@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'debate2'|'timecapsule'|'codeexplain'|'ideavalidator'|'tonerewriter'|'resumebuilder'|'emailnegotiator'|'storygen2'|'meetingsum'|'competitorspy'|'ailawyer'|'financeadvisor'|'languagetutor'|'flashcardgen'|'linkedinopt'|'speechwriter'|'pricenegotiator'|'emailroastv2'|'startupnamer'|'coverlettergen'|'interviewcoach'|'colddmwriter'|'fitnessplanner'|'recipegen2'|'travelplanner'|'apologyletter'|'leasereview'|'booksummarizer'|'quizgen'|'salaryneg'|'breakupletter'|'bizplan'|'viralhooks'|'dreaminterp'|'roastgen'|'futureself'|'resumebullets'|'meetingbuilder'|'gratitudereflect'|'coldpitch'|'moodtracker'|'habitjournal'|'lifegoals'|'standupwriter'|'conflictresolve'|'priceanchor'|'linkedinbio'|'failurecv'|'morningritual'|'apologytext'|'excusegen'|'ventmode'|'personalbrand'|'weeklyreview'|'negotiationsim'|'challengebuilder'|'therapyletter'|'podcastpitch'|'grantproposal'|'burnletter'|'decisionoracle'|'complimentengine'|'manifestowriter'|'debateprep14'|'eulogywriter'|'villainorigin'|'secretadmirer'|'legacyletter'|'lovelanguage'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -6817,6 +6817,75 @@ export default function ForgeApp() {
             { id:'forgeiq', icon:'🧬', label:'Forge IQ' },
             { id:'promptopt', icon:'✨', label:'Prompt Optimizer' },
             { id:'shadowmode', icon:'👥', label:'Shadow Mode' },
+            { id:'debate2', icon:'⚔️', label:'AI Debate' },
+            { id:'timecapsule', icon:'⏳', label:'Time Capsule' },
+            { id:'codeexplain', icon:'🔬', label:'Code Explainer' },
+            { id:'ideavalidator', icon:'💡', label:'Idea Validator' },
+            { id:'tonerewriter', icon:'🎨', label:'Tone Rewriter' },
+            { id:'resumebuilder', icon:'📄', label:'Resume Builder' },
+            { id:'emailnegotiator', icon:'🤝', label:'Email Negotiator' },
+            { id:'storygen2', icon:'📖', label:'Story Generator' },
+            { id:'meetingsum', icon:'📋', label:'Meeting Summarizer' },
+            { id:'competitorspy', icon:'🕵️', label:'Competitor Spy' },
+            { id:'ailawyer', icon:'⚖️', label:'AI Lawyer' },
+            { id:'financeadvisor', icon:'💰', label:'Finance Advisor' },
+            { id:'languagetutor', icon:'🌍', label:'Language Tutor' },
+            { id:'flashcardgen', icon:'🃏', label:'Flashcards' },
+            { id:'linkedinopt', icon:'💼', label:'LinkedIn Post' },
+            { id:'speechwriter', icon:'🎤', label:'Speech Writer' },
+            { id:'pricenegotiator', icon:'💬', label:'Price Negotiator' },
+            { id:'emailroastv2', icon:'🔥', label:'Email Roast' },
+            { id:'startupnamer', icon:'🚀', label:'Startup Namer' },
+            { id:'coverlettergen', icon:'📝', label:'Cover Letter' },
+            { id:'interviewcoach', icon:'🎯', label:'Interview Coach' },
+            { id:'colddmwriter', icon:'📨', label:'Cold DM' },
+            { id:'fitnessplanner', icon:'💪', label:'Fitness Plan' },
+            { id:'recipegen2', icon:'🍳', label:'Recipe Gen' },
+            { id:'travelplanner', icon:'✈️', label:'Travel Planner' },
+            { id:'apologyletter', icon:'💌', label:'Apology Letter' },
+            { id:'leasereview', icon:'🏠', label:'Lease Review' },
+            { id:'booksummarizer', icon:'📚', label:'Book Summary' },
+            { id:'quizgen', icon:'🧠', label:'Quiz Gen' },
+            { id:'salaryneg', icon:'💵', label:'Salary Negotiator' },
+            { id:'breakupletter', icon:'💔', label:'Breakup Letter' },
+            { id:'bizplan', icon:'📊', label:'Business Plan' },
+            { id:'viralhooks', icon:'🔥', label:'Viral Hooks' },
+            { id:'dreaminterp', icon:'🌙', label:'Dream Interpreter' },
+            { id:'roastgen', icon:'🎤', label:'Roast Generator' },
+            { id:'futureself', icon:'✉️', label:'Letter to Future Self' },
+            { id:'resumebullets', icon:'⚡', label:'Resume Bullet Rewriter' },
+            { id:'meetingbuilder', icon:'📋', label:'Meeting Agenda Builder' },
+            { id:'gratitudereflect', icon:'🙏', label:'Gratitude Journal' },
+            { id:'coldpitch', icon:'🎯', label:'Cold Pitch Generator' },
+            { id:'moodtracker', icon:'🌊', label:'Mood Tracker' },
+            { id:'habitjournal', icon:'🔗', label:'Habit Journal' },
+            { id:'lifegoals', icon:'🌟', label:'Life Goals Planner' },
+            { id:'standupwriter', icon:'☀️', label:'Daily Standup Writer' },
+            { id:'conflictresolve', icon:'🕊️', label:'Conflict Resolver' },
+            { id:'priceanchor', icon:'💲', label:'Price Anchor Strategy' },
+            { id:'linkedinbio', icon:'💼', label:'LinkedIn Bio Generator' },
+            { id:'failurecv', icon:'🏆', label:'Failure Resume' },
+            { id:'morningritual', icon:'🌅', label:'Morning Ritual Builder' },
+            { id:'apologytext', icon:'🙇', label:'Apology Text Writer' },
+            { id:'excusegen', icon:'🎭', label:'Excuse Generator' },
+            { id:'ventmode', icon:'💨', label:'Vent Mode' },
+            { id:'personalbrand', icon:'⚡', label:'Personal Brand Builder' },
+            { id:'weeklyreview', icon:'📅', label:'Weekly Review' },
+            { id:'negotiationsim', icon:'🤝', label:'Negotiation Simulator' },
+            { id:'challengebuilder', icon:'⚡', label:'24-Hour Challenge Builder' },
+            { id:'therapyletter', icon:'💌', label:'Therapy Letter Writer' },
+            { id:'podcastpitch', icon:'🎙️', label:'Podcast Pitch Generator' },
+            { id:'grantproposal', icon:'🏛️', label:'Grant Proposal Writer' },
+            { id:'burnletter', icon:'🔥', label:'Burn Letter Generator' },
+            { id:'decisionoracle', icon:'🔮', label:'Decision Oracle' },
+            { id:'complimentengine', icon:'💛', label:'Compliment Engine' },
+            { id:'manifestowriter', icon:'📜', label:'Manifesto Writer' },
+            { id:'debateprep14', icon:'⚔️', label:'Debate Prep AI' },
+            { id:'eulogywriter', icon:'🕊️', label:'Eulogy Writer' },
+            { id:'villainorigin', icon:'😈', label:'Villain Origin Story' },
+            { id:'secretadmirer', icon:'💘', label:'Secret Admirer Letter' },
+            { id:'legacyletter', icon:'📖', label:'Legacy Letter' },
+            { id:'lovelanguage', icon:'💞', label:'Love Language Decoder' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -13468,6 +13537,3605 @@ export default function ForgeApp() {
               </div>}
             </div>
           </div>);
+        })()}
+
+        {/* ── AI DEBATE (Wave 2) ───────────────────────────────── */}
+        {(mainTab as string) === 'debate2' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [topic, setTopic] = React.useState('');
+          const [rounds, setRounds] = React.useState(3);
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [history, setHistory] = React.useState<any[]>([]);
+          React.useEffect(() => { fetch(`${API}/api/debate/sessions`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.sessions||[])).catch(()=>{}); }, []);
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:900,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>⚔️ AI Debate Mode</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:20}}>Two AI agents argue opposite sides of any topic. You judge the winner.</div>
+              <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap'}}>
+                <input value={topic} onChange={e=>setTopic(e.target.value)} placeholder="Enter debate topic (e.g. 'Remote work is better than office')" style={{flex:1,minWidth:200,padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:14}} />
+                <select value={rounds} onChange={e=>setRounds(Number(e.target.value))} style={{padding:'10px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13}}>
+                  {[2,3,4,5].map(n=><option key={n} value={n}>{n} rounds</option>)}
+                </select>
+                <button disabled={loading||!topic.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(`${API}/api/debate/run`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({topic,rounds})});const d=await r.json();setResult(d);setHistory(h=>[{id:d.id,topic:d.topic,rounds:d.rounds,created_at:new Date().toISOString()},...h.slice(0,19)]);}catch(e:any){alert(e.message);}setLoading(false);}} style={{padding:'10px 20px',background:'#ef4444',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer',opacity:loading||!topic.trim()?0.5:1}}>{loading?'Debating…':'⚔️ Start Debate'}</button>
+              </div>
+              {result && <div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+                  {[{label:'✅ PRO (Side A)',content:result.side_a,color:'#22c55e'},{label:'❌ CON (Side B)',content:result.side_b,color:'#ef4444'}].map(s=>(
+                    <div key={s.label} style={{background:'var(--fg-bg2)',border:`1px solid ${s.color}44`,borderRadius:12,padding:16}}>
+                      <div style={{fontSize:12,fontWeight:700,color:s.color,marginBottom:10}}>{s.label}</div>
+                      <div style={{fontSize:13,color:'var(--fg-text)',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{s.content}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{background:'linear-gradient(135deg,#7c3aed22,#3b82f622)',border:'1px solid #7c3aed44',borderRadius:12,padding:16}}>
+                  <div style={{fontSize:12,fontWeight:700,color:'#a78bfa',marginBottom:8}}>🏆 VERDICT</div>
+                  <div style={{fontSize:14,color:'var(--fg-text)',lineHeight:1.7}}>{result.verdict}</div>
+                </div>
+              </div>}
+              {history.length>0 && <div style={{marginTop:24}}>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text3)',marginBottom:10,textTransform:'uppercase',letterSpacing:'0.08em'}}>Past Debates</div>
+                {history.map((h:any)=><div key={h.id} onClick={async()=>{const r=await fetch(`${API}/api/debate/${h.id}`,{headers:{Authorization:`Bearer ${tok}`}});setResult(await r.json());}} style={{padding:'8px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,marginBottom:6,cursor:'pointer',fontSize:13,color:'var(--fg-text2)'}}>{h.topic} <span style={{color:'var(--fg-text3)',fontSize:11}}>· {h.rounds} rounds · {h.created_at?.slice(0,10)}</span></div>)}
+              </div>}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── TIME CAPSULE (Wave 2) ─────────────────────────────── */}
+        {(mainTab as string) === 'timecapsule' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [msg, setMsg] = React.useState('');
+          const [deliverAt, setDeliverAt] = React.useState('');
+          const [capsules, setCapsules] = React.useState<any[]>([]);
+          const [ready, setReady] = React.useState<any[]>([]);
+          const [saving, setSaving] = React.useState(false);
+          const load = async () => { const [c,r]=await Promise.all([fetch(`${API}/api/time-capsules`,{headers:{Authorization:`Bearer ${tok}`}}).then(x=>x.json()),fetch(`${API}/api/time-capsules/ready`,{headers:{Authorization:`Bearer ${tok}`}}).then(x=>x.json())]); setCapsules(c.capsules||[]); setReady(r.capsules||[]); };
+          React.useEffect(()=>{load();}, []);
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:700,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>⏳ Time Capsule</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:20}}>Write a message to your future self. Choose when it unlocks.</div>
+              {ready.length>0 && <div style={{background:'linear-gradient(135deg,#f59e0b22,#ef444422)',border:'1px solid #f59e0b',borderRadius:12,padding:16,marginBottom:20}}>
+                <div style={{fontSize:13,fontWeight:700,color:'#fbbf24',marginBottom:10}}>📬 {ready.length} capsule{ready.length>1?'s':''} just unlocked!</div>
+                {ready.map((c:any)=><div key={c.id} style={{background:'var(--fg-bg2)',borderRadius:8,padding:12,marginBottom:8}}>
+                  <div style={{fontSize:11,color:'var(--fg-text3)',marginBottom:6}}>Written {c.created_at?.slice(0,10)} · Unlocked {c.deliver_at?.slice(0,16)}</div>
+                  <div style={{fontSize:14,color:'var(--fg-text)',lineHeight:1.6}}>{c.message}</div>
+                </div>)}
+              </div>}
+              <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:12,padding:16,marginBottom:20}}>
+                <textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder="Dear future me…" rows={5} style={{width:'100%',padding:'10px',background:'var(--fg-bg3)',border:'1px solid var(--fg-border)',borderRadius:8,color:'var(--fg-text)',fontSize:14,resize:'vertical',boxSizing:'border-box',marginBottom:12}} />
+                <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+                  <input type="datetime-local" value={deliverAt} onChange={e=>setDeliverAt(e.target.value)} style={{flex:1,padding:'8px 12px',background:'var(--fg-bg3)',border:'1px solid var(--fg-border)',borderRadius:8,color:'var(--fg-text)',fontSize:13}} />
+                  <button disabled={saving||!msg.trim()||!deliverAt} onClick={async()=>{setSaving(true);await fetch(`${API}/api/time-capsule`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({message:msg,deliver_at:deliverAt})});setMsg('');setDeliverAt('');await load();setSaving(false);}} style={{padding:'8px 18px',background:'#7c3aed',border:'none',borderRadius:8,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',opacity:saving||!msg.trim()||!deliverAt?0.5:1}}>{saving?'Saving…':'🕰️ Seal Capsule'}</button>
+                </div>
+              </div>
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text3)',marginBottom:10,textTransform:'uppercase',letterSpacing:'0.08em'}}>Pending Capsules ({capsules.filter((c:any)=>!c.delivered).length})</div>
+                {capsules.filter((c:any)=>!c.delivered).map((c:any)=><div key={c.id} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,marginBottom:6}}>
+                  <span style={{fontSize:20}}>🔒</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,color:'var(--fg-text)',fontStyle:'italic'}}>"{c.message.slice(0,80)}{c.message.length>80?'…':''}"</div>
+                    <div style={{fontSize:11,color:'var(--fg-text3)',marginTop:2}}>Unlocks: {c.deliver_at?.slice(0,16)}</div>
+                  </div>
+                  <button onClick={async()=>{await fetch(`${API}/api/time-capsule/${c.id}`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}});load();}} style={{padding:'4px 8px',background:'#ef444444',border:'none',borderRadius:6,color:'#f87171',cursor:'pointer',fontSize:11}}>Delete</button>
+                </div>)}
+                {capsules.filter((c:any)=>!c.delivered).length===0 && <div style={{textAlign:'center',color:'var(--fg-text3)',fontSize:13,padding:32}}>No pending capsules. Write your first message to the future!</div>}
+              </div>
+            </div>
+          </div>);
+        })()}
+
+        {/* ── CODE EXPLAINER (Wave 2) ───────────────────────────── */}
+        {(mainTab as string) === 'codeexplain' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [code, setCode] = React.useState('');
+          const [lang, setLang] = React.useState('auto');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [history, setHistory] = React.useState<any[]>([]);
+          React.useEffect(()=>{fetch(`${API}/api/code/history`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});}, []);
+          const LANGS = ['auto','javascript','typescript','python','rust','go','java','c++','c#','ruby','php','swift','kotlin','sql'];
+          const COMPLEXITY_COLOR:Record<string,string> = {simple:'#22c55e',moderate:'#f59e0b',complex:'#ef4444'};
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:900,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>🔬 Code Explainer</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:20}}>Paste any code and get a line-by-line explanation with key concepts.</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr auto auto',gap:10,marginBottom:12,alignItems:'start'}}>
+                <textarea value={code} onChange={e=>setCode(e.target.value)} placeholder="// Paste your code here..." rows={8} style={{padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,fontFamily:'monospace',resize:'vertical',boxSizing:'border-box'}} />
+                <select value={lang} onChange={e=>setLang(e.target.value)} style={{padding:'8px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,color:'var(--fg-text)',fontSize:12,height:'fit-content'}}>
+                  {LANGS.map(l=><option key={l} value={l}>{l}</option>)}
+                </select>
+                <button disabled={loading||!code.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(`${API}/api/code/explain`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({code,language:lang})});const d=await r.json();setResult(d);}catch(e:any){alert(e.message);}setLoading(false);}} style={{padding:'10px 18px',background:'#3b82f6',border:'none',borderRadius:10,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',opacity:loading||!code.trim()?0.5:1,height:'fit-content'}}>{loading?'Analyzing…':'🔬 Explain'}</button>
+              </div>
+              {result && <div>
+                <div style={{display:'flex',gap:12,marginBottom:16,flexWrap:'wrap'}}>
+                  <div style={{padding:'6px 14px',background:'#3b82f622',border:'1px solid #3b82f644',borderRadius:20,fontSize:12,color:'#60a5fa'}}>📝 {result.language}</div>
+                  <div style={{padding:'6px 14px',background:`${COMPLEXITY_COLOR[result.complexity]||'#gray'}22`,border:`1px solid ${COMPLEXITY_COLOR[result.complexity]||'gray'}44`,borderRadius:20,fontSize:12,color:COMPLEXITY_COLOR[result.complexity]||'#gray'}}>⚡ {result.complexity}</div>
+                  {(result.concepts||[]).slice(0,4).map((c:string)=><div key={c} style={{padding:'4px 10px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:16,fontSize:11,color:'var(--fg-text3)'}}>{c}</div>)}
+                </div>
+                <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:14,marginBottom:14}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--fg-text3)',marginBottom:6,textTransform:'uppercase'}}>Summary</div>
+                  <div style={{fontSize:14,color:'var(--fg-text)',lineHeight:1.6}}>{result.summary}</div>
+                </div>
+                <div style={{marginBottom:14}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--fg-text3)',marginBottom:10,textTransform:'uppercase'}}>Line-by-Line Breakdown</div>
+                  {(result.lines||[]).map((l:any,i:number)=><div key={i} style={{display:'grid',gridTemplateColumns:'auto 1fr 1fr',gap:0,marginBottom:6,background:'var(--fg-bg2)',borderRadius:8,overflow:'hidden',border:'1px solid var(--fg-border)'}}>
+                    <div style={{padding:'8px 10px',background:'#1e1e2e',borderRight:'1px solid var(--fg-border)',fontFamily:'monospace',fontSize:11,color:'#94a3b8',minWidth:80}}>{l.line_range}</div>
+                    <div style={{padding:'8px 10px',borderRight:'1px solid var(--fg-border)',fontSize:12,color:'var(--fg-text)',fontFamily:'monospace',background:'#0f0f1a'}}><code>{l.code}</code></div>
+                    <div style={{padding:'8px 10px',fontSize:12,color:'var(--fg-text2)',lineHeight:1.4}}>{l.explanation} {l.concept&&<span style={{fontSize:10,padding:'2px 6px',background:'#7c3aed22',border:'1px solid #7c3aed44',borderRadius:10,color:'#a78bfa',marginLeft:4}}>{l.concept}</span>}</div>
+                  </div>)}
+                </div>
+                {result.suggested_improvements?.length>0 && <div style={{background:'#22c55e11',border:'1px solid #22c55e33',borderRadius:10,padding:12}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'#4ade80',marginBottom:8,textTransform:'uppercase'}}>💡 Improvement Suggestions</div>
+                  {result.suggested_improvements.map((s:string,i:number)=><div key={i} style={{fontSize:13,color:'var(--fg-text)',marginBottom:4}}>• {s}</div>)}
+                </div>}
+              </div>}
+              {history.length>0 && !result && <div style={{marginTop:16}}>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text3)',marginBottom:8,textTransform:'uppercase',letterSpacing:'0.08em'}}>Recent</div>
+                {history.slice(0,5).map((h:any)=><div key={h.id} onClick={()=>setCode(h.code)} style={{padding:'8px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,marginBottom:4,cursor:'pointer',fontSize:12,color:'var(--fg-text3)'}}>{h.language} · {h.code?.slice(0,60)}… <span style={{color:'var(--fg-text4)'}}>{h.created_at?.slice(0,10)}</span></div>)}
+              </div>}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── IDEA VALIDATOR (Wave 2) ───────────────────────────── */}
+        {(mainTab as string) === 'ideavalidator' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [idea, setIdea] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [history, setHistory] = React.useState<any[]>([]);
+          React.useEffect(()=>{fetch(`${API}/api/idea/history`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});}, []);
+          const VERDICT_COLOR:Record<string,string>={pass:'#22c55e',promising:'#f59e0b',fail:'#ef4444'};
+          const scoreColor=(s:number)=>s>=70?'#22c55e':s>=40?'#f59e0b':'#ef4444';
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:800,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>💡 Idea Validator</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:20}}>Get a brutally honest VC-style analysis of your startup or project idea.</div>
+              <div style={{display:'flex',gap:10,marginBottom:16}}>
+                <textarea value={idea} onChange={e=>setIdea(e.target.value)} placeholder="Describe your idea in 1-3 sentences…" rows={3} style={{flex:1,padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:14,resize:'none',boxSizing:'border-box'}} />
+                <button disabled={loading||!idea.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(`${API}/api/idea/validate`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({idea})});const d=await r.json();setResult(d);}catch(e:any){alert(e.message);}setLoading(false);}} style={{padding:'0 20px',background:'#f59e0b',border:'none',borderRadius:10,color:'#000',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!idea.trim()?0.5:1,alignSelf:'stretch'}}>{loading?'Analyzing…':'🔍 Validate'}</button>
+              </div>
+              {result && <div>
+                <div style={{display:'flex',gap:16,marginBottom:20,flexWrap:'wrap'}}>
+                  <div style={{textAlign:'center',background:'var(--fg-bg2)',border:`2px solid ${scoreColor(result.score)}`,borderRadius:16,padding:'20px 28px'}}>
+                    <div style={{fontSize:48,fontWeight:900,color:scoreColor(result.score),lineHeight:1}}>{result.score}</div>
+                    <div style={{fontSize:11,color:'var(--fg-text3)',marginTop:4}}>SCORE / 100</div>
+                  </div>
+                  <div style={{flex:1,background:'var(--fg-bg2)',border:`1px solid ${VERDICT_COLOR[result.verdict]||'var(--fg-border)'}44`,borderRadius:16,padding:16}}>
+                    <div style={{fontSize:11,fontWeight:700,color:VERDICT_COLOR[result.verdict]||'var(--fg-text3)',marginBottom:6,textTransform:'uppercase'}}>Verdict: {result.verdict}</div>
+                    <div style={{fontSize:15,color:'var(--fg-text)',fontStyle:'italic',lineHeight:1.5}}>"{result.one_liner}"</div>
+                    <div style={{marginTop:10,display:'flex',gap:8,flexWrap:'wrap'}}>
+                      <span style={{fontSize:11,color:'var(--fg-text3)'}}>Market: {result.market_size}</span>
+                      <span style={{fontSize:11,color:'var(--fg-text3)'}}>Revenue in: {result.timeline_to_revenue}</span>
+                    </div>
+                  </div>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,marginBottom:16}}>
+                  {[{title:'✅ Strengths',items:result.strengths,color:'#22c55e'},{title:'⚠️ Weaknesses',items:result.weaknesses,color:'#f59e0b'},{title:'🚨 Risks',items:result.risks,color:'#ef4444'}].map(s=>(
+                    <div key={s.title} style={{background:'var(--fg-bg2)',border:`1px solid ${s.color}33`,borderRadius:10,padding:12}}>
+                      <div style={{fontSize:11,fontWeight:700,color:s.color,marginBottom:8}}>{s.title}</div>
+                      {(s.items||[]).map((item:string,i:number)=><div key={i} style={{fontSize:12,color:'var(--fg-text)',marginBottom:4}}>• {item}</div>)}
+                    </div>
+                  ))}
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                  <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#60a5fa',marginBottom:8}}>🎯 Key Advice</div>
+                    <div style={{fontSize:13,color:'var(--fg-text)',lineHeight:1.6}}>{result.advice}</div>
+                  </div>
+                  <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#a78bfa',marginBottom:8}}>🔄 Suggested Pivot</div>
+                    <div style={{fontSize:13,color:'var(--fg-text)',lineHeight:1.6}}>{result.pivot||'No pivot suggested — stay the course.'}</div>
+                  </div>
+                </div>
+                {result.competition?.length>0 && <div style={{marginTop:12,background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:12}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--fg-text3)',marginBottom:6}}>⚔️ Competition</div>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{result.competition.map((c:string)=><span key={c} style={{padding:'3px 10px',background:'var(--fg-bg3)',borderRadius:16,fontSize:12,color:'var(--fg-text2)'}}>{c}</span>)}</div>
+                </div>}
+              </div>}
+              {history.length>0 && !result && <div style={{marginTop:20}}>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text3)',marginBottom:10,textTransform:'uppercase',letterSpacing:'0.08em'}}>Recent Validations</div>
+                {history.map((h:any)=><div key={h.id} onClick={()=>setIdea(h.idea)} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,marginBottom:6,cursor:'pointer'}}>
+                  <span style={{fontSize:18,fontWeight:900,color:scoreColor(h.score)}}>{h.score}</span>
+                  <div style={{flex:1,fontSize:13,color:'var(--fg-text)'}}>{h.idea?.slice(0,80)}{h.idea?.length>80?'…':''}</div>
+                  <span style={{fontSize:11,color:'var(--fg-text3)'}}>{h.created_at?.slice(0,10)}</span>
+                </div>)}
+              </div>}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── TONE REWRITER (Wave 2) ────────────────────────────── */}
+        {(mainTab as string) === 'tonerewriter' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [text, setText] = React.useState('');
+          const [tone, setTone] = React.useState('professional');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [history, setHistory] = React.useState<any[]>([]);
+          React.useEffect(()=>{fetch(`${API}/api/tone/history`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});}, []);
+          const TONES = [{id:'professional',emoji:'👔',label:'Professional'},{id:'casual',emoji:'😊',label:'Casual'},{id:'brutal',emoji:'🔥',label:'Brutal'},{id:'poetic',emoji:'🌸',label:'Poetic'},{id:'academic',emoji:'🎓',label:'Academic'},{id:'humorous',emoji:'😂',label:'Humorous'},{id:'persuasive',emoji:'💪',label:'Persuasive'},{id:'simple',emoji:'🧒',label:'Simple'}];
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:800,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>🎨 Tone Rewriter</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:20}}>Rewrite any text in 8 different tones. Same message, different voice.</div>
+              <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
+                {TONES.map(t=><button key={t.id} onClick={()=>setTone(t.id)} style={{padding:'6px 14px',background:tone===t.id?'var(--fg-orange)':'var(--fg-bg2)',border:tone===t.id?'1px solid var(--fg-orange)':'1px solid var(--fg-border)',borderRadius:20,color:tone===t.id?'#fff':'var(--fg-text2)',fontSize:12,fontWeight:tone===t.id?600:400,cursor:'pointer'}}>{t.emoji} {t.label}</button>)}
+              </div>
+              <div style={{display:'flex',gap:12,marginBottom:16}}>
+                <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Enter text to rewrite…" rows={5} style={{flex:1,padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:14,resize:'vertical',boxSizing:'border-box'}} />
+              </div>
+              <button disabled={loading||!text.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(`${API}/api/tone/rewrite`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({text,tone})});const d=await r.json();setResult(d);}catch(e:any){alert(e.message);}setLoading(false);}} style={{width:'100%',padding:'12px',background:'var(--fg-orange)',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!text.trim()?0.5:1,marginBottom:20}}>{loading?'Rewriting…':'🎨 Rewrite'}</button>
+              {result && <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
+                <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:14}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--fg-text3)',marginBottom:8,textTransform:'uppercase'}}>Original ({result.word_count_original} words)</div>
+                  <div style={{fontSize:13,color:'var(--fg-text2)',lineHeight:1.7}}>{text}</div>
+                </div>
+                <div style={{background:'linear-gradient(135deg,var(--fg-bg2),var(--fg-bg3))',border:'1px solid var(--fg-orange)44',borderRadius:10,padding:14}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--fg-orange)',marginBottom:8,textTransform:'uppercase'}}>{TONES.find(t=>t.id===tone)?.emoji} {TONES.find(t=>t.id===tone)?.label} version</div>
+                  <div style={{fontSize:13,color:'var(--fg-text)',lineHeight:1.7,marginBottom:12}}>{result.rewritten}</div>
+                  <button onClick={()=>navigator.clipboard.writeText(result.rewritten)} style={{padding:'4px 12px',background:'var(--fg-bg3)',border:'1px solid var(--fg-border)',borderRadius:6,color:'var(--fg-text3)',fontSize:11,cursor:'pointer'}}>📋 Copy</button>
+                </div>
+              </div>}
+              {result && <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:12,marginBottom:20}}>
+                <div style={{fontSize:11,fontWeight:700,color:'var(--fg-text3)',marginBottom:6}}>What changed</div>
+                <div style={{fontSize:13,color:'var(--fg-text)',lineHeight:1.6}}>{result.changes}</div>
+              </div>}
+              {history.length>0 && <div>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text3)',marginBottom:8,textTransform:'uppercase',letterSpacing:'0.08em'}}>History</div>
+                {history.map((h:any)=><div key={h.id} onClick={()=>setText(h.original)} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,marginBottom:4,cursor:'pointer'}}>
+                  <span style={{fontSize:14}}>{TONES.find(t=>t.id===h.tone)?.emoji||'🎨'}</span>
+                  <span style={{fontSize:12,color:'var(--fg-text2)',flex:1}}>{h.original?.slice(0,60)}…</span>
+                  <span style={{fontSize:11,color:'var(--fg-text3)',padding:'2px 8px',background:'var(--fg-bg3)',borderRadius:10}}>{h.tone}</span>
+                </div>)}
+              </div>}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── RESUME BUILDER (Wave 3) ──────────────────────────── */}
+        {(mainTab as string) === 'resumebuilder' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [experience, setExperience] = React.useState('');
+          const [jobDesc, setJobDesc] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [history, setHistory] = React.useState<any[]>([]);
+          const [view, setView] = React.useState<'build'|'preview'>('build');
+          React.useEffect(()=>{fetch(`${API}/api/resume/history`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});}, []);
+          const scoreColor=(s:number)=>s>=80?'#22c55e':s>=60?'#f59e0b':'#ef4444';
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:900,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>📄 Resume Builder</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:20}}>AI tailors your resume to any job description. ATS-optimized, keyword-matched.</div>
+              {!result ? (<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+                <div>
+                  <div style={{fontSize:12,fontWeight:600,color:'var(--fg-text2)',marginBottom:6}}>Your Experience & Background</div>
+                  <textarea value={experience} onChange={e=>setExperience(e.target.value)} placeholder="Paste your work history, skills, education, projects…" rows={12} style={{width:'100%',padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,resize:'vertical',boxSizing:'border-box'}} />
+                </div>
+                <div>
+                  <div style={{fontSize:12,fontWeight:600,color:'var(--fg-text2)',marginBottom:6}}>Target Job Description</div>
+                  <textarea value={jobDesc} onChange={e=>setJobDesc(e.target.value)} placeholder="Paste the job description you're applying for…" rows={12} style={{width:'100%',padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,resize:'vertical',boxSizing:'border-box'}} />
+                </div>
+              </div>) : null}
+              {!result && <button disabled={loading||!experience.trim()||!jobDesc.trim()} onClick={async()=>{setLoading(true);try{const r=await fetch(`${API}/api/resume/build`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({experience,job_desc:jobDesc})});const d=await r.json();setResult(d);setView('preview');}catch(e:any){alert(e.message);}setLoading(false);}} style={{width:'100%',padding:'12px',background:'#3b82f6',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!experience.trim()||!jobDesc.trim()?0.5:1}}>{loading?'Building resume…':'📄 Build Resume'}</button>}
+              {result && <div>
+                <div style={{display:'flex',gap:12,marginBottom:16,alignItems:'center'}}>
+                  <div style={{textAlign:'center',background:'var(--fg-bg2)',border:`2px solid ${scoreColor(result.score)}`,borderRadius:12,padding:'12px 20px'}}>
+                    <div style={{fontSize:36,fontWeight:900,color:scoreColor(result.score),lineHeight:1}}>{result.score}</div>
+                    <div style={{fontSize:10,color:'var(--fg-text3)'}}>MATCH SCORE</div>
+                  </div>
+                  <div style={{flex:1,display:'flex',gap:8,flexWrap:'wrap'}}>
+                    {(result.keywords_used||[]).slice(0,8).map((k:string)=><span key={k} style={{padding:'3px 10px',background:'#3b82f622',border:'1px solid #3b82f644',borderRadius:16,fontSize:11,color:'#60a5fa'}}>{k}</span>)}
+                  </div>
+                  <div style={{display:'flex',gap:8}}>
+                    {(['preview','build'] as const).map(v=><button key={v} onClick={()=>setView(v)} style={{padding:'6px 14px',background:view===v?'var(--fg-orange)':'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,color:view===v?'#fff':'var(--fg-text2)',fontSize:12,cursor:'pointer'}}>{v==='preview'?'📄 Resume':'✏️ Edit'}</button>)}
+                    <button onClick={()=>navigator.clipboard.writeText(result.resume)} style={{padding:'6px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,color:'var(--fg-text2)',fontSize:12,cursor:'pointer'}}>📋 Copy</button>
+                    <button onClick={()=>{setResult(null);setView('build');}} style={{padding:'6px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,color:'var(--fg-text2)',fontSize:12,cursor:'pointer'}}>🔄 New</button>
+                  </div>
+                </div>
+                {view==='preview' && <div style={{background:'#fff',color:'#111',borderRadius:10,padding:28,fontFamily:'Georgia,serif',fontSize:14,lineHeight:1.7,whiteSpace:'pre-wrap',marginBottom:16,minHeight:400}}>{result.resume}</div>}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                  <div style={{background:'#22c55e11',border:'1px solid #22c55e33',borderRadius:10,padding:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#4ade80',marginBottom:6}}>✅ Why You Match</div>
+                    {(result.match_reasons||[]).map((r:string,i:number)=><div key={i} style={{fontSize:12,color:'var(--fg-text)',marginBottom:3}}>• {r}</div>)}
+                  </div>
+                  <div style={{background:'#f59e0b11',border:'1px solid #f59e0b33',borderRadius:10,padding:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#fbbf24',marginBottom:6}}>⚠️ Gaps to Address</div>
+                    {(result.gaps||[]).map((g:string,i:number)=><div key={i} style={{fontSize:12,color:'var(--fg-text)',marginBottom:3}}>• {g}</div>)}
+                  </div>
+                </div>
+              </div>}
+              {history.length>0 && !result && <div style={{marginTop:24}}>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text3)',marginBottom:8,textTransform:'uppercase',letterSpacing:'0.08em'}}>Past Resumes</div>
+                {history.map((h:any)=><div key={h.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,marginBottom:4,fontSize:13,color:'var(--fg-text2)'}}>
+                  <span style={{fontWeight:700,color:scoreColor(h.score)}}>{h.score}</span>
+                  <span style={{flex:1}}>{h.job_desc?.slice(0,60)}…</span>
+                  <span style={{fontSize:11,color:'var(--fg-text3)'}}>{h.created_at?.slice(0,10)}</span>
+                </div>)}
+              </div>}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── EMAIL NEGOTIATOR (Wave 3) ─────────────────────────── */}
+        {(mainTab as string) === 'emailnegotiator' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [original, setOriginal] = React.useState('');
+          const [context, setContext] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [history, setHistory] = React.useState<any[]>([]);
+          React.useEffect(()=>{fetch(`${API}/api/negotiate/history`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});}, []);
+          const RISK_COLOR:Record<string,string>={low:'#22c55e',medium:'#f59e0b',high:'#ef4444'};
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:800,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>🤝 Email Negotiator</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:20}}>Paste any offer, contract, or email. AI drafts the perfect counter-response.</div>
+              {!result ? (<>
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:12,fontWeight:600,color:'var(--fg-text2)',marginBottom:6}}>Original Email / Offer</div>
+                  <textarea value={original} onChange={e=>setOriginal(e.target.value)} placeholder="Paste the email or offer you received…" rows={8} style={{width:'100%',padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,resize:'vertical',boxSizing:'border-box'}} />
+                </div>
+                <div style={{marginBottom:16}}>
+                  <div style={{fontSize:12,fontWeight:600,color:'var(--fg-text2)',marginBottom:6}}>Context (optional)</div>
+                  <input value={context} onChange={e=>setContext(e.target.value)} placeholder="e.g. 'salary negotiation, I have 2 competing offers' or 'vendor contract renewal'" style={{width:'100%',padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,boxSizing:'border-box'}} />
+                </div>
+                <button disabled={loading||!original.trim()} onClick={async()=>{setLoading(true);try{const r=await fetch(`${API}/api/negotiate/email`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({original,context})});const d=await r.json();setResult(d);}catch(e:any){alert(e.message);}setLoading(false);}} style={{width:'100%',padding:'12px',background:'#22c55e',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!original.trim()?0.5:1}}>{loading?'Drafting counter…':'🤝 Generate Counter'}</button>
+              </>) : (<div>
+                <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap'}}>
+                  <span style={{padding:'4px 12px',background:RISK_COLOR[result.risk]+'22',border:`1px solid ${RISK_COLOR[result.risk]}44`,borderRadius:16,fontSize:12,color:RISK_COLOR[result.risk]}}>Risk: {result.risk}</span>
+                  <span style={{padding:'4px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:16,fontSize:12,color:'var(--fg-text2)'}}>Tone: {result.tone}</span>
+                  <button onClick={()=>setResult(null)} style={{padding:'4px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:16,fontSize:12,color:'var(--fg-text2)',cursor:'pointer'}}>← New</button>
+                </div>
+                <div style={{background:'var(--fg-bg2)',border:'1px solid #22c55e44',borderRadius:12,padding:20,marginBottom:16,position:'relative'}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'#4ade80',marginBottom:10}}>📧 YOUR COUNTER-RESPONSE</div>
+                  <div style={{fontSize:14,color:'var(--fg-text)',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{result.counter_email}</div>
+                  <button onClick={()=>navigator.clipboard.writeText(result.counter_email)} style={{position:'absolute',top:12,right:12,padding:'4px 10px',background:'var(--fg-bg3)',border:'1px solid var(--fg-border)',borderRadius:6,color:'var(--fg-text3)',fontSize:11,cursor:'pointer'}}>📋 Copy</button>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
+                  <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#60a5fa',marginBottom:6}}>🎯 Tactics Used</div>
+                    {(result.tactics||[]).map((t:string,i:number)=><div key={i} style={{fontSize:12,color:'var(--fg-text)',marginBottom:3}}>• {t}</div>)}
+                  </div>
+                  <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#a78bfa',marginBottom:6}}>💪 Your Leverage</div>
+                    {(result.leverage_points||[]).map((l:string,i:number)=><div key={i} style={{fontSize:12,color:'var(--fg-text)',marginBottom:3}}>• {l}</div>)}
+                  </div>
+                  <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#f59e0b',marginBottom:6}}>🚶 Walk-Away Options</div>
+                    {(result.alternatives||[]).map((a:string,i:number)=><div key={i} style={{fontSize:12,color:'var(--fg-text)',marginBottom:3}}>• {a}</div>)}
+                  </div>
+                </div>
+              </div>)}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── STORY GENERATOR (Wave 3) ──────────────────────────── */}
+        {(mainTab as string) === 'storygen2' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [premise, setPremise] = React.useState('');
+          const [genre, setGenre] = React.useState('fantasy');
+          const [storyId, setStoryId] = React.useState<string|null>(null);
+          const [storyText, setStoryText] = React.useState('');
+          const [choices, setChoices] = React.useState<string[]>([]);
+          const [turns, setTurns] = React.useState(0);
+          const [loading, setLoading] = React.useState(false);
+          const [isEnding, setIsEnding] = React.useState(false);
+          const [stories, setStories] = React.useState<any[]>([]);
+          const scrollRef = React.useRef<HTMLDivElement>(null);
+          React.useEffect(()=>{fetch(`${API}/api/stories`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setStories(d.stories||[])).catch(()=>{});}, []);
+          React.useEffect(()=>{if(scrollRef.current) scrollRef.current.scrollTop=scrollRef.current.scrollHeight;}, [storyText]);
+          const GENRES = ['fantasy','sci-fi','thriller','romance','horror','mystery','comedy','adventure'];
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:800,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>📖 Story Generator</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:20}}>Interactive AI fiction. You choose what happens next.</div>
+              {!storyId ? (<>
+                <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+                  {GENRES.map(g=><button key={g} onClick={()=>setGenre(g)} style={{padding:'6px 14px',background:genre===g?'var(--fg-orange)':'var(--fg-bg2)',border:`1px solid ${genre===g?'var(--fg-orange)':'var(--fg-border)'}`,borderRadius:20,color:genre===g?'#fff':'var(--fg-text2)',fontSize:12,cursor:'pointer'}}>{g}</button>)}
+                </div>
+                <textarea value={premise} onChange={e=>setPremise(e.target.value)} placeholder="Enter your story premise… (e.g. 'A time traveler accidentally prevents their own birth')" rows={3} style={{width:'100%',padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:14,resize:'none',boxSizing:'border-box',marginBottom:12}} />
+                <button disabled={loading||!premise.trim()} onClick={async()=>{setLoading(true);try{const r=await fetch(`${API}/api/story/start`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({premise,genre})});const d=await r.json();setStoryId(d.id);setStoryText(d.opening);setChoices(d.choices||[]);setTurns(0);}catch(e:any){alert(e.message);}setLoading(false);}} style={{width:'100%',padding:'12px',background:'var(--fg-orange)',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!premise.trim()?0.5:1}}>{loading?'Generating…':'📖 Begin Story'}</button>
+                {stories.length>0 && <div style={{marginTop:20}}>
+                  <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text3)',marginBottom:8,textTransform:'uppercase',letterSpacing:'0.08em'}}>Past Stories</div>
+                  {stories.map((s:any)=><div key={s.id} style={{padding:'8px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,marginBottom:4,fontSize:13,color:'var(--fg-text2)'}}>📖 {s.premise?.slice(0,60)}… <span style={{fontSize:11,color:'var(--fg-text3)'}}>· {s.genre} · {s.turns} turns</span></div>)}
+                </div>}
+              </>) : (<div>
+                <div ref={scrollRef} style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:12,padding:20,marginBottom:16,maxHeight:400,overflowY:'auto'}}>
+                  <div style={{fontSize:12,color:'var(--fg-text3)',marginBottom:10}}>Turn {turns} · {genre}</div>
+                  <div style={{fontSize:14,color:'var(--fg-text)',lineHeight:1.8,whiteSpace:'pre-wrap'}}>{storyText}</div>
+                </div>
+                {!isEnding && choices.length>0 && <div>
+                  <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text3)',marginBottom:10}}>What happens next?</div>
+                  {choices.map((c:string,i:number)=><button key={i} disabled={loading} onClick={async()=>{setLoading(true);try{const r=await fetch(`${API}/api/story/${storyId}/continue`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({choice:c})});const d=await r.json();setStoryText(d.full_story);setChoices(d.choices||[]);setTurns(d.turns);setIsEnding(d.is_ending||false);}catch(e:any){alert(e.message);}setLoading(false);}} style={{display:'block',width:'100%',padding:'12px 16px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,cursor:'pointer',marginBottom:8,textAlign:'left',opacity:loading?0.5:1,transition:'border-color 0.15s'}}>{loading?'Writing…':c}</button>)}
+                </div>}
+                {isEnding && <div style={{textAlign:'center',padding:24,background:'linear-gradient(135deg,#7c3aed22,#f59e0b22)',borderRadius:12,border:'1px solid #7c3aed44'}}>
+                  <div style={{fontSize:24,marginBottom:8}}>🏆 THE END</div>
+                  <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:16}}>Your story is complete ({turns} turns)</div>
+                  <div style={{display:'flex',gap:8,justifyContent:'center'}}>
+                    <button onClick={()=>navigator.clipboard.writeText(storyText)} style={{padding:'8px 16px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,color:'var(--fg-text2)',fontSize:12,cursor:'pointer'}}>📋 Copy Story</button>
+                    <button onClick={()=>{setStoryId(null);setStoryText('');setChoices([]);setTurns(0);setIsEnding(false);setPremise('');}} style={{padding:'8px 16px',background:'var(--fg-orange)',border:'none',borderRadius:8,color:'#fff',fontSize:12,cursor:'pointer'}}>📖 New Story</button>
+                  </div>
+                </div>}
+              </div>)}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── MEETING SUMMARIZER (Wave 3) ───────────────────────── */}
+        {(mainTab as string) === 'meetingsum' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [transcript, setTranscript] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [history, setHistory] = React.useState<any[]>([]);
+          React.useEffect(()=>{fetch(`${API}/api/meeting/history`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});}, []);
+          const SENTIMENT_COLOR:Record<string,string>={positive:'#22c55e',neutral:'#60a5fa',negative:'#ef4444'};
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:800,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>📋 Meeting Summarizer</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:20}}>Paste any meeting transcript → instant action items, decisions, and summary.</div>
+              {!result ? (<>
+                <textarea value={transcript} onChange={e=>setTranscript(e.target.value)} placeholder="Paste your meeting transcript or notes here…" rows={12} style={{width:'100%',padding:'12px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,resize:'vertical',boxSizing:'border-box',marginBottom:12}} />
+                <button disabled={loading||!transcript.trim()} onClick={async()=>{setLoading(true);try{const r=await fetch(`${API}/api/meeting/summarize`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({transcript})});const d=await r.json();setResult(d);}catch(e:any){alert(e.message);}setLoading(false);}} style={{width:'100%',padding:'12px',background:'#7c3aed',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!transcript.trim()?0.5:1}}>{loading?'Summarizing…':'📋 Summarize Meeting'}</button>
+              </>) : (<div>
+                <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
+                  <span style={{padding:'4px 12px',background:SENTIMENT_COLOR[result.sentiment]+'22',border:`1px solid ${SENTIMENT_COLOR[result.sentiment]}44`,borderRadius:16,fontSize:12,color:SENTIMENT_COLOR[result.sentiment]}}>Mood: {result.sentiment}</span>
+                  {result.duration_estimate && <span style={{padding:'4px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:16,fontSize:12,color:'var(--fg-text3)'}}>~{result.duration_estimate} min</span>}
+                  <button onClick={()=>setResult(null)} style={{padding:'4px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:16,fontSize:12,color:'var(--fg-text2)',cursor:'pointer',marginLeft:'auto'}}>← New</button>
+                </div>
+                <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:16,marginBottom:16}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--fg-text3)',marginBottom:8,textTransform:'uppercase'}}>Summary</div>
+                  <div style={{fontSize:14,color:'var(--fg-text)',lineHeight:1.6}}>{result.summary}</div>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+                  <div style={{background:'var(--fg-bg2)',border:'1px solid #3b82f644',borderRadius:10,padding:14}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#60a5fa',marginBottom:10}}>✅ Action Items ({(result.action_items||[]).length})</div>
+                    {(result.action_items||[]).map((a:any,i:number)=><div key={i} style={{padding:'8px',background:'var(--fg-bg3)',borderRadius:6,marginBottom:6}}>
+                      <div style={{fontSize:13,color:'var(--fg-text)',fontWeight:500}}>{a.task}</div>
+                      <div style={{fontSize:11,color:'var(--fg-text3)',marginTop:2}}>{a.owner && `👤 ${a.owner}`}{a.deadline && ` · 📅 ${a.deadline}`}</div>
+                    </div>)}
+                    {(result.action_items||[]).length===0 && <div style={{fontSize:12,color:'var(--fg-text3)'}}>No action items identified</div>}
+                  </div>
+                  <div style={{background:'var(--fg-bg2)',border:'1px solid #7c3aed44',borderRadius:10,padding:14}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#a78bfa',marginBottom:10}}>🔨 Decisions Made</div>
+                    {(result.decisions||[]).map((d:string,i:number)=><div key={i} style={{fontSize:13,color:'var(--fg-text)',marginBottom:6,paddingLeft:8,borderLeft:'2px solid #7c3aed44'}}>• {d}</div>)}
+                    {(result.decisions||[]).length===0 && <div style={{fontSize:12,color:'var(--fg-text3)'}}>No decisions recorded</div>}
+                  </div>
+                </div>
+                {result.blockers?.length>0 && <div style={{background:'#ef444411',border:'1px solid #ef444433',borderRadius:10,padding:12,marginBottom:12}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'#f87171',marginBottom:6}}>🚧 Blockers</div>
+                  {result.blockers.map((b:string,i:number)=><div key={i} style={{fontSize:13,color:'var(--fg-text)',marginBottom:3}}>• {b}</div>)}
+                </div>}
+                {result.next_meeting && <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:12}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--fg-text3)',marginBottom:4}}>🗓 Next Meeting Focus</div>
+                  <div style={{fontSize:13,color:'var(--fg-text)'}}>{result.next_meeting}</div>
+                </div>}
+              </div>)}
+              {history.length>0 && !result && <div style={{marginTop:20}}>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text3)',marginBottom:8,textTransform:'uppercase',letterSpacing:'0.08em'}}>Recent Meetings</div>
+                {history.map((h:any)=><div key={h.id} style={{padding:'8px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,marginBottom:4,fontSize:13,color:'var(--fg-text2)'}}>{h.summary?.slice(0,80)}… <span style={{fontSize:11,color:'var(--fg-text3)'}}>{h.created_at?.slice(0,10)}</span></div>)}
+              </div>}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── COMPETITOR SPY (Wave 3) ───────────────────────────── */}
+        {(mainTab as string) === 'competitorspy' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [company, setCompany] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [history, setHistory] = React.useState<any[]>([]);
+          React.useEffect(()=>{fetch(`${API}/api/competitor/history`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});}, []);
+          const THREAT_COLOR:Record<string,string>={low:'#22c55e',medium:'#f59e0b',high:'#ef4444'};
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:900,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>🕵️ Competitor Spy</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:20}}>Enter any company name. Get a full competitive intelligence report.</div>
+              <div style={{display:'flex',gap:10,marginBottom:20}}>
+                <input value={company} onChange={e=>setCompany(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&company.trim()&&!loading) document.getElementById('spy-btn')?.click();}} placeholder="Company name (e.g. Notion, Linear, Vercel…)" style={{flex:1,padding:'12px 16px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:14}} />
+                <button id="spy-btn" disabled={loading||!company.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(`${API}/api/competitor/analyze`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({company})});const d=await r.json();setResult(d);}catch(e:any){alert(e.message);}setLoading(false);}} style={{padding:'12px 24px',background:'#ef4444',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!company.trim()?0.5:1}}>{loading?'Analyzing…':'🕵️ Spy'}</button>
+              </div>
+              {result && <div>
+                <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
+                  <div style={{fontSize:18,fontWeight:700,color:'var(--fg-text)'}}>{result.company}</div>
+                  <span style={{padding:'4px 12px',background:THREAT_COLOR[result.threat_level]+'22',border:`1px solid ${THREAT_COLOR[result.threat_level]}44`,borderRadius:16,fontSize:12,color:THREAT_COLOR[result.threat_level]}}>Threat: {result.threat_level}</span>
+                  <button onClick={()=>{setResult(null);setCompany('');}} style={{padding:'4px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:16,fontSize:12,color:'var(--fg-text2)',cursor:'pointer',marginLeft:'auto'}}>← New</button>
+                </div>
+                <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:14,marginBottom:14}}>
+                  <div style={{fontSize:13,color:'var(--fg-text)',lineHeight:1.6,marginBottom:8}}>{result.overview}</div>
+                  <div style={{display:'flex',gap:12,fontSize:12,color:'var(--fg-text3)',flexWrap:'wrap'}}>
+                    <span>💰 {result.business_model}</span>
+                    <span>🎯 {result.target_market}</span>
+                    <span>💲 {result.pricing}</span>
+                  </div>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,marginBottom:12}}>
+                  {[{title:'✅ Strengths',items:result.strengths,color:'#22c55e'},{title:'⚠️ Weaknesses',items:result.weaknesses,color:'#f59e0b'},{title:'🏹 How to Beat Them',items:result.opportunities_against_them,color:'#60a5fa'}].map(s=>(
+                    <div key={s.title} style={{background:'var(--fg-bg2)',border:`1px solid ${s.color}33`,borderRadius:10,padding:12}}>
+                      <div style={{fontSize:11,fontWeight:700,color:s.color,marginBottom:8}}>{s.title}</div>
+                      {(s.items||[]).map((item:string,i:number)=><div key={i} style={{fontSize:12,color:'var(--fg-text)',marginBottom:4}}>• {item}</div>)}
+                    </div>
+                  ))}
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                  {result.products?.length>0 && <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'var(--fg-text3)',marginBottom:6}}>📦 Products</div>
+                    {result.products.map((p:string,i:number)=><div key={i} style={{fontSize:12,color:'var(--fg-text)',marginBottom:3}}>• {p}</div>)}
+                  </div>}
+                  {result.recent_moves?.length>0 && <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'var(--fg-text3)',marginBottom:6}}>📰 Recent Moves</div>
+                    {result.recent_moves.map((m:string,i:number)=><div key={i} style={{fontSize:12,color:'var(--fg-text)',marginBottom:3}}>• {m}</div>)}
+                  </div>}
+                </div>
+                {result.verdict && <div style={{marginTop:12,background:'linear-gradient(135deg,#7c3aed22,#ef444422)',border:'1px solid #7c3aed33',borderRadius:10,padding:14}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'#a78bfa',marginBottom:6}}>🏆 VERDICT</div>
+                  <div style={{fontSize:14,color:'var(--fg-text)',lineHeight:1.6}}>{result.verdict}</div>
+                </div>}
+              </div>}
+              {history.length>0 && !result && <div style={{marginTop:20}}>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text3)',marginBottom:8,textTransform:'uppercase',letterSpacing:'0.08em'}}>Recent Reports</div>
+                <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                  {history.map((h:any)=><button key={h.id} onClick={()=>setCompany(h.company)} style={{padding:'6px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:20,fontSize:12,color:'var(--fg-text2)',cursor:'pointer'}}>🕵️ {h.company}</button>)}
+                </div>
+              </div>}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── AI LAWYER (Wave 4) ───────────────────────────────── */}
+        {(mainTab as string) === 'ailawyer' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [doc, setDoc] = React.useState('');
+          const [docType, setDocType] = React.useState('contract');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [history, setHistory] = React.useState<any[]>([]);
+          React.useEffect(()=>{fetch(`${API}/api/legal/history`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});}, []);
+          const RISK_COLOR:Record<string,string>={low:'#22c55e',medium:'#f59e0b',high:'#ef4444'};
+          const DOC_TYPES=['contract','nda','lease','employment','terms-of-service','privacy-policy','partnership','loan','other'];
+          const VERDICT_STYLE:Record<string,any>={sign:{bg:'#22c55e22',border:'#22c55e44',color:'#4ade80'},negotiate:{bg:'#f59e0b22',border:'#f59e0b44',color:'#fbbf24'},'walk-away':{bg:'#ef444422',border:'#ef444444',color:'#f87171'}};
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:900,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>⚖️ AI Lawyer</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:4}}>Paste any legal document for plain-English analysis. Red flags, missing protections, verdict.</div>
+              <div style={{fontSize:11,color:'#f59e0b',marginBottom:20,padding:'6px 12px',background:'#f59e0b11',border:'1px solid #f59e0b33',borderRadius:8}}>⚠️ For informational purposes only — not legal advice. Consult a licensed attorney for binding decisions.</div>
+              {!result ? (<>
+                <div style={{display:'flex',gap:10,marginBottom:12,flexWrap:'wrap'}}>
+                  {DOC_TYPES.map(t=><button key={t} onClick={()=>setDocType(t)} style={{padding:'5px 12px',background:docType===t?'var(--fg-orange)':'var(--fg-bg2)',border:`1px solid ${docType===t?'var(--fg-orange)':'var(--fg-border)'}`,borderRadius:16,color:docType===t?'#fff':'var(--fg-text2)',fontSize:11,cursor:'pointer'}}>{t}</button>)}
+                </div>
+                <textarea value={doc} onChange={e=>setDoc(e.target.value)} placeholder="Paste your legal document here…" rows={12} style={{width:'100%',padding:'12px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,resize:'vertical',boxSizing:'border-box',marginBottom:12}} />
+                <button disabled={loading||!doc.trim()} onClick={async()=>{setLoading(true);try{const r=await fetch(`${API}/api/legal/review`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({document:doc,doc_type:docType})});const d=await r.json();setResult(d);}catch(e:any){alert(e.message);}setLoading(false);}} style={{width:'100%',padding:'12px',background:'#7c3aed',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!doc.trim()?0.5:1}}>{loading?'Analyzing…':'⚖️ Review Document'}</button>
+              </>) : (<div>
+                <div style={{display:'flex',gap:10,marginBottom:16,alignItems:'center',flexWrap:'wrap'}}>
+                  <span style={{padding:'6px 16px',background:RISK_COLOR[result.risk_level]+'22',border:`1px solid ${RISK_COLOR[result.risk_level]}44`,borderRadius:20,fontSize:13,fontWeight:700,color:RISK_COLOR[result.risk_level]}}>Risk: {result.risk_level?.toUpperCase()}</span>
+                  {result.verdict && <span style={{padding:'6px 16px',background:VERDICT_STYLE[result.verdict]?.bg,border:`1px solid ${VERDICT_STYLE[result.verdict]?.border}`,borderRadius:20,fontSize:13,fontWeight:700,color:VERDICT_STYLE[result.verdict]?.color}}>Verdict: {result.verdict?.toUpperCase()}</span>}
+                  <button onClick={()=>setResult(null)} style={{padding:'5px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:16,fontSize:12,color:'var(--fg-text2)',cursor:'pointer',marginLeft:'auto'}}>← New</button>
+                </div>
+                <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:14,marginBottom:14}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--fg-text3)',marginBottom:6,textTransform:'uppercase'}}>Summary</div>
+                  <div style={{fontSize:14,color:'var(--fg-text)',lineHeight:1.6}}>{result.summary}</div>
+                </div>
+                {result.red_flags?.length>0 && <div style={{marginBottom:14}}>
+                  <div style={{fontSize:12,fontWeight:700,color:'#f87171',marginBottom:8}}>🚨 Red Flags ({result.red_flags.length})</div>
+                  {result.red_flags.map((f:any,i:number)=><div key={i} style={{background:'#ef444411',border:'1px solid #ef444433',borderRadius:8,padding:12,marginBottom:6}}>
+                    <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:4}}>
+                      <span style={{fontSize:10,padding:'2px 8px',background:RISK_COLOR[f.severity]+'33',border:`1px solid ${RISK_COLOR[f.severity]}44`,borderRadius:10,color:RISK_COLOR[f.severity],fontWeight:700}}>{f.severity}</span>
+                      <span style={{fontSize:12,color:'var(--fg-text)',fontStyle:'italic'}}>"{f.clause?.slice(0,100)}"</span>
+                    </div>
+                    <div style={{fontSize:13,color:'#f87171',fontWeight:500}}>{f.issue}</div>
+                    <div style={{fontSize:12,color:'var(--fg-text3)',marginTop:2}}>{f.plain_english}</div>
+                  </div>)}
+                </div>}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
+                  {result.good_clauses?.length>0 && <div style={{background:'#22c55e11',border:'1px solid #22c55e33',borderRadius:10,padding:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#4ade80',marginBottom:6}}>✅ Protective Clauses</div>
+                    {result.good_clauses.map((c:string,i:number)=><div key={i} style={{fontSize:12,color:'var(--fg-text)',marginBottom:3}}>• {c}</div>)}
+                  </div>}
+                  {result.missing_protections?.length>0 && <div style={{background:'#f59e0b11',border:'1px solid #f59e0b33',borderRadius:10,padding:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#fbbf24',marginBottom:6}}>⚠️ Missing Protections</div>
+                    {result.missing_protections.map((m:string,i:number)=><div key={i} style={{fontSize:12,color:'var(--fg-text)',marginBottom:3}}>• {m}</div>)}
+                  </div>}
+                </div>
+                {result.questions_to_ask?.length>0 && <div style={{background:'var(--fg-bg2)',border:'1px solid #60a5fa44',borderRadius:10,padding:12}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'#60a5fa',marginBottom:6}}>❓ Questions to Ask</div>
+                  {result.questions_to_ask.map((q:string,i:number)=><div key={i} style={{fontSize:12,color:'var(--fg-text)',marginBottom:4}}>• {q}</div>)}
+                </div>}
+              </div>)}
+              {history.length>0 && !result && <div style={{marginTop:20}}>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text3)',marginBottom:8,textTransform:'uppercase',letterSpacing:'0.08em'}}>Past Reviews</div>
+                {history.map((h:any)=><div key={h.id} style={{display:'flex',gap:10,padding:'8px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,marginBottom:4,fontSize:12,color:'var(--fg-text2)'}}>
+                  <span style={{color:RISK_COLOR[h.risk_level]||'var(--fg-text3)',fontWeight:700}}>{h.risk_level}</span>
+                  <span>{h.doc_type}</span>
+                  <span style={{marginLeft:'auto',color:'var(--fg-text3)'}}>{h.created_at?.slice(0,10)}</span>
+                </div>)}
+              </div>}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── FINANCE ADVISOR (Wave 4) ──────────────────────────── */}
+        {(mainTab as string) === 'financeadvisor' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [situation, setSituation] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [history, setHistory] = React.useState<any[]>([]);
+          const EXAMPLES = ['I make $80k/year, have $12k in credit card debt at 22%, and $0 saved. What do I do?','I have $50k to invest and I\'m 30 years old. Where should I put it?','Should I pay off my student loans or invest in my 401k?','I want to buy a house in 2 years. How do I save for a down payment?'];
+          React.useEffect(()=>{fetch(`${API}/api/finance/history`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});}, []);
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:800,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>💰 Finance Advisor</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:4}}>Describe your financial situation. Get a personalized action plan.</div>
+              <div style={{fontSize:11,color:'#60a5fa',marginBottom:20,padding:'6px 12px',background:'#60a5fa11',border:'1px solid #60a5fa33',borderRadius:8}}>ℹ️ Educational only — not professional financial advice. Consult a licensed advisor for major decisions.</div>
+              {!result ? (<>
+                <div style={{display:'flex',gap:6,marginBottom:12,flexWrap:'wrap'}}>
+                  {EXAMPLES.map((e,i)=><button key={i} onClick={()=>setSituation(e)} style={{padding:'5px 10px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,color:'var(--fg-text3)',fontSize:11,cursor:'pointer',textAlign:'left'}}>{e.slice(0,40)}…</button>)}
+                </div>
+                <textarea value={situation} onChange={e=>setSituation(e.target.value)} placeholder="Describe your financial situation in detail — income, debts, savings, goals…" rows={6} style={{width:'100%',padding:'12px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,resize:'vertical',boxSizing:'border-box',marginBottom:12}} />
+                <button disabled={loading||!situation.trim()} onClick={async()=>{setLoading(true);try{const r=await fetch(`${API}/api/finance/advise`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({situation})});const d=await r.json();setResult(d);}catch(e:any){alert(e.message);}setLoading(false);}} style={{width:'100%',padding:'12px',background:'#22c55e',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!situation.trim()?0.5:1}}>{loading?'Analyzing…':'💰 Get Advice'}</button>
+              </>) : (<div>
+                <div style={{display:'flex',gap:8,marginBottom:16}}>
+                  <button onClick={()=>setResult(null)} style={{padding:'5px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:16,fontSize:12,color:'var(--fg-text2)',cursor:'pointer'}}>← New</button>
+                </div>
+                <div style={{background:'var(--fg-bg2)',border:'1px solid #22c55e44',borderRadius:10,padding:14,marginBottom:14}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'#4ade80',marginBottom:6,textTransform:'uppercase'}}>Assessment</div>
+                  <div style={{fontSize:14,color:'var(--fg-text)',lineHeight:1.6}}>{result.assessment}</div>
+                </div>
+                <div style={{display:'flex',gap:12,marginBottom:14,flexWrap:'wrap'}}>
+                  {[{label:'Savings Rate',val:result.savings_rate_recommendation},{label:'Emergency Fund',val:result.emergency_fund_target}].map(m=><div key={m.label} style={{padding:'10px 16px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,textAlign:'center'}}>
+                    <div style={{fontSize:11,color:'var(--fg-text3)',marginBottom:3}}>{m.label}</div>
+                    <div style={{fontSize:16,fontWeight:700,color:'#22c55e'}}>{m.val}</div>
+                  </div>)}
+                </div>
+                <div style={{marginBottom:14}}>
+                  <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text2)',marginBottom:10}}>📋 Action Plan (Priority Order)</div>
+                  {(result.action_plan||[]).map((a:any,i:number)=><div key={i} style={{display:'flex',gap:12,padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,marginBottom:6}}>
+                    <span style={{fontSize:18,fontWeight:900,color:'#22c55e',minWidth:24}}>{a.priority}</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:600,color:'var(--fg-text)'}}>{a.action}</div>
+                      <div style={{fontSize:12,color:'var(--fg-text3)',marginTop:2}}>{a.why}</div>
+                    </div>
+                    <div style={{textAlign:'right',minWidth:80}}>
+                      <div style={{fontSize:11,color:'#60a5fa'}}>{a.timeline}</div>
+                      <div style={{fontSize:11,color:'#22c55e'}}>{a.estimated_impact}</div>
+                    </div>
+                  </div>)}
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                  {result.quick_wins?.length>0 && <div style={{background:'var(--fg-bg2)',border:'1px solid #22c55e33',borderRadius:10,padding:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#4ade80',marginBottom:6}}>⚡ Quick Wins This Week</div>
+                    {result.quick_wins.map((w:string,i:number)=><div key={i} style={{fontSize:12,color:'var(--fg-text)',marginBottom:3}}>• {w}</div>)}
+                  </div>}
+                  {result.mistakes_to_avoid?.length>0 && <div style={{background:'var(--fg-bg2)',border:'1px solid #ef444433',borderRadius:10,padding:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#f87171',marginBottom:6}}>🚫 Mistakes to Avoid</div>
+                    {result.mistakes_to_avoid.map((m:string,i:number)=><div key={i} style={{fontSize:12,color:'var(--fg-text)',marginBottom:3}}>• {m}</div>)}
+                  </div>}
+                </div>
+              </div>)}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── LANGUAGE TUTOR (Wave 4) ───────────────────────────── */}
+        {(mainTab as string) === 'languagetutor' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [language, setLanguage] = React.useState('Spanish');
+          const [level, setLevel] = React.useState('beginner');
+          const [topic, setTopic] = React.useState('');
+          const [lesson, setLesson] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [history, setHistory] = React.useState<any[]>([]);
+          const [translateText, setTranslateText] = React.useState('');
+          const [translateTo, setTranslateTo] = React.useState('');
+          const [translation, setTranslation] = React.useState<any>(null);
+          const [tab, setTab] = React.useState<'lesson'|'translate'>('lesson');
+          const [flipped, setFlipped] = React.useState<Record<number,boolean>>({});
+          React.useEffect(()=>{fetch(`${API}/api/language/history`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});}, []);
+          const LANGS=['Spanish','French','Japanese','Mandarin','German','Portuguese','Italian','Korean','Arabic','Russian','Hindi','Dutch'];
+          const LEVELS=['beginner','elementary','intermediate','upper-intermediate','advanced'];
+          const TOPICS=['greetings','numbers','food & dining','travel','business','family','weather','shopping','health','directions','hobbies','emotions'];
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:800,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>🌍 Language Tutor</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:20}}>Learn any language with AI-powered lessons, vocabulary, and instant translation.</div>
+              <div style={{display:'flex',gap:4,marginBottom:20,background:'var(--fg-bg2)',borderRadius:10,padding:4}}>
+                {(['lesson','translate'] as const).map(t=><button key={t} onClick={()=>setTab(t)} style={{flex:1,padding:'8px',background:tab===t?'var(--fg-orange)':'transparent',border:'none',borderRadius:8,color:tab===t?'#fff':'var(--fg-text2)',fontSize:13,fontWeight:600,cursor:'pointer'}}>{t==='lesson'?'📚 Lesson':'🔄 Translate'}</button>)}
+              </div>
+              {tab==='lesson' && (<>
+                <div style={{display:'flex',gap:8,marginBottom:10,flexWrap:'wrap'}}>
+                  {LANGS.map(l=><button key={l} onClick={()=>setLanguage(l)} style={{padding:'4px 12px',background:language===l?'#3b82f6':'var(--fg-bg2)',border:`1px solid ${language===l?'#3b82f6':'var(--fg-border)'}`,borderRadius:16,color:language===l?'#fff':'var(--fg-text2)',fontSize:11,cursor:'pointer'}}>{l}</button>)}
+                </div>
+                <div style={{display:'flex',gap:8,marginBottom:10,flexWrap:'wrap'}}>
+                  {LEVELS.map(l=><button key={l} onClick={()=>setLevel(l)} style={{padding:'4px 12px',background:level===l?'#7c3aed':'var(--fg-bg2)',border:`1px solid ${level===l?'#7c3aed':'var(--fg-border)'}`,borderRadius:16,color:level===l?'#fff':'var(--fg-text2)',fontSize:11,cursor:'pointer'}}>{l}</button>)}
+                </div>
+                <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
+                  {TOPICS.map(t=><button key={t} onClick={()=>setTopic(t)} style={{padding:'4px 10px',background:topic===t?'var(--fg-orange)':'var(--fg-bg2)',border:`1px solid ${topic===t?'var(--fg-orange)':'var(--fg-border)'}`,borderRadius:12,color:topic===t?'#fff':'var(--fg-text2)',fontSize:11,cursor:'pointer'}}>{t}</button>)}
+                </div>
+                <div style={{display:'flex',gap:8,marginBottom:16}}>
+                  <input value={topic} onChange={e=>setTopic(e.target.value)} placeholder="Or enter custom topic…" style={{flex:1,padding:'8px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,color:'var(--fg-text)',fontSize:13}} />
+                  <button disabled={loading||!topic.trim()} onClick={async()=>{setLoading(true);setLesson(null);setFlipped({});try{const r=await fetch(`${API}/api/language/lesson`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({language,level,topic})});const d=await r.json();setLesson(d);}catch(e:any){alert(e.message);}setLoading(false);}} style={{padding:'8px 20px',background:'#3b82f6',border:'none',borderRadius:8,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',opacity:loading||!topic.trim()?0.5:1}}>{loading?'Loading…':'📚 Start Lesson'}</button>
+                </div>
+                {lesson && <div>
+                  <div style={{background:'var(--fg-bg2)',border:'1px solid #3b82f644',borderRadius:10,padding:14,marginBottom:14}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#60a5fa',marginBottom:6}}>{lesson.language} · {lesson.level} · {lesson.topic}</div>
+                    <div style={{fontSize:14,color:'var(--fg-text)',lineHeight:1.6}}>{lesson.intro}</div>
+                  </div>
+                  <div style={{marginBottom:14}}>
+                    <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text2)',marginBottom:10}}>📖 Vocabulary</div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:8}}>
+                      {(lesson.vocabulary||[]).map((v:any,i:number)=><div key={i} onClick={()=>setFlipped(f=>({...f,[i]:!f[i]}))} style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:12,cursor:'pointer',minHeight:80,display:'flex',flexDirection:'column',justifyContent:'center'}}>
+                        {!flipped[i] ? (<>
+                          <div style={{fontSize:16,fontWeight:700,color:'var(--fg-text)'}}>{v.word}</div>
+                          <div style={{fontSize:11,color:'#60a5fa'}}>{v.pronunciation}</div>
+                        </>) : (<>
+                          <div style={{fontSize:13,color:'#22c55e',fontWeight:600}}>{v.meaning}</div>
+                          <div style={{fontSize:11,color:'var(--fg-text3)',marginTop:4,fontStyle:'italic'}}>{v.example}</div>
+                        </>)}
+                      </div>)}
+                    </div>
+                    <div style={{fontSize:11,color:'var(--fg-text3)',marginTop:6}}>Click cards to flip</div>
+                  </div>
+                  {lesson.grammar_point && <div style={{background:'var(--fg-bg2)',border:'1px solid #7c3aed44',borderRadius:10,padding:12,marginBottom:14}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#a78bfa',marginBottom:6}}>📐 Grammar: {lesson.grammar_point.rule}</div>
+                    <div style={{fontSize:13,color:'var(--fg-text)',marginBottom:8}}>{lesson.grammar_point.explanation}</div>
+                    {(lesson.grammar_point.examples||[]).map((ex:string,i:number)=><div key={i} style={{fontSize:13,color:'var(--fg-text2)',marginBottom:2,paddingLeft:8,borderLeft:'2px solid #7c3aed44'}}>• {ex}</div>)}
+                  </div>}
+                  {lesson.cultural_note && <div style={{background:'#f59e0b11',border:'1px solid #f59e0b33',borderRadius:10,padding:12,marginBottom:14}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#fbbf24',marginBottom:4}}>🌏 Cultural Note</div>
+                    <div style={{fontSize:13,color:'var(--fg-text)'}}>{lesson.cultural_note}</div>
+                  </div>}
+                  {lesson.homework && <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'var(--fg-text3)',marginBottom:4}}>📝 Homework</div>
+                    <div style={{fontSize:13,color:'var(--fg-text)'}}>{lesson.homework}</div>
+                    {lesson.next_lesson && <button onClick={()=>setTopic(lesson.next_lesson)} style={{marginTop:8,padding:'5px 12px',background:'var(--fg-orange)',border:'none',borderRadius:8,color:'#fff',fontSize:11,cursor:'pointer'}}>Next: {lesson.next_lesson} →</button>}
+                  </div>}
+                </div>}
+              </>)}
+              {tab==='translate' && (<>
+                <div style={{display:'flex',gap:8,marginBottom:12}}>
+                  <input value={translateText} onChange={e=>setTranslateText(e.target.value)} placeholder="Text to translate…" style={{flex:1,padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,color:'var(--fg-text)',fontSize:13}} />
+                  <input value={translateTo} onChange={e=>setTranslateTo(e.target.value)} placeholder="To language…" style={{width:140,padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,color:'var(--fg-text)',fontSize:13}} />
+                  <button disabled={!translateText.trim()||!translateTo.trim()} onClick={async()=>{const r=await fetch(`${API}/api/language/translate`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({text:translateText,to:translateTo})});setTranslation(await r.json());}} style={{padding:'10px 16px',background:'#3b82f6',border:'none',borderRadius:8,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>Translate</button>
+                </div>
+                {translation && <div style={{background:'var(--fg-bg2)',border:'1px solid #3b82f644',borderRadius:10,padding:16}}>
+                  <div style={{fontSize:20,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>{translation.translation}</div>
+                  {translation.pronunciation && <div style={{fontSize:13,color:'#60a5fa',marginBottom:8}}>/{translation.pronunciation}/</div>}
+                  <div style={{fontSize:12,color:'var(--fg-text3)',marginBottom:6}}>Formality: {translation.formality}</div>
+                  {translation.alternatives?.length>0 && <div style={{fontSize:12,color:'var(--fg-text2)'}}><span style={{color:'var(--fg-text3)'}}>Alternatives: </span>{translation.alternatives.join(' · ')}</div>}
+                  {translation.notes && <div style={{fontSize:12,color:'var(--fg-text3)',marginTop:6,fontStyle:'italic'}}>{translation.notes}</div>}
+                </div>}
+              </>)}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── FLASHCARD GENERATOR (Wave 4) ─────────────────────── */}
+        {(mainTab as string) === 'flashcardgen' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [topic, setTopic] = React.useState('');
+          const [count, setCount] = React.useState(10);
+          const [difficulty, setDifficulty] = React.useState('medium');
+          const [cards, setCards] = React.useState<any[]>([]);
+          const [studyMode, setStudyMode] = React.useState(false);
+          const [idx, setIdx] = React.useState(0);
+          const [flipped, setFlipped] = React.useState(false);
+          const [known, setKnown] = React.useState<Set<number>>(new Set());
+          const [loading, setLoading] = React.useState(false);
+          const [sets, setSets] = React.useState<any[]>([]);
+          const [setTopic2, setSetTopic] = React.useState('');
+          React.useEffect(()=>{fetch(`${API}/api/flashcards/sets`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setSets(d.sets||[])).catch(()=>{});}, []);
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:700,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>🃏 Flashcard Generator</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:20}}>Generate study flashcards on any topic. Flip to reveal, track what you know.</div>
+              {!studyMode ? (<>
+                <div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap'}}>
+                  <input value={topic} onChange={e=>setTopic(e.target.value)} placeholder="Topic (e.g. 'React hooks', 'WW2 dates', 'Spanish verbs')" style={{flex:1,padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13}} />
+                  <select value={count} onChange={e=>setCount(Number(e.target.value))} style={{padding:'8px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,color:'var(--fg-text)',fontSize:12}}>
+                    {[5,10,15,20,25].map(n=><option key={n} value={n}>{n} cards</option>)}
+                  </select>
+                  {(['easy','medium','hard'] as const).map(d=><button key={d} onClick={()=>setDifficulty(d)} style={{padding:'8px 14px',background:difficulty===d?'var(--fg-orange)':'var(--fg-bg2)',border:`1px solid ${difficulty===d?'var(--fg-orange)':'var(--fg-border)'}`,borderRadius:8,color:difficulty===d?'#fff':'var(--fg-text2)',fontSize:12,cursor:'pointer'}}>{d}</button>)}
+                </div>
+                <button disabled={loading||!topic.trim()} onClick={async()=>{setLoading(true);try{const r=await fetch(`${API}/api/flashcards/generate`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({topic,count,difficulty})});const d=await r.json();setCards(d.cards||[]);setSetTopic(d.topic);setSets(s=>[{id:d.id,topic:d.topic,created_at:new Date().toISOString()},...s.slice(0,19)]);}catch(e:any){alert(e.message);}setLoading(false);}} style={{width:'100%',padding:'12px',background:'var(--fg-orange)',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!topic.trim()?0.5:1,marginBottom:16}}>{loading?'Generating…':'🃏 Generate Cards'}</button>
+                {cards.length>0 && <div>
+                  <div style={{display:'flex',gap:10,marginBottom:16,alignItems:'center'}}>
+                    <div style={{fontSize:13,color:'var(--fg-text2)'}}>{cards.length} cards on <strong>{setTopic2}</strong></div>
+                    <button onClick={()=>{setStudyMode(true);setIdx(0);setFlipped(false);setKnown(new Set());}} style={{marginLeft:'auto',padding:'8px 18px',background:'#3b82f6',border:'none',borderRadius:8,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>▶ Study Mode</button>
+                  </div>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:8}}>
+                    {cards.map((c:any,i:number)=><div key={i} style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,padding:10}}>
+                      <div style={{fontSize:12,fontWeight:600,color:'var(--fg-text)',marginBottom:4}}>{c.front}</div>
+                      <div style={{fontSize:11,color:'var(--fg-text3)'}}>{c.back?.slice(0,60)}</div>
+                    </div>)}
+                  </div>
+                </div>}
+                {sets.length>0 && <div style={{marginTop:20}}>
+                  <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text3)',marginBottom:8,textTransform:'uppercase',letterSpacing:'0.08em'}}>Saved Sets</div>
+                  {sets.map((s:any)=><div key={s.id} onClick={async()=>{const r=await fetch(`${API}/api/flashcards/${s.id}`,{headers:{Authorization:`Bearer ${tok}`}});const d=await r.json();setCards(d.cards||[]);setSetTopic(d.topic);}} style={{padding:'8px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,marginBottom:4,fontSize:13,color:'var(--fg-text2)',cursor:'pointer'}}>🃏 {s.topic} <span style={{color:'var(--fg-text3)',fontSize:11}}>{s.created_at?.slice(0,10)}</span></div>)}
+                </div>}
+              </>) : (<div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+                  <div style={{fontSize:13,color:'var(--fg-text3)'}}>{idx+1} / {cards.length} · ✅ {known.size} known</div>
+                  <button onClick={()=>setStudyMode(false)} style={{padding:'5px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,color:'var(--fg-text2)',fontSize:12,cursor:'pointer'}}>← Exit</button>
+                </div>
+                <div onClick={()=>setFlipped(f=>!f)} style={{background:'var(--fg-bg2)',border:'2px solid var(--fg-border)',borderRadius:16,padding:40,minHeight:200,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',cursor:'pointer',marginBottom:20,textAlign:'center',transition:'all 0.2s'}}>
+                  {!flipped ? (<>
+                    <div style={{fontSize:11,color:'var(--fg-text3)',marginBottom:12,textTransform:'uppercase',letterSpacing:'0.1em'}}>Question</div>
+                    <div style={{fontSize:20,fontWeight:700,color:'var(--fg-text)'}}>{cards[idx]?.front}</div>
+                    {cards[idx]?.hint && <div style={{fontSize:12,color:'#f59e0b',marginTop:12}}>💡 {cards[idx].hint}</div>}
+                    <div style={{fontSize:11,color:'var(--fg-text3)',marginTop:16}}>Click to reveal</div>
+                  </>) : (<>
+                    <div style={{fontSize:11,color:'#22c55e',marginBottom:12,textTransform:'uppercase',letterSpacing:'0.1em'}}>Answer</div>
+                    <div style={{fontSize:18,fontWeight:600,color:'var(--fg-text)'}}>{cards[idx]?.back}</div>
+                  </>)}
+                </div>
+                <div style={{display:'flex',gap:10,justifyContent:'center'}}>
+                  <button onClick={()=>{setKnown(k=>{const n=new Set(k);n.delete(idx);return n;});setFlipped(false);setIdx(i=>(i+1)%cards.length);}} style={{flex:1,padding:'12px',background:'#ef444422',border:'1px solid #ef444444',borderRadius:10,color:'#f87171',fontSize:13,fontWeight:600,cursor:'pointer'}}>❌ Still Learning</button>
+                  <button onClick={()=>{setKnown(k=>new Set([...k,idx]));setFlipped(false);setIdx(i=>(i+1)%cards.length);}} style={{flex:1,padding:'12px',background:'#22c55e22',border:'1px solid #22c55e44',borderRadius:10,color:'#4ade80',fontSize:13,fontWeight:600,cursor:'pointer'}}>✅ Got It</button>
+                </div>
+                {known.size===cards.length && <div style={{marginTop:16,textAlign:'center',padding:20,background:'linear-gradient(135deg,#22c55e22,#3b82f622)',borderRadius:12,border:'1px solid #22c55e44'}}>
+                  <div style={{fontSize:24,marginBottom:8}}>🏆 Set Complete!</div>
+                  <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:12}}>You know all {cards.length} cards!</div>
+                  <button onClick={()=>{setKnown(new Set());setIdx(0);setFlipped(false);}} style={{padding:'8px 16px',background:'var(--fg-orange)',border:'none',borderRadius:8,color:'#fff',fontSize:13,cursor:'pointer'}}>🔄 Study Again</button>
+                </div>}
+              </div>)}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── LINKEDIN POST OPTIMIZER (Wave 4) ─────────────────── */}
+        {(mainTab as string) === 'linkedinopt' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [topic, setTopic] = React.useState('');
+          const [angle, setAngle] = React.useState('thought-leadership');
+          const [about, setAbout] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [history, setHistory] = React.useState<any[]>([]);
+          const [copied, setCopied] = React.useState(false);
+          React.useEffect(()=>{fetch(`${API}/api/linkedin/history`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});}, []);
+          const ANGLES = [{id:'thought-leadership',emoji:'🧠',label:'Thought Leadership'},{id:'personal-story',emoji:'❤️',label:'Personal Story'},{id:'contrarian',emoji:'🔥',label:'Contrarian'},{id:'how-to',emoji:'📚',label:'How-To'},{id:'list',emoji:'📋',label:'List Post'},{id:'humble-brag',emoji:'🎉',label:'Humble Brag'},{id:'question',emoji:'❓',label:'Question/Poll'},{id:'hot-take',emoji:'⚡',label:'Hot Take'}];
+          const ENG_COLOR:Record<string,string>={low:'#94a3b8',medium:'#60a5fa',high:'#22c55e',viral:'#f59e0b'};
+          return (<div style={{flex:1,overflowY:'auto',padding:24}}>
+            <div style={{maxWidth:700,margin:'0 auto'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'var(--fg-text)',marginBottom:4}}>💼 LinkedIn Post Optimizer</div>
+              <div style={{fontSize:13,color:'var(--fg-text3)',marginBottom:20}}>Generate viral LinkedIn posts with hooks, hashtags, and engagement predictions.</div>
+              {!result ? (<>
+                <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
+                  {ANGLES.map(a=><button key={a.id} onClick={()=>setAngle(a.id)} style={{padding:'6px 12px',background:angle===a.id?'#0077b5':'var(--fg-bg2)',border:`1px solid ${angle===a.id?'#0077b5':'var(--fg-border)'}`,borderRadius:20,color:angle===a.id?'#fff':'var(--fg-text2)',fontSize:11,cursor:'pointer'}}>{a.emoji} {a.label}</button>)}
+                </div>
+                <textarea value={topic} onChange={e=>setTopic(e.target.value)} placeholder="What's the post about? (e.g. 'lessons from my startup failure', 'why remote work is the future')" rows={3} style={{width:'100%',padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,resize:'none',boxSizing:'border-box',marginBottom:10}} />
+                <input value={about} onChange={e=>setAbout(e.target.value)} placeholder="About you (optional — e.g. 'founder of a SaaS startup, 10 years in tech')" style={{width:'100%',padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,boxSizing:'border-box',marginBottom:14}} />
+                <button disabled={loading||!topic.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(`${API}/api/linkedin/generate`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({topic,angle,about})});const d=await r.json();setResult(d);}catch(e:any){alert(e.message);}setLoading(false);}} style={{width:'100%',padding:'12px',background:'#0077b5',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!topic.trim()?0.5:1}}>{loading?'Writing…':'💼 Generate Post'}</button>
+              </>) : (<div>
+                <div style={{display:'flex',gap:10,marginBottom:16,alignItems:'center',flexWrap:'wrap'}}>
+                  <span style={{padding:'4px 12px',background:ENG_COLOR[result.predicted_engagement]+'22',border:`1px solid ${ENG_COLOR[result.predicted_engagement]}44`,borderRadius:16,fontSize:12,color:ENG_COLOR[result.predicted_engagement]}}>Engagement: {result.predicted_engagement}</span>
+                  <span style={{padding:'4px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:16,fontSize:12,color:'var(--fg-text3)'}}>{result.character_count} chars</span>
+                  <span style={{padding:'4px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:16,fontSize:12,color:'var(--fg-text3)'}}>📅 {result.best_time_to_post}</span>
+                  <button onClick={()=>setResult(null)} style={{padding:'4px 12px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:16,fontSize:12,color:'var(--fg-text2)',cursor:'pointer',marginLeft:'auto'}}>← New</button>
+                </div>
+                <div style={{background:'var(--fg-bg2)',border:'1px solid #0077b544',borderRadius:12,padding:20,marginBottom:14,position:'relative'}}>
+                  <div style={{fontSize:14,color:'var(--fg-text)',lineHeight:1.8,whiteSpace:'pre-wrap'}}>{result.post}</div>
+                  <button onClick={()=>{navigator.clipboard.writeText(result.post+'\n\n'+result.hashtags?.join(' '));setCopied(true);setTimeout(()=>setCopied(false),2000);}} style={{position:'absolute',top:12,right:12,padding:'5px 12px',background:copied?'#22c55e':'var(--fg-bg3)',border:'1px solid var(--fg-border)',borderRadius:8,color:copied?'#fff':'var(--fg-text3)',fontSize:11,cursor:'pointer'}}>{copied?'✓ Copied':'📋 Copy'}</button>
+                </div>
+                {result.hashtags?.length>0 && <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:14}}>
+                  {result.hashtags.map((h:string)=><span key={h} style={{padding:'3px 10px',background:'#0077b511',border:'1px solid #0077b533',borderRadius:16,fontSize:12,color:'#60a5fa'}}>{h}</span>)}
+                </div>}
+                {result.hooks?.length>0 && <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:14,marginBottom:14}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--fg-text3)',marginBottom:8,textTransform:'uppercase'}}>🎣 Alternative Hooks to A/B Test</div>
+                  {result.hooks.map((h:string,i:number)=><div key={i} style={{padding:'8px 12px',background:'var(--fg-bg3)',borderRadius:6,marginBottom:6,fontSize:13,color:'var(--fg-text)',cursor:'pointer'}} onClick={()=>navigator.clipboard.writeText(h)}>"{h}"</div>)}
+                </div>}
+                <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:12}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--fg-text3)',marginBottom:4,textTransform:'uppercase'}}>Why It Works</div>
+                  <div style={{fontSize:13,color:'var(--fg-text)',lineHeight:1.6}}>{result.why_it_works}</div>
+                </div>
+              </div>)}
+              {history.length>0 && !result && <div style={{marginTop:20}}>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--fg-text3)',marginBottom:8,textTransform:'uppercase',letterSpacing:'0.08em'}}>Past Posts</div>
+                {history.map((h:any)=><div key={h.id} style={{padding:'8px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:8,marginBottom:4,fontSize:13,color:'var(--fg-text2)',cursor:'pointer'}} onClick={()=>setTopic(h.topic)}>{h.topic?.slice(0,70)} <span style={{fontSize:11,color:'var(--fg-text3)'}}>· {h.angle} · {h.created_at?.slice(0,10)}</span></div>)}
+              </div>}
+            </div>
+          </div>);
+        })()}
+
+        {/* ── WAVE 5 ─────────────────────────────────────── */}
+        {(mainTab as string) === 'speechwriter' && (() => {
+          const [occasion, setOccasion] = React.useState('');
+          const [tone, setTone] = React.useState('heartfelt');
+          const [mins, setMins] = React.useState(5);
+          const [about, setAbout] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!occasion || !about) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API}/api/speech/write`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({occasion,tone,duration_mins:mins,about}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🎤 Speech Writer</h2>
+              <p className="text-sm text-gray-500 mb-6">AI-written speeches for any occasion</p>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Occasion</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="e.g. Best man speech, graduation" value={occasion} onChange={e=>setOccasion(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Tone</label><select className="w-full border rounded px-3 py-2 text-sm" value={tone} onChange={e=>setTone(e.target.value)}><option value="heartfelt">Heartfelt</option><option value="funny">Funny</option><option value="professional">Professional</option><option value="inspirational">Inspirational</option><option value="roast">Roast</option></select></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Length: {mins} min (~{mins*130} words)</label><input type="range" min={1} max={20} value={mins} onChange={e=>setMins(+e.target.value)} className="w-full" /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">About / Context</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={4} placeholder="Tell me about the person, relationship, key memories, inside jokes..." value={about} onChange={e=>setAbout(e.target.value)} /></div>
+              <button onClick={generate} disabled={loading||!occasion||!about} className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50">{loading ? 'Writing...' : 'Write Speech'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  <div className="bg-gray-50 rounded-xl p-5 border"><p className="text-xs text-gray-500 mb-2 font-semibold">📝 YOUR SPEECH ({result.word_count} words)</p><pre className="whitespace-pre-wrap text-sm leading-relaxed">{result.speech}</pre></div>
+                  {result.opening_hook && <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4"><p className="font-semibold text-sm mb-1">✨ Opening Hook</p><p className="text-sm italic">"{result.opening_hook}"</p></div>}
+                  {result.tips?.length > 0 && <div className="bg-blue-50 rounded-lg p-4"><p className="font-semibold text-sm mb-2">🎯 Delivery Tips</p><ul className="text-sm space-y-1">{result.tips.map((t:string,i:number)=><li key={i} className="flex gap-2"><span>•</span><span>{t}</span></li>)}</ul></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'pricenegotiator' && (() => {
+          const [item, setItem] = React.useState('');
+          const [currentPrice, setCurrentPrice] = React.useState('');
+          const [targetPrice, setTargetPrice] = React.useState('');
+          const [context, setContext] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [tab, setTab] = React.useState<'script'|'tactics'>('script');
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const negotiate = async () => {
+            if (!item || !currentPrice) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API}/api/negotiate/price`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({item,current_price:currentPrice,target_price:targetPrice,context}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">💬 Price Negotiator</h2>
+              <p className="text-sm text-gray-500 mb-6">Get a word-for-word negotiation script + tactics</p>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Item / Service</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Used car, rent, salary..." value={item} onChange={e=>setItem(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Current Price</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="$45,000" value={currentPrice} onChange={e=>setCurrentPrice(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Target Price</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="$39,000" value={targetPrice} onChange={e=>setTargetPrice(e.target.value)} /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Context (optional)</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="e.g. dealership, been on market 60 days, has minor dent" value={context} onChange={e=>setContext(e.target.value)} /></div>
+              <button onClick={negotiate} disabled={loading||!item||!currentPrice} className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Building script...' : 'Get Negotiation Script'}</button>
+              {result && !result.error && (
+                <div className="mt-6">
+                  <div className="flex gap-4 mb-4 border-b">
+                    {(['script','tactics'] as const).map(t=><button key={t} onClick={()=>setTab(t)} className={`pb-2 px-1 text-sm font-medium border-b-2 capitalize ${tab===t?'border-green-600 text-green-600':'border-transparent text-gray-500'}`}>{t}</button>)}
+                  </div>
+                  {tab==='script' && (
+                    <div className="space-y-3">
+                      {result.opening_line && <div className="bg-green-50 border border-green-200 rounded-lg p-4"><p className="font-semibold text-sm mb-1">👋 Opening Line</p><p className="text-sm italic">"{result.opening_line}"</p></div>}
+                      <div className="bg-gray-50 rounded-xl p-5 border"><p className="text-xs text-gray-500 mb-2 font-semibold">📜 FULL SCRIPT</p><pre className="whitespace-pre-wrap text-sm">{result.script}</pre></div>
+                      {result.expected_savings && <div className="flex gap-4"><div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex-1 text-center"><p className="text-xs text-gray-500">Expected Savings</p><p className="font-bold">{result.expected_savings}</p></div><div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex-1 text-center"><p className="text-xs text-gray-500">Success Probability</p><p className="font-bold capitalize">{result.success_probability}</p></div></div>}
+                    </div>
+                  )}
+                  {tab==='tactics' && (
+                    <div className="space-y-4">
+                      {result.tactics?.length>0 && <div><p className="font-semibold mb-2 text-sm">🎯 Tactics</p><ul className="space-y-1">{result.tactics.map((t:string,i:number)=><li key={i} className="text-sm flex gap-2"><span className="text-green-600 font-bold">{i+1}.</span>{t}</li>)}</ul></div>}
+                      {result.leverage_points?.length>0 && <div><p className="font-semibold mb-2 text-sm">💪 Leverage Points</p><ul className="space-y-1">{result.leverage_points.map((t:string,i:number)=><li key={i} className="text-sm flex gap-2"><span>•</span>{t}</li>)}</ul></div>}
+                      {result.fallbacks?.length>0 && <div><p className="font-semibold mb-2 text-sm">🔄 Fallbacks (if they say no)</p><ul className="space-y-1">{result.fallbacks.map((t:string,i:number)=><li key={i} className="text-sm flex gap-2 text-orange-700"><span>→</span>{t}</li>)}</ul></div>}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'emailroastv2' && (() => {
+          const [emailText, setEmailText] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [view, setView] = React.useState<'roast'|'rewrite'>('roast');
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const roast = async () => {
+            if (!emailText.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API}/api/email/roast`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({email:emailText}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const gradeColor = (g:string) => ({'A':'text-green-600','B':'text-blue-600','C':'text-yellow-600','D':'text-orange-600','F':'text-red-600'})[g]||'text-gray-600';
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🔥 Email Roast</h2>
+              <p className="text-sm text-gray-500 mb-6">Brutal critique + perfect rewrite of your email</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Paste your email</label><textarea className="w-full border rounded px-3 py-2 text-sm font-mono" rows={8} placeholder="Paste the email you want to improve..." value={emailText} onChange={e=>setEmailText(e.target.value)} /></div>
+              <button onClick={roast} disabled={loading||!emailText.trim()} className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 disabled:opacity-50">{loading ? 'Roasting...' : '🔥 Roast This Email'}</button>
+              {result && !result.error && (
+                <div className="mt-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="bg-gray-100 rounded-xl p-4 text-center"><p className="text-xs text-gray-500">Grade</p><p className={`text-3xl font-black ${gradeColor(result.grade)}`}>{result.grade}</p><p className="text-xs text-gray-500">{result.score}/100</p></div>
+                    <div className="flex gap-2"><button onClick={()=>setView('roast')} className={`px-4 py-2 rounded-lg text-sm font-medium ${view==='roast'?'bg-red-500 text-white':'bg-gray-100'}`}>🔥 Roast</button><button onClick={()=>setView('rewrite')} className={`px-4 py-2 rounded-lg text-sm font-medium ${view==='rewrite'?'bg-green-500 text-white':'bg-gray-100'}`}>✨ Rewrite</button></div>
+                  </div>
+                  {view==='roast' && (
+                    <div className="space-y-4">
+                      <div className="bg-red-50 border border-red-200 rounded-xl p-4"><p className="font-semibold text-sm mb-2">🔥 The Roast</p><p className="text-sm italic">{result.roast}</p></div>
+                      {result.issues?.length>0 && <div className="bg-orange-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">❌ Problems Found</p><ul className="space-y-1">{result.issues.map((i:string,idx:number)=><li key={idx} className="text-sm flex gap-2 text-red-700"><span>•</span>{i}</li>)}</ul></div>}
+                    </div>
+                  )}
+                  {view==='rewrite' && (
+                    <div className="space-y-4">
+                      <div className="bg-green-50 border border-green-200 rounded-xl p-4"><p className="font-semibold text-sm mb-2">✨ Perfect Version</p><pre className="whitespace-pre-wrap text-sm">{result.rewrite}</pre></div>
+                      {result.improvements?.length>0 && <div className="bg-blue-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">✅ What Was Fixed</p><ul className="space-y-1">{result.improvements.map((i:string,idx:number)=><li key={idx} className="text-sm flex gap-2 text-blue-700"><span>✓</span>{i}</li>)}</ul></div>}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'startupnamer' && (() => {
+          const [desc, setDesc] = React.useState('');
+          const [style, setStyle] = React.useState('modern');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!desc.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API}/api/startup/names`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({description:desc,style}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const vibeColor = (v:string) => ({'modern':'bg-blue-100 text-blue-700','classic':'bg-amber-100 text-amber-700','techy':'bg-purple-100 text-purple-700','playful':'bg-pink-100 text-pink-700','premium':'bg-gray-100 text-gray-700'})[v]||'bg-gray-100 text-gray-600';
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🚀 Startup Namer</h2>
+              <p className="text-sm text-gray-500 mb-6">World-class brand names with domain availability and taglines</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What does your startup do?</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="e.g. AI-powered tool that helps freelancers invoice clients and track payments automatically" value={desc} onChange={e=>setDesc(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Naming Style</label><div className="flex gap-2 flex-wrap">{['modern','classic','techy','playful','premium'].map(s=><button key={s} onClick={()=>setStyle(s)} className={`px-3 py-1 rounded-full text-sm capitalize ${style===s?'bg-indigo-600 text-white':'bg-gray-100 text-gray-600'}`}>{s}</button>)}</div></div>
+              <button onClick={generate} disabled={loading||!desc.trim()} className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50">{loading ? 'Generating names...' : '🚀 Generate Names'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  {result.names?.map((n:any,i:number)=>(
+                    <div key={i} className="border rounded-xl p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3"><h3 className="text-xl font-bold">{n.name}</h3><span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${vibeColor(n.vibe)}`}>{n.vibe}</span></div>
+                        <div className="text-right"><span className="text-xs text-gray-500">Score</span><p className="font-bold text-lg">{n.score}/100</p></div>
+                      </div>
+                      {n.tagline && <p className="text-sm text-gray-500 italic mb-2">"{n.tagline}"</p>}
+                      <p className="text-sm mb-2">{n.why_it_works}</p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500"><span>🌐 {n.domain}</span>{n.meaning && <span>💡 {n.meaning}</span>}</div>
+                    </div>
+                  ))}
+                  {result.naming_rationale && <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600"><strong>Approach:</strong> {result.naming_rationale}</div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 6 ─────────────────────────────────────── */}
+        {(mainTab as string) === 'coverlettergen' && (() => {
+          const [jobTitle, setJobTitle] = React.useState('');
+          const [company, setCompany] = React.useState('');
+          const [jobDesc, setJobDesc] = React.useState('');
+          const [resumeSummary, setResumeSummary] = React.useState('');
+          const [tone, setTone] = React.useState('professional');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [copied, setCopied] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!jobTitle || !company) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API}/api/cover-letter/generate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({job_title:jobTitle,company,job_description:jobDesc,resume_summary:resumeSummary,tone}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const copy = () => { navigator.clipboard.writeText(result.letter); setCopied(true); setTimeout(()=>setCopied(false),2000); };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">📝 Cover Letter Generator</h2>
+              <p className="text-sm text-gray-500 mb-6">AI-crafted cover letters tailored to the job</p>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Job Title *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Senior Product Manager" value={jobTitle} onChange={e=>setJobTitle(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Company *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Acme Corp" value={company} onChange={e=>setCompany(e.target.value)} /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Job Description (paste key parts)</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="Paste job requirements, responsibilities..." value={jobDesc} onChange={e=>setJobDesc(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Your Background (brief summary)</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="5 years PM at SaaS companies, led teams of 10, shipped 3 major products..." value={resumeSummary} onChange={e=>setResumeSummary(e.target.value)} /></div>
+              <div className="mb-4 flex gap-2">{['professional','enthusiastic','concise','creative'].map(t=><button key={t} onClick={()=>setTone(t)} className={`px-3 py-1 rounded-full text-sm capitalize ${tone===t?'bg-blue-600 text-white':'bg-gray-100 text-gray-600'}`}>{t}</button>)}</div>
+              <button onClick={generate} disabled={loading||!jobTitle||!company} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? 'Writing...' : 'Generate Cover Letter'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  {result.subject_line && <div className="bg-gray-100 rounded-lg px-4 py-2 text-sm"><span className="font-semibold">Subject: </span>{result.subject_line}</div>}
+                  <div className="bg-white border rounded-xl p-5 relative"><button onClick={copy} className="absolute top-3 right-3 text-xs bg-gray-100 px-3 py-1 rounded-full hover:bg-gray-200">{copied ? '✓ Copied' : 'Copy'}</button><pre className="whitespace-pre-wrap text-sm leading-relaxed">{result.letter}</pre></div>
+                  {result.key_highlights?.length>0 && <div className="bg-green-50 rounded-lg p-4"><p className="font-semibold text-sm mb-2">✨ Key Highlights Used</p><ul className="space-y-1">{result.key_highlights.map((h:string,i:number)=><li key={i} className="text-sm flex gap-2"><span className="text-green-600">✓</span>{h}</li>)}</ul></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'interviewcoach' && (() => {
+          const [role, setRole] = React.useState('');
+          const [company, setCompany] = React.useState('');
+          const [level, setLevel] = React.useState('mid');
+          const [focus, setFocus] = React.useState('behavioral');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [activeQ, setActiveQ] = React.useState(0);
+          const [userAnswer, setUserAnswer] = React.useState('');
+          const [feedback, setFeedback] = React.useState<any>(null);
+          const [fbLoading, setFbLoading] = React.useState(false);
+          const [mode, setMode] = React.useState<'questions'|'practice'>('questions');
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!role) return;
+            setLoading(true); setResult(null); setActiveQ(0); setFeedback(null);
+            try {
+              const r = await fetch(`${API}/api/interview/generate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({role,company,level,focus}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const getFeedback = async () => {
+            if (!userAnswer.trim() || !result?.questions?.[activeQ]) return;
+            setFbLoading(true); setFeedback(null);
+            try {
+              const r = await fetch(`${API}/api/interview/answer-feedback`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({question:result.questions[activeQ].question,answer:userAnswer}) });
+              setFeedback(await r.json());
+            } finally { setFbLoading(false); }
+          };
+          const diffColor = (d:string) => ({'easy':'bg-green-100 text-green-700','medium':'bg-yellow-100 text-yellow-700','hard':'bg-red-100 text-red-700'})[d]||'bg-gray-100 text-gray-600';
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🎯 Interview Coach</h2>
+              <p className="text-sm text-gray-500 mb-6">Practice interviews with AI feedback on your answers</p>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Role *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Software Engineer" value={role} onChange={e=>setRole(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Company</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Google" value={company} onChange={e=>setCompany(e.target.value)} /></div>
+              </div>
+              <div className="flex gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Level</label><select className="border rounded px-3 py-2 text-sm" value={level} onChange={e=>setLevel(e.target.value)}><option value="junior">Junior</option><option value="mid">Mid</option><option value="senior">Senior</option><option value="staff">Staff/Principal</option></select></div>
+                <div><label className="block text-sm font-medium mb-1">Focus</label><select className="border rounded px-3 py-2 text-sm" value={focus} onChange={e=>setFocus(e.target.value)}><option value="behavioral">Behavioral</option><option value="technical">Technical</option><option value="mixed">Mixed</option><option value="system-design">System Design</option></select></div>
+              </div>
+              <button onClick={generate} disabled={loading||!role} className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50">{loading ? 'Generating...' : 'Generate Questions'}</button>
+              {result && !result.error && (
+                <div className="mt-6">
+                  <div className="flex gap-3 mb-4"><button onClick={()=>setMode('questions')} className={`px-4 py-1.5 rounded-lg text-sm font-medium ${mode==='questions'?'bg-indigo-600 text-white':'bg-gray-100'}`}>📋 Questions</button><button onClick={()=>setMode('practice')} className={`px-4 py-1.5 rounded-lg text-sm font-medium ${mode==='practice'?'bg-indigo-600 text-white':'bg-gray-100'}`}>🎤 Practice Mode</button></div>
+                  {mode==='questions' && (
+                    <div className="space-y-4">
+                      {result.questions?.map((q:any,i:number)=>(
+                        <div key={i} className="border rounded-xl p-4">
+                          <div className="flex items-center gap-2 mb-2"><span className="text-xs font-bold text-gray-400">Q{i+1}</span><span className={`px-2 py-0.5 rounded-full text-xs ${diffColor(q.difficulty)}`}>{q.difficulty}</span><span className="text-xs text-gray-400">{q.type}</span></div>
+                          <p className="font-medium mb-2">{q.question}</p>
+                          <p className="text-xs text-gray-500 mb-2">💡 <em>They want: {q.what_they_want}</em></p>
+                          {q.sample_answer && <details className="text-sm"><summary className="cursor-pointer text-blue-600 text-xs">Show sample answer</summary><div className="mt-2 bg-blue-50 rounded p-3 text-sm">{q.sample_answer}</div></details>}
+                        </div>
+                      ))}
+                      {result.questions_to_ask?.length>0 && <div className="bg-purple-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">❓ Questions to Ask Them</p><ul className="space-y-1">{result.questions_to_ask.map((q:string,i:number)=><li key={i} className="text-sm flex gap-2"><span className="text-purple-600">→</span>{q}</li>)}</ul></div>}
+                    </div>
+                  )}
+                  {mode==='practice' && result.questions?.length>0 && (
+                    <div>
+                      <div className="flex gap-2 mb-4 flex-wrap">{result.questions.map((_:any,i:number)=><button key={i} onClick={()=>{setActiveQ(i);setUserAnswer('');setFeedback(null);}} className={`w-8 h-8 rounded-full text-sm font-medium ${activeQ===i?'bg-indigo-600 text-white':'bg-gray-100'}`}>{i+1}</button>)}</div>
+                      <div className="bg-indigo-50 rounded-xl p-4 mb-4"><p className="font-medium">{result.questions[activeQ]?.question}</p></div>
+                      <textarea className="w-full border rounded px-3 py-2 text-sm mb-3" rows={5} placeholder="Type your answer here..." value={userAnswer} onChange={e=>setUserAnswer(e.target.value)} />
+                      <button onClick={getFeedback} disabled={fbLoading||!userAnswer.trim()} className="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50">{fbLoading ? 'Analyzing...' : 'Get AI Feedback'}</button>
+                      {feedback && !feedback.error && (
+                        <div className="mt-4 space-y-3">
+                          <div className="flex gap-3"><div className="bg-gray-100 rounded-xl p-3 text-center min-w-16"><p className="text-xs text-gray-500">Score</p><p className="text-2xl font-black">{feedback.score}</p></div><div className="bg-gray-100 rounded-xl p-3 text-center min-w-16"><p className="text-xs text-gray-500">Grade</p><p className="text-2xl font-black">{feedback.grade}</p></div><div className="flex-1 bg-green-50 rounded-xl p-3"><p className="font-semibold text-xs mb-1">Strengths</p><ul>{feedback.strengths?.map((s:string,i:number)=><li key={i} className="text-xs text-green-700">✓ {s}</li>)}</ul></div><div className="flex-1 bg-orange-50 rounded-xl p-3"><p className="font-semibold text-xs mb-1">Improve</p><ul>{feedback.improvements?.map((s:string,i:number)=><li key={i} className="text-xs text-orange-700">• {s}</li>)}</ul></div></div>
+                          {feedback.stronger_version && <div className="bg-blue-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">💡 Stronger Version</p><p className="text-sm italic">{feedback.stronger_version}</p></div>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'colddmwriter' && (() => {
+          const [platform, setPlatform] = React.useState('linkedin');
+          const [targetName, setTargetName] = React.useState('');
+          const [targetRole, setTargetRole] = React.useState('');
+          const [goal, setGoal] = React.useState('');
+          const [context, setContext] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [copied, setCopied] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const write = async () => {
+            if (!targetName || !goal) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API}/api/cold-dm/write`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({platform,target_name:targetName,target_role:targetRole,your_goal:goal,context}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">📨 Cold DM Writer</h2>
+              <p className="text-sm text-gray-500 mb-6">High-converting cold messages for any platform</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Platform</label><div className="flex gap-2">{['linkedin','twitter','email','instagram'].map(p=><button key={p} onClick={()=>setPlatform(p)} className={`px-3 py-1 rounded-full text-sm capitalize ${platform===p?'bg-blue-600 text-white':'bg-gray-100'}`}>{p}</button>)}</div></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Their Name *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Sarah Chen" value={targetName} onChange={e=>setTargetName(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Their Role</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Head of Growth at Stripe" value={targetRole} onChange={e=>setTargetRole(e.target.value)} /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Your Goal *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Get a 30-min call to learn about their growth strategy" value={goal} onChange={e=>setGoal(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Context / Hook (optional)</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="e.g. saw their talk at SaaStr, read their article on PLG..." value={context} onChange={e=>setContext(e.target.value)} /></div>
+              <button onClick={write} disabled={loading||!targetName||!goal} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? 'Writing...' : 'Write DM'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  {result.subject && <div className="bg-gray-100 rounded px-4 py-2 text-sm"><span className="font-semibold">Subject: </span>{result.subject}</div>}
+                  <div className="bg-gray-50 rounded-xl p-5 border relative">
+                    <div className="flex justify-between items-start mb-2"><p className="text-xs text-gray-500 font-semibold">MESSAGE ({result.character_count} chars)</p><button onClick={()=>{navigator.clipboard.writeText(result.dm);setCopied(true);setTimeout(()=>setCopied(false),2000);}} className="text-xs bg-white border px-3 py-1 rounded-full">{copied?'✓ Copied':'Copy'}</button></div>
+                    <p className="text-sm whitespace-pre-wrap">{result.dm}</p>
+                  </div>
+                  {result.why_it_works && <div className="bg-blue-50 rounded-lg p-3 text-sm"><strong>Why it works: </strong>{result.why_it_works}</div>}
+                  {result.variations?.length>0 && <div className="space-y-2"><p className="font-semibold text-sm">🔄 Variations</p>{result.variations.map((v:string,i:number)=><div key={i} className="bg-gray-50 rounded-lg p-3 text-sm border">{v}</div>)}</div>}
+                  {result.follow_up && <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm"><strong>📅 Follow-up: </strong>{result.follow_up}</div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'fitnessplanner' && (() => {
+          const [goal, setGoal] = React.useState('');
+          const [level, setLevel] = React.useState('beginner');
+          const [days, setDays] = React.useState(3);
+          const [equipment, setEquipment] = React.useState('none');
+          const [notes, setNotes] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [activeDay, setActiveDay] = React.useState(0);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!goal) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API}/api/fitness/plan`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({goal,level,days_per_week:days,equipment,notes}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">💪 Fitness Planner</h2>
+              <p className="text-sm text-gray-500 mb-6">Personalized workout plans with week-by-week progression</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Your Goal *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Lose 15 lbs, build muscle, run a 5K, get stronger..." value={goal} onChange={e=>setGoal(e.target.value)} /></div>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Level</label><select className="w-full border rounded px-3 py-2 text-sm" value={level} onChange={e=>setLevel(e.target.value)}><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select></div>
+                <div><label className="block text-sm font-medium mb-1">Days/Week: {days}</label><input type="range" min={2} max={6} value={days} onChange={e=>setDays(+e.target.value)} className="w-full mt-2" /></div>
+                <div><label className="block text-sm font-medium mb-1">Equipment</label><select className="w-full border rounded px-3 py-2 text-sm" value={equipment} onChange={e=>setEquipment(e.target.value)}><option value="none">None (bodyweight)</option><option value="dumbbells">Dumbbells</option><option value="gym">Full Gym</option><option value="bands">Resistance Bands</option></select></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Notes (injuries, preferences)</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Bad knee, prefer mornings, hate running..." value={notes} onChange={e=>setNotes(e.target.value)} /></div>
+              <button onClick={generate} disabled={loading||!goal} className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 disabled:opacity-50">{loading ? 'Building plan...' : 'Generate My Plan'}</button>
+              {result && result.plan && (
+                <div className="mt-6 space-y-4">
+                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-4"><p className="font-semibold mb-1">📋 Overview</p><p className="text-sm">{result.plan.overview}</p></div>
+                  {result.plan.weekly_schedule?.length>0 && (
+                    <div>
+                      <div className="flex gap-2 mb-3 flex-wrap">{result.plan.weekly_schedule.map((d:any,i:number)=><button key={i} onClick={()=>setActiveDay(i)} className={`px-3 py-1 rounded-lg text-sm ${activeDay===i?'bg-orange-500 text-white':'bg-gray-100'}`}>{d.day}</button>)}</div>
+                      <div className="border rounded-xl overflow-hidden">
+                        <div className="bg-orange-500 text-white px-4 py-2"><p className="font-semibold">{result.plan.weekly_schedule[activeDay]?.focus}</p></div>
+                        <div className="divide-y">
+                          {result.plan.weekly_schedule[activeDay]?.workout?.map((e:any,i:number)=>(
+                            <div key={i} className="px-4 py-3 flex items-center justify-between">
+                              <div><p className="font-medium text-sm">{e.exercise}</p>{e.notes && <p className="text-xs text-gray-500">{e.notes}</p>}</div>
+                              <div className="text-right text-sm"><p>{e.sets} × {e.reps}</p><p className="text-xs text-gray-500">Rest {e.rest}</p></div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {result.expected_results && <div className="grid grid-cols-3 gap-3">{Object.entries(result.expected_results).map(([k,v]:any)=><div key={k} className="bg-gray-50 rounded-lg p-3 text-center"><p className="text-xs text-gray-500 font-semibold">{k.replace('week','Week ')}</p><p className="text-sm">{v}</p></div>)}</div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'recipegen2' && (() => {
+          const [ingredients, setIngredients] = React.useState('');
+          const [dietary, setDietary] = React.useState('');
+          const [cuisine, setCuisine] = React.useState('');
+          const [servings, setServings] = React.useState(4);
+          const [time, setTime] = React.useState(30);
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!ingredients.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API}/api/recipe/generate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({ingredients,dietary,cuisine,servings,time_available:time}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const diffColor = (d:string) => ({'easy':'text-green-600','medium':'text-yellow-600','hard':'text-red-600'})[d]||'text-gray-600';
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🍳 Recipe Generator</h2>
+              <p className="text-sm text-gray-500 mb-6">Turn any ingredients into a complete recipe</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Ingredients you have *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="chicken breast, garlic, lemon, olive oil, pasta..." value={ingredients} onChange={e=>setIngredients(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Dietary</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="vegetarian, gluten-free, keto..." value={dietary} onChange={e=>setDietary(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Cuisine Style</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Italian, Thai, Mexican..." value={cuisine} onChange={e=>setCuisine(e.target.value)} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Servings: {servings}</label><input type="range" min={1} max={8} value={servings} onChange={e=>setServings(+e.target.value)} className="w-full" /></div>
+                <div><label className="block text-sm font-medium mb-1">Time: {time} min</label><input type="range" min={10} max={120} step={5} value={time} onChange={e=>setTime(+e.target.value)} className="w-full" /></div>
+              </div>
+              <button onClick={generate} disabled={loading||!ingredients.trim()} className="bg-amber-500 text-white px-6 py-2 rounded-lg hover:bg-amber-600 disabled:opacity-50">{loading ? 'Creating recipe...' : '🍳 Generate Recipe'}</button>
+              {result && result.recipe && (
+                <div className="mt-6 space-y-4">
+                  <div className="border-b pb-4">
+                    <h3 className="text-xl font-bold">{result.recipe.name}</h3>
+                    <div className="flex gap-4 mt-1 text-sm text-gray-500">
+                      <span>⏱ Prep {result.recipe.prep_time}</span>
+                      <span>🔥 Cook {result.recipe.cook_time}</span>
+                      <span>👥 {result.recipe.servings} servings</span>
+                      <span className={`font-medium ${diffColor(result.recipe.difficulty)}`}>{result.recipe.difficulty}</span>
+                    </div>
+                  </div>
+                  {result.recipe.nutrition_estimate && <div className="flex gap-3">{Object.entries(result.recipe.nutrition_estimate).map(([k,v]:any)=><div key={k} className="bg-amber-50 rounded-lg px-3 py-2 text-center flex-1"><p className="text-xs text-gray-500 capitalize">{k}</p><p className="text-sm font-semibold">{v}</p></div>)}</div>}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><p className="font-semibold mb-2 text-sm">🛒 Ingredients</p><ul className="space-y-1">{result.recipe.ingredients?.map((i:string,idx:number)=><li key={idx} className="text-sm flex gap-2"><span>•</span>{i}</li>)}</ul></div>
+                    <div><p className="font-semibold mb-2 text-sm">📋 Instructions</p><ol className="space-y-2">{result.recipe.instructions?.map((step:string,idx:number)=><li key={idx} className="text-sm flex gap-2"><span className="font-bold text-amber-500">{idx+1}.</span>{step}</li>)}</ol></div>
+                  </div>
+                  {result.recipe.tips?.length>0 && <div className="bg-amber-50 rounded-lg p-3"><p className="font-semibold text-sm mb-1">👨‍🍳 Pro Tips</p><ul className="space-y-1">{result.recipe.tips.map((t:string,i:number)=><li key={i} className="text-sm">• {t}</li>)}</ul></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 7 ─────────────────────────────────────── */}
+        {(mainTab as string) === 'travelplanner' && (() => {
+          const [dest, setDest] = React.useState('');
+          const [days, setDays] = React.useState(7);
+          const [budget, setBudget] = React.useState('moderate');
+          const [style, setStyle] = React.useState('balanced');
+          const [interests, setInterests] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [activeDay, setActiveDay] = React.useState(0);
+          const [view, setView] = React.useState<'itinerary'|'practical'|'tips'>('itinerary');
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const plan = async () => {
+            if (!dest) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/travel/plan`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({destination:dest,days,budget,style,interests}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-4xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">✈️ Travel Planner</h2>
+              <p className="text-sm text-gray-500 mb-6">Complete day-by-day itinerary with meals, tips & budget</p>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="col-span-2"><label className="block text-sm font-medium mb-1">Destination *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Tokyo, Japan / Tuscany, Italy / NYC..." value={dest} onChange={e=>setDest(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Duration: {days} days</label><input type="range" min={2} max={21} value={days} onChange={e=>setDays(+e.target.value)} className="w-full" /></div>
+                <div><label className="block text-sm font-medium mb-1">Interests</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="food, history, nightlife, nature..." value={interests} onChange={e=>setInterests(e.target.value)} /></div>
+              </div>
+              <div className="flex gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Budget</label><div className="flex gap-2">{['budget','moderate','luxury'].map(b=><button key={b} onClick={()=>setBudget(b)} className={`px-3 py-1 rounded-full text-sm capitalize ${budget===b?'bg-sky-600 text-white':'bg-gray-100'}`}>{b}</button>)}</div></div>
+                <div><label className="block text-sm font-medium mb-1">Style</label><div className="flex gap-2">{['relaxed','balanced','packed'].map(s=><button key={s} onClick={()=>setStyle(s)} className={`px-3 py-1 rounded-full text-sm capitalize ${style===s?'bg-sky-600 text-white':'bg-gray-100'}`}>{s}</button>)}</div></div>
+              </div>
+              <button onClick={plan} disabled={loading||!dest} className="bg-sky-600 text-white px-6 py-2 rounded-lg hover:bg-sky-700 disabled:opacity-50">{loading ? 'Planning...' : '✈️ Plan My Trip'}</button>
+              {result && result.plan && (
+                <div className="mt-6">
+                  {result.plan.overview && <div className="bg-sky-50 rounded-xl p-4 mb-4"><p className="font-semibold mb-1">{dest}</p><p className="text-sm">{result.plan.overview}</p></div>}
+                  <div className="flex gap-3 mb-4"><button onClick={()=>setView('itinerary')} className={`px-4 py-1.5 rounded-lg text-sm font-medium ${view==='itinerary'?'bg-sky-600 text-white':'bg-gray-100'}`}>📅 Itinerary</button><button onClick={()=>setView('practical')} className={`px-4 py-1.5 rounded-lg text-sm font-medium ${view==='practical'?'bg-sky-600 text-white':'bg-gray-100'}`}>📋 Practical Info</button><button onClick={()=>setView('tips')} className={`px-4 py-1.5 rounded-lg text-sm font-medium ${view==='tips'?'bg-sky-600 text-white':'bg-gray-100'}`}>💎 Hidden Gems</button></div>
+                  {view==='itinerary' && result.plan.days?.length>0 && (
+                    <div>
+                      <div className="flex gap-2 mb-4 flex-wrap">{result.plan.days.map((d:any,i:number)=><button key={i} onClick={()=>setActiveDay(i)} className={`px-3 py-1 rounded-lg text-sm ${activeDay===i?'bg-sky-600 text-white':'bg-gray-100'}`}>Day {d.day}</button>)}</div>
+                      <div className="border rounded-xl overflow-hidden">
+                        <div className="bg-sky-600 text-white px-4 py-3"><p className="font-semibold">Day {result.plan.days[activeDay]?.day}: {result.plan.days[activeDay]?.theme}</p>{result.plan.days[activeDay]?.estimated_cost && <p className="text-xs opacity-80">{result.plan.days[activeDay].estimated_cost}</p>}</div>
+                        <div className="divide-y">
+                          {['morning','afternoon','evening'].map(period=>(result.plan.days[activeDay]?.[period] && <div key={period} className="px-4 py-3"><p className="text-xs font-bold text-gray-400 uppercase mb-1">{period}</p><p className="text-sm">{result.plan.days[activeDay][period]}</p></div>))}
+                          {result.plan.days[activeDay]?.meals && <div className="px-4 py-3 bg-amber-50"><p className="text-xs font-bold text-gray-400 mb-1">MEALS</p><div className="flex gap-4 text-sm">{Object.entries(result.plan.days[activeDay].meals).map(([m,v]:any)=>v&&<span key={m}><strong className="capitalize">{m}:</strong> {v}</span>)}</div></div>}
+                          {result.plan.days[activeDay]?.tips && <div className="px-4 py-3 bg-yellow-50"><p className="text-xs">💡 {result.plan.days[activeDay].tips}</p></div>}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {view==='practical' && result.plan.practical_info && (
+                    <div className="space-y-3">
+                      {Object.entries(result.plan.practical_info).map(([k,v]:any)=>v&&<div key={k} className="flex gap-3 border-b pb-3"><p className="font-semibold text-sm capitalize min-w-32">{k.replace('_',' ')}</p><p className="text-sm text-gray-700">{v}</p></div>)}
+                      {result.plan.budget_breakdown && <div className="bg-green-50 rounded-xl p-4"><p className="font-semibold mb-2 text-sm">💰 Budget Breakdown</p>{Object.entries(result.plan.budget_breakdown).map(([k,v]:any)=><div key={k} className="flex justify-between text-sm py-1 border-b border-green-100"><span className="capitalize">{k.replace('_',' ')}</span><span className="font-medium">{v}</span></div>)}</div>}
+                    </div>
+                  )}
+                  {view==='tips' && (
+                    <div className="space-y-4">
+                      {result.plan.hidden_gems?.length>0 && <div><p className="font-semibold mb-2">💎 Hidden Gems</p><ul className="space-y-2">{result.plan.hidden_gems.map((g:string,i:number)=><li key={i} className="flex gap-2 text-sm"><span>•</span>{g}</li>)}</ul></div>}
+                      {result.plan.avoid?.length>0 && <div><p className="font-semibold mb-2">❌ Skip These</p><ul className="space-y-2">{result.plan.avoid.map((a:string,i:number)=><li key={i} className="flex gap-2 text-sm text-red-700"><span>✗</span>{a}</li>)}</ul></div>}
+                      {result.plan.packing_list?.length>0 && <div><p className="font-semibold mb-2">🧳 Packing List</p><div className="grid grid-cols-2 gap-1">{result.plan.packing_list.map((p:string,i:number)=><div key={i} className="text-sm flex gap-2"><span>☐</span>{p}</div>)}</div></div>}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'apologyletter' && (() => {
+          const [situation, setSituation] = React.useState('');
+          const [relationship, setRelationship] = React.useState('friend');
+          const [tone, setTone] = React.useState('sincere');
+          const [whatDid, setWhatDid] = React.useState('');
+          const [willDo, setWillDo] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [copied, setCopied] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const write = async () => {
+            if (!situation) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API}/api/apology/write`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({situation,relationship,tone,what_you_did:whatDid,what_you_will_do:willDo}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">💌 Apology Letter Writer</h2>
+              <p className="text-sm text-gray-500 mb-6">Heartfelt apologies that actually repair relationships</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What happened? *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="I forgot our anniversary / I said something hurtful at dinner / I let my team down..." value={situation} onChange={e=>setSituation(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Relationship</label><select className="w-full border rounded px-3 py-2 text-sm" value={relationship} onChange={e=>setRelationship(e.target.value)}><option value="partner">Partner/Spouse</option><option value="friend">Friend</option><option value="family">Family</option><option value="colleague">Colleague</option><option value="boss">Boss</option><option value="client">Client</option></select></div>
+                <div><label className="block text-sm font-medium mb-1">Tone</label><select className="w-full border rounded px-3 py-2 text-sm" value={tone} onChange={e=>setTone(e.target.value)}><option value="sincere">Sincere & Heartfelt</option><option value="professional">Professional</option><option value="brief">Brief & Direct</option><option value="detailed">Detailed & Thorough</option></select></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Specifically what did you do? (optional)</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="More detail helps personalize the letter..." value={whatDid} onChange={e=>setWhatDid(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What will you do differently?</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="I'll set calendar reminders / I'll be more mindful..." value={willDo} onChange={e=>setWillDo(e.target.value)} /></div>
+              <button onClick={write} disabled={loading||!situation} className="bg-rose-500 text-white px-6 py-2 rounded-lg hover:bg-rose-600 disabled:opacity-50">{loading ? 'Writing...' : '💌 Write Apology'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 relative"><button onClick={()=>{navigator.clipboard.writeText(result.letter);setCopied(true);setTimeout(()=>setCopied(false),2000);}} className="absolute top-3 right-3 text-xs bg-white border px-3 py-1 rounded-full">{copied?'✓ Copied':'Copy'}</button><pre className="whitespace-pre-wrap text-sm leading-relaxed">{result.letter}</pre></div>
+                  {result.delivery_tip && <div className="bg-blue-50 rounded-lg p-3 text-sm"><strong>📬 How to deliver: </strong>{result.delivery_tip}</div>}
+                  {result.follow_up_action && <div className="bg-green-50 rounded-lg p-3 text-sm"><strong>✅ Next step: </strong>{result.follow_up_action}</div>}
+                  {result.what_not_to_say?.length>0 && <div className="bg-red-50 rounded-lg p-3"><p className="font-semibold text-sm mb-1 text-red-700">❌ Avoid saying</p><ul className="space-y-1">{result.what_not_to_say.map((s:string,i:number)=><li key={i} className="text-sm text-red-700">• {s}</li>)}</ul></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'leasereview' && (() => {
+          const [leaseText, setLeaseText] = React.useState('');
+          const [docType, setDocType] = React.useState('lease');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [tab, setTab] = React.useState<'overview'|'redflags'|'terms'>('overview');
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const review = async () => {
+            if (!leaseText.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API}/api/lease/review`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({lease_text:leaseText,document_type:docType}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const sevColor = (s:string) => ({'high':'bg-red-100 text-red-700 border-red-200','medium':'bg-yellow-100 text-yellow-700 border-yellow-200','low':'bg-green-100 text-green-700 border-green-200'})[s]||'bg-gray-100 text-gray-600';
+          const verdictColor = (v:string) => ({'sign':'text-green-600','negotiate':'text-yellow-600','avoid':'text-red-600'})[v]||'text-gray-600';
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🏠 Lease / Contract Reviewer</h2>
+              <p className="text-sm text-gray-500 mb-2">Plain-English breakdown with red flags highlighted</p>
+              <p className="text-xs text-gray-400 mb-6">⚠️ Not legal advice — always consult a lawyer for important decisions</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Document Type</label><div className="flex gap-2">{['lease','contract','nda','employment'].map(t=><button key={t} onClick={()=>setDocType(t)} className={`px-3 py-1 rounded-full text-sm capitalize ${docType===t?'bg-teal-600 text-white':'bg-gray-100'}`}>{t}</button>)}</div></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Paste document text *</label><textarea className="w-full border rounded px-3 py-2 text-sm font-mono text-xs" rows={10} placeholder="Paste your lease or contract text here..." value={leaseText} onChange={e=>setLeaseText(e.target.value)} /></div>
+              <button onClick={review} disabled={loading||!leaseText.trim()} className="bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 disabled:opacity-50">{loading ? 'Analyzing...' : '🔍 Review Document'}</button>
+              {result && !result.error && (
+                <div className="mt-6">
+                  {result.overall_verdict && <div className={`rounded-xl p-4 mb-4 border text-center ${sevColor(result.overall_verdict==='sign'?'low':result.overall_verdict==='negotiate'?'medium':'high')}`}><p className="text-xs font-semibold mb-1">VERDICT</p><p className={`text-2xl font-black uppercase ${verdictColor(result.overall_verdict)}`}>{result.overall_verdict}</p><p className="text-sm mt-1">{result.verdict_reason}</p></div>}
+                  <div className="flex gap-3 mb-4"><button onClick={()=>setTab('overview')} className={`px-4 py-1.5 rounded-lg text-sm font-medium ${tab==='overview'?'bg-teal-600 text-white':'bg-gray-100'}`}>📋 Overview</button><button onClick={()=>setTab('redflags')} className={`px-4 py-1.5 rounded-lg text-sm font-medium ${tab==='redflags'?'bg-teal-600 text-white':'bg-gray-100'}`}>🚩 Red Flags ({result.red_flags?.length||0})</button><button onClick={()=>setTab('terms')} className={`px-4 py-1.5 rounded-lg text-sm font-medium ${tab==='terms'?'bg-teal-600 text-white':'bg-gray-100'}`}>📄 Key Terms</button></div>
+                  {tab==='overview' && <div className="space-y-3"><div className="bg-gray-50 rounded-xl p-4 text-sm">{result.summary}</div>{result.questions_to_ask?.length>0 && <div className="bg-blue-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">❓ Questions to Ask</p><ul className="space-y-1">{result.questions_to_ask.map((q:string,i:number)=><li key={i} className="text-sm flex gap-2"><span className="text-blue-600">→</span>{q}</li>)}</ul></div>}{result.tenant_rights?.length>0 && <div className="bg-green-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">✅ Your Rights</p><ul className="space-y-1">{result.tenant_rights.map((r:string,i:number)=><li key={i} className="text-sm flex gap-2"><span>•</span>{r}</li>)}</ul></div>}</div>}
+                  {tab==='redflags' && <div className="space-y-3">{result.red_flags?.length===0?<p className="text-sm text-green-600">✅ No major red flags found!</p>:result.red_flags?.map((f:any,i:number)=><div key={i} className={`border rounded-xl p-4 ${sevColor(f.severity)}`}><div className="flex justify-between mb-1"><p className="font-semibold text-sm">{f.issue}</p><span className={`px-2 py-0.5 rounded-full text-xs border ${sevColor(f.severity)}`}>{f.severity}</span></div><p className="text-sm mb-2">{f.what_it_means}</p>{f.clause && <p className="text-xs font-mono bg-white bg-opacity-50 p-2 rounded italic">{f.clause}</p>}{f.negotiable && <p className="text-xs font-medium mt-2">💡 This clause is negotiable</p>}</div>)}</div>}
+                  {tab==='terms' && result.key_terms && <div className="divide-y border rounded-xl overflow-hidden">{Object.entries(result.key_terms).filter(([,v])=>v).map(([k,v]:any)=><div key={k} className="flex gap-3 px-4 py-3"><p className="font-semibold text-sm capitalize min-w-40">{k.replace('_',' ')}</p><p className="text-sm text-gray-700">{v}</p></div>)}</div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'booksummarizer' && (() => {
+          const [title, setTitle] = React.useState('');
+          const [author, setAuthor] = React.useState('');
+          const [depth, setDepth] = React.useState('standard');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [activeIdea, setActiveIdea] = React.useState(0);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const summarize = async () => {
+            if (!title) return;
+            setLoading(true); setResult(null); setActiveIdea(0);
+            try {
+              const r = await fetch(`${API}/api/book/summarize`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({title,author,depth}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">📚 Book Summarizer</h2>
+              <p className="text-sm text-gray-500 mb-6">Key ideas, actionable takeaways & who should read it</p>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Book Title *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Atomic Habits" value={title} onChange={e=>setTitle(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Author</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="James Clear" value={author} onChange={e=>setAuthor(e.target.value)} /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Depth</label><div className="flex gap-2">{['quick','standard','deep'].map(d=><button key={d} onClick={()=>setDepth(d)} className={`px-3 py-1 rounded-full text-sm capitalize ${depth===d?'bg-violet-600 text-white':'bg-gray-100'}`}>{d}</button>)}</div></div>
+              <button onClick={summarize} disabled={loading||!title} className="bg-violet-600 text-white px-6 py-2 rounded-lg hover:bg-violet-700 disabled:opacity-50">{loading ? 'Reading...' : '📚 Summarize Book'}</button>
+              {result && result.summary && (
+                <div className="mt-6 space-y-4">
+                  <div className="border-b pb-4">
+                    <p className="text-lg font-bold">{title}</p>
+                    {result.summary.best_quote && <p className="text-sm italic text-gray-500 mt-1">"{result.summary.best_quote}"</p>}
+                  </div>
+                  <div className="bg-violet-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">In One Sentence</p><p className="text-sm font-medium">{result.summary.one_sentence}</p></div>
+                  <div><p className="font-semibold mb-1 text-sm">Overview</p><p className="text-sm text-gray-700 leading-relaxed">{result.summary.overview}</p></div>
+                  {result.summary.key_ideas?.length>0 && (
+                    <div>
+                      <p className="font-semibold mb-2 text-sm">💡 Key Ideas</p>
+                      <div className="flex gap-2 mb-3 flex-wrap">{result.summary.key_ideas.map((_:any,i:number)=><button key={i} onClick={()=>setActiveIdea(i)} className={`px-3 py-1 rounded-lg text-sm ${activeIdea===i?'bg-violet-600 text-white':'bg-gray-100'}`}>Idea {i+1}</button>)}</div>
+                      <div className="border rounded-xl p-4"><p className="font-semibold mb-2">{result.summary.key_ideas[activeIdea]?.idea}</p><p className="text-sm text-gray-700 mb-3">{result.summary.key_ideas[activeIdea]?.explanation}</p>{result.summary.key_ideas[activeIdea]?.quote && <p className="text-sm italic text-gray-500 border-l-4 border-violet-300 pl-3">"{result.summary.key_ideas[activeIdea].quote}"</p>}</div>
+                    </div>
+                  )}
+                  {result.summary.actionable_takeaways?.length>0 && <div className="bg-green-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">✅ Actionable Takeaways</p><ul className="space-y-2">{result.summary.actionable_takeaways.map((t:string,i:number)=><li key={i} className="text-sm flex gap-2"><span className="text-green-600 font-bold">{i+1}.</span>{t}</li>)}</ul></div>}
+                  <div className="grid grid-cols-2 gap-3">
+                    {result.summary.who_should_read && <div className="bg-blue-50 rounded-lg p-3"><p className="font-semibold text-xs text-blue-700 mb-1">👍 READ IF</p><p className="text-sm">{result.summary.who_should_read}</p></div>}
+                    {result.summary.who_should_skip && <div className="bg-gray-50 rounded-lg p-3"><p className="font-semibold text-xs text-gray-500 mb-1">⏭ SKIP IF</p><p className="text-sm">{result.summary.who_should_skip}</p></div>}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'quizgen' && (() => {
+          const [topic, setTopic] = React.useState('');
+          const [difficulty, setDifficulty] = React.useState('medium');
+          const [numQ, setNumQ] = React.useState(10);
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [currentQ, setCurrentQ] = React.useState(0);
+          const [selected, setSelected] = React.useState<string|null>(null);
+          const [revealed, setRevealed] = React.useState(false);
+          const [score, setScore] = React.useState(0);
+          const [finished, setFinished] = React.useState(false);
+          const [answers, setAnswers] = React.useState<{q:number,correct:boolean}[]>([]);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!topic) return;
+            setLoading(true); setResult(null); setCurrentQ(0); setSelected(null); setRevealed(false); setScore(0); setFinished(false); setAnswers([]);
+            try {
+              const r = await fetch(`${API}/api/quiz/generate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({topic,difficulty,num_questions:numQ}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const answer = (opt:string) => {
+            if (revealed) return;
+            setSelected(opt);
+            setRevealed(true);
+            const correct = opt.startsWith(result.questions[currentQ].correct);
+            if (correct) setScore(s=>s+1);
+            setAnswers(a=>[...a,{q:currentQ,correct}]);
+          };
+          const next = () => {
+            if (currentQ < result.questions.length-1) { setCurrentQ(q=>q+1); setSelected(null); setRevealed(false); }
+            else setFinished(true);
+          };
+          const optColor = (opt:string) => {
+            if (!revealed) return 'hover:bg-gray-50';
+            const isCorrect = opt.startsWith(result?.questions[currentQ]?.correct);
+            const isSelected = opt === selected;
+            if (isCorrect) return 'bg-green-100 border-green-400 text-green-800';
+            if (isSelected && !isCorrect) return 'bg-red-100 border-red-400 text-red-800';
+            return 'opacity-50';
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🧠 Quiz Generator</h2>
+              <p className="text-sm text-gray-500 mb-6">Interactive quizzes on any topic with instant feedback</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Topic *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="World War II, React hooks, The French Revolution, Nutrition..." value={topic} onChange={e=>setTopic(e.target.value)} /></div>
+              <div className="flex gap-6 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Difficulty</label><div className="flex gap-2">{['easy','medium','hard'].map(d=><button key={d} onClick={()=>setDifficulty(d)} className={`px-3 py-1 rounded-full text-sm capitalize ${difficulty===d?'bg-yellow-500 text-white':'bg-gray-100'}`}>{d}</button>)}</div></div>
+                <div><label className="block text-sm font-medium mb-1">Questions: {numQ}</label><input type="range" min={5} max={20} step={5} value={numQ} onChange={e=>setNumQ(+e.target.value)} className="w-32 mt-1" /></div>
+              </div>
+              <button onClick={generate} disabled={loading||!topic} className="bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 disabled:opacity-50">{loading ? 'Generating quiz...' : '🧠 Start Quiz'}</button>
+              {result && !finished && result.questions?.length>0 && (
+                <div className="mt-6">
+                  <div className="flex justify-between items-center mb-4"><p className="text-sm text-gray-500">Question {currentQ+1} of {result.questions.length}</p><div className="flex gap-1">{result.questions.map((_:any,i:number)=><div key={i} className={`w-2 h-2 rounded-full ${i<currentQ?answers[i]?.correct?'bg-green-500':'bg-red-500':i===currentQ?'bg-yellow-500':'bg-gray-200'}`} />)}</div></div>
+                  <div className="bg-gray-50 rounded-xl p-4 mb-4"><p className="font-medium">{result.questions[currentQ]?.question}</p></div>
+                  <div className="space-y-2 mb-4">{result.questions[currentQ]?.options?.map((opt:string)=><button key={opt} onClick={()=>answer(opt)} className={`w-full text-left border rounded-lg px-4 py-3 text-sm transition-colors ${optColor(opt)}`}>{opt}</button>)}</div>
+                  {revealed && (
+                    <div className="space-y-3">
+                      <div className={`rounded-lg p-3 text-sm ${selected===result.questions[currentQ].correct+')' || (selected||'').startsWith(result.questions[currentQ].correct)?'bg-green-50 text-green-800':'bg-red-50 text-red-800'}`}>{result.questions[currentQ].explanation}</div>
+                      {result.questions[currentQ].fun_fact && <div className="bg-blue-50 rounded-lg p-3 text-sm"><strong>💡 Fun fact: </strong>{result.questions[currentQ].fun_fact}</div>}
+                      <button onClick={next} className="bg-yellow-500 text-white px-5 py-2 rounded-lg hover:bg-yellow-600">{currentQ<result.questions.length-1?'Next Question →':'Finish Quiz'}</button>
+                    </div>
+                  )}
+                </div>
+              )}
+              {finished && (
+                <div className="mt-6 text-center space-y-4">
+                  <div className="bg-yellow-50 rounded-2xl p-8"><p className="text-5xl font-black mb-2">{score}/{result?.questions?.length}</p><p className="text-lg font-medium">{score/result?.questions?.length>=0.8?'🏆 Excellent!':score/result?.questions?.length>=0.6?'👍 Good job!':'📚 Keep studying!'}</p></div>
+                  <button onClick={()=>{setCurrentQ(0);setSelected(null);setRevealed(false);setScore(0);setFinished(false);setAnswers([]);}} className="bg-yellow-500 text-white px-5 py-2 rounded-lg hover:bg-yellow-600">Retake Quiz</button>
+                  <button onClick={generate} className="ml-3 bg-gray-100 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-200">New Quiz</button>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 8 ─────────────────────────────────────── */}
+        {(mainTab as string) === 'salaryneg' && (() => {
+          const [role, setRole] = React.useState('');
+          const [offer, setOffer] = React.useState('');
+          const [market, setMarket] = React.useState('');
+          const [yoe, setYoe] = React.useState(0);
+          const [competing, setCompeting] = React.useState('');
+          const [context, setContext] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [tab, setTab] = React.useState<'script'|'email'|'strategy'>('script');
+          const [copied, setCopied] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const negotiate = async () => {
+            if (!role || !offer) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API}/api/salary/negotiate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({role,current_offer:offer,market_rate:market,experience_years:yoe,competing_offers:competing,context}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">💵 Salary Negotiator</h2>
+              <p className="text-sm text-gray-500 mb-6">Word-for-word scripts to get paid what you're worth</p>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Role / Position *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Senior Software Engineer" value={role} onChange={e=>setRole(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Current Offer *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="$120,000" value={offer} onChange={e=>setOffer(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Market Rate (if known)</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="$140,000" value={market} onChange={e=>setMarket(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Years of Experience: {yoe}</label><input type="range" min={0} max={30} value={yoe} onChange={e=>setYoe(+e.target.value)} className="w-full mt-2" /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Competing Offers / Leverage</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="I have an offer from Stripe for $135k..." value={competing} onChange={e=>setCompeting(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Context</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Startup equity, remote, FAANG offer on the table..." value={context} onChange={e=>setContext(e.target.value)} /></div>
+              <button onClick={negotiate} disabled={loading||!role||!offer} className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50">{loading ? 'Building script...' : '💵 Get Negotiation Script'}</button>
+              {result && !result.error && (
+                <div className="mt-6">
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center"><p className="text-xs text-gray-500">Counter Offer</p><p className="text-2xl font-black text-emerald-700">{result.counter_offer}</p></div>
+                    {result.total_comp_increase && <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center"><p className="text-xs text-gray-500">Potential Increase</p><p className="text-2xl font-black text-blue-700">{result.total_comp_increase}</p></div>}
+                  </div>
+                  <div className="flex gap-3 mb-4">{(['script','email','strategy'] as const).map(t=><button key={t} onClick={()=>setTab(t)} className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize ${tab===t?'bg-emerald-600 text-white':'bg-gray-100'}`}>{t}</button>)}</div>
+                  {tab==='script' && (
+                    <div className="space-y-3">
+                      {result.opening_line && <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4"><p className="font-semibold text-sm mb-1">👋 Opening Line</p><p className="text-sm italic">"{result.opening_line}"</p></div>}
+                      <div className="bg-gray-50 rounded-xl p-5 border"><pre className="whitespace-pre-wrap text-sm">{result.negotiation_script}</pre></div>
+                      {result.timing_tip && <div className="bg-blue-50 rounded-lg p-3 text-sm"><strong>⏰ Timing: </strong>{result.timing_tip}</div>}
+                    </div>
+                  )}
+                  {tab==='email' && (
+                    <div>
+                      <div className="bg-gray-50 rounded-xl p-5 border relative"><button onClick={()=>{navigator.clipboard.writeText(result.email_template);setCopied(true);setTimeout(()=>setCopied(false),2000);}} className="absolute top-3 right-3 text-xs bg-white border px-3 py-1 rounded-full">{copied?'✓ Copied':'Copy'}</button><pre className="whitespace-pre-wrap text-sm">{result.email_template}</pre></div>
+                    </div>
+                  )}
+                  {tab==='strategy' && (
+                    <div className="space-y-4">
+                      {result.key_arguments?.length>0 && <div><p className="font-semibold mb-2 text-sm">💪 Your Arguments</p><ul className="space-y-2">{result.key_arguments.map((a:string,i:number)=><li key={i} className="flex gap-2 text-sm"><span className="text-emerald-600 font-bold">{i+1}.</span>{a}</li>)}</ul></div>}
+                      {result.benefits_to_negotiate?.length>0 && <div><p className="font-semibold mb-2 text-sm">🎁 Also Negotiate</p><div className="flex flex-wrap gap-2">{result.benefits_to_negotiate.map((b:string,i:number)=><span key={i} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">{b}</span>)}</div></div>}
+                      {result.what_if_they_say_no && <div className="bg-orange-50 rounded-lg p-3 text-sm"><strong>🔄 If they say no: </strong>{result.what_if_they_say_no}</div>}
+                      {result.expected_outcome && <div className="bg-gray-50 rounded-lg p-3 text-sm"><strong>📊 Expected outcome: </strong>{result.expected_outcome}</div>}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'breakupletter' && (() => {
+          const [reason, setReason] = React.useState('');
+          const [duration, setDuration] = React.useState('');
+          const [tone, setTone] = React.useState('kind');
+          const [medium, setMedium] = React.useState('text');
+          const [theirName, setTheirName] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [copied, setCopied] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const write = async () => {
+            if (!reason) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API}/api/breakup/write`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({reason,relationship_duration:duration,tone,medium,their_name:theirName}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">💔 Breakup Letter Writer</h2>
+              <p className="text-sm text-gray-500 mb-6">Kind, honest messages that provide closure</p>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Their Name</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Alex" value={theirName} onChange={e=>setTheirName(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Relationship Duration</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="6 months, 3 years..." value={duration} onChange={e=>setDuration(e.target.value)} /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Main reason *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="We want different things / I don't feel the same way / long distance isn't working..." value={reason} onChange={e=>setReason(e.target.value)} /></div>
+              <div className="flex gap-6 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Tone</label><div className="flex gap-2 flex-wrap">{['kind','direct','firm','compassionate'].map(t=><button key={t} onClick={()=>setTone(t)} className={`px-3 py-1 rounded-full text-sm capitalize ${tone===t?'bg-pink-500 text-white':'bg-gray-100'}`}>{t}</button>)}</div></div>
+                <div><label className="block text-sm font-medium mb-1">Medium</label><div className="flex gap-2">{['text','letter','email','in-person'].map(m=><button key={m} onClick={()=>setMedium(m)} className={`px-3 py-1 rounded-full text-sm capitalize ${medium===m?'bg-pink-500 text-white':'bg-gray-100'}`}>{m}</button>)}</div></div>
+              </div>
+              <button onClick={write} disabled={loading||!reason} className="bg-pink-500 text-white px-6 py-2 rounded-lg hover:bg-pink-600 disabled:opacity-50">{loading ? 'Writing...' : '💔 Write Message'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  <div className="bg-pink-50 border border-pink-200 rounded-xl p-5 relative"><button onClick={()=>{navigator.clipboard.writeText(result.letter);setCopied(true);setTimeout(()=>setCopied(false),2000);}} className="absolute top-3 right-3 text-xs bg-white border px-3 py-1 rounded-full">{copied?'✓ Copied':'Copy'}</button><pre className="whitespace-pre-wrap text-sm leading-relaxed">{result.letter}</pre></div>
+                  {result.timing_advice && <div className="bg-blue-50 rounded-lg p-3 text-sm"><strong>📅 Timing: </strong>{result.timing_advice}</div>}
+                  {result.self_care_reminder && <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-sm italic text-purple-700">💜 {result.self_care_reminder}</div>}
+                  <div className="grid grid-cols-2 gap-3">
+                    {result.dos?.length>0 && <div className="bg-green-50 rounded-lg p-3"><p className="font-semibold text-xs text-green-700 mb-1">✅ DO</p><ul className="space-y-1">{result.dos.map((d:string,i:number)=><li key={i} className="text-xs">• {d}</li>)}</ul></div>}
+                    {result.donts?.length>0 && <div className="bg-red-50 rounded-lg p-3"><p className="font-semibold text-xs text-red-700 mb-1">❌ DON'T</p><ul className="space-y-1">{result.donts.map((d:string,i:number)=><li key={i} className="text-xs text-red-700">• {d}</li>)}</ul></div>}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'bizplan' && (() => {
+          const [idea, setIdea] = React.useState('');
+          const [targetMarket, setTargetMarket] = React.useState('');
+          const [problem, setProblem] = React.useState('');
+          const [budget, setBudget] = React.useState('bootstrapped');
+          const [timeline, setTimeline] = React.useState('12 months');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [section, setSection] = React.useState<'overview'|'milestones'|'gtm'>('overview');
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!idea) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/business-plan/generate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({idea,target_market:targetMarket,problem,budget,timeline}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const scoreColor = (s:number) => s>=75?'text-green-600':s>=50?'text-yellow-600':'text-red-600';
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">📊 One-Page Business Plan</h2>
+              <p className="text-sm text-gray-500 mb-6">From idea to actionable plan in seconds</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Your Business Idea *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="An app that matches dog owners with local dog walkers using AI scheduling..." value={idea} onChange={e=>setIdea(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Target Market</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Urban pet owners aged 25-45" value={targetMarket} onChange={e=>setTargetMarket(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Problem it solves</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Finding reliable dog walkers is painful" value={problem} onChange={e=>setProblem(e.target.value)} /></div>
+              </div>
+              <div className="flex gap-6 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Budget</label><div className="flex gap-2">{['bootstrapped','seed','funded'].map(b=><button key={b} onClick={()=>setBudget(b)} className={`px-3 py-1 rounded-full text-sm capitalize ${budget===b?'bg-blue-600 text-white':'bg-gray-100'}`}>{b}</button>)}</div></div>
+                <div><label className="block text-sm font-medium mb-1">Timeline</label><select className="border rounded px-3 py-2 text-sm" value={timeline} onChange={e=>setTimeline(e.target.value)}><option>3 months</option><option>6 months</option><option>12 months</option><option>24 months</option></select></div>
+              </div>
+              <button onClick={generate} disabled={loading||!idea} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? 'Building plan...' : '📊 Generate Business Plan'}</button>
+              {result && result.plan && (
+                <div className="mt-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="bg-gray-50 rounded-xl p-4 text-center min-w-20"><p className="text-xs text-gray-500">Viability</p><p className={`text-3xl font-black ${scoreColor(result.viability_score)}`}>{result.viability_score}/100</p></div>
+                    <div><p className="font-bold text-lg">{result.plan.tagline}</p><p className="text-sm text-gray-600 mt-1">{result.viability_reason}</p>{result.biggest_challenge && <p className="text-xs text-orange-600 mt-1">⚠️ {result.biggest_challenge}</p>}</div>
+                  </div>
+                  <div className="flex gap-3 mb-4">{(['overview','milestones','gtm'] as const).map(s=><button key={s} onClick={()=>setSection(s)} className={`px-4 py-1.5 rounded-lg text-sm font-medium ${section===s?'bg-blue-600 text-white':'bg-gray-100'}`}>{s==='gtm'?'Go-to-Market':s.charAt(0).toUpperCase()+s.slice(1)}</button>)}</div>
+                  {section==='overview' && (
+                    <div className="space-y-3">
+                      {[['Problem',result.plan.problem],['Solution',result.plan.solution],['Target Customer',result.plan.target_customer],['Revenue Model',result.plan.revenue_model],['Competitive Advantage',result.plan.competitive_advantage]].map(([k,v]:any)=>v&&<div key={k} className="flex gap-3 border-b pb-3"><p className="font-semibold text-sm min-w-36">{k}</p><p className="text-sm text-gray-700">{v}</p></div>)}
+                      {result.plan.pricing && <div className="bg-green-50 rounded-lg p-3"><p className="font-semibold text-sm mb-2">💰 Pricing</p><div className="flex gap-4">{result.plan.pricing.tier1&&<div className="text-sm"><p className="font-medium">{result.plan.pricing.tier1}</p><p className="text-green-700 font-bold">{result.plan.pricing.price1}</p></div>}{result.plan.pricing.tier2&&<div className="text-sm"><p className="font-medium">{result.plan.pricing.tier2}</p><p className="text-green-700 font-bold">{result.plan.pricing.price2}</p></div>}</div></div>}
+                      {result.plan.key_metrics?.length>0 && <div><p className="font-semibold text-sm mb-2">📈 Key Metrics to Track</p><div className="flex flex-wrap gap-2">{result.plan.key_metrics.map((m:string,i:number)=><span key={i} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">{m}</span>)}</div></div>}
+                    </div>
+                  )}
+                  {section==='milestones' && (
+                    <div className="space-y-3">
+                      {result.plan.milestones?.map((m:any,i:number)=><div key={i} className="flex gap-4 border-b pb-3"><div className="bg-blue-600 text-white rounded-lg px-3 py-2 text-center min-w-16"><p className="text-xs">Month</p><p className="font-bold">{m.month}</p></div><p className="text-sm self-center">{m.goal}</p></div>)}
+                      {result.plan.first_30_days?.length>0 && <div className="bg-yellow-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">🚀 First 30 Days</p><ol className="space-y-2">{result.plan.first_30_days.map((a:string,i:number)=><li key={i} className="text-sm flex gap-2"><span className="font-bold text-yellow-600">{i+1}.</span>{a}</li>)}</ol></div>}
+                    </div>
+                  )}
+                  {section==='gtm' && (
+                    <div className="space-y-4">
+                      {result.plan.go_to_market?.length>0 && <div><p className="font-semibold mb-2 text-sm">📢 Go-to-Market Channels</p><ol className="space-y-2">{result.plan.go_to_market.map((c:string,i:number)=><li key={i} className="text-sm flex gap-2"><span className="text-blue-600 font-bold">{i+1}.</span>{c}</li>)}</ol></div>}
+                      {result.plan.risks?.length>0 && <div><p className="font-semibold mb-2 text-sm">⚠️ Risks & Mitigations</p><ul className="space-y-2">{result.plan.risks.map((r:string,i:number)=><li key={i} className="text-sm flex gap-2 text-orange-700"><span>•</span>{r}</li>)}</ul></div>}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'viralhooks' && (() => {
+          const [topic, setTopic] = React.useState('');
+          const [platform, setPlatform] = React.useState('twitter');
+          const [style, setStyle] = React.useState('curiosity');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [copied, setCopied] = React.useState<number|null>(null);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!topic) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/hooks/generate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({topic,platform,style}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const engColor = (e:string) => ({'low':'bg-gray-100 text-gray-600','medium':'bg-blue-100 text-blue-700','high':'bg-yellow-100 text-yellow-700','viral':'bg-red-100 text-red-700'})[e]||'bg-gray-100';
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🔥 Viral Hook Generator</h2>
+              <p className="text-sm text-gray-500 mb-6">10 scroll-stopping hooks for any topic or platform</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Topic / Content *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="How I grew my newsletter to 50k subscribers..." value={topic} onChange={e=>setTopic(e.target.value)} /></div>
+              <div className="flex gap-6 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Platform</label><div className="flex gap-2 flex-wrap">{['twitter','linkedin','instagram','tiktok','youtube','newsletter'].map(p=><button key={p} onClick={()=>setPlatform(p)} className={`px-3 py-1 rounded-full text-sm capitalize ${platform===p?'bg-orange-500 text-white':'bg-gray-100'}`}>{p}</button>)}</div></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Primary Style</label><div className="flex gap-2 flex-wrap">{['curiosity','story','stat','contrarian','list','how-to','shock'].map(s=><button key={s} onClick={()=>setStyle(s)} className={`px-3 py-1 rounded-full text-sm capitalize ${style===s?'bg-orange-500 text-white':'bg-gray-100'}`}>{s}</button>)}</div></div>
+              <button onClick={generate} disabled={loading||!topic} className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 disabled:opacity-50">{loading ? 'Generating...' : '🔥 Generate 10 Hooks'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-3">
+                  {result.hooks?.map((h:any,i:number)=>(
+                    <div key={i} className="border rounded-xl p-4 hover:shadow-sm transition-shadow">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex gap-2 items-center"><span className="text-xs font-bold text-gray-400">#{i+1}</span><span className={`px-2 py-0.5 rounded-full text-xs capitalize ${engColor(h.predicted_engagement)}`}>{h.predicted_engagement}</span><span className="text-xs text-gray-400 capitalize">{h.style}</span></div>
+                        <button onClick={()=>{navigator.clipboard.writeText(h.hook);setCopied(i);setTimeout(()=>setCopied(null),2000);}} className="text-xs bg-gray-100 px-3 py-1 rounded-full hover:bg-gray-200">{copied===i?'✓':h.emoji_suggestion||'📋'} {copied===i?'Copied!':'Copy'}</button>
+                      </div>
+                      <p className="font-medium text-sm mb-2">{h.hook}</p>
+                      <p className="text-xs text-gray-500">{h.why_it_works}</p>
+                    </div>
+                  ))}
+                  {result.content_angles?.length>0 && <div className="bg-blue-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">💡 Content Angles</p><ul className="space-y-1">{result.content_angles.map((a:string,i:number)=><li key={i} className="text-sm flex gap-2"><span>→</span>{a}</li>)}</ul></div>}
+                  {result.hashtag_suggestions?.length>0 && <div className="flex flex-wrap gap-2">{result.hashtag_suggestions.map((h:string,i:number)=><span key={i} className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-sm">{h}</span>)}</div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'dreaminterp' && (() => {
+          const [dream, setDream] = React.useState('');
+          const [mood, setMood] = React.useState('');
+          const [recurring, setRecurring] = React.useState(false);
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [view, setView] = React.useState<'symbols'|'analysis'|'journal'>('analysis');
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const interpret = async () => {
+            if (!dream.trim()) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/dream/interpret`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({dream,mood_before_sleep:mood,recurring}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🌙 Dream Interpreter</h2>
+              <p className="text-sm text-gray-500 mb-6">Jungian, Freudian & modern psychological analysis of your dreams</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Describe your dream *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={6} placeholder="I was in my childhood home but it had different rooms. There was a door I was afraid to open. Outside the window it was always sunset..." value={dream} onChange={e=>setDream(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Mood before sleep</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="anxious, happy, stressed..." value={mood} onChange={e=>setMood(e.target.value)} /></div>
+                <div className="flex items-end pb-2"><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={recurring} onChange={e=>setRecurring(e.target.checked)} className="w-4 h-4" /><span className="text-sm">This dream repeats</span></label></div>
+              </div>
+              <button onClick={interpret} disabled={loading||!dream.trim()} className="bg-indigo-900 text-white px-6 py-2 rounded-lg hover:bg-indigo-950 disabled:opacity-50">{loading ? 'Interpreting...' : '🌙 Interpret Dream'}</button>
+              {result && result.interpretation && (
+                <div className="mt-6">
+                  <div className="bg-indigo-950 text-white rounded-xl p-5 mb-4">
+                    <p className="text-xs text-indigo-300 mb-1 font-semibold">SUMMARY</p>
+                    <p className="text-sm leading-relaxed">{result.interpretation.summary}</p>
+                    {result.interpretation.message_to_self && <div className="mt-3 border-t border-indigo-800 pt-3"><p className="text-xs text-indigo-300 mb-1">MESSAGE FROM YOUR DREAM</p><p className="text-sm italic text-indigo-100">"{result.interpretation.message_to_self}"</p></div>}
+                  </div>
+                  <div className="flex gap-3 mb-4">{(['analysis','symbols','journal'] as const).map(v=><button key={v} onClick={()=>setView(v)} className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize ${view===v?'bg-indigo-900 text-white':'bg-gray-100'}`}>{v}</button>)}</div>
+                  {view==='analysis' && (
+                    <div className="space-y-4">
+                      {result.interpretation.what_your_mind_is_processing && <div className="bg-purple-50 rounded-xl p-4"><p className="font-semibold text-sm mb-1">🧠 What your mind is processing</p><p className="text-sm">{result.interpretation.what_your_mind_is_processing}</p></div>}
+                      {result.interpretation.emotional_themes?.length>0 && <div><p className="font-semibold text-sm mb-2">💜 Emotional Themes</p><div className="flex flex-wrap gap-2">{result.interpretation.emotional_themes.map((t:string,i:number)=><span key={i} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">{t}</span>)}</div></div>}
+                      {result.interpretation.jungian_analysis && <div className="bg-gray-50 rounded-lg p-4 text-sm"><p className="font-semibold mb-1">⚪ Jungian Analysis</p>{result.interpretation.jungian_analysis}</div>}
+                      {result.interpretation.positive_spin && <div className="bg-green-50 rounded-lg p-4 text-sm"><p className="font-semibold mb-1 text-green-700">✨ Positive Reframe</p>{result.interpretation.positive_spin}</div>}
+                    </div>
+                  )}
+                  {view==='symbols' && (
+                    <div className="space-y-3">{result.interpretation.symbols?.map((s:any,i:number)=><div key={i} className="border rounded-xl p-4"><div className="flex items-center gap-2 mb-1"><p className="font-semibold text-sm capitalize">"{s.symbol}"</p></div><p className="text-sm text-gray-700 mb-1">{s.meaning}</p>{s.context && <p className="text-xs text-gray-500 italic">{s.context}</p>}</div>)}</div>
+                  )}
+                  {view==='journal' && (
+                    <div className="space-y-3">
+                      {result.interpretation.action_items?.length>0 && <div className="bg-blue-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">💡 Reflect On</p><ul className="space-y-2">{result.interpretation.action_items.map((a:string,i:number)=><li key={i} className="text-sm flex gap-2"><span className="text-blue-600">{i+1}.</span>{a}</li>)}</ul></div>}
+                      {result.interpretation.questions_to_journal?.length>0 && <div><p className="font-semibold text-sm mb-2">📓 Journal Prompts</p><ul className="space-y-3">{result.interpretation.questions_to_journal.map((q:string,i:number)=><li key={i} className="bg-gray-50 rounded-lg p-3 text-sm italic">"{q}"</li>)}</ul></div>}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 9 ─────────────────────────────────────── */}
+        {(mainTab as string) === 'roastgen' && (() => {
+          const [subject, setSubject] = React.useState('');
+          const [style, setStyle] = React.useState('funny');
+          const [context, setContext] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [copied, setCopied] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!subject) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/roast/generate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({subject,style,context}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🎤 Roast Generator</h2>
+              <p className="text-sm text-gray-500 mb-6">Comedy roasts with killer burns (all in good fun)</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Who/What to roast *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="My friend who's always late, my old startup idea, 2020..." value={subject} onChange={e=>setSubject(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Context (optional)</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="We're at their birthday party, they love self-deprecating humor..." value={context} onChange={e=>setContext(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Roast Style</label><div className="flex gap-2 flex-wrap">{['funny','savage','gentle','dad-jokes','celebrity-style'].map(s=><button key={s} onClick={()=>setStyle(s)} className={`px-3 py-1 rounded-full text-sm capitalize ${style===s?'bg-red-500 text-white':'bg-gray-100'}`}>{s}</button>)}</div></div>
+              <button onClick={generate} disabled={loading||!subject} className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 disabled:opacity-50">{loading ? 'Writing burns...' : '🎤 Roast Them'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-5 relative"><button onClick={()=>{navigator.clipboard.writeText(result.roast);setCopied(true);setTimeout(()=>setCopied(false),2000);}} className="absolute top-3 right-3 text-xs bg-white border px-3 py-1 rounded-full">{copied?'✓ Copied':'Copy'}</button><pre className="whitespace-pre-wrap text-sm leading-relaxed">{result.roast}</pre></div>
+                  {result.best_line && <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4"><p className="font-bold text-sm mb-1">🏆 Best Line</p><p className="text-sm italic">"{result.best_line}"</p></div>}
+                  {result.burns?.length>0 && <div><p className="font-semibold text-sm mb-2">🔥 Top Burns</p><ul className="space-y-2">{result.burns.map((b:string,i:number)=><li key={i} className="bg-gray-50 rounded-lg p-3 text-sm flex gap-2"><span>{i+1}.</span>{b}</li>)}</ul></div>}
+                  {result.comeback_they_might_use && <div className="bg-blue-50 rounded-lg p-3 text-sm"><strong>😏 Their likely comeback: </strong>{result.comeback_they_might_use}</div>}
+                  {result.rating && <p className="text-xs text-gray-400 text-right">Roast rating: {result.rating}/10 🔥</p>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'futureself' && (() => {
+          const [situation, setSituation] = React.useState('');
+          const [goals, setGoals] = React.useState('');
+          const [fears, setFears] = React.useState('');
+          const [years, setYears] = React.useState(5);
+          const [msg, setMsg] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [copied, setCopied] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const write = async () => {
+            if (!situation) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/future-self/write`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({current_situation:situation,goals,fears,years_ahead:years,message_to_future:msg}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">✉️ Letter to Future Self</h2>
+              <p className="text-sm text-gray-500 mb-6">A heartfelt time capsule letter you'll treasure</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Where are you right now? *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="I just graduated, starting my first job, feeling uncertain about the future..." value={situation} onChange={e=>setSituation(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Your biggest goals</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="Start a company, find love, travel the world..." value={goals} onChange={e=>setGoals(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Your biggest fears</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="Failure, loneliness, never finding my purpose..." value={fears} onChange={e=>setFears(e.target.value)} /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Message to your future self</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="I hope you remember why you started..." value={msg} onChange={e=>setMsg(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Years into the future: {years}</label><input type="range" min={1} max={20} value={years} onChange={e=>setYears(+e.target.value)} className="w-full" /></div>
+              <button onClick={write} disabled={loading||!situation} className="bg-violet-600 text-white px-6 py-2 rounded-lg hover:bg-violet-700 disabled:opacity-50">{loading ? 'Writing...' : '✉️ Write Letter'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  <div className="bg-violet-50 border border-violet-200 rounded-xl p-5 relative font-serif"><button onClick={()=>{navigator.clipboard.writeText(result.letter);setCopied(true);setTimeout(()=>setCopied(false),2000);}} className="absolute top-3 right-3 text-xs bg-white border px-3 py-1 rounded-full font-sans">{copied?'✓ Copied':'Copy'}</button><pre className="whitespace-pre-wrap text-sm leading-relaxed">{result.letter}</pre></div>
+                  {result.key_reminder && <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4"><p className="font-bold text-sm mb-1">⭐ Key Reminder</p><p className="text-sm italic">"{result.key_reminder}"</p></div>}
+                  {result.predictions?.length>0 && <div><p className="font-semibold text-sm mb-2">🔮 What your future self might say</p><ul className="space-y-1">{result.predictions.map((p:string,i:number)=><li key={i} className="text-sm flex gap-2"><span className="text-violet-500">•</span>{p}</li>)}</ul></div>}
+                  {result.time_capsule_items?.length>0 && <div className="bg-gray-50 rounded-lg p-3"><p className="font-semibold text-sm mb-1">📦 Time Capsule Items to Include</p><ul className="space-y-1">{result.time_capsule_items.map((i:string,idx:number)=><li key={idx} className="text-sm">• {i}</li>)}</ul></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'resumebullets' && (() => {
+          const [bullets, setBullets] = React.useState('');
+          const [role, setRole] = React.useState('');
+          const [industry, setIndustry] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const rewrite = async () => {
+            if (!bullets) return;
+            const bulletList = bullets.split('\n').filter(b=>b.trim());
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/resume/rewrite-bullets`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({bullets:bulletList,role,industry}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const scoreColor = (s:number) => s>=8?'text-green-600':s>=6?'text-yellow-600':'text-red-500';
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">⚡ Resume Bullet Rewriter</h2>
+              <p className="text-sm text-gray-500 mb-6">Transform weak bullets into powerful, quantified achievements</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Your Bullets (one per line) *</label><textarea className="w-full border rounded px-3 py-2 text-sm font-mono" rows={6} placeholder={"Responsible for managing the team\nHelped with customer support\nWorked on improving the website"} value={bullets} onChange={e=>setBullets(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Target Role</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Product Manager, Software Engineer..." value={role} onChange={e=>setRole(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Industry</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="SaaS, Finance, Healthcare..." value={industry} onChange={e=>setIndustry(e.target.value)} /></div>
+              </div>
+              <button onClick={rewrite} disabled={loading||!bullets} className="bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 disabled:opacity-50">{loading ? 'Rewriting...' : '⚡ Rewrite Bullets'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  {result.rewritten?.map((b:any,i:number)=>(
+                    <div key={i} className="border rounded-xl p-4">
+                      <div className="text-xs text-red-500 line-through mb-1">{b.original}</div>
+                      <div className="text-sm font-medium text-green-700 mb-2">✅ {b.improved}</div>
+                      <div className="flex gap-3 text-xs text-gray-500"><span className={`font-bold ${scoreColor(b.impact_score)}`}>Impact: {b.impact_score}/10</span><span>Action verb: <strong>{b.action_verb}</strong></span></div>
+                      {b.why_better && <p className="text-xs text-gray-400 mt-1 italic">{b.why_better}</p>}
+                    </div>
+                  ))}
+                  {result.overall_tips?.length>0 && <div className="bg-blue-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">💡 Overall Tips</p><ul className="space-y-1">{result.overall_tips.map((t:string,i:number)=><li key={i} className="text-sm flex gap-2"><span>•</span>{t}</li>)}</ul></div>}
+                  {result.missing_keywords?.length>0 && <div className="bg-yellow-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">🔑 Keywords to Add</p><div className="flex flex-wrap gap-2">{result.missing_keywords.map((k:string,i:number)=><span key={i} className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-sm">{k}</span>)}</div></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'meetingbuilder' && (() => {
+          const [meetType, setMeetType] = React.useState('');
+          const [goal, setGoal] = React.useState('');
+          const [attendees, setAttendees] = React.useState('');
+          const [duration, setDuration] = React.useState(60);
+          const [context, setContext] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [copied, setCopied] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const build = async () => {
+            if (!meetType || !goal) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/meeting/agenda`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({meeting_type:meetType,goal,attendees,duration_mins:duration,context}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const typeIcon:Record<string,string> = { discussion:'💬', decision:'✅', info:'📢', brainstorm:'🧠' };
+          const formatAgenda = () => {
+            if (!result) return '';
+            let s = `${result.title}\n\nObjective: ${result.objective}\n\nAGENDA:\n`;
+            result.agenda_items?.forEach((a:any,i:number)=>{s+=`${i+1}. [${a.time_mins} min] ${a.topic} (${a.owner})\n`;});
+            return s;
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">📋 Meeting Agenda Builder</h2>
+              <p className="text-sm text-gray-500 mb-6">Structured agendas that make meetings actually worth attending</p>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Meeting Type *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Q3 Planning, 1:1, Sprint Retrospective..." value={meetType} onChange={e=>setMeetType(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Duration: {duration} min</label><input type="range" min={15} max={180} step={15} value={duration} onChange={e=>setDuration(+e.target.value)} className="w-full mt-2" /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Meeting Goal *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Decide on Q3 roadmap priorities and assign owners..." value={goal} onChange={e=>setGoal(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Attendees</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Product, Eng, Design leads..." value={attendees} onChange={e=>setAttendees(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Context</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="First planning meeting after org reorg..." value={context} onChange={e=>setContext(e.target.value)} /></div>
+              </div>
+              <button onClick={build} disabled={loading||!meetType||!goal} className="bg-slate-700 text-white px-6 py-2 rounded-lg hover:bg-slate-800 disabled:opacity-50">{loading ? 'Building...' : '📋 Build Agenda'}</button>
+              {result && !result.error && (
+                <div className="mt-6">
+                  <div className="flex justify-between items-start mb-3"><div><h3 className="font-bold text-lg">{result.title}</h3><p className="text-sm text-gray-600">{result.objective}</p></div><button onClick={()=>{navigator.clipboard.writeText(formatAgenda());setCopied(true);setTimeout(()=>setCopied(false),2000);}} className="text-xs bg-white border px-3 py-1 rounded-full hover:bg-gray-50">{copied?'✓ Copied':'Copy'}</button></div>
+                  {result.icebreaker && <div className="bg-yellow-50 rounded-lg p-3 mb-3 text-sm"><strong>🎲 Icebreaker: </strong>{result.icebreaker}</div>}
+                  <div className="space-y-2 mb-4">{result.agenda_items?.map((a:any,i:number)=><div key={i} className="border rounded-xl p-3 flex gap-4"><div className="bg-slate-700 text-white rounded-lg px-2 py-1 text-center min-w-14"><p className="text-xs">{a.time_mins}m</p></div><div className="flex-1"><div className="flex items-center gap-2"><span>{typeIcon[a.type]||'📌'}</span><p className="font-medium text-sm">{a.topic}</p></div><p className="text-xs text-gray-500 mt-0.5">{a.owner} • {a.notes}</p></div></div>)}</div>
+                  {result.desired_outcomes?.length>0 && <div className="bg-green-50 rounded-xl p-4 mb-3"><p className="font-semibold text-sm mb-2">✅ Desired Outcomes</p><ul className="space-y-1">{result.desired_outcomes.map((o:string,i:number)=><li key={i} className="text-sm flex gap-2"><span>•</span>{o}</li>)}</ul></div>}
+                  {result.pre_read?.length>0 && <div className="bg-blue-50 rounded-lg p-3"><p className="font-semibold text-sm mb-1">📖 Pre-read</p><ul className="space-y-1">{result.pre_read.map((p:string,i:number)=><li key={i} className="text-sm">• {p}</li>)}</ul></div>}
+                  {result.follow_up_template && <div className="bg-gray-50 rounded-lg p-3 mt-3"><p className="font-semibold text-sm mb-1">📬 Follow-up Template</p><pre className="text-xs whitespace-pre-wrap text-gray-700">{result.follow_up_template}</pre></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'gratitudereflect' && (() => {
+          const [entries, setEntries] = React.useState('');
+          const [mood, setMood] = React.useState('neutral');
+          const [context, setContext] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const reflect = async () => {
+            if (!entries) return;
+            const list = entries.split('\n').filter(e=>e.trim());
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/gratitude/reflect`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({entries:list,mood,context}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const depthColor:Record<string,string> = { surface:'bg-gray-100 text-gray-600', moderate:'bg-blue-100 text-blue-700', deep:'bg-purple-100 text-purple-700' };
+          return (
+            <div className="p-6 max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🙏 Gratitude Journal</h2>
+              <p className="text-sm text-gray-500 mb-6">Deepen your gratitude practice with AI reflection</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What are you grateful for today? *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={5} placeholder={"My morning coffee\nThe project finally shipped\nMy friend called to check on me\nThe sunlight coming through the window"} value={entries} onChange={e=>setEntries(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Current Mood</label><div className="flex gap-2 flex-wrap">{['😔 low','😐 neutral','😊 good','🌟 great'].map(m=>{const val=m.split(' ')[1];return<button key={val} onClick={()=>setMood(val)} className={`px-3 py-1 rounded-full text-sm ${mood===val?'bg-green-600 text-white':'bg-gray-100'}`}>{m}</button>})}</div></div>
+                <div><label className="block text-sm font-medium mb-1">Context</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Tough day at work, feeling burned out..." value={context} onChange={e=>setContext(e.target.value)} /></div>
+              </div>
+              <button onClick={reflect} disabled={loading||!entries} className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Reflecting...' : '🙏 Reflect on My Gratitude'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-5">
+                    <div className="flex items-center gap-2 mb-2"><p className="font-semibold text-sm">Your Reflection</p>{result.appreciation_depth && <span className={`px-2 py-0.5 rounded-full text-xs capitalize ${depthColor[result.appreciation_depth]||'bg-gray-100'}`}>{result.appreciation_depth} gratitude</span>}</div>
+                    <p className="text-sm leading-relaxed text-gray-800">{result.reflection}</p>
+                  </div>
+                  {result.themes?.length>0 && <div><p className="font-semibold text-sm mb-2">🌿 Themes in Your Gratitude</p><div className="flex flex-wrap gap-2">{result.themes.map((t:string,i:number)=><span key={i} className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm">{t}</span>)}</div></div>}
+                  {result.insight && <div className="bg-blue-50 rounded-lg p-4 text-sm"><strong>💡 Insight: </strong>{result.insight}</div>}
+                  {result.reframe && <div className="bg-orange-50 rounded-lg p-4 text-sm"><strong>🔄 Reframe: </strong>{result.reframe}</div>}
+                  {result.what_you_have?.length>0 && <div className="bg-purple-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">💜 What You Have</p><ul className="space-y-1">{result.what_you_have.map((w:string,i:number)=><li key={i} className="text-sm flex gap-2"><span>•</span>{w}</li>)}</ul></div>}
+                  {result.challenge_for_tomorrow && <div className="border-2 border-green-200 rounded-xl p-4"><p className="font-semibold text-sm mb-1">🌱 Tomorrow's Challenge</p><p className="text-sm">{result.challenge_for_tomorrow}</p></div>}
+                  {result.affirmation && <div className="text-center py-4"><p className="text-lg font-medium italic text-green-700">"{result.affirmation}"</p></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 10 ─────────────────────────────────────── */}
+        {(mainTab as string) === 'coldpitch' && (() => {
+          const [product, setProduct] = React.useState('');
+          const [target, setTarget] = React.useState('');
+          const [pain, setPain] = React.useState('');
+          const [value, setValue] = React.useState('');
+          const [tone, setTone] = React.useState('professional');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [copied, setCopied] = React.useState<number|null>(null);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!product || !target) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/cold-pitch/generate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({product,target_audience:target,pain_point:pain,unique_value:value,tone}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const chanIcon:Record<string,string> = { email:'📧', linkedin:'💼', twitter:'🐦', phone:'📞' };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🎯 Cold Pitch Generator</h2>
+              <p className="text-sm text-gray-500 mb-6">3 pitch variations across channels that actually get responses</p>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Product / Service *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="AI writing tool for marketers" value={product} onChange={e=>setProduct(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Target Audience *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="B2B SaaS startup founders" value={target} onChange={e=>setTarget(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Their Pain Point</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Spending 10+ hours/week on content" value={pain} onChange={e=>setPain(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Your Unique Value</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="10x faster than ChatGPT, brand-trained" value={value} onChange={e=>setValue(e.target.value)} /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Tone</label><div className="flex gap-2">{['professional','casual','bold','empathetic'].map(t=><button key={t} onClick={()=>setTone(t)} className={`px-3 py-1 rounded-full text-sm capitalize ${tone===t?'bg-blue-600 text-white':'bg-gray-100'}`}>{t}</button>)}</div></div>
+              <button onClick={generate} disabled={loading||!product||!target} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? 'Writing pitches...' : '🎯 Generate 3 Pitches'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  {result.key_message && <div className="bg-blue-50 border border-blue-200 rounded-xl p-4"><p className="font-semibold text-sm mb-1">💡 Core Message</p><p className="text-sm">{result.key_message}</p></div>}
+                  {result.pitches?.map((p:any,i:number)=>(
+                    <div key={i} className="border rounded-xl p-5">
+                      <div className="flex justify-between items-center mb-3"><div className="flex items-center gap-2"><span className="text-xl">{chanIcon[p.channel]||'📣'}</span><span className="font-semibold capitalize">{p.channel}</span><span className="text-xs text-gray-400">{p.length_words} words</span></div><button onClick={()=>{navigator.clipboard.writeText((p.subject?`Subject: ${p.subject}\n\n`:'')+p.pitch);setCopied(i);setTimeout(()=>setCopied(null),2000);}} className="text-xs bg-gray-100 px-3 py-1 rounded-full">{copied===i?'✓ Copied':'Copy'}</button></div>
+                      {p.subject && <p className="text-xs font-medium text-gray-500 mb-1">Subject: {p.subject}</p>}
+                      <div className="bg-gray-50 rounded-lg p-3 mb-2"><pre className="whitespace-pre-wrap text-sm">{p.pitch}</pre></div>
+                      <div className="flex gap-4 text-xs text-gray-500"><span>🎣 Hook: {p.hook}</span><span>→ CTA: {p.cta}</span></div>
+                    </div>
+                  ))}
+                  {result.objections_to_expect?.length>0 && <div className="bg-orange-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">⚠️ Expect These Objections</p><ul className="space-y-1">{result.objections_to_expect.map((o:string,i:number)=><li key={i} className="text-sm flex gap-2"><span>•</span>{o}</li>)}</ul></div>}
+                  {result.follow_up_template && <div className="bg-gray-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">📬 Follow-up Template</p><pre className="whitespace-pre-wrap text-sm">{result.follow_up_template}</pre></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'moodtracker' && (() => {
+          const [mood, setMood] = React.useState(7);
+          const [energy, setEnergy] = React.useState(6);
+          const [notes, setNotes] = React.useState('');
+          const [context, setContext] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [history, setHistory] = React.useState<any[]>([]);
+          const [view, setView] = React.useState<'log'|'history'>('log');
+          const [loading, setLoading] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          React.useEffect(() => { fetch(`${API}/api/mood/history`,{headers:{'Authorization':`Bearer ${token}`}}).then(r=>r.json()).then(d=>setHistory(Array.isArray(d)?d:[])).catch(()=>{}); }, []);
+          const log = async () => {
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/mood/log`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({mood,energy,notes,context}) });
+              const d = await r.json(); setResult(d);
+              setHistory(prev=>[{mood,energy,notes,created_at:new Date().toISOString()},...prev].slice(0,30));
+            } finally { setLoading(false); }
+          };
+          const moodEmoji = (m:number) => m>=9?'🌟':m>=7?'😊':m>=5?'😐':m>=3?'😔':'😢';
+          const trendColor:Record<string,string> = { improving:'text-green-600', stable:'text-blue-600', declining:'text-red-500', new:'text-gray-500' };
+          return (
+            <div className="p-6 max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🌊 Mood Tracker</h2>
+              <p className="text-sm text-gray-500 mb-4">Track your mood + get AI insights on patterns</p>
+              <div className="flex gap-3 mb-4">{(['log','history'] as const).map(v=><button key={v} onClick={()=>setView(v)} className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize ${view===v?'bg-indigo-600 text-white':'bg-gray-100'}`}>{v}</button>)}</div>
+              {view==='log' && (
+                <div>
+                  <div className="bg-gray-50 rounded-xl p-5 mb-4">
+                    <div className="flex items-center gap-4 mb-4"><span className="text-4xl">{moodEmoji(mood)}</span><div className="flex-1"><label className="text-sm font-medium">Mood: {mood}/10</label><input type="range" min={1} max={10} value={mood} onChange={e=>setMood(+e.target.value)} className="w-full mt-1" /></div></div>
+                    <div><label className="text-sm font-medium">Energy: {energy}/10</label><input type="range" min={1} max={10} value={energy} onChange={e=>setEnergy(+e.target.value)} className="w-full mt-1" /></div>
+                  </div>
+                  <div className="mb-4"><label className="block text-sm font-medium mb-1">Notes</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="What's going on today? How are you feeling?" value={notes} onChange={e=>setNotes(e.target.value)} /></div>
+                  <div className="mb-4"><label className="block text-sm font-medium mb-1">Context</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Big presentation today, got bad news, workout done..." value={context} onChange={e=>setContext(e.target.value)} /></div>
+                  <button onClick={log} disabled={loading} className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50">{loading ? 'Analyzing...' : '🌊 Log Mood + Get Insights'}</button>
+                  {result && !result.error && (
+                    <div className="mt-6 space-y-3">
+                      <div className="bg-indigo-50 rounded-xl p-4"><div className="flex justify-between mb-1"><p className="font-semibold text-sm">Insight</p>{result.trend&&<span className={`text-xs font-medium capitalize ${trendColor[result.trend]||''}`}>Trend: {result.trend}</span>}</div><p className="text-sm">{result.insight}</p></div>
+                      {result.pattern && <div className="bg-gray-50 rounded-lg p-3 text-sm"><strong>📊 Pattern: </strong>{result.pattern}</div>}
+                      {result.trigger_detected && <div className="bg-orange-50 rounded-lg p-3 text-sm"><strong>⚡ Trigger detected: </strong>{result.trigger_detected}</div>}
+                      {result.suggestion && <div className="bg-green-50 rounded-lg p-3 text-sm"><strong>💡 Suggestion: </strong>{result.suggestion}</div>}
+                      {result.activity_suggestion && <div className="bg-blue-50 rounded-lg p-3 text-sm"><strong>🎯 Try: </strong>{result.activity_suggestion}</div>}
+                      {result.affirmation && <p className="text-center italic text-indigo-700 text-sm py-2">"{result.affirmation}"</p>}
+                    </div>
+                  )}
+                </div>
+              )}
+              {view==='history' && (
+                <div className="space-y-2">
+                  {history.length===0 ? <p className="text-sm text-gray-400 text-center py-8">No mood entries yet — log your first one!</p> :
+                  history.map((h,i)=><div key={i} className="flex items-center gap-3 border rounded-lg px-4 py-2"><span className="text-xl">{moodEmoji(h.mood)}</span><div className="flex-1"><div className="flex gap-3"><span className="text-sm font-medium">Mood {h.mood}/10</span><span className="text-sm text-gray-500">Energy {h.energy}/10</span></div>{h.notes&&<p className="text-xs text-gray-400 truncate">{h.notes}</p>}</div><p className="text-xs text-gray-400">{new Date(h.created_at).toLocaleDateString()}</p></div>)}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'habitjournal' && (() => {
+          const [habit, setHabit] = React.useState('');
+          const [completed, setCompleted] = React.useState(true);
+          const [streak, setStreak] = React.useState(0);
+          const [notes, setNotes] = React.useState('');
+          const [difficulty, setDifficulty] = React.useState('normal');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const log = async () => {
+            if (!habit) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/habit-journal/log`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({habit,completed,streak,notes,difficulty}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🔗 Habit Journal</h2>
+              <p className="text-sm text-gray-500 mb-6">Log your habit + get personalized coaching</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Habit *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Morning run, meditation, cold shower, reading..." value={habit} onChange={e=>setHabit(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Did you complete it?</label><div className="flex gap-3 mt-2"><button onClick={()=>setCompleted(true)} className={`flex-1 py-2 rounded-lg text-sm font-medium ${completed?'bg-green-600 text-white':'bg-gray-100'}`}>✅ Yes!</button><button onClick={()=>setCompleted(false)} className={`flex-1 py-2 rounded-lg text-sm font-medium ${!completed?'bg-red-500 text-white':'bg-gray-100'}`}>❌ No</button></div></div>
+                <div><label className="block text-sm font-medium mb-1">Current Streak: {streak} days</label><input type="range" min={0} max={365} value={streak} onChange={e=>setStreak(+e.target.value)} className="w-full mt-2" /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">How did it feel?</label><div className="flex gap-2">{['easy','normal','hard','very hard'].map(d=><button key={d} onClick={()=>setDifficulty(d)} className={`px-3 py-1 rounded-full text-sm capitalize ${difficulty===d?'bg-orange-500 text-white':'bg-gray-100'}`}>{d}</button>)}</div></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Notes</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="How did it go? What made it easier/harder?" value={notes} onChange={e=>setNotes(e.target.value)} /></div>
+              <button onClick={log} disabled={loading||!habit} className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 disabled:opacity-50">{loading ? 'Getting coaching...' : '🔗 Log + Get Coaching'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-3">
+                  <div className={`rounded-xl p-5 ${completed?'bg-green-50 border border-green-200':'bg-orange-50 border border-orange-200'}`}><p className="font-semibold text-sm mb-2">{completed?'🎉 Coaching':'💪 Recovery Coaching'}</p><p className="text-sm leading-relaxed">{result.coaching}</p></div>
+                  {result.streak_message && <div className="text-center py-3 bg-yellow-50 rounded-xl"><p className="text-lg">🔥 {result.streak_message}</p></div>}
+                  {!completed && result.if_they_broke_streak && <div className="bg-blue-50 rounded-lg p-4 text-sm"><strong>💙 Remember: </strong>{result.if_they_broke_streak}</div>}
+                  {result.why_this_matters && <div className="bg-purple-50 rounded-lg p-3 text-sm"><strong>⭐ Why this matters: </strong>{result.why_this_matters}</div>}
+                  {result.tip_for_tomorrow && <div className="bg-gray-50 rounded-lg p-3 text-sm"><strong>☀️ Tomorrow: </strong>{result.tip_for_tomorrow}</div>}
+                  {result.micro_win && <p className="text-center text-sm italic text-green-700 py-2">"{result.micro_win}"</p>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'lifegoals' && (() => {
+          const [goal, setGoal] = React.useState('');
+          const [category, setCategory] = React.useState('personal');
+          const [timeframe, setTimeframe] = React.useState('');
+          const [situation, setSituation] = React.useState('');
+          const [obstacles, setObstacles] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [section, setSection] = React.useState<'plan'|'milestones'|'actions'>('plan');
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const plan = async () => {
+            if (!goal) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/life-goals/plan`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({goal,category,timeframe,current_situation:situation,obstacles}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const cats = ['personal','career','health','financial','relationships','learning','creative','spiritual'];
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🌟 Life Goals Planner</h2>
+              <p className="text-sm text-gray-500 mb-6">Transform big dreams into concrete, achievable plans</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Your Goal *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="I want to build a successful business, get fit, learn Spanish, move abroad..." value={goal} onChange={e=>setGoal(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Category</label><div className="flex gap-2 flex-wrap">{cats.map(c=><button key={c} onClick={()=>setCategory(c)} className={`px-3 py-1 rounded-full text-sm capitalize ${category===c?'bg-yellow-500 text-white':'bg-gray-100'}`}>{c}</button>)}</div></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Timeframe</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="6 months, 2 years, by 30..." value={timeframe} onChange={e=>setTimeframe(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Current Situation</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Working 9-5, no savings, beginner level..." value={situation} onChange={e=>setSituation(e.target.value)} /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Biggest Obstacles</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="No time, money, don't know where to start..." value={obstacles} onChange={e=>setObstacles(e.target.value)} /></div>
+              <button onClick={plan} disabled={loading||!goal} className="bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 disabled:opacity-50">{loading ? 'Planning...' : '🌟 Create My Plan'}</button>
+              {result && !result.error && (
+                <div className="mt-6">
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-5 mb-4">
+                    <p className="font-bold text-lg mb-1">{result.reframed_goal}</p>
+                    <p className="text-sm text-gray-600">{result.why_this_goal_matters}</p>
+                    {result.identity_shift && <p className="text-sm italic text-yellow-700 mt-2">Identity shift: {result.identity_shift}</p>}
+                  </div>
+                  <div className="flex gap-3 mb-4">{(['plan','milestones','actions'] as const).map(s=><button key={s} onClick={()=>setSection(s)} className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize ${section===s?'bg-yellow-500 text-white':'bg-gray-100'}`}>{s}</button>)}</div>
+                  {section==='plan' && (
+                    <div className="space-y-3">
+                      {result.success_metrics?.length>0 && <div><p className="font-semibold text-sm mb-2">📏 How You'll Know You've Made It</p><ul className="space-y-1">{result.success_metrics.map((m:string,i:number)=><li key={i} className="text-sm flex gap-2"><span className="text-yellow-500">✓</span>{m}</li>)}</ul></div>}
+                      {result.obstacle_solutions?.length>0 && <div><p className="font-semibold text-sm mb-2">🛡️ Obstacle Solutions</p>{result.obstacle_solutions.map((o:any,i:number)=><div key={i} className="border rounded-lg p-3 mb-2"><p className="text-sm font-medium text-red-600">⚠️ {o.obstacle}</p><p className="text-sm text-green-700 mt-1">→ {o.solution}</p></div>)}</div>}
+                      {result.accountability_ideas?.length>0 && <div className="bg-blue-50 rounded-lg p-3"><p className="font-semibold text-sm mb-1">👥 Accountability Ideas</p><ul className="space-y-1">{result.accountability_ideas.map((a:string,i:number)=><li key={i} className="text-sm">• {a}</li>)}</ul></div>}
+                    </div>
+                  )}
+                  {section==='milestones' && (
+                    <div className="space-y-3">{result.milestones?.map((m:any,i:number)=><div key={i} className="flex gap-4 border-b pb-3"><div className="bg-yellow-500 text-white rounded-lg px-3 py-2 text-center min-w-16 self-start"><p className="text-xs font-bold">{m.phase}</p></div><div><p className="font-medium text-sm">{m.milestone}</p>{m.by_when&&<p className="text-xs text-gray-500 mt-0.5">By: {m.by_when}</p>}</div></div>)}</div>
+                  )}
+                  {section==='actions' && (
+                    <div className="space-y-3">
+                      {result.first_step_right_now && <div className="bg-green-500 text-white rounded-xl p-4"><p className="font-bold text-sm mb-1">🚀 Do This RIGHT NOW</p><p>{result.first_step_right_now}</p></div>}
+                      {result.weekly_actions?.length>0 && <div><p className="font-semibold text-sm mb-2">📅 Weekly Actions</p><ol className="space-y-2">{result.weekly_actions.map((a:string,i:number)=><li key={i} className="text-sm flex gap-2"><span className="font-bold text-yellow-600">{i+1}.</span>{a}</li>)}</ol></div>}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'standupwriter' && (() => {
+          const [yesterday, setYesterday] = React.useState('');
+          const [today, setToday] = React.useState('');
+          const [blockers, setBlockers] = React.useState('');
+          const [teamCtx, setTeamCtx] = React.useState('');
+          const [format, setFormat] = React.useState('slack');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [copied, setCopied] = React.useState<string|null>(null);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const write = async () => {
+            if (!yesterday || !today) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/standup/write`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({yesterday,today,blockers,team_context:teamCtx,format}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">☀️ Daily Standup Writer</h2>
+              <p className="text-sm text-gray-500 mb-6">Crisp, clear standups that keep your team in the loop</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Yesterday *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="Finished the auth refactor, reviewed 3 PRs, fixed the prod bug from last night..." value={yesterday} onChange={e=>setYesterday(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Today *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="Starting on the payment integration, sprint planning meeting at 2pm..." value={today} onChange={e=>setToday(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Blockers</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Waiting on design review, need AWS access..." value={blockers} onChange={e=>setBlockers(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Team Context</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Engineering team, sprint 23, 5 devs..." value={teamCtx} onChange={e=>setTeamCtx(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Primary Format</label><div className="flex gap-2">{['slack','jira','email'].map(f=><button key={f} onClick={()=>setFormat(f)} className={`px-3 py-1 rounded-full text-sm capitalize ${format===f?'bg-gray-800 text-white':'bg-gray-100'}`}>{f}</button>)}</div></div>
+              </div>
+              <button onClick={write} disabled={loading||!yesterday||!today} className="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-900 disabled:opacity-50">{loading ? 'Writing...' : '☀️ Write Standup'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  <div className="bg-gray-50 rounded-xl p-5 relative"><button onClick={()=>{navigator.clipboard.writeText(result.standup);setCopied('main');setTimeout(()=>setCopied(null),2000);}} className="absolute top-3 right-3 text-xs bg-white border px-3 py-1 rounded-full">{copied==='main'?'✓ Copied':'Copy'}</button><pre className="whitespace-pre-wrap text-sm">{result.standup}</pre></div>
+                  {result.summary_tweet && <div className="bg-blue-50 rounded-lg p-3 text-sm"><strong>🐦 Tweet-length: </strong>{result.summary_tweet}</div>}
+                  {result.blocker_escalation && <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm"><strong>🚨 Escalate: </strong>{result.blocker_escalation}</div>}
+                  {result.formatted_versions && (
+                    <div><p className="font-semibold text-sm mb-2">📋 All Formats</p><div className="space-y-2">{Object.entries(result.formatted_versions).map(([fmt,text]:any)=><div key={fmt} className="border rounded-lg p-3"><div className="flex justify-between items-center mb-1"><span className="text-xs font-medium uppercase text-gray-500">{fmt}</span><button onClick={()=>{navigator.clipboard.writeText(text);setCopied(fmt);setTimeout(()=>setCopied(null),2000);}} className="text-xs bg-gray-100 px-2 py-0.5 rounded">{copied===fmt?'✓':'Copy'}</button></div><pre className="whitespace-pre-wrap text-xs text-gray-700">{text}</pre></div>)}</div></div>
+                  )}
+                  {result.energy_level_tip && <p className="text-xs text-gray-400 text-center italic">{result.progress_emoji} {result.energy_level_tip}</p>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 11 ─────────────────────────────────────── */}
+        {(mainTab as string) === 'conflictresolve' && (() => {
+          const [situation, setSituation] = React.useState('');
+          const [yourPov, setYourPov] = React.useState('');
+          const [theirPov, setTheirPov] = React.useState('');
+          const [relType, setRelType] = React.useState('colleague');
+          const [outcome, setOutcome] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [tab, setTab] = React.useState<'script'|'paths'|'insight'>('insight');
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const resolve = async () => {
+            if (!situation) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/conflict/resolve`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({situation,your_perspective:yourPov,their_perspective:theirPov,relationship_type:relType,desired_outcome:outcome}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🕊️ Conflict Resolver</h2>
+              <p className="text-sm text-gray-500 mb-6">Navigate difficult conversations with empathy and clarity</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What's the conflict? *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="My coworker takes credit for my work in meetings. It's happened 3 times now..." value={situation} onChange={e=>setSituation(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Your perspective</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="I feel disrespected and invisible..." value={yourPov} onChange={e=>setYourPov(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Their likely perspective</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="They might think they're just summarizing team work..." value={theirPov} onChange={e=>setTheirPov(e.target.value)} /></div>
+              </div>
+              <div className="flex gap-6 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Relationship</label><div className="flex gap-2 flex-wrap">{['colleague','friend','partner','family','manager','client'].map(r=><button key={r} onClick={()=>setRelType(r)} className={`px-3 py-1 rounded-full text-sm capitalize ${relType===r?'bg-teal-600 text-white':'bg-gray-100'}`}>{r}</button>)}</div></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Desired outcome</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="I want it to stop happening without damaging our relationship..." value={outcome} onChange={e=>setOutcome(e.target.value)} /></div>
+              <button onClick={resolve} disabled={loading||!situation} className="bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 disabled:opacity-50">{loading ? 'Analyzing...' : '🕊️ Help Me Resolve This'}</button>
+              {result && !result.error && (
+                <div className="mt-6">
+                  <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 mb-4"><p className="font-semibold text-sm mb-1">Situation Summary</p><p className="text-sm">{result.summary}</p></div>
+                  <div className="flex gap-3 mb-4">{(['insight','script','paths'] as const).map(t=><button key={t} onClick={()=>setTab(t)} className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize ${tab===t?'bg-teal-600 text-white':'bg-gray-100'}`}>{t}</button>)}</div>
+                  {tab==='insight' && (
+                    <div className="space-y-3">
+                      {result.what_they_likely_feel && <div className="bg-blue-50 rounded-lg p-3 text-sm"><strong>💙 What they likely feel: </strong>{result.what_they_likely_feel}</div>}
+                      {result.your_blind_spot && <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm"><strong>🪟 Your blind spot: </strong>{result.your_blind_spot}</div>}
+                      {result.their_valid_point && <div className="bg-yellow-50 rounded-lg p-3 text-sm"><strong>⚖️ Their valid point: </strong>{result.their_valid_point}</div>}
+                      {result.relationship_repair_tip && <div className="bg-pink-50 rounded-lg p-3 text-sm"><strong>💜 Repair tip: </strong>{result.relationship_repair_tip}</div>}
+                    </div>
+                  )}
+                  {tab==='script' && (
+                    <div className="space-y-3">
+                      {result.opening_line && <div className="bg-green-50 border border-green-200 rounded-xl p-4"><p className="font-semibold text-sm mb-1">👋 Open with</p><p className="text-sm italic">"{result.opening_line}"</p></div>}
+                      <div className="bg-gray-50 rounded-xl p-5 border"><pre className="whitespace-pre-wrap text-sm">{result.conversation_script}</pre></div>
+                      {result.things_to_avoid_saying?.length>0 && <div className="bg-red-50 rounded-lg p-3"><p className="font-semibold text-sm mb-1 text-red-700">🚫 Don't say</p><ul className="space-y-1">{result.things_to_avoid_saying.map((t:string,i:number)=><li key={i} className="text-sm text-red-600">• "{t}"</li>)}</ul></div>}
+                    </div>
+                  )}
+                  {tab==='paths' && (
+                    <div className="space-y-3">{result.resolution_paths?.map((p:any,i:number)=><div key={i} className="border rounded-xl p-4"><p className="font-semibold mb-1">{p.path}</p><div className="grid grid-cols-2 gap-2 mt-2"><div className="bg-green-50 rounded p-2 text-xs"><p className="font-medium text-green-700 mb-1">✅ Pros</p>{p.pros}</div><div className="bg-red-50 rounded p-2 text-xs"><p className="font-medium text-red-700 mb-1">⚠️ Cons</p>{p.cons}</div></div></div>)}</div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'priceanchor' && (() => {
+          const [product, setProduct] = React.useState('');
+          const [currentPrice, setCurrentPrice] = React.useState('');
+          const [targetPrice, setTargetPrice] = React.useState('');
+          const [competitors, setCompetitors] = React.useState('');
+          const [customerType, setCustomerType] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!product || !currentPrice) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/price-anchor/strategy`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({product,current_price:currentPrice,target_price:targetPrice,competitors,customer_type:customerType}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">💲 Price Anchor Strategy</h2>
+              <p className="text-sm text-gray-500 mb-6">Psychological pricing that makes your price feel like a bargain</p>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Product / Service *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="SaaS tool, coaching package, course..." value={product} onChange={e=>setProduct(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Current Price *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="$99/mo, $2,000 one-time..." value={currentPrice} onChange={e=>setCurrentPrice(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Target Price</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="$150/mo (what you want to charge)" value={targetPrice} onChange={e=>setTargetPrice(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Customer Type</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="SMB founders, enterprise CTOs..." value={customerType} onChange={e=>setCustomerType(e.target.value)} /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Competitors & Their Prices</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Competitor A: $200/mo, Competitor B: $50/mo..." value={competitors} onChange={e=>setCompetitors(e.target.value)} /></div>
+              <button onClick={generate} disabled={loading||!product||!currentPrice} className="bg-emerald-700 text-white px-6 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50">{loading ? 'Building strategy...' : '💲 Get Pricing Strategy'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-3"><div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center"><p className="text-xs text-gray-500">Recommended Price</p><p className="text-2xl font-black text-emerald-700">{result.recommended_price}</p></div><div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center"><p className="text-xs text-gray-500">Anchor Price (show first)</p><p className="text-2xl font-black text-yellow-700">{result.anchor_price}</p></div></div>
+                  {result.pricing_tiers?.length>0 && (
+                    <div><p className="font-semibold text-sm mb-2">📊 Pricing Tiers</p><div className="grid gap-3">{result.pricing_tiers.map((t:any,i:number)=><div key={i} className={`border rounded-xl p-4 ${i===1?'border-emerald-400 bg-emerald-50':''}`}>{i===1&&<div className="text-xs font-bold text-emerald-600 mb-1">⭐ RECOMMENDED</div>}<div className="flex justify-between items-start"><div><p className="font-semibold">{t.name}</p><p className="text-sm text-gray-600">{t.value_prop}</p><p className="text-xs text-gray-400 mt-1">{t.target}</p></div><p className="text-xl font-black text-emerald-700">{t.price}</p></div></div>)}</div></div>
+                  )}
+                  {result.psychological_tactics?.length>0 && <div className="bg-purple-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">🧠 Psychological Tactics</p><ul className="space-y-1">{result.psychological_tactics.map((t:string,i:number)=><li key={i} className="text-sm flex gap-2"><span className="text-purple-500">•</span>{t}</li>)}</ul></div>}
+                  {result.framing_language?.length>0 && <div><p className="font-semibold text-sm mb-2">🗣️ How to Frame the Price</p><div className="space-y-2">{result.framing_language.map((l:string,i:number)=><div key={i} className="bg-gray-50 rounded-lg p-3 text-sm italic">"{l}"</div>)}</div></div>}
+                  {result.price_justification && <div className="bg-blue-50 rounded-lg p-3 text-sm"><strong>📋 Justification script: </strong>{result.price_justification}</div>}
+                  {result.upsell_opportunity && <div className="bg-orange-50 rounded-lg p-3 text-sm"><strong>⬆️ Upsell: </strong>{result.upsell_opportunity}</div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'linkedinbio' && (() => {
+          const [name, setName] = React.useState('');
+          const [role, setRole] = React.useState('');
+          const [achievements, setAchievements] = React.useState('');
+          const [personality, setPersonality] = React.useState('');
+          const [style, setStyle] = React.useState('professional');
+          const [funFacts, setFunFacts] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [copied, setCopied] = React.useState<string|null>(null);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!role) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/linkedin-bio/generate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({name,role,achievements,personality,style,fun_facts:funFacts}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const styles = [{ id:'professional', label:'Professional' }, { id:'storytelling', label:'Storytelling' }, { id:'casual', label:'Casual' }, { id:'satirical', label:'🤡 Satirical' }];
+          return (
+            <div className="p-6 max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">💼 LinkedIn Bio Generator</h2>
+              <p className="text-sm text-gray-500 mb-6">From generic to magnetic — bios that get profile views</p>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Your Name</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Alex Chen" value={name} onChange={e=>setName(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Role / Title *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Founder @ Acme | ex-Google PM" value={role} onChange={e=>setRole(e.target.value)} /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Key Achievements</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="Built 0→1 product used by 50k people, raised $2M, featured in TechCrunch..." value={achievements} onChange={e=>setAchievements(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Personality / Vibe</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Direct, nerdy about systems, dog dad, terrible at golf..." value={personality} onChange={e=>setPersonality(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Fun Facts</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Speaks 3 languages, former chef, climbed Kilimanjaro..." value={funFacts} onChange={e=>setFunFacts(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Style</label><div className="flex gap-2 flex-wrap">{styles.map(s=><button key={s.id} onClick={()=>setStyle(s.id)} className={`px-3 py-1 rounded-full text-sm ${style===s.id?'bg-blue-700 text-white':'bg-gray-100'}`}>{s.label}</button>)}</div></div>
+              <button onClick={generate} disabled={loading||!role} className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 disabled:opacity-50">{loading ? 'Writing bio...' : '💼 Generate Bio'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  {result.headline && <div className="bg-blue-50 border border-blue-200 rounded-xl p-4"><p className="text-xs text-gray-500 mb-1">HEADLINE</p><p className="font-bold">{result.headline}</p></div>}
+                  <div className="bg-gray-50 rounded-xl p-5 relative border"><button onClick={()=>{navigator.clipboard.writeText(result.bio);setCopied('full');setTimeout(()=>setCopied(null),2000);}} className="absolute top-3 right-3 text-xs bg-white border px-3 py-1 rounded-full">{copied==='full'?'✓ Copied':'Copy'}</button><p className="text-xs text-gray-400 mb-2">FULL BIO</p><pre className="whitespace-pre-wrap text-sm">{result.bio}</pre></div>
+                  {result.bio_short && <div className="border rounded-xl p-4 relative"><button onClick={()=>{navigator.clipboard.writeText(result.bio_short);setCopied('short');setTimeout(()=>setCopied(null),2000);}} className="absolute top-3 right-3 text-xs bg-white border px-3 py-1 rounded-full">{copied==='short'?'✓':'Copy short'}</button><p className="text-xs text-gray-400 mb-1">SHORT VERSION</p><p className="text-sm">{result.bio_short}</p></div>}
+                  {result.cta && <div className="bg-green-50 rounded-lg p-3 text-sm"><strong>📣 CTA: </strong>{result.cta}</div>}
+                  {result.keywords_to_include?.length>0 && <div><p className="text-xs text-gray-500 mb-1">Keywords for discoverability</p><div className="flex flex-wrap gap-2">{result.keywords_to_include.map((k:string,i:number)=><span key={i} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{k}</span>)}</div></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'failurecv' && (() => {
+          const [failures, setFailures] = React.useState('');
+          const [name, setName] = React.useState('');
+          const [currentRole, setCurrentRole] = React.useState('');
+          const [tone, setTone] = React.useState('reflective');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [view, setView] = React.useState<'resume'|'entries'>('resume');
+          const [copied, setCopied] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!failures) return;
+            const list = failures.split('\n').filter(f=>f.trim());
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/failure-resume/generate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({failures:list,name,current_role:currentRole,tone}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🏆 Failure Resume</h2>
+              <p className="text-sm text-gray-500 mb-6">A CV of your most instructive failures — the real story of your growth</p>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Your Name</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Alex Chen" value={name} onChange={e=>setName(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Current Role</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Startup Founder, Engineer..." value={currentRole} onChange={e=>setCurrentRole(e.target.value)} /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Your Failures (one per line) *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={6} placeholder={"Failed my first startup after 2 years\nGot rejected from 47 jobs before my first offer\nPublished a product nobody used\nBombed a big presentation to the board\nGot fired from my second job"} value={failures} onChange={e=>setFailures(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Tone</label><div className="flex gap-2">{['reflective','humorous','proud','raw'].map(t=><button key={t} onClick={()=>setTone(t)} className={`px-3 py-1 rounded-full text-sm capitalize ${tone===t?'bg-gray-800 text-white':'bg-gray-100'}`}>{t}</button>)}</div></div>
+              <button onClick={generate} disabled={loading||!failures} className="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-900 disabled:opacity-50">{loading ? 'Building CV...' : '🏆 Build My Failure Resume'}</button>
+              {result && !result.error && (
+                <div className="mt-6">
+                  <div className="flex gap-3 mb-4">{(['resume','entries'] as const).map(v=><button key={v} onClick={()=>setView(v)} className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize ${view===v?'bg-gray-800 text-white':'bg-gray-100'}`}>{v==='resume'?'Full Resume':'Breakdown'}</button>)}</div>
+                  {view==='resume' && (
+                    <div className="bg-gray-50 rounded-xl p-5 border relative"><button onClick={()=>{navigator.clipboard.writeText(result.resume);setCopied(true);setTimeout(()=>setCopied(false),2000);}} className="absolute top-3 right-3 text-xs bg-white border px-3 py-1 rounded-full">{copied?'✓ Copied':'Copy'}</button><pre className="whitespace-pre-wrap text-sm font-mono">{result.resume}</pre></div>
+                  )}
+                  {view==='entries' && (
+                    <div className="space-y-4">
+                      {result.entries?.map((e:any,i:number)=><div key={i} className="border rounded-xl p-4"><p className="font-bold">{e.failure} <span className="text-gray-400 font-normal text-sm">({e.year})</span></p><p className="text-sm text-gray-600 mt-1"><strong>What I tried:</strong> {e.what_i_tried}</p><p className="text-sm text-gray-600"><strong>What happened:</strong> {e.what_happened}</p><div className="mt-2 bg-green-50 rounded-lg p-3"><p className="text-sm text-green-700"><strong>💡 Learned:</strong> {e.what_i_learned}</p><p className="text-sm text-green-600"><strong>→ How it helped:</strong> {e.how_it_helped}</p></div></div>)}
+                      {result.growth_summary && <div className="bg-blue-50 rounded-xl p-4"><p className="font-semibold text-sm mb-1">📈 Growth Summary</p><p className="text-sm">{result.growth_summary}</p></div>}
+                      {result.closing_line && <p className="text-center italic text-gray-600 text-sm py-3">"{result.closing_line}"</p>}
+                    </div>
+                  )}
+                  {result.overall_lesson && <div className="mt-4 border-2 border-gray-300 rounded-xl p-4"><p className="font-semibold text-sm mb-1">🔑 Overall Lesson</p><p className="text-sm">{result.overall_lesson}</p></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'morningritual' && (() => {
+          const [goals, setGoals] = React.useState('');
+          const [duration, setDuration] = React.useState(60);
+          const [wakeTime, setWakeTime] = React.useState('6:00 AM');
+          const [constraints, setConstraints] = React.useState('');
+          const [current, setCurrent] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const build = async () => {
+            if (!goals) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/morning-ritual/build`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({goals,duration_mins:duration,wake_time:wakeTime,constraints,current_routine:current}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🌅 Morning Ritual Builder</h2>
+              <p className="text-sm text-gray-500 mb-6">Design a science-backed morning ritual that fits your real life</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What do you want your mornings to give you? *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="More energy, focus for deep work, mental clarity, fitness, calm before chaos..." value={goals} onChange={e=>setGoals(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Available Time: {duration} minutes</label><input type="range" min={10} max={180} step={5} value={duration} onChange={e=>setDuration(+e.target.value)} className="w-full mt-2" /></div>
+                <div><label className="block text-sm font-medium mb-1">Wake Time</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="6:00 AM" value={wakeTime} onChange={e=>setWakeTime(e.target.value)} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Constraints</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Kids, no gym, small apartment, bad knees..." value={constraints} onChange={e=>setConstraints(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Current Routine</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Snooze 3x, check phone, coffee, panic..." value={current} onChange={e=>setCurrent(e.target.value)} /></div>
+              </div>
+              <button onClick={build} disabled={loading||!goals} className="bg-amber-500 text-white px-6 py-2 rounded-lg hover:bg-amber-600 disabled:opacity-50">{loading ? 'Designing ritual...' : '🌅 Build My Morning Ritual'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-5"><p className="font-bold text-lg">{result.ritual_name}</p><p className="text-sm text-gray-600 mt-1">{result.philosophy}</p>{result.science_backing && <p className="text-xs text-amber-700 mt-2 italic">🔬 {result.science_backing}</p>}</div>
+                  <div><p className="font-semibold text-sm mb-3">⏰ Your Schedule</p><div className="space-y-2">{result.schedule?.map((s:any,i:number)=><div key={i} className={`flex gap-4 border rounded-xl p-3 ${s.optional?'opacity-60':''}`}><div className="text-center min-w-16"><p className="text-xs text-gray-400">+{s.time_offset_mins}m</p><p className="text-xs font-medium">{s.duration_mins}m</p></div><div className="flex-1"><div className="flex items-center gap-2"><p className="font-medium text-sm">{s.activity}</p>{s.optional&&<span className="text-xs text-gray-400">(optional)</span>}</div><p className="text-xs text-gray-500">{s.why}</p></div></div>)}</div></div>
+                  {result.minimum_viable_ritual && <div className="bg-green-50 border border-green-200 rounded-xl p-4"><p className="font-semibold text-sm mb-1">⚡ Minimum Viable Ritual (busy days)</p><p className="text-sm">{result.minimum_viable_ritual}</p></div>}
+                  {result.what_to_avoid?.length>0 && <div className="bg-red-50 rounded-lg p-3"><p className="font-semibold text-sm mb-1 text-red-700">🚫 Avoid in your first hour</p><ul className="space-y-1">{result.what_to_avoid.map((a:string,i:number)=><li key={i} className="text-sm text-red-600">• {a}</li>)}</ul></div>}
+                  {result.first_week_challenge && <div className="border-2 border-amber-300 rounded-xl p-4"><p className="font-semibold text-sm mb-1">🎯 First Week Challenge</p><p className="text-sm">{result.first_week_challenge}</p></div>}
+                  {result.habit_stack_tip && <div className="bg-purple-50 rounded-lg p-3 text-sm"><strong>🔗 Habit stack: </strong>{result.habit_stack_tip}</div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 12 ─────────────────────────────────────── */}
+        {(mainTab as string) === 'apologytext' && (() => {
+          const [situation, setSituation] = React.useState('');
+          const [whatYouDid, setWhatYouDid] = React.useState('');
+          const [relationship, setRelationship] = React.useState('friend');
+          const [tone, setTone] = React.useState('sincere');
+          const [medium, setMedium] = React.useState('text');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [copied, setCopied] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const write = async () => {
+            if (!situation) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/apology-text/write`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({situation,what_you_did:whatYouDid,relationship,tone,medium}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🙇 Apology Text Writer</h2>
+              <p className="text-sm text-gray-500 mb-6">Genuine apologies that actually heal things</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What happened? *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="I forgot our plans last minute, let them down on an important day..." value={situation} onChange={e=>setSituation(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What did you specifically do?</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Cancelled 1 hour before, didn't show up, said something hurtful..." value={whatYouDid} onChange={e=>setWhatYouDid(e.target.value)} /></div>
+              <div className="flex gap-6 mb-4 flex-wrap">
+                <div><label className="block text-sm font-medium mb-1">Relationship</label><div className="flex gap-2 flex-wrap">{['friend','partner','family','colleague','boss','client'].map(r=><button key={r} onClick={()=>setRelationship(r)} className={`px-3 py-1 rounded-full text-sm capitalize ${relationship===r?'bg-rose-500 text-white':'bg-gray-100'}`}>{r}</button>)}</div></div>
+                <div><label className="block text-sm font-medium mb-1">Tone</label><div className="flex gap-2">{['sincere','heartfelt','brief','formal'].map(t=><button key={t} onClick={()=>setTone(t)} className={`px-3 py-1 rounded-full text-sm capitalize ${tone===t?'bg-rose-500 text-white':'bg-gray-100'}`}>{t}</button>)}</div></div>
+                <div><label className="block text-sm font-medium mb-1">Send via</label><div className="flex gap-2">{['text','email','in-person','letter'].map(m=><button key={m} onClick={()=>setMedium(m)} className={`px-3 py-1 rounded-full text-sm capitalize ${medium===m?'bg-rose-500 text-white':'bg-gray-100'}`}>{m}</button>)}</div></div>
+              </div>
+              <button onClick={write} disabled={loading||!situation} className="bg-rose-500 text-white px-6 py-2 rounded-lg hover:bg-rose-600 disabled:opacity-50">{loading?'Writing...':'🙇 Write Apology'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 relative"><button onClick={()=>{navigator.clipboard.writeText(result.apology);setCopied(true);setTimeout(()=>setCopied(false),2000);}} className="absolute top-3 right-3 text-xs bg-white border px-3 py-1 rounded-full">{copied?'✓ Copied':'Copy'}</button><pre className="whitespace-pre-wrap text-sm leading-relaxed">{result.apology}</pre></div>
+                  {result.alternative_shorter && <div className="border rounded-xl p-4"><p className="text-xs text-gray-400 mb-1">SHORT VERSION</p><pre className="whitespace-pre-wrap text-sm">{result.alternative_shorter}</pre></div>}
+                  {result.key_acknowledgment && <div className="bg-blue-50 rounded-lg p-3 text-sm"><strong>💡 Key acknowledgment: </strong>{result.key_acknowledgment}</div>}
+                  {result.follow_up_action && <div className="bg-green-50 rounded-lg p-3 text-sm"><strong>→ Follow-up action: </strong>{result.follow_up_action}</div>}
+                  {result.timing_advice && <div className="bg-yellow-50 rounded-lg p-3 text-sm"><strong>⏰ Timing: </strong>{result.timing_advice}</div>}
+                  {result.what_not_to_say?.length>0 && <div className="bg-red-50 rounded-lg p-3"><p className="font-semibold text-xs text-red-700 mb-1">🚫 Don't say</p><ul className="space-y-1">{result.what_not_to_say.map((w:string,i:number)=><li key={i} className="text-xs text-red-600">• "{w}"</li>)}</ul></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'excusegen' && (() => {
+          const [situation, setSituation] = React.useState('');
+          const [style, setStyle] = React.useState('professional');
+          const [audience, setAudience] = React.useState('boss');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [copied, setCopied] = React.useState<number|null>(null);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!situation) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/excuse/generate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({situation,style,audience}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const riskColor:Record<string,string> = { low:'bg-green-100 text-green-700', medium:'bg-yellow-100 text-yellow-700', high:'bg-red-100 text-red-700' };
+          const beliefBar = (n:number) => '█'.repeat(Math.round(n/10*10)).padEnd(10,'░');
+          return (
+            <div className="p-6 max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">🎭 Excuse Generator</h2>
+              <p className="text-sm text-gray-500 mb-6">For emergencies only. We don't judge.</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What do you need an excuse for? *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Late to a meeting, missed a deadline, forgot someone's birthday..." value={situation} onChange={e=>setSituation(e.target.value)} /></div>
+              <div className="flex gap-6 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Style</label><div className="flex gap-2">{['professional','funny','creative','desperate'].map(s=><button key={s} onClick={()=>setStyle(s)} className={`px-3 py-1 rounded-full text-sm capitalize ${style===s?'bg-purple-600 text-white':'bg-gray-100'}`}>{s}</button>)}</div></div>
+                <div><label className="block text-sm font-medium mb-1">To</label><div className="flex gap-2 flex-wrap">{['boss','friend','partner','client','parents'].map(a=><button key={a} onClick={()=>setAudience(a)} className={`px-3 py-1 rounded-full text-sm capitalize ${audience===a?'bg-purple-600 text-white':'bg-gray-100'}`}>{a}</button>)}</div></div>
+              </div>
+              <button onClick={generate} disabled={loading||!situation} className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50">{loading?'Generating...':'🎭 Generate Excuses'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-3">
+                  {result.excuses?.map((e:any,i:number)=>(
+                    <div key={i} className="border rounded-xl p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex gap-2"><span className={`px-2 py-0.5 rounded-full text-xs capitalize ${riskColor[e.risk_level]||''}`}>{e.risk_level} risk</span></div>
+                        <button onClick={()=>{navigator.clipboard.writeText(e.excuse);setCopied(i);setTimeout(()=>setCopied(null),2000);}} className="text-xs bg-gray-100 px-3 py-1 rounded-full">{copied===i?'✓ Copied':'Copy'}</button>
+                      </div>
+                      <p className="text-sm mb-2">"{e.excuse}"</p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500"><span>Believability:</span><span className="font-mono text-green-600">{beliefBar(e.believability)}</span><span>{e.believability}/100</span></div>
+                      {e.delivery_tip && <p className="text-xs text-gray-400 mt-1 italic">💡 {e.delivery_tip}</p>}
+                    </div>
+                  ))}
+                  {result.best_excuse && <div className="bg-purple-50 border border-purple-200 rounded-xl p-4"><p className="font-semibold text-sm mb-1">🏆 Best bet</p><p className="text-sm">"{result.best_excuse}"</p></div>}
+                  {result.better_alternative && <div className="bg-green-50 rounded-lg p-3 text-sm"><strong>✅ Actually better option: </strong>{result.better_alternative}</div>}
+                  {result.what_to_say_if_caught && <div className="bg-orange-50 rounded-lg p-3 text-sm"><strong>😬 If caught: </strong>{result.what_to_say_if_caught}</div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'ventmode' && (() => {
+          const [vent, setVent] = React.useState('');
+          const [wantAdvice, setWantAdvice] = React.useState(false);
+          const [wantReframe, setWantReframe] = React.useState(true);
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const express = async () => {
+            if (!vent.trim()) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/vent/express`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({vent,want_advice:wantAdvice,want_reframe:wantReframe}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">💨 Vent Mode</h2>
+              <p className="text-sm text-gray-500 mb-6">No judgment. Just let it out. AI listens and validates.</p>
+              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-4 text-sm text-indigo-700">
+                <strong>This is a safe space.</strong> Say exactly what you're feeling. No filters needed.
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What's on your mind?</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={6} placeholder="I'm so frustrated with... I can't believe... Nobody ever... Why does this always happen..." value={vent} onChange={e=>setVent(e.target.value)} /></div>
+              <div className="flex gap-6 mb-4">
+                <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={wantAdvice} onChange={e=>setWantAdvice(e.target.checked)} className="w-4 h-4" /><span className="text-sm">I want advice</span></label>
+                <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={wantReframe} onChange={e=>setWantReframe(e.target.checked)} className="w-4 h-4" /><span className="text-sm">Help me reframe</span></label>
+              </div>
+              <button onClick={express} disabled={loading||!vent.trim()} className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50">{loading?'Listening...':'💨 I Hear You'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-5">
+                    <p className="text-sm leading-relaxed text-indigo-900">{result.you_are_heard}</p>
+                    <p className="text-sm leading-relaxed mt-3">{result.validation}</p>
+                  </div>
+                  {result.their_feelings_named?.length>0 && <div><p className="font-semibold text-sm mb-2">What you're feeling</p><div className="flex flex-wrap gap-2">{result.their_feelings_named.map((f:string,i:number)=><span key={i} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm">{f}</span>)}</div></div>}
+                  {result.reframe && <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm"><strong>🔄 Another way to see it: </strong>{result.reframe}</div>}
+                  {result.gentle_question && <div className="border-l-4 border-indigo-400 pl-4 py-2"><p className="text-sm italic text-gray-600">"{result.gentle_question}"</p></div>}
+                  {result.advice && wantAdvice && <div className="bg-green-50 rounded-xl p-4 text-sm"><strong>💡 Here's what I'd suggest: </strong>{result.advice}</div>}
+                  {result.release_ritual && <div className="bg-yellow-50 rounded-lg p-3 text-sm"><strong>✨ Release ritual: </strong>{result.release_ritual}</div>}
+                  {result.affirmation && <p className="text-center italic text-indigo-700 py-3 text-sm">"{result.affirmation}"</p>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'personalbrand' && (() => {
+          const [name, setName] = React.useState('');
+          const [expertise, setExpertise] = React.useState('');
+          const [audience, setAudience] = React.useState('');
+          const [values, setValues] = React.useState('');
+          const [story, setStory] = React.useState('');
+          const [goal, setGoal] = React.useState('grow online presence');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [section, setSection] = React.useState<'brand'|'content'|'platforms'|'plan'>('brand');
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const build = async () => {
+            if (!expertise || !audience) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/personal-brand/build`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({name,expertise,audience,values,origin_story:story,content_goal:goal}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">⚡ Personal Brand Builder</h2>
+              <p className="text-sm text-gray-500 mb-6">Your unique positioning, content pillars, and 30-day launch plan</p>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Your Name</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Alex Chen" value={name} onChange={e=>setName(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Expertise / What you do *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="AI product strategy, fitness coaching, SaaS growth..." value={expertise} onChange={e=>setExpertise(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Target Audience *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Early-stage founders, burned-out professionals..." value={audience} onChange={e=>setAudience(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Your Values</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Honesty, simplicity, no-BS advice..." value={values} onChange={e=>setValues(e.target.value)} /></div>
+              </div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Origin Story</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="I burned out at my corporate job and discovered..." value={story} onChange={e=>setStory(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Content Goal</label><div className="flex gap-2 flex-wrap">{['grow online presence','get clients','build community','launch product','get speaking gigs'].map(g=><button key={g} onClick={()=>setGoal(g)} className={`px-3 py-1 rounded-full text-sm capitalize ${goal===g?'bg-orange-500 text-white':'bg-gray-100'}`}>{g}</button>)}</div></div>
+              <button onClick={build} disabled={loading||!expertise||!audience} className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 disabled:opacity-50">{loading?'Building brand...':'⚡ Build My Brand'}</button>
+              {result && !result.error && (
+                <div className="mt-6">
+                  <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-xl p-5 mb-4">
+                    <p className="font-bold text-xl mb-1">{result.tagline}</p>
+                    <p className="text-sm text-gray-700 mb-2">{result.brand_statement}</p>
+                    <p className="text-xs text-orange-600 font-medium">{result.niche}</p>
+                    {result.unique_angle && <p className="text-sm italic text-gray-600 mt-2">"Unique angle: {result.unique_angle}"</p>}
+                  </div>
+                  <div className="flex gap-2 flex-wrap mb-4">{(['brand','content','platforms','plan'] as const).map(s=><button key={s} onClick={()=>setSection(s)} className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize ${section===s?'bg-orange-500 text-white':'bg-gray-100'}`}>{s==='plan'?'30-Day Plan':s}</button>)}</div>
+                  {section==='brand' && (
+                    <div className="space-y-3">
+                      {result.positioning && <div className="bg-gray-50 rounded-lg p-3 text-sm"><strong>🎯 Positioning: </strong>{result.positioning}</div>}
+                      {result.brand_voice && <div><p className="font-semibold text-sm mb-2">🗣️ Brand Voice</p><div className="flex gap-3"><div className="flex-1"><p className="text-xs text-gray-500 mb-1">Sound like</p><div className="flex flex-wrap gap-1">{result.brand_voice.adjectives?.map((a:string,i:number)=><span key={i} className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded text-sm">{a}</span>)}</div></div><div className="flex-1"><p className="text-xs text-gray-500 mb-1">NOT this</p><div className="flex flex-wrap gap-1">{result.brand_voice.not_this?.map((a:string,i:number)=><span key={i} className="px-2 py-0.5 bg-red-100 text-red-600 rounded text-sm line-through">{a}</span>)}</div></div></div></div>}
+                      {result.origin_story_polished && <div className="bg-blue-50 rounded-xl p-4"><p className="font-semibold text-sm mb-1">📖 Your Origin Story</p><p className="text-sm">{result.origin_story_polished}</p></div>}
+                    </div>
+                  )}
+                  {section==='content' && (
+                    <div className="space-y-3">{result.content_pillars?.map((p:any,i:number)=><div key={i} className="border rounded-xl p-4"><p className="font-semibold mb-2">{i+1}. {p.pillar}</p><div className="flex flex-wrap gap-2">{p.topics?.map((t:string,j:number)=><span key={j} className="px-2 py-1 bg-gray-100 rounded text-sm">• {t}</span>)}</div></div>)}</div>
+                  )}
+                  {section==='platforms' && (
+                    <div className="space-y-3">{result.platforms_to_focus?.map((p:any,i:number)=><div key={i} className="border rounded-xl p-4"><div className="flex justify-between items-start"><p className="font-semibold capitalize">{p.platform}</p><span className="text-xs bg-gray-100 px-2 py-1 rounded">{p.content_type}</span></div><p className="text-sm text-gray-600 mt-1">{p.why}</p></div>)}</div>
+                  )}
+                  {section==='plan' && (
+                    <div><p className="font-semibold text-sm mb-3">🗓️ First 30 Days</p><ol className="space-y-2">{result['30_day_plan']?.map((a:string,i:number)=><li key={i} className="flex gap-3 border-b pb-2"><span className="font-bold text-orange-500 min-w-6">W{i+1}</span><p className="text-sm">{a}</p></li>)}</ol></div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'weeklyreview' && (() => {
+          const [wins, setWins] = React.useState('');
+          const [struggles, setStruggles] = React.useState('');
+          const [lessons, setLessons] = React.useState('');
+          const [energy, setEnergy] = React.useState(6);
+          const [priorities, setPriorities] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!wins && !struggles) return;
+            setLoading(true); setResult(null);
+            try {
+              const r = await fetch(`${API}/api/weekly-review/generate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({wins,struggles,lessons,energy_level:energy,next_week_priorities:priorities}) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div className="p-6 max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold mb-2">📅 Weekly Review</h2>
+              <p className="text-sm text-gray-500 mb-6">Close the week with clarity. Start Monday with intention.</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">This week's wins</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="Shipped the feature, had a great 1:1, finally fixed that bug, worked out 4x..." value={wins} onChange={e=>setWins(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Struggles / What didn't go well</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="Got distracted too much, missed a deadline, conflict with a coworker..." value={struggles} onChange={e=>setStruggles(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Key lessons this week</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="I work better in the morning, async is underrated, I need to say no more..." value={lessons} onChange={e=>setLessons(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div><label className="block text-sm font-medium mb-1">Overall energy level: {energy}/10</label><input type="range" min={1} max={10} value={energy} onChange={e=>setEnergy(+e.target.value)} className="w-full mt-2" /></div>
+                <div><label className="block text-sm font-medium mb-1">Next week's top priority</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Ship v2, close the deal, rest..." value={priorities} onChange={e=>setPriorities(e.target.value)} /></div>
+              </div>
+              <button onClick={generate} disabled={loading||(!wins&&!struggles)} className="bg-slate-700 text-white px-6 py-2 rounded-lg hover:bg-slate-800 disabled:opacity-50">{loading?'Reviewing...':'📅 Generate My Weekly Review'}</button>
+              {result && !result.error && (
+                <div className="mt-6 space-y-4">
+                  <div className="bg-slate-50 border rounded-xl p-5"><p className="font-bold text-lg mb-2">Week Summary</p><p className="text-sm">{result.week_summary}</p></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {result.win_analysis && <div className="bg-green-50 rounded-xl p-4"><p className="font-semibold text-sm mb-1">🏆 Wins</p><p className="text-sm">{result.win_analysis}</p></div>}
+                    {result.struggle_reframe && <div className="bg-orange-50 rounded-xl p-4"><p className="font-semibold text-sm mb-1">💪 Reframe</p><p className="text-sm">{result.struggle_reframe}</p></div>}
+                  </div>
+                  {result.biggest_lesson && <div className="bg-blue-50 border border-blue-100 rounded-xl p-4"><p className="font-semibold text-sm mb-1">💡 Biggest Lesson</p><p className="text-sm">{result.biggest_lesson}</p></div>}
+                  {result.pattern_noticed && <div className="bg-purple-50 rounded-lg p-3 text-sm"><strong>🔍 Pattern: </strong>{result.pattern_noticed}</div>}
+                  {result.energy_insight && <div className="bg-yellow-50 rounded-lg p-3 text-sm"><strong>⚡ Energy insight: </strong>{result.energy_insight}</div>}
+                  {result.next_week_theme && <div className="border-2 border-slate-300 rounded-xl p-4"><p className="font-bold text-lg">{result.next_week_theme}</p><p className="text-sm italic text-gray-600 mt-1">Next week's theme</p>{result.monday_intention && <p className="text-sm mt-2"><strong>Monday intention: </strong>{result.monday_intention}</p>}</div>}
+                  <div className="grid grid-cols-2 gap-3">
+                    {result.things_to_keep?.length>0 && <div className="bg-green-50 rounded-lg p-3"><p className="font-semibold text-xs text-green-700 mb-1">✅ KEEP DOING</p><ul className="space-y-1">{result.things_to_keep.map((t:string,i:number)=><li key={i} className="text-xs">• {t}</li>)}</ul></div>}
+                    {result.things_to_drop?.length>0 && <div className="bg-red-50 rounded-lg p-3"><p className="font-semibold text-xs text-red-700 mb-1">🗑️ DROP</p><ul className="space-y-1">{result.things_to_drop.map((t:string,i:number)=><li key={i} className="text-xs text-red-600">• {t}</li>)}</ul></div>}
+                  </div>
+                  {result.gratitude_moment && <p className="text-center italic text-slate-600 py-3 text-sm">"{result.gratitude_moment}"</p>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 13: Negotiation Sim + 24Hr Challenge + Therapy Letter + Podcast Pitch + Grant Proposal ── */}
+        {(mainTab as string) === 'negotiationsim' && (() => {
+          const [scenario, setScenario] = React.useState('');
+          const [role, setRole] = React.useState('');
+          const [counterpart, setCounterpart] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const simulate = async () => {
+            if (!scenario.trim() || !role.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/negotiation/simulate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ scenario, role, counterpart }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
+              <h2 style={{color:'#a78bfa',marginBottom:'1rem'}}>🤝 Negotiation Simulator</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Practice negotiation with AI — get scored and coached.</p>
+              <textarea value={scenario} onChange={e=>setScenario(e.target.value)} placeholder="Describe the negotiation scenario (e.g. salary negotiation for $120k role)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'80px',marginBottom:'0.75rem'}} />
+              <input value={role} onChange={e=>setRole(e.target.value)} placeholder="Your role (e.g. Software Engineer candidate)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <input value={counterpart} onChange={e=>setCounterpart(e.target.value)} placeholder="Counterpart (e.g. HR Manager)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}} />
+              <button onClick={simulate} disabled={loading} style={{background:'#7c3aed',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Simulating...' : 'Run Simulation'}
+              </button>
+              {result && !result.error && (
+                <div style={{marginTop:'1.5rem'}}>
+                  <div style={{background:'#1e293b',borderRadius:'10px',padding:'1.25rem',marginBottom:'1rem'}}>
+                    <h3 style={{color:'#a78bfa',marginBottom:'0.75rem'}}>📊 Score: {result.score}/10</h3>
+                    <h4 style={{color:'#94a3b8',marginBottom:'0.5rem'}}>Transcript</h4>
+                    {(result.transcript||[]).map((t:any,i:number)=>(
+                      <div key={i} style={{background:t.speaker==='You'?'#312e81':'#1e293b',borderRadius:'6px',padding:'0.5rem 0.75rem',marginBottom:'0.4rem'}}>
+                        <strong style={{color:t.speaker==='You'?'#a78bfa':'#64748b'}}>{t.speaker}:</strong> <span style={{color:'#e2e8f0'}}>{t.line}</span>
+                      </div>
+                    ))}
+                    <h4 style={{color:'#94a3b8',margin:'1rem 0 0.5rem'}}>💡 Tips</h4>
+                    {(result.tips||[]).map((tip:string,i:number)=><p key={i} style={{color:'#e2e8f0',marginBottom:'0.25rem'}}>• {tip}</p>)}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'challengebuilder' && (() => {
+          const [goal, setGoal] = React.useState('');
+          const [hours, setHours] = React.useState('24');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const build = async () => {
+            if (!goal.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/challenge/build`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ goal, hours: parseInt(hours) }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
+              <h2 style={{color:'#f59e0b',marginBottom:'1rem'}}>⚡ 24-Hour Challenge Builder</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Hyper-focused sprint plan to achieve any goal fast.</p>
+              <input value={goal} onChange={e=>setGoal(e.target.value)} placeholder="What do you want to achieve?" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <select value={hours} onChange={e=>setHours(e.target.value)} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}}>
+                <option value="6">6-Hour Sprint</option>
+                <option value="12">12-Hour Push</option>
+                <option value="24">24-Hour Challenge</option>
+                <option value="48">48-Hour Deep Work</option>
+              </select>
+              <button onClick={build} disabled={loading} style={{background:'#d97706',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Building plan...' : `Build ${hours}-Hour Challenge`}
+              </button>
+              {result && !result.error && (
+                <div style={{marginTop:'1.5rem'}}>
+                  {(result.schedule||[]).map((block:any,i:number)=>(
+                    <div key={i} style={{background:'#1e293b',borderRadius:'8px',padding:'1rem',marginBottom:'0.75rem',borderLeft:'3px solid #f59e0b'}}>
+                      <strong style={{color:'#f59e0b'}}>{block.block}</strong> <span style={{color:'#64748b',fontSize:'0.85rem'}}>{block.hours}</span>
+                      <ul style={{marginTop:'0.5rem',paddingLeft:'1.25rem'}}>{(block.tasks||[]).map((t:string,j:number)=><li key={j} style={{color:'#e2e8f0',marginBottom:'0.2rem'}}>{t}</li>)}</ul>
+                    </div>
+                  ))}
+                  {result.motivation && <div style={{background:'#292524',borderRadius:'8px',padding:'1rem',marginTop:'0.75rem',borderLeft:'3px solid #ef4444'}}><p style={{color:'#fca5a5',fontStyle:'italic'}}>"{result.motivation}"</p></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'therapyletter' && (() => {
+          const [recipient, setRecipient] = React.useState('');
+          const [situation, setSituation] = React.useState('');
+          const [emotion, setEmotion] = React.useState('');
+          const [intent, setIntent] = React.useState('processing only');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const write = async () => {
+            if (!recipient.trim() || !situation.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/therapy-letter/write`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ recipient, situation, emotion, intent }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
+              <h2 style={{color:'#ec4899',marginBottom:'1rem'}}>💌 Therapy Letter Writer</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Write a healing letter for processing, closure, or sending.</p>
+              <input value={recipient} onChange={e=>setRecipient(e.target.value)} placeholder="Who is this letter to? (e.g. my ex, my dad, younger me)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <textarea value={situation} onChange={e=>setSituation(e.target.value)} placeholder="What happened? What do you need to process?" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'80px',marginBottom:'0.75rem'}} />
+              <input value={emotion} onChange={e=>setEmotion(e.target.value)} placeholder="Primary emotion (e.g. grief, anger, love, confusion)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <select value={intent} onChange={e=>setIntent(e.target.value)} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}}>
+                <option value="processing only">For processing only (not sending)</option>
+                <option value="might send">Might send</option>
+                <option value="will send">Will send</option>
+                <option value="burn it">Burn it ritual</option>
+              </select>
+              <button onClick={write} disabled={loading} style={{background:'#be185d',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Writing...' : 'Write Letter'}
+              </button>
+              {result && result.letter && (
+                <div style={{marginTop:'1.5rem'}}>
+                  <div style={{background:'#1e293b',borderRadius:'10px',padding:'1.5rem',marginBottom:'1rem',whiteSpace:'pre-line',color:'#e2e8f0',lineHeight:'1.7'}}>{result.letter}</div>
+                  {result.prompts && <div style={{background:'#1e1a1e',borderRadius:'8px',padding:'1rem'}}>
+                    <h4 style={{color:'#ec4899',marginBottom:'0.5rem'}}>🪞 Reflection Prompts</h4>
+                    {result.prompts.map((p:string,i:number)=><p key={i} style={{color:'#94a3b8',marginBottom:'0.4rem'}}>• {p}</p>)}
+                  </div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'podcastpitch' && (() => {
+          const [showName, setShowName] = React.useState('');
+          const [topic, setTopic] = React.useState('');
+          const [angle, setAngle] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const generate = async () => {
+            if (!showName.trim() || !topic.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/podcast-pitch/generate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ showName, topic, angle }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
+              <h2 style={{color:'#06b6d4',marginBottom:'1rem'}}>🎙️ Podcast Pitch Generator</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Craft a pitch that gets you booked as a podcast guest.</p>
+              <input value={showName} onChange={e=>setShowName(e.target.value)} placeholder="Podcast name (e.g. How I Built This)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <input value={topic} onChange={e=>setTopic(e.target.value)} placeholder="Your topic/expertise (e.g. bootstrapping SaaS to $1M ARR)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <input value={angle} onChange={e=>setAngle(e.target.value)} placeholder="Unique angle or hook (optional)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}} />
+              <button onClick={generate} disabled={loading} style={{background:'#0891b2',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Crafting pitch...' : 'Generate Pitch'}
+              </button>
+              {result && result.full_pitch && (
+                <div style={{marginTop:'1.5rem'}}>
+                  <div style={{background:'#0c4a6e',borderRadius:'8px',padding:'0.75rem 1rem',marginBottom:'0.75rem'}}>
+                    <span style={{color:'#7dd3fc',fontWeight:600}}>Subject: </span><span style={{color:'#e2e8f0'}}>{result.subject}</span>
+                  </div>
+                  <div style={{background:'#1e293b',borderRadius:'10px',padding:'1.5rem',whiteSpace:'pre-line',color:'#e2e8f0',lineHeight:'1.7',marginBottom:'0.75rem'}}>{result.full_pitch}</div>
+                  {result.episodes && <div style={{background:'#0c1628',borderRadius:'8px',padding:'1rem'}}>
+                    <h4 style={{color:'#06b6d4',marginBottom:'0.5rem'}}>📋 Episode Ideas</h4>
+                    {result.episodes.map((ep:any,i:number)=><div key={i} style={{marginBottom:'0.5rem'}}><strong style={{color:'#7dd3fc'}}>{ep.title}</strong><p style={{color:'#94a3b8',margin:'0.15rem 0 0'}}>{ep.description}</p></div>)}
+                  </div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'grantproposal' && (() => {
+          const [orgName, setOrgName] = React.useState('');
+          const [grantName, setGrantName] = React.useState('');
+          const [amount, setAmount] = React.useState('');
+          const [mission, setMission] = React.useState('');
+          const [impact, setImpact] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [tab, setTab] = React.useState('full');
+          const write = async () => {
+            if (!orgName.trim() || !mission.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/grant/write`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ orgName, grantName, amount, mission, impact }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div style={{padding:'2rem',maxWidth:'750px',margin:'0 auto'}}>
+              <h2 style={{color:'#84cc16',marginBottom:'1rem'}}>🏛️ Grant Proposal Writer</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Full grant proposals with SMART goals and budget narrative.</p>
+              <input value={orgName} onChange={e=>setOrgName(e.target.value)} placeholder="Organization name" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <input value={grantName} onChange={e=>setGrantName(e.target.value)} placeholder="Grant/Funder name (e.g. Ford Foundation)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <input value={amount} onChange={e=>setAmount(e.target.value)} placeholder="Amount requested (e.g. $50,000)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <textarea value={mission} onChange={e=>setMission(e.target.value)} placeholder="Organization mission and project description" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'80px',marginBottom:'0.75rem'}} />
+              <textarea value={impact} onChange={e=>setImpact(e.target.value)} placeholder="Expected impact and outcomes" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'60px',marginBottom:'1rem'}} />
+              <button onClick={write} disabled={loading} style={{background:'#65a30d',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Writing proposal...' : 'Generate Grant Proposal'}
+              </button>
+              {result && result.full_proposal && (
+                <div style={{marginTop:'1.5rem'}}>
+                  <div style={{display:'flex',gap:'0.5rem',marginBottom:'1rem'}}>
+                    {['full','summary','goals'].map(t=><button key={t} onClick={()=>setTab(t)} style={{background:tab===t?'#65a30d':'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'6px',padding:'0.4rem 0.9rem',cursor:'pointer',textTransform:'capitalize'}}>{t}</button>)}
+                  </div>
+                  {tab==='full' && <div style={{background:'#1e293b',borderRadius:'10px',padding:'1.5rem',whiteSpace:'pre-line',color:'#e2e8f0',lineHeight:'1.7'}}>{result.full_proposal}</div>}
+                  {tab==='summary' && <div style={{background:'#1e293b',borderRadius:'10px',padding:'1.5rem',color:'#e2e8f0',lineHeight:'1.7'}}><p>{result.executive_summary}</p></div>}
+                  {tab==='goals' && <div style={{background:'#1e293b',borderRadius:'10px',padding:'1.5rem'}}>{(result.goals||[]).map((g:string,i:number)=><p key={i} style={{color:'#e2e8f0',marginBottom:'0.4rem'}}>✅ {g}</p>)}</div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 14: Burn Letter + Decision Oracle + Compliment Engine + Manifesto + Debate Prep ── */}
+        {(mainTab as string) === 'burnletter' && (() => {
+          const [target, setTarget] = React.useState('');
+          const [grievance, setGrievance] = React.useState('');
+          const [tone, setTone] = React.useState('raw and honest');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const write = async () => {
+            if (!target.trim() || !grievance.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/burn-letter/write`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ target, grievance, tone }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
+              <h2 style={{color:'#ef4444',marginBottom:'0.5rem'}}>🔥 Burn Letter Generator</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Write it out. Release it. Never send it. <span style={{color:'#ef4444'}}>This stays private.</span></p>
+              <input value={target} onChange={e=>setTarget(e.target.value)} placeholder="Who is this to? (e.g. my boss, my ex, my younger self)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <textarea value={grievance} onChange={e=>setGrievance(e.target.value)} placeholder="What did they do? What needs to be said?" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'100px',marginBottom:'0.75rem'}} />
+              <select value={tone} onChange={e=>setTone(e.target.value)} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}}>
+                <option value="raw and honest">Raw and honest</option>
+                <option value="furious">Furious — hold nothing back</option>
+                <option value="grieving">Grieving and heartbroken</option>
+                <option value="dignified">Dignified but cutting</option>
+              </select>
+              <button onClick={write} disabled={loading} style={{background:'#dc2626',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Writing...' : '🔥 Write the Burn Letter'}
+              </button>
+              {result && result.letter && (
+                <div style={{marginTop:'1.5rem'}}>
+                  <div style={{background:'#1c0a0a',border:'1px solid #7f1d1d',borderRadius:'10px',padding:'1.5rem',whiteSpace:'pre-line',color:'#fca5a5',lineHeight:'1.8',marginBottom:'1rem'}}>{result.letter}</div>
+                  {result.ritual && <div style={{background:'#1e293b',borderRadius:'8px',padding:'0.75rem',textAlign:'center'}}><em style={{color:'#94a3b8'}}>{result.ritual}</em></div>}
+                  {result.emotions_surfaced && <p style={{color:'#64748b',marginTop:'0.75rem',fontSize:'0.9rem'}}>Emotions surfaced: {result.emotions_surfaced}</p>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'decisionoracle' && (() => {
+          const [question, setQuestion] = React.useState('');
+          const [options, setOptions] = React.useState('');
+          const [context, setContext] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const decide = async () => {
+            if (!question.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/oracle/decide`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ question, options, context }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
+              <h2 style={{color:'#8b5cf6',marginBottom:'1rem'}}>🔮 Decision Oracle</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Multi-framework decision analysis. The oracle will speak.</p>
+              <input value={question} onChange={e=>setQuestion(e.target.value)} placeholder="What decision are you facing?" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <input value={options} onChange={e=>setOptions(e.target.value)} placeholder="Your options (e.g. Stay at job vs. quit and start a company)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <textarea value={context} onChange={e=>setContext(e.target.value)} placeholder="Context (optional — your situation, constraints, fears)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'60px',marginBottom:'1rem'}} />
+              <button onClick={decide} disabled={loading} style={{background:'#7c3aed',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Consulting the oracle...' : '🔮 Consult the Oracle'}
+              </button>
+              {result && result.verdict && (
+                <div style={{marginTop:'1.5rem'}}>
+                  <div style={{background:'#1e1333',border:'1px solid #7c3aed',borderRadius:'10px',padding:'1.25rem',marginBottom:'1rem',textAlign:'center'}}>
+                    <p style={{color:'#c4b5fd',fontSize:'1.1rem',fontWeight:600}}>Verdict: {result.verdict}</p>
+                    <p style={{color:'#7c3aed',marginTop:'0.4rem'}}>Confidence: {result.confidence}%</p>
+                  </div>
+                  {(result.frameworks||[]).map((f:any,i:number)=>(
+                    <div key={i} style={{background:'#1e293b',borderRadius:'8px',padding:'1rem',marginBottom:'0.75rem',borderLeft:'3px solid #7c3aed'}}>
+                      <strong style={{color:'#a78bfa'}}>{f.name}</strong>
+                      <p style={{color:'#e2e8f0',marginTop:'0.4rem'}}>{f.analysis}</p>
+                    </div>
+                  ))}
+                  {result.risk && <div style={{background:'#1c1917',borderRadius:'8px',padding:'0.75rem',marginTop:'0.5rem'}}><span style={{color:'#f97316'}}>⚠️ Risk: </span><span style={{color:'#e2e8f0'}}>{result.risk}</span></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'complimentengine' && (() => {
+          const [recipient, setRecipient] = React.useState('');
+          const [context, setContext] = React.useState('');
+          const [style, setStyle] = React.useState('warm and genuine');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const generate = async () => {
+            if (!recipient.trim() || !context.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/compliment/generate`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ recipient, context, style }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const impactColor = (lvl:string) => lvl==='high'?'#22c55e':lvl==='medium'?'#f59e0b':'#64748b';
+          return (
+            <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
+              <h2 style={{color:'#fbbf24',marginBottom:'1rem'}}>💛 Compliment Engine</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Specific, meaningful compliments that actually land.</p>
+              <input value={recipient} onChange={e=>setRecipient(e.target.value)} placeholder="Who are you complimenting? (e.g. my coworker Sarah)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <textarea value={context} onChange={e=>setContext(e.target.value)} placeholder="Tell me about them — their strengths, what they've done, who they are" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'80px',marginBottom:'0.75rem'}} />
+              <select value={style} onChange={e=>setStyle(e.target.value)} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}}>
+                <option value="warm and genuine">Warm and genuine</option>
+                <option value="professional">Professional</option>
+                <option value="playful">Playful and fun</option>
+                <option value="deeply heartfelt">Deeply heartfelt</option>
+              </select>
+              <button onClick={generate} disabled={loading} style={{background:'#d97706',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Generating...' : '💛 Generate Compliments'}
+              </button>
+              {result && result.compliments && (
+                <div style={{marginTop:'1.5rem'}}>
+                  {result.compliments.map((c:any,i:number)=>(
+                    <div key={i} style={{background:'#1e293b',borderRadius:'10px',padding:'1rem 1.25rem',marginBottom:'0.75rem',borderLeft:`3px solid ${impactColor(c.impact_level)}`}}>
+                      <p style={{color:'#e2e8f0',lineHeight:'1.6',marginBottom:'0.4rem'}}>"{c.text}"</p>
+                      <span style={{fontSize:'0.8rem',color:impactColor(c.impact_level),textTransform:'uppercase'}}>{c.category} · {c.impact_level} impact</span>
+                    </div>
+                  ))}
+                  {result.delivery_tip && <p style={{color:'#64748b',marginTop:'0.5rem',fontSize:'0.9rem'}}>💡 {result.delivery_tip}</p>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'manifestowriter' && (() => {
+          const [topic, setTopic] = React.useState('');
+          const [values, setValues] = React.useState('');
+          const [audience, setAudience] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [view, setView] = React.useState('full');
+          const write = async () => {
+            if (!topic.trim() || !values.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/manifesto/write`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ topic, values, audience }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div style={{padding:'2rem',maxWidth:'750px',margin:'0 auto'}}>
+              <h2 style={{color:'#f59e0b',marginBottom:'1rem'}}>📜 Manifesto Writer</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Write a bold manifesto for your movement, brand, or life philosophy.</p>
+              <input value={topic} onChange={e=>setTopic(e.target.value)} placeholder="What is your manifesto about? (e.g. slow living, ethical AI, DIY culture)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <input value={values} onChange={e=>setValues(e.target.value)} placeholder="Core values/beliefs (e.g. autonomy, craft, community, honesty)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <input value={audience} onChange={e=>setAudience(e.target.value)} placeholder="Your audience (e.g. creators, founders, parents, the world)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}} />
+              <button onClick={write} disabled={loading} style={{background:'#b45309',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Writing manifesto...' : '📜 Write My Manifesto'}
+              </button>
+              {result && result.full_manifesto && (
+                <div style={{marginTop:'1.5rem'}}>
+                  {result.title && <h3 style={{color:'#f59e0b',textAlign:'center',marginBottom:'1rem',fontSize:'1.3rem'}}>{result.title}</h3>}
+                  <div style={{display:'flex',gap:'0.5rem',marginBottom:'1rem'}}>
+                    {['full','principles'].map(v=><button key={v} onClick={()=>setView(v)} style={{background:view===v?'#b45309':'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'6px',padding:'0.4rem 0.9rem',cursor:'pointer',textTransform:'capitalize'}}>{v}</button>)}
+                  </div>
+                  {view==='full' && <div style={{background:'#1c1400',border:'1px solid #92400e',borderRadius:'10px',padding:'1.5rem',whiteSpace:'pre-line',color:'#fde68a',lineHeight:'1.8'}}>{result.full_manifesto}</div>}
+                  {view==='principles' && <div>{(result.principles||[]).map((p:any,i:number)=>(
+                    <div key={i} style={{background:'#1e293b',borderRadius:'8px',padding:'1rem',marginBottom:'0.75rem',borderLeft:'3px solid #f59e0b'}}>
+                      <strong style={{color:'#f59e0b'}}>#{p.number} {p.statement}</strong>
+                      <p style={{color:'#e2e8f0',marginTop:'0.4rem'}}>{p.explanation}</p>
+                    </div>
+                  ))}</div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'debateprep14' && (() => {
+          const [topic, setTopic] = React.useState('');
+          const [position, setPosition] = React.useState('');
+          const [opponent, setOpponent] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const [tab, setTab] = React.useState('arguments');
+          const prep = async () => {
+            if (!topic.trim() || !position.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/debate/prep`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ topic, position, opponent }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div style={{padding:'2rem',maxWidth:'750px',margin:'0 auto'}}>
+              <h2 style={{color:'#ef4444',marginBottom:'1rem'}}>⚔️ Debate Prep AI</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Arguments, rebuttals, opening/closing — be debate-ready in seconds.</p>
+              <input value={topic} onChange={e=>setTopic(e.target.value)} placeholder="Debate topic (e.g. AI will replace most jobs within 20 years)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <input value={position} onChange={e=>setPosition(e.target.value)} placeholder="Your position (e.g. FOR / AGAINST / nuanced take)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <input value={opponent} onChange={e=>setOpponent(e.target.value)} placeholder="Expected opponent/audience (optional)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}} />
+              <button onClick={prep} disabled={loading} style={{background:'#dc2626',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Preparing...' : '⚔️ Generate Debate Prep'}
+              </button>
+              {result && result.arguments && (
+                <div style={{marginTop:'1.5rem'}}>
+                  <div style={{display:'flex',gap:'0.5rem',flexWrap:'wrap',marginBottom:'1rem'}}>
+                    {['arguments','counters','opening'].map(t=><button key={t} onClick={()=>setTab(t)} style={{background:tab===t?'#dc2626':'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'6px',padding:'0.4rem 0.9rem',cursor:'pointer',textTransform:'capitalize'}}>{t}</button>)}
+                  </div>
+                  {tab==='arguments' && <div>{result.arguments.map((a:any,i:number)=>(
+                    <div key={i} style={{background:'#1e293b',borderRadius:'8px',padding:'1rem',marginBottom:'0.75rem',borderLeft:'3px solid #22c55e'}}>
+                      <strong style={{color:'#86efac'}}>Arg {i+1}: {a.point}</strong>
+                      <p style={{color:'#94a3b8',marginTop:'0.3rem',fontSize:'0.9rem'}}>{a.evidence}</p>
+                    </div>
+                  ))}</div>}
+                  {tab==='counters' && <div>{result.counters.map((c:any,i:number)=>(
+                    <div key={i} style={{background:'#1e293b',borderRadius:'8px',padding:'1rem',marginBottom:'0.75rem'}}>
+                      <p style={{color:'#f87171'}}>❌ Attack: {c.attack}</p>
+                      <p style={{color:'#86efac',marginTop:'0.4rem'}}>✅ Rebuttal: {c.rebuttal}</p>
+                    </div>
+                  ))}</div>}
+                  {tab==='opening' && <div>
+                    <div style={{background:'#1e293b',borderRadius:'10px',padding:'1.25rem',marginBottom:'0.75rem'}}><h4 style={{color:'#ef4444',marginBottom:'0.5rem'}}>Opening Statement</h4><p style={{color:'#e2e8f0',lineHeight:'1.7',fontStyle:'italic'}}>"{result.opening}"</p></div>
+                    <div style={{background:'#1e293b',borderRadius:'10px',padding:'1.25rem'}}><h4 style={{color:'#f97316',marginBottom:'0.5rem'}}>Closing Line</h4><p style={{color:'#e2e8f0',lineHeight:'1.7',fontStyle:'italic'}}>"{result.closing}"</p></div>
+                  </div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 15: Eulogy + Villain Origin + Secret Admirer + Legacy Letter + Love Language ── */}
+        {(mainTab as string) === 'eulogywriter' && (() => {
+          const [person, setPerson] = React.useState('');
+          const [relationship, setRelationship] = React.useState('');
+          const [memories, setMemories] = React.useState('');
+          const [tone, setTone] = React.useState('heartfelt and celebratory');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const write = async () => {
+            if (!person.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/eulogy/write`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ person, relationship, memories, tone }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
+              <h2 style={{color:'#94a3b8',marginBottom:'1rem'}}>🕊️ Eulogy Writer</h2>
+              <p style={{color:'#64748b',marginBottom:'1.5rem'}}>Write a heartfelt eulogy that truly honors someone's life.</p>
+              <input value={person} onChange={e=>setPerson(e.target.value)} placeholder="Person's name" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <input value={relationship} onChange={e=>setRelationship(e.target.value)} placeholder="Your relationship (e.g. daughter, best friend, colleague)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <textarea value={memories} onChange={e=>setMemories(e.target.value)} placeholder="Their qualities, memories, things they said or did..." style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'80px',marginBottom:'0.75rem'}} />
+              <select value={tone} onChange={e=>setTone(e.target.value)} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}}>
+                <option value="heartfelt and celebratory">Heartfelt and celebratory</option>
+                <option value="solemn and dignified">Solemn and dignified</option>
+                <option value="humorous and warm">Humorous and warm</option>
+                <option value="poetic and spiritual">Poetic and spiritual</option>
+              </select>
+              <button onClick={write} disabled={loading} style={{background:'#475569',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Writing...' : '🕊️ Write Eulogy'}
+              </button>
+              {result && result.eulogy && (
+                <div style={{marginTop:'1.5rem'}}>
+                  <div style={{background:'#1e293b',borderRadius:'10px',padding:'1.5rem',whiteSpace:'pre-line',color:'#e2e8f0',lineHeight:'1.8',marginBottom:'0.75rem'}}>{result.eulogy}</div>
+                  {result.reading_time_mins && <p style={{color:'#64748b',fontSize:'0.85rem',textAlign:'right'}}>Reading time: ~{result.reading_time_mins} min</p>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'villainorigin' && (() => {
+          const [name, setName] = React.useState('');
+          const [wound, setWound] = React.useState('');
+          const [power, setPower] = React.useState('');
+          const [goal, setGoal] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const generate = async () => {
+            if (!name.trim() || !wound.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/villain/origin`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ name, wound, power, goal }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
+              <h2 style={{color:'#dc2626',marginBottom:'1rem'}}>😈 Villain Origin Story</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Every villain is the hero of their own story. Write yours.</p>
+              <input value={name} onChange={e=>setName(e.target.value)} placeholder="Villain's name" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <textarea value={wound} onChange={e=>setWound(e.target.value)} placeholder="Core wound or trauma (e.g. betrayed by the city they swore to protect)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'70px',marginBottom:'0.75rem'}} />
+              <input value={power} onChange={e=>setPower(e.target.value)} placeholder="Power or ability (e.g. control over time, genius-level intellect)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <input value={goal} onChange={e=>setGoal(e.target.value)} placeholder="Ultimate goal (e.g. burn the corrupt system to ashes)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}} />
+              <button onClick={generate} disabled={loading} style={{background:'#991b1b',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Forging origin...' : '😈 Generate Origin Story'}
+              </button>
+              {result && result.origin && (
+                <div style={{marginTop:'1.5rem'}}>
+                  {result.title && <h3 style={{color:'#ef4444',marginBottom:'1rem',textAlign:'center'}}>{result.title}</h3>}
+                  <div style={{background:'#1c0a0a',border:'1px solid #7f1d1d',borderRadius:'10px',padding:'1.5rem',whiteSpace:'pre-line',color:'#fca5a5',lineHeight:'1.8',marginBottom:'0.75rem'}}>{result.origin}</div>
+                  {result.manifesto_line && <div style={{background:'#1e293b',borderRadius:'8px',padding:'0.75rem',textAlign:'center',fontStyle:'italic'}}><span style={{color:'#f87171'}}>"{result.manifesto_line}"</span></div>}
+                  {result.backstory_twist && <p style={{color:'#64748b',marginTop:'0.75rem',fontSize:'0.9rem'}}>🌀 Twist: {result.backstory_twist}</p>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'secretadmirer' && (() => {
+          const [recipient, setRecipient] = React.useState('');
+          const [feelings, setFeelings] = React.useState('');
+          const [context, setContext] = React.useState('');
+          const [reveal, setReveal] = React.useState('no — keep anonymous');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const write = async () => {
+            if (!recipient.trim() || !feelings.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/admirer/write`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ recipient, feelings, context, reveal }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
+              <h2 style={{color:'#f43f5e',marginBottom:'1rem'}}>💘 Secret Admirer Letter</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Poetic, mysterious, and delightfully unsettling (in the good way).</p>
+              <input value={recipient} onChange={e=>setRecipient(e.target.value)} placeholder="Their name or how you know them" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <textarea value={feelings} onChange={e=>setFeelings(e.target.value)} placeholder="What do you feel? What do you notice about them that others miss?" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'80px',marginBottom:'0.75rem'}} />
+              <input value={context} onChange={e=>setContext(e.target.value)} placeholder="Context (e.g. we work in the same building, met at a coffee shop)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <select value={reveal} onChange={e=>setReveal(e.target.value)} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}}>
+                <option value="no — keep anonymous">Keep anonymous</option>
+                <option value="yes — reveal at the end">Reveal identity at the end</option>
+                <option value="leave a clue">Leave a subtle clue</option>
+              </select>
+              <button onClick={write} disabled={loading} style={{background:'#e11d48',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Writing...' : '💘 Write the Letter'}
+              </button>
+              {result && result.letter && (
+                <div style={{marginTop:'1.5rem'}}>
+                  <div style={{background:'#1e1e2e',border:'1px solid #831843',borderRadius:'10px',padding:'1.5rem',whiteSpace:'pre-line',color:'#fda4af',lineHeight:'1.8',fontStyle:'italic',marginBottom:'0.75rem'}}>{result.letter}</div>
+                  {result.ps_line && <p style={{color:'#94a3b8',marginBottom:'0.4rem'}}>P.S. {result.ps_line}</p>}
+                  {result.mystery_clue && <p style={{color:'#64748b',fontSize:'0.85rem'}}>🔍 Clue: {result.mystery_clue}</p>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'legacyletter' && (() => {
+          const [recipient, setRecipient] = React.useState('');
+          const [lessons, setLessons] = React.useState('');
+          const [values, setValues] = React.useState('');
+          const [timeline, setTimeline] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const write = async () => {
+            if (!recipient.trim() || !lessons.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/legacy/write`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ recipient, lessons, values, timeline }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          return (
+            <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
+              <h2 style={{color:'#818cf8',marginBottom:'1rem'}}>📖 Legacy Letter</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>A letter from you to the future — wisdom they can open when they need it most.</p>
+              <input value={recipient} onChange={e=>setRecipient(e.target.value)} placeholder="Who is this for? (e.g. my daughter, my future self, my team)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <textarea value={lessons} onChange={e=>setLessons(e.target.value)} placeholder="Life lessons you want to pass on..." style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'80px',marginBottom:'0.75rem'}} />
+              <input value={values} onChange={e=>setValues(e.target.value)} placeholder="Core values (e.g. courage, kindness, honesty, curiosity)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <input value={timeline} onChange={e=>setTimeline(e.target.value)} placeholder="To be opened when... (e.g. they turn 18, they face failure, they get married)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}} />
+              <button onClick={write} disabled={loading} style={{background:'#4f46e5',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Writing your legacy...' : '📖 Write Legacy Letter'}
+              </button>
+              {result && result.letter && (
+                <div style={{marginTop:'1.5rem'}}>
+                  <div style={{background:'#1e1b4b',border:'1px solid #4338ca',borderRadius:'10px',padding:'1.5rem',whiteSpace:'pre-line',color:'#e0e7ff',lineHeight:'1.8',marginBottom:'0.75rem'}}>{result.letter}</div>
+                  {result.if_you_forget_everything_else && <div style={{background:'#1e293b',borderRadius:'8px',padding:'0.75rem',borderLeft:'3px solid #818cf8'}}><span style={{color:'#a5b4fc',fontWeight:600}}>If you forget everything else: </span><span style={{color:'#e2e8f0'}}>{result.if_you_forget_everything_else}</span></div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'lovelanguage' && (() => {
+          const [behaviors, setBehaviors] = React.useState('');
+          const [relationship, setRelationship] = React.useState('romantic partner');
+          const [concern, setConcern] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          const decode = async () => {
+            if (!behaviors.trim()) return;
+            setLoading(true);
+            try {
+              const r = await fetch(`${API_BASE}/api/love-language/decode`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ behaviors, relationship, concern }) });
+              setResult(await r.json());
+            } finally { setLoading(false); }
+          };
+          const langColor: Record<string,string> = {'words of affirmation':'#f59e0b','acts of service':'#22c55e','receiving gifts':'#ec4899','quality time':'#3b82f6','physical touch':'#ef4444'};
+          return (
+            <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
+              <h2 style={{color:'#f472b6',marginBottom:'1rem'}}>💞 Love Language Decoder</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Describe how they act — I'll decode their love language.</p>
+              <textarea value={behaviors} onChange={e=>setBehaviors(e.target.value)} placeholder="How do they show love? What do they do or say? What upsets them? (e.g. always doing things for me, gets hurt when I cancel plans, gives random gifts)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'100px',marginBottom:'0.75rem'}} />
+              <select value={relationship} onChange={e=>setRelationship(e.target.value)} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}}>
+                {['romantic partner','spouse','parent','child','friend','colleague'].map(r=><option key={r} value={r}>{r.charAt(0).toUpperCase()+r.slice(1)}</option>)}
+              </select>
+              <input value={concern} onChange={e=>setConcern(e.target.value)} placeholder="What's your main concern? (e.g. we keep missing each other emotionally)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}} />
+              <button onClick={decode} disabled={loading} style={{background:'#db2777',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
+                {loading ? 'Decoding...' : '💞 Decode Their Love Language'}
+              </button>
+              {result && result.primary && (
+                <div style={{marginTop:'1.5rem'}}>
+                  <div style={{background:'#1e293b',borderRadius:'10px',padding:'1.25rem',marginBottom:'1rem',textAlign:'center',border:`2px solid ${langColor[result.primary.language?.toLowerCase()]||'#f472b6'}`}}>
+                    <p style={{color:'#f472b6',fontSize:'1.1rem',fontWeight:600,textTransform:'capitalize'}}>Primary: {result.primary.language}</p>
+                    <p style={{color:'#64748b',fontSize:'0.85rem'}}>{result.primary.confidence}% confidence</p>
+                    <p style={{color:'#94a3b8',marginTop:'0.4rem',fontSize:'0.9rem'}}>{result.primary.evidence}</p>
+                  </div>
+                  {result.speak_their_language && <div style={{background:'#1e293b',borderRadius:'8px',padding:'1rem',marginBottom:'0.75rem'}}>
+                    <h4 style={{color:'#22c55e',marginBottom:'0.5rem'}}>💡 How to speak their language</h4>
+                    {result.speak_their_language.map((tip:string,i:number)=><p key={i} style={{color:'#e2e8f0',marginBottom:'0.3rem'}}>• {tip}</p>)}
+                  </div>}
+                  {result.insight && <div style={{background:'#1e1e2e',borderRadius:'8px',padding:'0.75rem',borderLeft:'3px solid #f472b6'}}><p style={{color:'#fda4af',fontStyle:'italic'}}>{result.insight}</p></div>}
+                </div>
+              )}
+            </div>
+          );
         })()}
 
         {/* ── FORGE OPERATOR ─────────────────────────────────────── */}

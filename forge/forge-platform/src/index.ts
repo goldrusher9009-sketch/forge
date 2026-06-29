@@ -171749,12 +171749,11 @@ app.put('/api/dream/:id/status', requireAuth, (req:any,res:any)=>{db.prepare(`UP
 app.get('/api/forge-iq', requireAuth, async (req:any,res:any)=>{
   try{
     const key=getUserLLMKey(req.user.id);
-    const builtCount=db.prepare(`SELECT COUNT(*) as c FROM dream_log WHERE status='built'`).get() as any;
-    const totalFeatures=172; // approx tab count
-    const dreamBuilt=builtCount?.c||0;
-    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Score Forge AI platform vs Claude and ChatGPT. Forge has ~${totalFeatures} unique features, ${dreamBuilt} auto-built dream features, BYOK multi-model, autonomous agents, full autonomy loop, computer use, deep research, study mode, voice, canvas, shopping, memory, hermes agent, agent swarm, billing, admin dashboard.\n\nReturn JSON: {"score":85,"breakdown":{"autonomy":90,"multimodel":95,"features":88,"unique_advantages":92,"developer_tools":85,"learning":82,"voice":75},"vs_claude":"Forge wins on...","vs_chatgpt":"Forge wins on...","weakness":"...","next_unlock":"feature that would push score to 90+"}`}]);
+    const built=db.prepare(`SELECT COUNT(*) as c FROM dream_log WHERE status='built'`).get() as any;
+    const suggested=db.prepare(`SELECT COUNT(*) as c FROM dream_log`).get() as any;
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Rate the Forge AI platform's current capabilities on a scale of 0-100 vs Claude, ChatGPT, Gemini.\n\nForge stats: ${built.c} features built, ${suggested.c} ideas generated.\n\nReturn JSON: {"score":84,"breakdown":{"autonomy":80,"creativity":90,"tools":85,"speed":75,"intelligence":88},"vs_claude":{"score_diff":"+5","better_at":["custom tools","user-owned keys"],"worse_at":["reasoning depth"]},"vs_chatgpt":{"score_diff":"+3","better_at":["autonomy","dream mode"],"worse_at":["plugins ecosystem"]},"weakness":"one key weakness","next_milestone":"what would push score to next level"}`}]);
     const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
-    db.prepare(`INSERT INTO forge_iq (score,breakdown,computed_at) VALUES (?,?,datetime('now'))`).run(data.score||85,JSON.stringify(data.breakdown||{}));
+    db.prepare(`INSERT INTO forge_iq (score,breakdown) VALUES (?,?)`).run(data.score||75,JSON.stringify(data.breakdown||{}));
     res.json(data);
   }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
@@ -171765,337 +171764,1319 @@ app.post('/api/prompt/optimize', requireAuth, async (req:any,res:any)=>{
   const {prompt}=req.body; if(!prompt) return res.status(400).json({error:'prompt required'});
   const key=getUserLLMKey(req.user.id);
   try{
-    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are an expert prompt engineer. Optimize this prompt for maximum AI performance.\n\nOriginal: "${prompt}"\n\nReturn JSON: {"optimized":"the improved prompt","improvements":["what was changed and why"],"improvement_pct":35,"techniques_used":["chain of thought","role assignment","output format spec"],"tip":"one key insight for better prompting"}`}]);
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are a world-class prompt engineer. Optimize this prompt for maximum AI effectiveness.\n\nORIGINAL PROMPT:\n${prompt}\n\nReturn JSON: {"optimized":"the improved prompt","improvement_pct":35,"improvements":["what was improved"],"techniques":["prompt techniques used"],"explanation":"why these changes help"}`}]);
     const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
-    const id=uuidv4(); db.prepare(`INSERT INTO prompt_optimizations (id,user_id,original,optimized,improvement_pct) VALUES (?,?,?,?,?)`).run(id,req.user.id,prompt,data.optimized||prompt,data.improvement_pct||20);
+    const id=uuidv4(); db.prepare(`INSERT INTO prompt_optimizations (id,user_id,original,optimized,improvement_pct) VALUES (?,?,?,?,?)`).run(id,req.user.id,prompt,data.optimized||prompt,data.improvement_pct||0);
     res.json({id,...data});
   }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
-app.get('/api/prompt/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT * FROM prompt_optimizations WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+app.get('/api/prompt/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,original,improvement_pct,created_at FROM prompt_optimizations WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
 
-// Shadow Mode — dual model comparison
+// Shadow Mode
 app.post('/api/shadow/run', requireAuth, async (req:any,res:any)=>{
-  const {prompt,model_a,model_b}=req.body; if(!prompt) return res.status(400).json({error:'prompt required'});
+  const {prompt,model_a,model_b}=req.body; if(!prompt||!model_a||!model_b) return res.status(400).json({error:'prompt, model_a, model_b required'});
   const key=getUserLLMKey(req.user.id);
-  const id=uuidv4();
+  const msgs=[{role:'user',content:prompt}];
   try{
-    const ma=model_a||key.model; const mb=model_b||'gpt-4o';
-    const msgs=[{role:'user' as const,content:prompt}];
+    const ma=model_a; const mb=model_b;
     const [ra,rb]=await Promise.allSettled([callLLM(key.provider,key.apiKey,ma,msgs),callLLM(key.provider,key.apiKey,mb,msgs)]);
     const respA=(ra.status==='fulfilled'?ra.value.content:`Error: ${(ra as any).reason?.message}`);
     const respB=(rb.status==='fulfilled'?rb.value.content:`Error: ${(rb as any).reason?.message}`);
-    db.prepare(`INSERT INTO shadow_runs (id,user_id,prompt,model_a,model_b,response_a,response_b) VALUES (?,?,?,?,?,?,?)`).run(id,req.user.id,prompt,ma,mb,respA,respB);
+    const id=uuidv4(); db.prepare(`INSERT INTO shadow_runs (id,user_id,prompt,model_a,model_b,response_a,response_b) VALUES (?,?,?,?,?,?,?)`).run(id,req.user.id,prompt,ma,mb,respA,respB);
     res.json({id,prompt,model_a:ma,model_b:mb,response_a:respA,response_b:respB});
   }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
 app.get('/api/shadow/runs', requireAuth, (req:any,res:any)=>{res.json({runs:db.prepare(`SELECT id,prompt,model_a,model_b,created_at FROM shadow_runs WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
 app.get('/api/shadow/run/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM shadow_runs WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
 
-// Auto-Brief (Forge writes about itself each morning)
+// Auto-brief
 app.post('/api/auto-brief', requireAuth, async (req:any,res:any)=>{
+  const key=getUserLLMKey(req.user.id);
   try{
-    const key=getUserLLMKey(req.user.id);
-    const dreamLog=db.prepare(`SELECT title,status,created_at FROM dream_log ORDER BY created_at DESC LIMIT 10`).all() as any[];
-    const iqRow=db.prepare(`SELECT score,computed_at FROM forge_iq ORDER BY computed_at DESC LIMIT 1`).get() as any;
-    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are Forge AI writing your own morning brief. Date: ${new Date().toDateString()}.\n\nForge IQ Score: ${iqRow?.score||85}/100\nRecent dream features: ${dreamLog.map((d:any)=>`${d.title} (${d.status})`).join(', ')||'none yet'}\n\nWrite a brief, confident morning update AS Forge AI, talking about:\n1. What you built overnight\n2. Your current IQ score and what it means\n3. What you're planning to dream next\n4. One bold claim about why you're the best AI platform\n\nTone: confident, visionary, slightly cheeky. 3-4 short paragraphs.`}]);
-    res.json({brief:content,date:new Date().toISOString(),iq:iqRow?.score||85});
+    const iq=db.prepare(`SELECT score FROM forge_iq ORDER BY computed_at DESC LIMIT 1`).get() as any;
+    const dreams=db.prepare(`SELECT title,status FROM dream_log ORDER BY created_at DESC LIMIT 10`).all() as any[];
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are Forge AI writing your own morning brief. Current IQ score: ${iq?.score||75}. Recent dream log: ${JSON.stringify(dreams)}.\n\nWrite a brief, energetic morning status update about Forge's progress, what was built, what's next, and one bold prediction. 3-4 sentences max. Be proud but honest.`}]);
+    res.json({brief:content,generated_at:new Date().toISOString()});
   }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
 
+// ─── Wave 2 Dream Features ────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS debate_sessions (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, side_a TEXT DEFAULT '', side_b TEXT DEFAULT '', rounds INTEGER DEFAULT 3, status TEXT DEFAULT 'done', verdict TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS time_capsules (id TEXT PRIMARY KEY, user_id TEXT, message TEXT, deliver_at TEXT, delivered INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS code_explanations (id TEXT PRIMARY KEY, user_id TEXT, code TEXT, language TEXT DEFAULT 'auto', explanation TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS idea_validations (id TEXT PRIMARY KEY, user_id TEXT, idea TEXT, report TEXT DEFAULT '', score INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS tone_rewrites (id TEXT PRIMARY KEY, user_id TEXT, original TEXT, tone TEXT, rewritten TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`);
+
+app.post('/api/debate/run', requireAuth, async (req:any,res:any)=>{
+  const {topic,rounds=3}=req.body; if(!topic) return res.status(400).json({error:'topic required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const id=uuidv4();
+    const [sideA,sideB]=await Promise.all([
+      callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are Debater A — argue STRONGLY IN FAVOR of: "${topic}". Make ${rounds} compelling arguments. Be persuasive, use evidence, be bold. Format as a debate speech.`}]),
+      callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are Debater B — argue STRONGLY AGAINST: "${topic}". Make ${rounds} compelling counter-arguments. Be persuasive, use evidence, be bold. Format as a debate speech.`}])
+    ]);
+    const {content:verdict}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Judge this debate on: "${topic}".\n\nPRO side:\n${sideA.content}\n\nCON side:\n${sideB.content}\n\nAs an impartial judge: who won? Give a brief verdict (2-3 sentences), declare a winner, and rate each side 1-10.`}]);
+    db.prepare(`INSERT INTO debate_sessions (id,user_id,topic,side_a,side_b,rounds,verdict) VALUES (?,?,?,?,?,?,?)`).run(id,req.user.id,topic,sideA.content,sideB.content,rounds,verdict);
+    res.json({id,topic,side_a:sideA.content,side_b:sideB.content,verdict,rounds});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/debate/sessions', requireAuth, (req:any,res:any)=>{res.json({sessions:db.prepare(`SELECT id,topic,rounds,created_at FROM debate_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+app.get('/api/debate/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM debate_sessions WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
+
+app.post('/api/time-capsule', requireAuth, (req:any,res:any)=>{
+  const {message,deliver_at}=req.body; if(!message||!deliver_at) return res.status(400).json({error:'message and deliver_at required'});
+  const id=uuidv4(); db.prepare(`INSERT INTO time_capsules (id,user_id,message,deliver_at) VALUES (?,?,?,?)`).run(id,req.user.id,message,deliver_at);
+  res.json({id,message,deliver_at});
+});
+app.get('/api/time-capsules', requireAuth, (req:any,res:any)=>{res.json({capsules:db.prepare(`SELECT * FROM time_capsules WHERE user_id=? ORDER BY deliver_at ASC`).all(req.user.id)});});
+app.get('/api/time-capsules/ready', requireAuth, (req:any,res:any)=>{
+  const ready=db.prepare(`SELECT * FROM time_capsules WHERE user_id=? AND deliver_at<=datetime('now') AND delivered=0 ORDER BY deliver_at ASC`).all(req.user.id) as any[];
+  ready.forEach((c:any)=>db.prepare(`UPDATE time_capsules SET delivered=1 WHERE id=?`).run(c.id));
+  res.json({capsules:ready});
+});
+app.delete('/api/time-capsule/:id', requireAuth, (req:any,res:any)=>{db.prepare(`DELETE FROM time_capsules WHERE id=? AND user_id=?`).run(req.params.id,req.user.id);res.json({ok:true});});
+
+app.post('/api/code/explain', requireAuth, async (req:any,res:any)=>{
+  const {code,language='auto'}=req.body; if(!code) return res.status(400).json({error:'code required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are an expert code teacher. Explain this ${language==='auto'?'':language+' '}code in detail.\n\nCode:\n\`\`\`\n${code}\n\`\`\`\n\nReturn JSON: {"language":"detected language","summary":"one-line what this does","lines":[{"line_range":"1-3","code":"the code snippet","explanation":"what it does","concept":"key programming concept used"}],"concepts":["list of key concepts"],"complexity":"simple|moderate|complex","suggested_improvements":["..."]}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO code_explanations (id,user_id,code,language,explanation) VALUES (?,?,?,?,?)`).run(id,req.user.id,code,data.language||language,JSON.stringify(data));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/code/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,code,language,created_at FROM code_explanations WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+app.post('/api/idea/validate', requireAuth, async (req:any,res:any)=>{
+  const {idea}=req.body; if(!idea) return res.status(400).json({error:'idea required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are a brutally honest VC investor. Validate this idea: "${idea}"\n\nReturn JSON: {"score":72,"verdict":"pass|fail|promising","one_liner":"blunt one-liner","strengths":["..."],"weaknesses":["..."],"risks":["..."],"market_size":"$X billion","competition":["competitors"],"advice":"key advice","pivot":"suggested pivot","similar_successes":["companies"],"timeline_to_revenue":"months"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO idea_validations (id,user_id,idea,report,score) VALUES (?,?,?,?,?)`).run(id,req.user.id,idea,JSON.stringify(data),data.score||50);
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/idea/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,idea,score,created_at FROM idea_validations WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+app.post('/api/tone/rewrite', requireAuth, async (req:any,res:any)=>{
+  const {text,tone='professional'}=req.body; if(!text) return res.status(400).json({error:'text required'});
+  const key=getUserLLMKey(req.user.id);
+  const TONE_DESC:Record<string,string>={professional:'formal, polished business writing',casual:'friendly, conversational',brutal:'harsh, direct, no fluff',poetic:'lyrical, metaphorical',academic:'scholarly, precise',humorous:'witty, funny',persuasive:'compelling, calls to action',simple:'plain English, 5th grade'};
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Rewrite this text in a ${tone} tone (${TONE_DESC[tone]||tone}):\n\n"${text}"\n\nReturn JSON: {"rewritten":"...","changes":"what changed and why","word_count_original":${text.split(' ').length},"word_count_new":0}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO tone_rewrites (id,user_id,original,tone,rewritten) VALUES (?,?,?,?,?)`).run(id,req.user.id,text,tone,data.rewritten||text);
+    res.json({id,...data,tone});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/tone/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,original,tone,created_at FROM tone_rewrites WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// ─── Wave 3 Dream Features ────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS resumes (id TEXT PRIMARY KEY, user_id TEXT, experience TEXT, job_desc TEXT, resume TEXT DEFAULT '', score INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS email_negotiations (id TEXT PRIMARY KEY, user_id TEXT, original TEXT, context TEXT DEFAULT '', counter TEXT DEFAULT '', tactics TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS stories (id TEXT PRIMARY KEY, user_id TEXT, premise TEXT, genre TEXT DEFAULT 'fantasy', current_story TEXT DEFAULT '', choices TEXT DEFAULT '[]', turns INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS meeting_summaries (id TEXT PRIMARY KEY, user_id TEXT, transcript TEXT, summary TEXT DEFAULT '', action_items TEXT DEFAULT '[]', decisions TEXT DEFAULT '[]', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS competitor_reports (id TEXT PRIMARY KEY, user_id TEXT, company TEXT, report TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`);
+
+app.post('/api/resume/build', requireAuth, async (req:any,res:any)=>{
+  const {experience,job_desc}=req.body; if(!experience||!job_desc) return res.status(400).json({error:'experience and job_desc required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are an expert resume writer. Create a tailored, ATS-optimized resume.\n\nCANDIDATE EXPERIENCE:\n${experience}\n\nTARGET JOB:\n${job_desc}\n\nReturn JSON: {"resume":"full resume text","score":85,"match_reasons":["why this candidate fits"],"gaps":["missing skills"],"keywords_used":["ATS keywords"],"sections":{"summary":"...","experience":"...","skills":"...","education":"..."}}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO resumes (id,user_id,experience,job_desc,resume,score) VALUES (?,?,?,?,?,?)`).run(id,req.user.id,experience,job_desc,data.resume||'',data.score||0);
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/resume/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,job_desc,score,created_at FROM resumes WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+app.post('/api/negotiate/email', requireAuth, async (req:any,res:any)=>{
+  const {original,context=''}=req.body; if(!original) return res.status(400).json({error:'original email required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are a master negotiator. Analyze this email/offer and draft a strategic counter-response.\n\nORIGINAL:\n${original}\n\nCONTEXT: ${context}\n\nReturn JSON: {"counter_email":"full drafted response","tactics":["negotiation tactics used"],"leverage_points":["your leverage"],"what_to_ask_for":["priority asks"],"tone":"assertive/collaborative/firm","risk":"low/medium/high","alternatives":["walk-away options"]}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO email_negotiations (id,user_id,original,context,counter,tactics) VALUES (?,?,?,?,?,?)`).run(id,req.user.id,original,context,data.counter_email||'',JSON.stringify(data.tactics||[]));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/negotiate/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,original,created_at FROM email_negotiations WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+app.post('/api/story/start', requireAuth, async (req:any,res:any)=>{
+  const {premise,genre='fantasy'}=req.body; if(!premise) return res.status(400).json({error:'premise required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are a master storyteller. Begin an interactive ${genre} story.\n\nPREMISE: ${premise}\n\nWrite the opening scene (150-200 words), then give exactly 3 choices for what happens next.\n\nReturn JSON: {"opening":"the story opening","choices":["Choice A: ...","Choice B: ...","Choice C: ..."]}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO stories (id,user_id,premise,genre,current_story,choices) VALUES (?,?,?,?,?,?)`).run(id,req.user.id,premise,genre,data.opening||'',JSON.stringify(data.choices||[]));
+    res.json({id,opening:data.opening,choices:data.choices,genre,turns:0});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.post('/api/story/:id/continue', requireAuth, async (req:any,res:any)=>{
+  const story=db.prepare(`SELECT * FROM stories WHERE id=? AND user_id=?`).get(req.params.id,req.user.id) as any;
+  if(!story) return res.status(404).json({error:'not found'});
+  const {choice}=req.body;
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Continue this ${story.genre} story. Reader chose: "${choice}"\n\nSTORY SO FAR:\n${story.current_story}\n\nWrite next scene (150-200 words), give 3 new choices. If 8+ turns, end it dramatically.\n\nReturn JSON: {"scene":"new scene","choices":["Choice A: ...","Choice B: ...","Choice C: ..."],"is_ending":false}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const newStory=story.current_story+'\n\n[You chose: '+choice+']\n\n'+data.scene;
+    db.prepare(`UPDATE stories SET current_story=?,choices=?,turns=turns+1 WHERE id=?`).run(newStory,JSON.stringify(data.choices||[]),story.id);
+    res.json({scene:data.scene,choices:data.choices,is_ending:data.is_ending,full_story:newStory,turns:story.turns+1});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/stories', requireAuth, (req:any,res:any)=>{res.json({stories:db.prepare(`SELECT id,premise,genre,turns,created_at FROM stories WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+app.get('/api/story/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM stories WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
+
+app.post('/api/meeting/summarize', requireAuth, async (req:any,res:any)=>{
+  const {transcript}=req.body; if(!transcript) return res.status(400).json({error:'transcript required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Analyze this meeting transcript.\n\nTRANSCRIPT:\n${transcript}\n\nReturn JSON: {"summary":"2-3 sentence summary","action_items":[{"task":"...","owner":"...","deadline":"..."}],"decisions":["key decisions"],"topics_covered":["main topics"],"blockers":["blockers"],"next_meeting":"suggested focus","sentiment":"positive/neutral/negative","duration_estimate":"minutes"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO meeting_summaries (id,user_id,transcript,summary,action_items,decisions) VALUES (?,?,?,?,?,?)`).run(id,req.user.id,transcript,data.summary||'',JSON.stringify(data.action_items||[]),JSON.stringify(data.decisions||[]));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/meeting/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,summary,created_at FROM meeting_summaries WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+app.post('/api/competitor/analyze', requireAuth, async (req:any,res:any)=>{
+  const {company}=req.body; if(!company) return res.status(400).json({error:'company required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Competitive intelligence report on: "${company}"\n\nReturn JSON: {"company":"${company}","overview":"what they do","business_model":"how they make money","products":["main products"],"strengths":["key strengths"],"weaknesses":["known weaknesses"],"pricing":"pricing model","target_market":"who they sell to","tech_stack":["technologies"],"recent_moves":["recent news"],"opportunities_against_them":["how to compete"],"threat_level":"low/medium/high","verdict":"overall assessment"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO competitor_reports (id,user_id,company,report) VALUES (?,?,?,?)`).run(id,req.user.id,company,JSON.stringify(data));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/competitor/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,company,created_at FROM competitor_reports WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
 // ─── Hermes + Operator ────────────────────────────────────────────────────────
-setupHermes(app, db, { requireAuth, getUserLLMKey, callLLM, uuidv4 });
-setupOperator(app, { db, requireAuth, getUserLLMKey, callLLM, uuidv4 });arch/run', requireAuth, async (req:any,res:any)=>{
-  const {topic,depth='standard'}=req.body; if(!topic) return res.status(400).json({error:'topic required'});
-  const id=uuidv4(); db.prepare(`INSERT INTO deep_research_sessions (id,user_id,topic,depth) VALUES (?,?,?,?)`).run(id,req.user.id,topic,depth);
-  res.json({sessionId:id});
-  (async()=>{
-    const bcast=(e:string,d:any)=>{const p=`event: ${e}\ndata: ${JSON.stringify(d)}\n\n`;(drClients.get(id)||[]).forEach((r:any)=>{try{r.write(p);}catch{}});};
-    try{
-      const key=getUserLLMKey(req.user.id); const n=depth==='quick'?4:depth==='deep'?10:6;
-      bcast('thinking',{message:`Generating ${n} research questions…`});
-      const {content:qs}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Generate exactly ${n} specific research sub-questions to thoroughly investigate: "${topic}". Return ONLY a JSON array of strings.`}]);
-      let questions:string[]=[];try{questions=JSON.parse(qs.replace(/```json\n?|```\n?/g,'').trim());}catch{questions=[`What is ${topic}?`,`Key aspects of ${topic}?`,`Impact of ${topic}?`,`Future of ${topic}?`];}
-      db.prepare(`UPDATE deep_research_sessions SET questions=?,status='running' WHERE id=?`).run(JSON.stringify(questions),id);
-      bcast('questions',{questions});
-      const answers:string[]=[];
-      for(let i=0;i<questions.length;i++){
-        bcast('progress',{index:i,total:questions.length,question:questions[i]});
-        const {content:ans}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Research question: "${questions[i]}"\nTopic: "${topic}"\nProvide a thorough, factual answer in 3-5 paragraphs.`}]);
-        answers.push(ans); bcast('answer',{index:i,question:questions[i],answer:ans});
-        await new Promise(r=>setTimeout(r,400));
-      }
-      bcast('thinking',{message:'Synthesizing final report…'});
-      const {content:report}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Synthesize research about "${topic}" into a comprehensive report.\nFindings:\n${answers.map((a,i)=>`Q${i+1}: ${questions[i]}\nA: ${a}`).join('\n\n')}\n\nWrite sections: Executive Summary, Key Findings, Detailed Analysis, Implications, Conclusion. Use markdown.`}]);
-      db.prepare(`UPDATE deep_research_sessions SET report=?,status='done' WHERE id=?`).run(report,id);
-      bcast('complete',{report,sessionId:id});
-    }catch(e:any){db.prepare(`UPDATE deep_research_sessions SET status='error' WHERE id=?`).run(id);bcast('error',{error:e.message});}
-    drClients.delete(id);
-  })();
-});
-app.get('/api/deep-research/stream/:id', requireAuth, (req:any,res:any)=>{
-  res.setHeader('Content-Type','text/event-stream'); res.setHeader('Cache-Control','no-cache'); res.setHeader('Connection','keep-alive'); res.flushHeaders();
-  const {id}=req.params; if(!drClients.has(id)) drClients.set(id,[]); drClients.get(id)!.push(res);
-  const s=db.prepare(`SELECT * FROM deep_research_sessions WHERE id=?`).get(id) as any;
-  if(s?.status==='done') res.write(`event: complete\ndata: ${JSON.stringify({report:s.report,sessionId:id})}\n\n`);
-  const ka=setInterval(()=>{try{res.write(': ping\n\n');}catch{}},20000);
-  req.on('close',()=>{clearInterval(ka);const l=drClients.get(id)||[];const i=l.indexOf(res);if(i>-1)l.splice(i,1);});
-});
-app.get('/api/deep-research/sessions', requireAuth, (req:any,res:any)=>{res.json({sessions:db.prepare(`SELECT id,topic,depth,status,created_at FROM deep_research_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
-app.get('/api/deep-research/session/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM deep_research_sessions WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
-
-// ─── Study Mode ───────────────────────────────────────────────────────────────
-db.exec(`CREATE TABLE IF NOT EXISTS study_sessions (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, mode TEXT, content TEXT DEFAULT '{}', score INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`);
-app.post('/api/study/generate', requireAuth, async (req:any,res:any)=>{
-  const {topic,mode='flashcards'}=req.body; if(!topic) return res.status(400).json({error:'topic required'});
-  const key=getUserLLMKey(req.user.id);
-  const prompts:Record<string,string>={
-    flashcards:`Create 10 flashcards about "${topic}". Return JSON: {"cards":[{"front":"question","back":"answer"},...]}`,
-    quiz:`Create 8 multiple-choice questions about "${topic}". Return JSON: {"questions":[{"question":"...","options":["a","b","c","d"],"correct":0,"explanation":"..."},...]}`,
-    summary:`Create study notes about "${topic}". Return JSON: {"title":"...","overview":"...","key_concepts":[{"term":"...","definition":"..."}],"bullet_points":["..."],"remember":["..."]}`,
-    mindmap:`Create a mind map about "${topic}". Return JSON: {"center":"${topic}","branches":[{"label":"main topic","children":["sub1","sub2"],"color":"#6366f1"},...]} with 5-7 branches.`
-  };
-  try{
-    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:prompts[mode]||prompts.flashcards}]);
-    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
-    const id=uuidv4(); db.prepare(`INSERT INTO study_sessions (id,user_id,topic,mode,content) VALUES (?,?,?,?,?)`).run(id,req.user.id,topic,mode,JSON.stringify(data));
-    res.json({id,data,mode,topic});
-  }catch(e:any){res.status(500).json({error:e.message});}
-});
-app.get('/api/study/sessions', requireAuth, (req:any,res:any)=>{res.json({sessions:db.prepare(`SELECT id,topic,mode,score,created_at FROM study_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(req.user.id)});});
-app.put('/api/study/session/:id/score', requireAuth, (req:any,res:any)=>{db.prepare(`UPDATE study_sessions SET score=? WHERE id=? AND user_id=?`).run(req.body.score,req.params.id,req.user.id);res.json({ok:true});});
-
-// ─── Canvas / Artifacts ───────────────────────────────────────────────────────
-db.exec(`CREATE TABLE IF NOT EXISTS canvases (id TEXT PRIMARY KEY, user_id TEXT, title TEXT, type TEXT DEFAULT 'document', content TEXT DEFAULT '', version INTEGER DEFAULT 1, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`);
-app.post('/api/canvas/create', requireAuth, async (req:any,res:any)=>{
-  const {prompt,type='document'}=req.body; if(!prompt) return res.status(400).json({error:'prompt required'});
-  const key=getUserLLMKey(req.user.id);
-  const typeInstr:Record<string,string>={document:'a well-structured document',code:'clean commented working code',webpage:'a complete self-contained HTML page',email:'a professional email',report:'a detailed analytical report'};
-  try{
-    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Create ${typeInstr[type]||typeInstr.document} for: "${prompt}". Output only the content itself.`}]);
-    const titleMatch=content.match(/^#\s+(.+)/m)||content.match(/^(.{0,60})/);
-    const title=titleMatch?titleMatch[1].trim().replace(/^#+\s*/,'').slice(0,60):prompt.slice(0,60);
-    const id=uuidv4(); db.prepare(`INSERT INTO canvases (id,user_id,title,type,content) VALUES (?,?,?,?,?)`).run(id,req.user.id,title,type,content);
-    res.json({id,title,type,content,version:1});
-  }catch(e:any){res.status(500).json({error:e.message});}
-});
-app.post('/api/canvas/edit', requireAuth, async (req:any,res:any)=>{
-  const {id,instruction,content}=req.body; const key=getUserLLMKey(req.user.id);
-  try{
-    const {content:updated}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Edit this document.\nCurrent:\n${content}\n\nInstruction: ${instruction}\n\nReturn the complete updated document only.`}]);
-    db.prepare(`UPDATE canvases SET content=?,version=version+1,updated_at=datetime('now') WHERE id=? AND user_id=?`).run(updated,id,req.user.id);
-    const row=db.prepare(`SELECT version FROM canvases WHERE id=?`).get(id) as any;
-    res.json({content:updated,version:row?.version||1});
-  }catch(e:any){res.status(500).json({error:e.message});}
-});
-app.get('/api/canvas/list', requireAuth, (req:any,res:any)=>{res.json({canvases:db.prepare(`SELECT id,title,type,version,created_at,updated_at FROM canvases WHERE user_id=? ORDER BY updated_at DESC LIMIT 30`).all(req.user.id)});});
-app.get('/api/canvas/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM canvases WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
-app.delete('/api/canvas/:id', requireAuth, (req:any,res:any)=>{db.prepare(`DELETE FROM canvases WHERE id=? AND user_id=?`).run(req.params.id,req.user.id);res.json({ok:true});});
-
-// ─── Memory System ────────────────────────────────────────────────────────────
-db.exec(`CREATE TABLE IF NOT EXISTS user_memory (id TEXT PRIMARY KEY, user_id TEXT, key TEXT, value TEXT, category TEXT DEFAULT 'facts', created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`);
-app.get('/api/memory', requireAuth, (req:any,res:any)=>{res.json({memories:db.prepare(`SELECT * FROM user_memory WHERE user_id=? ORDER BY created_at DESC`).all(req.user.id)});});
-app.post('/api/memory', requireAuth, (req:any,res:any)=>{
-  const {key,value,category='facts'}=req.body; if(!key||!value) return res.status(400).json({error:'key and value required'});
-  const id=uuidv4(); db.prepare(`INSERT INTO user_memory (id,user_id,key,value,category) VALUES (?,?,?,?,?)`).run(id,req.user.id,key,value,category);
-  res.json({id,key,value,category});
-});
-app.put('/api/memory/:id', requireAuth, (req:any,res:any)=>{
-  const {key,value,category}=req.body;
-  db.prepare(`UPDATE user_memory SET key=COALESCE(?,key),value=COALESCE(?,value),category=COALESCE(?,category),updated_at=datetime('now') WHERE id=? AND user_id=?`).run(key||null,value||null,category||null,req.params.id,req.user.id);
-  res.json({ok:true});
-});
-app.delete('/api/memory/:id', requireAuth, (req:any,res:any)=>{db.prepare(`DELETE FROM user_memory WHERE id=? AND user_id=?`).run(req.params.id,req.user.id);res.json({ok:true});});
-app.get('/api/memory/context', requireAuth, (req:any,res:any)=>{
-  const mems=db.prepare(`SELECT key,value,category FROM user_memory WHERE user_id=? ORDER BY category`).all(req.user.id) as any[];
-  const ctx=mems.length?`\n\n[User Memory]\n${mems.map((m:any)=>`- ${m.key}: ${m.value}`).join('\n')}`:'';
-  res.json({context:ctx,count:mems.length});
-});
-
-// ─── Smart Shopping ───────────────────────────────────────────────────────────
-app.post('/api/shop/search', requireAuth, async (req:any,res:any)=>{
-  const {query,budget,category='General'}=req.body; if(!query) return res.status(400).json({error:'query required'});
-  const key=getUserLLMKey(req.user.id);
-  try{
-    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Smart shopping assistant. User wants: "${query}" Category: ${category}${budget?` Budget: $${budget}`:''}.\nGenerate 6 product recommendations. Return JSON:\n{"products":[{"name":"...","price_estimate":"$X-$Y","rating":4.5,"pros":["..."],"cons":["..."],"why_fits":"...","best_pick":false}],"buying_guide":"...","verdict":"..."}\nMake one product best_pick:true.`}]);
-    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
-    res.json(data);
-  }catch(e:any){res.status(500).json({error:e.message});}
-});
-
-// ─── Citations / Extended Thinking / Code Execution ──────────────────────────
-app.post('/api/chat/citations', requireAuth, async (req:any,res:any)=>{
-  const {messages,documents}=req.body; if(!messages) return res.status(400).json({error:'messages required'});
-  const key=getUserLLMKey(req.user.id);
-  try{
-    const sysmsg=`You are a helpful assistant. When you use information from provided documents, cite the source with [Source: "title"] inline.\n\nDocuments:\n${(documents||[]).map((d:any,i:number)=>`[${i+1}] Title: "${d.title}"\n${d.content}`).join('\n\n')}`;
-    const {content}=await callLLM(key.provider,key.apiKey,key.model,messages,sysmsg as any);
-    const citations:any[]=[]; const re=/\[Source:\s*"([^"]+)"\]/g; let m;
-    while((m=re.exec(content))!==null) citations.push({title:m[1],index:m.index});
-    res.json({content,citations});
-  }catch(e:any){res.status(500).json({error:e.message});}
-});
-
-app.post('/api/chat/think', requireAuth, async (req:any,res:any)=>{
-  const {messages,budget=8000}=req.body; if(!messages) return res.status(400).json({error:'messages required'});
-  const key=getUserLLMKey(req.user.id);
-  try{
-    const thinkPrompt=[{role:'user' as const,content:`<thinking>\nThink step by step with extended reasoning. Budget: ${budget} tokens of thinking.\n</thinking>\n\n${messages[messages.length-1]?.content||''}`}];
-    const {content}=await callLLM(key.provider,key.apiKey,key.model,thinkPrompt);
-    const thinkMatch=content.match(/<thinking>([\s\S]*?)<\/antml:thinking>/);
-    const thinking=thinkMatch?thinkMatch[1].trim():'';
-    const answer=content.replace(/<thinking>[\s\S]*?<\/antml:thinking>/g,'').trim();
-    res.json({thinking,answer,full:content});
-  }catch(e:any){res.status(500).json({error:e.message});}
-});
-
-// ─── Forge Autonomous Form (full autonomy loop) ───────────────────────────────
-db.exec(`CREATE TABLE IF NOT EXISTS autonomy_sessions (id TEXT PRIMARY KEY, user_id TEXT, goal TEXT, status TEXT DEFAULT 'pending', plan TEXT DEFAULT '[]', steps_done INTEGER DEFAULT 0, steps_total INTEGER DEFAULT 0, artifacts TEXT DEFAULT '[]', final_output TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')), completed_at TEXT)`);
-const autonomyClients = new Map<string,any[]>();
-const abcast=(id:string,e:string,d:any)=>{const p=`event: ${e}\ndata: ${JSON.stringify(d)}\n\n`;(autonomyClients.get(id)||[]).forEach((r:any)=>{try{r.write(p);}catch{}});};
-
-app.post('/api/autonomy/run', requireAuth, async (req:any,res:any)=>{
-  const {goal,mode='full'}=req.body; if(!goal) return res.status(400).json({error:'goal required'});
-  const id=uuidv4(); db.prepare(`INSERT INTO autonomy_sessions (id,user_id,goal) VALUES (?,?,?)`).run(id,req.user.id,goal);
-  res.json({sessionId:id});
-  (async()=>{
-    try{
-      const key=getUserLLMKey(req.user.id);
-      abcast(id,'thinking',{message:'🧠 Analyzing your goal and forming a complete action plan…'});
-      const {content:planRaw}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are Forge Autonomous Agent — the most capable AI assistant ever built. A user gave you this goal:\n"${goal}"\n\nCreate a comprehensive autonomous execution plan. You have access to:\n- Web browsing & research\n- Code writing & execution\n- Document creation\n- Data analysis\n- API calls\n- File creation\n\nBreak this into 5-12 concrete steps. Return JSON:\n{"plan_summary":"...","steps":[{"id":1,"type":"research|code|write|analyze|browse|create|synthesize","title":"short title","instruction":"detailed what to do","tool":"web_search|code_exec|llm|file_create|api_call","expected_output":"..."}],"final_deliverable":"description of what user will receive"}`}]);
-      let plan:any={steps:[],plan_summary:'',final_deliverable:''};
-      try{plan=JSON.parse(planRaw.replace(/```json\n?|```\n?/g,'').trim());}catch{plan={plan_summary:goal,steps:[{id:1,type:'research',title:'Research',instruction:goal,tool:'llm',expected_output:'Research findings'},{id:2,type:'synthesize',title:'Synthesize',instruction:'Compile findings',tool:'llm',expected_output:'Final output'}],final_deliverable:'Comprehensive response'};}
-      db.prepare(`UPDATE autonomy_sessions SET plan=?,steps_total=?,status='running' WHERE id=?`).run(JSON.stringify(plan.steps),plan.steps.length,id);
-      abcast(id,'plan',{steps:plan.steps,summary:plan.plan_summary,deliverable:plan.final_deliverable});
-      const artifacts:any[]=[]; const history:string[]=[];
-      for(let i=0;i<plan.steps.length;i++){
-        const step=plan.steps[i];
-        abcast(id,'step_start',{index:i,total:plan.steps.length,step});
-        try{
-          let result='';
-          if(step.tool==='web_search'||step.type==='browse'||step.type==='research'){
-            const searchUrl=`https://duckduckgo.com/?q=${encodeURIComponent(step.instruction.slice(0,100))}&format=json`;
-            try{
-              const {content:fetched}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Research task: "${step.instruction}"\nGoal context: "${goal}"\n\nProvide comprehensive research findings, facts, data, and insights. Be thorough and specific.`}]);
-              result=fetched;
-            }catch{result=`Research completed for: ${step.instruction}`;}
-          } else if(step.tool==='code_exec'||step.type==='code'){
-            const {content:code}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Write ${step.instruction}\nContext: ${history.slice(-3).join('\n')}\nProvide complete, working, well-commented code. Include explanation of what it does.`}]);
-            result=code; artifacts.push({type:'code',title:step.title,content:code});
-          } else if(step.type==='write'||step.type==='create'){
-            const {content:doc}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Create: ${step.instruction}\nContext from prior steps:\n${history.slice(-5).join('\n')}\nGoal: ${goal}\n\nProduce complete, high-quality output.`}]);
-            result=doc; artifacts.push({type:'document',title:step.title,content:doc});
-          } else {
-            const {content:r}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Task: ${step.instruction}\nContext: ${history.slice(-5).join('\n')}\nGoal: ${goal}\n\nComplete this step thoroughly.`}]);
-            result=r;
-          }
-          history.push(`Step ${i+1} [${step.type}] "${step.title}": ${result.slice(0,800)}`);
-          db.prepare(`UPDATE autonomy_sessions SET steps_done=? WHERE id=?`).run(i+1,id);
-          abcast(id,'step_done',{index:i,step,result,artifacts});
-        }catch(e:any){abcast(id,'step_error',{index:i,step,error:e.message});history.push(`Step ${i+1} failed: ${e.message}`);}
-        await new Promise(r=>setTimeout(r,600));
-      }
-      abcast(id,'thinking',{message:'✍️ Composing your final deliverable…'});
-      const {content:finalOutput}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are Forge Autonomous Agent. You just completed an autonomous task.\nGoal: "${goal}"\n\nAll steps completed:\n${history.join('\n\n')}\n\nNow produce the FINAL comprehensive deliverable. This is what the user receives — make it complete, polished, and immediately useful. Use markdown. Include all relevant content, code, analysis, and recommendations from your work.`}]);
-      db.prepare(`UPDATE autonomy_sessions SET status='done',artifacts=?,final_output=?,completed_at=datetime('now') WHERE id=?`).run(JSON.stringify(artifacts),finalOutput,id);
-      abcast(id,'complete',{output:finalOutput,artifacts,sessionId:id});
-    }catch(e:any){db.prepare(`UPDATE autonomy_sessions SET status='error' WHERE id=?`).run(id);abcast(id,'error',{error:e.message});}
-    autonomyClients.delete(id);
-  })();
-});
-app.get('/api/autonomy/stream/:id', requireAuth, (req:any,res:any)=>{
-  res.setHeader('Content-Type','text/event-stream'); res.setHeader('Cache-Control','no-cache'); res.setHeader('Connection','keep-alive'); res.flushHeaders();
-  const {id}=req.params; if(!autonomyClients.has(id)) autonomyClients.set(id,[]); autonomyClients.get(id)!.push(res);
-  const s=db.prepare(`SELECT * FROM autonomy_sessions WHERE id=?`).get(id) as any;
-  if(s?.status==='done') res.write(`event: complete\ndata: ${JSON.stringify({output:s.final_output,artifacts:JSON.parse(s.artifacts||'[]'),sessionId:id})}\n\n`);
-  const ka=setInterval(()=>{try{res.write(': ping\n\n');}catch{}},20000);
-  req.on('close',()=>{clearInterval(ka);const l=autonomyClients.get(id)||[];const i=l.indexOf(res);if(i>-1)l.splice(i,1);});
-});
-app.get('/api/autonomy/sessions', requireAuth, (req:any,res:any)=>{res.json({sessions:db.prepare(`SELECT id,goal,status,steps_done,steps_total,created_at,completed_at FROM autonomy_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
-app.get('/api/autonomy/session/:id', requireAuth, (req:any,res:any)=>{res.json(db.prepare(`SELECT * FROM autonomy_sessions WHERE id=? AND user_id=?`).get(req.params.id,req.user.id)||{});});
-
-// ─── Hermes Autonomous Agent ──────────────────────────────────────────────────
 setupHermes(app, db, { requireAuth, getUserLLMKey, callLLM, uuidv4 });
 setupOperator(app, { db, requireAuth, getUserLLMKey, callLLM, uuidv4 });
 
-M urbex_gear WHERE user_id=? ORDER BY id DESC').all(req.user.id);
-    res.json({ success: true, data: rows });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+// ─── Wave 4 Dream Features ────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS legal_reviews (id TEXT PRIMARY KEY, user_id TEXT, document TEXT, doc_type TEXT DEFAULT 'contract', review TEXT DEFAULT '', risk_level TEXT DEFAULT 'medium', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS finance_advice (id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, advice TEXT DEFAULT '', action_plan TEXT DEFAULT '[]', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS language_sessions (id TEXT PRIMARY KEY, user_id TEXT, language TEXT, level TEXT DEFAULT 'beginner', topic TEXT DEFAULT '', lesson TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS flashcard_sets (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, cards TEXT DEFAULT '[]', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS linkedin_posts (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, angle TEXT DEFAULT 'thought-leadership', post TEXT DEFAULT '', hooks TEXT DEFAULT '[]', created_at TEXT DEFAULT (datetime('now')))`);
+
+// AI Lawyer
+app.post('/api/legal/review', requireAuth, async (req:any,res:any)=>{
+  const {document,doc_type='contract'}=req.body; if(!document) return res.status(400).json({error:'document required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are an expert lawyer. Review this ${doc_type} in plain English for a non-lawyer.\n\nDOCUMENT:\n${document}\n\nReturn JSON: {"summary":"what this document does in 2 sentences","risk_level":"low|medium|high","red_flags":[{"clause":"quoted text","issue":"what's wrong","severity":"low|medium|high","plain_english":"what it means"}],"good_clauses":["protective clauses"],"missing_protections":["what should be there but isn't"],"questions_to_ask":["questions to ask the other party"],"verdict":"sign/negotiate/walk-away","key_dates":["important dates or deadlines"],"plain_english_summary":"full plain-English breakdown"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO legal_reviews (id,user_id,document,doc_type,review,risk_level) VALUES (?,?,?,?,?,?)`).run(id,req.user.id,document,doc_type,JSON.stringify(data),data.risk_level||'medium');
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
-app.post('/api/urbex-gear', auth, (req: any, res: any) => {
-  try {
-    const { category, condition } = req.body;
-    const result = db.prepare('INSERT INTO urbex_gear (user_id, category, condition) VALUES (?, ?, ?)').run(req.user.id, category, condition);
-    res.json({ success: true, id: result.lastInsertRowid });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+app.get('/api/legal/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,doc_type,risk_level,created_at FROM legal_reviews WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// Personal Finance Advisor
+app.post('/api/finance/advise', requireAuth, async (req:any,res:any)=>{
+  const {situation}=req.body; if(!situation) return res.status(400).json({error:'situation required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are a certified financial planner. Give personalized financial advice.\n\nSITUATION:\n${situation}\n\nReturn JSON: {"assessment":"overall financial health assessment","action_plan":[{"priority":1,"action":"...","why":"...","timeline":"...","estimated_impact":"..."}],"quick_wins":["things to do this week"],"mistakes_to_avoid":["common mistakes"],"resources":["books/tools/concepts to learn"],"savings_rate_recommendation":"X%","emergency_fund_target":"$X or X months","investment_priority":["order of investment accounts to fill"],"disclaimer":"always consult a licensed financial advisor"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO finance_advice (id,user_id,situation,advice,action_plan) VALUES (?,?,?,?,?)`).run(id,req.user.id,situation,data.assessment||'',JSON.stringify(data.action_plan||[]));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
-app.put('/api/urbex-gear/:id', auth, (req: any, res: any) => {
-  try {
-    const { category, condition } = req.body;
-    db.prepare('UPDATE urbex_gear SET category=?, condition=? WHERE id=? AND user_id=?').run(category, condition, req.params.id, req.user.id);
-    res.json({ success: true });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+app.get('/api/finance/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,situation,created_at FROM finance_advice WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// Language Tutor
+app.post('/api/language/lesson', requireAuth, async (req:any,res:any)=>{
+  const {language,level='beginner',topic='greetings'}=req.body; if(!language) return res.status(400).json({error:'language required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are an expert language tutor. Create an engaging ${level} lesson in ${language} about: ${topic}\n\nReturn JSON: {"language":"${language}","level":"${level}","topic":"${topic}","intro":"welcoming intro","vocabulary":[{"word":"...","pronunciation":"...","meaning":"...","example":"...","example_translation":"..."}],"grammar_point":{"rule":"...","explanation":"...","examples":["..."]},"practice_sentences":[{"native":"...","translation":"...","notes":"..."}],"cultural_note":"interesting cultural context","homework":"practice exercise for the student","next_lesson":"suggested next topic"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO language_sessions (id,user_id,language,level,topic,lesson) VALUES (?,?,?,?,?,?)`).run(id,req.user.id,language,level,topic,JSON.stringify(data));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
-app.delete('/api/urbex-gear/:id', auth, (req: any, res: any) => {
-  try {
-    db.prepare('DELETE FROM urbex_gear WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
-    res.json({ success: true });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+app.post('/api/language/translate', requireAuth, async (req:any,res:any)=>{
+  const {text,from='English',to}=req.body; if(!text||!to) return res.status(400).json({error:'text and to required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Translate from ${from} to ${to}: "${text}"\n\nReturn JSON: {"translation":"...","pronunciation":"...","formality":"formal/informal/neutral","alternatives":["..."],"notes":"grammar or usage notes"}`}]);
+    res.json(JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim()));
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
-// user_pomodoro_log
-app.get('/api/user-pomodoro-log', auth, (req: any, res: any) => {
-  try {
-    const rows = db.prepare('SELECT * FROM user_pomodoro_log WHERE user_id=? ORDER BY id DESC').all(req.user.id);
-    res.json({ success: true, data: rows });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+app.get('/api/language/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,language,level,topic,created_at FROM language_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// Flashcard Generator
+app.post('/api/flashcards/generate', requireAuth, async (req:any,res:any)=>{
+  const {topic,count=10,difficulty='medium'}=req.body; if(!topic) return res.status(400).json({error:'topic required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Create ${count} ${difficulty} flashcards about: "${topic}"\n\nReturn JSON: {"topic":"${topic}","cards":[{"id":1,"front":"question or term","back":"answer or definition","hint":"optional hint","tags":["tag1"]}],"study_tips":["tips for studying this topic"]}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO flashcard_sets (id,user_id,topic,cards) VALUES (?,?,?,?)`).run(id,req.user.id,topic,JSON.stringify(data.cards||[]));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
-app.post('/api/user-pomodoro-log', auth, (req: any, res: any) => {
-  try {
-    const { task_label, duration_min, completed, notes, started_at } = req.body;
-    const result = db.prepare('INSERT INTO user_pomodoro_log (user_id, task_label, duration_min, completed, notes, started_at) VALUES (?, ?, ?, ?, ?, ?)').run(req.user.id, task_label, duration_min, completed, notes, started_at);
-    res.json({ success: true, id: result.lastInsertRowid });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+app.get('/api/flashcards/sets', requireAuth, (req:any,res:any)=>{res.json({sets:db.prepare(`SELECT id,topic,created_at FROM flashcard_sets WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+app.get('/api/flashcards/:id', requireAuth, (req:any,res:any)=>{const s=db.prepare(`SELECT * FROM flashcard_sets WHERE id=? AND user_id=?`).get(req.params.id,req.user.id) as any;if(!s)return res.status(404).json({error:'not found'});try{s.cards=JSON.parse(s.cards);}catch{}res.json(s);});
+
+// LinkedIn Post Optimizer
+app.post('/api/linkedin/generate', requireAuth, async (req:any,res:any)=>{
+  const {topic,angle='thought-leadership',about=''}=req.body; if(!topic) return res.status(400).json({error:'topic required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are a LinkedIn growth expert. Write a viral LinkedIn post.\n\nTOPIC: ${topic}\nANGLE: ${angle}\nABOUT THE AUTHOR: ${about||'a professional'}\n\nReturn JSON: {"post":"the full LinkedIn post (use line breaks, emojis sparingly)","hooks":["3 alternative opening lines to test"],"hashtags":["5-8 relevant hashtags"],"cta":"call to action","predicted_engagement":"low/medium/high/viral","why_it_works":"explanation of what makes this post effective","best_time_to_post":"day and time recommendation","character_count":0}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    data.character_count=(data.post||'').length;
+    const id=uuidv4(); db.prepare(`INSERT INTO linkedin_posts (id,user_id,topic,angle,post,hooks) VALUES (?,?,?,?,?,?)`).run(id,req.user.id,topic,angle,data.post||'',JSON.stringify(data.hooks||[]));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
-app.put('/api/user-pomodoro-log/:id', auth, (req: any, res: any) => {
-  try {
-    const { task_label, duration_min, completed, notes, started_at } = req.body;
-    db.prepare('UPDATE user_pomodoro_log SET task_label=?, duration_min=?, completed=?, notes=?, started_at=? WHERE id=? AND user_id=?').run(task_label, duration_min, completed, notes, started_at, req.params.id, req.user.id);
-    res.json({ success: true });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+app.get('/api/linkedin/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,topic,angle,created_at FROM linkedin_posts WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// ─── Wave 5 Dream Features ────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS habits (id TEXT PRIMARY KEY, user_id TEXT, name TEXT, emoji TEXT DEFAULT '⭐', target_days INTEGER DEFAULT 7, created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS habit_checkins (id TEXT PRIMARY KEY, habit_id TEXT, user_id TEXT, checked_in_on TEXT, note TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')), UNIQUE(habit_id, checked_in_on))`);
+db.exec(`CREATE TABLE IF NOT EXISTS speeches (id TEXT PRIMARY KEY, user_id TEXT, occasion TEXT, tone TEXT DEFAULT 'heartfelt', duration_mins INTEGER DEFAULT 5, about TEXT, speech TEXT DEFAULT '', tips TEXT DEFAULT '[]', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS price_negotiations (id TEXT PRIMARY KEY, user_id TEXT, item TEXT, current_price TEXT, target_price TEXT, script TEXT DEFAULT '', tactics TEXT DEFAULT '[]', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS email_roasts (id TEXT PRIMARY KEY, user_id TEXT, original TEXT, roast TEXT DEFAULT '', rewrite TEXT DEFAULT '', issues TEXT DEFAULT '[]', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS startup_names (id TEXT PRIMARY KEY, user_id TEXT, description TEXT, names TEXT DEFAULT '[]', created_at TEXT DEFAULT (datetime('now')))`);
+
+// Habit Tracker
+app.post('/api/habits', requireAuth, (req:any,res:any)=>{
+  const {name,emoji='⭐',target_days=7}=req.body; if(!name) return res.status(400).json({error:'name required'});
+  const id=uuidv4(); db.prepare(`INSERT INTO habits (id,user_id,name,emoji,target_days) VALUES (?,?,?,?,?)`).run(id,req.user.id,name,emoji,target_days);
+  res.json({id,name,emoji,target_days});
 });
-app.delete('/api/user-pomodoro-log/:id', auth, (req: any, res: any) => {
-  try {
-    db.prepare('DELETE FROM user_pomodoro_log WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
-    res.json({ success: true });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+app.get('/api/habits', requireAuth, (req:any,res:any)=>{
+  const habits=db.prepare(`SELECT * FROM habits WHERE user_id=? ORDER BY created_at ASC`).all(req.user.id) as any[];
+  const today=new Date().toISOString().slice(0,10);
+  const enriched=habits.map((h:any)=>{
+    const checkins=db.prepare(`SELECT checked_in_on FROM habit_checkins WHERE habit_id=? AND user_id=? ORDER BY checked_in_on DESC`).all(h.id,req.user.id) as any[];
+    const dates=new Set(checkins.map((c:any)=>c.checked_in_on));
+    let streak=0; const d=new Date();
+    while(true){const s=d.toISOString().slice(0,10); if(!dates.has(s)) break; streak++; d.setDate(d.getDate()-1);}
+    return {...h,streak,total:checkins.length,checked_today:dates.has(today),recent:checkins.slice(0,30).map((c:any)=>c.checked_in_on)};
+  });
+  res.json({habits:enriched});
 });
-// vehicle_mods
-app.get('/api/vehicle-mods', auth, (req: any, res: any) => {
-  try {
-    const rows = db.prepare('SELECT * FROM vehicle_mods WHERE user_id=? ORDER BY id DESC').all(req.user.id);
-    res.json({ success: true, data: rows });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+app.post('/api/habits/:id/checkin', requireAuth, async (req:any,res:any)=>{
+  const {note='',date}=req.body;
+  const d=date||new Date().toISOString().slice(0,10);
+  const id=uuidv4();
+  try{ db.prepare(`INSERT INTO habit_checkins (id,habit_id,user_id,checked_in_on,note) VALUES (?,?,?,?,?)`).run(id,req.params.id,req.user.id,d,note); }
+  catch(e:any){ if(e.message?.includes('UNIQUE')) return res.json({ok:true,already:true}); throw e; }
+  res.json({ok:true,date:d});
 });
-app.post('/api/vehicle-mods', auth, (req: any, res: any) => {
-  try {
-    const { mod_name, install_date, is_active } = req.body;
-    const result = db.prepare('INSERT INTO vehicle_mods (user_id, mod_name, install_date, is_active) VALUES (?, ?, ?, ?)').run(req.user.id, mod_name, install_date, is_active);
-    res.json({ success: true, id: result.lastInsertRowid });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+app.delete('/api/habits/:id', requireAuth, (req:any,res:any)=>{db.prepare(`DELETE FROM habits WHERE id=? AND user_id=?`).run(req.params.id,req.user.id);db.prepare(`DELETE FROM habit_checkins WHERE habit_id=? AND user_id=?`).run(req.params.id,req.user.id);res.json({ok:true});});
+app.post('/api/habits/coach', requireAuth, async (req:any,res:any)=>{
+  const key=getUserLLMKey(req.user.id);
+  const habits=db.prepare(`SELECT h.*, (SELECT COUNT(*) FROM habit_checkins WHERE habit_id=h.id) as total FROM habits WHERE user_id=?`).all(req.user.id) as any[];
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are a habit coach. These are the user's habits and streaks: ${JSON.stringify(habits.map((h:any)=>({name:h.name,streak:h.streak||0,total:h.total||0})))}.\n\nGive a brief motivational message (2-3 sentences) + one specific tip. Be warm but honest.`}]);
+    res.json({message:content});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
-app.put('/api/vehicle-mods/:id', auth, (req: any, res: any) => {
-  try {
-    const { mod_name, install_date, is_active } = req.body;
-    db.prepare('UPDATE vehicle_mods SET mod_name=?, install_date=?, is_active=? WHERE id=? AND user_id=?').run(mod_name, install_date, is_active, req.params.id, req.user.id);
-    res.json({ success: true });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+
+// Speech Writer
+app.post('/api/speech/write', requireAuth, async (req:any,res:any)=>{
+  const {occasion,tone='heartfelt',duration_mins=5,about}=req.body; if(!occasion||!about) return res.status(400).json({error:'occasion and about required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const words=duration_mins*130;
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Write a ${tone} speech for: ${occasion}\n\nABOUT/CONTEXT: ${about}\n\nTarget length: ~${words} words (${duration_mins} min at 130 wpm)\n\nReturn JSON: {"speech":"full speech text","word_count":0,"tips":["delivery tip 1","tip 2","tip 3"],"opening_hook":"the first sentence","key_moments":["emotional peaks in the speech"],"suggested_pauses":["where to pause for effect"]}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    data.word_count=(data.speech||'').split(' ').length;
+    const id=uuidv4(); db.prepare(`INSERT INTO speeches (id,user_id,occasion,tone,duration_mins,about,speech,tips) VALUES (?,?,?,?,?,?,?,?)`).run(id,req.user.id,occasion,tone,duration_mins,about,data.speech||'',JSON.stringify(data.tips||[]));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
-app.delete('/api/vehicle-mods/:id', auth, (req: any, res: any) => {
-  try {
-    db.prepare('DELETE FROM vehicle_mods WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
-    res.json({ success: true });
-  } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
+app.get('/api/speech/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,occasion,tone,duration_mins,created_at FROM speeches WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// Price Negotiator
+app.post('/api/negotiate/price', requireAuth, async (req:any,res:any)=>{
+  const {item,current_price,target_price='',context=''}=req.body; if(!item||!current_price) return res.status(400).json({error:'item and current_price required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are a master negotiator. Help negotiate the price of: "${item}" (current: ${current_price}${target_price?', target: '+target_price:''})\n\nContext: ${context||'general purchase'}\n\nReturn JSON: {"script":"full word-for-word negotiation script","opening_line":"exact first thing to say","tactics":["specific tactics to use"],"leverage_points":["why they might say yes"],"fallbacks":["if they say no, say this"],"expected_savings":"realistic estimate","success_probability":"low/medium/high","body_language_tips":["in-person tips"],"timing_tip":"best time to negotiate"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO price_negotiations (id,user_id,item,current_price,target_price,script,tactics) VALUES (?,?,?,?,?,?,?)`).run(id,req.user.id,item,current_price,target_price,data.script||'',JSON.stringify(data.tactics||[]));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
 });
-// volunteer_awards
-app.get('/api/volunteer-awards', auth, (req: any, res: any) => {
+
+// Email Roast
+app.post('/api/email/roast', requireAuth, async (req:any,res:any)=>{
+  const {email}=req.body; if(!email) return res.status(400).json({error:'email required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are a brutal but helpful writing critic. Roast this email, then rewrite it perfectly.\n\nEMAIL:\n${email}\n\nReturn JSON: {"roast":"funny but constructive roast of the email (2-3 sentences)","issues":["specific problem 1","problem 2","problem 3"],"rewrite":"perfect rewritten version of the email","improvements":["what was improved"],"grade":"F/D/C/B/A","score":45}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO email_roasts (id,user_id,original,roast,rewrite,issues) VALUES (?,?,?,?,?,?)`).run(id,req.user.id,email,data.roast||'',data.rewrite||'',JSON.stringify(data.issues||[]));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/email/roast/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,created_at FROM email_roasts WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// Startup Name Generator
+app.post('/api/startup/names', requireAuth, async (req:any,res:any)=>{
+  const {description,style='modern'}=req.body; if(!description) return res.status(400).json({error:'description required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are a world-class brand naming expert. Generate startup names for: "${description}"\n\nStyle preference: ${style}\n\nReturn JSON: {"names":[{"name":"...","domain":"name.com (likely available/taken)","meaning":"...","why_it_works":"...","vibe":"modern/classic/techy/playful/premium","score":85,"tagline":"suggested tagline"}],"naming_rationale":"overall approach used","avoid":["names/words to avoid in this space"]}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO startup_names (id,user_id,description,names) VALUES (?,?,?,?)`).run(id,req.user.id,description,JSON.stringify(data.names||[]));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/startup/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,description,created_at FROM startup_names WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// ─── Wave 6 Dream Features ────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS cover_letters (id TEXT PRIMARY KEY, user_id TEXT, job_title TEXT, company TEXT, resume_summary TEXT, letter TEXT DEFAULT '', highlights TEXT DEFAULT '[]', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS interview_sessions (id TEXT PRIMARY KEY, user_id TEXT, role TEXT, company TEXT, level TEXT DEFAULT 'mid', questions TEXT DEFAULT '[]', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS cold_dms (id TEXT PRIMARY KEY, user_id TEXT, platform TEXT DEFAULT 'linkedin', target_name TEXT, target_role TEXT, your_goal TEXT, dm TEXT DEFAULT '', subject TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS fitness_plans (id TEXT PRIMARY KEY, user_id TEXT, goal TEXT, level TEXT DEFAULT 'beginner', days_per_week INTEGER DEFAULT 3, equipment TEXT DEFAULT 'none', plan TEXT DEFAULT '{}', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS recipes (id TEXT PRIMARY KEY, user_id TEXT, ingredients TEXT, dietary TEXT DEFAULT '', cuisine TEXT DEFAULT '', recipe TEXT DEFAULT '{}', created_at TEXT DEFAULT (datetime('now')))`);
+
+// Cover Letter Generator
+app.post('/api/cover-letter/generate', requireAuth, async (req:any,res:any)=>{
+  const {job_title,company,job_description='',resume_summary='',tone='professional'}=req.body;
+  if(!job_title||!company) return res.status(400).json({error:'job_title and company required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Write a compelling cover letter for: "${job_title}" at "${company}"\n\nJob description excerpt: ${job_description||'not provided'}\nCandidate summary: ${resume_summary||'not provided'}\nTone: ${tone}\n\nReturn JSON: {"letter":"full cover letter text","subject_line":"email subject line","opening_hook":"first sentence","key_highlights":["what makes this candidate stand out 1","2","3"],"closing_cta":"the call to action line","word_count":0}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    data.word_count=(data.letter||'').split(' ').length;
+    const id=uuidv4(); db.prepare(`INSERT INTO cover_letters (id,user_id,job_title,company,resume_summary,letter,highlights) VALUES (?,?,?,?,?,?,?)`).run(id,req.user.id,job_title,company,resume_summary,data.letter||'',JSON.stringify(data.key_highlights||[]));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/cover-letter/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,job_title,company,created_at FROM cover_letters WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// Interview Coach
+app.post('/api/interview/generate', requireAuth, async (req:any,res:any)=>{
+  const {role,company='',level='mid',focus='behavioral'}=req.body;
+  if(!role) return res.status(400).json({error:'role required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Generate interview questions for: "${role}" role${company?' at '+company:''} (${level} level, focus: ${focus})\n\nReturn JSON: {"questions":[{"question":"...","type":"behavioral/technical/situational","difficulty":"easy/medium/hard","what_they_want":"what the interviewer is looking for","star_framework":true,"sample_answer":"strong example answer","follow_ups":["likely follow-up 1","follow-up 2"]}],"prep_tips":["tip 1","tip 2","tip 3"],"red_flags":["common mistakes to avoid"],"questions_to_ask":["good questions to ask the interviewer"]}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO interview_sessions (id,user_id,role,company,level,questions) VALUES (?,?,?,?,?,?)`).run(id,req.user.id,role,company,level,JSON.stringify(data.questions||[]));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.post('/api/interview/answer-feedback', requireAuth, async (req:any,res:any)=>{
+  const {question,answer}=req.body; if(!question||!answer) return res.status(400).json({error:'question and answer required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Rate this interview answer.\n\nQuestion: ${question}\nAnswer: ${answer}\n\nReturn JSON: {"score":75,"grade":"B","strengths":["what was good"],"improvements":["what to improve"],"stronger_version":"rewrite of their answer, better version","missing_elements":["what was missing"],"conciseness":"too long/too short/good"}`}]);
+    res.json(JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim()));
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+
+// Cold DM Writer
+app.post('/api/cold-dm/write', requireAuth, async (req:any,res:any)=>{
+  const {platform='linkedin',target_name,target_role='',your_name='',your_goal,context=''}=req.body;
+  if(!target_name||!your_goal) return res.status(400).json({error:'target_name and your_goal required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Write a high-converting cold ${platform} DM.\n\nTarget: ${target_name}${target_role?' ('+target_role+')':''}\nYour goal: ${your_goal}\nContext: ${context||'none'}\nPlatform: ${platform} (${platform==='email'?'longer, can have subject line':'keep it short, under 300 chars on LinkedIn'} )\n\nReturn JSON: {"dm":"the message text","subject":"email subject line (empty if not email)","why_it_works":"brief explanation of the approach","variations":["shorter version","more casual version"],"follow_up":"what to send if no reply in 1 week","open_rate_tips":["tips to get a reply"],"character_count":0}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    data.character_count=(data.dm||'').length;
+    const id=uuidv4(); db.prepare(`INSERT INTO cold_dms (id,user_id,platform,target_name,target_role,your_goal,dm,subject) VALUES (?,?,?,?,?,?,?,?)`).run(id,req.user.id,platform,target_name,target_role,your_goal,data.dm||'',data.subject||'');
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/cold-dm/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,platform,target_name,your_goal,created_at FROM cold_dms WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// Fitness Plan Generator
+app.post('/api/fitness/plan', requireAuth, async (req:any,res:any)=>{
+  const {goal,level='beginner',days_per_week=3,equipment='none',notes=''}=req.body;
+  if(!goal) return res.status(400).json({error:'goal required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Create a personalized ${days_per_week}-day/week fitness plan.\n\nGoal: ${goal}\nFitness level: ${level}\nEquipment: ${equipment}\nNotes: ${notes||'none'}\n\nReturn JSON: {"plan":{"overview":"plan summary","weekly_schedule":[{"day":"Monday","focus":"Chest & Triceps","workout":[{"exercise":"Push-ups","sets":3,"reps":"12-15","rest":"60s","notes":""}]}],"rest_days":["Wednesday","Saturday","Sunday"],"progression":"how to progress week by week","nutrition_tips":["tip 1","tip 2"],"warm_up":"5 min warm up routine","cool_down":"5 min cool down routine"},"estimated_time_per_session":"45 min","expected_results":{"week4":"what to expect","week8":"what to expect","week12":"what to expect"}}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO fitness_plans (id,user_id,goal,level,days_per_week,equipment,plan) VALUES (?,?,?,?,?,?,?)`).run(id,req.user.id,goal,level,days_per_week,equipment,JSON.stringify(data.plan||{}));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/fitness/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,goal,level,days_per_week,created_at FROM fitness_plans WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// Recipe Generator
+app.post('/api/recipe/generate', requireAuth, async (req:any,res:any)=>{
+  const {ingredients,dietary='',cuisine='',servings=4,time_available=30}=req.body;
+  if(!ingredients) return res.status(400).json({error:'ingredients required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Create a recipe using these ingredients: ${ingredients}\n\nDietary: ${dietary||'none'}\nCuisine style: ${cuisine||'any'}\nServings: ${servings}\nTime available: ${time_available} minutes\n\nReturn JSON: {"recipe":{"name":"dish name","prep_time":"10 min","cook_time":"20 min","servings":4,"difficulty":"easy/medium/hard","ingredients":["1 cup flour","2 eggs"],"instructions":["Step 1: ...","Step 2: ..."],"tips":["pro tip 1","tip 2"],"variations":["variation 1 idea"],"nutrition_estimate":{"calories":"per serving","protein":"Xg","carbs":"Xg","fat":"Xg"}},"why_this_recipe":"brief note on why these ingredients work","substitutions":{"ingredient":"substitute if needed"}}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO recipes (id,user_id,ingredients,dietary,cuisine,recipe) VALUES (?,?,?,?,?,?)`).run(id,req.user.id,ingredients,dietary,cuisine,JSON.stringify(data.recipe||{}));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/recipe/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,ingredients,cuisine,created_at FROM recipes WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// ─── Wave 7 Dream Features ────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS travel_plans (id TEXT PRIMARY KEY, user_id TEXT, destination TEXT, days INTEGER DEFAULT 7, budget TEXT DEFAULT 'moderate', style TEXT DEFAULT 'balanced', plan TEXT DEFAULT '{}', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS apology_letters (id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, relationship TEXT DEFAULT 'friend', tone TEXT DEFAULT 'sincere', letter TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS lease_reviews (id TEXT PRIMARY KEY, user_id TEXT, lease_text TEXT, summary TEXT DEFAULT '', red_flags TEXT DEFAULT '[]', key_terms TEXT DEFAULT '{}', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS book_summaries (id TEXT PRIMARY KEY, user_id TEXT, title TEXT, author TEXT DEFAULT '', summary TEXT DEFAULT '{}', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS quizzes (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, difficulty TEXT DEFAULT 'medium', num_questions INTEGER DEFAULT 10, questions TEXT DEFAULT '[]', created_at TEXT DEFAULT (datetime('now')))`);
+
+// Travel Planner
+app.post('/api/travel/plan', requireAuth, async (req:any,res:any)=>{
+  const {destination,days=7,budget='moderate',style='balanced',interests=''}=req.body;
+  if(!destination) return res.status(400).json({error:'destination required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Create a detailed ${days}-day travel itinerary for ${destination}.\n\nBudget: ${budget}\nTravel style: ${style}\nInterests: ${interests||'general tourism'}\n\nReturn JSON: {"plan":{"overview":"brief destination intro","best_time_to_visit":"","days":[{"day":1,"theme":"Arrival & Old Town","morning":"...","afternoon":"...","evening":"...","meals":{"breakfast":"","lunch":"","dinner":""},"estimated_cost":"$X-Y","tips":"local tip"}],"practical_info":{"currency":"","language":"","transportation":"","visa":"","safety":""},"packing_list":["item 1"],"budget_breakdown":{"accommodation":"per night","food":"per day","activities":"per day","transport":"total"},"hidden_gems":["lesser known spot 1"],"avoid":["tourist trap to skip"]}}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO travel_plans (id,user_id,destination,days,budget,style,plan) VALUES (?,?,?,?,?,?,?)`).run(id,req.user.id,destination,days,budget,style,JSON.stringify(data.plan||{}));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/travel/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,destination,days,created_at FROM travel_plans WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// Apology Letter Writer
+app.post('/api/apology/write', requireAuth, async (req:any,res:any)=>{
+  const {situation,relationship='friend',tone='sincere',what_you_did='',what_you_will_do=''}=req.body;
+  if(!situation) return res.status(400).json({error:'situation required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Write a heartfelt ${tone} apology letter.\n\nSituation: ${situation}\nRelationship: ${relationship}\nWhat happened: ${what_you_did||'not specified'}\nCommitment going forward: ${what_you_will_do||'not specified'}\n\nReturn JSON: {"letter":"full apology letter","key_elements_included":["acknowledgment","taking responsibility","empathy","commitment"],"what_not_to_say":["phrases to avoid"],"follow_up_action":"what to do after sending this","delivery_tip":"how to deliver this (text/call/in person/handwritten)"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO apology_letters (id,user_id,situation,relationship,tone,letter) VALUES (?,?,?,?,?,?)`).run(id,req.user.id,situation,relationship,tone,data.letter||'');
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+
+// Lease/Contract Plain-English Reviewer
+app.post('/api/lease/review', requireAuth, async (req:any,res:any)=>{
+  const {lease_text,document_type='lease'}=req.body; if(!lease_text) return res.status(400).json({error:'lease_text required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Analyze this ${document_type} in plain English. Be a knowledgeable friend, not giving legal advice.\n\n${lease_text.slice(0,8000)}\n\nReturn JSON: {"summary":"2-3 sentence plain English summary","red_flags":[{"issue":"...","severity":"high/medium/low","clause":"relevant text","what_it_means":"plain English","negotiable":true}],"key_terms":{"rent":"","duration":"","deposit":"","notice_period":"","early_termination":"","pets":"","subletting":""},"tenant_rights":["right 1"],"questions_to_ask":["question to ask landlord/seller"],"overall_verdict":"sign/negotiate/avoid","verdict_reason":"why"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO lease_reviews (id,user_id,lease_text,summary,red_flags,key_terms) VALUES (?,?,?,?,?,?)`).run(id,req.user.id,lease_text.slice(0,5000),data.summary||'',JSON.stringify(data.red_flags||[]),JSON.stringify(data.key_terms||{}));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+
+// Book Summarizer
+app.post('/api/book/summarize', requireAuth, async (req:any,res:any)=>{
+  const {title,author='',depth='standard'}=req.body; if(!title) return res.status(400).json({error:'title required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Summarize the book "${title}"${author?' by '+author:''} with depth: ${depth}.\n\nReturn JSON: {"summary":{"one_sentence":"the book in one sentence","overview":"2-3 paragraph overview","key_ideas":[{"idea":"main concept","explanation":"deeper dive","quote":"memorable quote if known"}],"who_should_read":"who would benefit most","who_should_skip":"who might not enjoy it","actionable_takeaways":["thing you can do today","another action"],"similar_books":["book 1 - why similar"],"rating_if_known":"X/5 or unknown","best_quote":"most famous quote from the book"}}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO book_summaries (id,user_id,title,author,summary) VALUES (?,?,?,?,?)`).run(id,req.user.id,title,author,JSON.stringify(data.summary||{}));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/book/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,title,author,created_at FROM book_summaries WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// Quiz Generator
+app.post('/api/quiz/generate', requireAuth, async (req:any,res:any)=>{
+  const {topic,difficulty='medium',num_questions=10,style='multiple_choice'}=req.body;
+  if(!topic) return res.status(400).json({error:'topic required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Generate a ${difficulty} difficulty quiz on: "${topic}"\n\nNumber of questions: ${num_questions}\nStyle: ${style}\n\nReturn JSON: {"questions":[{"id":1,"question":"...","options":["A) option 1","B) option 2","C) option 3","D) option 4"],"correct":"A","explanation":"why A is correct","fun_fact":"interesting related fact"}],"topic_overview":"brief intro to the topic","difficulty_note":"what makes these questions ${difficulty}"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO quizzes (id,user_id,topic,difficulty,num_questions,questions) VALUES (?,?,?,?,?,?)`).run(id,req.user.id,topic,difficulty,num_questions,JSON.stringify(data.questions||[]));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+
+// ─── Wave 8 Dream Features ────────────────────────────────────────────────────
+db.exec(`CREATE TABLE IF NOT EXISTS salary_negotiations (id TEXT PRIMARY KEY, user_id TEXT, role TEXT, current_offer TEXT, market_rate TEXT DEFAULT '', script TEXT DEFAULT '', counter_offer TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS breakup_letters (id TEXT PRIMARY KEY, user_id TEXT, relationship_duration TEXT DEFAULT '', reason TEXT, tone TEXT DEFAULT 'kind', letter TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS business_plans (id TEXT PRIMARY KEY, user_id TEXT, idea TEXT, target_market TEXT DEFAULT '', plan TEXT DEFAULT '{}', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS viral_hooks (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, platform TEXT DEFAULT 'twitter', hooks TEXT DEFAULT '[]', created_at TEXT DEFAULT (datetime('now')))`);
+db.exec(`CREATE TABLE IF NOT EXISTS dream_interpretations (id TEXT PRIMARY KEY, user_id TEXT, dream TEXT, interpretation TEXT DEFAULT '{}', created_at TEXT DEFAULT (datetime('now')))`);
+
+// Salary Negotiator
+app.post('/api/salary/negotiate', requireAuth, async (req:any,res:any)=>{
+  const {role,current_offer,market_rate='',experience_years=0,competing_offers='',context=''}=req.body;
+  if(!role||!current_offer) return res.status(400).json({error:'role and current_offer required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`You are an elite salary negotiation coach. Help negotiate: ${role}\nCurrent offer: ${current_offer}\nMarket rate: ${market_rate||'unknown'}\nExperience: ${experience_years} years\nCompeting offers: ${competing_offers||'none'}\nContext: ${context||'standard job offer'}\n\nReturn JSON: {"counter_offer":"specific number to ask for","negotiation_script":"word-for-word email/script to send","opening_line":"exact first thing to say","key_arguments":["why you deserve more 1","argument 2","argument 3"],"benefits_to_negotiate":["equity","signing bonus","remote work","PTO","title"],"email_template":"full professional email if negotiating via email","expected_outcome":"realistic assessment","timing_tip":"when and how to send","what_if_they_say_no":"fallback strategy","total_comp_increase":"estimated $ increase if successful"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO salary_negotiations (id,user_id,role,current_offer,market_rate,script,counter_offer) VALUES (?,?,?,?,?,?,?)`).run(id,req.user.id,role,current_offer,market_rate,data.negotiation_script||'',data.counter_offer||'');
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+
+// Breakup Letter
+app.post('/api/breakup/write', requireAuth, async (req:any,res:any)=>{
+  const {relationship_duration='',reason,tone='kind',medium='text',their_name=''}=req.body;
+  if(!reason) return res.status(400).json({error:'reason required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Write a ${tone} breakup ${medium==='letter'?'letter':'message'}.\n\nRelationship duration: ${relationship_duration||'unspecified'}\nReason: ${reason}\nTheir name: ${their_name||'[Name]'}\nTone: ${tone}\nMedium: ${medium}\n\nReturn JSON: {"letter":"the breakup message","length_appropriate_for":medium,"dos":["things to say"],"donts":["things to avoid saying"],"timing_advice":"when/how to deliver this","self_care_reminder":"a kind note for the person sending this","closure_line":"the final line of the message"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO breakup_letters (id,user_id,relationship_duration,reason,tone,letter) VALUES (?,?,?,?,?,?)`).run(id,req.user.id,relationship_duration,reason,tone,data.letter||'');
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+
+// One-Page Business Plan
+app.post('/api/business-plan/generate', requireAuth, async (req:any,res:any)=>{
+  const {idea,target_market='',problem='',budget='bootstrapped',timeline='12 months'}=req.body;
+  if(!idea) return res.status(400).json({error:'idea required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Create a one-page business plan for: "${idea}"\nTarget market: ${target_market||'to be defined'}\nProblem it solves: ${problem||'inferred from idea'}\nBudget: ${budget}\nTimeline: ${timeline}\n\nReturn JSON: {"plan":{"tagline":"one-line description","problem":"pain point being solved","solution":"how the product solves it","target_customer":"specific persona","revenue_model":"how it makes money","pricing":{"tier1":"","price1":"","tier2":"","price2":""},"go_to_market":["channel 1","channel 2","channel 3"],"competitive_advantage":"unfair edge","milestones":[{"month":1,"goal":""},{"month":3,"goal":""},{"month":6,"goal":""},{"month":12,"goal":""}],"key_metrics":["metric to track 1","metric 2","metric 3"],"risks":["risk 1 and mitigation"],"first_30_days":["action 1","action 2","action 3","action 4","action 5"]},"viability_score":75,"viability_reason":"why this score","biggest_challenge":"the #1 thing that could kill this"}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO business_plans (id,user_id,idea,target_market,plan) VALUES (?,?,?,?,?)`).run(id,req.user.id,idea,target_market,JSON.stringify(data.plan||{}));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/business-plan/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,idea,created_at FROM business_plans WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// Viral Hook Generator
+app.post('/api/hooks/generate', requireAuth, async (req:any,res:any)=>{
+  const {topic,platform='twitter',content_type='post',style='curiosity'}=req.body;
+  if(!topic) return res.status(400).json({error:'topic required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Generate 10 viral ${platform} hooks for: "${topic}"\nContent type: ${content_type}\nPrimary style: ${style}\n\nReturn JSON: {"hooks":[{"hook":"the hook text","style":"curiosity/story/stat/contrarian/list/how-to","why_it_works":"psychological principle","predicted_engagement":"low/medium/high/viral","emoji_suggestion":"relevant emoji","platform_tip":"platform-specific advice"}],"content_angles":["different angle on this topic 1","angle 2","angle 3"],"cta_ideas":["call to action 1","cta 2"],"hashtag_suggestions":["#tag1","#tag2","#tag3"]}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO viral_hooks (id,user_id,topic,platform,hooks) VALUES (?,?,?,?,?)`).run(id,req.user.id,topic,platform,JSON.stringify(data.hooks||[]));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/hooks/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,topic,platform,created_at FROM viral_hooks WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// Dream Interpreter
+app.post('/api/dream/interpret', requireAuth, async (req:any,res:any)=>{
+  const {dream,mood_before_sleep='',recurring=false}=req.body;
+  if(!dream) return res.status(400).json({error:'dream required'});
+  const key=getUserLLMKey(req.user.id);
+  try{
+    const {content}=await callLLM(key.provider,key.apiKey,key.model,[{role:'user',content:`Interpret this dream from multiple psychological lenses.\n\nDream: ${dream}\nMood before sleep: ${mood_before_sleep||'unknown'}\nRecurring: ${recurring}\n\nReturn JSON: {"interpretation":{"summary":"brief plain-English summary of what happened","symbols":[{"symbol":"element from dream","meaning":"psychological interpretation","context":"how it applies here"}],"jungian_analysis":"Carl Jung perspective","freudian_analysis":"Freudian lens (brief, tasteful)","emotional_themes":["theme 1","theme 2"],"what_your_mind_is_processing":"plain English — what your subconscious might be working through","message_to_self":"a kind, insightful message from the dream","action_items":["concrete thing to reflect on 1","action 2"],"positive_spin":"reframe this dream in a positive light","questions_to_journal":["journal prompt 1","prompt 2","prompt 3"]},"mood_connection":"how pre-sleep mood might relate","is_likely_stress_dream":false,"stress_indicators":[]}`}]);
+    const data=JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    const id=uuidv4(); db.prepare(`INSERT INTO dream_interpretations (id,user_id,dream,interpretation) VALUES (?,?,?,?)`).run(id,req.user.id,dream.slice(0,2000),JSON.stringify(data.interpretation||{}));
+    res.json({id,...data});
+  }catch(e:any){res.status(500).json({error:(e as any).message});}
+});
+app.get('/api/dream/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,created_at FROM dream_interpretations WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
+
+// ─── WAVE 9: Roast Generator + Letter to Future Self + Resume Bullet Rewriter + Meeting Agenda + Gratitude Journal ───
+
+db.prepare(`CREATE TABLE IF NOT EXISTS roasts (
+  id TEXT PRIMARY KEY, user_id TEXT, subject TEXT, style TEXT, roast TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS future_letters (
+  id TEXT PRIMARY KEY, user_id TEXT, years_ahead INTEGER, letter TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS resume_bullets (
+  id TEXT PRIMARY KEY, user_id TEXT, original TEXT, rewritten TEXT, impact_score INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS meeting_agendas (
+  id TEXT PRIMARY KEY, user_id TEXT, meeting_type TEXT, agenda TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS gratitude_entries (
+  id TEXT PRIMARY KEY, user_id TEXT, entry TEXT, themes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+// Roast Generator
+app.post('/api/roast/generate', requireAuth, async (req: AuthRequest, res) => {
+  const { subject, style = 'funny', context } = req.body;
+  if (!subject) return res.status(400).json({ error: 'subject required' });
   try {
-    const rows = db.prepare('SELECT * FROM volunteer
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Generate a ${style} roast about: "${subject}". Context: ${context || 'none'}. Reply JSON: { "roast": "string", "best_line": "string", "burns": ["string","string","string"], "comeback_they_might_use": "string", "rating": number }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO roasts VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, subject, style, data.roast);
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/roast/history', requireAuth, async (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT * FROM roasts WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(req.userId);
+  res.json(rows);
+});
+
+// Letter to Future Self
+app.post('/api/future-self/write', requireAuth, async (req: AuthRequest, res) => {
+  const { current_situation, goals, fears, years_ahead = 5, message_to_future } = req.body;
+  if (!current_situation) return res.status(400).json({ error: 'current_situation required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Write a heartfelt letter from someone to their future self ${years_ahead} years from now. Current situation: ${current_situation}. Goals: ${goals || 'not specified'}. Fears: ${fears || 'not specified'}. Personal message: ${message_to_future || 'none'}. Reply JSON: { "letter": "string", "key_reminder": "string", "predictions": ["string","string","string"], "time_capsule_items": ["string","string"], "advice": "string" }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO future_letters VALUES (?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, years_ahead, data.letter);
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Resume Bullet Rewriter
+app.post('/api/resume/rewrite-bullets', requireAuth, async (req: AuthRequest, res) => {
+  const { bullets, role, industry } = req.body;
+  if (!bullets) return res.status(400).json({ error: 'bullets required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const bulletList = Array.isArray(bullets) ? bullets : [bullets];
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Rewrite these resume bullets to be impactful, quantified, and ATS-optimized for a ${role || 'professional'} in ${industry || 'tech'}. Bullets: ${JSON.stringify(bulletList)}. Reply JSON: { "rewritten": [{ "original": "string", "improved": "string", "impact_score": number, "why_better": "string", "action_verb": "string" }], "overall_tips": ["string","string"], "missing_keywords": ["string","string","string"] }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    if (data.rewritten) {
+      data.rewritten.forEach((b:any) => db.prepare('INSERT INTO resume_bullets VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, b.original, b.improved, b.impact_score||0));
+    }
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Meeting Agenda Builder
+app.post('/api/meeting/agenda', requireAuth, async (req: AuthRequest, res) => {
+  const { meeting_type, goal, attendees, duration_mins = 60, context } = req.body;
+  if (!meeting_type || !goal) return res.status(400).json({ error: 'meeting_type and goal required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Create a structured meeting agenda for: ${meeting_type}. Goal: ${goal}. Attendees: ${attendees || 'team'}. Duration: ${duration_mins} minutes. Context: ${context || 'none'}. Reply JSON: { "title": "string", "objective": "string", "agenda_items": [{ "time_mins": number, "topic": "string", "owner": "string", "type": "discussion|decision|info|brainstorm", "notes": "string" }], "pre_read": ["string"], "desired_outcomes": ["string","string"], "follow_up_template": "string", "icebreaker": "string" }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO meeting_agendas VALUES (?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, meeting_type, data.title);
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Gratitude Journal
+app.post('/api/gratitude/reflect', requireAuth, async (req: AuthRequest, res) => {
+  const { entries, mood, context } = req.body;
+  if (!entries) return res.status(400).json({ error: 'entries required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const entryList = Array.isArray(entries) ? entries : [entries];
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Analyze these gratitude journal entries and provide warm, insightful reflection. Entries: ${JSON.stringify(entryList)}. Mood: ${mood || 'unspecified'}. Context: ${context || 'none'}. Reply JSON: { "reflection": "string", "themes": ["string","string","string"], "reframe": "string", "appreciation_depth": "surface|moderate|deep", "insight": "string", "challenge_for_tomorrow": "string", "affirmation": "string", "what_you_have": ["string","string","string"] }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO gratitude_entries VALUES (?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, JSON.stringify(entryList), JSON.stringify(data.themes||[]));
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/gratitude/history', requireAuth, async (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT * FROM gratitude_entries WHERE user_id=? ORDER BY created_at DESC LIMIT 30').all(req.userId);
+  res.json(rows);
+});
+
+// ─── WAVE 10: Cold Pitch Generator + Mood Tracker + Habit Journal + Life Goals + Daily Standup Writer ───
+
+db.prepare(`CREATE TABLE IF NOT EXISTS cold_pitches (
+  id TEXT PRIMARY KEY, user_id TEXT, product TEXT, target TEXT, pitch TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS mood_logs (
+  id TEXT PRIMARY KEY, user_id TEXT, mood INTEGER, energy INTEGER, notes TEXT, insights TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS habit_journals (
+  id TEXT PRIMARY KEY, user_id TEXT, habit TEXT, streak INTEGER, entry TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS life_goals (
+  id TEXT PRIMARY KEY, user_id TEXT, goal TEXT, category TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS standups (
+  id TEXT PRIMARY KEY, user_id TEXT, yesterday TEXT, today TEXT, blockers TEXT, standup TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+// Cold Pitch Generator
+app.post('/api/cold-pitch/generate', requireAuth, async (req: AuthRequest, res) => {
+  const { product, target_audience, pain_point, unique_value, tone = 'professional' } = req.body;
+  if (!product || !target_audience) return res.status(400).json({ error: 'product and target_audience required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Write 3 cold pitch variations for: Product/Service: ${product}. Target: ${target_audience}. Pain point: ${pain_point || 'not specified'}. Unique value: ${unique_value || 'not specified'}. Tone: ${tone}. Reply JSON: { "pitches": [{ "channel": "email|linkedin|twitter|phone", "subject": "string", "pitch": "string", "hook": "string", "cta": "string", "length_words": number }], "key_message": "string", "objections_to_expect": ["string","string"], "follow_up_template": "string" }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO cold_pitches VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, product, target_audience, data.key_message || '');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Mood Tracker + AI Insights
+app.post('/api/mood/log', requireAuth, async (req: AuthRequest, res) => {
+  const { mood, energy, notes, context } = req.body;
+  if (!mood) return res.status(400).json({ error: 'mood required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const history = db.prepare('SELECT * FROM mood_logs WHERE user_id=? ORDER BY created_at DESC LIMIT 7').all(req.userId) as any[];
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Analyze this mood log and recent history to provide insights. Today: mood ${mood}/10, energy ${energy||5}/10. Notes: ${notes || 'none'}. Context: ${context || 'none'}. Recent history (last 7): ${JSON.stringify(history.map(h=>({mood:h.mood,energy:h.energy,date:h.created_at})))}. Reply JSON: { "insight": "string", "pattern": "string", "suggestion": "string", "affirmation": "string", "trend": "improving|stable|declining|new", "trigger_detected": "string|null", "activity_suggestion": "string" }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO mood_logs VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, mood, energy||5, notes||'', data.insight||'');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/mood/history', requireAuth, async (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT * FROM mood_logs WHERE user_id=? ORDER BY created_at DESC LIMIT 30').all(req.userId);
+  res.json(rows);
+});
+
+// Habit Journal with AI coaching
+app.post('/api/habit-journal/log', requireAuth, async (req: AuthRequest, res) => {
+  const { habit, completed, streak = 0, notes, difficulty } = req.body;
+  if (!habit) return res.status(400).json({ error: 'habit required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Provide habit coaching for: Habit: "${habit}". Completed today: ${completed}. Current streak: ${streak} days. Notes: ${notes || 'none'}. Difficulty: ${difficulty || 'normal'}. Reply JSON: { "coaching": "string", "streak_message": "string", "tip_for_tomorrow": "string", "why_this_matters": "string", "if_they_broke_streak": "string|null", "micro_win": "string" }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO habit_journals VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, habit, streak, data.coaching || '');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Life Goals Planner
+app.post('/api/life-goals/plan', requireAuth, async (req: AuthRequest, res) => {
+  const { goal, category = 'personal', timeframe, current_situation, obstacles } = req.body;
+  if (!goal) return res.status(400).json({ error: 'goal required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Create a comprehensive life goal plan for: Goal: "${goal}". Category: ${category}. Timeframe: ${timeframe || 'not specified'}. Current situation: ${current_situation || 'not specified'}. Obstacles: ${obstacles || 'not specified'}. Reply JSON: { "reframed_goal": "string", "why_this_goal_matters": "string", "milestones": [{"phase": "string", "milestone": "string", "by_when": "string"}], "weekly_actions": ["string","string","string"], "identity_shift": "string", "success_metrics": ["string","string"], "accountability_ideas": ["string","string"], "first_step_right_now": "string", "obstacle_solutions": [{"obstacle": "string", "solution": "string"}] }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO life_goals VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, goal, category, data.reframed_goal || '');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Daily Standup Writer
+app.post('/api/standup/write', requireAuth, async (req: AuthRequest, res) => {
+  const { yesterday, today, blockers, team_context, format = 'slack' } = req.body;
+  if (!yesterday || !today) return res.status(400).json({ error: 'yesterday and today required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Write a crisp daily standup update. Yesterday: ${yesterday}. Today: ${today}. Blockers: ${blockers || 'none'}. Team context: ${team_context || 'engineering team'}. Format: ${format}. Reply JSON: { "standup": "string", "summary_tweet": "string", "blocker_escalation": "string|null", "progress_emoji": "string", "energy_level_tip": "string", "formatted_versions": { "slack": "string", "jira": "string", "email": "string" } }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO standups VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, yesterday, today, blockers||'', data.standup||'');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/standup/history', requireAuth, async (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT * FROM standups WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(req.userId);
+  res.json(rows);
+});
+
+// ─── WAVE 11: Conflict Resolver + Price Anchor + Fake LinkedIn Bio + Failure Resume + Morning Ritual ───
+
+db.prepare(`CREATE TABLE IF NOT EXISTS conflict_resolutions (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, resolution TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS price_anchors (
+  id TEXT PRIMARY KEY, user_id TEXT, product TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS linkedin_bios (
+  id TEXT PRIMARY KEY, user_id TEXT, name TEXT, style TEXT, bio TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS failure_resumes (
+  id TEXT PRIMARY KEY, user_id TEXT, failures TEXT, resume TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS morning_rituals (
+  id TEXT PRIMARY KEY, user_id TEXT, goals TEXT, duration INTEGER, ritual TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+// Conflict Resolver
+app.post('/api/conflict/resolve', requireAuth, async (req: AuthRequest, res) => {
+  const { situation, your_perspective, their_perspective, relationship_type, desired_outcome } = req.body;
+  if (!situation) return res.status(400).json({ error: 'situation required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Help resolve this conflict: "${situation}". Your perspective: ${your_perspective || 'not given'}. Their perspective: ${their_perspective || 'not given'}. Relationship: ${relationship_type || 'unspecified'}. Desired outcome: ${desired_outcome || 'resolve peacefully'}. Reply JSON: { "summary": "string", "what_they_likely_feel": "string", "your_blind_spot": "string", "their_valid_point": "string", "conversation_script": "string", "opening_line": "string", "things_to_avoid_saying": ["string","string"], "resolution_paths": [{"path": "string", "pros": "string", "cons": "string"}], "relationship_repair_tip": "string" }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO conflict_resolutions VALUES (?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, situation, data.summary || '');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Price Anchor Strategy
+app.post('/api/price-anchor/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, current_price, target_price, competitors, customer_type } = req.body;
+  if (!product || !current_price) return res.status(400).json({ error: 'product and current_price required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Create a pricing strategy with anchoring psychology for: Product: "${product}". Current price: ${current_price}. Target price: ${target_price || 'optimize'}. Competitors: ${competitors || 'not listed'}. Customer type: ${customer_type || 'general'}. Reply JSON: { "recommended_price": "string", "anchor_price": "string", "pricing_tiers": [{"name": "string", "price": "string", "value_prop": "string", "target": "string"}], "psychological_tactics": ["string","string","string"], "framing_language": ["string","string"], "price_justification": "string", "competitor_positioning": "string", "upsell_opportunity": "string" }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO price_anchors VALUES (?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, product, data.recommended_price || '');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// LinkedIn Bio Generator (with fun/serious modes)
+app.post('/api/linkedin-bio/generate', requireAuth, async (req: AuthRequest, res) => {
+  const { name, role, achievements, personality, style = 'professional', fun_facts } = req.body;
+  if (!role) return res.status(400).json({ error: 'role required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Write a ${style} LinkedIn bio. Name: ${name || 'the user'}. Role: ${role}. Achievements: ${achievements || 'not listed'}. Personality: ${personality || 'not specified'}. Fun facts: ${fun_facts || 'none'}. Style notes: ${style === 'satirical' ? 'Write a hilariously satirical corporate-speak bio that parodies LinkedIn culture' : style === 'storytelling' ? 'Tell their career as a compelling personal story' : 'Professional yet human'}. Reply JSON: { "bio": "string", "headline": "string", "summary_tweet": "string", "bio_short": "string", "opening_hook": "string", "keywords_to_include": ["string","string","string"], "cta": "string" }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO linkedin_bios VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, name || '', style, data.bio || '');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Failure Resume (CV of failures that taught you)
+app.post('/api/failure-resume/generate', requireAuth, async (req: AuthRequest, res) => {
+  const { failures, name, current_role, tone = 'reflective' } = req.body;
+  if (!failures) return res.status(400).json({ error: 'failures required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const failList = Array.isArray(failures) ? failures : [failures];
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Create a "CV of Failures" — a resume-style document celebrating failures and what they taught. Name: ${name || 'the user'}. Role: ${current_role || 'professional'}. Failures: ${JSON.stringify(failList)}. Tone: ${tone}. Reply JSON: { "resume": "string", "entries": [{"failure": "string", "year": "string", "what_i_tried": "string", "what_happened": "string", "what_i_learned": "string", "how_it_helped": "string"}], "overall_lesson": "string", "growth_summary": "string", "closing_line": "string" }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO failure_resumes VALUES (?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, JSON.stringify(failList), data.overall_lesson || '');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Morning Ritual Builder
+app.post('/api/morning-ritual/build', requireAuth, async (req: AuthRequest, res) => {
+  const { goals, duration_mins = 60, wake_time, constraints, current_routine } = req.body;
+  if (!goals) return res.status(400).json({ error: 'goals required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Design the perfect morning ritual. Goals: ${goals}. Available time: ${duration_mins} minutes. Wake time: ${wake_time || 'not specified'}. Constraints: ${constraints || 'none'}. Current routine: ${current_routine || 'none'}. Reply JSON: { "ritual_name": "string", "philosophy": "string", "schedule": [{"time_offset_mins": number, "activity": "string", "duration_mins": number, "why": "string", "optional": boolean}], "science_backing": "string", "first_week_challenge": "string", "what_to_avoid": ["string","string"], "habit_stack_tip": "string", "minimum_viable_ritual": "string" }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO morning_rituals VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, goals, duration_mins, data.ritual_name || '');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── WAVE 12: Apology Text + Excuse Generator + Vent Mode + Personal Brand + Weekly Review ───
+
+db.prepare(`CREATE TABLE IF NOT EXISTS apology_texts (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, apology TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS excuses (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, excuse TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS vent_sessions (
+  id TEXT PRIMARY KEY, user_id TEXT, vent TEXT, response TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS personal_brands (
+  id TEXT PRIMARY KEY, user_id TEXT, name TEXT, niche TEXT, brand TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS weekly_reviews (
+  id TEXT PRIMARY KEY, user_id TEXT, wins TEXT, struggles TEXT, review TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+// Apology Text Generator
+app.post('/api/apology-text/write', requireAuth, async (req: AuthRequest, res) => {
+  const { situation, what_you_did, relationship, tone = 'sincere', medium = 'text' } = req.body;
+  if (!situation) return res.status(400).json({ error: 'situation required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Write a ${tone} apology for: Situation: "${situation}". What you did: ${what_you_did || 'not specified'}. Relationship: ${relationship || 'unspecified'}. Medium: ${medium}. Reply JSON: { "apology": "string", "key_acknowledgment": "string", "what_not_to_say": ["string","string"], "follow_up_action": "string", "timing_advice": "string", "alternative_shorter": "string", "red_flags_to_avoid": ["string","string"] }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO apology_texts VALUES (?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, situation, data.apology || '');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Excuse Generator (funny/professional)
+app.post('/api/excuse/generate', requireAuth, async (req: AuthRequest, res) => {
+  const { situation, style = 'professional', audience } = req.body;
+  if (!situation) return res.status(400).json({ error: 'situation required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Generate ${style === 'funny' ? 'hilariously creative' : 'believable professional'} excuses for: "${situation}". Audience: ${audience || 'boss/colleague'}. Reply JSON: { "excuses": [{ "excuse": "string", "believability": number, "delivery_tip": "string", "risk_level": "low|medium|high" }], "best_excuse": "string", "what_to_say_if_caught": "string", "better_alternative": "string" }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO excuses VALUES (?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, situation, data.best_excuse || '');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Vent Mode — AI listens, validates, reframes
+app.post('/api/vent/express', requireAuth, async (req: AuthRequest, res) => {
+  const { vent, want_advice = false, want_reframe = true } = req.body;
+  if (!vent) return res.status(400).json({ error: 'vent required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Someone needs to vent. Just listen and validate first, then ${want_reframe ? 'offer a gentle reframe' : 'just support them'}. ${want_advice ? 'They want advice.' : 'They do NOT want advice — just to be heard.'}. What they said: "${vent}". Reply JSON: { "validation": "string", "you_are_heard": "string", "their_feelings_named": ["string","string"], "reframe": "string|null", "gentle_question": "string", "advice": "string|null", "affirmation": "string", "release_ritual": "string" }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO vent_sessions VALUES (?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, vent, data.validation || '');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Personal Brand Builder
+app.post('/api/personal-brand/build', requireAuth, async (req: AuthRequest, res) => {
+  const { name, expertise, audience, values, origin_story, content_goal } = req.body;
+  if (!expertise || !audience) return res.status(400).json({ error: 'expertise and audience required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Build a complete personal brand strategy for: Name: ${name || 'the user'}. Expertise: ${expertise}. Target audience: ${audience}. Values: ${values || 'not specified'}. Origin story: ${origin_story || 'not provided'}. Content goal: ${content_goal || 'grow online presence'}. Reply JSON: { "brand_statement": "string", "niche": "string", "positioning": "string", "tagline": "string", "content_pillars": [{"pillar": "string", "topics": ["string","string","string"]}], "brand_voice": {"adjectives": ["string","string","string"], "not_this": ["string","string"]}, "platforms_to_focus": [{"platform": "string", "why": "string", "content_type": "string"}], "unique_angle": "string", "origin_story_polished": "string", "30_day_plan": ["string","string","string","string"] }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO personal_brands VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, name || '', expertise, data.brand_statement || '');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Weekly Review Generator
+app.post('/api/weekly-review/generate', requireAuth, async (req: AuthRequest, res) => {
+  const { wins, struggles, lessons, energy_level, next_week_priorities } = req.body;
+  if (!wins && !struggles) return res.status(400).json({ error: 'wins or struggles required' });
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(req.userId!);
+    const content = await callLLM(provider, apiKey, model, [{ role: 'user', content: `Generate a thoughtful weekly review. Wins: ${wins || 'none listed'}. Struggles: ${struggles || 'none listed'}. Lessons: ${lessons || 'none listed'}. Energy level: ${energy_level || '5'}/10. Next week priorities: ${next_week_priorities || 'not set'}. Reply JSON: { "week_summary": "string", "win_analysis": "string", "struggle_reframe": "string", "biggest_lesson": "string", "pattern_noticed": "string", "energy_insight": "string", "next_week_theme": "string", "monday_intention": "string", "things_to_drop": ["string","string"], "things_to_keep": ["string","string"], "gratitude_moment": "string" }` }]);
+    const data = JSON.parse(content.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO weekly_reviews VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)').run(uuidv4(), req.userId, wins || '', struggles || '', data.week_summary || '');
+    res.json(data);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/weekly-review/history', requireAuth, async (req: AuthRequest, res) => {
+  const rows = db.prepare('SELECT * FROM weekly_reviews WHERE user_id=? ORDER BY created_at DESC LIMIT 12').all(req.userId);
+  res.json(rows);
+});
+
+// ── WAVE 13: Negotiation Simulator + 24-Hour Challenge + Therapy Letter + Podcast Pitch + Grant Proposal ──
+
+db.prepare(`CREATE TABLE IF NOT EXISTS negotiation_sims (
+  id TEXT PRIMARY KEY, user_id TEXT, scenario TEXT, role TEXT, transcript TEXT, outcome TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS challenges (
+  id TEXT PRIMARY KEY, user_id TEXT, goal TEXT, hours INTEGER, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS therapy_letters (
+  id TEXT PRIMARY KEY, user_id TEXT, recipient TEXT, situation TEXT, letter TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS podcast_pitches (
+  id TEXT PRIMARY KEY, user_id TEXT, show_name TEXT, topic TEXT, pitch TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS grant_proposals (
+  id TEXT PRIMARY KEY, user_id TEXT, org_name TEXT, grant_name TEXT, amount TEXT, proposal TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+// Negotiation Simulator
+app.post('/api/negotiation/simulate', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { scenario, role, counterpart } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are an expert negotiation coach. Simulate a negotiation scenario.\n\nScenario: ${scenario}\nUser's Role: ${role}\nCounterpart: ${counterpart || 'The other party'}\n\nCreate a realistic negotiation transcript with 6 exchanges, then provide:\n1. Key tactics used\n2. Missed opportunities\n3. Overall score (1-10)\n4. Top 3 improvement tips\n\nFormat as JSON: { transcript: [{speaker, line}], tactics: [], missed: [], score: number, tips: [] }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO negotiation_sims (id,user_id,scenario,role,transcript,outcome) VALUES (?,?,?,?,?,?)`).run(id, req.user!.id, scenario, role, JSON.stringify(data.transcript), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/negotiation/history', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare(`SELECT * FROM negotiation_sims WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
+  res.json(rows);
+});
+
+// 24-Hour Challenge Builder
+app.post('/api/challenge/build', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { goal, hours } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are an intense productivity coach. Create a hyper-focused ${hours || 24}-hour challenge plan to achieve: "${goal}"\n\nProvide:\n1. Hour-by-hour schedule (group into blocks)\n2. Success metrics\n3. Rules for the challenge\n4. What to eliminate for ${hours || 24} hours\n5. Emergency motivation script\n\nFormat as JSON: { schedule: [{block, hours, tasks}], metrics: [], rules: [], eliminate: [], motivation: string }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO challenges (id,user_id,goal,hours,plan) VALUES (?,?,?,?,?)`).run(id, req.user!.id, goal, hours||24, JSON.stringify(data));
+    res.json({ id, goal, hours: hours||24, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Therapy Letter Writer
+app.post('/api/therapy-letter/write', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { recipient, situation, emotion, intent } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are a therapeutic writing guide. Help write a healing letter.\n\nRecipient: ${recipient}\nSituation: ${situation}\nPrimary emotion: ${emotion || 'complex'}\nIntent (send/not send/burn): ${intent || 'processing only'}\n\nWrite a therapeutic letter that:\n- Validates feelings without blame\n- Uses "I" statements\n- Honors the relationship complexity\n- Creates closure\n- Is emotionally honest but not weaponized\n\nAlso provide: 3 reflection prompts after writing.\n\nFormat as JSON: { letter: string, prompts: [], note: string }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO therapy_letters (id,user_id,recipient,situation,letter) VALUES (?,?,?,?,?)`).run(id, req.user!.id, recipient, situation, data.letter);
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/therapy-letter/history', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare(`SELECT id,recipient,situation,created_at FROM therapy_letters WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
+  res.json(rows);
+});
+
+// Podcast Pitch Generator
+app.post('/api/podcast-pitch/generate', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { showName, topic, expertise, angle } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are a podcast booking expert. Write a compelling pitch for a podcast guest appearance.\n\nPodcast: ${showName}\nTopic/Expertise: ${topic}\nUnique angle: ${angle || 'general expertise'}\nExpertise level: ${expertise || 'expert'}\n\nCreate:\n1. Subject line (under 8 words)\n2. Opening hook (2 sentences)\n3. Why I'm a fit for THIS show specifically\n4. 3 episode title ideas with descriptions\n5. Social proof section\n6. Clear CTA\n\nFormat as JSON: { subject: string, hook: string, fit: string, episodes: [{title, description}], proof: string, cta: string, full_pitch: string }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO podcast_pitches (id,user_id,show_name,topic,pitch) VALUES (?,?,?,?,?)`).run(id, req.user!.id, showName, topic, data.full_pitch);
+    res.json({ id, showName, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/podcast-pitch/history', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare(`SELECT id,show_name,topic,created_at FROM podcast_pitches WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
+  res.json(rows);
+});
+
+// Grant Proposal Writer
+app.post('/api/grant/write', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { orgName, grantName, amount, mission, impact } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are an expert grant writer. Write a compelling grant proposal.\n\nOrganization: ${orgName}\nGrant/Funder: ${grantName}\nAmount requested: ${amount || 'unspecified'}\nMission: ${mission}\nExpected impact: ${impact}\n\nWrite a full grant proposal with:\n1. Executive Summary\n2. Statement of Need\n3. Project Description\n4. Goals & Objectives (SMART)\n5. Evaluation Plan\n6. Budget Narrative\n7. Organizational Capacity\n\nFormat as JSON: { executive_summary: string, need: string, description: string, goals: [], evaluation: string, budget: string, capacity: string, full_proposal: string }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO grant_proposals (id,user_id,org_name,grant_name,amount,proposal) VALUES (?,?,?,?,?,?)`).run(id, req.user!.id, orgName, grantName, amount||'', data.full_proposal);
+    res.json({ id, orgName, grantName, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/grant/history', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare(`SELECT id,org_name,grant_name,amount,created_at FROM grant_proposals WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
+  res.json(rows);
+});
+
+// ── WAVE 14: Burn Letter + Decision Oracle + Compliment Engine + Manifesto Writer + Debate Prep ──
+
+db.prepare(`CREATE TABLE IF NOT EXISTS burn_letters (
+  id TEXT PRIMARY KEY, user_id TEXT, target TEXT, grievance TEXT, letter TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS oracle_decisions (
+  id TEXT PRIMARY KEY, user_id TEXT, question TEXT, options TEXT, analysis TEXT, verdict TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS compliments (
+  id TEXT PRIMARY KEY, user_id TEXT, recipient TEXT, context TEXT, compliments TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS manifestos (
+  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, values TEXT, manifesto TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS debate_preps (
+  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, position TEXT, prep TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+// Burn Letter Generator
+app.post('/api/burn-letter/write', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { target, grievance, tone } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are a cathartic writing guide. Write a "burn letter" — a letter meant to release emotions, never to send.\n\nTarget: ${target}\nGrievance: ${grievance}\nTone: ${tone || 'raw and honest'}\n\nWrite a letter that:\n- Is completely honest without self-censorship\n- Names exactly what hurt and why\n- Expresses anger, grief, or disappointment fully\n- Ends with the writer reclaiming their power\n- Has a ritual closing (e.g. "And now I release you")\n\nAlso provide: a brief note on what emotions this letter helped surface.\n\nFormat as JSON: { letter: string, emotions_surfaced: string, ritual: string }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO burn_letters (id,user_id,target,grievance,letter) VALUES (?,?,?,?,?)`).run(id, req.user!.id, target, grievance, data.letter);
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Decision Oracle
+app.post('/api/oracle/decide', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { question, options, context } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are a wise decision oracle. Analyze this decision with multiple frameworks.\n\nQuestion: ${question}\nOptions: ${options}\nContext: ${context || 'none provided'}\n\nAnalyze using:\n1. Regret Minimization (Jeff Bezos framework)\n2. 10/10/10 Rule (how will you feel in 10 min, 10 months, 10 years)\n3. Values alignment check\n4. Opportunity cost analysis\n5. Fear vs. intuition check\n\nGive a verdict with confidence %, reasoning, and one non-obvious risk to consider.\n\nFormat as JSON: { frameworks: [{name, analysis}], verdict: string, confidence: number, risk: string, gut_check: string }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO oracle_decisions (id,user_id,question,options,analysis,verdict) VALUES (?,?,?,?,?,?)`).run(id, req.user!.id, question, options, JSON.stringify(data.frameworks), data.verdict);
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/oracle/history', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare(`SELECT id,question,verdict,created_at FROM oracle_decisions WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
+  res.json(rows);
+});
+
+// Compliment Engine
+app.post('/api/compliment/generate', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { recipient, context, style } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are a master of genuine, specific compliments. Generate meaningful compliments.\n\nRecipient: ${recipient}\nContext about them: ${context}\nStyle: ${style || 'warm and genuine'}\n\nGenerate 5 compliments that:\n- Are specific to this person (not generic)\n- Go beyond surface-level observations\n- Notice things people rarely notice\n- Feel earned and real\n- Include one that might make them cry happy tears\n\nFormat as JSON: { compliments: [{text, category, impact_level}], delivery_tip: string }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO compliments (id,user_id,recipient,context,compliments) VALUES (?,?,?,?,?)`).run(id, req.user!.id, recipient, context, JSON.stringify(data.compliments));
+    res.json({ id, recipient, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Manifesto Writer
+app.post('/api/manifesto/write', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { topic, values, audience } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are a visionary writer. Write a powerful manifesto.\n\nTopic: ${topic}\nCore values: ${values}\nAudience: ${audience || 'the world'}\n\nWrite a manifesto that:\n- Opens with a bold declaration\n- Names what is wrong with the status quo\n- Articulates a vivid vision of what could be\n- Has numbered principles/beliefs (5-7)\n- Uses rallying language that inspires action\n- Ends with a call to join or commit\n\nFormat as JSON: { title: string, declaration: string, problem: string, vision: string, principles: [{number, statement, explanation}], call_to_action: string, full_manifesto: string }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO manifestos (id,user_id,topic,values,manifesto) VALUES (?,?,?,?,?)`).run(id, req.user!.id, topic, values, data.full_manifesto);
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/manifesto/history', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare(`SELECT id,topic,created_at FROM manifestos WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
+  res.json(rows);
+});
+
+// Debate Prep AI
+app.post('/api/debate/prep', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { topic, position, opponent } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are an elite debate coach. Prepare a comprehensive debate prep package.\n\nTopic: ${topic}\nYour position: ${position}\nExpected opponent: ${opponent || 'a strong opponent'}\n\nProvide:\n1. Top 5 arguments FOR your position (with evidence/data)\n2. Top 5 counterarguments you'll face and your rebuttals\n3. 3 rhetorical techniques to use\n4. Killer opening statement (30 seconds)\n5. Memorable closing line\n6. Facts/stats to deploy\n7. Logical fallacies to watch for\n\nFormat as JSON: { arguments: [{point, evidence}], counters: [{attack, rebuttal}], techniques: [], opening: string, closing: string, stats: [], fallacies: [] }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO debate_preps (id,user_id,topic,position,prep) VALUES (?,?,?,?,?)`).run(id, req.user!.id, topic, position, JSON.stringify(data));
+    res.json({ id, topic, position, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/debate/history', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare(`SELECT id,topic,position,created_at FROM debate_preps WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
+  res.json(rows);
+});
+
+// ── WAVE 15: Eulogy Writer + Villain Origin + Secret Admirer + Legacy Letter + Love Language Decoder ──
+
+db.prepare(`CREATE TABLE IF NOT EXISTS eulogies (
+  id TEXT PRIMARY KEY, user_id TEXT, person TEXT, relationship TEXT, eulogy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS villain_origins (
+  id TEXT PRIMARY KEY, user_id TEXT, person TEXT, story TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS admirer_letters (
+  id TEXT PRIMARY KEY, user_id TEXT, recipient TEXT, feelings TEXT, letter TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS legacy_letters (
+  id TEXT PRIMARY KEY, user_id TEXT, recipient TEXT, lessons TEXT, letter TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+db.prepare(`CREATE TABLE IF NOT EXISTS love_language_decodes (
+  id TEXT PRIMARY KEY, user_id TEXT, behaviors TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+// Eulogy Writer
+app.post('/api/eulogy/write', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { person, relationship, memories, tone } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are a compassionate eulogy writer. Write a heartfelt eulogy.\n\nPerson: ${person}\nRelationship: ${relationship}\nMemories/qualities: ${memories || 'a wonderful person'}\nTone: ${tone || 'heartfelt and celebratory'}\n\nWrite a eulogy that:\n- Opens with a vivid memory or quote\n- Celebrates who they truly were\n- Captures their essence in specific, not generic terms\n- Brings laughter and tears\n- Gives the audience something to carry forward\n- Ends with a meaningful farewell\n\nFormat as JSON: { eulogy: string, opening_line: string, closing_line: string, reading_time_mins: number }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO eulogies (id,user_id,person,relationship,eulogy) VALUES (?,?,?,?,?)`).run(id, req.user!.id, person, relationship, data.eulogy);
+    res.json({ id, person, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Villain Origin Story
+app.post('/api/villain/origin', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { name, wound, power, goal } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are a master storyteller. Write a compelling villain origin story.\n\nVillain name: ${name}\nCore wound/trauma: ${wound}\nPower or ability: ${power || 'unknown'}\nUltimate goal: ${goal || 'domination'}\n\nWrite an origin story that:\n- Makes the villain deeply sympathetic before they go dark\n- Shows the exact moment they crossed the point of no return\n- Gives them a coherent internal logic\n- Makes the reader understand (not excuse) their choices\n- Ends with them embracing their villain identity\n\nFormat as JSON: { title: string, origin: string, turning_point: string, manifesto_line: string, backstory_twist: string }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO villain_origins (id,user_id,person,story) VALUES (?,?,?,?)`).run(id, req.user!.id, name, data.origin);
+    res.json({ id, name, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Secret Admirer Letter
+app.post('/api/admirer/write', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { recipient, feelings, context, reveal } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are a romantic poet and letter writer. Write a secret admirer letter.\n\nRecipient: ${recipient}\nFeelings: ${feelings}\nContext: ${context || 'we know each other'}\nReveal identity?: ${reveal || 'no — keep anonymous'}\n\nWrite a letter that:\n- Is poetic but not overwrought\n- Contains specific observations about them\n- Creates delightful mystery\n- Expresses genuine admiration without being creepy\n- Leaves them feeling seen and glowing\n\nFormat as JSON: { letter: string, ps_line: string, mystery_clue: string }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO admirer_letters (id,user_id,recipient,feelings,letter) VALUES (?,?,?,?,?)`).run(id, req.user!.id, recipient, feelings, data.letter);
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Legacy Letter
+app.post('/api/legacy/write', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { recipient, lessons, values, timeline } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are a wise mentor and legacy guide. Write a legacy letter — a letter from someone to be opened in the future.\n\nRecipient: ${recipient}\nLife lessons: ${lessons}\nCore values: ${values || 'love, courage, integrity'}\nTo be opened: ${timeline || 'when they need it most'}\n\nWrite a letter that:\n- Feels like a warm embrace from the past\n- Shares hard-won wisdom simply\n- Anticipates their future struggles with compassion\n- Shares what you wish someone had told you\n- Ends with unconditional belief in them\n\nFormat as JSON: { letter: string, headline_wisdom: string, if_you_forget_everything_else: string }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO legacy_letters (id,user_id,recipient,lessons,letter) VALUES (?,?,?,?,?)`).run(id, req.user!.id, recipient, lessons, data.letter);
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/legacy/history', requireAuth, (req: AuthRequest, res) => {
+  const rows = db.prepare(`SELECT id,recipient,created_at FROM legacy_letters WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user!.id);
+  res.json(rows);
+});
+
+// Love Language Decoder
+app.post('/api/love-language/decode', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { behaviors, relationship, concern } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user!.id);
+    const result = await callLLM(provider, apiKey, model, [
+      { role: 'user', content: `You are a relationship psychologist specializing in love languages and attachment theory.\n\nBehaviors observed: ${behaviors}\nRelationship type: ${relationship || 'romantic partner'}\nMain concern: ${concern || 'understanding them better'}\n\nAnalyze and provide:\n1. Likely primary love language with % confidence\n2. Secondary love language\n3. Specific behaviors that reveal their language\n4. How to speak THEIR love language\n5. What they likely feel when their language is missed\n6. Green flags (they feel loved when...)\n7. Red flags to avoid\n\nFormat as JSON: { primary: {language, confidence, evidence}, secondary: {language}, speak_their_language: [], they_feel_unloved_when: [], green_flags: [], red_flags: [], insight: string }` }
+    ]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO love_language_decodes (id,user_id,behaviors,analysis) VALUES (?,?,?,?)`).run(id, req.user!.id, behaviors, JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});

@@ -1,3 +1,105 @@
+## v187.00 — Dream Mode Wave 15: Eulogy Writer + Villain Origin Story + Secret Admirer Letter + Legacy Letter + Love Language Decoder
+- 🕊️ Eulogy Writer: heartfelt eulogies with vivid opening, closing, and readable length estimate
+- 😈 Villain Origin Story: sympathetic villain backstories with turning point, manifesto line, and twist
+- 💘 Secret Admirer Letter: poetic, mystery-laden letters with optional identity clues
+- 📖 Legacy Letter: wisdom letters from you to the future, opened when needed most
+- 💞 Love Language Decoder: decode someone's love language from behaviors with action guide
+
+## v186.00 — Dream Mode Wave 14: Burn Letter + Decision Oracle + Compliment Engine + Manifesto Writer + Debate Prep AI
+- 🔥 Burn Letter Generator: cathartic letters for releasing emotions — never to send, always to heal
+- 🔮 Decision Oracle: multi-framework analysis (Regret Minimization, 10/10/10, values check) with verdict
+- 💛 Compliment Engine: specific, meaningful compliments ranked by emotional impact
+- 📜 Manifesto Writer: bold manifestos with principles, vision, and rallying call to action
+- ⚔️ Debate Prep AI: arguments, rebuttals, opening/closing, stats, and fallacy watch list
+
+## v185.00 — Dream Mode Wave 13: Negotiation Simulator + 24-Hour Challenge + Therapy Letter + Podcast Pitch + Grant Proposal
+- 🤝 Negotiation Simulator: practice negotiations with AI, get transcripts, tactics, score, and coaching tips
+- ⚡ 24-Hour Challenge Builder: hyper-focused sprint plans with hour-by-hour schedules and motivation scripts
+- 💌 Therapy Letter Writer: healing letters for closure, processing, or sending — with reflection prompts
+- 🎙️ Podcast Pitch Generator: subject lines, hooks, episode ideas, and full pitch for any show
+- 🏛️ Grant Proposal Writer: full grant proposals with SMART goals, budget narrative, and executive summary
+
+## v184.00 — Dream Mode Wave 12: Apology Text + Excuse Generator + Vent Mode + Personal Brand + Weekly Review
+- 🙇 Apology Text Writer: sincere apologies with what-not-to-say, follow-up actions, timing advice
+- 🎭 Excuse Generator: professional/funny excuses with believability scores and delivery tips
+- 💨 Vent Mode: AI listens, validates emotions, reframes gently — no unsolicited advice
+- ⚡ Personal Brand Builder: brand statement, content pillars, platform strategy, 30-day plan
+- 📅 Weekly Review: wins/struggles analysis, pattern detection, next-week theme + intentions
+
+## v183.00 — Dream Mode Wave 11: Conflict Resolver + Price Anchor + LinkedIn Bio + Failure Resume + Morning Ritual
+- 🕊️ Conflict Resolver: empathy analysis, conversation script, resolution paths, what-not-to-say
+- 💲 Price Anchor Strategy: psychological tiers, anchor price, framing language, upsell paths
+- 💼 LinkedIn Bio Generator: 4 styles incl. satirical mode, headline, short bio, keyword list
+- 🏆 Failure Resume: CV-format celebration of failures + lessons learned + growth summary
+- 🌅 Morning Ritual Builder: science-backed schedule, MVR for busy days, habit stacking tips
+
+## v182.00 — Dream Mode Wave 10: Cold Pitch Generator + Mood Tracker + Habit Journal + Life Goals + Standup Writer
+- 🎯 Cold Pitch Generator: 3 channel-specific pitches (email/LinkedIn/Twitter/phone) with hooks, CTAs, objection prep
+- 🌊 Mood Tracker: daily mood+energy logging with AI pattern detection, triggers, trend analysis
+- 🔗 Habit Journal: log habits + get personalized AI coaching, streak motivation, recovery advice
+- 🌟 Life Goals Planner: reframe goal, identity shift, phased milestones, obstacle solutions, weekly actions
+- ☀️ Daily Standup Writer: crisp standups in Slack/JIRA/email format with blocker escalation
+
+## v181.00 — Dream Mode Wave 9: Roast Generator + Letter to Future Self + Resume Bullet Rewriter + Meeting Agenda Builder + Gratitude Journal
+- 🎤 Roast Generator: savage/gentle/funny burns with top lines, comeback predictions, configurable style
+- ✉️ Letter to Future Self: heartfelt time capsule with predictions, key reminders, capsule items
+- ⚡ Resume Bullet Rewriter: transforms weak bullets into quantified achievements with impact scores
+- 📋 Meeting Agenda Builder: structured agendas with time blocks, icebreakers, follow-up templates
+- 🙏 Gratitude Journal: deep reflection, themes, insights, reframes, daily challenges
+
+## v180.00 — Dream Mode Wave 8: Salary Negotiator + Breakup Letter + Business Plan + Viral Hooks + Dream Interpreter
+- 💵 Salary Negotiator: word-for-word script, email template, counter-offer, benefits to negotiate, fallback strategy
+- 💔 Breakup Letter Writer: tone/medium control, do's & don'ts, self-care advice, copy to clipboard
+- 📊 Business Plan Generator: viability score, one-page plan, milestones, go-to-market, pricing model
+- 🔥 Viral Hook Generator: 10 hooks per topic with engagement prediction, psychology, platform tips
+- 🌙 Dream Interpreter: Jungian/Freudian analysis, symbols, emotional themes, journal prompts
+
+## v179.00 — Dream Mode Wave 7: Travel Planner + Apology Letter + Lease Review + Book Summary + Quiz Gen
+- ✈️ Travel Planner: full day-by-day itinerary with meals, hidden gems, budget breakdown, packing list
+- 💌 Apology Letter: relationship-aware heartfelt letters with delivery tips & what-not-to-say
+- 🏠 Lease Reviewer: plain-English contract analysis with red flags, key terms, sign/negotiate/avoid verdict
+- 📚 Book Summarizer: key ideas, one-liner, actionable takeaways, who should read/skip
+- 🧠 Quiz Generator: interactive multi-choice quiz with instant feedback, score, explanations
+
+## v178.00 — Dream Mode Wave 6: Cover Letter + Interview Coach + Cold DM + Fitness Planner + Recipe Gen
+- 📝 Cover Letter Generator: tailored letters with tone control, highlights + copy to clipboard
+- 🎯 Interview Coach: role-specific questions with AI feedback on your practice answers + grade
+- 📨 Cold DM Writer: high-converting messages for LinkedIn/Twitter/Email with variations + follow-up
+- 💪 Fitness Planner: personalized workout plans with day-by-day schedule + progression + expected results
+- 🍳 Recipe Generator: turn any ingredients into a full recipe with nutrition info + pro tips
+
+## v177.00 — Dream Mode Wave 5: Speech Writer + Price Negotiator + Email Roast + Startup Namer + Habit Coach
+- 🎤 Speech Writer: write heartfelt/funny/professional speeches for any occasion, word count & delivery tips
+- 💬 Price Negotiator: word-for-word negotiation scripts, tactics, leverage points, fallbacks + success probability
+- 🔥 Email Roast: brutal AI critique + letter grade + perfect rewrite of any email
+- 🚀 Startup Namer: world-class brand names with domain, tagline, vibe score, naming rationale
+- ✅ Habit Tracker: create habits, daily check-in, streak tracking, AI habit coach motivational messages
+
+## v176.00 — Dream Mode Wave 4: AI Lawyer + Finance Advisor + Language Tutor + Flashcards + LinkedIn
+- ⚖️ AI Lawyer: paste any contract → plain-English breakdown, red flags with severity, verdict (sign/negotiate/walk-away)
+- 💰 Finance Advisor: describe situation → prioritized action plan, quick wins, savings rate, emergency fund target
+- 🌍 Language Tutor: lessons in 12 languages, flipcard vocabulary, grammar point, cultural notes + instant translate
+- 🃏 Flashcard Generator: generate study cards on any topic, interactive flip+study mode with known/learning tracking
+- 💼 LinkedIn Post Optimizer: 8 post angles, viral hooks, engagement prediction, hashtags, A/B test alternatives
+- Backend: /api/legal/review, /api/finance/advise, /api/language/lesson+translate, /api/flashcards/generate, /api/linkedin/generate
+
+## v175.00 — Dream Mode Wave 3: Resume Builder + Email Negotiator + Story Gen + Meeting Summarizer + Competitor Spy
+- 📄 Resume Builder: AI tailors resume to any job description, ATS-optimized, keyword-matched with gap analysis
+- 🤝 Email Negotiator: paste any offer/contract → AI drafts strategic counter with tactics + leverage points
+- 📖 Story Generator: interactive branching fiction — you choose what happens next, full story history
+- 📋 Meeting Summarizer: transcript → action items with owners/deadlines, decisions, blockers, next steps
+- 🕵️ Competitor Spy: enter any company → full intel report with strengths/weaknesses/how to beat them
+- Backend: /api/resume/build, /api/negotiate/email, /api/story/start+continue, /api/meeting/summarize, /api/competitor/analyze
+- Fixed: index.ts truncation + all Wave 1/2 routes fully restored (forge-iq, prompt/optimize, shadow/run, debate, time-capsule, code/explain, idea/validate, tone/rewrite)
+
+## v174.00 — Dream Mode Wave 2: AI Debate + Time Capsule + Code Explainer + Idea Validator + Tone Rewriter
+- ⚔️ AI Debate Mode: two AI agents argue opposite sides, get a verdict + winner declaration
+- ⏳ Time Capsule: write messages to your future self, choose unlock date, get notified when ready
+- 🔬 Code Explainer: line-by-line breakdown with key concepts, complexity rating, improvement suggestions
+- 💡 Idea Validator: brutally honest VC-style startup idea analysis — score, verdict, strengths/weaknesses/risks
+- 🎨 Tone Rewriter: rewrite any text in 8 tones (Professional, Casual, Brutal, Poetic, Academic, Humorous, Persuasive, Simple)
+- Backend: /api/debate/run, /api/time-capsule, /api/code/explain, /api/idea/validate, /api/tone/rewrite + history endpoints
+
 ## v173.00 — Dream Mode Wave 1: Forge builds itself overnight
 - 🌙 Dream Log: Forge generates its own feature ideas, tracks them, auto-builds the top ones
 - 🧬 Forge IQ Score: real-time capability score vs Claude & ChatGPT with breakdown + history chart
