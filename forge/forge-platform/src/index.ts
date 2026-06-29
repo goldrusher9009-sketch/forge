@@ -179385,3 +179385,97 @@ app.post('/api/familyvalues/set', requireAuth, async (req: AuthRequest, res) => 
     res.json({ charter });
   } catch (e: any) { res.json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 85: LEGAL SELF-HELP & RIGHTS AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS rights_explainers (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, jurisdiction TEXT, explanation TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS demand_letter_writers (
+  id TEXT PRIMARY KEY, user_id TEXT, dispute TEXT, amount TEXT, letter TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS contract_clause_decoders (
+  id TEXT PRIMARY KEY, user_id TEXT, clause TEXT, context TEXT, explanation TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS tenant_rights_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, issue TEXT, state TEXT, guidance TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS small_claims_helpers (
+  id TEXT PRIMARY KEY, user_id TEXT, dispute TEXT, amount TEXT, guide TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/rights/explain', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { situation, jurisdiction } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a legal education expert (this is NOT legal advice — consult an attorney for your specific situation). Explain legal rights in plain English.\nSituation: ${situation}\nJurisdiction: ${jurisdiction||'USA (general)'}\nExplain: what rights typically apply here, key laws and protections, what most people don't know about their rights, what to document, when to get an attorney, and practical first steps. Always note this is educational, not legal advice.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const explanation = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO rights_explainers (id,user_id,situation,jurisdiction,explanation) VALUES (?,?,?,?,?)').run(id, userId, situation, jurisdiction, explanation);
+    res.json({ explanation });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/demandletter/write', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { dispute, amount, recipient, deadline } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a legal writing expert. Draft a firm, professional demand letter (template for educational use — have an attorney review before sending).\nDispute: ${dispute}\nAmount/remedy sought: ${amount}\nRecipient: ${recipient||'the responsible party'}\nDeadline: ${deadline||'30 days'}\nWrite a formal demand letter with: clear statement of facts, legal basis for claim, specific demand, deadline, consequences of non-compliance, and professional closing. Include a note to have an attorney review.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const letter = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO demand_letter_writers (id,user_id,dispute,amount,letter) VALUES (?,?,?,?,?)').run(id, userId, dispute, amount, letter);
+    res.json({ letter });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/contract/decode', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { clause, contract_type } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a contract education expert (NOT legal advice — consult an attorney). Decode this contract language into plain English.\nClause: ${clause}\nContract type: ${contract_type||'general'}\nExplain: what this clause means in simple terms, what it obligates you to, what rights it waives, red flags to watch for, what's standard vs unusual, and what questions to ask an attorney about this clause.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const explanation = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO contract_clause_decoders (id,user_id,clause,context,explanation) VALUES (?,?,?,?,?)').run(id, userId, clause, contract_type, explanation);
+    res.json({ explanation });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/tenantright/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { issue, state } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a tenant rights education expert (NOT legal advice — consult an attorney or tenant rights organization). Explain tenant rights for this situation.\nIssue: ${issue}\nState/Country: ${state||'USA (general)'}\nProvide: general tenant rights in this scenario, landlord obligations typically, what to document immediately, notice requirements, available remedies, local resources to contact, and when to get legal help. Note: laws vary significantly by location.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const guidance = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO tenant_rights_coaches (id,user_id,issue,state,guidance) VALUES (?,?,?,?,?)').run(id, userId, issue, state, guidance);
+    res.json({ guidance });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/smallclaims/help', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { dispute, amount, state } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a small claims court education expert (NOT legal advice — verify procedures with your local court). Guide through the small claims process.\nDispute: ${dispute}\nAmount: ${amount}\nState: ${state||'USA (general)'}\nProvide: whether small claims is appropriate, typical filing limits, how to file step-by-step, what evidence to bring, how to present your case clearly, what happens if you win/lose, how to collect a judgment, and common mistakes to avoid.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const guide = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO small_claims_helpers (id,user_id,dispute,amount,guide) VALUES (?,?,?,?,?)').run(id, userId, dispute, amount, guide);
+    res.json({ guide });
+  } catch (e: any) { res.json({ error: e.message }); }
+});

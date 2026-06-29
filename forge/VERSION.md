@@ -1,3 +1,5 @@
+## v257.00 — Dream Mode Wave 85: Legal Self-Help & Rights AI (Rights Explainer + Demand Letter Writer + Contract Clause Decoder + Tenant Rights Coach + Small Claims Helper)
+
 ## v256.00 — Dream Mode Wave 84: Parenting & Family AI (Parenting Coach + Family Meeting Facilitator + Teen Communicator + Screen Time Manager + Family Values Charter)
 
 ## v255.00 — Dream Mode Wave 83: Health & Longevity AI (Longevity Planner + VO2max Trainer + Stress Decoder + Recovery Optimizer + Supplement Stack Builder)
