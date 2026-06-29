@@ -1,3 +1,10 @@
+## v192.00 — Dream Mode Wave 20: Will Generator + Lease Analyzer + Dispute Letter + TOS Decoder + FOIA Request Writer
+- 📜 Will Generator: asset distribution outline + executor clauses + next steps (consult a lawyer)
+- 🏠 Lease Analyzer: red-flag detection, risk score, negotiate-these list, sign/avoid verdict
+- ⚔️ Dispute Letter: professional letters for billing disputes, with escalation path + laws cited
+- 🔍 TOS Decoder: plain-English TOS summary with red flags, data rights, verdict
+- 📋 FOIA Request: complete Freedom of Information Act request letters with appeal rights
+
 ## v191.00 — Dream Mode Wave 19: Symptom Checker + Sleep Optimizer + Stress Decoder + Workout Generator + Nutrition Coach
 - 🩺 Symptom Checker: AI triage with urgency rating, possible explanations, home care & warning signs
 - 😴 Sleep Optimizer: personalized wind-down routine, ideal schedule, environment tips & timeline

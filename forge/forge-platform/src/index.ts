@@ -173444,3 +173444,81 @@ app.post('/api/nutrition/plan', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 20: Legal & Life Admin AI ──
+
+db.prepare(`CREATE TABLE IF NOT EXISTS will_drafts (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, draft TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS lease_analyses (id TEXT PRIMARY KEY, user_id TEXT, lease_text TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS dispute_letters (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, letter TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS tos_decodings (id TEXT PRIMARY KEY, user_id TEXT, tos_text TEXT, summary TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS foia_requests (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, request TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Will Generator
+app.post('/api/will/generate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { full_name, state, assets, beneficiaries, executor, special_wishes } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a will outline/template (NOT legal advice — user must consult a lawyer to finalize).\n\nName: ${full_name}\nState: ${state||'not specified'}\nAssets: ${assets}\nBeneficiaries: ${beneficiaries}\nExecutor: ${executor||'not specified'}\nSpecial wishes: ${special_wishes||'none'}\n\nRespond in JSON: { "will_outline": { "declaration": "opening declaration text", "asset_distribution": [{"asset":"name","beneficiary":"who","percentage_or_amount":"X%"}], "executor_clause": "executor text", "guardianship": "if applicable", "special_provisions": ["provision1","provision2"], "residuary_clause": "remainder estate clause" }, "next_steps": ["step1","step2","step3"], "missing_info": ["what else needed"], "disclaimer": "must see a lawyer disclaimer" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO will_drafts (id,user_id,context,draft) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Lease Analyzer
+app.post('/api/lease/analyze', requireAuth, async (req: any, res: any) => {
+  try {
+    const { lease_text, monthly_rent, state } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Analyze this rental lease for red flags, unusual clauses, and tenant-unfriendly terms.\n\nLease text: ${lease_text}\nMonthly rent: ${monthly_rent||'not specified'}\nState: ${state||'not specified'}\n\nRespond in JSON: { "overall_risk": "low/medium/high", "risk_score": number_1_to_10, "red_flags": [{"clause":"clause text","issue":"why problematic","severity":"high/medium/low"}], "missing_protections": ["protection1","protection2"], "unusual_clauses": ["clause1","clause2"], "negotiate_these": [{"item":"what to negotiate","suggested_change":"..."}], "tenant_rights_note": "key tenant rights for this state", "verdict": "sign/negotiate/avoid" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO lease_analyses (id,user_id,lease_text,analysis) VALUES (?,?,?,?)`).run(id, req.user.id, lease_text, JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Dispute Letter Generator
+app.post('/api/dispute/write', requireAuth, async (req: any, res: any) => {
+  try {
+    const { dispute_type, company, amount, description, desired_outcome } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a professional dispute letter.\n\nType: ${dispute_type||'billing dispute'}\nCompany: ${company}\nAmount disputed: ${amount||'unspecified'}\nDescription: ${description}\nDesired outcome: ${desired_outcome||'full refund'}\n\nRespond in JSON: { "subject_line": "...", "letter": "full professional letter text ready to send", "cc_suggestions": ["who to CC"], "follow_up_timeline": "when to follow up", "escalation_path": "if no response, next steps", "key_laws_cited": ["relevant consumer protection laws"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO dispute_letters (id,user_id,context,letter) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// TOS Decoder
+app.post('/api/tos/decode', requireAuth, async (req: any, res: any) => {
+  try {
+    const { tos_text, service_name } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Decode this Terms of Service into plain English. Find the concerning parts.\n\nService: ${service_name||'unknown service'}\nTOS: ${tos_text.substring(0,4000)}\n\nRespond in JSON: { "tldr": "2-sentence plain English summary", "data_collection": "what data they collect", "data_sharing": "who they share data with", "your_rights": "what rights you retain", "their_rights": "what rights they claim over your content", "cancellation": "how to cancel and what happens", "red_flags": [{"section":"section name","issue":"plain English explanation","severity":"high/medium/low"}], "verdict": "safe/caution/concerning", "verdict_reason": "why" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO tos_decodings (id,user_id,tos_text,summary) VALUES (?,?,?,?)`).run(id, req.user.id, tos_text.substring(0,2000), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// FOIA Request Writer
+app.post('/api/foia/write', requireAuth, async (req: any, res: any) => {
+  try {
+    const { agency, records_sought, date_range, purpose, your_name } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a proper FOIA (Freedom of Information Act) request letter.\n\nAgency: ${agency}\nRecords sought: ${records_sought}\nDate range: ${date_range||'all available'}\nPurpose: ${purpose||'public interest'}\nRequester name: ${your_name||'[YOUR NAME]'}\n\nRespond in JSON: { "letter": "complete formal FOIA request letter", "fee_waiver_argument": "argument for fee waiver if applicable", "expedited_processing_argument": "if applicable", "tips": ["tip1","tip2"], "expected_timeline": "typical response time", "appeal_rights": "if denied, how to appeal" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO foia_requests (id,user_id,context,request) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
