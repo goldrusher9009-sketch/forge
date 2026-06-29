@@ -177011,3 +177011,87 @@ app.post('/api/world/build', requireAuth, async (req: AuthRequest, res) => {
     res.json(data);
   } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 59: CAREER ACCELERATION AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS promotion_roadmaps (
+  id TEXT PRIMARY KEY, user_id TEXT, role TEXT, target_role TEXT, timeline TEXT, roadmap TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS salary_benchmarkers (
+  id TEXT PRIMARY KEY, user_id TEXT, role TEXT, location TEXT, experience TEXT, benchmark TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS executive_presence (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, current_style TEXT, coaching TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS job_offer_negotiators (
+  id TEXT PRIMARY KEY, user_id TEXT, offer TEXT, strategy TEXT, scripts TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS career_brand_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, background TEXT, goals TEXT, brand TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/promotion/roadmap', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { current_role, target_role, timeline, industry } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a career coach for Fortune 500 executives. Create a detailed promotion roadmap. Current role: ${current_role}. Target: ${target_role}. Timeline: ${timeline}. Industry: ${industry}. Return JSON: { gap_analysis: { skills_gap, experience_gap, visibility_gap, relationship_gap }, 90_day_plan: [{ week_range, focus, actions, metrics }], skills_to_develop: [{ skill, why_critical, how_to_build, timeline }], visibility_moves: [{ move, why, how, expected_impact }], key_relationships: [{ person_type, why_needed, how_to_build }], quick_wins: [5 wins to demonstrate readiness now], potential_blockers: [{ blocker, mitigation }], success_metrics, promotion_conversation_script }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO promotion_roadmaps VALUES (?,?,?,?,?,?,?)').run(uuidv4(), userId, current_role, target_role, timeline, JSON.stringify(data), new Date().toISOString());
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/salary/benchmark', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { role, location, experience_years, skills, company_size } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a compensation expert. Provide detailed salary benchmarking. Role: ${role}. Location: ${location}. Experience: ${experience_years} years. Skills: ${skills}. Company size: ${company_size}. Return JSON: { role_title, location, market_analysis: { p25_salary, p50_salary, p75_salary, p90_salary, total_comp_p50, total_comp_p75 }, factors_affecting_pay: [{ factor, impact, your_position }], negotiation_power_score (1-10), negotiation_strategy: { opening_ask, target, walk_away_number, rationale }, talking_points: [5 data-backed points], competing_offers_leverage, benefits_to_negotiate: [{ benefit, typical_value, negotiation_tip }], market_timing, script_for_asking }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO salary_benchmarkers VALUES (?,?,?,?,?,?,?)').run(uuidv4(), userId, role, location, experience_years, JSON.stringify(data), new Date().toISOString());
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/executive/presence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { situation, current_approach, goal, level } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are an executive presence coach for C-suite leaders. Situation: ${situation}. Current approach: ${current_approach}. Goal: ${goal}. Level: ${level}. Return JSON: { presence_assessment: { gravity_score, clarity_score, authority_score, authenticity_score, overall }, what_youre_projecting_now, what_you_want_to_project, reframe_your_mindset, body_language_adjustments: [5 specific tips], voice_and_delivery: [5 specific tips], key_phrases_to_use: [5 powerful phrases], phrases_to_avoid: [5 weak phrases], room_entry_strategy, how_to_command_attention_without_demanding_it, pre_situation_ritual, follow_up_email_template }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO executive_presence VALUES (?,?,?,?,?)').run(uuidv4(), userId, situation, current_approach, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/offer/negotiate', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { offer_details, competing_offers, priorities, risk_tolerance } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a job offer negotiation expert. Analyze this offer and create a negotiation strategy. Offer: ${offer_details}. Competing offers: ${competing_offers || 'none'}. Priorities: ${priorities}. Risk tolerance: ${risk_tolerance || 'medium'}. Return JSON: { offer_grade (A-F), offer_analysis: { strengths, weaknesses, market_position }, negotiation_potential: { salary_upside, equity_upside, bonus_upside, total_upside }, negotiation_sequence: [{ item, current, target, tactic, script }], email_scripts: { initial_response, counter_offer, final_ask, acceptance }, negotiation_tactics: [5 proven tactics with examples], red_flags_in_offer, what_not_to_negotiate_first, leverage_points, walk_away_triggers, acceptance_checklist }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO job_offer_negotiators VALUES (?,?,?,?,?)').run(uuidv4(), userId, offer_details, JSON.stringify(data), JSON.stringify(data.email_scripts));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/brand', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { background, goals, target_audience, differentiators } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a personal branding strategist. Build a powerful career brand. Background: ${background}. Goals: ${goals}. Target audience: ${target_audience}. Differentiators: ${differentiators}. Return JSON: { brand_statement (2 sentences), elevator_pitch (30 sec), linkedin_headline, linkedin_about_section (300 words), unique_value_proposition, brand_pillars: [3 pillars with description], content_themes: [5 topics to post about], visibility_strategy: [10 specific actions], networking_message_template, speaking_topics: [3 talk ideas], brand_voice: { tone, style, avoid }, 90_day_brand_launch_plan: [{ week, focus, actions }] }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO career_brand_builders VALUES (?,?,?,?,?)').run(uuidv4(), userId, background, goals, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});

@@ -1,3 +1,5 @@
+## v231.00 — Dream Mode Wave 59: Career Acceleration AI (Promotion Roadmap + Salary Benchmark + Executive Presence + Offer Negotiator + Career Brand)
+
 ## v230.00 — Dream Mode Wave 58: Creative AI Studio (Story World + Lyric Crafter + Character Forge + Plot Twist Engine + World Builder)
 
 ## v229.00 — Dream Mode Wave 57: Emotion Decoder + Coping Toolkit + Inner Critic + Attachment Coach + Resilience Builder
