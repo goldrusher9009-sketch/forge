@@ -177515,3 +177515,87 @@ app.post('/api/breakup/analyze', requireAuth, async (req: AuthRequest, res) => {
     res.json(data);
   } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 65: CREATIVE BUSINESS AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS product_namers (
+  id TEXT PRIMARY KEY, user_id TEXT, product TEXT, names TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS brand_voice_creators (
+  id TEXT PRIMARY KEY, user_id TEXT, business TEXT, voice TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS launch_strategists (
+  id TEXT PRIMARY KEY, user_id TEXT, product TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS customer_avatar_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, business TEXT, avatar TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS revenue_model_designers (
+  id TEXT PRIMARY KEY, user_id TEXT, business TEXT, model TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/product/name', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product_description, target_audience, vibe, competitors } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a brand naming expert. Generate powerful product/company names. Product: ${product_description}. Audience: ${target_audience}. Vibe: ${vibe}. Competitors: ${competitors}. Return JSON: { naming_brief, name_categories: [{ category, names: [{ name, why_it_works, domain_likely_available, pronunciation_score (1-10), memorability_score (1-10), meaning_or_story }] (4 per category) }] (5 categories: evocative, descriptive, abstract, portmanteau, founder-style), top_3_picks: [{ name, full_rationale, tagline_suggestion, logo_concept }], names_to_avoid: [3 with reasons], domain_search_strategy, trademark_considerations }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO product_namers VALUES (?,?,?,?,?)').run(uuidv4(), userId, product_description, JSON.stringify(data), new Date().toISOString());
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brand/voice', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { business_description, target_customer, personality_adjectives, competitors } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a brand strategy expert. Create a complete brand voice guide. Business: ${business_description}. Customer: ${target_customer}. Personality: ${personality_adjectives}. Competitors: ${competitors}. Return JSON: { brand_personality: { archetype, core_traits: [5], what_you_are, what_you_are_not }, voice_dimensions: [{ dimension, description, do_examples: [3], dont_examples: [3] }] (4 dimensions), tone_by_context: [{ context, tone, example }] (6 contexts), vocabulary: { power_words: [10], words_to_avoid: [7], signature_phrases: [5] }, writing_style: { sentence_length, punctuation_style, emoji_policy, humor_level }, example_copy: { homepage_headline, about_us_opening, error_message, social_post, email_subject }, brand_voice_in_one_sentence }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO brand_voice_creators VALUES (?,?,?,?)').run(uuidv4(), userId, business_description, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/launch/strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, target_market, current_resources, launch_goal, timeline } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a product launch strategist. Design a complete go-to-market launch plan. Product: ${product}. Market: ${target_market}. Resources: ${current_resources}. Goal: ${launch_goal}. Timeline: ${timeline}. Return JSON: { launch_thesis, positioning_statement, target_segment: { primary, secondary, early_adopter_profile }, launch_phases: [{ phase, duration, focus, tactics: [5], success_metrics, budget_allocation }] (3 phases), channels: [{ channel, why_it_fits, tactics: [3], expected_roi }] (5 channels), launch_week_playbook: [{ day, actions: [3], goal }], pr_strategy: { angles: [3], target_outlets: [5], pitch_hook }, community_building: [3 tactics], viral_loop_design, risk_mitigation: [3 risks with solutions], kpis_to_track: [7], 90_day_revenue_projection }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO launch_strategists VALUES (?,?,?,?)').run(uuidv4(), userId, product, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customer/avatar', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { business_type, product_or_service, known_customers, price_point } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a customer research expert. Build detailed customer avatars. Business: ${business_type}. Product: ${product_or_service}. Known customers: ${known_customers}. Price point: ${price_point}. Return JSON: { avatars: [{ name, tagline, demographics: { age_range, income, location, education, job }, psychographics: { values: [4], personality, lifestyle, interests: [5] }, buying_behavior: { triggers: [3], objections: [3], research_process, decision_factors: [4] }, pain_points: [5], desired_outcomes: [5], where_they_hang_out: { online: [5], offline: [3] }, how_they_talk: { vocabulary: [5], phrases: [3] }, marketing_message_for_them, product_features_they_care_most_about: [3] }] (3 avatars), primary_avatar, messaging_matrix: [{ avatar, headline, hook, cta }], channel_recommendations_by_avatar }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO customer_avatar_builders VALUES (?,?,?,?)').run(uuidv4(), userId, business_type, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/revenue/model', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { business_idea, target_market, current_model, revenue_goal } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a business model expert. Design optimal revenue models. Business: ${business_idea}. Market: ${target_market}. Current model: ${current_model}. Goal: ${revenue_goal}. Return JSON: { revenue_model_analysis, recommended_models: [{ model_name, description, how_it_works_for_you, pricing_structure, pros: [3], cons: [3], companies_using_this, revenue_potential, time_to_first_dollar, implementation_steps: [5] }] (4 models), hybrid_model_recommendation, pricing_psychology: [{ tactic, why_it_works, how_to_implement }] (5), pricing_tiers: [{ tier_name, price, what_included, target_customer, conversion_rate_estimate }] (3 tiers), revenue_diversification: [3 additional streams], unit_economics: { cac_target, ltv_target, ltv_cac_ratio, payback_period }, path_to_goal: { monthly_targets: [{ month, revenue, key_action }] (6 months) } }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO revenue_model_designers VALUES (?,?,?,?)').run(uuidv4(), userId, business_idea, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
