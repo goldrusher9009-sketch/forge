@@ -178069,3 +178069,97 @@ app.post('/api/book/title', requireAuth, async (req: AuthRequest, res) => {
     res.json({ titles });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 71: PRODUCTIVITY & TIME MANAGEMENT AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS procrastination_busters (
+  id TEXT PRIMARY KEY, user_id TEXT, task TEXT, reason TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS time_block_planners (
+  id TEXT PRIMARY KEY, user_id TEXT, goals TEXT, schedule TEXT, blocks TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS meeting_cost_calculators (
+  id TEXT PRIMARY KEY, user_id TEXT, attendees TEXT, duration TEXT, cost TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS inbox_zero_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, email_situation TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS deep_work_schedulers (
+  id TEXT PRIMARY KEY, user_id TEXT, work_type TEXT, schedule TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/procrastination/bust', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { task, reason, deadline } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Help me stop procrastinating on this task.\nTask: ${task}\nWhy I'm avoiding it: ${reason||'not sure'}\nDeadline: ${deadline||'soon'}\n\nDiagnose the procrastination type (fear, overwhelm, perfectionism, boredom, etc.) and provide a specific action plan to start NOW. Include a 2-minute starter action.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO procrastination_busters (id,user_id,task,reason,plan) VALUES (?,?,?,?,?)`).run(id,userId,task,reason||'',plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/timeblock/plan', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { goals, work_hours, energy_pattern, commitments } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Create a time-blocking schedule.\nWeekly goals: ${goals}\nAvailable work hours: ${work_hours||'9am-5pm'}\nEnergy pattern: ${energy_pattern||'morning person'}\nFixed commitments: ${commitments||'none'}\n\nDesign an optimized weekly time-block schedule with themed days, buffer blocks, and specific time windows for deep work, meetings, and admin.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const blocks = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO time_block_planners (id,user_id,goals,schedule,blocks) VALUES (?,?,?,?,?)`).run(id,userId,goals,work_hours||'',blocks);
+    res.json({ blocks });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/meeting/cost', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { attendees, duration_minutes, avg_salary, purpose } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Calculate meeting cost and ROI analysis.\nAttendees: ${attendees}\nDuration: ${duration_minutes} minutes\nAverage salary: ${avg_salary||'$80,000/year'}\nMeeting purpose: ${purpose||'status update'}\n\nCalculate total cost, opportunity cost, and assess if this meeting provides ROI. Suggest whether it could be an email, async update, or shorter meeting.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const cost = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO meeting_cost_calculators (id,user_id,attendees,duration,cost) VALUES (?,?,?,?,?)`).run(id,userId,String(attendees),String(duration_minutes),cost);
+    res.json({ cost });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/inbox/zero', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { email_count, email_types, time_available, email_habits } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Create an inbox zero strategy for me.\nCurrent email count: ${email_count||'500+'}\nEmail types: ${email_types||'newsletters, work, personal'}\nTime available daily: ${time_available||'30 minutes'}\nCurrent habits: ${email_habits||'check constantly'}\n\nProvide a step-by-step inbox zero system including sorting rules, response templates, unsubscribe strategy, and a sustainable daily email routine.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const strategy = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO inbox_zero_coaches (id,user_id,email_situation,strategy) VALUES (?,?,?,?)`).run(id,userId,email_count||'500+',strategy);
+    res.json({ strategy });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/deepwork/schedule', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { work_type, available_hours, distractions, goals } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Design a deep work schedule using Cal Newport's principles.\nWork type: ${work_type}\nAvailable hours per week for deep work: ${available_hours||'10-15 hours'}\nMain distractions: ${distractions||'phone, meetings, email'}\nDeep work goals: ${goals}\n\nCreate a deep work protocol including scheduling strategy, distraction elimination plan, rituals to enter flow state, and progress tracking.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO deep_work_schedulers (id,user_id,work_type,schedule,plan) VALUES (?,?,?,?,?)`).run(id,userId,work_type,available_hours||'',plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
