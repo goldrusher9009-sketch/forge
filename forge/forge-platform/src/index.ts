@@ -179660,3 +179660,90 @@ app.post('/api/monetization/plan', requireAuth, async (req: AuthRequest, res) =>
     res.json({ plan });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── Wave 88: Mental Performance & Flow State AI ───────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS flow_state_designers (
+  id TEXT PRIMARY KEY, user_id TEXT, work_type TEXT, blockers TEXT, protocol TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS procrastination_busters (
+  id TEXT PRIMARY KEY, user_id TEXT, task TEXT, reason TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS decision_fatigue_reducers (
+  id TEXT PRIMARY KEY, user_id TEXT, decisions TEXT, framework TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS attention_trainers (
+  id TEXT PRIMARY KEY, user_id TEXT, challenges TEXT, schedule TEXT, protocol TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS mental_energy_optimizers (
+  id TEXT PRIMARY KEY, user_id TEXT, lifestyle TEXT, goals TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/flowstate/design', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { work_type, blockers, environment } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a flow state and peak performance expert. Design a personalized flow state protocol.\nWork type: ${work_type}\nCurrent blockers to flow: ${blockers || 'distractions, low motivation'}\nEnvironment: ${environment || 'home office'}\n\nProvide: pre-flow ritual (15-min protocol), optimal session length, environment setup checklist, trigger stacking method, re-entry techniques when interrupted, tracking metrics for flow quality.` }
+    ]);
+    const protocol = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO flow_state_designers (id,user_id,work_type,blockers,protocol) VALUES (?,?,?,?,?)').run(uuidv4(), userId, work_type, blockers, protocol);
+    res.json({ protocol });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/procrastination/bust', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { task, reason, deadline } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are an anti-procrastination coach. Help overcome procrastination on a specific task.\nTask: ${task}\nWhy avoiding it: ${reason || 'unknown'}\nDeadline: ${deadline || 'soon'}\n\nProvide: root cause diagnosis, the 2-minute start technique customized for this task, task breakdown into micro-steps, accountability system, reward structure, what happens if not done (realistic consequences), a starting script for right now.` }
+    ]);
+    const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO procrastination_busters (id,user_id,task,reason,plan) VALUES (?,?,?,?,?)').run(uuidv4(), userId, task, reason, plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/decisionfatigue/reduce', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { decisions, role, energy_pattern } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a cognitive load and decision design expert. Create a decision fatigue reduction system.\nRecurring decisions: ${decisions}\nRole/context: ${role || 'professional'}\nEnergy pattern: ${energy_pattern || 'morning peak'}\n\nProvide: decisions to automate (standard operating procedures), decisions to batch by time of day, decision trees for recurring choices, default rules to adopt, "if-then" protocols, weekly decision audit template.` }
+    ]);
+    const framework = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO decision_fatigue_reducers (id,user_id,decisions,framework) VALUES (?,?,?,?)').run(uuidv4(), userId, decisions, framework);
+    res.json({ framework });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/attention/train', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { challenges, work_style, goals } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are an attention and focus training specialist. Build a personalized attention training protocol.\nAttention challenges: ${challenges}\nWork style: ${work_style || 'office professional'}\nGoals: ${goals || 'longer focus sessions'}\n\nProvide: attention baseline assessment, progressive training schedule (4 weeks), specific exercises (visual, auditory, task-switching), digital environment audit, physiological attention boosters, measurement protocol to track improvement.` }
+    ]);
+    const protocol = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO attention_trainers (id,user_id,challenges,schedule,protocol) VALUES (?,?,?,?,?)').run(uuidv4(), userId, challenges, work_style, protocol);
+    res.json({ protocol });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mentalenergy/optimize', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { lifestyle, goals, current_issues } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a mental energy and cognitive performance coach. Build a complete mental energy optimization plan.\nCurrent lifestyle: ${lifestyle}\nPerformance goals: ${goals}\nCurrent issues: ${current_issues || 'afternoon crashes, brain fog'}\n\nProvide: energy audit by hour, sleep optimization protocol, nutrition for brain performance, movement/exercise timing, mental breaks system, stress inoculation techniques, weekly energy management calendar.` }
+    ]);
+    const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO mental_energy_optimizers (id,user_id,lifestyle,goals,plan) VALUES (?,?,?,?,?)').run(uuidv4(), userId, lifestyle, goals, plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
