@@ -174527,3 +174527,80 @@ app.post('/api/mental/performance', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 34: LEGAL & FINANCE AI ──────────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS contract_analyzers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS tax_strategists (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS estate_planners (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS investment_analyzers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS insurance_auditors (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, audit TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Contract Clause Analyzer
+app.post('/api/contract/analyze', requireAuth, async (req: any, res: any) => {
+  try {
+    const { contract_text, contract_type, party_role } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Analyze this contract for risks and key terms. Educational only — not legal advice.\n\nContract type: ${contract_type||'general'}\nYour role: ${party_role||'unknown party'}\nContract text: ${contract_text}\n\nRespond in JSON: { "disclaimer": "not legal advice, consult an attorney", "summary": "plain English summary of what this contract does", "key_terms": [{"clause":"clause name","plain_english":"what it means","risk_level":"low/medium/high","concern":"specific concern if any"}], "red_flags": [{"flag":"description","severity":"high/medium","location":"section or quote"}], "missing_protections": ["protection you should ask to add"], "negotiation_points": [{"point":"what to negotiate","suggested_language":"how to phrase it","priority":"must-have/nice-to-have"}], "overall_risk": "low/medium/high", "recommendation": "sign as-is/negotiate first/avoid/consult attorney" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO contract_analyzers (id,user_id,context,analysis) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Tax Strategy Builder
+app.post('/api/tax/strategy', requireAuth, async (req: any, res: any) => {
+  try {
+    const { income_type, annual_income, filing_status, situation } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a tax optimization strategy. Educational only — consult a CPA.\n\nIncome type: ${income_type||'W-2 employee'}\nAnnual income: ${annual_income||'unknown'}\nFiling status: ${filing_status||'single'}\nSituation: ${situation||'standard'}\n\nRespond in JSON: { "disclaimer": "consult a CPA or tax professional", "effective_rate_estimate": "estimated effective tax rate", "immediate_actions": [{"action":"thing to do now","potential_savings":"estimated savings","effort":"low/medium/high","deadline":"when to do it by"}], "retirement_strategy": {"vehicles":["401k","IRA","HSA — which to prioritize"],"contribution_order":"which to fund first","match_optimization":"how to get max employer match"}, "deductions_checklist": [{"deduction":"name","qualifies":"yes/no/maybe","estimated_value":"$X","what_you_need":"documentation needed"}], "tax_loss_harvesting": "if applicable", "entity_structure": "sole prop vs LLC vs S-corp analysis if relevant", "year_end_moves": ["action before Dec 31"], "quarterly_estimates": "if applicable for self-employed" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO tax_strategists (id,user_id,context,strategy) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Estate Planning Guide
+app.post('/api/estate/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { age, assets, dependents, wishes } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create an estate planning roadmap. Educational only — consult an estate attorney.\n\nAge: ${age}\nAssets overview: ${assets||'home, retirement accounts, savings'}\nDependents: ${dependents||'none'}\nWishes: ${wishes||'pass assets to family, minimize taxes'}\n\nRespond in JSON: { "disclaimer": "consult an estate planning attorney", "urgency": "immediate/soon/eventual", "documents_needed": [{"document":"Will/Trust/POA/etc","priority":"must-have/important/optional","what_it_does":"plain English","without_it":"what happens without it","estimated_cost":"$X to prepare"}], "asset_titling": [{"asset_type":"real estate/retirement/bank accounts","recommended_titling":"how to title it","why":"reason"}], "beneficiary_audit": "check these beneficiary designations now", "tax_efficiency": ["strategy to minimize estate tax"], "digital_assets": ["how to handle online accounts, crypto, etc"], "conversation_to_have": "what to tell your family", "first_3_steps": ["concrete action 1","concrete action 2","concrete action 3"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO estate_planners (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Investment Portfolio Analyzer
+app.post('/api/investment/analyze', requireAuth, async (req: any, res: any) => {
+  try {
+    const { portfolio, goals, timeline, risk_tolerance } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Analyze this investment portfolio and provide educational insights. Not financial advice.\n\nPortfolio: ${portfolio}\nGoals: ${goals||'wealth building'}\nTimeline: ${timeline||'long-term 20+ years'}\nRisk tolerance: ${risk_tolerance||'moderate'}\n\nRespond in JSON: { "disclaimer": "not financial advice, consult a fiduciary advisor", "portfolio_grade": "A/B/C/D with explanation", "allocation_analysis": {"current":"what you have","assessment":"how balanced it is","concerns":["concern1"]}, "diversification_score": "1-10 with explanation", "fee_analysis": "estimated drag from fees if calculable", "risk_assessment": {"volatility":"expected volatility level","max_drawdown":"realistic worst case","recovery_time":"typical recovery period"}, "recommendations": [{"action":"rebalance/add/remove/hold","specific":"what to do","reasoning":"why","priority":"high/medium/low"}], "missing_asset_classes": ["asset class not represented that could help"], "rebalancing_trigger": "when and how to rebalance", "tax_efficiency_notes": ["tax optimization note"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO investment_analyzers (id,user_id,context,analysis) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Insurance Coverage Auditor
+app.post('/api/insurance/audit', requireAuth, async (req: any, res: any) => {
+  try {
+    const { coverage, life_stage, assets, dependents } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Audit insurance coverage and identify gaps. Educational only.\n\nCurrent coverage: ${coverage||'unknown'}\nLife stage: ${life_stage||'working adult'}\nAssets: ${assets||'home, car, savings'}\nDependents: ${dependents||'none'}\n\nRespond in JSON: { "disclaimer": "consult a licensed insurance broker", "coverage_scorecard": [{"type":"Health/Life/Disability/Auto/Home/Umbrella/etc","status":"have/missing/inadequate","current_coverage":"what they have or none","recommendation":"what level they need","annual_cost_estimate":"$X/year","priority":"critical/important/nice-to-have"}], "biggest_gaps": [{"gap":"uncovered risk","worst_case_scenario":"what happens","fix":"what coverage to get"}], "overinsured_areas": ["area where they may be paying too much"], "life_events_triggers": ["trigger event that requires coverage review"], "quick_wins": ["easy improvement to make this week"], "total_coverage_grade": "A/B/C/D" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO insurance_auditors (id,user_id,context,audit) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
