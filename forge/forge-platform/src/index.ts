@@ -178915,3 +178915,97 @@ app.post('/api/world/build', requireAuth, async (req: AuthRequest, res) => {
     res.json({ world });
   } catch (e: any) { res.json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 80: MENTAL PERFORMANCE & COGNITIVE AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS focus_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, goal TEXT, blockers TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS memory_trainers (
+  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, technique TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS cognitive_bias_detectors (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS mental_clarity_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, fog_description TEXT, lifestyle TEXT, recommendations TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS peak_state_designers (
+  id TEXT PRIMARY KEY, user_id TEXT, goals TEXT, current_state TEXT, protocol TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/focus/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { goal, blockers, work_style } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a focus and deep work coach. Create a personalized focus plan.\nGoal: ${goal}\nBlockers: ${blockers||'distraction, procrastination'}\nWork style: ${work_style||'not specified'}\nProvide: root cause analysis, environment design tips, focus protocols (time blocks, rituals), distraction elimination strategies, and a 30-day focus challenge.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO focus_coaches (id,user_id,goal,blockers,plan) VALUES (?,?,?,?,?)').run(id, userId, goal, blockers, plan);
+    res.json({ plan });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/memory/train', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { topic, content_to_memorize, memory_goal } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a memory training expert. Help memorize this content using proven techniques.\nTopic: ${topic}\nContent: ${content_to_memorize}\nGoal: ${memory_goal||'long-term retention'}\nProvide: memory palace technique, spaced repetition schedule, mnemonics, visualization tricks, practice exercises, and a retention test.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const technique = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO memory_trainers (id,user_id,topic,technique,result) VALUES (?,?,?,?,?)').run(id, userId, topic, technique, '');
+    res.json({ technique });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/cognitivebias/detect', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { situation, decision, thinking_process } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a cognitive bias expert. Analyze this situation for thinking errors.\nSituation: ${situation}\nDecision being made: ${decision||'not specified'}\nThinking process: ${thinking_process||'not shared'}\nIdentify: all cognitive biases present, how each distorts thinking, debiasing strategies for each, and a clearer way to think about this situation.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const analysis = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO cognitive_bias_detectors (id,user_id,situation,analysis) VALUES (?,?,?,?)').run(id, userId, situation, analysis);
+    res.json({ analysis });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/mentalclarity/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { fog_description, sleep, diet, stress, exercise } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a mental clarity and cognitive performance coach. Analyze and improve brain fog.\nFog description: ${fog_description}\nSleep: ${sleep||'unknown'}, Diet: ${diet||'unknown'}, Stress: ${stress||'unknown'}, Exercise: ${exercise||'unknown'}\nProvide: likely causes, immediate clarity boosters (today), lifestyle changes, nutrition and supplement suggestions (educational), and a 2-week clarity protocol.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const recommendations = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO mental_clarity_coaches (id,user_id,fog_description,lifestyle,recommendations) VALUES (?,?,?,?,?)').run(id, userId, fog_description, JSON.stringify({sleep,diet,stress,exercise}), recommendations);
+    res.json({ recommendations });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/peakstate/design', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { goals, current_state, chronotype, challenges } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a peak performance architect. Design a personalized peak state protocol.\nGoals: ${goals}\nCurrent state: ${current_state||'average'}\nChronotype: ${chronotype||'unknown'}\nChallenges: ${challenges||'none specified'}\nDeliver: morning activation sequence, ultradian rhythm work blocks, recovery rituals, evening wind-down protocol, weekly peak state review, and performance triggers to anchor into flow states.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const protocol = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO peak_state_designers (id,user_id,goals,current_state,protocol) VALUES (?,?,?,?,?)').run(id, userId, goals, current_state, protocol);
+    res.json({ protocol });
+  } catch (e: any) { res.json({ error: e.message }); }
+});

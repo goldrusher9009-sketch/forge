@@ -1,3 +1,5 @@
+## v252.00 — Dream Mode Wave 80: Mental Performance & Cognitive AI (Focus Coach + Memory Trainer + Cognitive Bias Detector + Mental Clarity Coach + Peak State Designer)
+
 ## v251.00 — Dream Mode Wave 79: Creative Writing & Storytelling AI (Story Outliner + Character Creator + Dialogue Writer + Plot Twist Generator + World Builder)
 
 ## v250.00 — Dream Mode Wave 78: Finance & Money Mastery AI (Emergency Fund Builder + Insurance Auditor + Money Mindset Coach + FI Planner + Tax-Loss Harvester)
