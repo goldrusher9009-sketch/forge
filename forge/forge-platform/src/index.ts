@@ -176395,3 +176395,178 @@ Return JSON:
     res.json(parsed);
   } catch(e:any){ res.status(500).json({error:e.message}); }
 });
+
+// ── Wave 55: Legal & Compliance AI ──────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS contract_drafters (id TEXT PRIMARY KEY, user_id TEXT, contract_type TEXT, parties TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS nda_reviewers (id TEXT PRIMARY KEY, user_id TEXT, nda_text TEXT, party_role TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS terms_decoders (id TEXT PRIMARY KEY, user_id TEXT, tos_text TEXT, service_name TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS compliance_checkers (id TEXT PRIMARY KEY, user_id TEXT, business_type TEXT, jurisdiction TEXT, activity TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS dispute_letter_pros (id TEXT PRIMARY KEY, user_id TEXT, dispute_type TEXT, situation TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+app.post('/api/contract/draft', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { contract_type, party_a, party_b, key_terms, jurisdiction } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Draft a professional contract outline.
+Type: ${contract_type}
+Party A: ${party_a}
+Party B: ${party_b}
+Key terms: ${key_terms || 'standard'}
+Jurisdiction: ${jurisdiction || 'US general'}
+
+Return JSON:
+{
+  "contract_title": string,
+  "parties": {"party_a": string, "party_b": string},
+  "recitals": string,
+  "key_clauses": [{"clause_name": string, "content": string, "why_important": string}],
+  "payment_terms": string,
+  "term_and_termination": string,
+  "ip_ownership": string,
+  "confidentiality": string,
+  "liability_limitation": string,
+  "dispute_resolution": string,
+  "governing_law": string,
+  "red_flags_to_watch": [string],
+  "lawyer_review_recommended": string,
+  "next_steps": [string]
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO contract_drafters (id,user_id,contract_type,parties,result) VALUES (?,?,?,?,?)`).run(uuidv4(),userId,contract_type,`${party_a} / ${party_b}`,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/nda/review', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { nda_text, party_role, industry } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Review this NDA and flag issues.
+Your role: ${party_role || 'receiving party'}
+Industry: ${industry || 'general'}
+NDA text: ${nda_text}
+
+Return JSON:
+{
+  "overall_risk": string,
+  "risk_score": string,
+  "nda_type": string,
+  "duration": string,
+  "scope_assessment": string,
+  "red_flags": [{"clause": string, "issue": string, "severity": string, "suggested_fix": string}],
+  "missing_protections": [string],
+  "overly_broad_clauses": [string],
+  "reasonable_clauses": [string],
+  "negotiation_priorities": [string],
+  "mutual_vs_one_sided": string,
+  "jurisdiction_issues": string,
+  "verdict": string,
+  "lawyer_needed": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO nda_reviewers (id,user_id,nda_text,party_role,result) VALUES (?,?,?,?,?)`).run(uuidv4(),userId,nda_text?.substring(0,500),party_role,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/terms/decode', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { tos_text, service_name } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Decode these Terms of Service in plain English.
+Service: ${service_name || 'unknown'}
+Terms text: ${tos_text}
+
+Return JSON:
+{
+  "tldr": string,
+  "danger_zones": [{"what": string, "why_it_matters": string, "severity": string}],
+  "data_they_collect": [string],
+  "data_they_share": [string],
+  "can_they_delete_your_account": string,
+  "auto_renewal_traps": string,
+  "arbitration_clause": string,
+  "class_action_waiver": string,
+  "ip_you_give_them": string,
+  "price_change_rights": string,
+  "content_moderation": string,
+  "your_rights_to_data": string,
+  "surprising_clauses": [string],
+  "overall_verdict": string,
+  "trust_score": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO terms_decoders (id,user_id,tos_text,service_name,result) VALUES (?,?,?,?,?)`).run(uuidv4(),userId,tos_text?.substring(0,500),service_name,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/compliance/check', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { business_type, jurisdiction, activity, employees } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Check compliance requirements for this business.
+Business type: ${business_type}
+Jurisdiction: ${jurisdiction || 'US'}
+Activity/Product: ${activity}
+Employees: ${employees || 'unknown'}
+
+Return JSON:
+{
+  "compliance_overview": string,
+  "required_licenses": [{"license": string, "authority": string, "urgency": string}],
+  "data_privacy_reqs": [string],
+  "employment_law_reqs": [string],
+  "industry_regulations": [string],
+  "tax_obligations": [string],
+  "reporting_requirements": [string],
+  "potential_violations": [{"issue": string, "penalty": string, "how_to_fix": string}],
+  "immediate_actions": [string],
+  "compliance_calendar": [{"month": string, "deadline": string}],
+  "estimated_compliance_cost": string,
+  "biggest_compliance_risk": string,
+  "lawyer_recommended": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO compliance_checkers (id,user_id,business_type,jurisdiction,activity,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(),userId,business_type,jurisdiction,activity,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/dispute/letter', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { dispute_type, situation, desired_outcome, recipient } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Draft a professional dispute letter.
+Dispute type: ${dispute_type}
+Situation: ${situation}
+Desired outcome: ${desired_outcome || 'fair resolution'}
+Recipient: ${recipient || 'company/party'}
+
+Return JSON:
+{
+  "letter_draft": string,
+  "subject_line": string,
+  "tone": string,
+  "legal_basis": string,
+  "key_demands": [string],
+  "deadline_to_respond": string,
+  "escalation_path": [string],
+  "supporting_docs_needed": [string],
+  "leverage_points": [string],
+  "common_responses": [{"response": string, "your_counter": string}],
+  "send_via": string,
+  "keep_copy_of": [string],
+  "success_probability": string,
+  "next_steps_if_ignored": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO dispute_letter_pros (id,user_id,dispute_type,situation,result) VALUES (?,?,?,?,?)`).run(uuidv4(),userId,dispute_type,situation,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
