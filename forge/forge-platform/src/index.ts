@@ -175605,3 +175605,83 @@ app.post('/api/cofounder/match', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// Wave 48: Parenting & Family AI
+const createParentingTables = () => {
+  db.prepare(`CREATE TABLE IF NOT EXISTS parenting_advisors (id TEXT PRIMARY KEY, user_id TEXT, child_age TEXT, challenge TEXT, advice TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS family_meeting_planners (id TEXT PRIMARY KEY, user_id TEXT, family_size TEXT, agenda TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS chore_chart_builders (id TEXT PRIMARY KEY, user_id TEXT, kids TEXT, ages TEXT, chart TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS bedtime_story_gens (id TEXT PRIMARY KEY, user_id TEXT, child_name TEXT, theme TEXT, story TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS college_prep_coaches (id TEXT PRIMARY KEY, user_id TEXT, student_grade TEXT, interests TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+};
+createParentingTables();
+
+app.post('/api/parenting/advise', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { child_age, challenge, context } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a child development expert and parenting coach. A parent needs advice.\n\nChild age: ${child_age}\nChallenge: ${challenge}\nContext: ${context||'not provided'}\n\nProvide warm, evidence-based advice. Return JSON:\n{\n  "empathy_statement": "acknowledge the difficulty",\n  "developmental_context": "why this happens at this age",\n  "strategies": [{"strategy": "name", "how_to": "step-by-step", "what_to_say": "exact words"}],\n  "what_not_to_do": ["common mistake"],\n  "self_care_reminder": "reminder for the parent",\n  "when_to_seek_help": "signs this needs professional support"\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO parenting_advisors (id,user_id,child_age,challenge,advice) VALUES (?,?,?,?,?)`).run(id, userId, child_age, challenge, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/family/meeting', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { family_size, topics, kids_ages } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a family therapist. Plan an effective family meeting.\n\nFamily size: ${family_size}\nKids ages: ${kids_ages||'mixed'}\nTopics to cover: ${topics}\n\nReturn JSON:\n{\n  "meeting_duration": "recommended time",\n  "best_time_to_hold": "suggestion",\n  "ground_rules": ["rule for the meeting"],\n  "agenda": [{"item": "topic", "time_allotted": "X min", "how_to_facilitate": "instructions", "age_appropriate_tip": "tip for younger kids"}],\n  "closing_ritual": "how to end positively",\n  "follow_up": "how to track commitments",\n  "what_makes_family_meetings_fail": ["pitfall to avoid"]\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO family_meeting_planners (id,user_id,family_size,agenda,plan) VALUES (?,?,?,?,?)`).run(id, userId, family_size, topics, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/chore/chart', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { kids, ages, household_size } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a family organization expert. Create a personalized chore chart.\n\nKids: ${kids}\nAges: ${ages}\nHousehold size: ${household_size||'average'}\n\nReturn JSON:\n{\n  "philosophy": "your approach to chores and kids",\n  "chore_chart": [{"child": "name/age", "daily_chores": ["chore"], "weekly_chores": ["chore"], "skills_developed": ["skill"]}],\n  "reward_system": {"type": "approach", "how_it_works": "description", "pitfalls": "what to avoid"},\n  "age_appropriate_guide": [{"age_range": "X-Y years", "can_do": ["task"], "needs_supervision": ["task"]}],\n  "introduction_script": "how to introduce this to kids",\n  "troubleshooting": [{"problem": "issue", "solution": "fix"}]\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO chore_chart_builders (id,user_id,kids,ages,chart) VALUES (?,?,?,?,?)`).run(id, userId, kids, ages, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/bedtime/story', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { child_name, age, theme, length } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a master children's storyteller. Write a magical bedtime story.\n\nChild's name: ${child_name}\nAge: ${age}\nTheme/elements: ${theme}\nLength: ${length||'medium (5-7 minutes)'}\n\nCreate an original, calming story featuring the child as the hero. Return JSON:\n{\n  "title": "story title",\n  "story": "full story text with natural paragraph breaks",\n  "moral": "gentle lesson woven in",\n  "reading_tips": ["tip for reading aloud"],\n  "discussion_questions": ["question to ask after"],\n  "sequel_hook": "optional cliffhanger for tomorrow"\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO bedtime_story_gens (id,user_id,child_name,theme,story) VALUES (?,?,?,?,?)`).run(id, userId, child_name, theme, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/college/prep', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { student_grade, interests, dream_schools, budget } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a college admissions counselor with 20 years experience. Create a personalized college prep plan.\n\nStudent grade: ${student_grade}\nInterests/passions: ${interests}\nDream schools: ${dream_schools||'not specified'}\nBudget considerations: ${budget||'not specified'}\n\nReturn JSON:\n{\n  "timeline_overview": "big picture plan",\n  "this_year_priorities": [{"priority": "focus area", "why": "reason", "actions": ["specific step"]}],\n  "extracurricular_strategy": {"philosophy": "approach", "recommendations": ["activity with why"]},\n  "test_prep_plan": {"sat_act": "recommendation", "ap_courses": ["suggested courses"]},\n  "essay_themes": ["powerful theme to explore"],\n  "school_list_strategy": {"reaches": ["type"], "targets": ["type"], "safeties": ["type"]},\n  "financial_aid_tips": ["tip"],\n  "parent_role": "how parents can help without hovering",\n  "biggest_mistakes": ["mistake to avoid"]\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO college_prep_coaches (id,user_id,student_grade,interests,plan) VALUES (?,?,?,?,?)`).run(id, userId, student_grade, interests, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
