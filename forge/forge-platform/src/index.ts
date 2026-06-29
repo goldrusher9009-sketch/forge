@@ -173988,3 +173988,80 @@ app.post('/api/side-hustle/plan', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 27: MENTAL HEALTH & WELLNESS AI ─────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS anxiety_toolkits (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, toolkit TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS cbt_exercises (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, exercise TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS self_care_plans (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS boundary_scripts (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, scripts TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS burnout_assessments (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, assessment TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Anxiety Toolkit
+app.post('/api/anxiety/toolkit', requireAuth, async (req: any, res: any) => {
+  try {
+    const { trigger, intensity, context: ctx } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a personalized anxiety management toolkit. Note: This is educational content only, not a substitute for professional mental health care.\n\nTrigger/situation: ${trigger}\nAnxiety intensity (1-10): ${intensity||5}\nContext: ${ctx||'general anxiety'}\n\nRespond in JSON: { "disclaimer": "reminder this is educational not therapy", "immediate_relief": [{"technique":"name","steps":["step1","step2"],"time_needed":"2-5 min","how_it_helps":"explanation"}], "grounding_exercises": [{"name":"technique","description":"how to do it"}], "thought_patterns_to_watch": ["pattern1","pattern2"], "reframe_examples": [{"anxious_thought":"thought","balanced_thought":"reframe"}], "longer_term_tools": ["tool1","tool2"], "when_to_seek_help": "signs professional support is needed" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO anxiety_toolkits (id,user_id,context,toolkit) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// CBT Exercise Generator
+app.post('/api/cbt/exercise', requireAuth, async (req: any, res: any) => {
+  try {
+    const { situation, automatic_thought, emotion, intensity } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Guide a CBT thought record exercise. Educational only, not therapy.\n\nSituation: ${situation}\nAutomatic thought: ${automatic_thought}\nEmotion felt: ${emotion}\nIntensity (1-10): ${intensity||7}\n\nRespond in JSON: { "thought_record": { "situation": "${situation}", "automatic_thought": "${automatic_thought}", "emotion": "${emotion}", "intensity_before": ${intensity||7}, "evidence_for": ["evidence that supports the thought"], "evidence_against": ["evidence against the thought"], "cognitive_distortions": ["identified distortions like catastrophizing, all-or-nothing thinking"], "balanced_thought": "more balanced alternative thought", "new_emotion": "likely emotion after reframe", "new_intensity": 4 }, "follow_up_questions": ["question1","question2"], "behavioral_experiment": "a small action to test the belief", "affirmation": "compassionate closing statement", "disclaimer": "this is educational, not a substitute for therapy" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO cbt_exercises (id,user_id,context,exercise) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Self-Care Plan Builder
+app.post('/api/self-care/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { current_stressors, energy_level, time_available, preferences } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a personalized self-care plan.\n\nCurrent stressors: ${current_stressors}\nEnergy level: ${energy_level||'medium'}\nTime available daily: ${time_available||'30 minutes'}\nPreferences: ${preferences||'no preferences specified'}\n\nRespond in JSON: { "morning_routine": [{"activity":"name","duration":"X min","benefit":"why helpful"}], "afternoon_resets": [{"activity":"name","duration":"X min"}], "evening_wind_down": [{"activity":"name","duration":"X min","benefit":"why helpful"}], "weekly_practices": [{"activity":"name","frequency":"X times/week","benefit":"why helpful"}], "emergency_self_care": "what to do when overwhelmed in 5 minutes", "things_to_reduce": ["habit1","habit2"], "self_compassion_reminder": "kind message to yourself" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO self_care_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Boundary Script Writer
+app.post('/api/boundaries/write', requireAuth, async (req: any, res: any) => {
+  try {
+    const { relationship_type, situation, desired_boundary, concern } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write boundary-setting scripts.\n\nRelationship: ${relationship_type}\nSituation: ${situation}\nDesired boundary: ${desired_boundary}\nConcern about setting it: ${concern||'fear of conflict'}\n\nRespond in JSON: { "scripts": [{"tone":"direct","script":"word-for-word script"},{"tone":"gentle","script":"softer version"},{"tone":"firm","script":"for pushback"}], "what_to_expect": "how they might react", "responses_to_pushback": [{"pushback":"what they might say","your_response":"how to respond"}], "affirmations": ["I have the right to...","My needs matter because..."], "when_professional_help_helps": "if the relationship pattern needs more support" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO boundary_scripts (id,user_id,context,scripts) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Burnout Assessment
+app.post('/api/burnout/assess', requireAuth, async (req: any, res: any) => {
+  try {
+    const { symptoms, work_hours, duration, domain } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Assess burnout and provide recovery guidance. Educational only.\n\nSymptoms: ${symptoms}\nWork hours per week: ${work_hours||50}\nHow long feeling this way: ${duration||'a few weeks'}\nDomain: ${domain||'work'}\n\nRespond in JSON: { "burnout_stage": "early warning / moderate burnout / severe burnout", "key_symptoms_identified": ["symptom1","symptom2"], "root_causes_likely": ["cause1","cause2"], "recovery_plan": {"immediate":["action1","action2"],"this_week":["action1","action2"],"this_month":["action1","action2"]}, "energy_restoration": ["restoration activity1","activity2"], "what_to_say_to_your_manager": "script for requesting support/boundaries", "red_flags_for_professional_help": ["sign1","sign2"], "disclaimer": "this is educational, not medical advice" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO burnout_assessments (id,user_id,context,assessment) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
