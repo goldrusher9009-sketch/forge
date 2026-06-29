@@ -175925,3 +175925,156 @@ app.post('/api/pkm/design', requireAuth, async (req: AuthRequest, res: Response)
     res.json({ id, ...result });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── Wave 52: Creative & Storytelling AI ──────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS character_builders (id TEXT PRIMARY KEY, user_id TEXT, character_name TEXT, genre TEXT, traits TEXT, backstory TEXT, arc TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS plot_weavers (id TEXT PRIMARY KEY, user_id TEXT, genre TEXT, premise TEXT, protagonist TEXT, conflict TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS dialogue_sharpeners (id TEXT PRIMARY KEY, user_id TEXT, scene TEXT, characters TEXT, tone TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS world_builders (id TEXT PRIMARY KEY, user_id TEXT, genre TEXT, world_type TEXT, rules TEXT, culture TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS scene_writers (id TEXT PRIMARY KEY, user_id TEXT, scene_type TEXT, setting TEXT, characters TEXT, goal TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+app.post('/api/character/build', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { character_name, genre, traits, backstory_hint, story_role } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Build a rich, compelling fictional character.
+Character name: ${character_name || 'unnamed'}
+Genre: ${genre || 'literary fiction'}
+Key traits: ${traits || 'not specified'}
+Backstory hint: ${backstory_hint || 'none'}
+Story role: ${story_role || 'protagonist'}
+
+Return JSON:
+{
+  "character_essence": "one-sentence soul of this character",
+  "core_traits": [{"trait": string, "how_it_shows": string, "dark_side": string}],
+  "backstory": {"childhood": string, "defining_moment": string, "wound": string, "desire": string, "fear": string},
+  "voice": {"speech_pattern": string, "favorite_phrases": [string], "what_they_never_say": string},
+  "arc": {"starts_as": string, "catalyst": string, "transformation": string, "ends_as": string},
+  "relationships": [{"role": string, "dynamic": string}],
+  "contradictions": [string],
+  "writer_notes": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO character_builders (id,user_id,character_name,genre,traits,backstory,arc,result) VALUES (?,?,?,?,?,?,?,?)`).run(uuidv4(),userId,character_name,genre,traits,backstory_hint,story_role,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/plot/weave', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { genre, premise, protagonist, conflict, theme } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Create a compelling story plot structure.
+Genre: ${genre || 'fiction'}
+Core premise: ${premise}
+Protagonist: ${protagonist || 'not specified'}
+Central conflict: ${conflict || 'not specified'}
+Theme: ${theme || 'not specified'}
+
+Return JSON:
+{
+  "logline": "one-sentence hook",
+  "three_act_structure": {
+    "act1": {"setup": string, "inciting_incident": string, "end": string},
+    "act2": {"rising_action": string, "midpoint": string, "dark_night": string},
+    "act3": {"climax": string, "resolution": string, "theme_landing": string}
+  },
+  "key_scenes": [{"scene": string, "purpose": string, "emotional_beat": string}],
+  "subplots": [{"subplot": string, "how_it_mirrors_main": string}],
+  "plot_twists": [string],
+  "pacing_notes": string,
+  "opening_line_suggestion": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO plot_weavers (id,user_id,genre,premise,protagonist,conflict,result) VALUES (?,?,?,?,?,?,?)`).run(uuidv4(),userId,genre,premise,protagonist,conflict,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/dialogue/sharpen', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { existing_dialogue, characters, scene_goal, tone, what_unsaid } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Sharpen this dialogue to be more authentic, tense, and revealing.
+Existing dialogue: ${existing_dialogue}
+Characters: ${characters || 'not specified'}
+Scene goal: ${scene_goal || 'not specified'}
+Tone: ${tone || 'dramatic'}
+What's unsaid/subtext: ${what_unsaid || 'not specified'}
+
+Return JSON:
+{
+  "diagnosis": "what's weak about the current dialogue",
+  "rewritten_dialogue": "the improved version",
+  "subtext_map": [{"line": string, "what_they_really_mean": string}],
+  "techniques_used": [string],
+  "action_beats": [{"after_line": string, "beat": string}],
+  "alternative_endings": [string],
+  "craft_notes": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO dialogue_sharpeners (id,user_id,scene,characters,tone,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(),userId,existing_dialogue,characters,tone,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/world/build', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { genre, world_type, magic_or_tech_rules, society_type, conflict_seed } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Build a rich, internally consistent fictional world.
+Genre: ${genre || 'fantasy'}
+World type: ${world_type || 'not specified'}
+Magic/tech rules: ${magic_or_tech_rules || 'not specified'}
+Society type: ${society_type || 'not specified'}
+Conflict seed: ${conflict_seed || 'not specified'}
+
+Return JSON:
+{
+  "world_name": string,
+  "elevator_pitch": "2-sentence world description",
+  "geography": {"key_locations": [{"name": string, "vibe": string, "story_use": string}]},
+  "magic_or_tech": {"core_rule": string, "cost": string, "who_has_it": string, "forbidden_uses": string},
+  "society": {"power_structure": string, "factions": [{"name": string, "goal": string, "methods": string}], "taboos": [string]},
+  "history": {"founding_myth": string, "catastrophe": string, "current_tension": string},
+  "sensory_details": {"sights": string, "sounds": string, "smells": string},
+  "story_hooks": [string]
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO world_builders (id,user_id,genre,world_type,rules,culture,result) VALUES (?,?,?,?,?,?,?)`).run(uuidv4(),userId,genre,world_type,magic_or_tech_rules,society_type,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/scene/write', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { scene_type, setting, characters_present, scene_goal, pov_character } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Write a vivid, emotionally resonant scene.
+Scene type: ${scene_type || 'dramatic confrontation'}
+Setting: ${setting || 'not specified'}
+Characters present: ${characters_present || 'not specified'}
+Scene goal: ${scene_goal || 'advance the story'}
+POV character: ${pov_character || 'third person'}
+
+Return JSON:
+{
+  "scene_draft": "the full written scene (300-500 words)",
+  "craft_choices": [{"choice": string, "why": string}],
+  "sensory_anchors": [string],
+  "emotional_arc": {"opens": string, "shifts": string, "closes": string},
+  "what_changed": "what is different at scene end vs start",
+  "cut_variations": [{"opening_line": string, "tone_shift": string}],
+  "revision_notes": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO scene_writers (id,user_id,scene_type,setting,characters,goal,result) VALUES (?,?,?,?,?,?,?)`).run(uuidv4(),userId,scene_type,setting,characters_present,scene_goal,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
