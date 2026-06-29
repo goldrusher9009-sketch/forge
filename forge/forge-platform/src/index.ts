@@ -179834,3 +179834,90 @@ app.post('/api/socialanxiety/coach', requireAuth, async (req: AuthRequest, res) 
     res.json({ protocol });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── Wave 90: Financial Independence & Wealth AI ───────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS fire_calculators (
+  id TEXT PRIMARY KEY, user_id TEXT, income TEXT, expenses TEXT, savings TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS debt_destroyers (
+  id TEXT PRIMARY KEY, user_id TEXT, debts TEXT, income TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS investment_educators (
+  id TEXT PRIMARY KEY, user_id TEXT, level TEXT, goals TEXT, curriculum TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS side_hustle_launchers (
+  id TEXT PRIMARY KEY, user_id TEXT, skills TEXT, time TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS net_worth_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, goals TEXT, roadmap TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/fire/calculate', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { annual_income, annual_expenses, current_savings, age } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a FIRE (Financial Independence, Retire Early) calculator and coach. Compute the FIRE number and roadmap.\nAnnual income: ${annual_income}\nAnnual expenses: ${annual_expenses}\nCurrent savings/investments: ${current_savings}\nCurrent age: ${age || 30}\n\nProvide: FIRE number (25x expenses), years to FIRE at current savings rate, years to FIRE at 50%/60%/70% savings rates, safe withdrawal rate breakdown, investment allocation suggestion, FIRE variants (LeanFIRE/FatFIRE/BaristaFIRE) with thresholds, top 3 levers to accelerate timeline.` }
+    ]);
+    const fireResult = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO fire_calculators (id,user_id,income,expenses,savings,result) VALUES (?,?,?,?,?,?)').run(uuidv4(), userId, annual_income, annual_expenses, current_savings, fireResult);
+    res.json({ result: fireResult });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/debt/destroy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { debts, monthly_income, monthly_expenses } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a debt elimination strategist. Create the fastest path to debt freedom.\nDebts: ${debts}\nMonthly income: ${monthly_income}\nMonthly expenses: ${monthly_expenses}\n\nProvide: debt inventory ranked by interest rate, avalanche vs snowball comparison for this situation (with exact numbers), month-by-month payoff schedule, amount saved in interest with avalanche method, extra income needed for 1-year vs 2-year payoff, negotiation scripts for lower interest rates, psychological wins to celebrate.` }
+    ]);
+    const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO debt_destroyers (id,user_id,debts,income,plan) VALUES (?,?,?,?,?)').run(uuidv4(), userId, debts, monthly_income, plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investing/educate', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { knowledge_level, goals, time_horizon } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are an investing educator. Create a personalized investing curriculum.\nKnowledge level: ${knowledge_level || 'beginner'}\nInvesting goals: ${goals}\nTime horizon: ${time_horizon || '10+ years'}\n\nProvide: investing fundamentals checklist, step-by-step learning path (8 weeks), key concepts to master in order, account types to open and why, first investment recommendation with rationale, common mistakes to avoid, books/resources ranked by impact, how to evaluate if you're on track.` }
+    ]);
+    const curriculum = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO investment_educators (id,user_id,level,goals,curriculum) VALUES (?,?,?,?,?)').run(uuidv4(), userId, knowledge_level, goals, curriculum);
+    res.json({ curriculum });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sidehustle/launch', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { skills, available_hours, income_goal } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a side hustle and entrepreneurship coach. Design a side hustle launch plan.\nSkills: ${skills}\nAvailable hours per week: ${available_hours || 10}\nIncome goal: ${income_goal || '$1000/month'}\n\nProvide: top 3 side hustle matches for these skills, fastest path to first dollar for the best match, 30-60-90 day launch plan, pricing strategy, first 5 clients acquisition plan, tools needed (free options first), hourly rate calculator, how to scale from side hustle to full income.` }
+    ]);
+    const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO side_hustle_launchers (id,user_id,skills,time,plan) VALUES (?,?,?,?,?)').run(uuidv4(), userId, skills, available_hours, plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/networth/build', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { current_situation, goals, timeline } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a wealth building strategist. Create a comprehensive net worth building roadmap.\nCurrent situation: ${current_situation}\nWealth goals: ${goals}\nTimeline: ${timeline || '10 years'}\n\nProvide: net worth snapshot template, income growth strategy (career + side income), expense optimization (high-impact cuts only), investment vehicle hierarchy, net worth milestones by year, asset allocation by decade, wealth protection (insurance, legal structure), exact actions for first 30 days.` }
+    ]);
+    const roadmap = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO net_worth_builders (id,user_id,situation,goals,roadmap) VALUES (?,?,?,?,?)').run(uuidv4(), userId, current_situation, goals, roadmap);
+    res.json({ roadmap });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
