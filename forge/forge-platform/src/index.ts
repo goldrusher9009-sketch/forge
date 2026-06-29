@@ -173267,3 +173267,96 @@ app.post('/api/flirty-text/generate', requireAuth, async (req: any, res: any) =>
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 18: Finance & Money Tools ──
+
+db.prepare(`CREATE TABLE IF NOT EXISTS net_worth_snapshots (id TEXT PRIMARY KEY, user_id TEXT, assets TEXT, liabilities TEXT, net_worth REAL, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS budget_roasts (id TEXT PRIMARY KEY, user_id TEXT, budget TEXT, roast TEXT, score INTEGER, savings_plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS rate_calculations (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, recommended_rate REAL, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS investment_theses (id TEXT PRIMARY KEY, user_id TEXT, asset TEXT, thesis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS subscription_audits (id TEXT PRIMARY KEY, user_id TEXT, subscriptions TEXT, audit TEXT, monthly_savings REAL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Net Worth Calculator
+app.post('/api/net-worth/calculate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { assets, liabilities, income, age, goals } = req.body;
+    const totalAssets = Object.values(assets||{}).reduce((s:number, v:any) => s + parseFloat(v)||0, 0);
+    const totalLiabilities = Object.values(liabilities||{}).reduce((s:number, v:any) => s + parseFloat(v)||0, 0);
+    const netWorth = totalAssets - totalLiabilities;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Analyze this person's financial snapshot.\n\nAssets: ${JSON.stringify(assets)}\nLiabilities: ${JSON.stringify(liabilities)}\nNet Worth: $${netWorth.toLocaleString()}\nIncome: ${income||'not provided'}\nAge: ${age||'not provided'}\nGoals: ${goals||'build wealth'}\n\nRespond in JSON: { "assessment": "paragraph assessment", "percentile": "estimated net worth percentile for their age", "strengths": ["strength1","strength2"], "concerns": ["concern1","concern2"], "next_moves": ["move1","move2","move3"], "milestone_next": "next financial milestone to hit", "benchmark": "how they compare to peers" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO net_worth_snapshots (id,user_id,assets,liabilities,net_worth,analysis) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, JSON.stringify(assets), JSON.stringify(liabilities), netWorth, JSON.stringify(data));
+    res.json({ id, net_worth: netWorth, total_assets: totalAssets, total_liabilities: totalLiabilities, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/net-worth/history', requireAuth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare(`SELECT id,net_worth,created_at FROM net_worth_snapshots WHERE user_id=? ORDER BY created_at DESC LIMIT 12`).all(req.user.id);
+    res.json(rows);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Budget Roaster
+app.post('/api/budget-roast/analyze', requireAuth, async (req: any, res: any) => {
+  try {
+    const { monthly_income, expenses, financial_goals } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Roast this budget with brutal honesty and helpful advice.\n\nMonthly income: $${monthly_income}\nExpenses: ${JSON.stringify(expenses)}\nGoals: ${financial_goals||'save more money'}\n\nRespond in JSON: { "score": number_0_to_100, "roast": "brutal but funny budget critique paragraph", "savings_rate": "calculated savings rate as percentage", "red_line_items": ["expense that needs cutting"], "quick_wins": ["save $X by doing Y"], "savings_plan": "concrete monthly savings action plan", "months_to_goal": "if they follow plan, how long to hit goals" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO budget_roasts (id,user_id,budget,roast,score,savings_plan) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, JSON.stringify({monthly_income,expenses}), data.roast, data.score, data.savings_plan);
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Freelance Rate Calculator
+app.post('/api/freelance-rate/calculate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { skill, experience_years, location, desired_annual, niche, competitors } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Calculate the optimal freelance rate for this person.\n\nSkill: ${skill}\nExperience: ${experience_years} years\nLocation: ${location||'US-based'}\nDesired annual income: $${desired_annual||'100000'}\nNiche/specialization: ${niche||'general'}\nCompetitor context: ${competitors||'unknown'}\n\nRespond in JSON: { "hourly_rate": { "minimum": number, "target": number, "premium": number }, "project_rates": { "small": {"range":"$X-Y","description":"what this covers"}, "medium": {"range":"$X-Y","description":"..."}, "large": {"range":"$X-Y","description":"..."} }, "positioning": "how to position at premium rates", "value_arguments": ["argument1","argument2"], "rate_increase_trigger": "when to raise rates", "red_flags": "client types to avoid at this rate" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO rate_calculations (id,user_id,context,recommended_rate,analysis) VALUES (?,?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), data.hourly_rate?.target||0, JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Investment Thesis Writer
+app.post('/api/investment-thesis/write', requireAuth, async (req: any, res: any) => {
+  try {
+    const { asset, asset_type, time_horizon, conviction_level, known_risks } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a structured investment thesis for ${asset} (${asset_type||'stock'}).\n\nTime horizon: ${time_horizon||'3-5 years'}\nConviction level: ${conviction_level||'medium'}\nKnown risks: ${known_risks||'general market risk'}\n\nRespond in JSON: { "bull_case": "why this wins", "bear_case": "why this loses", "base_case": "most likely scenario", "key_metrics_to_watch": ["metric1","metric2","metric3"], "entry_strategy": "how and when to enter", "exit_strategy": "when to sell / take profits", "position_size_rec": "how much of portfolio", "verdict": "buy/hold/avoid with one sentence reason", "risk_rating": "1-5 risk score" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO investment_theses (id,user_id,asset,thesis) VALUES (?,?,?,?)`).run(id, req.user.id, asset, JSON.stringify(data));
+    res.json({ id, asset, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/investment-thesis/history', requireAuth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare(`SELECT id,asset,created_at FROM investment_theses WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
+    res.json(rows);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Subscription Audit
+app.post('/api/subscription-audit/analyze', requireAuth, async (req: any, res: any) => {
+  try {
+    const { subscriptions, monthly_budget_tolerance } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Audit these subscriptions and find savings.\n\nSubscriptions: ${JSON.stringify(subscriptions)}\nBudget tolerance: $${monthly_budget_tolerance||100}/month\n\nRespond in JSON: { "total_monthly": number, "kill_immediately": [{"name":"...","monthly":number,"reason":"..."}], "worth_keeping": [{"name":"...","why":"..."}], "negotiate_or_downgrade": [{"name":"...","action":"...","potential_savings":"..."}], "monthly_savings_if_followed": number, "annual_savings": number, "score": number_budget_efficiency_0_to_100, "one_liner": "savage summary of their subscriptions" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO subscription_audits (id,user_id,subscriptions,audit,monthly_savings) VALUES (?,?,?,?,?)`).run(id, req.user.id, JSON.stringify(subscriptions), JSON.stringify(data), data.monthly_savings_if_followed||0);
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});

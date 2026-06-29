@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'debate2'|'timecapsule'|'codeexplain'|'ideavalidator'|'tonerewriter'|'resumebuilder'|'emailnegotiator'|'storygen2'|'meetingsum'|'competitorspy'|'ailawyer'|'financeadvisor'|'languagetutor'|'flashcardgen'|'linkedinopt'|'speechwriter'|'pricenegotiator'|'emailroastv2'|'startupnamer'|'coverlettergen'|'interviewcoach'|'colddmwriter'|'fitnessplanner'|'recipegen2'|'travelplanner'|'apologyletter'|'leasereview'|'booksummarizer'|'quizgen'|'salaryneg'|'breakupletter'|'bizplan'|'viralhooks'|'dreaminterp'|'roastgen'|'futureself'|'resumebullets'|'meetingbuilder'|'gratitudereflect'|'coldpitch'|'moodtracker'|'habitjournal'|'lifegoals'|'standupwriter'|'conflictresolve'|'priceanchor'|'linkedinbio'|'failurecv'|'morningritual'|'apologytext'|'excusegen'|'ventmode'|'personalbrand'|'weeklyreview'|'negotiationsim'|'challengebuilder'|'therapyletter'|'podcastpitch'|'grantproposal'|'burnletter'|'decisionoracle'|'complimentengine'|'manifestowriter'|'debateprep14'|'eulogywriter'|'villainorigin'|'secretadmirer'|'legacyletter'|'lovelanguage'|'resumeroast'|'coldemailanalyze'|'pitchdeckcritic'|'refletter'|'offereval'|'datingbio'|'dateplanner'|'relcheckin'|'breakuprecover'|'flirtytext'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'debate2'|'timecapsule'|'codeexplain'|'ideavalidator'|'tonerewriter'|'resumebuilder'|'emailnegotiator'|'storygen2'|'meetingsum'|'competitorspy'|'ailawyer'|'financeadvisor'|'languagetutor'|'flashcardgen'|'linkedinopt'|'speechwriter'|'pricenegotiator'|'emailroastv2'|'startupnamer'|'coverlettergen'|'interviewcoach'|'colddmwriter'|'fitnessplanner'|'recipegen2'|'travelplanner'|'apologyletter'|'leasereview'|'booksummarizer'|'quizgen'|'salaryneg'|'breakupletter'|'bizplan'|'viralhooks'|'dreaminterp'|'roastgen'|'futureself'|'resumebullets'|'meetingbuilder'|'gratitudereflect'|'coldpitch'|'moodtracker'|'habitjournal'|'lifegoals'|'standupwriter'|'conflictresolve'|'priceanchor'|'linkedinbio'|'failurecv'|'morningritual'|'apologytext'|'excusegen'|'ventmode'|'personalbrand'|'weeklyreview'|'negotiationsim'|'challengebuilder'|'therapyletter'|'podcastpitch'|'grantproposal'|'burnletter'|'decisionoracle'|'complimentengine'|'manifestowriter'|'debateprep14'|'eulogywriter'|'villainorigin'|'secretadmirer'|'legacyletter'|'lovelanguage'|'resumeroast'|'coldemailanalyze'|'pitchdeckcritic'|'refletter'|'offereval'|'datingbio'|'dateplanner'|'relcheckin'|'breakuprecover'|'flirtytext'|'networthcalc'|'budgetroast'|'freelancerate'|'invthesis'|'subaudit'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -6896,6 +6896,11 @@ export default function ForgeApp() {
             { id:'relcheckin', icon:'💑', label:'Relationship Check-In' },
             { id:'breakuprecover', icon:'💔', label:'Breakup Recovery' },
             { id:'flirtytext', icon:'😏', label:'Flirty Text Generator' },
+            { id:'networthcalc', icon:'💰', label:'Net Worth Calculator' },
+            { id:'budgetroast', icon:'🔥', label:'Budget Roaster' },
+            { id:'freelancerate', icon:'💼', label:'Freelance Rate Calc' },
+            { id:'invthesis', icon:'📈', label:'Investment Thesis' },
+            { id:'subaudit', icon:'✂️', label:'Subscription Audit' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -17695,6 +17700,352 @@ export default function ForgeApp() {
                   </div>}
                   {result.red_flags_to_avoid && <div style={{ background: '#1f2937', borderRadius: 10, padding: '1rem', border: '1px solid #ef4444' }}>
                     <span style={{ color: '#ef4444', fontWeight: 600 }}>⚠️ Avoid: </span><span style={{ color: '#d1d5db', fontSize: 13 }}>{result.red_flags_to_avoid}</span>
+                  </div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 18: Net Worth Calculator ────────────────────────── */}
+        {(mainTab as string) === 'networthcalc' && (() => {
+          const [assets, setAssets] = (React as any).useState({ cash: '', investments: '', retirement: '', real_estate: '', vehicle: '', other: '' });
+          const [liabilities, setLiabilities] = (React as any).useState({ mortgage: '', car_loan: '', student_loans: '', credit_cards: '', other: '' });
+          const [meta, setMeta] = (React as any).useState({ income: '', age: '', goals: '' });
+          const [result, setResult] = (React as any).useState<any>(null);
+          const [loading, setLoading] = (React as any).useState(false);
+          const [history, setHistory] = (React as any).useState<any[]>([]);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          (React as any).useEffect(() => {
+            fetch(`${API}/api/net-worth/history`, { headers: { Authorization: `Bearer ${token}` } })
+              .then(r => r.json()).then(d => setHistory(Array.isArray(d) ? d : [])).catch(() => {});
+          }, []);
+          const calculate = async () => {
+            setLoading(true);
+            const r = await fetch(`${API}/api/net-worth/calculate`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ assets, liabilities, ...meta }) });
+            const d = await r.json(); setResult(d); setLoading(false);
+            setHistory((h: any[]) => [{ id: d.id, net_worth: d.net_worth, created_at: new Date().toISOString() }, ...h.slice(0, 11)]);
+          };
+          const fmt = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+          const inputStyle = { background: '#111827', border: '1px solid #374151', borderRadius: 6, color: '#f9fafb', padding: '0.5rem 0.75rem', fontSize: 12, width: '100%', boxSizing: 'border-box' as const };
+          return (
+            <div style={{ padding: '2rem', maxWidth: 750, margin: '0 auto' }}>
+              <h2 style={{ color: '#10b981', marginBottom: '0.5rem' }}>💰 Net Worth Calculator</h2>
+              <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>Know your number. Then make it bigger.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.25rem', border: '1px solid #374151' }}>
+                  <div style={{ color: '#10b981', fontWeight: 600, marginBottom: '0.75rem' }}>Assets</div>
+                  {Object.keys(assets).map(k => <div key={k} style={{ marginBottom: '0.5rem' }}>
+                    <div style={{ color: '#6b7280', fontSize: 11, marginBottom: '0.2rem', textTransform: 'capitalize' as const }}>{k.replace('_',' ')}</div>
+                    <input value={(assets as any)[k]} onChange={(e: any) => setAssets((a: any) => ({...a,[k]:e.target.value}))} placeholder="$0" style={inputStyle} />
+                  </div>)}
+                </div>
+                <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.25rem', border: '1px solid #374151' }}>
+                  <div style={{ color: '#ef4444', fontWeight: 600, marginBottom: '0.75rem' }}>Liabilities</div>
+                  {Object.keys(liabilities).map(k => <div key={k} style={{ marginBottom: '0.5rem' }}>
+                    <div style={{ color: '#6b7280', fontSize: 11, marginBottom: '0.2rem', textTransform: 'capitalize' as const }}>{k.replace('_',' ')}</div>
+                    <input value={(liabilities as any)[k]} onChange={(e: any) => setLiabilities((l: any) => ({...l,[k]:e.target.value}))} placeholder="$0" style={inputStyle} />
+                  </div>)}
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                <input value={meta.income} onChange={(e: any) => setMeta((m: any) => ({...m,income:e.target.value}))} placeholder="Monthly income" style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
+                <input value={meta.age} onChange={(e: any) => setMeta((m: any) => ({...m,age:e.target.value}))} placeholder="Age" style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
+                <input value={meta.goals} onChange={(e: any) => setMeta((m: any) => ({...m,goals:e.target.value}))} placeholder="Financial goals" style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
+              </div>
+              <button onClick={calculate} disabled={loading} style={{ background: loading ? '#374151' : '#10b981', color: '#fff', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{loading ? 'Calculating...' : '💰 Calculate Net Worth'}</button>
+              {result && (
+                <div style={{ marginTop: '2rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                    {[['Total Assets', result.total_assets, '#10b981'], ['Total Liabilities', result.total_liabilities, '#ef4444'], ['Net Worth', result.net_worth, result.net_worth >= 0 ? '#06b6d4' : '#ef4444']].map(([label, val, color]: any) => (
+                      <div key={label} style={{ background: '#1f2937', borderRadius: 12, padding: '1rem', border: '1px solid #374151', textAlign: 'center' as const }}>
+                        <div style={{ color: '#6b7280', fontSize: 11, marginBottom: '0.25rem' }}>{label}</div>
+                        <div style={{ color, fontWeight: 700, fontSize: 18 }}>{fmt(val)}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {result.percentile && <div style={{ background: '#1f2937', borderRadius: 10, padding: '1rem', border: '1px solid #374151', marginBottom: '1rem' }}>
+                    <span style={{ color: '#10b981', fontWeight: 600 }}>{result.percentile} </span><span style={{ color: '#9ca3af', fontSize: 13 }}>{result.benchmark}</span>
+                  </div>}
+                  <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.5rem', border: '1px solid #374151', marginBottom: '1rem' }}>
+                    <div style={{ color: '#d1d5db', fontSize: 13, lineHeight: 1.6, marginBottom: '1rem' }}>{result.assessment}</div>
+                    <div style={{ color: '#10b981', fontWeight: 600, marginBottom: '0.5rem' }}>Next Moves</div>
+                    {result.next_moves?.map((m: string, i: number) => <div key={i} style={{ color: '#6ee7b7', fontSize: 13, marginBottom: '0.25rem' }}>→ {m}</div>)}
+                  </div>
+                  {history.length > 1 && <div style={{ background: '#1f2937', borderRadius: 12, padding: '1rem', border: '1px solid #374151' }}>
+                    <div style={{ color: '#6b7280', fontSize: 12, marginBottom: '0.5rem' }}>History</div>
+                    {history.map((h: any) => <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', color: h.net_worth >= 0 ? '#10b981' : '#ef4444', fontSize: 13, marginBottom: '0.25rem' }}>
+                      <span>{new Date(h.created_at).toLocaleDateString()}</span><span>{fmt(h.net_worth)}</span>
+                    </div>)}
+                  </div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 18: Budget Roaster ───────────────────────────────── */}
+        {(mainTab as string) === 'budgetroast' && (() => {
+          const [income, setIncome] = (React as any).useState('');
+          const [expenses, setExpenses] = (React as any).useState({ rent: '', groceries: '', dining_out: '', subscriptions: '', transportation: '', entertainment: '', shopping: '', savings: '', other: '' });
+          const [goals, setGoals] = (React as any).useState('');
+          const [result, setResult] = (React as any).useState<any>(null);
+          const [loading, setLoading] = (React as any).useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const analyze = async () => {
+            if (!income) return;
+            setLoading(true);
+            const r = await fetch(`${API}/api/budget-roast/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ monthly_income: income, expenses, financial_goals: goals }) });
+            const d = await r.json(); setResult(d); setLoading(false);
+          };
+          return (
+            <div style={{ padding: '2rem', maxWidth: 700, margin: '0 auto' }}>
+              <h2 style={{ color: '#f59e0b', marginBottom: '0.5rem' }}>🔥 Budget Roaster</h2>
+              <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>Brutal honesty about where your money goes.</p>
+              <input value={income} onChange={(e: any) => setIncome(e.target.value)} placeholder="Monthly income ($)" style={{ width: '100%', background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13, marginBottom: '1rem', boxSizing: 'border-box' as const }} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '1rem' }}>
+                {Object.keys(expenses).map(k => (
+                  <div key={k}>
+                    <div style={{ color: '#6b7280', fontSize: 10, marginBottom: '0.2rem', textTransform: 'capitalize' as const }}>{k.replace('_',' ')}</div>
+                    <input value={(expenses as any)[k]} onChange={(e: any) => setExpenses((ex: any) => ({...ex,[k]:e.target.value}))} placeholder="$0" style={{ width: '100%', background: '#1f2937', border: '1px solid #374151', borderRadius: 6, color: '#f9fafb', padding: '0.5rem', fontSize: 12, boxSizing: 'border-box' as const }} />
+                  </div>
+                ))}
+              </div>
+              <input value={goals} onChange={(e: any) => setGoals(e.target.value)} placeholder="Financial goals" style={{ width: '100%', background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13, marginBottom: '1rem', boxSizing: 'border-box' as const }} />
+              <button onClick={analyze} disabled={loading || !income} style={{ background: loading ? '#374151' : '#f59e0b', color: '#111', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{loading ? 'Roasting...' : '🔥 Roast My Budget'}</button>
+              {result && (
+                <div style={{ marginTop: '2rem' }}>
+                  <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.5rem', border: '1px solid #374151', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <div><div style={{ color: '#fbbf24', fontSize: 12, marginBottom: '0.25rem' }}>Budget Score</div><div style={{ color: '#6b7280', fontSize: 13 }}>Savings rate: {result.savings_rate}</div></div>
+                      <span style={{ fontSize: '2.5rem', fontWeight: 700, color: result.score < 50 ? '#ef4444' : result.score < 70 ? '#f59e0b' : '#10b981' }}>{result.score}/100</span>
+                    </div>
+                    <div style={{ background: '#111827', borderRadius: 8, padding: '1rem', color: '#fbbf24', fontStyle: 'italic', fontSize: 14 }}>{result.roast}</div>
+                  </div>
+                  {result.red_line_items?.length > 0 && <div style={{ background: '#1f2937', borderRadius: 10, padding: '1rem', border: '1px solid #ef4444', marginBottom: '1rem' }}>
+                    <div style={{ color: '#ef4444', fontWeight: 600, marginBottom: '0.5rem' }}>🚫 Cut These</div>
+                    {result.red_line_items.map((r: string, i: number) => <div key={i} style={{ color: '#f87171', fontSize: 13, marginBottom: '0.25rem' }}>• {r}</div>)}
+                  </div>}
+                  {result.quick_wins?.length > 0 && <div style={{ background: '#1f2937', borderRadius: 10, padding: '1rem', border: '1px solid #10b981', marginBottom: '1rem' }}>
+                    <div style={{ color: '#10b981', fontWeight: 600, marginBottom: '0.5rem' }}>⚡ Quick Wins</div>
+                    {result.quick_wins.map((w: string, i: number) => <div key={i} style={{ color: '#6ee7b7', fontSize: 13, marginBottom: '0.25rem' }}>• {w}</div>)}
+                  </div>}
+                  {result.savings_plan && <div style={{ background: '#1f2937', borderRadius: 10, padding: '1rem', border: '1px solid #374151' }}>
+                    <div style={{ color: '#f59e0b', fontWeight: 600, marginBottom: '0.5rem' }}>📋 Savings Plan</div>
+                    <div style={{ color: '#d1d5db', fontSize: 13 }}>{result.savings_plan}</div>
+                  </div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 18: Freelance Rate Calculator ───────────────────── */}
+        {(mainTab as string) === 'freelancerate' && (() => {
+          const [form, setForm] = (React as any).useState({ skill: '', experience_years: '', location: '', desired_annual: '', niche: '', competitors: '' });
+          const [result, setResult] = (React as any).useState<any>(null);
+          const [loading, setLoading] = (React as any).useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const calculate = async () => {
+            if (!form.skill) return;
+            setLoading(true);
+            const r = await fetch(`${API}/api/freelance-rate/calculate`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) });
+            const d = await r.json(); setResult(d); setLoading(false);
+          };
+          return (
+            <div style={{ padding: '2rem', maxWidth: 700, margin: '0 auto' }}>
+              <h2 style={{ color: '#06b6d4', marginBottom: '0.5rem' }}>💼 Freelance Rate Calculator</h2>
+              <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>Know your worth. Charge accordingly.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                {[['skill','Your skill/service'],['experience_years','Years of experience'],['location','Location (e.g. US, Remote)'],['desired_annual','Desired annual income ($)'],['niche','Niche/specialization'],['competitors','Competitor context (optional)']].map(([k,ph]) => (
+                  <input key={k} value={(form as any)[k]} onChange={(e: any) => setForm((f: any) => ({...f,[k]:e.target.value}))} placeholder={ph} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
+                ))}
+              </div>
+              <button onClick={calculate} disabled={loading || !form.skill} style={{ background: loading ? '#374151' : '#06b6d4', color: '#fff', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{loading ? 'Calculating...' : '💼 Calculate My Rate'}</button>
+              {result && (
+                <div style={{ marginTop: '2rem' }}>
+                  {result.hourly_rate && <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                    {[['Minimum', result.hourly_rate.minimum, '#6b7280'], ['Target', result.hourly_rate.target, '#06b6d4'], ['Premium', result.hourly_rate.premium, '#8b5cf6']].map(([label, rate, color]: any) => (
+                      <div key={label} style={{ background: '#1f2937', borderRadius: 12, padding: '1.25rem', border: `1px solid ${color}`, textAlign: 'center' as const }}>
+                        <div style={{ color: '#6b7280', fontSize: 11, marginBottom: '0.25rem' }}>{label}</div>
+                        <div style={{ color, fontWeight: 700, fontSize: 22 }}>${rate}/hr</div>
+                      </div>
+                    ))}
+                  </div>}
+                  {result.project_rates && <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.5rem', border: '1px solid #374151', marginBottom: '1rem' }}>
+                    <div style={{ color: '#06b6d4', fontWeight: 600, marginBottom: '0.75rem' }}>Project Rates</div>
+                    {Object.entries(result.project_rates).map(([size, info]: any) => (
+                      <div key={size} style={{ marginBottom: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid #374151' }}>
+                        <span style={{ color: '#e5e7eb', fontWeight: 600, textTransform: 'capitalize' as const }}>{size}: </span>
+                        <span style={{ color: '#06b6d4' }}>{info.range} </span>
+                        <span style={{ color: '#6b7280', fontSize: 12 }}>— {info.description}</span>
+                      </div>
+                    ))}
+                  </div>}
+                  {result.positioning && <div style={{ background: '#1f2937', borderRadius: 10, padding: '1rem', border: '1px solid #374151', marginBottom: '1rem' }}>
+                    <div style={{ color: '#f59e0b', fontWeight: 600, marginBottom: '0.5rem' }}>How to Position</div>
+                    <div style={{ color: '#d1d5db', fontSize: 13 }}>{result.positioning}</div>
+                  </div>}
+                  {result.rate_increase_trigger && <div style={{ background: '#1f2937', borderRadius: 10, padding: '1rem', border: '1px solid #374151' }}>
+                    <div style={{ color: '#10b981', fontWeight: 600, marginBottom: '0.25rem' }}>📈 Raise Rates When</div>
+                    <div style={{ color: '#d1d5db', fontSize: 13 }}>{result.rate_increase_trigger}</div>
+                  </div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 18: Investment Thesis Writer ────────────────────── */}
+        {(mainTab as string) === 'invthesis' && (() => {
+          const [form, setForm] = (React as any).useState({ asset: '', asset_type: 'stock', time_horizon: '3-5 years', conviction_level: 'medium', known_risks: '' });
+          const [result, setResult] = (React as any).useState<any>(null);
+          const [loading, setLoading] = (React as any).useState(false);
+          const [history, setHistory] = (React as any).useState<any[]>([]);
+          const [tab, setTab] = (React as any).useState<'bull'|'bear'|'strategy'>('bull');
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          (React as any).useEffect(() => {
+            fetch(`${API}/api/investment-thesis/history`, { headers: { Authorization: `Bearer ${token}` } })
+              .then(r => r.json()).then(d => setHistory(Array.isArray(d) ? d : [])).catch(() => {});
+          }, []);
+          const write = async () => {
+            if (!form.asset) return;
+            setLoading(true);
+            const r = await fetch(`${API}/api/investment-thesis/write`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) });
+            const d = await r.json(); setResult(d); setLoading(false); setTab('bull');
+            setHistory((h: any[]) => [{ id: d.id, asset: d.asset, created_at: new Date().toISOString() }, ...h.slice(0, 19)]);
+          };
+          const verdictColor = (v: string) => v?.toLowerCase().startsWith('buy') ? '#10b981' : v?.toLowerCase().startsWith('avoid') ? '#ef4444' : '#f59e0b';
+          return (
+            <div style={{ padding: '2rem', maxWidth: 700, margin: '0 auto' }}>
+              <h2 style={{ color: '#10b981', marginBottom: '0.5rem' }}>📈 Investment Thesis Writer</h2>
+              <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>Structured bull/bear analysis for any asset.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                <input value={form.asset} onChange={(e: any) => setForm((f: any) => ({...f,asset:e.target.value}))} placeholder="Asset name (e.g. NVDA, Bitcoin, Gold)" style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
+                <select value={form.asset_type} onChange={(e: any) => setForm((f: any) => ({...f,asset_type:e.target.value}))} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }}>
+                  {['stock','crypto','ETF','real estate','commodity','bond'].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <select value={form.time_horizon} onChange={(e: any) => setForm((f: any) => ({...f,time_horizon:e.target.value}))} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }}>
+                  {['< 1 year','1-2 years','3-5 years','5-10 years','10+ years'].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <select value={form.conviction_level} onChange={(e: any) => setForm((f: any) => ({...f,conviction_level:e.target.value}))} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }}>
+                  {['low','medium','high'].map(c => <option key={c} value={c}>{c} conviction</option>)}
+                </select>
+              </div>
+              <input value={form.known_risks} onChange={(e: any) => setForm((f: any) => ({...f,known_risks:e.target.value}))} placeholder="Known risks (optional)" style={{ width: '100%', background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13, marginBottom: '1rem', boxSizing: 'border-box' as const }} />
+              <button onClick={write} disabled={loading || !form.asset} style={{ background: loading ? '#374151' : '#10b981', color: '#fff', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{loading ? 'Writing thesis...' : '📈 Write Thesis'}</button>
+              {result && (
+                <div style={{ marginTop: '2rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <div style={{ background: '#1f2937', borderRadius: 10, padding: '0.75rem 1.25rem', border: `1px solid ${verdictColor(result.verdict)}` }}>
+                      <span style={{ color: verdictColor(result.verdict), fontWeight: 700 }}>{result.verdict}</span>
+                    </div>
+                    <div style={{ color: '#6b7280', fontSize: 13 }}>Risk: <span style={{ color: '#f59e0b' }}>{result.risk_rating}/5</span></div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                    {(['bull','bear','strategy'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ background: tab === t ? (t==='bull'?'#10b981':t==='bear'?'#ef4444':'#8b5cf6') : '#374151', color: '#fff', border: 'none', borderRadius: 8, padding: '0.5rem 1rem', cursor: 'pointer', fontSize: 13, textTransform: 'capitalize' as const }}>{t}</button>)}
+                  </div>
+                  {tab === 'bull' && <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.5rem', border: '1px solid #10b981' }}>
+                    <div style={{ color: '#10b981', fontWeight: 600, marginBottom: '0.75rem' }}>🐂 Bull Case</div>
+                    <p style={{ color: '#d1d5db', fontSize: 13, lineHeight: 1.6, margin: '0 0 1rem' }}>{result.bull_case}</p>
+                    <div style={{ color: '#10b981', fontWeight: 600, marginBottom: '0.5rem' }}>Base Case</div>
+                    <p style={{ color: '#9ca3af', fontSize: 13, margin: 0 }}>{result.base_case}</p>
+                  </div>}
+                  {tab === 'bear' && <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.5rem', border: '1px solid #ef4444' }}>
+                    <div style={{ color: '#ef4444', fontWeight: 600, marginBottom: '0.75rem' }}>🐻 Bear Case</div>
+                    <p style={{ color: '#d1d5db', fontSize: 13, lineHeight: 1.6, margin: '0 0 1rem' }}>{result.bear_case}</p>
+                    {result.key_metrics_to_watch?.length > 0 && <>
+                      <div style={{ color: '#f59e0b', fontWeight: 600, marginBottom: '0.5rem' }}>Watch These Metrics</div>
+                      {result.key_metrics_to_watch.map((m: string, i: number) => <div key={i} style={{ color: '#d1d5db', fontSize: 13, marginBottom: '0.25rem' }}>• {m}</div>)}
+                    </>}
+                  </div>}
+                  {tab === 'strategy' && <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.5rem', border: '1px solid #8b5cf6' }}>
+                    <div style={{ color: '#8b5cf6', fontWeight: 600, marginBottom: '0.75rem' }}>Entry Strategy</div>
+                    <p style={{ color: '#d1d5db', fontSize: 13, marginBottom: '1rem' }}>{result.entry_strategy}</p>
+                    <div style={{ color: '#f59e0b', fontWeight: 600, marginBottom: '0.5rem' }}>Exit Strategy</div>
+                    <p style={{ color: '#d1d5db', fontSize: 13, marginBottom: '1rem' }}>{result.exit_strategy}</p>
+                    <div style={{ color: '#06b6d4', fontWeight: 600, marginBottom: '0.5rem' }}>Position Size</div>
+                    <p style={{ color: '#d1d5db', fontSize: 13, margin: 0 }}>{result.position_size_rec}</p>
+                  </div>}
+                </div>
+              )}
+              {history.length > 0 && !result && (
+                <div style={{ marginTop: '2rem' }}>
+                  <div style={{ color: '#6b7280', fontSize: 13, marginBottom: '0.75rem' }}>Past Theses</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '0.5rem' }}>
+                    {history.map((h: any) => <span key={h.id} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 20, padding: '0.3rem 0.75rem', color: '#e5e7eb', fontSize: 12, cursor: 'pointer' }}>{h.asset}</span>)}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 18: Subscription Audit ──────────────────────────── */}
+        {(mainTab as string) === 'subaudit' && (() => {
+          const defaultSubs = [{ name: '', monthly_cost: '', category: 'entertainment', last_used: '' }];
+          const [subs, setSubs] = (React as any).useState(defaultSubs);
+          const [budget, setBudget] = (React as any).useState('');
+          const [result, setResult] = (React as any).useState<any>(null);
+          const [loading, setLoading] = (React as any).useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const addSub = () => setSubs((s: any[]) => [...s, { name: '', monthly_cost: '', category: 'entertainment', last_used: '' }]);
+          const updateSub = (i: number, key: string, val: string) => setSubs((prev: any[]) => prev.map((s, idx) => idx === i ? { ...s, [key]: val } : s));
+          const audit = async () => {
+            const filled = subs.filter((s: any) => s.name.trim());
+            if (!filled.length) return;
+            setLoading(true);
+            const r = await fetch(`${API}/api/subscription-audit/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ subscriptions: filled, monthly_budget_tolerance: budget }) });
+            const d = await r.json(); setResult(d); setLoading(false);
+          };
+          const fmt = (n: number) => `$${(n||0).toFixed(0)}`;
+          return (
+            <div style={{ padding: '2rem', maxWidth: 750, margin: '0 auto' }}>
+              <h2 style={{ color: '#ef4444', marginBottom: '0.5rem' }}>✂️ Subscription Audit</h2>
+              <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>Find the subscriptions slowly bleeding you dry.</p>
+              <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.25rem', border: '1px solid #374151', marginBottom: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  {['Service','$/month','Category','Last used'].map(h => <div key={h} style={{ color: '#6b7280', fontSize: 11 }}>{h}</div>)}
+                </div>
+                {subs.map((sub: any, i: number) => (
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <input value={sub.name} onChange={(e: any) => updateSub(i, 'name', e.target.value)} placeholder="Netflix, Gym..." style={{ background: '#111827', border: '1px solid #374151', borderRadius: 6, color: '#f9fafb', padding: '0.5rem', fontSize: 12 }} />
+                    <input value={sub.monthly_cost} onChange={(e: any) => updateSub(i, 'monthly_cost', e.target.value)} placeholder="15.99" style={{ background: '#111827', border: '1px solid #374151', borderRadius: 6, color: '#f9fafb', padding: '0.5rem', fontSize: 12 }} />
+                    <select value={sub.category} onChange={(e: any) => updateSub(i, 'category', e.target.value)} style={{ background: '#111827', border: '1px solid #374151', borderRadius: 6, color: '#f9fafb', padding: '0.5rem', fontSize: 11 }}>
+                      {['entertainment','fitness','software','news','food','shopping','education','other'].map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <input value={sub.last_used} onChange={(e: any) => updateSub(i, 'last_used', e.target.value)} placeholder="This week" style={{ background: '#111827', border: '1px solid #374151', borderRadius: 6, color: '#f9fafb', padding: '0.5rem', fontSize: 12 }} />
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', alignItems: 'center' }}>
+                <button onClick={addSub} style={{ background: '#374151', color: '#d1d5db', border: 'none', borderRadius: 8, padding: '0.5rem 1rem', cursor: 'pointer', fontSize: 13 }}>+ Add</button>
+                <input value={budget} onChange={(e: any) => setBudget(e.target.value)} placeholder="Monthly sub budget ($)" style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.6rem 0.75rem', fontSize: 13, flex: 1 }} />
+              </div>
+              <button onClick={audit} disabled={loading} style={{ background: loading ? '#374151' : '#ef4444', color: '#fff', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{loading ? 'Auditing...' : '✂️ Audit Subscriptions'}</button>
+              {result && (
+                <div style={{ marginTop: '2rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                    {[['Monthly Total', fmt(result.total_monthly), '#ef4444'], ['Monthly Savings', fmt(result.monthly_savings_if_followed), '#10b981'], ['Annual Savings', fmt(result.annual_savings), '#10b981']].map(([l,v,c]: any) => (
+                      <div key={l} style={{ background: '#1f2937', borderRadius: 10, padding: '1rem', border: '1px solid #374151', textAlign: 'center' as const }}>
+                        <div style={{ color: '#6b7280', fontSize: 11 }}>{l}</div>
+                        <div style={{ color: c, fontWeight: 700, fontSize: 20 }}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {result.one_liner && <div style={{ background: '#111827', borderRadius: 8, padding: '0.75rem 1rem', color: '#fbbf24', fontStyle: 'italic', marginBottom: '1rem', fontSize: 14 }}>"{result.one_liner}"</div>}
+                  {result.kill_immediately?.length > 0 && <div style={{ background: '#1f2937', borderRadius: 10, padding: '1rem', border: '1px solid #ef4444', marginBottom: '1rem' }}>
+                    <div style={{ color: '#ef4444', fontWeight: 600, marginBottom: '0.5rem' }}>🗑️ Kill Immediately</div>
+                    {result.kill_immediately.map((k: any, i: number) => <div key={i} style={{ display: 'flex', justifyContent: 'space-between', color: '#f87171', fontSize: 13, marginBottom: '0.25rem' }}><span>• {k.name} — {k.reason}</span><span>{fmt(k.monthly)}/mo</span></div>)}
+                  </div>}
+                  {result.negotiate_or_downgrade?.length > 0 && <div style={{ background: '#1f2937', borderRadius: 10, padding: '1rem', border: '1px solid #f59e0b', marginBottom: '1rem' }}>
+                    <div style={{ color: '#f59e0b', fontWeight: 600, marginBottom: '0.5rem' }}>💬 Negotiate or Downgrade</div>
+                    {result.negotiate_or_downgrade.map((n: any, i: number) => <div key={i} style={{ color: '#fbbf24', fontSize: 13, marginBottom: '0.25rem' }}>• {n.name}: {n.action} — <span style={{ color: '#10b981' }}>save {n.potential_savings}</span></div>)}
                   </div>}
                 </div>
               )}
@@ -34802,227 +35153,4 @@ export default function ForgeApp() {
                       <button onClick={async(e)=>{ e.stopPropagation(); await fetch(`/api/boards/${b.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoards(boards.filter((x:any)=>x.id!==b.id)); }} style={{ marginTop:8, padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Delete</button>
                     </div>
                   ))}
-                  {boards.length===0 && <div style={{ color:'var(--fg-text3)', padding:32, gridColumn:'1/-1', textAlign:'center' }}>No boards yet.</div>}
-                </div>
-              </>
-            ) : (
-              <div>
-                <button onClick={()=>setActiveBoardId(null)} style={{ marginBottom:16, padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>← Back to Boards</button>
-                <div style={{ display:'flex', gap:8, marginBottom:16 }}>
-                  <input value={newItemTitle} onChange={e=>setNewItemTitle(e.target.value)} placeholder="New item..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-                  <select value={newItemCol} onChange={e=>setNewItemCol(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
-                    <option value="todo">To Do</option><option value="in_progress">In Progress</option><option value="review">Review</option><option value="done">Done</option>
-                  </select>
-                  <button onClick={async()=>{ if(!newItemTitle.trim()) return; await fetch(`/api/boards/${activeBoardId}/items`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newItemTitle,column_name:newItemCol})}); setNewItemTitle(''); const r=await fetch(`/api/boards/${activeBoardId}/items`,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoardItems(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add</button>
-                </div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
-                  {['todo','in_progress','review','done'].map(col=>(
-                    <div key={col} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:12, minHeight:200 }}>
-                      <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:10, fontSize:13, textTransform:'uppercase', letterSpacing:1 }}>{col.replace('_',' ')}</div>
-                      {boardItems.filter((i:any)=>i.column_name===col).map((item:any)=>(
-                        <div key={item.id} style={{ background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, padding:'8px 10px', marginBottom:6 }}>
-                          <div style={{ color:'var(--fg-text)', fontSize:13 }}>{item.title}</div>
-                          <div style={{ display:'flex', gap:4, marginTop:6 }}>
-                            {['todo','in_progress','review','done'].filter(c=>c!==col).slice(0,2).map(c2=>(
-                              <button key={c2} onClick={async()=>{ await fetch(`/api/boards/items/${item.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({column_name:c2})}); const r=await fetch(`/api/boards/${activeBoardId}/items`,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoardItems(await r.json()); }} style={{ padding:'2px 6px', fontSize:10, background:'var(--accent)22', color:'var(--accent)', border:'1px solid var(--accent)', borderRadius:4, cursor:'pointer' }}>→{c2.slice(0,4)}</button>
-                            ))}
-                            <button onClick={async()=>{ await fetch(`/api/boards/items/${item.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoardItems(boardItems.filter((x:any)=>x.id!==item.id)); }} style={{ padding:'2px 6px', fontSize:10, background:'#ef444422', color:'#ef4444', border:'1px solid #ef4444', borderRadius:4, cursor:'pointer' }}>✕</button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Sprints tab */}
-        {mainTab==='sprints' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🏃 Sprint Tracker</div>
-            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-              <input value={newSprintName} onChange={e=>setNewSprintName(e.target.value)} placeholder="Sprint name..." style={{ flex:1, minWidth:130, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <input type="date" value={newSprintStart} onChange={e=>setNewSprintStart(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <input type="date" value={newSprintEnd} onChange={e=>setNewSprintEnd(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <input value={newSprintGoal} onChange={e=>setNewSprintGoal(e.target.value)} placeholder="Sprint goal..." style={{ flex:2, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <button onClick={async()=>{ if(!newSprintName.trim()||!newSprintStart||!newSprintEnd) return; await fetch('/api/sprints',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newSprintName,start_date:newSprintStart,end_date:newSprintEnd,goal:newSprintGoal})}); setNewSprintName(''); setNewSprintGoal(''); const r=await fetch('/api/sprints',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setSprints(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Start Sprint</button>
-            </div>
-            <button onClick={async()=>{ const r=await fetch('/api/sprints',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setSprints(await r.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Sprints</button>
-            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-              {sprints.map((s:any)=>{
-                const today=new Date(); const end=new Date(s.end_date); const start=new Date(s.start_date);
-                const pct=Math.min(100,Math.max(0,Math.round((today.getTime()-start.getTime())/(end.getTime()-start.getTime())*100)));
-                return (
-                  <div key={s.id} style={{ background:'var(--bg-card)', border:`1px solid ${s.status==='done'?'#22c55e':'var(--border)'}`, borderRadius:12, padding:16 }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
-                      <div>
-                        <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{s.name}</div>
-                        {s.goal && <div style={{ color:'var(--fg-text2)', fontSize:13 }}>🎯 {s.goal}</div>}
-                        <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{s.start_date} → {s.end_date}</div>
-                      </div>
-                      <div style={{ display:'flex', gap:6 }}>
-                        {s.status!=='done' && <button onClick={async()=>{ await fetch(`/api/sprints/${s.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({status:'done'})}); const r=await fetch('/api/sprints',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setSprints(await r.json()); }} style={{ padding:'4px 10px', background:'#22c55e', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>✓ Done</button>}
-                        <button onClick={async()=>{ await fetch(`/api/sprints/${s.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setSprints(sprints.filter((x:any)=>x.id!==s.id)); }} style={{ padding:'4px 10px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>Del</button>
-                      </div>
-                    </div>
-                    <div style={{ height:6, background:'var(--bg-input)', borderRadius:3 }}>
-                      <div style={{ height:'100%', background:'var(--accent)', borderRadius:3, width:`${pct}%` }} />
-                    </div>
-                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{pct}% elapsed</div>
-                  </div>
-                );
-              })}
-              {sprints.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No sprints yet.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* Content Calendar tab */}
-        {mainTab==='contentcal' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📆 Content Calendar</div>
-            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-              <input value={newCcTitle} onChange={e=>setNewCcTitle(e.target.value)} placeholder="Content title..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <select value={newCcPlatform} onChange={e=>setNewCcPlatform(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
-                {['general','twitter','linkedin','instagram','youtube','blog','newsletter','tiktok'].map(p=><option key={p} value={p}>{p}</option>)}
-              </select>
-              <input type="date" value={newCcDate} onChange={e=>setNewCcDate(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <button onClick={async()=>{ if(!newCcTitle.trim()||!newCcDate) return; await fetch('/api/content-calendar',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newCcTitle,platform:newCcPlatform,scheduled_date:newCcDate})}); setNewCcTitle(''); setNewCcDate(''); const r=await fetch('/api/content-calendar',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setContentCal(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Schedule</button>
-            </div>
-            <button onClick={async()=>{ const r=await fetch('/api/content-calendar',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setContentCal(await r.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Calendar</button>
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {contentCal.map((cc:any)=>(
-                <div key={cc.id} style={{ display:'flex', gap:12, alignItems:'center', background:'var(--bg-card)', border:`1px solid ${cc.status==='published'?'#22c55e':'var(--border)'}`, borderRadius:10, padding:'10px 14px' }}>
-                  <div style={{ padding:'2px 8px', background:'var(--accent)22', color:'var(--accent)', borderRadius:6, fontSize:11, fontWeight:600, minWidth:60, textAlign:'center' }}>{cc.platform}</div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{cc.title}</div>
-                    <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{cc.scheduled_date}</div>
-                  </div>
-                  <select value={cc.status} onChange={async e=>{ await fetch(`/api/content-calendar/${cc.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({status:e.target.value})}); const r=await fetch('/api/content-calendar',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setContentCal(await r.json()); }} style={{ padding:'3px 6px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:6, color:'var(--fg-text)', fontSize:11 }}>
-                    <option value="draft">Draft</option><option value="ready">Ready</option><option value="published">Published</option>
-                  </select>
-                  <button onClick={async()=>{ await fetch(`/api/content-calendar/${cc.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setContentCal(contentCal.filter((x:any)=>x.id!==cc.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
-                </div>
-              ))}
-              {contentCal.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No content scheduled yet.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* Learning Paths tab */}
-        {mainTab==='learnpath' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🎓 Learning Paths</div>
-            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-              <input value={newLpName} onChange={e=>setNewLpName(e.target.value)} placeholder="Learning path name..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <textarea value={newLpTopics} onChange={e=>setNewLpTopics(e.target.value)} placeholder="Topics (one per line)..." rows={3} style={{ flex:2, minWidth:200, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
-              <button onClick={async()=>{ if(!newLpName.trim()) return; const topics=newLpTopics.split('\n').filter(Boolean); await fetch('/api/learning-paths',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newLpName,topics})}); setNewLpName(''); setNewLpTopics(''); const r=await fetch('/api/learning-paths',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.topics=JSON.parse(x.topics);}catch{x.topics=[];}}); setLearnPaths(data); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Create Path</button>
-            </div>
-            <button onClick={async()=>{ const r=await fetch('/api/learning-paths',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.topics=JSON.parse(x.topics);}catch{x.topics=[];}}); setLearnPaths(data); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Paths</button>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:12 }}>
-              {learnPaths.map((lp:any)=>(
-                <div key={lp.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16 }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
-                    <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{lp.name}</div>
-                    <button onClick={async()=>{ await fetch(`/api/learning-paths/${lp.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setLearnPaths(learnPaths.filter((x:any)=>x.id!==lp.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
-                  </div>
-                  <div style={{ marginBottom:10 }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
-                      <span style={{ color:'var(--fg-text3)', fontSize:12 }}>Progress</span>
-                      <span style={{ color:'var(--accent)', fontWeight:600, fontSize:12 }}>{lp.progress}%</span>
-                    </div>
-                    <div style={{ height:6, background:'var(--bg-input)', borderRadius:3 }}>
-                      <div style={{ height:'100%', background:'var(--accent)', borderRadius:3, width:`${lp.progress}%` }} />
-                    </div>
-                  </div>
-                  <div style={{ display:'flex', gap:4, marginBottom:10, flexWrap:'wrap' }}>
-                    {[0,25,50,75,100].map(p=>(
-                      <button key={p} onClick={async()=>{ await fetch(`/api/learning-paths/${lp.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({progress:p})}); const r=await fetch('/api/learning-paths',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.topics=JSON.parse(x.topics);}catch{x.topics=[];}}); setLearnPaths(data); }} style={{ padding:'3px 8px', background:lp.progress===p?'var(--accent)':'var(--bg-input)', color:lp.progress===p?'#fff':'var(--fg-text3)', border:'1px solid var(--border)', borderRadius:4, cursor:'pointer', fontSize:11 }}>{p}%</button>
-                    ))}
-                  </div>
-                  {(Array.isArray(lp.topics)?lp.topics:[]).map((t:string,i:number)=>(
-                    <div key={i} style={{ display:'flex', gap:6, alignItems:'center', marginBottom:3 }}>
-                      <span style={{ color:'var(--accent)', fontSize:11 }}>#{i+1}</span>
-                      <span style={{ color:'var(--fg-text2)', fontSize:13 }}>{t}</span>
-                    </div>
-                  ))}
-                </div>
-              ))}
-              {learnPaths.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32, gridColumn:'1/-1' }}>No learning paths yet.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* Decision Log tab */}
-        {mainTab==='decisionlog' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>⚖️ Decision Log</div>
-            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-              <input value={newDecTitle} onChange={e=>setNewDecTitle(e.target.value)} placeholder="Decision title..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <input value={newDecContext} onChange={e=>setNewDecContext(e.target.value)} placeholder="Context/rationale..." style={{ flex:2, minWidth:180, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <input value={newDecChosen} onChange={e=>setNewDecChosen(e.target.value)} placeholder="Chosen option..." style={{ flex:1, minWidth:130, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <button onClick={async()=>{ if(!newDecTitle.trim()) return; await fetch('/api/decision-log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newDecTitle,context:newDecContext,chosen:newDecChosen,decided_at:new Date().toISOString().split('T')[0]})}); setNewDecTitle(''); setNewDecContext(''); setNewDecChosen(''); const r=await fetch('/api/decision-log',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.options=JSON.parse(x.options);}catch{x.options=[];}}); setDecisions(data); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Log Decision</button>
-            </div>
-            <button onClick={async()=>{ const r=await fetch('/api/decision-log',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.options=JSON.parse(x.options);}catch{x.options=[];}}); setDecisions(data); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Log</button>
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {decisions.map((d:any)=>(
-                <div key={d.id} style={{ background:'var(--bg-card)', border:`1px solid ${d.outcome==='success'?'#22c55e':d.outcome==='failed'?'#ef4444':'var(--border)'}`, borderRadius:12, padding:16 }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-                    <div style={{ flex:1 }}>
-                      <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:4 }}>{d.title}</div>
-                      {d.context && <div style={{ color:'var(--fg-text2)', fontSize:13, marginBottom:4 }}>{d.context}</div>}
-                      {d.chosen && <div style={{ color:'var(--accent)', fontSize:13 }}>✓ Chose: {d.chosen}</div>}
-                      <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{d.decided_at}</div>
-                    </div>
-                    <div style={{ display:'flex', gap:4, flexShrink:0 }}>
-                      <select value={d.outcome} onChange={async e=>{ await fetch(`/api/decision-log/${d.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({outcome:e.target.value})}); const r=await fetch('/api/decision-log',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.options=JSON.parse(x.options);}catch{x.options=[];}}); setDecisions(data); }} style={{ padding:'3px 6px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:6, color:'var(--fg-text)', fontSize:11 }}>
-                        <option value="pending">Pending</option><option value="success">Success</option><option value="failed">Failed</option><option value="reconsidering">Reconsidering</option>
-                      </select>
-                      <button onClick={async()=>{ await fetch(`/api/decision-log/${d.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setDecisions(decisions.filter((x:any)=>x.id!==d.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {decisions.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No decisions logged yet.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* Thread Clones tab */}
-        {mainTab==='threadclones' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🐑 Thread Clones</div>
-            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
-              <input value={cloneSrcId} onChange={e=>setCloneSrcId(e.target.value)} placeholder="Source thread ID..." style={{ width:140, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <input value={cloneName29} onChange={e=>setCloneName29(e.target.value)} placeholder="Clone name (optional)..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <button onClick={async()=>{ if(!cloneSrcId) return; const resp=await fetch(`/api/threads/${cloneSrcId}/clone`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:cloneName29})}); if(resp.ok){setCloneSrcId('');setCloneName29('');const r=await fetch('/api/thread-clones',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}});setThreadClones(await r.json());} }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Clone Thread</button>
-              <button onClick={async()=>{ const r=await fetch('/api/thread-clones',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadClones(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
-            </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {threadClones.map((cl:any)=>(
-                <div key={cl.id} style={{ display:'flex', alignItems:'center', gap:10, background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 14px' }}>
-                  <div style={{ flex:1 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                      <span style={{ color:'var(--fg-text)', fontSize:13 }}>{cl.original_title||`#${cl.original_thread_id}`}</span>
-                      <span style={{ color:'var(--accent)', fontSize:12 }}>→🐑→</span>
-                      <span style={{ color:'var(--fg-text)', fontSize:13 }}>{cl.clone_title||cl.clone_name}</span>
-                    </div>
-                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:3 }}>{cl.created_at?.slice(0,10)}</div>
-                  </div>
-                </div>
-              ))}
-              {threadClones.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No clones yet. Clone a thread above.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* Workspace Mood tab */}
-        {mainTab==='wsmood' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>😊 Workspace Mood</div>
-            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
-              <div style={{ display:'flex', gap:6 }}>
-                {['😊','😐','😔','🔥','😤','🤔','😴'].map(emoji=>(
-                  <button key={emoji} onClick={()=>setNewMoodEmoji(emoji)} style={{ fontSize:24, background:newMoodEmoj
+                  {boards.length===0 && <div

@@ -1,3 +1,10 @@
+## v190.00 — Dream Mode Wave 18: Net Worth Calculator + Budget Roaster + Freelance Rate Calculator + Investment Thesis Writer + Subscription Audit
+- 💰 Net Worth Calculator: assets vs liabilities with AI assessment, percentile ranking, and next moves
+- 🔥 Budget Roaster: brutal budget critique with score, red-line items, quick wins, and savings plan
+- 💼 Freelance Rate Calculator: hourly/project rate bands + positioning strategy + rate-increase triggers
+- 📈 Investment Thesis Writer: bull/bear/base case + entry/exit strategy + position size recommendation
+- ✂️ Subscription Audit: kill/keep/negotiate breakdown with monthly savings estimate
+
 ## v189.00 — Dream Mode Wave 17: Tinder Bio Writer + First Date Planner + Relationship Check-In + Breakup Recovery Plan + Flirty Text Generator
 - 💘 Tinder Bio Writer: 3 magnetic bios in different vibes (playful, genuine, intriguing) with hook lines
 - 📅 First Date Planner: personalized date plan with activities, conversation starters, and backup plan
