@@ -1,3 +1,10 @@
+## v188.00 — Dream Mode Wave 16: Roast My Resume + Cold Email Analyzer + Pitch Deck Critic + Reference Letter Generator + Job Offer Evaluator
+- 🔥 Roast My Resume: brutal AI critique with score, top issues, bright spots, and savage one-liner
+- 📧 Cold Email Analyzer: score breakdown across subject/opening/CTA + full rewrite + 3 subject alternatives
+- 📊 Pitch Deck Critic: VC-level slide-by-slide scoring, fatal flaws, strengths, and must-fix priority
+- ✉️ Reference Letter Generator: professional recommendation letters with opening hook and key themes
+- 💼 Job Offer Evaluator: multi-offer comparison with scoring matrix, hidden considerations, and negotiation tips
+
 ## v187.00 — Dream Mode Wave 15: Eulogy Writer + Villain Origin Story + Secret Admirer Letter + Legacy Letter + Love Language Decoder
 - 🕊️ Eulogy Writer: heartfelt eulogies with vivid opening, closing, and readable length estimate
 - 😈 Villain Origin Story: sympathetic villain backstories with turning point, manifesto line, and twist

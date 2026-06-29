@@ -173080,3 +173080,112 @@ app.post('/api/love-language/decode', requireAuth, async (req: AuthRequest, res)
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 16: Roast My Resume + Cold Email Analyzer + Pitch Deck Critic + Reference Letter + Job Offer Evaluator ──
+
+// Tables
+db.prepare(`CREATE TABLE IF NOT EXISTS resume_roasts (id TEXT PRIMARY KEY, user_id TEXT, resume_text TEXT, roast TEXT, score INTEGER, top_issues TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS cold_email_analyses (id TEXT PRIMARY KEY, user_id TEXT, email_text TEXT, score INTEGER, analysis TEXT, rewrite TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS pitch_critiques (id TEXT PRIMARY KEY, user_id TEXT, deck_description TEXT, critique TEXT, slide_scores TEXT, overall_score INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS reference_letters (id TEXT PRIMARY KEY, user_id TEXT, candidate_name TEXT, relationship TEXT, role_applying TEXT, highlights TEXT, letter TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS offer_evaluations (id TEXT PRIMARY KEY, user_id TEXT, offers TEXT, evaluation TEXT, winner TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Roast My Resume
+app.post('/api/resume-roast/analyze', requireAuth, async (req: any, res: any) => {
+  try {
+    const { resume_text } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `You are a brutally honest career coach. Roast this resume with tough love — be specific, funny, and actionable. Give a score /100, list the 3 biggest problems, and provide a savage but helpful summary.\n\nResume:\n${resume_text}\n\nRespond in JSON: { "score": number, "roast": "brutal summary paragraph", "top_issues": ["issue1","issue2","issue3"], "bright_spots": ["what actually works"], "one_liner": "savage one-liner summary" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO resume_roasts (id,user_id,resume_text,roast,score,top_issues) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, resume_text, data.roast, data.score, JSON.stringify(data.top_issues));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/resume-roast/history', requireAuth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare(`SELECT id,score,roast,top_issues,created_at FROM resume_roasts WHERE user_id=? ORDER BY created_at DESC LIMIT 10`).all(req.user.id);
+    res.json(rows.map((r:any) => ({ ...r, top_issues: JSON.parse(r.top_issues||'[]') })));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Cold Email Analyzer
+app.post('/api/cold-email/analyze', requireAuth, async (req: any, res: any) => {
+  try {
+    const { email_text, target_audience, goal } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `You are a cold email expert. Analyze this cold email and provide a score, breakdown, and improved rewrite.\n\nEmail:\n${email_text}\nTarget audience: ${target_audience||'unknown'}\nGoal: ${goal||'get a reply'}\n\nRespond in JSON: { "score": number_0_to_100, "subject_line_score": number, "opening_score": number, "value_prop_score": number, "cta_score": number, "analysis": "paragraph breakdown", "key_issues": ["issue1","issue2"], "rewrite": "improved full email", "subject_line_options": ["option1","option2","option3"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO cold_email_analyses (id,user_id,email_text,score,analysis,rewrite) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, email_text, data.score, data.analysis, data.rewrite);
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/cold-email/history', requireAuth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare(`SELECT id,score,analysis,created_at FROM cold_email_analyses WHERE user_id=? ORDER BY created_at DESC LIMIT 10`).all(req.user.id);
+    res.json(rows);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Pitch Deck Critic
+app.post('/api/pitch-deck/critique', requireAuth, async (req: any, res: any) => {
+  try {
+    const { deck_description, industry, stage, audience } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `You are a VC partner who has reviewed thousands of pitch decks. Critique this pitch deck description brutally and helpfully.\n\nDeck: ${deck_description}\nIndustry: ${industry||'tech'}\nStage: ${stage||'seed'}\nAudience: ${audience||'VCs'}\n\nRespond in JSON: { "overall_score": number_0_to_100, "slide_scores": { "problem": number, "solution": number, "market": number, "business_model": number, "traction": number, "team": number, "ask": number }, "critique": "comprehensive paragraph critique", "fatal_flaws": ["flaw1","flaw2"], "strengths": ["strength1","strength2"], "vc_reaction": "how a VC would react in the room", "must_fix_before_next_meeting": "top priority fix" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO pitch_critiques (id,user_id,deck_description,critique,slide_scores,overall_score) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, deck_description, data.critique, JSON.stringify(data.slide_scores), data.overall_score);
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/pitch-deck/history', requireAuth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare(`SELECT id,overall_score,critique,created_at FROM pitch_critiques WHERE user_id=? ORDER BY created_at DESC LIMIT 10`).all(req.user.id);
+    res.json(rows);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Reference Letter Generator
+app.post('/api/reference-letter/generate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { candidate_name, relationship, duration, role_applying, company_applying, highlights, your_name, your_title } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a compelling professional reference letter.\n\nCandidate: ${candidate_name}\nYour relationship: ${relationship} for ${duration||'2 years'}\nRole applying for: ${role_applying} at ${company_applying||'a company'}\nKey highlights to mention: ${highlights}\nYour name/title: ${your_name||'[Your Name]'} / ${your_title||'[Your Title]'}\n\nRespond in JSON: { "letter": "full formatted reference letter", "opening_hook": "compelling opening sentence", "key_themes": ["theme1","theme2","theme3"], "closing_strength": "strong closing statement" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO reference_letters (id,user_id,candidate_name,relationship,role_applying,highlights,letter) VALUES (?,?,?,?,?,?,?)`).run(id, req.user.id, candidate_name, relationship, role_applying, highlights, data.letter);
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/reference-letter/history', requireAuth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare(`SELECT id,candidate_name,role_applying,created_at FROM reference_letters WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
+    res.json(rows);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Job Offer Evaluator
+app.post('/api/offer-evaluator/evaluate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { offers, priorities, current_situation } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `You are a career strategist. Evaluate these job offers and help the person make the best decision.\n\nOffers: ${JSON.stringify(offers)}\nPersonal priorities: ${priorities||'compensation, growth, work-life balance'}\nCurrent situation: ${current_situation||'employed, looking to switch'}\n\nRespond in JSON: { "winner": "company name of recommended offer", "winner_reason": "why this one wins", "scores": [{"company":"name","total_score":number,"comp_score":number,"growth_score":number,"culture_score":number,"risk_score":number}], "comparison_table": "markdown table comparing all offers", "hidden_considerations": ["thing1","thing2"], "negotiation_tips": "what to negotiate for in the winning offer", "red_flags": ["flag per offer if any"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO offer_evaluations (id,user_id,offers,evaluation,winner) VALUES (?,?,?,?,?)`).run(id, req.user.id, JSON.stringify(offers), JSON.stringify(data), data.winner);
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/offer-evaluator/history', requireAuth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare(`SELECT id,winner,created_at FROM offer_evaluations WHERE user_id=? ORDER BY created_at DESC LIMIT 10`).all(req.user.id);
+    res.json(rows);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
