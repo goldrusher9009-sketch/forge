@@ -173360,3 +173360,87 @@ app.post('/api/subscription-audit/analyze', requireAuth, async (req: any, res: a
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 19: Health & Wellness AI ──
+
+db.prepare(`CREATE TABLE IF NOT EXISTS symptom_checks (id TEXT PRIMARY KEY, user_id TEXT, symptoms TEXT, result TEXT, urgency TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS sleep_protocols (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, protocol TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS stress_analyses (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS custom_workouts (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, workout TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS nutrition_plans (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Symptom Checker
+app.post('/api/symptom-check/analyze', requireAuth, async (req: any, res: any) => {
+  try {
+    const { symptoms, duration, age, medical_history } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `You are a helpful health information assistant. Provide general health information (NOT medical diagnosis). Always recommend seeing a doctor for proper diagnosis.\n\nSymptoms: ${symptoms}\nDuration: ${duration||'a few days'}\nAge: ${age||'adult'}\nMedical history: ${medical_history||'none provided'}\n\nRespond in JSON: { "urgency": "emergency/urgent/soon/routine/self-care", "urgency_reason": "why this urgency level", "possible_explanations": ["explanation1","explanation2","explanation3"], "immediate_actions": ["action1","action2"], "see_doctor_if": ["warning sign 1","warning sign 2"], "home_care_tips": ["tip1","tip2","tip3"], "disclaimer": "always include medical disclaimer" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO symptom_checks (id,user_id,symptoms,result,urgency) VALUES (?,?,?,?,?)`).run(id, req.user.id, symptoms, JSON.stringify(data), data.urgency);
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Sleep Optimizer
+app.post('/api/sleep/optimize', requireAuth, async (req: any, res: any) => {
+  try {
+    const { sleep_issues, current_schedule, lifestyle, goals } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a personalized sleep optimization protocol.\n\nSleep issues: ${sleep_issues}\nCurrent schedule: ${current_schedule||'irregular'}\nLifestyle: ${lifestyle||'office worker'}\nGoals: ${goals||'fall asleep faster, sleep deeper'}\n\nRespond in JSON: { "ideal_bedtime": "recommended bedtime", "ideal_wake_time": "recommended wake time", "wind_down_routine": [{"time":"30 min before","action":"..."},{"time":"1 hour before","action":"..."}], "morning_routine": ["action1","action2"], "environment_tips": ["tip1","tip2","tip3"], "avoid": ["thing1","thing2"], "quick_wins": ["win1","win2"], "timeline": "how long to see results" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO sleep_protocols (id,user_id,context,protocol) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Stress Decoder
+app.post('/api/stress/decode', requireAuth, async (req: any, res: any) => {
+  try {
+    const { stress_description, duration, impact_areas, coping_tried } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Analyze this stress situation and provide a compassionate, actionable response.\n\nStress: ${stress_description}\nDuration: ${duration||'ongoing'}\nImpact areas: ${impact_areas||'work, sleep, relationships'}\nCoping attempts: ${coping_tried||'nothing consistent'}\n\nRespond in JSON: { "stress_type": "type classification (acute/chronic/situational/etc)", "root_drivers": ["driver1","driver2"], "stress_score": number_1_to_10, "body_impact": "how this manifests physically", "coping_toolkit": [{"technique":"name","how_to":"instructions","time_needed":"X minutes"}], "boundary_to_set": "one key boundary to establish", "reframe": "perspective shift to try", "this_week_action": "one concrete action for this week", "when_to_seek_help": "signs professional help is needed" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO stress_analyses (id,user_id,context,analysis) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Workout Generator
+app.post('/api/workout/generate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { goal, equipment, time_available, fitness_level, focus_area } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a complete workout plan.\n\nGoal: ${goal||'general fitness'}\nEquipment: ${equipment||'bodyweight only'}\nTime: ${time_available||'45 minutes'}\nFitness level: ${fitness_level||'intermediate'}\nFocus area: ${focus_area||'full body'}\n\nRespond in JSON: { "workout_name": "creative name", "duration": "total time", "calories_estimate": "approximate calories", "warmup": [{"exercise":"name","duration":"time","notes":"form cue"}], "main_workout": [{"exercise":"name","sets":number,"reps":"X or time","rest":"seconds","notes":"form cue"}], "cooldown": [{"exercise":"name","duration":"time"}], "pro_tip": "one key tip to maximize this workout", "progression": "how to make harder next session" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO custom_workouts (id,user_id,context,workout) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/workout/history', requireAuth, (req: any, res: any) => {
+  try {
+    const rows = db.prepare(`SELECT id,context,created_at FROM custom_workouts WHERE user_id=? ORDER BY created_at DESC LIMIT 10`).all(req.user.id);
+    res.json(rows.map((r: any) => ({ ...r, goal: JSON.parse(r.context||'{}').goal })));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Nutrition Coach
+app.post('/api/nutrition/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { goal, dietary_restrictions, calories_target, meal_count, cooking_skill } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a practical nutrition plan.\n\nGoal: ${goal||'eat healthier'}\nDietary restrictions: ${dietary_restrictions||'none'}\nCalorie target: ${calories_target||'2000'} calories/day\nMeals per day: ${meal_count||'3'}\nCooking skill: ${cooking_skill||'intermediate'}\n\nRespond in JSON: { "daily_calories": number, "macros": {"protein":"Xg","carbs":"Xg","fat":"Xg"}, "meal_plan": { "breakfast": {"name":"...","calories":number,"protein":"Xg","prep_time":"X min","recipe":"brief instructions"}, "lunch": {"name":"...","calories":number,"protein":"Xg","prep_time":"X min","recipe":"..."}, "dinner": {"name":"...","calories":number,"protein":"Xg","prep_time":"X min","recipe":"..."}, "snack": {"name":"...","calories":number} }, "grocery_list": ["item1","item2"], "meal_prep_tip": "one efficiency tip", "cheat_meal_guidance": "how to handle it" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO nutrition_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});

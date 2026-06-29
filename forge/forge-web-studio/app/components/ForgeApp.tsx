@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'debate2'|'timecapsule'|'codeexplain'|'ideavalidator'|'tonerewriter'|'resumebuilder'|'emailnegotiator'|'storygen2'|'meetingsum'|'competitorspy'|'ailawyer'|'financeadvisor'|'languagetutor'|'flashcardgen'|'linkedinopt'|'speechwriter'|'pricenegotiator'|'emailroastv2'|'startupnamer'|'coverlettergen'|'interviewcoach'|'colddmwriter'|'fitnessplanner'|'recipegen2'|'travelplanner'|'apologyletter'|'leasereview'|'booksummarizer'|'quizgen'|'salaryneg'|'breakupletter'|'bizplan'|'viralhooks'|'dreaminterp'|'roastgen'|'futureself'|'resumebullets'|'meetingbuilder'|'gratitudereflect'|'coldpitch'|'moodtracker'|'habitjournal'|'lifegoals'|'standupwriter'|'conflictresolve'|'priceanchor'|'linkedinbio'|'failurecv'|'morningritual'|'apologytext'|'excusegen'|'ventmode'|'personalbrand'|'weeklyreview'|'negotiationsim'|'challengebuilder'|'therapyletter'|'podcastpitch'|'grantproposal'|'burnletter'|'decisionoracle'|'complimentengine'|'manifestowriter'|'debateprep14'|'eulogywriter'|'villainorigin'|'secretadmirer'|'legacyletter'|'lovelanguage'|'resumeroast'|'coldemailanalyze'|'pitchdeckcritic'|'refletter'|'offereval'|'datingbio'|'dateplanner'|'relcheckin'|'breakuprecover'|'flirtytext'|'networthcalc'|'budgetroast'|'freelancerate'|'invthesis'|'subaudit'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'debate2'|'timecapsule'|'codeexplain'|'ideavalidator'|'tonerewriter'|'resumebuilder'|'emailnegotiator'|'storygen2'|'meetingsum'|'competitorspy'|'ailawyer'|'financeadvisor'|'languagetutor'|'flashcardgen'|'linkedinopt'|'speechwriter'|'pricenegotiator'|'emailroastv2'|'startupnamer'|'coverlettergen'|'interviewcoach'|'colddmwriter'|'fitnessplanner'|'recipegen2'|'travelplanner'|'apologyletter'|'leasereview'|'booksummarizer'|'quizgen'|'salaryneg'|'breakupletter'|'bizplan'|'viralhooks'|'dreaminterp'|'roastgen'|'futureself'|'resumebullets'|'meetingbuilder'|'gratitudereflect'|'coldpitch'|'moodtracker'|'habitjournal'|'lifegoals'|'standupwriter'|'conflictresolve'|'priceanchor'|'linkedinbio'|'failurecv'|'morningritual'|'apologytext'|'excusegen'|'ventmode'|'personalbrand'|'weeklyreview'|'negotiationsim'|'challengebuilder'|'therapyletter'|'podcastpitch'|'grantproposal'|'burnletter'|'decisionoracle'|'complimentengine'|'manifestowriter'|'debateprep14'|'eulogywriter'|'villainorigin'|'secretadmirer'|'legacyletter'|'lovelanguage'|'resumeroast'|'coldemailanalyze'|'pitchdeckcritic'|'refletter'|'offereval'|'datingbio'|'dateplanner'|'relcheckin'|'breakuprecover'|'flirtytext'|'networthcalc'|'budgetroast'|'freelancerate'|'invthesis'|'subaudit'|'symptomcheck'|'sleepopt'|'stressdecode'|'workoutgen'|'nutricoach'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -6901,6 +6901,11 @@ export default function ForgeApp() {
             { id:'freelancerate', icon:'💼', label:'Freelance Rate Calc' },
             { id:'invthesis', icon:'📈', label:'Investment Thesis' },
             { id:'subaudit', icon:'✂️', label:'Subscription Audit' },
+            { id:'symptomcheck', icon:'🩺', label:'Symptom Checker' },
+            { id:'sleepopt', icon:'😴', label:'Sleep Optimizer' },
+            { id:'stressdecode', icon:'😤', label:'Stress Decoder' },
+            { id:'workoutgen', icon:'💪', label:'Workout Generator' },
+            { id:'nutricoach', icon:'🥗', label:'Nutrition Coach' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -34853,304 +34858,208 @@ export default function ForgeApp() {
                       </div>
                       <div style={{ display:'flex', gap:4 }}>
                         <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}/dismiss`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:5, color:'var(--fg-text)', cursor:'pointer', fontSize:11 }}>Dismiss</button>
-                        <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
-                      </div>
-                    </div>
-                    <div style={{ color:'var(--fg-text2)', fontSize:13 }}>{a.body}</div>
-                  </div>
-                );
-              })}
-              {wsAnnouncementsB47.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No announcements.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* AI Journal tab */}
-        {mainTab==='aijournal' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📓 AI Journal</div>
-            {journalStats && (
-              <div style={{ display:'flex', gap:12, marginBottom:20, flexWrap:'wrap' }}>
-                {[['Entries',journalStats.total],['Words',journalStats.words]].map(([l,v])=>(
-                  <div key={l as string} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 18px', textAlign:'center' }}>
-                    <div style={{ color:'var(--accent)', fontSize:22, fontWeight:700 }}>{v}</div>
-                    <div style={{ color:'var(--fg-text3)', fontSize:12 }}>{l}</div>
-                  </div>
-                ))}
-                {journalStats.moods?.map((m:any)=>(
-                  <div key={m.mood} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 16px', textAlign:'center' }}>
-                    <div style={{ fontSize:20 }}>{m.mood==='happy'?'😊':m.mood==='sad'?'😢':m.mood==='excited'?'🤩':m.mood==='frustrated'?'😤':'😐'}</div>
-                    <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{m.mood} ×{m.n}</div>
-                  </div>
-                ))}
+                        <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id
+        {/* ── WAVE 19: Health & Wellness AI ─────────────────────── */}
+        {(mainTab as string) === 'symptomcheck' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [symptoms, setSymptoms] = React.useState('');
+          const [duration, setDuration] = React.useState('');
+          const [age, setAge] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          return (
+            <div style={{padding:'2rem',maxWidth:700,margin:'0 auto'}}>
+              <h2 style={{color:'#f87171',marginBottom:4}}>🩺 Symptom Checker</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem',fontSize:13}}>AI health info triage — not a medical diagnosis. Always see a doctor.</p>
+              <textarea value={symptoms} onChange={e=>setSymptoms(e.target.value)} placeholder="Describe your symptoms in detail..." rows={4} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem',marginBottom:'0.75rem',resize:'vertical'}}/>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+                <input value={duration} onChange={e=>setDuration(e.target.value)} placeholder="Duration (e.g. 3 days)" style={{background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem'}}/>
+                <input value={age} onChange={e=>setAge(e.target.value)} placeholder="Age (optional)" style={{background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem'}}/>
               </div>
-            )}
-            <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16, marginBottom:20 }}>
-              <div style={{ display:'flex', gap:8, marginBottom:8, alignItems:'center' }}>
-                <span style={{ color:'var(--fg-text2)', fontSize:13 }}>Today's entry:</span>
-                <select value={journalMood32} onChange={e=>setJournalMood32(e.target.value)} style={{ padding:'4px 8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:6, color:'var(--fg-text)', fontSize:12 }}>
-                  {['neutral','happy','sad','excited','frustrated','calm','anxious'].map(m=><option key={m} value={m}>{m}</option>)}
+              <button onClick={async()=>{if(!symptoms.trim())return;setLoading(true);setResult(null);try{const r=await fetch(`${API}/api/symptom-check/analyze`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`},body:JSON.stringify({symptoms,duration,age})});const d=await r.json();setResult(d);}catch(e){setResult({error:'Failed'});}setLoading(false);}} disabled={loading} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:8,padding:'0.75rem 2rem',cursor:'pointer',fontWeight:600,marginBottom:'1.5rem'}}>{loading?'Analyzing...':'Check Symptoms'}</button>
+              {result&&!result.error&&(<div>
+                <div style={{background:result.urgency==='emergency'?'#7f1d1d':result.urgency==='urgent'?'#78350f':result.urgency==='soon'?'#1e3a5f':'#14532d',border:`1px solid ${result.urgency==='emergency'?'#ef4444':result.urgency==='urgent'?'#f59e0b':'#3b82f6'}`,borderRadius:10,padding:'1.25rem',marginBottom:'1rem'}}>
+                  <div style={{fontSize:18,fontWeight:700,color:'#fff',marginBottom:4}}>Urgency: {result.urgency?.toUpperCase()}</div>
+                  <div style={{color:'#cbd5e1',fontSize:14}}>{result.urgency_reason}</div>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
+                  <div style={{background:'#1e293b',borderRadius:10,padding:'1rem'}}>
+                    <div style={{color:'#f87171',fontWeight:600,marginBottom:8}}>Possible Explanations</div>
+                    {(result.possible_explanations||[]).map((e:string,i:number)=><div key={i} style={{color:'#cbd5e1',fontSize:13,marginBottom:4}}>• {e}</div>)}
+                  </div>
+                  <div style={{background:'#1e293b',borderRadius:10,padding:'1rem'}}>
+                    <div style={{color:'#fb923c',fontWeight:600,marginBottom:8}}>Immediate Actions</div>
+                    {(result.immediate_actions||[]).map((a:string,i:number)=><div key={i} style={{color:'#cbd5e1',fontSize:13,marginBottom:4}}>→ {a}</div>)}
+                  </div>
+                  <div style={{background:'#1e293b',borderRadius:10,padding:'1rem'}}>
+                    <div style={{color:'#facc15',fontWeight:600,marginBottom:8}}>See Doctor If...</div>
+                    {(result.see_doctor_if||[]).map((s:string,i:number)=><div key={i} style={{color:'#cbd5e1',fontSize:13,marginBottom:4}}>⚠ {s}</div>)}
+                  </div>
+                  <div style={{background:'#1e293b',borderRadius:10,padding:'1rem'}}>
+                    <div style={{color:'#4ade80',fontWeight:600,marginBottom:8}}>Home Care Tips</div>
+                    {(result.home_care_tips||[]).map((t:string,i:number)=><div key={i} style={{color:'#cbd5e1',fontSize:13,marginBottom:4}}>✓ {t}</div>)}
+                  </div>
+                </div>
+                <div style={{background:'#0f172a',border:'1px solid #334155',borderRadius:8,padding:'0.75rem',marginTop:'1rem',color:'#64748b',fontSize:12}}>{result.disclaimer}</div>
+              </div>)}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'sleepopt' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [issues, setIssues] = React.useState('');
+          const [schedule, setSchedule] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          return (
+            <div style={{padding:'2rem',maxWidth:700,margin:'0 auto'}}>
+              <h2 style={{color:'#818cf8',marginBottom:4}}>😴 Sleep Optimizer</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem',fontSize:13}}>Get a personalized sleep protocol based on your issues and lifestyle.</p>
+              <textarea value={issues} onChange={e=>setIssues(e.target.value)} placeholder="What are your sleep issues? (e.g. can't fall asleep, wake up at 3am, feel groggy...)" rows={3} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem',marginBottom:'0.75rem',resize:'vertical'}}/>
+              <input value={schedule} onChange={e=>setSchedule(e.target.value)} placeholder="Current schedule (e.g. need to wake at 7am, usually sleep around midnight)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem',marginBottom:'0.75rem'}}/>
+              <button onClick={async()=>{if(!issues.trim())return;setLoading(true);setResult(null);try{const r=await fetch(`${API}/api/sleep/optimize`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`},body:JSON.stringify({sleep_issues:issues,current_schedule:schedule})});const d=await r.json();setResult(d);}catch(e){setResult({error:'Failed'});}setLoading(false);}} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:8,padding:'0.75rem 2rem',cursor:'pointer',fontWeight:600,marginBottom:'1.5rem'}}>{loading?'Optimizing...':'Get Sleep Protocol'}</button>
+              {result&&!result.error&&(<div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem',marginBottom:'1rem'}}>
+                  <div style={{background:'#1e293b',borderRadius:10,padding:'1rem',textAlign:'center'}}>
+                    <div style={{color:'#818cf8',fontSize:13}}>Ideal Bedtime</div>
+                    <div style={{color:'#fff',fontSize:24,fontWeight:700}}>{result.ideal_bedtime}</div>
+                  </div>
+                  <div style={{background:'#1e293b',borderRadius:10,padding:'1rem',textAlign:'center'}}>
+                    <div style={{color:'#818cf8',fontSize:13}}>Ideal Wake Time</div>
+                    <div style={{color:'#fff',fontSize:24,fontWeight:700}}>{result.ideal_wake_time}</div>
+                  </div>
+                </div>
+                <div style={{background:'#1e293b',borderRadius:10,padding:'1rem',marginBottom:'1rem'}}>
+                  <div style={{color:'#c4b5fd',fontWeight:600,marginBottom:8}}>Wind-Down Routine</div>
+                  {(result.wind_down_routine||[]).map((s:any,i:number)=><div key={i} style={{display:'flex',gap:'1rem',marginBottom:6}}><span style={{color:'#818cf8',fontSize:12,minWidth:90}}>{s.time}</span><span style={{color:'#cbd5e1',fontSize:13}}>{s.action}</span></div>)}
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
+                  <div style={{background:'#1e293b',borderRadius:10,padding:'1rem'}}>
+                    <div style={{color:'#4ade80',fontWeight:600,marginBottom:8}}>Morning Routine</div>
+                    {(result.morning_routine||[]).map((m:string,i:number)=><div key={i} style={{color:'#cbd5e1',fontSize:13,marginBottom:4}}>☀ {m}</div>)}
+                  </div>
+                  <div style={{background:'#1e293b',borderRadius:10,padding:'1rem'}}>
+                    <div style={{color:'#f87171',fontWeight:600,marginBottom:8}}>Avoid</div>
+                    {(result.avoid||[]).map((a:string,i:number)=><div key={i} style={{color:'#cbd5e1',fontSize:13,marginBottom:4}}>✗ {a}</div>)}
+                  </div>
+                </div>
+                <div style={{background:'#0f172a',border:'1px solid #6366f1',borderRadius:8,padding:'0.75rem',marginTop:'1rem',color:'#94a3b8',fontSize:13}}>⏱ {result.timeline}</div>
+              </div>)}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'stressdecode' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [desc, setDesc] = React.useState('');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          return (
+            <div style={{padding:'2rem',maxWidth:700,margin:'0 auto'}}>
+              <h2 style={{color:'#fb923c',marginBottom:4}}>😤 Stress Decoder</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem',fontSize:13}}>Understand your stress and get an actionable coping toolkit.</p>
+              <textarea value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Describe what's stressing you out — work, relationships, finances, health, everything..." rows={5} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem',marginBottom:'0.75rem',resize:'vertical'}}/>
+              <button onClick={async()=>{if(!desc.trim())return;setLoading(true);setResult(null);try{const r=await fetch(`${API}/api/stress/decode`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`},body:JSON.stringify({stress_description:desc})});const d=await r.json();setResult(d);}catch(e){setResult({error:'Failed'});}setLoading(false);}} disabled={loading} style={{background:'#f97316',color:'#fff',border:'none',borderRadius:8,padding:'0.75rem 2rem',cursor:'pointer',fontWeight:600,marginBottom:'1.5rem'}}>{loading?'Decoding...':'Decode My Stress'}</button>
+              {result&&!result.error&&(<div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'1rem',marginBottom:'1rem'}}>
+                  <div style={{background:'#1e293b',borderRadius:10,padding:'1rem',textAlign:'center'}}>
+                    <div style={{color:'#94a3b8',fontSize:12}}>Stress Type</div>
+                    <div style={{color:'#fb923c',fontWeight:700,fontSize:14,marginTop:4}}>{result.stress_type}</div>
+                  </div>
+                  <div style={{background:'#1e293b',borderRadius:10,padding:'1rem',textAlign:'center'}}>
+                    <div style={{color:'#94a3b8',fontSize:12}}>Stress Score</div>
+                    <div style={{color:result.stress_score>=8?'#ef4444':result.stress_score>=5?'#f59e0b':'#4ade80',fontWeight:700,fontSize:28}}>{result.stress_score}/10</div>
+                  </div>
+                  <div style={{background:'#1e293b',borderRadius:10,padding:'1rem',textAlign:'center'}}>
+                    <div style={{color:'#94a3b8',fontSize:12}}>This Week</div>
+                    <div style={{color:'#c4b5fd',fontWeight:600,fontSize:12,marginTop:4}}>{result.this_week_action}</div>
+                  </div>
+                </div>
+                <div style={{background:'#1e293b',borderRadius:10,padding:'1rem',marginBottom:'1rem'}}>
+                  <div style={{color:'#fb923c',fontWeight:600,marginBottom:8}}>Coping Toolkit</div>
+                  {(result.coping_toolkit||[]).map((t:any,i:number)=><div key={i} style={{background:'#0f172a',borderRadius:8,padding:'0.75rem',marginBottom:6}}><div style={{color:'#e2e8f0',fontWeight:600,fontSize:13}}>{t.technique} <span style={{color:'#64748b',fontWeight:400}}>({t.time_needed})</span></div><div style={{color:'#94a3b8',fontSize:12,marginTop:2}}>{t.how_to}</div></div>)}
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
+                  <div style={{background:'#1e293b',borderRadius:10,padding:'1rem'}}><div style={{color:'#f59e0b',fontWeight:600,marginBottom:6}}>Boundary to Set</div><div style={{color:'#cbd5e1',fontSize:13}}>{result.boundary_to_set}</div></div>
+                  <div style={{background:'#1e293b',borderRadius:10,padding:'1rem'}}><div style={{color:'#818cf8',fontWeight:600,marginBottom:6}}>Reframe</div><div style={{color:'#cbd5e1',fontSize:13}}>{result.reframe}</div></div>
+                </div>
+              </div>)}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'workoutgen' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [goal, setGoal] = React.useState('');
+          const [equipment, setEquipment] = React.useState('bodyweight only');
+          const [time, setTime] = React.useState('45');
+          const [level, setLevel] = React.useState('intermediate');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          return (
+            <div style={{padding:'2rem',maxWidth:700,margin:'0 auto'}}>
+              <h2 style={{color:'#4ade80',marginBottom:4}}>💪 Workout Generator</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem',fontSize:13}}>Get a complete custom workout plan in seconds.</p>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+                <input value={goal} onChange={e=>setGoal(e.target.value)} placeholder="Goal (e.g. lose fat, build muscle)" style={{background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem'}}/>
+                <input value={equipment} onChange={e=>setEquipment(e.target.value)} placeholder="Equipment available" style={{background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem'}}/>
+                <select value={time} onChange={e=>setTime(e.target.value)} style={{background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem'}}>
+                  {['20','30','45','60','90'].map(t=><option key={t} value={t}>{t} min</option>)}
+                </select>
+                <select value={level} onChange={e=>setLevel(e.target.value)} style={{background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem'}}>
+                  {['beginner','intermediate','advanced'].map(l=><option key={l} value={l}>{l}</option>)}
                 </select>
               </div>
-              <textarea value={journalEntry} onChange={e=>setJournalEntry(e.target.value)} placeholder="Write your journal entry..." rows={6} style={{ width:'100%', padding:'10px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, boxSizing:'border-box', fontFamily:'inherit', lineHeight:1.6 }} />
-              <div style={{ display:'flex', gap:8, marginTop:8 }}>
-                <button onClick={async()=>{ if(!journalEntry.trim()) return; const today=new Date().toISOString().split('T')[0]; await fetch('/api/ai-journal',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({date:today,entry:journalEntry,mood:journalMood32})}); setJournalEntry(''); const r=await fetch('/api/ai-journal',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiJournal(await r.json()); const s=await fetch('/api/ai-journal/stats',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setJournalStats(await s.json()); }} style={{ padding:'8px 20px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save Entry</button>
-                <button onClick={async()=>{ const r=await fetch('/api/ai-journal',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiJournal(await r.json()); const s=await fetch('/api/ai-journal/stats',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setJournalStats(await s.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load All</button>
+              <button onClick={async()=>{if(!goal.trim())return;setLoading(true);setResult(null);try{const r=await fetch(`${API}/api/workout/generate`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`},body:JSON.stringify({goal,equipment,time_available:`${time} minutes`,fitness_level:level})});const d=await r.json();setResult(d);}catch(e){setResult({error:'Failed'});}setLoading(false);}} disabled={loading} style={{background:'#22c55e',color:'#fff',border:'none',borderRadius:8,padding:'0.75rem 2rem',cursor:'pointer',fontWeight:600,marginBottom:'1.5rem'}}>{loading?'Building Workout...':'Generate Workout'}</button>
+              {result&&!result.error&&(<div>
+                <div style={{background:'#14532d',border:'1px solid #22c55e',borderRadius:10,padding:'1rem',marginBottom:'1rem',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div><div style={{color:'#4ade80',fontWeight:700,fontSize:18}}>{result.workout_name}</div><div style={{color:'#86efac',fontSize:13}}>{result.duration} • ~{result.calories_estimate}</div></div>
+                </div>
+                {['warmup','main_workout','cooldown'].map(phase=><div key={phase} style={{background:'#1e293b',borderRadius:10,padding:'1rem',marginBottom:'0.75rem'}}>
+                  <div style={{color:phase==='warmup'?'#fbbf24':phase==='main_workout'?'#4ade80':'#818cf8',fontWeight:600,marginBottom:8,textTransform:'capitalize'}}>{phase.replace('_',' ')}</div>
+                  {(result[phase]||[]).map((ex:any,i:number)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'0.5rem 0',borderBottom:'1px solid #0f172a'}}><div><div style={{color:'#e2e8f0',fontSize:13,fontWeight:600}}>{ex.exercise}</div><div style={{color:'#64748b',fontSize:11}}>{ex.notes}</div></div><div style={{color:'#94a3b8',fontSize:12,textAlign:'right'}}>{ex.sets?`${ex.sets}x${ex.reps}`:ex.duration}{ex.rest?` / ${ex.rest}s rest`:''}</div></div>)}
+                </div>)}
+                <div style={{background:'#0f172a',border:'1px solid #22c55e',borderRadius:8,padding:'0.75rem',color:'#86efac',fontSize:13}}>💡 {result.pro_tip}</div>
+              </div>)}
+            </div>
+          );
+        })()}
+
+        {(mainTab as string) === 'nutricoach' && (() => {
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const [goal, setGoal] = React.useState('');
+          const [restrictions, setRestrictions] = React.useState('');
+          const [calories, setCalories] = React.useState('2000');
+          const [result, setResult] = React.useState<any>(null);
+          const [loading, setLoading] = React.useState(false);
+          return (
+            <div style={{padding:'2rem',maxWidth:700,margin:'0 auto'}}>
+              <h2 style={{color:'#34d399',marginBottom:4}}>🥗 Nutrition Coach</h2>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem',fontSize:13}}>Get a personalized meal plan with macros, recipes & grocery list.</p>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+                <input value={goal} onChange={e=>setGoal(e.target.value)} placeholder="Goal (e.g. lose weight, build muscle)" style={{background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem'}}/>
+                <input value={restrictions} onChange={e=>setRestrictions(e.target.value)} placeholder="Dietary restrictions (or 'none')" style={{background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem'}}/>
+                <input value={calories} onChange={e=>setCalories(e.target.value)} placeholder="Daily calorie target" style={{background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem'}}/>
               </div>
-            </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {aiJournal.map((j:any)=>(
-                <div key={j.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:14 }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
-                    <div>
-                      <span style={{ color:'var(--fg-text2)', fontSize:12 }}>{j.date}</span>
-                      <span style={{ marginLeft:10, color:'var(--accent)', fontSize:11 }}>{j.mood} · {j.word_count} words</span>
-                    </div>
-                    <button onClick={async()=>{ await fetch(`/api/ai-journal/${j.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiJournal(aiJournal.filter((x:any)=>x.id!==j.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
-                  </div>
-                  <div style={{ color:'var(--fg-text)', fontSize:13, lineHeight:1.6, whiteSpace:'pre-wrap', maxHeight:100, overflow:'hidden' }}>{j.entry.slice(0,300)}{j.entry.length>300?'...':''}</div>
+              <button onClick={async()=>{if(!goal.trim())return;setLoading(true);setResult(null);try{const r=await fetch(`${API}/api/nutrition/plan`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`},body:JSON.stringify({goal,dietary_restrictions:restrictions,calories_target:calories})});const d=await r.json();setResult(d);}catch(e){setResult({error:'Failed'});}setLoading(false);}} disabled={loading} style={{background:'#10b981',color:'#fff',border:'none',borderRadius:8,padding:'0.75rem 2rem',cursor:'pointer',fontWeight:600,marginBottom:'1.5rem'}}>{loading?'Building Plan...':'Generate Meal Plan'}</button>
+              {result&&!result.error&&(<div>
+                <div style={{background:'#064e3b',border:'1px solid #10b981',borderRadius:10,padding:'1rem',marginBottom:'1rem',display:'flex',gap:'2rem',justifyContent:'center'}}>
+                  {[['Calories',result.daily_calories+'kcal'],['Protein',result.macros?.protein],['Carbs',result.macros?.carbs],['Fat',result.macros?.fat]].map(([k,v])=><div key={k as string} style={{textAlign:'center'}}><div style={{color:'#6ee7b7',fontSize:12}}>{k}</div><div style={{color:'#fff',fontWeight:700,fontSize:16}}>{v}</div></div>)}
                 </div>
-              ))}
+                {(['breakfast','lunch','dinner','snack'] as const).map(meal=>{const m=result.meal_plan?.[meal];if(!m)return null;return(<div key={meal} style={{background:'#1e293b',borderRadius:10,padding:'1rem',marginBottom:'0.75rem'}}><div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><div style={{color:'#34d399',fontWeight:700,textTransform:'capitalize'}}>{meal}: {m.name}</div><div style={{color:'#64748b',fontSize:12}}>{m.calories} cal • {m.protein} protein{m.prep_time?` • ${m.prep_time}`:''}</div></div>{m.recipe&&<div style={{color:'#94a3b8',fontSize:12}}>{m.recipe}</div>}</div>);})}
+                <div style={{background:'#1e293b',borderRadius:10,padding:'1rem',marginBottom:'0.75rem'}}>
+                  <div style={{color:'#34d399',fontWeight:600,marginBottom:8}}>🛒 Grocery List</div>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:8}}>{(result.grocery_list||[]).map((item:string,i:number)=><span key={i} style={{background:'#0f172a',color:'#94a3b8',borderRadius:20,padding:'2px 10px',fontSize:12}}>{item}</span>)}</div>
+                </div>
+                <div style={{background:'#0f172a',border:'1px solid #10b981',borderRadius:8,padding:'0.75rem',color:'#86efac',fontSize:13}}>💡 {result.meal_prep_tip}</div>
+              </div>)}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
-        {/* Thread Polls tab */}
-        {mainTab==='threadpolls' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📊 Thread Polls</div>
-            <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16, marginBottom:20 }}>
-              <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:10 }}>Create Poll</div>
-              <input value={newPollQ32} onChange={e=>setNewPollQ32(e.target.value)} placeholder="Poll question..." style={{ width:'100%', padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, marginBottom:8, boxSizing:'border-box' }} />
-              <textarea value={newPollOpts32} onChange={e=>setNewPollOpts32(e.target.value)} placeholder="Options (one per line)..." rows={3} style={{ width:'100%', padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box', fontFamily:'inherit' }} />
-              <div style={{ display:'flex', gap:8 }}>
-                <button onClick={async()=>{ if(!newPollQ32.trim()) return; const options=newPollOpts32.split('\n').filter(Boolean); await fetch('/api/thread-polls',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({question:newPollQ32,options})}); setNewPollQ32(''); const r=await fetch('/api/thread-polls',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadPolls(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Create Poll</button>
-                <button onClick={async()=>{ const r=await fetch('/api/thread-polls',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadPolls(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
-              </div>
-            </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-              {threadPolls.map((poll:any)=>{
-                const totalVotes=Object.values(poll.votes||{}).reduce((a:any,b:any)=>a+b,0) as number;
-                return (
-                  <div key={poll.id} style={{ background:'var(--bg-card)', border:`1px solid ${poll.closed?'var(--border)':'var(--accent)'}`, borderRadius:12, padding:16 }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
-                      <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{poll.question}</div>
-                      <div style={{ display:'flex', gap:4 }}>
-                        {!poll.closed && <button onClick={async()=>{ await fetch(`/api/thread-polls/${poll.id}/close`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/thread-polls',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadPolls(await r.json()); }} style={{ padding:'3px 8px', background:'#f59e0b', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Close</button>}
-                        <button onClick={async()=>{ await fetch(`/api/thread-polls/${poll.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadPolls(threadPolls.filter((x:any)=>x.id!==poll.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
-                      </div>
-                    </div>
-                    {(Array.isArray(poll.options)?poll.options:[]).map((opt:string)=>{
-                      const votes=(poll.votes||{})[opt]||0;
-                      const pct=totalVotes>0?Math.round(votes/totalVotes*100):0;
-                      return (
-                        <div key={opt} style={{ marginBottom:8 }}>
-                          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
-                            <button onClick={async()=>{ if(poll.closed) return; await fetch(`/api/thread-polls/${poll.id}/vote`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({option:opt})}); const r=await fetch('/api/thread-polls',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadPolls(await r.json()); }} disabled={poll.closed} style={{ background:'none', border:'none', color:poll.closed?'var(--fg-text2)':'var(--accent)', cursor:poll.closed?'default':'pointer', fontSize:13, textAlign:'left', padding:0 }}>{opt}</button>
-                            <span style={{ color:'var(--fg-text3)', fontSize:12 }}>{votes} ({pct}%)</span>
-                          </div>
-                          <div style={{ height:5, background:'var(--bg-input)', borderRadius:3 }}>
-                            <div style={{ height:'100%', background:'var(--accent)', borderRadius:3, width:`${pct}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{totalVotes} total votes{poll.closed?' · CLOSED':''}</div>
-                  </div>
-                );
-              })}
-              {threadPolls.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No polls yet.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* AI Bookmarks tab */}
-        {mainTab==='aibookmarks' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🔖 AI Bookmarks</div>
-            <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>
-              <input value={newBmUrl} onChange={e=>setNewBmUrl(e.target.value)} placeholder="URL..." style={{ flex:2, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <input value={newBmTitle} onChange={e=>setNewBmTitle(e.target.value)} placeholder="Title..." style={{ flex:1, minWidth:120, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <input value={newBmSummary} onChange={e=>setNewBmSummary(e.target.value)} placeholder="Summary..." style={{ flex:2, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <button onClick={async()=>{ if(!newBmUrl.trim()) return; await fetch('/api/ai-bookmarks',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({url:newBmUrl,title:newBmTitle,summary:newBmSummary})}); setNewBmUrl(''); setNewBmTitle(''); setNewBmSummary(''); const r=await fetch('/api/ai-bookmarks',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiBookmarks(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save</button>
-            </div>
-            <div style={{ display:'flex', gap:8, marginBottom:16 }}>
-              <input value={bmSearch} onChange={e=>setBmSearch(e.target.value)} placeholder="Search bookmarks..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <button onClick={async()=>{ const url=bmSearch.trim()?`/api/ai-bookmarks/search?q=${encodeURIComponent(bmSearch)}`:'/api/ai-bookmarks'; const r=await fetch(url,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiBookmarks(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Search</button>
-            </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {aiBookmarks.map((bm:any)=>(
-                <div key={bm.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 14px', display:'flex', gap:12, alignItems:'flex-start' }}>
-                  <div style={{ flex:1 }}>
-                    <a href={bm.url} target="_blank" rel="noreferrer" style={{ color:'var(--accent)', fontWeight:600, fontSize:14, textDecoration:'none' }}>{bm.title||bm.url}</a>
-                    {bm.summary && <div style={{ color:'var(--fg-text2)', fontSize:12, marginTop:4 }}>{bm.summary}</div>}
-                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{bm.created_at?.split('T')[0]}</div>
-                  </div>
-                  <button onClick={async()=>{ await fetch(`/api/ai-bookmarks/${bm.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setAiBookmarks(aiBookmarks.filter((x:any)=>x.id!==bm.id)); }} style={{ padding:'4px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
-                </div>
-              ))}
-              {aiBookmarks.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No bookmarks yet. Save URLs with AI context.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* Focus Sessions tab */}
-        {mainTab==='focussess' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🎯 Focus Sessions</div>
-            {focusStats && (
-              <div style={{ display:'flex', gap:12, marginBottom:20, flexWrap:'wrap' }}>
-                {[['Total',focusStats.total],['Done',focusStats.completed],['Minutes',focusStats.totalMin]].map(([l,v])=>(
-                  <div key={l as string} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 18px', textAlign:'center' }}>
-                    <div style={{ color:'var(--accent)', fontSize:22, fontWeight:700 }}>{v}</div>
-                    <div style={{ color:'var(--fg-text3)', fontSize:12 }}>{l}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {activeFocus ? (
-              <div style={{ background:'var(--bg-card)', border:'2px solid var(--accent)', borderRadius:12, padding:24, textAlign:'center', marginBottom:20 }}>
-                <div style={{ color:'var(--accent)', fontSize:32, marginBottom:8 }}>⏱</div>
-                <div style={{ color:'var(--fg-text)', fontSize:18, fontWeight:700, marginBottom:4 }}>{activeFocus.label}</div>
-                <div style={{ color:'var(--fg-text2)', marginBottom:16 }}>{activeFocus.duration_min} min session — started {activeFocus.started_at?.split('T')[1]?.slice(0,5)}</div>
-                <button onClick={async()=>{ await fetch(`/api/focus-sessions/${activeFocus.id}/complete`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({})}); setActiveFocus(null); const r=await fetch('/api/focus-sessions',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setFocusSessions(await r.json()); const s=await fetch('/api/focus-sessions/stats',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setFocusStats(await s.json()); }} style={{ padding:'10px 28px', background:'#22c55e', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:15, fontWeight:600 }}>Complete Session ✓</button>
-              </div>
-            ) : (
-              <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
-                <input value={newFocusLabel} onChange={e=>setNewFocusLabel(e.target.value)} placeholder="Session label..." style={{ flex:1, minWidth:120, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-                <select value={newFocusDur} onChange={e=>setNewFocusDur(Number(e.target.value))} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
-                  {[10,15,25,30,45,60,90].map(d=><option key={d} value={d}>{d} min</option>)}
-                </select>
-                <button onClick={async()=>{ const r=await fetch('/api/focus-sessions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({label:newFocusLabel,duration_min:newFocusDur})}); const sess=await r.json(); setActiveFocus({...sess,label:newFocusLabel,duration_min:newFocusDur}); }} style={{ padding:'8px 20px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Start Focus</button>
-                <button onClick={async()=>{ const r=await fetch('/api/focus-sessions',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setFocusSessions(await r.json()); const s=await fetch('/api/focus-sessions/stats',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setFocusStats(await s.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
-              </div>
-            )}
-            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-              {focusSessions.map((s:any)=>(
-                <div key={s.id} style={{ display:'flex', gap:10, alignItems:'center', background:'var(--bg-card)', border:`1px solid ${s.completed?'#22c55e':'var(--border)'}`, borderRadius:8, padding:'8px 12px' }}>
-                  <span style={{ fontSize:18 }}>{s.completed?'✅':'⏳'}</span>
-                  <div style={{ flex:1 }}>
-                    <div style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{s.label} — {s.duration_min}min</div>
-                    <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{s.started_at?.split('T')[0]}</div>
-                  </div>
-                  <button onClick={async()=>{ await fetch(`/api/focus-sessions/${s.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setFocusSessions(focusSessions.filter((x:any)=>x.id!==s.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Thread Reactions tab */}
-        {mainTab==='treactions' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>💬 Thread Reactions</div>
-            <div style={{ display:'flex', gap:8, marginBottom:16, alignItems:'center' }}>
-              <input value={reactionThreadId} onChange={e=>setReactionThreadId(e.target.value)} placeholder="Thread ID..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <button onClick={async()=>{ if(!reactionThreadId.trim()) return; const r=await fetch(`/api/thread-reactions/${reactionThreadId}`,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadReactions(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
-            </div>
-            {reactionThreadId && (
-              <div style={{ marginBottom:20 }}>
-                <div style={{ color:'var(--fg-text2)', fontSize:13, marginBottom:10 }}>React to thread #{reactionThreadId}:</div>
-                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                  {['👍','❤️','🔥','😂','😮','🎉','💡','⭐','🤔','👏'].map(emoji=>(
-                    <button key={emoji} onClick={async()=>{ await fetch('/api/thread-reactions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({thread_id:parseInt(reactionThreadId),emoji})}); const r=await fetch(`/api/thread-reactions/${reactionThreadId}`,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadReactions(await r.json()); }} style={{ padding:'6px 12px', fontSize:22, background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:8, cursor:'pointer' }}>{emoji}</button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-              {threadReactions.map((rx:any,i:number)=>(
-                <div key={i} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'8px 14px', textAlign:'center' }}>
-                  <div style={{ fontSize:28 }}>{rx.emoji}</div>
-                  <div style={{ color:'var(--fg-text)', fontWeight:700 }}>{rx.count}</div>
-                </div>
-              ))}
-              {threadReactions.length===0 && reactionThreadId && <div style={{ color:'var(--fg-text3)', padding:20 }}>No reactions yet.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* Workspace Tags tab */}
-        {mainTab==='wstags' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🏷 Workspace Tags</div>
-            <div style={{ display:'flex', gap:8, marginBottom:16 }}>
-              <input value={wsTagName} onChange={e=>setWsTagName(e.target.value)} placeholder="Tag name..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <input type="color" value={wsTagColor} onChange={e=>setWsTagColor(e.target.value)} style={{ width:44, height:38, padding:2, background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, cursor:'pointer' }} />
-              <button onClick={async()=>{ if(!newTagName.trim()) return; await fetch('/api/workspace-tags',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:wsTagName,color:wsTagColor})}); setWsTagName(''); const r=await fetch('/api/workspace-tags',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsTags(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Create</button>
-              <button onClick={async()=>{ const r=await fetch('/api/workspace-tags',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsTags(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
-            </div>
-            <div style={{ display:'flex', flexWrap:'wrap', gap:10 }}>
-              {wsTags.map((tag:any)=>(
-                <div key={tag.id} style={{ display:'flex', gap:6, alignItems:'center', padding:'6px 12px', background:tag.color+'22', border:`1.5px solid ${tag.color}`, borderRadius:20 }}>
-                  <span style={{ color:tag.color, fontWeight:600, fontSize:13 }}>{tag.name}</span>
-                  <span style={{ color:'var(--fg-text3)', fontSize:11 }}>×{tag.usage_count}</span>
-                  <button onClick={async()=>{ await fetch(`/api/workspace-tags/${tag.id}/use`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const r=await fetch('/api/workspace-tags',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsTags(await r.json()); }} style={{ background:'none', border:'none', color:tag.color, cursor:'pointer', fontSize:13, padding:'0 2px' }}>+</button>
-                  <button onClick={async()=>{ await fetch(`/api/workspace-tags/${tag.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsTags(wsTags.filter((x:any)=>x.id!==tag.id)); }} style={{ background:'none', border:'none', color:'#ef4444', cursor:'pointer', fontSize:12, padding:'0 2px' }}>✕</button>
-                </div>
-              ))}
-              {wsTags.length===0 && <div style={{ color:'var(--fg-text3)', padding:24 }}>No tags yet. Tags help organize your workspace content.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* Daily Intentions tab */}
-        {mainTab==='intentions' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🌅 Daily Intentions</div>
-            <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16, marginBottom:20 }}>
-              <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:8 }}>Today's Intention</div>
-              {todayIntention ? (
-                <div>
-                  <div style={{ color:'var(--fg-text2)', fontSize:15, fontStyle:'italic', marginBottom:12 }}>"{todayIntention}"</div>
-                  <div style={{ color:'var(--accent)', fontSize:13 }}>✓ Intention set for today</div>
-                </div>
-              ) : (
-                <div style={{ display:'flex', gap:8 }}>
-                  <input value={newIntention} onChange={e=>setNewIntention(e.target.value)} placeholder="Set your intention for today..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-                  <button onClick={async()=>{ if(!newIntention.trim()) return; const today=new Date().toISOString().split('T')[0]; await fetch('/api/daily-intentions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({date:today,intention:newIntention})}); setTodayIntention(newIntention); setNewIntention(''); const r=await fetch('/api/daily-intentions',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setDailyIntentions(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Set</button>
-                  <button onClick={async()=>{ const today=new Date().toISOString().split('T')[0]; const r=await fetch('/api/daily-intentions/today',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const d=await r.json(); if(d) setTodayIntention(d.intention); const all=await fetch('/api/daily-intentions',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setDailyIntentions(await all.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
-                </div>
-              )}
-            </div>
-            <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:12 }}>Past Intentions</div>
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {dailyIntentions.map((di:any)=>(
-                <div key={di.id} style={{ background:'var(--bg-card)', border:`1px solid ${di.achieved?'#22c55e':'var(--border)'}`, borderRadius:10, padding:'10px 14px' }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
-                    <span style={{ color:'var(--fg-text3)', fontSize:12 }}>{di.date}</span>
-                    <div style={{ display:'flex', gap:6 }}>
-                      {!di.achieved && <button onClick={async()=>{ await fetch(`/api/daily-intentions/${di.id}/reflect`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({achieved:true,reflection:''})}); const r=await fetch('/api/daily-intentions',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setDailyIntentions(await r.json()); }} style={{ padding:'2px 8px', background:'#22c55e', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Achieved ✓</button>}
-                      <button onClick={async()=>{ await fetch(`/api/daily-intentions/${di.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setDailyIntentions(dailyIntentions.filter((x:any)=>x.id!==di.id)); }} style={{ padding:'2px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
-                    </div>
-                  </div>
-                  <div style={{ color:'var(--fg-text)', fontSize:14, fontStyle:'italic' }}>"{di.intention}"</div>
-                  {di.achieved && <div style={{ color:'#22c55e', fontSize:12, marginTop:4 }}>✅ Achieved{di.reflection?' — '+di.reflection:''}</div>}
-                </div>
-              ))}
-              {dailyIntentions.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:24 }}>No past intentions found.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* Project Boards tab */}
-        {mainTab==='boards' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📋 Project Boards</div>
-            {!activeBoardId ? (
-              <>
-                <div style={{ display:'flex', gap:8, marginBottom:16 }}>
-                  <input value={newBoardName} onChange={e=>setNewBoardName(e.target.value)} placeholder="Board name..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-                  <input type="color" value={newBoardColor} onChange={e=>setNewBoardColor(e.target.value)} style={{ width:44, height:38, padding:2, background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, cursor:'pointer' }} />
-                  <button onClick={async()=>{ if(!newBoardName.trim()) return; await fetch('/api/boards',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({name:newBoardName,color:newBoardColor})}); setNewBoardName(''); const r=await fetch('/api/boards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoards(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Create Board</button>
-                  <button onClick={async()=>{ const r=await fetch('/api/boards',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoards(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
-                </div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:12 }}>
-                  {boards.map((b:any)=>(
-                    <div key={b.id} onClick={async()=>{ setActiveBoardId(b.id); const r=await fetch(`/api/boards/${b.id}/items`,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoardItems(await r.json()); }} style={{ background:'var(--bg-card)', border:`2px solid ${b.color||'var(--border)'}`, borderRadius:12, padding:20, cursor:'pointer' }}>
-                      <div style={{ color:b.color||'var(--accent)', fontSize:24, marginBottom:8 }}>📋</div>
-                      <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{b.name}</div>
-                      <button onClick={async(e)=>{ e.stopPropagation(); await fetch(`/api/boards/${b.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setBoards(boards.filter((x:any)=>x.id!==b.id)); }} style={{ marginTop:8, padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Delete</button>
-                    </div>
-                  ))}
-                  {boards.length===0 && <div
