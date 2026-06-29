@@ -175685,3 +175685,83 @@ app.post('/api/college/prep', requireAuth, async (req: AuthRequest, res: Respons
     res.json({ id, ...result });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// Wave 49: Personal Finance Deep Dive
+const createFinanceTables = () => {
+  db.prepare(`CREATE TABLE IF NOT EXISTS debt_strategists (id TEXT PRIMARY KEY, user_id TEXT, debts TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS investment_decoders (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, explanation TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS credit_score_coaches (id TEXT PRIMARY KEY, user_id TEXT, current_score TEXT, issues TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS tax_optimizers (id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, advice TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS wealth_roadmappers (id TEXT PRIMARY KEY, user_id TEXT, age TEXT, income TEXT, goals TEXT, roadmap TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+};
+createFinanceTables();
+
+app.post('/api/debt/strategy', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { debts, monthly_income, monthly_expenses, goal } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a certified financial planner specializing in debt elimination.\n\nDebts: ${debts}\nMonthly income: ${monthly_income||'not specified'}\nMonthly expenses: ${monthly_expenses||'not specified'}\nGoal: ${goal||'pay off debt as fast as possible'}\n\nCreate a personalized debt payoff strategy. Return JSON:\n{\n  "debt_analysis": {"total_debt": "amount", "monthly_minimum": "amount", "high_interest_flag": true/false},\n  "recommended_strategy": {"name": "avalanche or snowball or hybrid", "why": "reason for this specific situation"},\n  "payoff_order": [{"debt": "name/amount", "rate": "interest rate", "priority": 1, "why": "reason"}],\n  "monthly_action_plan": {"extra_to_debt": "how much extra to throw at debt", "first_target": "name"},\n  "acceleration_moves": ["specific tactic to pay off faster"],\n  "payoff_timeline": {"minimum_payments": "X years", "with_strategy": "X years", "interest_saved": "$amount"},\n  "psychological_tips": ["tip for staying motivated"],\n  "when_to_refinance": "advice on refinancing or consolidation"\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO debt_strategists (id,user_id,debts,strategy) VALUES (?,?,?,?)`).run(id, userId, debts, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investment/decode', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { topic, experience_level, amount_to_invest } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a financial educator who makes investing crystal clear.\n\nTopic: ${topic}\nExperience level: ${experience_level||'beginner'}\nAmount to invest: ${amount_to_invest||'not specified'}\n\nExplain this investment topic thoroughly. Return JSON:\n{\n  "eli5": "explain it like I'm 5 years old",\n  "what_it_is": "clear definition",\n  "how_it_works": "mechanics",\n  "risks": [{"risk": "name", "level": "low/medium/high", "description": "what could go wrong"}],\n  "potential_returns": "realistic expectations",\n  "who_its_best_for": "ideal investor profile",\n  "who_should_avoid_it": "who shouldn't use this",\n  "example": {"scenario": "concrete dollar example", "outcome": "result"},\n  "common_mistakes": ["mistake beginners make"],\n  "how_to_start": ["step to get started"],\n  "key_terms": [{"term": "jargon", "meaning": "plain english"}]\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO investment_decoders (id,user_id,topic,explanation) VALUES (?,?,?,?)`).run(id, userId, topic, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/credit/coach', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { current_score, score_range, known_issues, goals } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a credit repair specialist.\n\nCurrent credit score: ${current_score}\nScore range: ${score_range||'not specified'}\nKnown issues: ${known_issues||'not sure'}\nGoals: ${goals||'improve credit score'}\n\nCreate a personalized credit improvement plan. Return JSON:\n{\n  "score_assessment": {"tier": "poor/fair/good/very good/excellent", "what_it_means": "practical implications"},\n  "biggest_factors": [{"factor": "factor name", "weight": "% of score", "your_status": "good/bad/unknown", "impact": "how this affects you"}],\n  "30_day_actions": [{"action": "specific thing to do", "impact": "expected score change", "difficulty": "easy/medium/hard"}],\n  "90_day_plan": "overview of first 3 months",\n  "timeline_to_goal": {"target_score": "number", "estimated_time": "months"},\n  "credit_myths": [{"myth": "common belief", "truth": "reality"}],\n  "disputes_to_consider": "when and how to dispute errors",\n  "tools_to_use": ["free resource or tool"]\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO credit_score_coaches (id,user_id,current_score,issues,plan) VALUES (?,?,?,?,?)`).run(id, userId, current_score, known_issues, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/tax/optimize', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { situation, income_type, deductions_taken, filing_status } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a tax strategist (note: educational information only, not professional tax advice).\n\nSituation: ${situation}\nIncome type: ${income_type||'W-2 employee'}\nDeductions taken: ${deductions_taken||'standard deduction'}\nFiling status: ${filing_status||'single'}\n\nIdentify tax optimization opportunities. Return JSON:\n{\n  "disclaimer": "brief reminder this is educational",\n  "situation_summary": "what kind of tax situation this is",\n  "opportunities": [{"strategy": "name", "description": "how it works", "potential_savings": "estimate", "who_qualifies": "requirements", "action": "what to do"}],\n  "deductions_to_check": [{"deduction": "name", "if_you_qualify": "criteria", "max_amount": "limit"}],\n  "timing_strategies": ["end of year move to consider"],\n  "retirement_tax_moves": ["tax-advantaged account strategy"],\n  "biggest_mistakes": ["common costly error"],\n  "questions_for_your_cpa": ["smart question to ask a tax professional"]\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO tax_optimizers (id,user_id,situation,advice) VALUES (?,?,?,?)`).run(id, userId, situation, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/wealth/roadmap', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { age, income, current_savings, goals, risk_tolerance } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a wealth building coach.\n\nAge: ${age}\nAnnual income: ${income}\nCurrent savings: ${current_savings||'$0'}\nFinancial goals: ${goals}\nRisk tolerance: ${risk_tolerance||'moderate'}\n\nCreate a comprehensive wealth building roadmap. Return JSON:\n{\n  "financial_snapshot": {"assessment": "honest evaluation", "net_worth_goal_by_50": "estimate"},\n  "wealth_stages": [{"stage": "name", "age_range": "X-Y", "focus": "main priority", "target": "specific milestone"}],\n  "immediate_priorities": [{"priority": 1, "action": "what to do first", "why": "reason", "target_amount": "goal"}],\n  "investment_allocation": [{"asset": "type", "percentage": "% of portfolio", "why": "rationale"}],\n  "retirement_projection": {"monthly_savings_needed": "amount", "at_current_rate": "you'll have $X at 65", "target_rate": "you need $Y monthly"},\n  "wealth_accelerators": ["high-impact move for this specific situation"],\n  "common_mistakes_for_your_stage": ["mistake people at this age/income make"],\n  "books_to_read": ["resource for next level"],\n  "5_year_action_plan": [{"year": 1, "focus": "priority", "milestone": "target"}]\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO wealth_roadmappers (id,user_id,age,income,goals,roadmap) VALUES (?,?,?,?,?,?)`).run(id, userId, age, income, goals, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});

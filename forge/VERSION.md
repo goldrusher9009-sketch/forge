@@ -1,3 +1,5 @@
+## v221.00 — Dream Mode Wave 49: Debt Strategist + Investment Decoder + Credit Score Coach + Tax Optimizer + Wealth Roadmapper
+
 ## v220.00 — Dream Mode Wave 48: Parenting Advisor + Family Meeting Planner + Chore Chart Builder + Bedtime Story Gen + College Prep Coach
 
 ## v219.00 — Dream Mode Wave 47: Startup Validator + Pitch Deck Builder + Investor Email + MVP Designer + Co-founder Matcher
