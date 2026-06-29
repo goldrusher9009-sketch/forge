@@ -179479,3 +179479,97 @@ app.post('/api/smallclaims/help', requireAuth, async (req: AuthRequest, res) => 
     res.json({ guide });
   } catch (e: any) { res.json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 86: ENVIRONMENTAL & SUSTAINABILITY AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS carbon_footprint_calculators (
+  id TEXT PRIMARY KEY, user_id TEXT, lifestyle TEXT, footprint TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS sustainable_living_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, current_habits TEXT, goals TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS eco_diet_planners (
+  id TEXT PRIMARY KEY, user_id TEXT, diet_style TEXT, constraints TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS green_home_optimizers (
+  id TEXT PRIMARY KEY, user_id TEXT, home_type TEXT, issues TEXT, optimization TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS climate_action_planners (
+  id TEXT PRIMARY KEY, user_id TEXT, context TEXT, action_plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/carbonfootprint/calculate', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { transportation, diet, energy, shopping } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a carbon footprint and environmental science expert. Calculate and analyze carbon footprint.\nTransportation: ${transportation||'car daily'}\nDiet: ${diet||'omnivore'}\nHome energy: ${energy||'standard'}\nShopping habits: ${shopping||'average consumer'}\nProvide: estimated annual CO2 footprint vs national average, breakdown by category (%, tons), top 3 reduction opportunities with impact, low/medium/high effort changes, and a 30/90/365-day reduction roadmap.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const footprint = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO carbon_footprint_calculators (id,user_id,lifestyle,footprint) VALUES (?,?,?,?)').run(id, userId, JSON.stringify({transportation,diet,energy,shopping}), footprint);
+    res.json({ footprint });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/sustainable/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { current_habits, budget, living_situation } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a sustainable living coach. Create a practical, impactful sustainable lifestyle plan.\nCurrent habits: ${current_habits}\nBudget: ${budget||'moderate'}\nLiving situation: ${living_situation||'apartment'}\nDeliver: quick wins (this week), medium-term swaps, high-impact changes, money-saving sustainability tips, sustainable swaps that cost nothing, recommended certifications/labels to look for, and community actions with multiplied impact.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO sustainable_living_coaches (id,user_id,current_habits,goals,plan) VALUES (?,?,?,?,?)').run(id, userId, current_habits, living_situation, plan);
+    res.json({ plan });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/ecodiet/plan', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { diet_style, restrictions, budget } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a planetary health and sustainable nutrition expert. Design an eco-friendly diet plan.\nCurrent diet: ${diet_style||'omnivore'}\nRestrictions: ${restrictions||'none'}\nBudget: ${budget||'moderate'}\nProvide: environmental impact of current diet, most impactful food swaps, planetary health plate breakdown, seasonal eating guide, low-carbon protein sources, sustainable grocery shopping tips, sample weekly meal plan, and how to reduce food waste.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO eco_diet_planners (id,user_id,diet_style,constraints,plan) VALUES (?,?,?,?,?)').run(id, userId, diet_style, restrictions, plan);
+    res.json({ plan });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/greenhome/optimize', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { home_type, biggest_energy_uses, budget } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a home energy efficiency and green building expert. Optimize this home for sustainability.\nHome type: ${home_type||'apartment'}\nBiggest energy uses: ${biggest_energy_uses||'heating, cooling, appliances'}\nBudget: ${budget||'moderate'}\nDeliver: energy audit checklist, free/low-cost improvements, medium investments with ROI, major upgrades (solar, heat pump) with payback periods, utility rebates to investigate, smart home tech recommendations, and estimated annual savings.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const optimization = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO green_home_optimizers (id,user_id,home_type,issues,optimization) VALUES (?,?,?,?,?)').run(id, userId, home_type, biggest_energy_uses, optimization);
+    res.json({ optimization });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/climateaction/plan', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { context, skills, time_available } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a climate action strategist. Create a personalized high-leverage climate action plan.\nContext: ${context||'concerned individual'}\nSkills/background: ${skills||'general'}\nTime available: ${time_available||'a few hours/week'}\nProvide: highest-leverage individual actions, community organizing opportunities, career-aligned climate roles, political actions (voting, advocacy), investment alignment, organizations to join, skills to develop, and a realistic 1-year action roadmap.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const action_plan = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO climate_action_planners (id,user_id,context,action_plan) VALUES (?,?,?,?)').run(id, userId, context, action_plan);
+    res.json({ action_plan });
+  } catch (e: any) { res.json({ error: e.message }); }
+});

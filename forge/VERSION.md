@@ -1,3 +1,5 @@
+## v258.00 — Dream Mode Wave 86: Environmental & Sustainability AI (Carbon Footprint Calculator + Sustainable Living Coach + Eco Diet Planner + Green Home Optimizer + Climate Action Planner)
+
 ## v257.00 — Dream Mode Wave 85: Legal Self-Help & Rights AI (Rights Explainer + Demand Letter Writer + Contract Clause Decoder + Tenant Rights Coach + Small Claims Helper)
 
 ## v256.00 — Dream Mode Wave 84: Parenting & Family AI (Parenting Coach + Family Meeting Facilitator + Teen Communicator + Screen Time Manager + Family Values Charter)
