@@ -175297,3 +175297,80 @@ app.post('/api/music/pitch', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 44: REAL ESTATE & HOME AI ───────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS home_buyers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS rent_analyzers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS mortgage_explainers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS neighborhood_scouts (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS home_renovators (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Home Buyer Guide
+app.post('/api/home/buy', requireAuth, async (req: any, res: any) => {
+  try {
+    const { budget, location, priorities, situation, timeline } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a comprehensive home buying guide for this buyer.\n\nBudget: ${budget}\nLocation: ${location}\nPriorities: ${priorities||'space, good schools, commute'}\nSituation: ${situation||'first-time buyer'}\nTimeline: ${timeline||'6 months'}\n\nRespond in JSON: { "readiness_assessment": "honest assessment of buyer readiness", "budget_breakdown": {"max_home_price":"how much home they can afford based on budget","down_payment":"recommended down payment","closing_costs":"estimated closing costs","monthly_payment_estimate":"estimated monthly all-in cost","emergency_fund_needed":"reserves to keep"}, "step_by_step_process": [{"step":"action","timing":"when to do it","why_it_matters":"importance"}], "must_ask_questions": ["question to ask seller/agent"], "red_flags_to_watch": ["warning sign in listing or inspection"], "negotiation_tips": ["tactic for this market"], "hidden_costs": ["unexpected expense new buyers miss"], "first_year_budget": "anticipated costs in first year beyond mortgage", "biggest_mistakes": ["error first-time buyers make"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO home_buyers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Rent Analyzer
+app.post('/api/rent/analyze', requireAuth, async (req: any, res: any) => {
+  try {
+    const { location, rent_amount, apartment_details, alternatives } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Analyze whether this rental is a good deal.\n\nLocation: ${location}\nRent amount: ${rent_amount}\nApartment details: ${apartment_details}\nAlternatives considered: ${alternatives||'none specified'}\n\nRespond in JSON: { "verdict": "good deal / fair / overpriced with brief reason", "market_context": "how this compares to typical rents in this area", "value_factors": [{"factor":"feature","assessment":"adds or detracts value","impact":"High/Medium/Low"}], "negotiation_potential": "likelihood of negotiating and by how much", "negotiation_script": "what to say to the landlord to negotiate rent", "what_to_ask_for": ["concession to request if price is firm"], "lease_clauses_to_watch": ["clause to read carefully or push back on"], "total_monthly_cost": "all-in monthly estimate including utilities, parking, etc.", "buy_vs_rent_note": "brief note on whether buying makes sense at this price point", "walkaway_threshold": "price/condition at which you should walk away" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO rent_analyzers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Mortgage Explainer
+app.post('/api/mortgage/explain', requireAuth, async (req: any, res: any) => {
+  try {
+    const { home_price, down_payment, credit_score, loan_type, questions } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Explain mortgage options and help this person understand their financing.\n\nHome price: ${home_price}\nDown payment: ${down_payment}\nCredit score: ${credit_score||'good (700+)'}\nLoan type interest: ${loan_type||'conventional'}\nSpecific questions: ${questions||'what are my options?'}\n\nRespond in JSON: { "loan_options": [{"type":"loan name","rate_estimate":"typical rate","pros":["advantage"],"cons":["disadvantage"],"best_for":"ideal buyer profile"}], "monthly_payment_breakdown": {"principal_interest":"estimated P&I","property_tax_estimate":"monthly tax estimate","insurance_estimate":"monthly insurance","pmi_if_applicable":"PMI if down payment under 20%","total":"all-in monthly estimate"}, "key_terms_explained": [{"term":"mortgage jargon","plain_english":"what it actually means"}], "questions_answered": "direct answer to their specific questions", "rate_shopping_tips": ["how to get the best rate"], "pre_approval_checklist": ["document/step needed for pre-approval"], "closing_cost_breakdown": "typical closing costs explained", "first_time_buyer_programs": "relevant assistance programs to research" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO mortgage_explainers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Neighborhood Scout
+app.post('/api/neighborhood/scout', requireAuth, async (req: any, res: any) => {
+  try {
+    const { neighborhood, priorities, lifestyle, budget_range } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Provide a detailed neighborhood analysis for a potential move.\n\nNeighborhood: ${neighborhood}\nBuyer priorities: ${priorities||'safety, walkability, schools'}\nLifestyle: ${lifestyle||'young family'}\nBudget range: ${budget_range||'not specified'}\n\nRespond in JSON: { "neighborhood_profile": "character and vibe in 3 sentences", "scores": {"walkability":"score and explanation","safety":"general notes (not specific crime stats)","schools":"reputation and options","transit":"public transport access","nightlife":"dining and entertainment","green_space":"parks and outdoor access"}, "who_lives_here": "demographic and lifestyle profile of typical resident", "pros": ["genuine advantage of this neighborhood"], "cons": ["honest drawback to consider"], "things_to_do_nearby": ["specific type of attraction or venue"], "what_to_research": ["specific thing to verify before committing"], "comparable_neighborhoods": ["similar area to also consider"], "trajectory": "is the neighborhood improving, stable, or declining?", "best_streets_or_pockets": "which sub-areas within the neighborhood are best" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO neighborhood_scouts (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Home Renovation Planner
+app.post('/api/home/renovate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { project, budget, home_type, diy_skill, goals } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Plan a home renovation project.\n\nProject: ${project}\nBudget: ${budget}\nHome type: ${home_type||'single family'}\nDIY skill level: ${diy_skill||'intermediate'}\nGoals: ${goals||'improve function and value'}\n\nRespond in JSON: { "project_overview": "scope and realistic expectations", "budget_breakdown": [{"category":"cost category","estimated_cost":"amount","notes":"what's included"}], "roi_estimate": "expected return on investment if selling", "diy_vs_hire": [{"task":"specific task","recommendation":"DIY or hire","reason":"why","diy_difficulty":"if DIY, skill level required"}], "phase_plan": [{"phase":"project phase","timeline":"duration","tasks":["specific tasks"],"dependencies":"what must happen first"}], "permit_requirements": "likely permits needed for this type of project", "materials_list": [{"item":"material","quantity_note":"how much roughly","where_to_buy":"type of supplier"}], "common_mistakes": ["costly error to avoid on this type of project"], "contractor_vetting": "how to find and vet contractors for this work", "contingency_advice": "how much to hold back for surprises" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO home_renovators (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
