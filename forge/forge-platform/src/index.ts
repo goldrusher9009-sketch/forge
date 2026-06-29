@@ -177347,3 +177347,87 @@ app.post('/api/money/mindset', requireAuth, async (req: AuthRequest, res) => {
     res.json(data);
   } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 63: PEAK PERFORMANCE AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS flow_state_optimizers (
+  id TEXT PRIMARY KEY, user_id TEXT, activity TEXT, blockers TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS cognitive_enhancers (
+  id TEXT PRIMARY KEY, user_id TEXT, goal TEXT, current_state TEXT, protocol TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS mental_models_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, problem TEXT, models_applied TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS decision_speed_trainers (
+  id TEXT PRIMARY KEY, user_id TEXT, decision TEXT, framework TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS performance_reviewers (
+  id TEXT PRIMARY KEY, user_id TEXT, period TEXT, wins TEXT, review TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/flow/optimize', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { activity, current_blockers, available_time, environment } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a flow state expert. Design a personalized flow state protocol. Activity: ${activity}. Blockers: ${current_blockers}. Available time: ${available_time}. Environment: ${environment}. Return JSON: { flow_state_diagnosis, your_flow_profile: { dominant_triggers, typical_blockers, ideal_conditions }, pre_flow_ritual: [{ step, duration, purpose }] (10 steps), environment_setup: { lighting, sound, temperature, tools, notifications }, flow_triggers_ranked: [{ trigger, how_to_use, time_to_flow }], anti_flow_list: [5 things to eliminate], flow_session_structure: { warm_up_minutes, peak_work_minutes, cool_down_minutes, optimal_session_count_per_day }, recovery_protocol, weekly_flow_schedule, flow_metrics_to_track: [5] }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO flow_state_optimizers VALUES (?,?,?,?,?,?)').run(uuidv4(), userId, activity, current_blockers, JSON.stringify(data), new Date().toISOString());
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cognitive/enhance', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { performance_goal, current_limitations, lifestyle } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a cognitive performance expert. Design an evidence-based cognitive enhancement protocol. Goal: ${performance_goal}. Limitations: ${current_limitations}. Lifestyle: ${lifestyle}. Return JSON: { cognitive_assessment, evidence_based_interventions: [{ intervention, mechanism, evidence_level, how_to_implement, expected_benefit, timeframe }], sleep_optimization: { target_hours, sleep_hygiene_protocol: [5 steps], sleep_quality_hacks: [5] }, nutrition_for_brain: { key_foods: [7], foods_to_avoid: [5], meal_timing }, exercise_protocol: { type, frequency, duration, cognitive_benefits }, mental_training: [{ practice, duration, frequency, benefit }], morning_protocol: [{ time, action, why }], 30_day_roadmap, expected_improvements_timeline }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO cognitive_enhancers VALUES (?,?,?,?,?)').run(uuidv4(), userId, performance_goal, current_limitations, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mental/models', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { problem_or_situation, domain, goal } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a mental models expert (Charlie Munger-style). Apply the most powerful mental models to this situation. Problem: ${problem_or_situation}. Domain: ${domain}. Goal: ${goal}. Return JSON: { situation_analysis, mental_models_applied: [{ model_name, origin_discipline, core_principle, how_it_applies_here, insight_generated, action_implication }] (7-9 models), synthesis: { key_insights: [5], recommended_action, what_most_people_miss, second_order_effects: [3] }, models_in_conflict: [{ model1, model2, how_to_resolve }], mental_model_learning_path: [{ model, why_learn_next, resource }] (5 models), decision_framework_from_models }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO mental_models_builders VALUES (?,?,?,?)').run(uuidv4(), userId, problem_or_situation, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/decision/speed', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { decision, stakes, time_pressure, available_info } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a rapid decision-making expert. Help make this decision fast and confidently. Decision: ${decision}. Stakes: ${stakes}. Time pressure: ${time_pressure}. Available info: ${available_info}. Return JSON: { decision_classification: { reversibility, stakes_level, urgency }, recommended_framework, 10_10_10_analysis: { in_10_minutes, in_10_months, in_10_years }, options: [{ option, pros: [3], cons: [3], probability_of_success, gut_check_score }], regret_minimization: { option_least_regret, why }, recommended_decision, confidence_level, key_assumptions, what_to_do_next_5_minutes: [3 immediate actions], decision_making_bias_check: [{ bias, am_i_affected, correction }], learn_from_this: { what_to_track, when_to_revisit } }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO decision_speed_trainers VALUES (?,?,?,?)').run(uuidv4(), userId, decision, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/performance/review', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { period, wins, losses, goals_set, key_learnings } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a peak performance coach. Conduct a deep performance review. Period: ${period}. Wins: ${wins}. Losses/challenges: ${losses}. Goals: ${goals_set}. Key learnings: ${key_learnings}. Return JSON: { performance_score (1-10), performance_summary, wins_analysis: [{ win, root_cause, how_to_repeat }], losses_analysis: [{ loss, root_cause, lesson, how_to_prevent }], patterns_identified: [{ pattern, positive_or_negative, action }], blind_spots: [3 things you might be missing], energy_audit: { high_energy_activities, low_energy_drains, optimization }, goals_for_next_period: [{ goal, why_this_goal, how_to_achieve, metric_to_track }] (5 goals), performance_upgrade_plan: [{ area, current, target, action }], one_thing_that_will_change_everything, personal_operating_system_updates: [3 rule changes] }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO performance_reviewers VALUES (?,?,?,?,?)').run(uuidv4(), userId, period, wins, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
