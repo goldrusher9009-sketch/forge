@@ -174296,3 +174296,80 @@ app.post('/api/energy/map', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 31: CREATIVE WRITING AI ─────────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS short_stories (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, story TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS poem_crafters (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, poem TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS screenplay_scenes (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, scene TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS memoir_drafts (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, draft TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS satire_pieces (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, piece TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Short Story Generator
+app.post('/api/shortstory/write', requireAuth, async (req: any, res: any) => {
+  try {
+    const { premise, genre, tone, length, pov } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a compelling short story.\n\nPremise: ${premise}\nGenre: ${genre||'literary fiction'}\nTone: ${tone||'contemplative'}\nLength: ${length||'flash fiction (500 words)'}\nPoint of view: ${pov||'third person'}\n\nRespond in JSON: { "title": "story title", "hook": "opening line", "story": "the full story text", "themes": ["theme1","theme2"], "craft_notes": {"technique_used":"what literary technique this employs","why_it_works":"brief analysis"} }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO short_stories (id,user_id,context,story) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Poem Crafter
+app.post('/api/poem/craft', requireAuth, async (req: any, res: any) => {
+  try {
+    const { subject, form, mood, imagery } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Craft a beautiful poem.\n\nSubject: ${subject}\nForm: ${form||'free verse'}\nMood/emotion: ${mood||'reflective'}\nImagery to include: ${imagery||'natural world'}\n\nRespond in JSON: { "title": "poem title", "poem": "the full poem with line breaks as \\n", "form_notes": "what form this uses and why", "imagery_analysis": "key images and what they evoke", "interpretation": "what this poem is really about", "alternative_title": "another title option" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO poem_crafters (id,user_id,context,poem) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Screenplay Scene Writer
+app.post('/api/screenplay/scene', requireAuth, async (req: any, res: any) => {
+  try {
+    const { setup, characters, conflict, location, genre } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a professional screenplay scene.\n\nSetup: ${setup}\nCharacters: ${characters}\nConflict: ${conflict||'underlying tension'}\nLocation: ${location||'unspecified'}\nGenre: ${genre||'drama'}\n\nRespond in JSON: { "scene_heading": "INT. LOCATION - TIME", "scene": "full screenplay formatted scene with action lines and dialogue", "subtext": "what the scene is really about beneath the dialogue", "character_notes": [{"character":"name","objective":"what they want in this scene","obstacle":"what's in their way"}], "director_note": "visual suggestion for this scene", "setup_payoff": "what this scene sets up for later" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO screenplay_scenes (id,user_id,context,scene) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Memoir Draft Writer
+app.post('/api/memoir/draft', requireAuth, async (req: any, res: any) => {
+  try {
+    const { memory, emotion, lesson, era } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Help write a memoir passage about this memory.\n\nMemory/event: ${memory}\nCore emotion: ${emotion||'complex'}\nLesson or insight: ${lesson||'to be discovered in writing'}\nTime period: ${era||'unspecified'}\n\nRespond in JSON: { "opening": "scene-setting opening paragraph", "draft": "full memoir passage (600-800 words) in first person, present tense for immediacy", "reflection": "the reflective closing that zooms out to meaning", "sensory_details": ["detail1","detail2","detail3"], "revision_notes": ["what to strengthen in revision","another suggestion"], "alternate_opening": "different way to start this piece" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO memoir_drafts (id,user_id,context,draft) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Satire Piece Generator
+app.post('/api/satire/write', requireAuth, async (req: any, res: any) => {
+  try {
+    const { target, angle, format, tone } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a sharp satirical piece.\n\nTarget/subject: ${target}\nSatirical angle: ${angle||'absurdist'}\nFormat: ${format||'short essay / opinion piece'}\nTone: ${tone||'dry wit'}\n\nRespond in JSON: { "headline": "satirical headline", "subheadline": "supporting deck", "piece": "the full satirical piece", "technique": "what satirical technique this uses (Swiftian irony, absurdism, parody, etc.)", "the_real_critique": "what this is actually criticizing beneath the humor", "best_line": "the sharpest line in the piece" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO satire_pieces (id,user_id,context,piece) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
