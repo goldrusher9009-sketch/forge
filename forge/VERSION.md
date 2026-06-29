@@ -1,3 +1,10 @@
+## v194.00 — Dream Mode Wave 22: Performance Review Writer + Salary Research + Offer Comparison + Career Pivot Planner + LinkedIn Message Optimizer
+- 📊 Performance Review Writer: self-review with quantified impact, growth narrative, and strong closing ask
+- 💰 Salary Research: market percentiles + negotiation leverage + talking points
+- ⚖️ Offer Comparison: side-by-side matrix, total comp estimates, winner + negotiation opportunities
+- 🔄 Career Pivot Planner: 30/60/90 day action plan, skill gap analysis, portfolio project
+- 💼 LinkedIn Message Optimizer: 3 message styles that get replies + follow-up template
+
 ## v193.00 — Dream Mode Wave 21: Plot Twist Generator + Character Creator + World Builder + Dialogue Coach + Book Blurb Writer
 - 🌀 Plot Twist Generator: 5 unexpected twists with setup foreshadowing and shock rating
 - 👤 Character Creator: deep profile with wound, want, need, flaw, arc and quirks

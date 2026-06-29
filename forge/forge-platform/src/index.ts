@@ -173600,3 +173600,81 @@ app.post('/api/blurb/write', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 22: Career & Productivity AI ──
+
+db.prepare(`CREATE TABLE IF NOT EXISTS perf_reviews (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, review TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS salary_research (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, research TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS offer_comparisons (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, comparison TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS career_pivots (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS linkedin_msgs (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, messages TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Performance Review Writer
+app.post('/api/perf-review/write', requireAuth, async (req: any, res: any) => {
+  try {
+    const { role, achievements, areas_for_growth, goals_next_period, tone } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a compelling performance self-review that positions the employee favorably.\n\nRole: ${role}\nKey achievements: ${achievements}\nAreas for growth: ${areas_for_growth||'communication, delegation'}\nGoals next period: ${goals_next_period||'lead a major project'}\nTone: ${tone||'confident and professional'}\n\nRespond in JSON: { "executive_summary": "2-3 sentence opening statement", "achievements": [{"achievement":"what you did","impact":"quantified business impact","skill_demonstrated":"leadership/technical/etc"}], "growth_areas": [{"area":"area name","action_taken":"what you did about it","progress":"measurable progress"}], "goals_next_period": [{"goal":"goal","why_it_matters":"strategic importance","how_to_achieve":"specific plan"}], "closing_statement": "strong closing that asks for next step (promotion/raise/responsibility)" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO perf_reviews (id,user_id,context,review) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Salary Research
+app.post('/api/salary/research', requireAuth, async (req: any, res: any) => {
+  try {
+    const { role, years_exp, location, industry, company_size, current_salary } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Provide salary market data and negotiation positioning based on your training data.\n\nRole: ${role}\nYears experience: ${years_exp}\nLocation: ${location||'US remote'}\nIndustry: ${industry||'tech'}\nCompany size: ${company_size||'mid-size'}\nCurrent salary: ${current_salary||'not specified'}\n\nRespond in JSON: { "market_data": { "p25": "$X", "p50_median": "$X", "p75": "$X", "p90": "$X" }, "total_comp_note": "equity/bonus typical ranges", "your_target_range": { "floor": "$X", "target": "$X", "stretch": "$X" }, "negotiation_leverage": ["leverage point 1","leverage point 2"], "talking_points": ["point1","point2","point3"], "red_flags": ["if company offers below X"], "data_sources_to_cite": ["Levels.fyi","Glassdoor","Blind","LinkedIn Salary"], "disclaimer": "data from training set, verify with current sources" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO salary_research (id,user_id,context,research) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Job Offer Comparison
+app.post('/api/offer/compare', requireAuth, async (req: any, res: any) => {
+  try {
+    const { offers, priorities } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Compare these job offers and give a clear recommendation.\n\nOffers: ${JSON.stringify(offers)}\nPersonal priorities: ${priorities||'compensation, growth, work-life balance'}\n\nRespond in JSON: { "comparison_matrix": [{"factor":"Base Salary","weights":"high/medium/low",...offerScores}], "total_comp_estimates": [{"offer_name":"...","year1_total":"$X","year2_total":"$X"}], "winner": "offer name", "why_winner": "3 clear reasons", "watch_outs": {"offer_name":["risk1","risk2"]}, "negotiation_opportunities": [{"offer":"...","ask_for":"...","how_much":"..."}] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO offer_comparisons (id,user_id,context,comparison) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Career Pivot Planner
+app.post('/api/career-pivot/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { current_role, target_role, timeline, transferable_skills, constraints } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a realistic career pivot plan.\n\nCurrent: ${current_role}\nTarget: ${target_role}\nTimeline: ${timeline||'12 months'}\nTransferable skills: ${transferable_skills||'project management, communication'}\nConstraints: ${constraints||'full-time job, limited study time'}\n\nRespond in JSON: { "feasibility": "high/medium/low", "feasibility_reason": "why", "skill_gap_analysis": [{"skill":"needed skill","current_level":"none/basic/intermediate","how_to_learn":"specific resource","time_needed":"X weeks"}], "30_day_plan": ["action1","action2","action3","action4","action5"], "60_day_plan": ["action1","action2","action3"], "90_day_plan": ["action1","action2","action3"], "networking_strategy": "specific approach for this pivot", "portfolio_project": "one project to build that proves capability", "first_job_title": "realistic first role to target", "salary_expectation": "likely initial salary range for this pivot" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO career_pivots (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// LinkedIn Message Optimizer
+app.post('/api/linkedin/message', requireAuth, async (req: any, res: any) => {
+  try {
+    const { your_background, target_person, target_company, goal, original_message } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write 3 LinkedIn messages that will actually get a reply.\n\nYour background: ${your_background}\nTarget person: ${target_person}\nTarget company: ${target_company}\nGoal: ${goal||'informational interview'}\nOriginal message (if any): ${original_message||'none — write from scratch'}\n\nRespond in JSON: { "messages": [{"style":"ultra-short","message":"under 75 words","why_it_works":"..."},{"style":"value-first","message":"lead with what you can offer","why_it_works":"..."},{"style":"mutual connection","message":"find a hook or commonality","why_it_works":"..."}], "subject_line_options": ["option1","option2"], "timing_tip": "when to send for best open rate", "follow_up_template": "if no reply in 5 days..." }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO linkedin_msgs (id,user_id,context,messages) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
