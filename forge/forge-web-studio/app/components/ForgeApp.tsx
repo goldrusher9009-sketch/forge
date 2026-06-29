@@ -614,7 +614,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'debate2'|'timecapsule'|'codeexplain'|'ideavalidator'|'tonerewriter'|'resumebuilder'|'emailnegotiator'|'storygen2'|'meetingsum'|'competitorspy'|'ailawyer'|'financeadvisor'|'languagetutor'|'flashcardgen'|'linkedinopt'|'speechwriter'|'pricenegotiator'|'emailroastv2'|'startupnamer'|'coverlettergen'|'interviewcoach'|'colddmwriter'|'fitnessplanner'|'recipegen2'|'travelplanner'|'apologyletter'|'leasereview'|'booksummarizer'|'quizgen'|'salaryneg'|'breakupletter'|'bizplan'|'viralhooks'|'dreaminterp'|'roastgen'|'futureself'|'resumebullets'|'meetingbuilder'|'gratitudereflect'|'coldpitch'|'moodtracker'|'habitjournal'|'lifegoals'|'standupwriter'|'conflictresolve'|'priceanchor'|'linkedinbio'|'failurecv'|'morningritual'|'apologytext'|'excusegen'|'ventmode'|'personalbrand'|'weeklyreview'|'negotiationsim'|'challengebuilder'|'therapyletter'|'podcastpitch'|'grantproposal'|'burnletter'|'decisionoracle'|'complimentengine'|'manifestowriter'|'debateprep14'|'eulogywriter'|'villainorigin'|'secretadmirer'|'legacyletter'|'lovelanguage'|'resumeroast'|'coldemailanalyze'|'pitchdeckcritic'|'refletter'|'offereval'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
+  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'debate2'|'timecapsule'|'codeexplain'|'ideavalidator'|'tonerewriter'|'resumebuilder'|'emailnegotiator'|'storygen2'|'meetingsum'|'competitorspy'|'ailawyer'|'financeadvisor'|'languagetutor'|'flashcardgen'|'linkedinopt'|'speechwriter'|'pricenegotiator'|'emailroastv2'|'startupnamer'|'coverlettergen'|'interviewcoach'|'colddmwriter'|'fitnessplanner'|'recipegen2'|'travelplanner'|'apologyletter'|'leasereview'|'booksummarizer'|'quizgen'|'salaryneg'|'breakupletter'|'bizplan'|'viralhooks'|'dreaminterp'|'roastgen'|'futureself'|'resumebullets'|'meetingbuilder'|'gratitudereflect'|'coldpitch'|'moodtracker'|'habitjournal'|'lifegoals'|'standupwriter'|'conflictresolve'|'priceanchor'|'linkedinbio'|'failurecv'|'morningritual'|'apologytext'|'excusegen'|'ventmode'|'personalbrand'|'weeklyreview'|'negotiationsim'|'challengebuilder'|'therapyletter'|'podcastpitch'|'grantproposal'|'burnletter'|'decisionoracle'|'complimentengine'|'manifestowriter'|'debateprep14'|'eulogywriter'|'villainorigin'|'secretadmirer'|'legacyletter'|'lovelanguage'|'resumeroast'|'coldemailanalyze'|'pitchdeckcritic'|'refletter'|'offereval'|'datingbio'|'dateplanner'|'relcheckin'|'breakuprecover'|'flirtytext'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -6891,6 +6891,11 @@ export default function ForgeApp() {
             { id:'pitchdeckcritic', icon:'📊', label:'Pitch Deck Critic' },
             { id:'refletter', icon:'✉️', label:'Reference Letter' },
             { id:'offereval', icon:'💼', label:'Job Offer Evaluator' },
+            { id:'datingbio', icon:'💘', label:'Tinder Bio Writer' },
+            { id:'dateplanner', icon:'📅', label:'First Date Planner' },
+            { id:'relcheckin', icon:'💑', label:'Relationship Check-In' },
+            { id:'breakuprecover', icon:'💔', label:'Breakup Recovery' },
+            { id:'flirtytext', icon:'😏', label:'Flirty Text Generator' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -17431,6 +17436,265 @@ export default function ForgeApp() {
                   {result.hidden_considerations?.length > 0 && <div style={{ background: '#1f2937', borderRadius: 12, padding: '1rem', border: '1px solid #374151' }}>
                     <div style={{ color: '#8b5cf6', fontWeight: 600, marginBottom: '0.5rem' }}>🔮 Hidden Considerations</div>
                     {result.hidden_considerations.map((c: string, i: number) => <div key={i} style={{ color: '#d1d5db', fontSize: 13, marginBottom: '0.25rem' }}>• {c}</div>)}
+                  </div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 17: Tinder Bio Writer ───────────────────────────── */}
+        {(mainTab as string) === 'datingbio' && (() => {
+          const [form, setForm] = (React as any).useState({ age: '', interests: '', personality: '', looking_for: '', platform: 'Tinder' });
+          const [result, setResult] = (React as any).useState<any>(null);
+          const [loading, setLoading] = (React as any).useState(false);
+          const [copied, setCopied] = (React as any).useState<number|null>(null);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            if (!form.interests) return;
+            setLoading(true);
+            const r = await fetch(`${API}/api/dating-bio/generate`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) });
+            const d = await r.json(); setResult(d); setLoading(false);
+          };
+          const vibeColors: any = { playful: '#f59e0b', genuine: '#10b981', intriguing: '#8b5cf6' };
+          return (
+            <div style={{ padding: '2rem', maxWidth: 700, margin: '0 auto' }}>
+              <h2 style={{ color: '#ec4899', marginBottom: '0.5rem' }}>💘 Tinder Bio Writer</h2>
+              <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>3 magnetic bios in different vibes. Pick your favorite.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                {[['age','Age',''],['platform','Platform','Tinder']].map(([k,ph,def]) => (
+                  <input key={k} value={(form as any)[k]} onChange={(e: any) => setForm((f: any) => ({...f,[k]:e.target.value}))} placeholder={ph} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
+                ))}
+              </div>
+              {[['interests','Interests (hobbies, passions, quirks)'],['personality','Personality in 3 words'],['looking_for','What you\'re looking for']].map(([k,ph]) => (
+                <input key={k} value={(form as any)[k]} onChange={(e: any) => setForm((f: any) => ({...f,[k]:e.target.value}))} placeholder={ph} style={{ width: '100%', background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13, marginBottom: '0.75rem', boxSizing: 'border-box' as const }} />
+              ))}
+              <button onClick={generate} disabled={loading || !form.interests} style={{ background: loading ? '#374151' : '#ec4899', color: '#fff', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{loading ? 'Writing...' : '💘 Generate Bios'}</button>
+              {result?.bios && (
+                <div style={{ marginTop: '2rem' }}>
+                  {result.bios.map((b: any, i: number) => (
+                    <div key={i} style={{ background: '#1f2937', borderRadius: 12, padding: '1.25rem', marginBottom: '1rem', border: `1px solid ${vibeColors[b.vibe]||'#374151'}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                        <span style={{ background: vibeColors[b.vibe]||'#374151', color: '#fff', borderRadius: 20, padding: '0.2rem 0.75rem', fontSize: 12, fontWeight: 600, textTransform: 'capitalize' as const }}>{b.vibe}</span>
+                        <button onClick={() => { navigator.clipboard.writeText(b.bio); setCopied(i); setTimeout(() => setCopied(null), 2000); }} style={{ background: '#374151', color: '#d1d5db', border: 'none', borderRadius: 6, padding: '0.3rem 0.7rem', cursor: 'pointer', fontSize: 12 }}>{copied === i ? '✓ Copied' : 'Copy'}</button>
+                      </div>
+                      <p style={{ color: '#e5e7eb', fontSize: 14, lineHeight: 1.6, margin: '0 0 0.75rem' }}>{b.bio}</p>
+                      {b.hook_line && <div style={{ background: '#111827', borderRadius: 6, padding: '0.5rem 0.75rem', color: '#fbbf24', fontSize: 12 }}>💬 Opening line: "{b.hook_line}"</div>}
+                    </div>
+                  ))}
+                  {result.pro_tips?.length > 0 && <div style={{ background: '#1f2937', borderRadius: 10, padding: '1rem', border: '1px solid #374151' }}>
+                    <div style={{ color: '#ec4899', fontWeight: 600, marginBottom: '0.5rem' }}>Pro Tips</div>
+                    {result.pro_tips.map((t: string, i: number) => <div key={i} style={{ color: '#d1d5db', fontSize: 13, marginBottom: '0.25rem' }}>• {t}</div>)}
+                  </div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 17: First Date Planner ──────────────────────────── */}
+        {(mainTab as string) === 'dateplanner' && (() => {
+          const [form, setForm] = (React as any).useState({ match_vibe: '', interests_shared: '', location_type: 'city', budget: 'moderate', time_of_day: 'evening' });
+          const [result, setResult] = (React as any).useState<any>(null);
+          const [loading, setLoading] = (React as any).useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const plan = async () => {
+            setLoading(true);
+            const r = await fetch(`${API}/api/date-planner/plan`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) });
+            const d = await r.json(); setResult(d); setLoading(false);
+          };
+          return (
+            <div style={{ padding: '2rem', maxWidth: 700, margin: '0 auto' }}>
+              <h2 style={{ color: '#f59e0b', marginBottom: '0.5rem' }}>📅 First Date Planner</h2>
+              <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>Perfect first date with conversation starters included.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                <input value={form.match_vibe} onChange={(e: any) => setForm((f: any) => ({...f,match_vibe:e.target.value}))} placeholder="Match vibe (e.g. adventurous, artsy)" style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
+                <input value={form.interests_shared} onChange={(e: any) => setForm((f: any) => ({...f,interests_shared:e.target.value}))} placeholder="Shared interests" style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
+                <select value={form.budget} onChange={(e: any) => setForm((f: any) => ({...f,budget:e.target.value}))} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }}>
+                  {['budget','moderate','splurge'].map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+                <select value={form.time_of_day} onChange={(e: any) => setForm((f: any) => ({...f,time_of_day:e.target.value}))} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }}>
+                  {['morning','afternoon','evening','night'].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <button onClick={plan} disabled={loading} style={{ background: loading ? '#374151' : '#f59e0b', color: '#111', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{loading ? 'Planning...' : '📅 Plan Date'}</button>
+              {result && (
+                <div style={{ marginTop: '2rem' }}>
+                  <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.5rem', border: '1px solid #374151', marginBottom: '1rem' }}>
+                    <div style={{ color: '#fbbf24', fontWeight: 600, marginBottom: '0.75rem' }}>✨ The Plan</div>
+                    <p style={{ color: '#d1d5db', fontSize: 13, lineHeight: 1.6, margin: 0 }}>{result.date_plan}</p>
+                  </div>
+                  {result.activities?.length > 0 && <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.5rem', border: '1px solid #374151', marginBottom: '1rem' }}>
+                    <div style={{ color: '#f59e0b', fontWeight: 600, marginBottom: '0.75rem' }}>🗓 Activities</div>
+                    {result.activities.map((a: any, i: number) => <div key={i} style={{ marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: i < result.activities.length - 1 ? '1px solid #374151' : 'none' }}>
+                      <div style={{ color: '#e5e7eb', fontWeight: 600, fontSize: 14 }}>{a.name} <span style={{ color: '#6b7280', fontWeight: 400, fontSize: 12 }}>({a.duration})</span></div>
+                      <div style={{ color: '#9ca3af', fontSize: 12 }}>{a.why}</div>
+                    </div>)}
+                  </div>}
+                  <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.5rem', border: '1px solid #374151' }}>
+                    <div style={{ color: '#10b981', fontWeight: 600, marginBottom: '0.75rem' }}>💬 Conversation Starters</div>
+                    {result.conversation_starters?.map((q: string, i: number) => <div key={i} style={{ color: '#d1d5db', fontSize: 13, marginBottom: '0.5rem', paddingLeft: '0.75rem', borderLeft: '2px solid #10b981' }}>{q}</div>)}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 17: Relationship Check-In ───────────────────────── */}
+        {(mainTab as string) === 'relcheckin' && (() => {
+          const [form, setForm] = (React as any).useState({ relationship_length: '', recent_challenge: '', what_is_working: '', love_languages: '', last_quality_time: '' });
+          const [result, setResult] = (React as any).useState<any>(null);
+          const [loading, setLoading] = (React as any).useState(false);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const checkin = async () => {
+            if (!form.relationship_length) return;
+            setLoading(true);
+            const r = await fetch(`${API}/api/relationship/checkin`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) });
+            const d = await r.json(); setResult(d); setLoading(false);
+          };
+          const scoreColor = (s: number) => s >= 80 ? '#10b981' : s >= 60 ? '#f59e0b' : '#ef4444';
+          return (
+            <div style={{ padding: '2rem', maxWidth: 700, margin: '0 auto' }}>
+              <h2 style={{ color: '#ec4899', marginBottom: '0.5rem' }}>💑 Relationship Check-In</h2>
+              <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>Honest reflection on your relationship health.</p>
+              {[['relationship_length','How long have you been together?'],['what_is_working','What\'s working well?'],['recent_challenge','Recent challenge you\'re facing'],['love_languages','Your love languages (if known)'],['last_quality_time','When did you last have quality time?']].map(([k,ph]) => (
+                <input key={k} value={(form as any)[k]} onChange={(e: any) => setForm((f: any) => ({...f,[k]:e.target.value}))} placeholder={ph} style={{ width: '100%', background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13, marginBottom: '0.75rem', boxSizing: 'border-box' as const }} />
+              ))}
+              <button onClick={checkin} disabled={loading || !form.relationship_length} style={{ background: loading ? '#374151' : '#ec4899', color: '#fff', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{loading ? 'Reflecting...' : '💑 Run Check-In'}</button>
+              {result && (
+                <div style={{ marginTop: '2rem' }}>
+                  <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.5rem', border: '1px solid #374151', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div><div style={{ color: '#e5e7eb', fontWeight: 600, marginBottom: '0.5rem' }}>Relationship Health</div><p style={{ color: '#9ca3af', fontSize: 13, margin: 0 }}>{result.assessment}</p></div>
+                    <div style={{ textAlign: 'center' as const, minWidth: 80 }}><div style={{ fontSize: '2.5rem', fontWeight: 700, color: scoreColor(result.health_score) }}>{result.health_score}</div><div style={{ color: '#6b7280', fontSize: 11 }}>/100</div></div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    <div style={{ background: '#1f2937', borderRadius: 12, padding: '1rem', border: '1px solid #374151' }}>
+                      <div style={{ color: '#10b981', fontWeight: 600, marginBottom: '0.5rem' }}>💚 Strengths</div>
+                      {result.strengths?.map((s: string, i: number) => <div key={i} style={{ color: '#d1d5db', fontSize: 12, marginBottom: '0.25rem' }}>• {s}</div>)}
+                    </div>
+                    <div style={{ background: '#1f2937', borderRadius: 12, padding: '1rem', border: '1px solid #374151' }}>
+                      <div style={{ color: '#f59e0b', fontWeight: 600, marginBottom: '0.5rem' }}>🌱 Growth Areas</div>
+                      {result.growth_areas?.map((g: string, i: number) => <div key={i} style={{ color: '#d1d5db', fontSize: 12, marginBottom: '0.25rem' }}>• {g}</div>)}
+                    </div>
+                  </div>
+                  <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.5rem', border: '1px solid #374151', marginBottom: '1rem' }}>
+                    <div style={{ color: '#ec4899', fontWeight: 600, marginBottom: '0.75rem' }}>💬 Reflection Prompts for You Two</div>
+                    {result.reflection_prompts?.map((p: string, i: number) => <div key={i} style={{ color: '#d1d5db', fontSize: 13, marginBottom: '0.5rem', paddingLeft: '0.75rem', borderLeft: '2px solid #ec4899' }}>{p}</div>)}
+                  </div>
+                  {result.this_week_action && <div style={{ background: '#111827', borderRadius: 10, padding: '1rem', border: '1px solid #ec4899' }}>
+                    <div style={{ color: '#f9fafb', fontWeight: 600, fontSize: 13 }}>🎯 This Week: {result.this_week_action}</div>
+                  </div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 17: Breakup Recovery Plan ───────────────────────── */}
+        {(mainTab as string) === 'breakuprecover' && (() => {
+          const [form, setForm] = (React as any).useState({ relationship_length: '', how_long_ago: '', who_ended_it: 'them', current_feeling: '', support_system: '' });
+          const [result, setResult] = (React as any).useState<any>(null);
+          const [loading, setLoading] = (React as any).useState(false);
+          const [phase, setPhase] = (React as any).useState<'week1'|'week2'|'month1'>('week1');
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const planRecover = async () => {
+            if (!form.current_feeling) return;
+            setLoading(true);
+            const r = await fetch(`${API}/api/breakup-recovery/plan`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) });
+            const d = await r.json(); setResult(d); setLoading(false);
+          };
+          const phaseMap: any = { week1: 'week_1', week2: 'week_2', month1: 'month_1' };
+          return (
+            <div style={{ padding: '2rem', maxWidth: 700, margin: '0 auto' }}>
+              <h2 style={{ color: '#818cf8', marginBottom: '0.5rem' }}>💔 Breakup Recovery Plan</h2>
+              <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>Your personalized healing roadmap. You've got this.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <input value={form.relationship_length} onChange={(e: any) => setForm((f: any) => ({...f,relationship_length:e.target.value}))} placeholder="Relationship length" style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
+                <input value={form.how_long_ago} onChange={(e: any) => setForm((f: any) => ({...f,how_long_ago:e.target.value}))} placeholder="How long ago did it end?" style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
+                <select value={form.who_ended_it} onChange={(e: any) => setForm((f: any) => ({...f,who_ended_it:e.target.value}))} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }}>
+                  {['them','me','mutual'].map(o => <option key={o} value={o}>{o} ended it</option>)}
+                </select>
+                <input value={form.support_system} onChange={(e: any) => setForm((f: any) => ({...f,support_system:e.target.value}))} placeholder="Support system (friends, family, therapist?)" style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
+              </div>
+              <textarea value={form.current_feeling} onChange={(e: any) => setForm((f: any) => ({...f,current_feeling:e.target.value}))} placeholder="How are you feeling right now? Be honest." rows={3} style={{ width: '100%', background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13, resize: 'vertical', boxSizing: 'border-box' as const, marginBottom: '1rem' }} />
+              <button onClick={planRecover} disabled={loading || !form.current_feeling} style={{ background: loading ? '#374151' : '#818cf8', color: '#fff', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{loading ? 'Building plan...' : '💔 Build Recovery Plan'}</button>
+              {result && (
+                <div style={{ marginTop: '2rem' }}>
+                  {result.honest_truth && <div style={{ background: '#1e1b4b', borderRadius: 10, padding: '1rem', border: '1px solid #818cf8', marginBottom: '1.5rem' }}>
+                    <div style={{ color: '#a5b4fc', fontSize: 13, fontStyle: 'italic' }}>"{result.honest_truth}"</div>
+                  </div>}
+                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                    {(['week1','week2','month1'] as const).map(p => <button key={p} onClick={() => setPhase(p)} style={{ background: phase === p ? '#818cf8' : '#374151', color: '#fff', border: 'none', borderRadius: 8, padding: '0.5rem 1rem', cursor: 'pointer', fontSize: 13 }}>{p === 'month1' ? 'Month 1' : p === 'week1' ? 'Week 1' : 'Week 2'}</button>)}
+                  </div>
+                  {result[phaseMap[phase]] && <div style={{ background: '#1f2937', borderRadius: 12, padding: '1.5rem', border: '1px solid #374151', marginBottom: '1rem' }}>
+                    <div style={{ color: '#818cf8', fontWeight: 600, marginBottom: '0.75rem' }}>{result[phaseMap[phase]].theme}</div>
+                    {(result[phaseMap[phase]].daily_actions || result[phaseMap[phase]].milestones)?.map((a: string, i: number) => <div key={i} style={{ color: '#d1d5db', fontSize: 13, marginBottom: '0.5rem' }}>✓ {a}</div>)}
+                  </div>}
+                  {result.affirmations?.length > 0 && <div style={{ background: '#1f2937', borderRadius: 12, padding: '1rem', border: '1px solid #374151', marginBottom: '1rem' }}>
+                    <div style={{ color: '#10b981', fontWeight: 600, marginBottom: '0.5rem' }}>🌱 Affirmations</div>
+                    {result.affirmations.map((a: string, i: number) => <div key={i} style={{ color: '#6ee7b7', fontSize: 13, marginBottom: '0.25rem', fontStyle: 'italic' }}>"{a}"</div>)}
+                  </div>}
+                  {result.green_flags_youre_healing?.length > 0 && <div style={{ background: '#1f2937', borderRadius: 12, padding: '1rem', border: '1px solid #374151' }}>
+                    <div style={{ color: '#f59e0b', fontWeight: 600, marginBottom: '0.5rem' }}>💛 Signs You're Healing</div>
+                    {result.green_flags_youre_healing.map((g: string, i: number) => <div key={i} style={{ color: '#d1d5db', fontSize: 13, marginBottom: '0.25rem' }}>• {g}</div>)}
+                  </div>}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ── WAVE 17: Flirty Text Generator ───────────────────────── */}
+        {(mainTab as string) === 'flirtytext' && (() => {
+          const [form, setForm] = (React as any).useState({ situation: '', their_last_message: '', relationship_stage: 'early flirting', your_vibe: 'playful' });
+          const [result, setResult] = (React as any).useState<any>(null);
+          const [loading, setLoading] = (React as any).useState(false);
+          const [copied, setCopied] = (React as any).useState<number|null>(null);
+          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+          const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+          const generate = async () => {
+            setLoading(true);
+            const r = await fetch(`${API}/api/flirty-text/generate`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) });
+            const d = await r.json(); setResult(d); setLoading(false);
+          };
+          const toneColors: any = { playful: '#f59e0b', confident: '#8b5cf6', charming: '#ec4899' };
+          return (
+            <div style={{ padding: '2rem', maxWidth: 700, margin: '0 auto' }}>
+              <h2 style={{ color: '#f472b6', marginBottom: '0.5rem' }}>😏 Flirty Text Generator</h2>
+              <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>Witty, confident messages for every stage.</p>
+              <textarea value={form.situation} onChange={(e: any) => setForm((f: any) => ({...f,situation:e.target.value}))} placeholder="Situation context (e.g. matched on Hinge, been texting 2 days, she likes hiking)" rows={3} style={{ width: '100%', background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13, resize: 'vertical', boxSizing: 'border-box' as const, marginBottom: '0.75rem' }} />
+              <textarea value={form.their_last_message} onChange={(e: any) => setForm((f: any) => ({...f,their_last_message:e.target.value}))} placeholder="Their last message (optional)" rows={2} style={{ width: '100%', background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13, resize: 'vertical', boxSizing: 'border-box' as const, marginBottom: '0.75rem' }} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                <select value={form.relationship_stage} onChange={(e: any) => setForm((f: any) => ({...f,relationship_stage:e.target.value}))} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }}>
+                  {['just matched','early flirting','been on a date','dating','long-term'].map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <select value={form.your_vibe} onChange={(e: any) => setForm((f: any) => ({...f,your_vibe:e.target.value}))} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }}>
+                  {['playful','confident','sincere','mysterious'].map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+              <button onClick={generate} disabled={loading || !form.situation} style={{ background: loading ? '#374151' : '#f472b6', color: '#fff', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{loading ? 'Writing...' : '😏 Generate Texts'}</button>
+              {result?.messages && (
+                <div style={{ marginTop: '2rem' }}>
+                  {result.messages.map((m: any, i: number) => (
+                    <div key={i} style={{ background: '#1f2937', borderRadius: 12, padding: '1.25rem', marginBottom: '1rem', border: `1px solid ${toneColors[m.tone]||'#374151'}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                        <span style={{ background: toneColors[m.tone]||'#374151', color: '#fff', borderRadius: 20, padding: '0.2rem 0.75rem', fontSize: 12, fontWeight: 600, textTransform: 'capitalize' as const }}>{m.tone}</span>
+                        <button onClick={() => { navigator.clipboard.writeText(m.text); setCopied(i); setTimeout(() => setCopied(null), 2000); }} style={{ background: '#374151', color: '#d1d5db', border: 'none', borderRadius: 6, padding: '0.3rem 0.7rem', cursor: 'pointer', fontSize: 12 }}>{copied === i ? '✓' : 'Copy'}</button>
+                      </div>
+                      <div style={{ background: '#111827', borderRadius: 8, padding: '0.75rem 1rem', color: '#f9fafb', fontSize: 14, marginBottom: '0.5rem' }}>"{m.text}"</div>
+                      {m.why_it_works && <div style={{ color: '#6b7280', fontSize: 12 }}>💡 {m.why_it_works}</div>}
+                    </div>
+                  ))}
+                  {result.conversation_tip && <div style={{ background: '#1f2937', borderRadius: 10, padding: '1rem', border: '1px solid #374151', marginBottom: '0.75rem' }}>
+                    <span style={{ color: '#f472b6', fontWeight: 600 }}>Tip: </span><span style={{ color: '#d1d5db', fontSize: 13 }}>{result.conversation_tip}</span>
+                  </div>}
+                  {result.red_flags_to_avoid && <div style={{ background: '#1f2937', borderRadius: 10, padding: '1rem', border: '1px solid #ef4444' }}>
+                    <span style={{ color: '#ef4444', fontWeight: 600 }}>⚠️ Avoid: </span><span style={{ color: '#d1d5db', fontSize: 13 }}>{result.red_flags_to_avoid}</span>
                   </div>}
                 </div>
               )}
@@ -34761,227 +35025,4 @@ export default function ForgeApp() {
             <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
               <div style={{ display:'flex', gap:6 }}>
                 {['😊','😐','😔','🔥','😤','🤔','😴'].map(emoji=>(
-                  <button key={emoji} onClick={()=>setNewMoodEmoji(emoji)} style={{ fontSize:24, background:newMoodEmoji===emoji?'var(--accent)22':'none', border:newMoodEmoji===emoji?'2px solid var(--accent)':'2px solid transparent', borderRadius:8, cursor:'pointer', padding:4 }}>{emoji}</button>
-                ))}
-              </div>
-              <input type="range" min={1} max={5} value={newMoodScore} onChange={e=>setNewMoodScore(Number(e.target.value))} style={{ width:100 }} />
-              <span style={{ color:'var(--fg-text)', fontWeight:700 }}>{newMoodScore}/5</span>
-              <button onClick={async()=>{ await fetch('/api/workspace-mood',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({mood:newMoodEmoji,score:newMoodScore})}); const [r,t]=await Promise.all([fetch('/api/workspace-mood',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}),fetch('/api/workspace-mood/trend',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}})]); setWsMoods(await r.json()); setWsMoodTrend(await t.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Log Mood</button>
-            </div>
-            <button onClick={async()=>{ const [r,t]=await Promise.all([fetch('/api/workspace-mood',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}),fetch('/api/workspace-mood/trend',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}})]); setWsMoods(await r.json()); setWsMoodTrend(await t.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Mood Log</button>
-            {wsMoodTrend && (
-              <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:16, marginBottom:16 }}>
-                <div style={{ color:'var(--fg-text)', fontWeight:600, marginBottom:8 }}>14-Day Average: <span style={{ color:'var(--accent)', fontSize:20 }}>{wsMoodTrend.average_score}/5</span></div>
-                <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-                  {(wsMoodTrend.entries||[]).map((e:any)=>(
-                    <div key={e.log_date} style={{ textAlign:'center', padding:'4px 8px', background:'var(--bg-input)', borderRadius:6 }}>
-                      <div style={{ fontSize:18 }}>{e.mood}</div>
-                      <div style={{ color:'var(--fg-text3)', fontSize:10 }}>{e.log_date?.slice(5)}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Reading Progress tab */}
-        {mainTab==='readprog' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📖 Reading Progress</div>
-            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-              <input value={newRpTitle} onChange={e=>setNewRpTitle(e.target.value)} placeholder="Book/article title..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <input value={newRpUrl} onChange={e=>setNewRpUrl(e.target.value)} placeholder="URL (optional)..." style={{ flex:1, minWidth:160, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <input type="number" value={newRpPages} onChange={e=>setNewRpPages(Number(e.target.value))} placeholder="Total pages" style={{ width:100, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <button onClick={async()=>{ if(!newRpTitle.trim()) return; await fetch('/api/reading-progress',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newRpTitle,url:newRpUrl,total_pages:newRpPages})}); setNewRpTitle(''); setNewRpUrl(''); setNewRpPages(0); const r=await fetch('/api/reading-progress',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setReadProgress(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Add</button>
-            </div>
-            <button onClick={async()=>{ const r=await fetch('/api/reading-progress',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setReadProgress(await r.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load List</button>
-            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-              {readProgress.map((rp:any)=>(
-                <div key={rp.id} style={{ background:'var(--bg-card)', border:`1px solid ${rp.status==='done'?'#22c55e':'var(--border)'}`, borderRadius:12, padding:16 }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 }}>
-                    <div>
-                      <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{rp.title}</div>
-                      {rp.url && <a href={rp.url} target="_blank" rel="noreferrer" style={{ color:'var(--accent)', fontSize:12 }}>🔗 Open</a>}
-                    </div>
-                    <div style={{ display:'flex', gap:4 }}>
-                      <select value={rp.status} onChange={async e=>{ await fetch(`/api/reading-progress/${rp.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({status:e.target.value})}); const r=await fetch('/api/reading-progress',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setReadProgress(await r.json()); }} style={{ padding:'3px 6px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:6, color:'var(--fg-text)', fontSize:11 }}>
-                        <option value="reading">Reading</option><option value="done">Done</option><option value="paused">Paused</option><option value="dropped">Dropped</option>
-                      </select>
-                      <button onClick={async()=>{ await fetch(`/api/reading-progress/${rp.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setReadProgress(readProgress.filter((x:any)=>x.id!==rp.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
-                    </div>
-                  </div>
-                  {rp.total_pages > 0 && (
-                    <div>
-                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
-                        <span style={{ color:'var(--fg-text3)', fontSize:12 }}>Page {rp.current_page}/{rp.total_pages}</span>
-                        <span style={{ color:'var(--accent)', fontSize:12, fontWeight:600 }}>{Math.round(rp.current_page/rp.total_pages*100)}%</span>
-                      </div>
-                      <div style={{ height:6, background:'var(--bg-input)', borderRadius:3 }}>
-                        <div style={{ height:'100%', background:'var(--accent)', borderRadius:3, width:`${Math.min(100,Math.round(rp.current_page/rp.total_pages*100))}%` }} />
-                      </div>
-                      <div style={{ display:'flex', gap:4, marginTop:8 }}>
-                        <input type="number" placeholder="Current page" defaultValue={rp.current_page} onBlur={async(e)=>{ await fetch(`/api/reading-progress/${rp.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({current_page:Number(e.target.value)})}); const r=await fetch('/api/reading-progress',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setReadProgress(await r.json()); }} style={{ width:100, padding:'4px 8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:6, color:'var(--fg-text)', fontSize:12 }} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-              {readProgress.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No books tracked yet.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* AI Debate tab */}
-        {mainTab==='aidebate' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🎙 AI Debate Generator</div>
-            <div style={{ display:'flex', gap:8, marginBottom:16 }}>
-              <input value={newDebateTopic} onChange={e=>setNewDebateTopic(e.target.value)} placeholder="Enter debate topic (e.g. 'Remote work vs office')..." style={{ flex:1, padding:'10px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <button onClick={async()=>{ if(!newDebateTopic.trim()) return; const r=await fetch('/api/ai-debates/generate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({topic:newDebateTopic})}); const debate=await r.json(); setDebates([debate,...debates]); setNewDebateTopic(''); }} style={{ padding:'10px 20px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:14 }}>Generate Debate</button>
-            </div>
-            <button onClick={async()=>{ const r=await fetch('/api/ai-debates',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.pro_points=JSON.parse(x.pro_points);x.con_points=JSON.parse(x.con_points);}catch{}}); setDebates(data); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load History</button>
-            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-              {debates.map((db29:any)=>(
-                <div key={db29.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:20 }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:12 }}>
-                    <div style={{ color:'var(--fg-text)', fontWeight:700, fontSize:16 }}>⚖️ {db29.topic}</div>
-                    <button onClick={async()=>{ await fetch(`/api/ai-debates/${db29.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setDebates(debates.filter((x:any)=>x.id!==db29.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
-                  </div>
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:12 }}>
-                    <div style={{ background:'#22c55e11', border:'1px solid #22c55e44', borderRadius:8, padding:12 }}>
-                      <div style={{ color:'#22c55e', fontWeight:600, marginBottom:8 }}>✅ Pro</div>
-                      {(Array.isArray(db29.pro_points)?db29.pro_points:[]).map((p:string,i:number)=><div key={i} style={{ color:'var(--fg-text)', fontSize:13, marginBottom:6, lineHeight:1.4 }}>• {p}</div>)}
-                    </div>
-                    <div style={{ background:'#ef444411', border:'1px solid #ef444444', borderRadius:8, padding:12 }}>
-                      <div style={{ color:'#ef4444', fontWeight:600, marginBottom:8 }}>❌ Con</div>
-                      {(Array.isArray(db29.con_points)?db29.con_points:[]).map((p:string,i:number)=><div key={i} style={{ color:'var(--fg-text)', fontSize:13, marginBottom:6, lineHeight:1.4 }}>• {p}</div>)}
-                    </div>
-                  </div>
-                  {db29.verdict && <div style={{ color:'var(--fg-text2)', fontSize:13, padding:'10px 14px', background:'var(--bg-input)', borderRadius:8, fontStyle:'italic' }}>🏛 {db29.verdict}</div>}
-                </div>
-              ))}
-              {debates.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:48 }}>Enter a topic above to generate a debate.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* Idea Inbox tab */}
-        {mainTab==='ideainbox' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📥 Idea Inbox</div>
-            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-              <input value={newIdeaContent} onChange={e=>setNewIdeaContent(e.target.value)} placeholder="Capture an idea..." style={{ flex:1, minWidth:200, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <select value={newIdeaPriority} onChange={e=>setNewIdeaPriority(Number(e.target.value))} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
-                <option value={0}>Low</option><option value={1}>Medium</option><option value={2}>High</option>
-              </select>
-              <button onClick={async()=>{ if(!newIdeaContent.trim()) return; await fetch('/api/idea-inbox',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({content:newIdeaContent,priority:newIdeaPriority})}); setNewIdeaContent(''); const [r,s]=await Promise.all([fetch('/api/idea-inbox',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}),fetch('/api/idea-inbox/stats',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}})]); const data=await r.json(); data.forEach((x:any)=>{try{x.tags=JSON.parse(x.tags);}catch{x.tags=[];}}); setIdeaInbox(data); setIdeaStats(await s.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Capture</button>
-            </div>
-            <button onClick={async()=>{ const [r,s]=await Promise.all([fetch('/api/idea-inbox',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}),fetch('/api/idea-inbox/stats',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}})]); const data=await r.json(); data.forEach((x:any)=>{try{x.tags=JSON.parse(x.tags);}catch{x.tags=[];}}); setIdeaInbox(data); setIdeaStats(await s.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Ideas</button>
-            {ideaStats && (
-              <div style={{ display:'flex', gap:10, marginBottom:16, flexWrap:'wrap' }}>
-                {[['🆕 New',ideaStats.new,'var(--accent)'],['⚡ Active',ideaStats.in_progress,'#f59e0b'],['✅ Done',ideaStats.done,'#22c55e'],['📦 Archived',ideaStats.archived,'var(--fg-text3)']].map(([k,v,col])=>(
-                  <div key={String(k)} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'8px 16px', textAlign:'center' }}>
-                    <div style={{ color:String(col), fontSize:20, fontWeight:700 }}>{v}</div>
-                    <div style={{ color:'var(--fg-text3)', fontSize:11 }}>{k}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {ideaInbox.map((idea:any)=>(
-                <div key={idea.id} style={{ display:'flex', gap:12, alignItems:'flex-start', background:'var(--bg-card)', border:`2px solid ${idea.priority===2?'#f59e0b':idea.priority===1?'var(--accent)':'var(--border)'}`, borderRadius:10, padding:'12px 14px' }}>
-                  <div style={{ flex:1 }}>
-                    <div style={{ color:'var(--fg-text)', fontSize:14, lineHeight:1.5 }}>{idea.content}</div>
-                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{idea.created_at?.slice(0,10)} · {idea.status}</div>
-                  </div>
-                  <div style={{ display:'flex', gap:4, flexShrink:0 }}>
-                    <select value={idea.status} onChange={async e=>{ await fetch(`/api/idea-inbox/${idea.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({status:e.target.value})}); const r=await fetch('/api/idea-inbox',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.tags=JSON.parse(x.tags);}catch{x.tags=[];}}); setIdeaInbox(data); }} style={{ padding:'3px 6px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:6, color:'var(--fg-text)', fontSize:11 }}>
-                      <option value="new">New</option><option value="in_progress">Active</option><option value="done">Done</option><option value="archived">Archive</option>
-                    </select>
-                    <button onClick={async()=>{ await fetch(`/api/idea-inbox/${idea.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setIdeaInbox(ideaInbox.filter((x:any)=>x.id!==idea.id)); }} style={{ padding:'3px 8px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11 }}>Del</button>
-                  </div>
-                </div>
-              ))}
-              {ideaInbox.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>Inbox zero! Capture an idea above.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* Session Plans tab */}
-        {mainTab==='sessionplans' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🗓 Session Plans</div>
-            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-              <input value={newSpTitle} onChange={e=>setNewSpTitle(e.target.value)} placeholder="Session title..." style={{ flex:1, minWidth:150, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <textarea value={newSpGoals} onChange={e=>setNewSpGoals(e.target.value)} placeholder="Goals (one per line)..." rows={3} style={{ flex:2, minWidth:200, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
-              <input type="date" value={newSpDate} onChange={e=>setNewSpDate(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <button onClick={async()=>{ if(!newSpTitle.trim()) return; const goals=newSpGoals.split('\n').filter(Boolean); await fetch('/api/session-plans',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({title:newSpTitle,goals,planned_at:newSpDate||new Date().toISOString().split('T')[0]})}); setNewSpTitle(''); setNewSpGoals(''); const r=await fetch('/api/session-plans',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.goals=JSON.parse(x.goals);}catch{x.goals=[];}}); setSessionPlans(data); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Plan</button>
-            </div>
-            <button onClick={async()=>{ const r=await fetch('/api/session-plans',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.goals=JSON.parse(x.goals);}catch{x.goals=[];}}); setSessionPlans(data); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Plans</button>
-            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-              {sessionPlans.map((sp:any)=>(
-                <div key={sp.id} style={{ background:'var(--bg-card)', border:`1px solid ${sp.status==='done'?'#22c55e':'var(--border)'}`, borderRadius:12, padding:16 }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
-                    <div>
-                      <div style={{ color:'var(--fg-text)', fontWeight:600 }}>{sp.title}</div>
-                      <div style={{ color:'var(--fg-text3)', fontSize:12 }}>{sp.planned_at} · {sp.status}</div>
-                    </div>
-                    <div style={{ display:'flex', gap:6 }}>
-                      {sp.status!=='done' && <button onClick={async()=>{ await fetch(`/api/session-plans/${sp.id}/status`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({status:'done'})}); const r=await fetch('/api/session-plans',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); const data=await r.json(); data.forEach((x:any)=>{try{x.goals=JSON.parse(x.goals);}catch{x.goals=[];}}); setSessionPlans(data); }} style={{ padding:'4px 10px', background:'#22c55e', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>✓ Done</button>}
-                      <button onClick={async()=>{ await fetch(`/api/session-plans/${sp.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setSessionPlans(sessionPlans.filter((x:any)=>x.id!==sp.id)); }} style={{ padding:'4px 10px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>Del</button>
-                    </div>
-                  </div>
-                  {(Array.isArray(sp.goals)?sp.goals:[]).map((g:string,i:number)=>(
-                    <div key={i} style={{ display:'flex', gap:6, alignItems:'center', marginBottom:3 }}>
-                      <span style={{ color:'var(--accent)', fontSize:12 }}>•</span>
-                      <span style={{ color:'var(--fg-text2)', fontSize:13 }}>{g}</span>
-                    </div>
-                  ))}
-                </div>
-              ))}
-              {sessionPlans.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No session plans yet.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* Thread Dependencies tab */}
-        {mainTab==='threaddeps' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>🔗 Thread Dependencies</div>
-            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
-              <input value={newDepSrc} onChange={e=>setNewDepSrc(e.target.value)} placeholder="Source thread ID..." style={{ width:130, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <span style={{ color:'var(--fg-text3)', fontSize:13 }}>depends on</span>
-              <input value={newDepTgt} onChange={e=>setNewDepTgt(e.target.value)} placeholder="Target thread ID..." style={{ width:130, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <button onClick={async()=>{ if(!newDepSrc||!newDepTgt) return; const resp=await fetch('/api/thread-dependencies',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({source_thread_id:Number(newDepSrc),target_thread_id:Number(newDepTgt)})}); if(resp.ok){setNewDepSrc('');setNewDepTgt('');const r=await fetch('/api/thread-dependencies',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}});setThreadDeps(await r.json());} }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Link</button>
-              <button onClick={async()=>{ const r=await fetch('/api/thread-dependencies',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadDeps(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
-            </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {threadDeps.map((dep:any)=>(
-                <div key={dep.id} style={{ display:'flex', alignItems:'center', gap:10, background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 14px' }}>
-                  <div style={{ flex:1, display:'flex', alignItems:'center', gap:8 }}>
-                    <span style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{dep.source_title||`#${dep.source_thread_id}`}</span>
-                    <span style={{ color:'var(--accent)', fontSize:12 }}>→ depends on →</span>
-                    <span style={{ color:'var(--fg-text)', fontSize:13, fontWeight:600 }}>{dep.target_title||`#${dep.target_thread_id}`}</span>
-                  </div>
-                  <button onClick={async()=>{ await fetch(`/api/thread-dependencies/${dep.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setThreadDeps(threadDeps.filter((x:any)=>x.id!==dep.id)); }} style={{ padding:'4px 10px', background:'#ef4444', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>Unlink</button>
-                </div>
-              ))}
-              {threadDeps.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32 }}>No dependencies. Link threads above.</div>}
-            </div>
-          </div>
-        )}
-
-        {/* WS Changelog tab */}
-        {mainTab==='wschangelog' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📝 Workspace Changelog</div>
-            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-              <input value={newClVersion} onChange={e=>setNewClVersion(e.target.value)} placeholder="v1.0.0" style={{ width:90, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <input value={newClSummary} onChange={e=>setNewClSummary(e.target.value)} placeholder="What changed..." style={{ flex:1, minWidth:200, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <button onClick={async()=>{ if(!newClVersion.trim()||!newClSummary.trim()) return; await fetch('/api/workspace-changelog',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify({version:newClVersion,summary:newClSummary,log_date:new Date().toISOString().split('T')[0]})}); setNewClVersion(''); setNewClSummary(''); const r=await fetch('/api/workspace-changelog',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsChangelog(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Log</button>
-            </div>
-            <button onClick={async()=>{ const r=await fetch('/api/workspace-changelog',{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsChangelog(await r.json()); }} style={{ padding:'6px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer', marginBottom:16 }}>Load Log</button>
-            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-              {wsChangelog.map((entry:any)=>(
-                <div key={entry.id} style={{ display:'flex', gap:12,
+                  <button key={emoji} onClick={()=>setNewMoodEmoji(emoji)} style={{ fontSize:24, background:newMoodEmoj

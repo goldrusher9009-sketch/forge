@@ -173189,3 +173189,81 @@ app.get('/api/offer-evaluator/history', requireAuth, (req: any, res: any) => {
     res.json(rows);
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 17: Dating & Relationships ──
+
+db.prepare(`CREATE TABLE IF NOT EXISTS tinder_bios (id TEXT PRIMARY KEY, user_id TEXT, bio TEXT, hooks TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS date_plans (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS relationship_checkins (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, health_score INTEGER, analysis TEXT, prompts TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS breakup_recovery (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS flirty_texts (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, messages TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Tinder Bio Writer
+app.post('/api/dating-bio/generate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { age, interests, personality, looking_for, platform } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write 3 magnetic dating profile bios for ${platform||'Tinder'}.\n\nAge: ${age||'mid-20s'}\nInterests: ${interests}\nPersonality: ${personality}\nLooking for: ${looking_for||'something real'}\n\nMake them witty, specific, and authentic. Each should have a different vibe (playful, genuine, intriguing).\n\nRespond in JSON: { "bios": [{"vibe":"playful","bio":"...","hook_line":"opening line if they match"},{"vibe":"genuine","bio":"...","hook_line":"..."},{"vibe":"intriguing","bio":"...","hook_line":"..."}], "pro_tips": ["tip1","tip2"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO tinder_bios (id,user_id,bio,hooks) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(data.bios), JSON.stringify(data.pro_tips));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// First Date Planner
+app.post('/api/date-planner/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { match_vibe, interests_shared, location_type, budget, time_of_day } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Plan an amazing first date.\n\nVibe: ${match_vibe||'fun and casual'}\nShared interests: ${interests_shared||'unknown'}\nLocation: ${location_type||'city'}\nBudget: ${budget||'moderate'}\nTime: ${time_of_day||'evening'}\n\nRespond in JSON: { "date_plan": "full narrative description of the date", "activities": [{"name":"...","why":"...","duration":"..."}], "conversation_starters": ["q1","q2","q3","q4","q5"], "avoid_topics": ["topic1","topic2"], "backup_plan": "if something goes wrong...", "vibe_score": "how this date will feel" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO date_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Relationship Check-In
+app.post('/api/relationship/checkin', requireAuth, async (req: any, res: any) => {
+  try {
+    const { relationship_length, recent_challenge, what_is_working, love_languages, last_quality_time } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Analyze this relationship and provide a health check-in.\n\nLength: ${relationship_length}\nRecent challenge: ${recent_challenge||'none mentioned'}\nWhat's working: ${what_is_working}\nLove languages: ${love_languages||'unknown'}\nLast quality time: ${last_quality_time||'recently'}\n\nRespond in JSON: { "health_score": number_0_to_100, "assessment": "paragraph assessment", "strengths": ["s1","s2"], "growth_areas": ["g1","g2"], "reflection_prompts": ["prompt1","prompt2","prompt3","prompt4"], "date_idea": "specific date idea for your stage", "this_week_action": "one thing to do this week" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO relationship_checkins (id,user_id,context,health_score,analysis,prompts) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), data.health_score, data.assessment, JSON.stringify(data.reflection_prompts));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Breakup Recovery Plan
+app.post('/api/breakup-recovery/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { relationship_length, how_long_ago, who_ended_it, current_feeling, support_system } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a personalized breakup recovery plan with compassion and practicality.\n\nRelationship length: ${relationship_length}\nTime since breakup: ${how_long_ago}\nWho ended it: ${who_ended_it||'them'}\nCurrent feeling: ${current_feeling}\nSupport system: ${support_system||'some friends'}\n\nRespond in JSON: { "week_1": {"theme":"...","daily_actions":["a1","a2","a3"]}, "week_2": {"theme":"...","daily_actions":["a1","a2","a3"]}, "month_1": {"theme":"...","milestones":["m1","m2","m3"]}, "affirmations": ["aff1","aff2","aff3"], "avoid_list": ["what not to do"], "green_flags_youre_healing": ["sign1","sign2","sign3"], "honest_truth": "something kind but true they need to hear" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO breakup_recovery (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Flirty Text Generator
+app.post('/api/flirty-text/generate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { situation, their_last_message, relationship_stage, your_vibe } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Generate witty, charming text message responses.\n\nSituation: ${situation}\nTheir last message: "${their_last_message||'just started talking'}"\nRelationship stage: ${relationship_stage||'early flirting'}\nYour vibe: ${your_vibe||'playful'}\n\nRespond in JSON: { "messages": [{"tone":"playful","text":"...","why_it_works":"..."},{"tone":"confident","text":"...","why_it_works":"..."},{"tone":"charming","text":"...","why_it_works":"..."}], "conversation_tip": "one tip for this specific stage", "red_flags_to_avoid": "what not to say here" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO flirty_texts (id,user_id,context,messages) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data.messages));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});

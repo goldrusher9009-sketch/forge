@@ -1,3 +1,10 @@
+## v189.00 — Dream Mode Wave 17: Tinder Bio Writer + First Date Planner + Relationship Check-In + Breakup Recovery Plan + Flirty Text Generator
+- 💘 Tinder Bio Writer: 3 magnetic bios in different vibes (playful, genuine, intriguing) with hook lines
+- 📅 First Date Planner: personalized date plan with activities, conversation starters, and backup plan
+- 💑 Relationship Check-In: health score, strengths, growth areas, reflection prompts, this-week action
+- 💔 Breakup Recovery Plan: week-by-week healing roadmap with affirmations and green flags
+- 😏 Flirty Text Generator: 3 witty responses per scenario with tone labels and why-it-works explanations
+
 ## v188.00 — Dream Mode Wave 16: Roast My Resume + Cold Email Analyzer + Pitch Deck Critic + Reference Letter Generator + Job Offer Evaluator
 - 🔥 Roast My Resume: brutal AI critique with score, top issues, bright spots, and savage one-liner
 - 📧 Cold Email Analyzer: score breakdown across subject/opening/CTA + full rewrite + 3 subject alternatives
