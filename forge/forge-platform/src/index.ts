@@ -179103,3 +179103,97 @@ app.post('/api/difficultconv/guide', requireAuth, async (req: AuthRequest, res) 
     res.json({ script });
   } catch (e: any) { res.json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 82: BUSINESS OPERATIONS & PRODUCTIVITY AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS sop_generators (
+  id TEXT PRIMARY KEY, user_id TEXT, process TEXT, department TEXT, sop TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS kpi_designers (
+  id TEXT PRIMARY KEY, user_id TEXT, role TEXT, goals TEXT, kpis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS meeting_designers (
+  id TEXT PRIMARY KEY, user_id TEXT, purpose TEXT, attendees TEXT, design TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS delegation_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, tasks TEXT, team TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS workflow_optimizers (
+  id TEXT PRIMARY KEY, user_id TEXT, current_workflow TEXT, pain_points TEXT, optimization TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/sop/generate', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { process, department, frequency } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a business operations expert. Create a comprehensive Standard Operating Procedure.\nProcess: ${process}\nDepartment: ${department||'general'}\nFrequency: ${frequency||'recurring'}\nProvide: Purpose & scope, prerequisites, step-by-step procedure with decision points, roles and responsibilities (RACI), quality checks, common errors to avoid, revision history section, and emergency escalation path.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const sop = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO sop_generators (id,user_id,process,department,sop) VALUES (?,?,?,?,?)').run(id, userId, process, department, sop);
+    res.json({ sop });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/kpi/design', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { role, goals, team_size } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a KPI and performance management expert. Design a comprehensive KPI framework.\nRole: ${role}\nGoals: ${goals}\nTeam size: ${team_size||'individual'}\nDeliver: 5-7 primary KPIs (with measurement method, target, frequency), 3-5 leading indicators, 3-5 lagging indicators, a simple dashboard design, monthly review cadence, and how to cascade KPIs to team members.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const kpis = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO kpi_designers (id,user_id,role,goals,kpis) VALUES (?,?,?,?,?)').run(id, userId, role, goals, kpis);
+    res.json({ kpis });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/meeting/design', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { purpose, attendees, duration, recurring } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a meeting design and facilitation expert. Design an effective meeting structure.\nPurpose: ${purpose}\nAttendees: ${attendees}\nDuration: ${duration||'60 minutes'}\nRecurring: ${recurring||'one-time'}\nDeliver: Pre-meeting prep (what to send, what to decide beforehand), timed agenda with facilitation notes, decision-making framework for this meeting, participation techniques, action item capture template, and a shorter alternative if people resist.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const design = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO meeting_designers (id,user_id,purpose,attendees,design) VALUES (?,?,?,?,?)').run(id, userId, purpose, attendees, design);
+    res.json({ design });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/delegation/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { tasks, team_description, current_struggles } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a delegation and leadership coach. Build a delegation framework.\nTasks to delegate: ${tasks}\nTeam: ${team_description||'small team'}\nCurrent struggles: ${current_struggles||'doing too much myself'}\nProvide: delegation decision matrix (what to delegate vs keep), for each task: who, how to hand off, success criteria, check-in schedule; how to build trust with delegation; scripts for giving delegated tasks; and a 30-day delegation plan.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO delegation_coaches (id,user_id,tasks,team,plan) VALUES (?,?,?,?,?)').run(id, userId, tasks, team_description, plan);
+    res.json({ plan });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/workflow/optimize', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { current_workflow, pain_points, goal } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a workflow and process optimization expert. Redesign this workflow for maximum efficiency.\nCurrent workflow: ${current_workflow}\nPain points: ${pain_points}\nOptimization goal: ${goal||'reduce time and errors'}\nDeliver: bottleneck analysis, waste identification (lean/6-sigma lens), redesigned workflow step-by-step, automation opportunities, tool recommendations, estimated time/cost savings, and implementation timeline.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const optimization = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO workflow_optimizers (id,user_id,current_workflow,pain_points,optimization) VALUES (?,?,?,?,?)').run(id, userId, current_workflow, pain_points, optimization);
+    res.json({ optimization });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
