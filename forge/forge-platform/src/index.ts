@@ -173911,3 +173911,80 @@ app.post('/api/welcome-sequence/build', requireAuth, async (req: any, res: any) 
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 26: PERSONAL FINANCE AI ─────────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS debt_payoff_plans (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS budget_builders (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, budget TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS investment_explainers (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, explanation TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS fire_calculators (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS side_hustle_plans (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Debt Payoff Planner
+app.post('/api/debt/payoff-plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { debts, monthly_extra, strategy } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a debt payoff plan.\n\nDebts: ${JSON.stringify(debts)}\nExtra monthly payment available: $${monthly_extra||0}\nStrategy preference: ${strategy||'avalanche (highest interest first)'}\n\nRespond in JSON: { "strategy_chosen": "name", "why": "why this strategy fits", "payoff_order": [{"debt_name":"name","balance":0,"rate":0,"min_payment":0,"extra_allocation":0,"payoff_months":0,"total_interest":0}], "total_debt": 0, "total_interest_paid": 0, "payoff_date": "estimated month/year", "interest_saved_vs_minimum": 0, "quick_wins": ["actionable tip1","tip2"], "motivation": "encouraging message" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO debt_payoff_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Budget Builder
+app.post('/api/budget/build', requireAuth, async (req: any, res: any) => {
+  try {
+    const { monthly_income, fixed_expenses, variable_expenses, goals } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a monthly budget.\n\nMonthly income: $${monthly_income}\nFixed expenses: ${JSON.stringify(fixed_expenses||[])}\nVariable expenses: ${JSON.stringify(variable_expenses||[])}\nFinancial goals: ${goals||'build emergency fund, invest'}\n\nRespond in JSON: { "budget_framework": "50/30/20 or custom", "categories": [{"category":"name","budgeted":0,"percentage":0,"type":"need/want/savings","notes":"advice"}], "total_income": 0, "total_expenses": 0, "surplus_or_deficit": 0, "emergency_fund_timeline": "months to 3-6 month fund", "savings_rate": "percentage", "areas_to_cut": ["suggestion1","suggestion2"], "30_day_challenge": "one specific action this month" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO budget_builders (id,user_id,context,budget) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Investment Explainer
+app.post('/api/investment/explain', requireAuth, async (req: any, res: any) => {
+  try {
+    const { topic, experience_level } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Explain this investment concept clearly.\n\nTopic: ${topic}\nExperience level: ${experience_level||'beginner'}\n\nRespond in JSON: { "concept": "topic name", "eli5": "explain like I'm 5", "how_it_works": "clear explanation", "pros": ["pro1","pro2","pro3"], "cons": ["con1","con2","con3"], "real_example": "concrete real-world example", "who_its_for": "ideal investor profile", "common_mistakes": ["mistake1","mistake2"], "next_steps": "what to do if interested", "disclaimer": "this is educational, not financial advice" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO investment_explainers (id,user_id,topic,explanation) VALUES (?,?,?,?)`).run(id, req.user.id, topic, JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// FIRE Calculator
+app.post('/api/fire/calculate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { age, income, expenses, savings, investments, fire_type } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Calculate FIRE number and timeline.\n\nCurrent age: ${age}\nAnnual income: $${income}\nAnnual expenses: $${expenses}\nCurrent savings: $${savings||0}\nCurrent investments: $${investments||0}\nFIRE type: ${fire_type||'regular FIRE'}\n\nRespond in JSON: { "fire_type": "type chosen", "annual_expenses": 0, "fire_number": 0, "fire_number_explanation": "how calculated (25x rule)", "current_net_worth": 0, "gap_to_fire": 0, "years_to_fire": 0, "fire_age": 0, "savings_rate": "percentage", "monthly_savings_needed": 0, "milestones": [{"milestone":"25% FI","amount":0,"estimated_year":""},{"milestone":"50% FI","amount":0,"estimated_year":""},{"milestone":"FI","amount":0,"estimated_year":""}], "ways_to_accelerate": ["tip1","tip2","tip3"], "safe_withdrawal_rate": "4% rule explanation" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO fire_calculators (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Side Hustle Planner
+app.post('/api/side-hustle/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { skills, time_available, income_goal, capital } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a personalized side hustle plan.\n\nSkills/interests: ${skills}\nHours per week available: ${time_available||10}\nMonthly income goal: $${income_goal||500}\nStartup capital: $${capital||0}\n\nRespond in JSON: { "recommended_hustles": [{"name":"hustle name","match_score":"high/medium","why_good_fit":"reason","earning_potential":"$X-$Y/month","startup_cost":"$X","time_to_first_dollar":"X weeks/months","how_to_start":"step by step"}], "30_day_action_plan": ["week1","week2","week3","week4"], "tools_needed": ["tool1","tool2"], "avoid_these": ["common mistake1","mistake2"], "scaling_path": "how to grow from side hustle to full business" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO side_hustle_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
