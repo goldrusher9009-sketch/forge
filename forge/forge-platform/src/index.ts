@@ -176756,3 +176756,174 @@ Return JSON:
     res.json(parsed);
   } catch(e:any){ res.status(500).json({error:e.message}); }
 });
+
+// ── Wave 57: Mental Wellness & Emotional Intelligence AI ─────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS emotion_decoders (id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS coping_toolkits (id TEXT PRIMARY KEY, user_id TEXT, challenge TEXT, severity TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS inner_critics (id TEXT PRIMARY KEY, user_id TEXT, thought TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS attachment_coaches (id TEXT PRIMARY KEY, user_id TEXT, pattern TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS resilience_builders (id TEXT PRIMARY KEY, user_id TEXT, setback TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+app.post('/api/emotion/decode', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { situation, feelings, intensity } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Help decode and understand this emotional experience.
+Situation: ${situation}
+Feelings described: ${feelings || 'not specified'}
+Intensity (1-10): ${intensity || 'unknown'}
+
+Return JSON:
+{
+  "primary_emotion": string,
+  "secondary_emotions": [string],
+  "emotion_explanation": string,
+  "what_the_emotion_is_telling_you": string,
+  "body_signals": [string],
+  "trigger_analysis": string,
+  "unmet_needs": [string],
+  "cognitive_patterns": [string],
+  "healthy_expression": [string],
+  "journaling_prompts": [string],
+  "immediate_relief": [string],
+  "deeper_work": string,
+  "self_compassion_message": string,
+  "when_to_seek_help": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO emotion_decoders (id,user_id,situation,result) VALUES (?,?,?,?)`).run(uuidv4(),userId,situation,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/coping/toolkit', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { challenge, severity, preferences } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Build a personalized coping toolkit.
+Challenge: ${challenge}
+Severity (1-10): ${severity || '5'}
+Preferences: ${preferences || 'open to anything'}
+
+Return JSON:
+{
+  "challenge_assessment": string,
+  "immediate_tools": [{"name": string, "how_to": string, "time_needed": string, "best_when": string}],
+  "short_term_strategies": [{"strategy": string, "description": string, "duration": string}],
+  "long_term_practices": [{"practice": string, "why_it_helps": string, "how_to_start": string}],
+  "grounding_techniques": [{"name": string, "steps": [string]}],
+  "breathing_exercise": {"name": string, "steps": [string], "duration": string},
+  "movement_suggestions": [string],
+  "cognitive_reframes": [{"unhelpful_thought": string, "reframe": string}],
+  "support_system_tips": [string],
+  "crisis_resources": string,
+  "weekly_wellness_plan": [{"day": string, "practice": string}],
+  "progress_markers": [string]
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO coping_toolkits (id,user_id,challenge,severity,result) VALUES (?,?,?,?,?)`).run(uuidv4(),userId,challenge,severity,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/inner/critic', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { thought, context } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Help challenge and reframe this inner critic thought using CBT and self-compassion techniques.
+Thought: ${thought}
+Context: ${context || 'not provided'}
+
+Return JSON:
+{
+  "critic_type": string,
+  "thought_pattern": string,
+  "evidence_for": [string],
+  "evidence_against": [string],
+  "cognitive_distortions": [string],
+  "compassionate_reframe": string,
+  "what_a_good_friend_would_say": string,
+  "inner_child_perspective": string,
+  "origin_exploration": string,
+  "healthier_belief": string,
+  "affirmations": [string],
+  "action_steps": [string],
+  "self_compassion_practice": string,
+  "mantra": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO inner_critics (id,user_id,thought,result) VALUES (?,?,?,?)`).run(uuidv4(),userId,thought,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/attachment/coach', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { pattern, relationship_type, behaviors } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Provide attachment style coaching and healing guidance.
+Pattern/Style: ${pattern}
+Relationship type: ${relationship_type || 'romantic'}
+Behaviors noticed: ${behaviors || 'not specified'}
+
+Return JSON:
+{
+  "attachment_style": string,
+  "style_description": string,
+  "core_wounds": [string],
+  "triggering_situations": [string],
+  "protective_behaviors": [string],
+  "impact_on_relationships": string,
+  "healing_practices": [{"practice": string, "how_to": string, "timeline": string}],
+  "secure_attachment_traits": [string],
+  "communication_scripts": [{"situation": string, "script": string}],
+  "what_you_need_in_a_partner": [string],
+  "green_flags_to_seek": [string],
+  "red_flags_to_watch": [string],
+  "inner_work_exercises": [string],
+  "therapy_recommendation": string,
+  "affirmations": [string]
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO attachment_coaches (id,user_id,pattern,result) VALUES (?,?,?,?)`).run(uuidv4(),userId,pattern,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/resilience/build', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { setback, current_state, strengths } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Help build resilience after this setback.
+Setback: ${setback}
+Current emotional state: ${current_state || 'struggling'}
+Known strengths: ${strengths || 'not sure'}
+
+Return JSON:
+{
+  "validation": string,
+  "resilience_assessment": string,
+  "post_traumatic_growth_potential": string,
+  "immediate_stabilizers": [string],
+  "meaning_making": string,
+  "strengths_inventory": [string],
+  "past_resilience_evidence": string,
+  "rebuilding_roadmap": [{"week": string, "focus": string, "actions": [string]}],
+  "identity_anchors": [string],
+  "support_mobilization": [string],
+  "cognitive_reframes": [string],
+  "growth_opportunities": [string],
+  "daily_resilience_practices": [string],
+  "mantra": string,
+  "letter_from_future_self": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO resilience_builders (id,user_id,setback,result) VALUES (?,?,?,?)`).run(uuidv4(),userId,setback,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});

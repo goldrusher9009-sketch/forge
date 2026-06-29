@@ -1,3 +1,5 @@
+## v229.00 — Dream Mode Wave 57: Emotion Decoder + Coping Toolkit + Inner Critic + Attachment Coach + Resilience Builder
+
 ## v228.00 — Dream Mode Wave 56: Home Valuator + Mortgage Calculator + Neighborhood Scout + Renovation Planner + Landlord Advisor
 
 ## v227.00 — Dream Mode Wave 55: Contract Drafter + NDA Reviewer + Terms Decoder + Compliance Checker + Dispute Letter Pro
