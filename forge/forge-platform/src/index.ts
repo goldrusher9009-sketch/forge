@@ -169472,15 +169472,15 @@ app.get('/api/dream-tags', auth, (req: any, res: any) => {
 });
 app.post('/api/dream-tags', auth, (req: any, res: any) => {
   try {
-    const { tag, try } = req.body;
-    const result = db.prepare('INSERT INTO dream_tags (user_id, tag, try) VALUES (?, ?, ?)').run(req.user.id, tag, try);
+    const { tag, try: tryVal } = req.body;
+    const result = db.prepare('INSERT INTO dream_tags (user_id, tag, try) VALUES (?, ?, ?)').run(req.user.id, tag, tryVal);
     res.json({ success: true, id: result.lastInsertRowid });
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
 app.put('/api/dream-tags/:id', auth, (req: any, res: any) => {
   try {
-    const { tag, try } = req.body;
-    db.prepare('UPDATE dream_tags SET tag=?, try=? WHERE id=? AND user_id=?').run(tag, try, req.params.id, req.user.id);
+    const { tag, try: tryVal } = req.body;
+    db.prepare('UPDATE dream_tags SET tag=?, try=? WHERE id=? AND user_id=?').run(tag, tryVal, req.params.id, req.user.id);
     res.json({ success: true });
   } catch(e: any) { res.status(500).json({ success: false, error: e.message }); }
 });
