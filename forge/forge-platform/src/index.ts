@@ -173834,3 +173834,80 @@ app.post('/api/bio/optimize', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 25: EMAIL MARKETING AI ──────────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS email_sequences (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, sequence TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS subject_lines (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, lines TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS newsletter_drafts (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, draft TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS reengagement_emails (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, email TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS welcome_sequences (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, sequence TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Email Sequence Builder
+app.post('/api/email-sequence/build', requireAuth, async (req: any, res: any) => {
+  try {
+    const { product, goal, audience, num_emails } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a ${num_emails||5}-email nurture sequence.\n\nProduct/Service: ${product}\nGoal: ${goal||'convert leads to customers'}\nAudience: ${audience||'email subscribers'}\n\nRespond in JSON: { "sequence_overview": "what this sequence accomplishes", "emails": [{"email_number":1,"send_day":"Day 0","subject":"subject line","preview_text":"preview","body":"full email body","cta":"call to action","goal":"email goal"}] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO email_sequences (id,user_id,context,sequence) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Subject Line Generator
+app.post('/api/subject-lines/generate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { email_topic, audience, tone } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Generate 10 email subject lines.\n\nEmail topic: ${email_topic}\nAudience: ${audience||'email list'}\nTone: ${tone||'conversational'}\n\nRespond in JSON: { "subject_lines": [{"line":"subject line text","type":"curiosity/urgency/benefit/question/number","open_rate_psychology":"why this works"}], "preview_text_suggestions": ["preview1","preview2","preview3"], "best_send_times": "platform recommendation", "ab_test_recommendation": "which two to A/B test and why" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO subject_lines (id,user_id,context,lines) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Newsletter Draft Writer
+app.post('/api/newsletter/draft', requireAuth, async (req: any, res: any) => {
+  try {
+    const { topic, audience, format, length } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a newsletter.\n\nTopic: ${topic}\nAudience: ${audience||'subscribers'}\nFormat: ${format||'educational with one main insight'}\nLength: ${length||'medium (400-600 words)'}\n\nRespond in JSON: { "subject_line": "newsletter subject", "preview_text": "preview snippet", "opening": "hook paragraph", "body": "main content", "key_takeaway": "one-sentence summary", "cta": "call to action", "p_s": "PS line (optional)" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO newsletter_drafts (id,user_id,context,draft) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Re-engagement Email Writer
+app.post('/api/reengagement/write', requireAuth, async (req: any, res: any) => {
+  try {
+    const { brand, inactive_period, offer, tone } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a re-engagement email sequence for inactive subscribers.\n\nBrand: ${brand}\nInactive for: ${inactive_period||'3+ months'}\nOffer/incentive: ${offer||'no special offer'}\nTone: ${tone||'warm and personal'}\n\nRespond in JSON: { "emails": [{"number":1,"subject":"subject","body":"email body","send_timing":"immediately"},{"number":2,"subject":"subject","body":"email body","send_timing":"3 days later"},{"number":3,"subject":"subject - final","body":"sunset email body","send_timing":"7 days later"}], "strategy": "overall re-engagement strategy", "sunset_advice": "what to do with non-responders" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO reengagement_emails (id,user_id,context,email) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Welcome Sequence Builder
+app.post('/api/welcome-sequence/build', requireAuth, async (req: any, res: any) => {
+  try {
+    const { brand, lead_magnet, product, subscriber_goal } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a 5-email welcome sequence for new subscribers.\n\nBrand/Creator: ${brand}\nLead magnet they signed up for: ${lead_magnet||'newsletter/freebie'}\nUltimate product/offer: ${product||'paid product or service'}\nGoal for subscriber: ${subscriber_goal||'know, like, trust the brand'}\n\nRespond in JSON: { "sequence_goal": "what this sequence achieves", "emails": [{"number":1,"send_timing":"immediately","subject":"subject","body":"full email","purpose":"delivery + first impression"},{"number":2,"send_timing":"day 2","subject":"subject","body":"full email","purpose":"your story / credibility"},{"number":3,"send_timing":"day 4","subject":"subject","body":"full email","purpose":"deliver value / quick win"},{"number":4,"send_timing":"day 7","subject":"subject","body":"full email","purpose":"social proof + offer intro"},{"number":5,"send_timing":"day 10","subject":"subject","body":"full email","purpose":"soft pitch / clear CTA"}] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO welcome_sequences (id,user_id,context,sequence) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});

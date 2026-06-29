@@ -1,3 +1,5 @@
+## v197.00 — Dream Mode Wave 25: Email Sequence Builder + Subject Line Generator + Newsletter Writer + Re-engagement + Welcome Sequence
+
 ## v196.00 — Dream Mode Wave 24: Viral Thread Writer + Caption Generator + Content Calendar + Hashtag Strategy + Bio Optimizer
 
 ## v195.00 — Dream Mode Wave 23: Competitor Deep Dive + Pricing Strategy + Customer Persona + GTM Planner + OKR Builder
