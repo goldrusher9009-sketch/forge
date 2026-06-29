@@ -175528,3 +175528,80 @@ app.post('/api/inner/child', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 47: ENTREPRENEURSHIP & STARTUP AI ───────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS startup_validators (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS pitch_deck_builders (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS investor_emailers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS mvp_designers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS cofounder_matchers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Startup Validator
+app.post('/api/startup/validate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { idea, target_market, problem, solution, stage } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Rigorously validate this startup idea like a tough but fair investor.\n\nIdea: ${idea}\nTarget market: ${target_market}\nProblem it solves: ${problem}\nSolution: ${solution}\nCurrent stage: ${stage||'idea'}\n\nRespond in JSON: { "verdict": "Pass/Proceed with Caution/Pivot Needed with brief reason", "market_size": {"tam":"Total addressable market estimate","sam":"Serviceable addressable market","som":"Realistically capturable share"}, "problem_strength": "how painful and frequent is this problem? honest assessment", "solution_assessment": "strengths and weaknesses of the proposed solution", "competitive_landscape": "honest view of competition and differentiation", "business_model_options": [{"model":"revenue model","pros":"advantages","cons":"challenges"}], "critical_assumptions": [{"assumption":"key thing that must be true","how_to_test":"fastest way to validate"}], "biggest_risks": [{"risk":"specific risk","severity":"High/Medium/Low","mitigation":"how to reduce this risk"}], "green_lights": ["genuine strengths of this idea"], "red_flags": ["serious concerns investors would raise"], "next_3_actions": ["most important thing to do in the next 30 days to validate or kill this idea"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO startup_validators (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Pitch Deck Builder
+app.post('/api/pitchdeck/build', requireAuth, async (req: any, res: any) => {
+  try {
+    const { company_name, industry, problem, solution, traction, ask } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a compelling pitch deck narrative and structure.\n\nCompany: ${company_name}\nIndustry: ${industry}\nProblem: ${problem}\nSolution: ${solution}\nTraction: ${traction||'pre-revenue, early users'}\nAsk: ${ask||'seed round'}\n\nRespond in JSON: { "deck_structure": [{"slide":"slide name","headline":"powerful one-line headline","content":"what goes on this slide","storytelling_tip":"how to present this effectively"}], "opening_hook": "the first 30 seconds that grabs investor attention", "problem_slide_content": "how to make the problem feel urgent and real", "solution_slide_content": "how to position the solution as inevitable", "market_slide_approach": "how to present market size compellingly without looking unrealistic", "traction_narrative": "how to present early stage traction as signal not noise", "team_slide_tips": "what investors look for in team slides", "ask_structure": "how to frame the ask with use of funds", "investor_psychology": "what investors are actually thinking as they review your deck", "common_mistakes": ["pitch deck error that kills otherwise good deals"], "one_pager_version": "condensed version for initial outreach" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO pitch_deck_builders (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Investor Email Writer
+app.post('/api/investor/email', requireAuth, async (req: any, res: any) => {
+  try {
+    const { startup_name, stage, traction, ask, investor_type, mutual_connection } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a compelling investor cold/warm outreach email.\n\nStartup: ${startup_name}\nStage and traction: ${stage} — ${traction||'early users, strong growth'}\nAsk: ${ask||'intro call to explore fit'}\nInvestor type: ${investor_type||'seed stage VC'}\nMutual connection or hook: ${mutual_connection||'cold outreach'}\n\nRespond in JSON: { "subject_lines": ["3 subject line options ranked by effectiveness"], "email_versions": [{"version":"short (5 lines)","content":"full email"},{"version":"medium (10 lines)","content":"full email"}], "what_makes_it_work": "why this approach works psychologically with investors", "personalization_slots": ["where to add investor-specific personalization"], "follow_up_sequence": [{"day":"follow-up timing","message":"follow-up content"}], "common_mistakes": ["cold email mistake that gets investors to delete immediately"], "warm_intro_script": "how to ask a mutual contact for an intro email" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO investor_emailers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// MVP Designer
+app.post('/api/mvp/design', requireAuth, async (req: any, res: any) => {
+  try {
+    const { idea, target_user, core_problem, constraints, timeline } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Design the leanest possible MVP to validate this idea.\n\nIdea: ${idea}\nTarget user: ${target_user}\nCore problem to solve: ${core_problem}\nConstraints: ${constraints||'limited budget and time'}\nTimeline: ${timeline||'8 weeks'}\n\nRespond in JSON: { "mvp_philosophy": "the single hypothesis this MVP must test", "what_to_build": "the absolute minimum product that tests the core hypothesis", "what_not_to_build": ["feature that feels essential but actually isn't for validation"], "user_story": "the single most important user journey the MVP must deliver", "feature_list": [{"feature":"name","why_its_core":"why it stays in MVP","effort":"Low/Medium/High","validates":"what it tests"}], "no_code_first": "can this be validated without building anything? approach if yes", "week_by_week_plan": [{"week":"week number","goals":"what to accomplish","milestone":"what done looks like"}], "success_metrics": [{"metric":"measurement","target":"success threshold","timeline":"when to measure"}], "kill_criteria": "what results would tell you to kill or pivot this idea", "launch_strategy": "how to get first 10 users without advertising budget" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO mvp_designers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Co-founder Matcher
+app.post('/api/cofounder/match', requireAuth, async (req: any, res: any) => {
+  try {
+    const { your_skills, your_background, startup_type, ideal_cofounder, stage } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Help someone find and evaluate co-founders.\n\nFounder skills: ${your_skills}\nBackground: ${your_background||'technical/business/design'}\nStartup type: ${startup_type}\nIdeal co-founder: ${ideal_cofounder||'complementary skills, aligned on vision'}\nStage: ${stage||'idea/pre-product'}\n\nRespond in JSON: { "cofounder_fit_analysis": "what skill and personality gaps need to be filled based on their profile", "ideal_cofounder_profile": {"must_have_skills":["non-negotiable competency"],"personality_traits":["trait that complements the founder"],"background":"ideal experience","red_flags":["warning sign in a potential co-founder"]}, "where_to_find": [{"source":"where to look","approach":"how to engage","quality":"type of candidates"}], "vetting_process": [{"stage":"evaluation step","what_to_assess":"what you're learning","how":"specific method"}], "trial_project_ideas": ["project to do together before committing"], "cofounder_agreement_checklist": ["key thing to align on before formalizing partnership"], "equity_conversation": "how to approach the equity split conversation", "green_flags": ["sign this person could be a great co-founder"], "breakup_prevention": "how to structure the relationship to survive hard times", "solo_vs_cofounder": "honest tradeoff analysis for this specific situation" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO cofounder_matchers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
