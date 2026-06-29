@@ -180008,3 +180008,90 @@ app.post('/api/literature/review', requireAuth, async (req: AuthRequest, res) =>
     res.json({ review });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── Wave 92: Leadership & Executive AI ────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS leadership_style_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, style TEXT, challenges TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS executive_presence_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, context TEXT, gaps TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS team_motivation_designers (
+  id TEXT PRIMARY KEY, user_id TEXT, team_type TEXT, issues TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS strategic_thinkers (
+  id TEXT PRIMARY KEY, user_id TEXT, challenge TEXT, context TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS feedback_culture_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, org_context TEXT, current_state TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/leadership/coach', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { style, challenges, team_size } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a world-class executive leadership coach. Develop a personalized leadership growth plan.\nCurrent leadership style: ${style || 'unsure'}\nChallenges: ${challenges}\nTeam size: ${team_size || 'small team'}\n\nProvide: leadership style assessment, blind spots to watch, strengths to leverage, 3 leadership models to study, 90-day development plan, specific behaviors to start/stop/continue, how to measure leadership effectiveness, book recommendations, one skill to master this quarter.` }
+    ]);
+    const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO leadership_style_coaches (id,user_id,style,challenges,plan) VALUES (?,?,?,?,?)').run(uuidv4(), userId, style, challenges, plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/executivepresence/build', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { context, current_gaps, role } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are an executive presence and gravitas coach. Build executive presence systematically.\nContext: ${context}\nPerceived gaps: ${current_gaps || 'unclear'}\nRole: ${role || 'mid-level manager'}\n\nProvide: executive presence framework (appearance, communication, gravitas), self-assessment across each dimension, top 3 priority improvements, communication upgrades (body language, vocal authority, language patterns), how to command rooms, writing for executives, managing up, specific 60-day plan.` }
+    ]);
+    const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO executive_presence_builders (id,user_id,context,gaps,plan) VALUES (?,?,?,?,?)').run(uuidv4(), userId, context, current_gaps, plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/teammotivation/design', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { team_type, issues, goals } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a team dynamics and organizational psychology expert. Design a team motivation system.\nTeam type: ${team_type}\nCurrent issues: ${issues || 'low energy, unclear purpose'}\nGoals: ${goals || 'high performance'}\n\nProvide: motivation audit (intrinsic vs extrinsic), individual motivation mapping tool, team rituals to implement, recognition system design, autonomy/mastery/purpose framework application, how to handle low performers, psychological safety practices, 30-day motivation sprint.` }
+    ]);
+    const strategy = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO team_motivation_designers (id,user_id,team_type,issues,strategy) VALUES (?,?,?,?,?)').run(uuidv4(), userId, team_type, issues, strategy);
+    res.json({ strategy });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/think', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { challenge, context, constraints } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a strategic advisor and systems thinker. Develop a comprehensive strategy for this challenge.\nChallenge: ${challenge}\nContext: ${context}\nConstraints: ${constraints || 'standard business constraints'}\n\nProvide: situation analysis (forces at play), 3 strategic options with trade-offs, recommended path with rationale, key assumptions to validate, quick wins in first 30 days, risks and mitigation, success metrics, decision tree for key choice points, what to watch for that would change the strategy.` }
+    ]);
+    const strategy = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO strategic_thinkers (id,user_id,challenge,context,strategy) VALUES (?,?,?,?,?)').run(uuidv4(), userId, challenge, context, strategy);
+    res.json({ strategy });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/feedbackculture/build', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { org_context, current_state, team_size } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are an organizational culture and feedback systems expert. Build a feedback culture.\nOrg context: ${org_context}\nCurrent feedback culture: ${current_state || 'little to no feedback'}\nTeam size: ${team_size || 'small team'}\n\nProvide: feedback culture assessment, psychological safety foundation steps, feedback frameworks to adopt (SBI, COIN, etc.), cadence design (1:1s, retrospectives, 360s), how to train people to give and receive feedback, manager modeling behaviors, how to handle defensive reactions, 90-day culture change plan.` }
+    ]);
+    const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO feedback_culture_builders (id,user_id,org_context,current_state,plan) VALUES (?,?,?,?,?)').run(uuidv4(), userId, org_context, current_state, plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
