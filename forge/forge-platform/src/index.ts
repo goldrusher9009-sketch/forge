@@ -178445,3 +178445,97 @@ app.post('/api/startuplegal/guide', requireAuth, async (req: AuthRequest, res) =
     res.json({ guidance });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 75: HEALTH & WELLNESS OPTIMIZATION AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS hormone_optimizers (
+  id TEXT PRIMARY KEY, user_id TEXT, symptoms TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS gut_health_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, issues TEXT, protocol TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS inflammation_reducers (
+  id TEXT PRIMARY KEY, user_id TEXT, triggers TEXT, protocol TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS energy_optimizers (
+  id TEXT PRIMARY KEY, user_id TEXT, patterns TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS preventive_health_planners (
+  id TEXT PRIMARY KEY, user_id TEXT, profile TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/hormone/optimize', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { symptoms, age, gender, lifestyle, goals } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Provide educational information about hormone optimization (not medical advice — consult a doctor).\nSymptoms: ${symptoms}\nAge: ${age||'30s'}\nGender: ${gender||'not specified'}\nLifestyle: ${lifestyle||'sedentary office worker'}\nGoals: ${goals||'more energy and better mood'}\n\nExplain which hormones may be involved, lifestyle factors that influence them (sleep, stress, exercise, nutrition), evidence-based natural optimization strategies, and what tests to discuss with a doctor.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO hormone_optimizers (id,user_id,symptoms,plan) VALUES (?,?,?,?)`).run(id,userId,symptoms,plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/guthealth/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { issues, diet, medications, stress_level } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Provide gut health education and a wellness protocol (not medical advice).\nGut issues: ${issues}\nCurrent diet: ${diet||'standard western diet'}\nMedications/supplements: ${medications||'none'}\nStress level: ${stress_level||'moderate'}\n\nExplain the gut-brain connection relevant to these issues, dietary changes that typically help, probiotic and prebiotic guidance, lifestyle factors affecting gut health, and warning signs to discuss with a gastroenterologist.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const protocol = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO gut_health_coaches (id,user_id,issues,protocol) VALUES (?,?,?,?)`).run(id,userId,issues,protocol);
+    res.json({ protocol });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/inflammation/reduce', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { symptoms, diet, lifestyle, known_triggers } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Create an anti-inflammation protocol based on evidence-based research (educational, not medical advice).\nInflammation symptoms: ${symptoms}\nCurrent diet: ${diet||'unknown'}\nLifestyle: ${lifestyle||'sedentary'}\nKnown triggers: ${known_triggers||'unknown'}\n\nProvide a 30-day anti-inflammation protocol including: top pro-inflammatory foods to eliminate, top anti-inflammatory foods to add, lifestyle interventions (sleep, exercise, stress), key supplements with evidence, and biomarkers to track with a doctor.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const protocol = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO inflammation_reducers (id,user_id,triggers,protocol) VALUES (?,?,?,?)`).run(id,userId,known_triggers||symptoms,protocol);
+    res.json({ protocol });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/energy/optimize', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { energy_patterns, sleep_quality, diet, exercise, stress } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Design a comprehensive energy optimization strategy.\nEnergy patterns: ${energy_patterns||'crashes after lunch'}\nSleep quality: ${sleep_quality||'poor'}\nDiet: ${diet||'standard'}\nExercise: ${exercise||'minimal'}\nStress: ${stress||'high'}\n\nCreate a personalized energy optimization plan covering: circadian rhythm alignment, nutrition timing, strategic caffeine use, movement snacks, stress management, sleep architecture improvements, and a sample optimized daily schedule.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const strategy = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO energy_optimizers (id,user_id,patterns,strategy) VALUES (?,?,?,?)`).run(id,userId,energy_patterns||'',strategy);
+    res.json({ strategy });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/preventivehealth/plan', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { age, gender, family_history, current_health, lifestyle } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Create a preventive health plan (educational, not medical advice — work with your doctor).\nAge: ${age}\nGender: ${gender||'not specified'}\nFamily history: ${family_history||'unknown'}\nCurrent health: ${current_health||'generally healthy'}\nLifestyle: ${lifestyle||'standard'}\n\nDesign a preventive health roadmap including: recommended screenings by age, key biomarkers to track, lifestyle interventions with biggest longevity ROI, vaccines and supplements to discuss with a doctor, and a 12-month wellness calendar.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO preventive_health_planners (id,user_id,profile,plan) VALUES (?,?,?,?)`).run(id,userId,`${age}/${gender}`,plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
