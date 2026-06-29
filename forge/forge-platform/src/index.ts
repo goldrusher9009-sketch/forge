@@ -176235,3 +176235,163 @@ Return JSON:
     res.json(parsed);
   } catch(e:any){ res.status(500).json({error:e.message}); }
 });
+
+// ── Wave 54: Business Strategy & Growth AI ────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS pricing_strategists (id TEXT PRIMARY KEY, user_id TEXT, product TEXT, market TEXT, competitors TEXT, costs TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS churn_analysts (id TEXT PRIMARY KEY, user_id TEXT, product TEXT, churn_rate TEXT, user_segments TEXT, signals TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS growth_hackers (id TEXT PRIMARY KEY, user_id TEXT, product TEXT, stage TEXT, current_growth TEXT, budget TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS investor_pitchers (id TEXT PRIMARY KEY, user_id TEXT, startup TEXT, stage TEXT, ask TEXT, traction TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS moat_builders (id TEXT PRIMARY KEY, user_id TEXT, business TEXT, industry TEXT, competitors TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+app.post('/api/pricing/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, market, competitors, unit_costs, current_price } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Design a comprehensive pricing strategy.
+Product: ${product}
+Market: ${market || 'not specified'}
+Competitors: ${competitors || 'not specified'}
+Unit costs: ${unit_costs || 'not specified'}
+Current price (if any): ${current_price || 'not set'}
+
+Return JSON:
+{
+  "pricing_diagnosis": "what's right or wrong with current approach",
+  "recommended_model": {"model": string, "rationale": string},
+  "price_anchors": [{"tier": string, "price": string, "target_customer": string, "features": [string]}],
+  "psychological_tactics": [{"tactic": string, "implementation": string, "expected_lift": string}],
+  "competitive_positioning": {"vs_cheap": string, "vs_premium": string, "sweet_spot": string},
+  "raise_price_playbook": [{"step": string, "messaging": string}],
+  "churn_risk_at_increase": string,
+  "revenue_impact_model": string,
+  "experiment_to_run": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO pricing_strategists (id,user_id,product,market,competitors,costs,result) VALUES (?,?,?,?,?,?,?)`).run(uuidv4(),userId,product,market,competitors,unit_costs,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/churn/analyze', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, churn_rate, user_segments, exit_reasons, biggest_competitor } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Analyze churn and build a retention strategy.
+Product: ${product}
+Current churn rate: ${churn_rate || 'unknown'}
+User segments: ${user_segments || 'not specified'}
+Known exit reasons: ${exit_reasons || 'not known'}
+Main competitor they leave for: ${biggest_competitor || 'unknown'}
+
+Return JSON:
+{
+  "churn_diagnosis": string,
+  "churn_risk_segments": [{"segment": string, "risk_level": string, "signals": [string]}],
+  "retention_playbook": [{"stage": string, "intervention": string, "trigger": string, "expected_impact": string}],
+  "win_back_campaign": {"email_1": string, "email_2": string, "offer": string},
+  "product_fixes": [{"issue": string, "fix": string, "priority": string}],
+  "early_warning_system": [{"signal": string, "action": string, "timeline": string}],
+  "north_star_metric": string,
+  "if_you_fix_one_thing": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO churn_analysts (id,user_id,product,churn_rate,user_segments,signals,result) VALUES (?,?,?,?,?,?,?)`).run(uuidv4(),userId,product,churn_rate,user_segments,exit_reasons,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/growth/hack', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, stage, current_growth_rate, budget, channel_history } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Build a growth hacking strategy for this product.
+Product: ${product}
+Stage: ${stage || 'early startup'}
+Current growth rate: ${current_growth_rate || 'unknown'}
+Monthly budget: ${budget || 'bootstrap/minimal'}
+Channels tried: ${channel_history || 'not specified'}
+
+Return JSON:
+{
+  "growth_diagnosis": string,
+  "highest_leverage_moves": [{"move": string, "mechanism": string, "cost": string, "timeline": string, "potential": string}],
+  "viral_loops": [{"loop": string, "how_to_build": string, "k_factor_target": string}],
+  "channel_priority": [{"channel": string, "why": string, "first_experiment": string, "budget": string}],
+  "retention_first": string,
+  "aha_moment_optimization": {"current_aha": string, "time_to_aha": string, "how_to_accelerate": string},
+  "90_day_sprint": [{"week": string, "focus": string, "metric": string}],
+  "kill_immediately": [string],
+  "unfair_advantage_to_exploit": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO growth_hackers (id,user_id,product,stage,current_growth,budget,result) VALUES (?,?,?,?,?,?,?)`).run(uuidv4(),userId,product,stage,current_growth_rate,budget,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/investor/pitch', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { startup, stage, funding_ask, traction, target_investors } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Build a compelling investor pitch narrative.
+Startup: ${startup}
+Stage: ${stage || 'pre-seed'}
+Funding ask: ${funding_ask || 'not specified'}
+Traction: ${traction || 'early'}
+Target investors: ${target_investors || 'general VCs'}
+
+Return JSON:
+{
+  "one_line_pitch": string,
+  "problem_framing": string,
+  "solution_narrative": string,
+  "market_sizing": {"tam": string, "sam": string, "som": string, "approach": string},
+  "traction_narrative": string,
+  "why_now": string,
+  "why_us": string,
+  "business_model_clarity": string,
+  "use_of_funds": [{"allocation": string, "percent": string, "milestone": string}],
+  "investor_objections": [{"objection": string, "answer": string}],
+  "closing_ask": string,
+  "deck_slide_order": [string],
+  "red_flags_to_avoid": [string]
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO investor_pitchers (id,user_id,startup,stage,ask,traction,result) VALUES (?,?,?,?,?,?,?)`).run(uuidv4(),userId,startup,stage,funding_ask,traction,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/moat/build', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { business, industry, current_advantages, competitors } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Analyze and design a defensible competitive moat.
+Business: ${business}
+Industry: ${industry || 'not specified'}
+Current advantages: ${current_advantages || 'not sure'}
+Main competitors: ${competitors || 'not specified'}
+
+Return JSON:
+{
+  "moat_assessment": {"current_moat": string, "strength": string, "durability_years": string},
+  "moat_types_analysis": [{"type": string, "do_you_have_it": string, "how_to_build": string}],
+  "top_moat_to_build": {"moat": string, "why": string, "blueprint": [string], "timeline": string},
+  "defensibility_score": {"now": string, "in_2_years": string, "in_5_years": string},
+  "competitor_countermoves": [{"competitor_move": string, "your_defense": string}],
+  "network_effects_path": string,
+  "data_advantage_playbook": string,
+  "switching_cost_engineering": [string],
+  "biggest_moat_risk": string,
+  "one_year_moat_sprint": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO moat_builders (id,user_id,business,industry,competitors,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(),userId,business,industry,competitors,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
