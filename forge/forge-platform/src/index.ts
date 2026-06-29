@@ -173756,3 +173756,81 @@ app.post('/api/okr/build', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 24: SOCIAL MEDIA AI ─────────────────────────────────────────────────
+// Tables
+db.prepare(`CREATE TABLE IF NOT EXISTS viral_threads (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, thread TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS caption_gen (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, captions TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS content_calendar (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, calendar TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS hashtag_sets (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, hashtags TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS bio_optimizer (id TEXT PRIMARY KEY, user_id TEXT, input TEXT, output TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Viral Thread Writer
+app.post('/api/thread/write', requireAuth, async (req: any, res: any) => {
+  try {
+    const { topic, angle, audience, platform } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a viral ${platform||'Twitter/X'} thread.\n\nTopic: ${topic}\nAngle: ${angle||'educational/actionable'}\nAudience: ${audience||'general'}\n\nRespond in JSON: { "hook": "attention-grabbing first tweet", "thread": ["tweet1","tweet2","tweet3","tweet4","tweet5","tweet6","tweet7","tweet8","tweet9","tweet10"], "cta_tweet": "final call-to-action tweet", "why_it_works": "psychology behind this thread structure", "best_time_to_post": "platform-specific timing advice" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO viral_threads (id,user_id,topic,thread) VALUES (?,?,?,?)`).run(id, req.user.id, topic, JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Caption Generator
+app.post('/api/caption/generate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { description, platform, tone, goal } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Generate social media captions.\n\nPost description: ${description}\nPlatform: ${platform||'Instagram'}\nTone: ${tone||'authentic'}\nGoal: ${goal||'engagement'}\n\nRespond in JSON: { "captions": [{"caption":"full caption text","hook":"opening line","why":"why this works"},{"caption":"full caption text","hook":"opening line","why":"why this works"},{"caption":"full caption text","hook":"opening line","why":"why this works"}], "platform_tips": "specific tips for ${platform||'Instagram'}", "emoji_suggestions": ["emoji1","emoji2","emoji3"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO caption_gen (id,user_id,context,captions) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Content Calendar Builder
+app.post('/api/content-calendar/build', requireAuth, async (req: any, res: any) => {
+  try {
+    const { niche, platforms, posting_frequency, goals } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a 30-day social media content calendar.\n\nNiche: ${niche}\nPlatforms: ${platforms||'Instagram, Twitter, LinkedIn'}\nPosting frequency: ${posting_frequency||'daily'}\nGoals: ${goals||'grow audience and drive engagement'}\n\nRespond in JSON: { "strategy": "overall content strategy in 2 sentences", "content_pillars": ["pillar1","pillar2","pillar3","pillar4"], "weekly_themes": [{"week":1,"theme":"theme name","rationale":"why this week"},{"week":2,"theme":"theme name","rationale":"why"},{"week":3,"theme":"theme name","rationale":"why"},{"week":4,"theme":"theme name","rationale":"why"}], "daily_schedule": [{"day":1,"content_type":"type","topic":"specific topic idea","platform":"platform","format":"reel/post/story/thread"}], "repurposing_system": "how to turn one piece into 5+ pieces of content" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO content_calendar (id,user_id,context,calendar) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Hashtag Strategy Generator
+app.post('/api/hashtags/generate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { topic, platform, account_size } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Generate a hashtag strategy.\n\nTopic: ${topic}\nPlatform: ${platform||'Instagram'}\nAccount size: ${account_size||'under 10k followers'}\n\nRespond in JSON: { "strategy": "hashtag strategy explanation", "mega_hashtags": ["#tag (size)"], "mid_hashtags": ["#tag (size)"], "niche_hashtags": ["#tag (size)"], "branded_hashtag_ideas": ["#YourBrandTag"], "optimal_count": "recommended number for platform", "placement_tip": "where to put hashtags", "rotation_sets": [["set1tag1","set1tag2","set1tag3"],["set2tag1","set2tag2","set2tag3"]] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO hashtag_sets (id,user_id,topic,hashtags) VALUES (?,?,?,?)`).run(id, req.user.id, topic, JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Social Bio Optimizer
+app.post('/api/bio/optimize', requireAuth, async (req: any, res: any) => {
+  try {
+    const { current_bio, platform, profession, goal } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Optimize this social media bio.\n\nCurrent bio: ${current_bio||'(no bio yet)'}\nPlatform: ${platform||'Instagram'}\nProfession/niche: ${profession}\nGoal: ${goal||'attract followers and clients'}\n\nRespond in JSON: { "optimized_bios": [{"bio":"full bio text","why":"what makes this work"},{"bio":"alternative version","why":"different angle"}], "key_elements_added": ["element1","element2","element3"], "cta_options": ["cta1","cta2","cta3"], "keyword_suggestions": ["keyword1","keyword2","keyword3"], "platform_character_count": "current limit for platform" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO bio_optimizer (id,user_id,input,output) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
