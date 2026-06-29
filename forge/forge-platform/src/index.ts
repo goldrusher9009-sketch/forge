@@ -176570,3 +176570,189 @@ Return JSON:
     res.json(parsed);
   } catch(e:any){ res.status(500).json({error:e.message}); }
 });
+
+// ── Wave 56: Real Estate & Home AI ──────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS home_valuators (id TEXT PRIMARY KEY, user_id TEXT, address TEXT, details TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS mortgage_calculators (id TEXT PRIMARY KEY, user_id TEXT, loan_amount TEXT, inputs TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS neighborhood_scouts (id TEXT PRIMARY KEY, user_id TEXT, location TEXT, priorities TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS renovation_planners (id TEXT PRIMARY KEY, user_id TEXT, property_type TEXT, project TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS landlord_advisors (id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, role TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+app.post('/api/home/valuate', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { address, bedrooms, bathrooms, sqft, year_built, condition, recent_renovations } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Estimate home value and provide real estate analysis.
+Address/Area: ${address}
+Bedrooms: ${bedrooms || 'unknown'}, Bathrooms: ${bathrooms || 'unknown'}
+Sq Ft: ${sqft || 'unknown'}, Year Built: ${year_built || 'unknown'}
+Condition: ${condition || 'average'}
+Recent renovations: ${recent_renovations || 'none'}
+
+Return JSON:
+{
+  "estimated_value": string,
+  "value_range": {"low": string, "high": string},
+  "price_per_sqft": string,
+  "market_position": string,
+  "comparable_homes": [{"description": string, "est_price": string, "similarity": string}],
+  "value_drivers": [{"factor": string, "impact": string, "direction": string}],
+  "renovation_roi": [{"project": string, "cost": string, "added_value": string, "roi": string}],
+  "market_trend": string,
+  "days_on_market_estimate": string,
+  "buy_vs_rent_analysis": string,
+  "negotiation_range": string,
+  "red_flags": [string],
+  "best_time_to_sell": string,
+  "appraisal_tips": [string]
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO home_valuators (id,user_id,address,details,result) VALUES (?,?,?,?,?)`).run(uuidv4(),userId,address,`${bedrooms}br/${bathrooms}ba ${sqft}sqft`,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/mortgage/calculate', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { home_price, down_payment, interest_rate, loan_term, annual_income, monthly_debts } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Provide comprehensive mortgage analysis.
+Home Price: ${home_price}
+Down Payment: ${down_payment}
+Interest Rate: ${interest_rate}%
+Loan Term: ${loan_term || 30} years
+Annual Income: ${annual_income || 'not provided'}
+Monthly Debts: ${monthly_debts || '0'}
+
+Return JSON:
+{
+  "monthly_payment": string,
+  "payment_breakdown": {"principal": string, "interest": string, "taxes_est": string, "insurance_est": string, "total": string},
+  "total_interest_paid": string,
+  "total_cost_of_home": string,
+  "loan_amount": string,
+  "down_payment_pct": string,
+  "affordability_check": {"dti_ratio": string, "status": string, "recommendation": string},
+  "amortization_milestones": [{"year": string, "remaining_balance": string, "equity": string}],
+  "rate_comparison": [{"rate": string, "monthly": string, "total_interest": string}],
+  "pmi_required": string,
+  "break_even_vs_renting": string,
+  "refinance_tips": [string],
+  "mortgage_types": [{"type": string, "best_for": string, "rate_estimate": string}],
+  "closing_costs_estimate": string,
+  "first_time_buyer_programs": [string]
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO mortgage_calculators (id,user_id,loan_amount,inputs,result) VALUES (?,?,?,?,?)`).run(uuidv4(),userId,home_price,`${down_payment} down, ${interest_rate}% rate`,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/neighborhood/scout', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { location, family_size, priorities, budget, lifestyle } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Scout and analyze this neighborhood for a potential resident.
+Location: ${location}
+Family size: ${family_size || 'not specified'}
+Priorities: ${priorities || 'safety, schools, amenities'}
+Budget: ${budget || 'not specified'}
+Lifestyle: ${lifestyle || 'not specified'}
+
+Return JSON:
+{
+  "neighborhood_score": string,
+  "overview": string,
+  "category_scores": [{"category": string, "score": string, "notes": string}],
+  "pros": [string],
+  "cons": [string],
+  "schools_assessment": string,
+  "safety_profile": string,
+  "commute_analysis": string,
+  "amenities_nearby": [string],
+  "demographics_snapshot": string,
+  "housing_market": string,
+  "appreciation_potential": string,
+  "best_streets_areas": [string],
+  "avoid_areas": [string],
+  "local_insider_tips": [string],
+  "similar_neighborhoods": [{"name": string, "why": string, "price_diff": string}],
+  "verdict": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO neighborhood_scouts (id,user_id,location,priorities,result) VALUES (?,?,?,?,?)`).run(uuidv4(),userId,location,priorities,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/renovation/plan', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { property_type, project, budget, timeline, diy_skill } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Create a detailed renovation plan.
+Property type: ${property_type || 'house'}
+Project: ${project}
+Budget: ${budget}
+Timeline: ${timeline || 'flexible'}
+DIY skill level: ${diy_skill || 'beginner'}
+
+Return JSON:
+{
+  "project_summary": string,
+  "total_estimate": string,
+  "cost_breakdown": [{"item": string, "cost": string, "notes": string}],
+  "timeline_phases": [{"phase": string, "duration": string, "tasks": [string]}],
+  "roi_estimate": string,
+  "diy_vs_hire": [{"task": string, "recommendation": string, "reason": string}],
+  "materials_list": [{"item": string, "estimated_cost": string, "where_to_buy": string}],
+  "permits_needed": [string],
+  "common_mistakes": [string],
+  "money_saving_tips": [string],
+  "contractor_hiring_tips": [string],
+  "before_you_start": [string],
+  "red_flags_to_watch": [string]
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO renovation_planners (id,user_id,property_type,project,result) VALUES (?,?,?,?,?)`).run(uuidv4(),userId,property_type,project,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/landlord/advise', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { role, situation, property_type, jurisdiction } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Provide landlord/tenant advice for this situation.
+Role: ${role || 'landlord'}
+Situation: ${situation}
+Property type: ${property_type || 'residential'}
+Jurisdiction: ${jurisdiction || 'US general'}
+
+Return JSON:
+{
+  "situation_assessment": string,
+  "your_rights": [string],
+  "your_obligations": [string],
+  "recommended_actions": [{"action": string, "timeline": string, "why": string}],
+  "legal_basis": string,
+  "documents_needed": [string],
+  "communication_script": string,
+  "escalation_path": [string],
+  "common_mistakes_to_avoid": [string],
+  "negotiation_leverage": [string],
+  "worst_case_scenario": string,
+  "best_case_scenario": string,
+  "cost_estimate": string,
+  "verdict": string,
+  "lawyer_needed": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO landlord_advisors (id,user_id,situation,role,result) VALUES (?,?,?,?,?)`).run(uuidv4(),userId,situation,role,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
