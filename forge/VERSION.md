@@ -1,3 +1,5 @@
+## v207.00 — Dream Mode Wave 35: Deep Work Planner + Meeting Optimizer + Career Trajectory + Promotion Case + LinkedIn Rewriter
+
 ## v206.00 — Dream Mode Wave 34: Contract Analyzer + Tax Strategy + Estate Plan + Investment Analyzer + Insurance Audit
 
 ## v205.00 — Dream Mode Wave 33: Lab Interpreter + Supplement Stack + Recovery Plan + Longevity Protocol + Mental Performance

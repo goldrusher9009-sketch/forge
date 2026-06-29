@@ -174604,3 +174604,80 @@ app.post('/api/insurance/audit', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 35: PRODUCTIVITY & CAREER AI ────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS deep_work_planners (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS meeting_optimizers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, optimization TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS career_trajectory (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, trajectory TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS promotion_cases (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, case_doc TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS linkedin_rewriters (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, rewrite TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Deep Work Planner
+app.post('/api/deepwork/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { work_type, current_schedule, biggest_blockers, output_goals } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Design a deep work system tailored to this person.\n\nWork type: ${work_type}\nCurrent schedule: ${current_schedule||'9-5 office'}\nBiggest blockers: ${biggest_blockers||'meetings, slack, context switching'}\nOutput goals: ${output_goals||'ship more, think clearly'}\n\nRespond in JSON: { "diagnosis": "what's killing their deep work", "ideal_schedule": [{"block":"time slot","type":"deep/shallow/admin/recovery","activity":"what to do","why":"reason for this placement"}], "environment_design": {"physical":"workspace setup","digital":"app/notification setup","social":"how to communicate availability"}, "session_structure": {"warmup":"5-10min ritual","main_session":"how to structure focused work","wind_down":"how to end a session"}, "shallow_work_batching": "when and how to handle email/slack/meetings", "protection_scripts": ["phrase to say when someone wants to interrupt you","how to decline unnecessary meetings"], "weekly_review": "Sunday/Friday review process to maintain the system", "metrics": ["how to measure if deep work is improving"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO deep_work_planners (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Meeting Optimizer
+app.post('/api/meeting/optimize', requireAuth, async (req: any, res: any) => {
+  try {
+    const { meeting_load, meeting_types, goals } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Optimize this person's meeting culture and schedule.\n\nCurrent meeting load: ${meeting_load||'heavy, 6+ hours/day'}\nTypes of meetings: ${meeting_types||'standups, 1:1s, all-hands, ad-hoc'}\nGoals: ${goals||'fewer meetings, better outcomes'}\n\nRespond in JSON: { "meeting_audit": "assessment of current meeting situation", "meetings_to_eliminate": [{"meeting_type":"type","why":"why it should die","replacement":"what replaces it"}], "meetings_to_fix": [{"meeting_type":"type","current_problem":"what's wrong","fix":"how to fix it","new_format":"improved format"}], "meeting_templates": [{"purpose":"1:1/standup/brainstorm/decision","agenda":"template agenda","duration":"ideal length","prep":"what to send beforehand","output":"what should be decided/documented"}], "no_meeting_blocks": "when to block calendar for deep work", "async_alternatives": ["zoom call → Loom video","status meeting → Notion doc"], "scripts": {"decline_meeting":"polite way to decline unnecessary meetings","shorten_meeting":"how to end meetings early"} }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO meeting_optimizers (id,user_id,context,optimization) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Career Trajectory Mapper
+app.post('/api/career/trajectory', requireAuth, async (req: any, res: any) => {
+  try {
+    const { current_role, experience, skills, goals, timeline } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Map a realistic career trajectory.\n\nCurrent role: ${current_role}\nYears experience: ${experience||'5'}\nKey skills: ${skills||'not specified'}\nCareer goals: ${goals||'senior leadership'}\nTimeline: ${timeline||'5 years'}\n\nRespond in JSON: { "current_assessment": "honest assessment of where they are", "trajectory_paths": [{"path":"IC track/management track/entrepreneurship/pivot","probability":"high/medium/low given background","milestones":[{"timeframe":"6 months","milestone":"what to achieve","how":"key actions"}],"trade_offs":"what you give up vs gain"}], "skill_gaps": [{"skill":"gap","importance":"critical/important","how_to_close":"specific way to develop it","timeline":"how long"}], "network_strategy": "who to meet, what communities to join", "visibility_plan": ["how to become known in your field"], "compensation_trajectory": "realistic comp at each milestone", "risk_factors": ["thing that could derail this trajectory"], "quick_wins_next_90_days": ["actionable step you can take now"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO career_trajectory (id,user_id,context,trajectory) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Promotion Case Builder
+app.post('/api/promotion/case', requireAuth, async (req: any, res: any) => {
+  try {
+    const { current_role, target_role, accomplishments, company_context } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a compelling promotion case document.\n\nCurrent role: ${current_role}\nTarget role: ${target_role}\nKey accomplishments: ${accomplishments}\nCompany context: ${company_context||'standard tech company'}\n\nRespond in JSON: { "executive_summary": "one paragraph making the case", "impact_stories": [{"situation":"context","action":"what you did","result":"measurable outcome","competency":"what skill this demonstrates"}], "scope_expansion": "how your responsibilities have grown beyond your current level", "future_impact": "what you will do at the next level that you are not doing now", "market_comparison": "how your skills compare externally", "peer_evidence": "suggested framing for peer feedback", "manager_ask": "exact language for the conversation with your manager", "timing_recommendation": "when to have this conversation", "objection_responses": {"objection":"common pushback","response":"how to answer it"}, "follow_up_plan": "what to do if you get a yes, a no, or a maybe" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO promotion_cases (id,user_id,context,case_doc) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// LinkedIn Profile Rewriter
+app.post('/api/linkedin/rewrite', requireAuth, async (req: any, res: any) => {
+  try {
+    const { current_profile, target_role, ideal_audience, achievements } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Rewrite this LinkedIn profile to attract the right opportunities.\n\nCurrent profile/headline/summary: ${current_profile}\nTarget role: ${target_role}\nIdeal audience: ${ideal_audience||'recruiters and hiring managers'}\nKey achievements: ${achievements||'not provided'}\n\nRespond in JSON: { "headline": "optimized headline under 220 chars that positions them for target role", "headline_alternatives": ["alternative 1","alternative 2"], "about_section": "rewritten about section 2000 chars max, first person, value-first, keyword rich", "open_to_work_message": "optional note for open to work banner", "featured_section_suggestions": ["what to pin in featured: post, project, case study"], "experience_bullets": [{"role":"job title","rewritten_bullets":["achievement-focused bullet 1","bullet 2"]}], "skills_to_add": ["skill keyword 1","skill keyword 2"], "connection_request_template": "short note for reaching out to recruiters", "creator_mode_topics": ["topic to post about to attract target audience"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO linkedin_rewriters (id,user_id,context,rewrite) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
