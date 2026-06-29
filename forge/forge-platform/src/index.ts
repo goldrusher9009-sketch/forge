@@ -174142,3 +174142,80 @@ app.post('/api/socratic/learn', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 29: DEVELOPER TOOLS AI ──────────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS code_reviewers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, review TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS regex_builders (id TEXT PRIMARY KEY, user_id TEXT, description TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS api_doc_gens (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, docs TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS sql_optimizers (id TEXT PRIMARY KEY, user_id TEXT, query TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS git_commit_gens (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, commits TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// AI Code Reviewer
+app.post('/api/code/review', requireAuth, async (req: any, res: any) => {
+  try {
+    const { code, language, focus } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Perform a thorough code review.\n\nLanguage: ${language||'auto-detect'}\nCode:\n\`\`\`\n${code}\n\`\`\`\nFocus areas: ${focus||'bugs, security, performance, readability'}\n\nRespond in JSON: { "summary": "overall assessment", "score": 85, "issues": [{"severity":"critical|high|medium|low","type":"bug|security|performance|style","line":"line number or range","description":"what the issue is","suggestion":"how to fix it","fixed_code":"corrected code snippet"}], "strengths": ["what this code does well"], "refactoring_suggestions": [{"description":"what to refactor","before":"original code","after":"improved code","benefit":"why this is better"}], "security_concerns": ["concern1"], "test_cases_needed": ["test case description1"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO code_reviewers (id,user_id,context,review) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Regex Builder
+app.post('/api/regex/build', requireAuth, async (req: any, res: any) => {
+  try {
+    const { description, examples, language } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a regex pattern for this requirement.\n\nDescription: ${description}\nExample matches: ${examples||'none provided'}\nLanguage/flavor: ${language||'JavaScript'}\n\nRespond in JSON: { "pattern": "the regex pattern", "flags": "gi etc", "explanation": "what the pattern does in plain English", "breakdown": [{"part":"(\\\\w+)","meaning":"captures one or more word characters"}], "test_cases": [{"input":"test string","matches":["match1"],"groups":{"group1":"value"},"should_match":true}], "variations": [{"use_case":"more specific","pattern":"alt regex","when_to_use":"when you need X"}], "common_pitfalls": ["pitfall1","pitfall2"], "usage_example": "const re = /pattern/flags; re.test(str);" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO regex_builders (id,user_id,description,result) VALUES (?,?,?,?)`).run(id, req.user.id, description, JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// API Documentation Generator
+app.post('/api/apidoc/generate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { endpoints, project_name, style } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Generate professional API documentation.\n\nProject: ${project_name||'My API'}\nEndpoints/code:\n${endpoints}\nStyle: ${style||'REST, developer-friendly'}\n\nRespond in JSON: { "overview": "what this API does", "base_url": "https://api.example.com/v1", "authentication": {"type":"Bearer Token","description":"how to auth","example":"Authorization: Bearer YOUR_TOKEN"}, "endpoints": [{"method":"POST","path":"/api/users","summary":"short description","description":"full explanation","request":{"headers":{"Content-Type":"application/json"},"body":{"field":"type — description"},"example":"JSON body example"},"response":{"status":200,"description":"success","body":{"field":"type — description"},"example":"JSON response"},"errors":[{"status":400,"message":"error message","cause":"why this happens"}]}], "rate_limits": "rate limit policy", "versioning": "how versioning works", "sdks": ["language the API supports"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO api_doc_gens (id,user_id,context,docs) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// SQL Query Optimizer
+app.post('/api/sql/optimize', requireAuth, async (req: any, res: any) => {
+  try {
+    const { query, schema, db_type } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Analyze and optimize this SQL query.\n\nDatabase: ${db_type||'PostgreSQL'}\nSchema context: ${schema||'not provided'}\nQuery:\n\`\`\`sql\n${query}\n\`\`\`\n\nRespond in JSON: { "analysis": "what the query does", "issues": [{"type":"missing index|n+1|full table scan|etc","description":"what's wrong","impact":"performance impact"}], "optimized_query": "improved SQL", "changes_made": ["change1 and why","change2 and why"], "indexes_to_add": [{"table":"table_name","columns":["col1","col2"],"type":"btree","reason":"why this helps"}], "estimated_improvement": "rough performance gain", "execution_plan_notes": "what to check in EXPLAIN ANALYZE", "alternative_approaches": [{"approach":"approach name","query":"alt SQL","tradeoffs":"when to use this instead"}] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO sql_optimizers (id,user_id,query,result) VALUES (?,?,?,?)`).run(id, req.user.id, query, JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Git Commit Message Generator
+app.post('/api/git/commit', requireAuth, async (req: any, res: any) => {
+  try {
+    const { diff, context, style } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Generate professional git commit messages.\n\nDiff/changes:\n${diff}\nAdditional context: ${context||'none'}\nStyle: ${style||'conventional commits'}\n\nRespond in JSON: { "primary_commit": {"subject":"feat(auth): add OAuth2 login flow","body":"Implement Google and GitHub OAuth2 providers using passport.js\\n\\nUsers can now sign in with their Google or GitHub accounts\\nSession tokens are stored securely in httpOnly cookies","footer":"Closes #123\\nBreaking-change: removes legacy /login endpoint"}, "alternatives": [{"style":"short","message":"add OAuth2 login"},{"style":"descriptive","message":"longer descriptive version"},{"style":"emoji","message":"✨ feat: add OAuth2 login"}], "changelog_entry": "what to put in CHANGELOG.md", "pr_title": "suggested pull request title", "pr_description": "suggested PR description with context" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO git_commit_gens (id,user_id,context,commits) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});

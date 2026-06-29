@@ -1,3 +1,5 @@
+## v201.00 — Dream Mode Wave 29: Code Reviewer + Regex Builder + API Docs + SQL Optimizer + Git Commit Gen
+
 ## v200.00 — Dream Mode Wave 28: Study Plan + Concept Map + Exam Prep + Skill Roadmap + Socratic Learning
 
 ## v199.00 — Dream Mode Wave 27: Anxiety Toolkit + CBT Exercise + Self-Care Plan + Boundary Scripts + Burnout Assessment
