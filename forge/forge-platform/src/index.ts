@@ -179009,3 +179009,97 @@ app.post('/api/peakstate/design', requireAuth, async (req: AuthRequest, res) => 
     res.json({ protocol });
   } catch (e: any) { res.json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 81: RELATIONSHIP & SOCIAL INTELLIGENCE AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS empathy_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, other_perspective TEXT, response TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS small_talk_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, context TEXT, goal TEXT, scripts TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS love_language_analyzers (
+  id TEXT PRIMARY KEY, user_id TEXT, behaviors TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS relationship_auditors (
+  id TEXT PRIMARY KEY, user_id TEXT, relationship_type TEXT, dynamics TEXT, audit TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS difficult_conversation_guides (
+  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, relationship TEXT, approach TEXT, script TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/empathy/build', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { situation, your_view, other_person } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are an empathy and perspective-taking coach. Help understand another person's viewpoint.\nSituation: ${situation}\nYour view: ${your_view||'not specified'}\nOther person: ${other_person||'not described'}\nProvide: 3 possible perspectives they might hold, emotional experience they're likely having, what they might need from this interaction, empathic response scripts, and how to bridge the gap.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const response = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO empathy_builders (id,user_id,situation,other_perspective,response) VALUES (?,?,?,?,?)').run(id, userId, situation, other_person, response);
+    res.json({ response });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/smalltalk/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { context, goal, anxiety_level } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a social skills and conversation coach. Create a small talk toolkit.\nContext: ${context}\nGoal: ${goal||'build rapport'}\nAnxiety level: ${anxiety_level||'moderate'}\nProvide: 10 conversation openers, 5 topic bridges, active listening phrases, graceful exit lines, how to remember names, and 3 conversation practice scenarios with example exchanges.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const scripts = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO small_talk_coaches (id,user_id,context,goal,scripts) VALUES (?,?,?,?,?)').run(id, userId, context, goal, scripts);
+    res.json({ scripts });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/lovelanguage/analyze', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { behaviors, relationship_type, complaints } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a love languages and relationship expert. Analyze and apply the 5 love languages.\nBehaviors observed: ${behaviors}\nRelationship type: ${relationship_type||'romantic'}\nComplaints or friction: ${complaints||'none specified'}\nProvide: inferred love language(s), how mismatches cause conflict, specific expressions for each love language in this context, a 30-day connection plan, and scripts for asking about love languages.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const analysis = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO love_language_analyzers (id,user_id,behaviors,analysis) VALUES (?,?,?,?)').run(id, userId, behaviors, analysis);
+    res.json({ analysis });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/relationship/audit', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { relationship_type, dynamics, what_works, what_doesnt } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a relationship health auditor. Assess the health and growth potential of this relationship.\nType: ${relationship_type}\nDynamics: ${dynamics}\nWhat works: ${what_works||'unclear'}\nWhat doesn't: ${what_doesnt||'unclear'}\nProvide: health score (1-10) with reasoning, patterns to address, strengths to amplify, 30/60/90 day action plan, conversation starters for improvement, and when to seek professional help.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const audit = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO relationship_auditors (id,user_id,relationship_type,dynamics,audit) VALUES (?,?,?,?,?)').run(id, userId, relationship_type, dynamics, audit);
+    res.json({ audit });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/difficultconv/guide', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { topic, relationship, desired_outcome, fears } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a difficult conversations expert. Prepare someone to have a crucial conversation.\nTopic: ${topic}\nRelationship: ${relationship}\nDesired outcome: ${desired_outcome||'resolution and understanding'}\nFears: ${fears||'conflict, rejection'}\nDeliver: opening line options, complete conversation script with branches, how to handle pushback, de-escalation phrases, how to end productively, and what to do if it goes badly.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const script = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO difficult_conversation_guides (id,user_id,topic,relationship,approach,script) VALUES (?,?,?,?,?,?)').run(id, userId, topic, relationship, desired_outcome, script);
+    res.json({ script });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
