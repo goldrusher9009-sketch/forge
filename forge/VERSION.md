@@ -1,3 +1,5 @@
+## v234.00 — Dream Mode Wave 62: Money & Wealth AI (Passive Income Planner + Tax Strategist + Investment Thesis Builder + Wealth Gap Analyzer + Money Mindset Coach)
+
 ## v233.00 — Dream Mode Wave 61: Social Intelligence AI (Conversation Hacker + Charisma Coach + Networking Strategist + Conflict Mediator + Influence Builder)
 
 ## v232.00 — Dream Mode Wave 60: Science & Learning AI (Concept Decoder + Research Synthesizer + Debate Prep + Critical Thinker + Teaching Assistant)

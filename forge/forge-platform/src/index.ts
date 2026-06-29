@@ -177263,3 +177263,87 @@ app.post('/api/influence/build', requireAuth, async (req: AuthRequest, res) => {
     res.json(data);
   } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 62: MONEY & WEALTH AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS passive_income_planners (
+  id TEXT PRIMARY KEY, user_id TEXT, capital TEXT, skills TEXT, time TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS tax_strategists (
+  id TEXT PRIMARY KEY, user_id TEXT, income TEXT, situation TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS investment_thesis_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, asset TEXT, thesis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS wealth_gap_analyzers (
+  id TEXT PRIMARY KEY, user_id TEXT, current TEXT, goal TEXT, gap_analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS money_mindset_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, belief TEXT, coaching TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/passive/income', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { available_capital, skills, time_per_week, risk_tolerance } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a passive income strategist. Create a personalized plan. Capital: ${available_capital}. Skills: ${skills}. Time: ${time_per_week} hours/week. Risk tolerance: ${risk_tolerance}. Return JSON: { income_streams: [{ name, type, startup_cost, monthly_income_potential, time_to_first_dollar, effort_level, how_to_start, skills_needed, best_for }] (5 streams), recommended_stack (which 2-3 to combine), 90_day_roadmap: [{ week, focus, actions, expected_outcome }], total_income_potential_12_months, biggest_mistakes_to_avoid: [5], resources_to_start: [5 books/tools/platforms] }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO passive_income_planners VALUES (?,?,?,?,?,?,?)').run(uuidv4(), userId, available_capital, skills, time_per_week, JSON.stringify(data), new Date().toISOString());
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/tax/strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { income_type, annual_income, situation, country } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a tax strategy educator (not a licensed advisor — for educational purposes only). Income type: ${income_type}. Annual income: ${annual_income}. Situation: ${situation}. Country: ${country || 'US'}. Return JSON: { disclaimer, tax_education_overview, commonly_missed_deductions: [{ deduction, who_qualifies, estimated_savings }], tax_advantaged_accounts: [{ account, 2024_limit, tax_benefit, best_for }], strategies_by_income_type: [{ strategy, how_it_works, potential_savings, action_to_take }], year_end_moves: [5 actions before Dec 31], questions_to_ask_your_accountant: [7], estimated_tax_savings_range, next_steps }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO tax_strategists VALUES (?,?,?,?,?)').run(uuidv4(), userId, income_type, annual_income, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investment/thesis', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { asset_or_company, investment_horizon, bull_case_belief } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are an investment analyst educator. Build an investment thesis framework. Asset/Company: ${asset_or_company}. Horizon: ${investment_horizon}. Bull case belief: ${bull_case_belief}. (Educational only — not financial advice). Return JSON: { disclaimer, asset_overview, bull_case: { core_thesis, catalysts: [5], target_price_rationale, timeline }, bear_case: { key_risks: [5], what_would_invalidate_thesis }, key_questions_to_research: [7], metrics_to_track: [5], comparable_cases: [3], position_sizing_framework, entry_criteria, exit_criteria, monitoring_checklist, conviction_score (1-10 with rationale) }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO investment_thesis_builders VALUES (?,?,?,?)').run(uuidv4(), userId, asset_or_company, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/wealth/gap', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { current_net_worth, income, age, wealth_goal, timeline } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a wealth planning educator. Analyze the wealth gap. Current net worth: ${current_net_worth}. Income: ${income}. Age: ${age}. Goal: ${wealth_goal}. Timeline: ${timeline}. Return JSON: { current_trajectory_at_retirement, gap_amount, gap_assessment, wealth_building_levers: [{ lever, current_state, optimized_state, monthly_impact }], savings_rate_analysis, investment_allocation_suggestion, income_growth_needed, milestones: [{ year, target_net_worth, key_action }], acceleration_moves: [5 non-obvious wealth builders], wealth_killers_to_eliminate: [5], compound_growth_scenarios: [{ scenario, annual_return, net_worth_at_goal }], mindset_shifts_needed: [3] }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO wealth_gap_analyzers VALUES (?,?,?,?,?)').run(uuidv4(), userId, current_net_worth, wealth_goal, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/money/mindset', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { limiting_belief, money_story, current_patterns } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a money mindset coach. Transform limiting money beliefs. Limiting belief: "${limiting_belief}". Money story: ${money_story}. Current patterns: ${current_patterns}. Return JSON: { belief_origin_insight, how_this_belief_is_costing_you, the_truth: { reframe, evidence, new_belief }, wealthy_mindset_shift: { old_belief, new_belief, why_it_works }, affirmations: [5 personalized powerful affirmations], behavioral_experiments: [3 small actions to reprogram this belief], journaling_prompts: [5], books_that_rewire_money_mindset: [3], your_new_money_story (write a 100-word empowering narrative), 30_day_money_mindset_plan }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO money_mindset_coaches VALUES (?,?,?,?)').run(uuidv4(), userId, limiting_belief, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
