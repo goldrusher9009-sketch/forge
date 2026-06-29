@@ -174758,3 +174758,80 @@ app.post('/api/personal/ceo', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 37: SCIENCE & RESEARCH AI ───────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS paper_decoders (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS hypothesis_builders (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS experiment_designers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS literature_mappers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS grant_writers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Paper Decoder
+app.post('/api/paper/decode', requireAuth, async (req: any, res: any) => {
+  try {
+    const { abstract, title, field, questions } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Decode this academic paper for a general audience.\n\nTitle: ${title||'Unknown'}\nField: ${field||'general science'}\nAbstract: ${abstract}\nSpecific questions: ${questions||'what does this mean and why does it matter?'}\n\nRespond in JSON: { "eli5": "explain like I'm 5 — one paragraph", "key_finding": "the single most important thing this paper found", "methodology_plain": "what they did — no jargon", "why_it_matters": "real-world implications in 2-3 sentences", "limitations": ["what this study can't tell us","who this doesn't apply to"], "follow_up_studies": "what research should happen next", "counterarguments": "what critics might say about this", "confidence_level": "how solid is this evidence — preliminary/promising/well-established", "applications": ["practical use case"], "glossary": [{"term":"jargon term","meaning":"plain English definition"}] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO paper_decoders (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Hypothesis Builder
+app.post('/api/hypothesis/build', requireAuth, async (req: any, res: any) => {
+  try {
+    const { observation, field, prior_knowledge, constraints } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build testable scientific hypotheses from an observation.\n\nObservation: ${observation}\nField: ${field||'general'}\nPrior knowledge: ${prior_knowledge||'none provided'}\nConstraints: ${constraints||'none'}\n\nRespond in JSON: { "primary_hypothesis": {"statement":"if X then Y because Z","null_hypothesis":"the version to disprove","type":"causal/correlational/descriptive"}, "alternative_hypotheses": [{"statement":"alt hypothesis","why_plausible":"reasoning"}], "variables": {"independent":"what you change","dependent":"what you measure","control":"what you hold constant","confounds":"what could mess up results"}, "predictions": ["specific, measurable prediction if hypothesis is true"], "falsification": "what result would prove this hypothesis WRONG", "theoretical_basis": "what existing science supports this", "novelty_assessment": "how original is this hypothesis — incremental/novel/paradigm-shifting" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO hypothesis_builders (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Experiment Designer
+app.post('/api/experiment/design', requireAuth, async (req: any, res: any) => {
+  try {
+    const { hypothesis, resources, timeline, constraints } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Design a rigorous experiment to test this hypothesis.\n\nHypothesis: ${hypothesis}\nAvailable resources: ${resources||'standard lab'}\nTimeline: ${timeline||'flexible'}\nConstraints: ${constraints||'none'}\n\nRespond in JSON: { "design_type": "RCT/observational/quasi-experimental/A-B test/case study", "sample": {"size":"recommended n with reasoning","selection":"how to pick participants/subjects","inclusion_criteria":["who qualifies"],"exclusion_criteria":["who to exclude"]}, "procedure": [{"step":"step name","action":"what to do","duration":"how long","notes":"important details"}], "measurements": [{"variable":"what to measure","method":"how","frequency":"when","instrument":"tool to use"}], "controls": ["control condition","blinding approach","randomization method"], "statistical_plan": "what analysis to run and why", "power_analysis": "sample size justification", "potential_confounds": ["confound and how to control it"], "ethical_considerations": ["ethical issue and mitigation"], "expected_timeline": "phase-by-phase schedule", "budget_estimate": "rough cost breakdown if applicable" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO experiment_designers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Literature Mapper
+app.post('/api/literature/map', requireAuth, async (req: any, res: any) => {
+  try {
+    const { topic, field, depth, angle } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Map the research landscape for this topic.\n\nTopic: ${topic}\nField: ${field||'interdisciplinary'}\nDepth needed: ${depth||'comprehensive'}\nAngle: ${angle||'general overview'}\n\nRespond in JSON: { "field_overview": "state of knowledge in 2-3 paragraphs", "key_findings": [{"finding":"established finding","evidence":"how well supported","year_range":"roughly when established"}], "major_debates": [{"debate":"the disagreement","side_a":"position A","side_b":"position B","current_lean":"which way evidence tilts"}], "landmark_papers": [{"title":"paper title","why_important":"why it matters","year":"approximate year"}], "research_gaps": ["underexplored area that needs more study"], "emerging_directions": ["frontier area or new approach"], "methodological_trends": "how research in this area is typically done", "interdisciplinary_links": ["related field with relevant insights"], "practical_applications": ["how this research translates to real world"], "recommended_starting_points": ["where to begin reading if new to this topic"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO literature_mappers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Grant Writer
+app.post('/api/grant/write', requireAuth, async (req: any, res: any) => {
+  try {
+    const { project_title, research_question, significance, methodology, team, budget_range } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write compelling grant proposal sections.\n\nProject title: ${project_title}\nResearch question: ${research_question}\nSignificance: ${significance}\nMethodology: ${methodology||'to be determined'}\nTeam: ${team||'PI + 2 researchers'}\nBudget range: ${budget_range||'$100k-500k'}\n\nRespond in JSON: { "specific_aims": "300-word specific aims section — the most important part of any grant", "significance": "why this research matters — impact on field and society", "innovation": "what is novel about this approach", "approach": "methodology section — rigorous, detailed, anticipates reviewers' concerns", "significance_score_factors": ["what makes this fundable","what reviewers will love"], "weaknesses_to_preempt": [{"weakness":"likely reviewer concern","response":"how to address it in the proposal"}], "budget_justification": "narrative justifying the budget range", "broader_impacts": "societal benefits beyond the immediate research", "hook_sentence": "the single sentence that makes reviewers want to fund this", "success_metrics": ["how you'll know the research succeeded"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO grant_writers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
