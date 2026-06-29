@@ -175451,3 +175451,80 @@ app.post('/api/solo/travel', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 46: MENTAL WELLNESS & THERAPY AI ────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS grief_coaches (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS anger_managers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS trauma_educators (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS mindset_coaches (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS inner_child_workers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Grief Coach
+app.post('/api/grief/coach', requireAuth, async (req: any, res: any) => {
+  try {
+    const { loss_type, time_since, current_state, support_needed } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Provide compassionate grief support and education. Note: This is educational and supportive content, not therapy. Always encourage professional support.\n\nType of loss: ${loss_type}\nTime since loss: ${time_since||'recent'}\nCurrent state: ${current_state||'processing the loss'}\nSupport needed: ${support_needed||'understanding and coping tools'}\n\nRespond in JSON: { "validation": "empathetic acknowledgment of their specific loss and experience", "what_youre_experiencing": "normalize their experience with grief education", "grief_stages_context": "compassionate, non-linear view of grief stages and what that means for them", "coping_tools": [{"tool":"specific coping technique","how_to":"step by step","when_to_use":"situations it helps most","why_it_helps":"the psychology behind it"}], "things_that_help": ["evidence-supported practices for grief"], "things_to_avoid": ["common mistakes that prolong difficult grief"], "for_others_supporting_you": ["what to tell people who want to help"], "when_to_seek_professional_help": "clear guidance on when grief support or therapy is important", "self_compassion_reminder": "gentle reminder about being kind to themselves", "one_small_step": "one tiny thing they could do today" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO grief_coaches (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Anger Manager
+app.post('/api/anger/manage', requireAuth, async (req: any, res: any) => {
+  try {
+    const { trigger_pattern, anger_style, impact, goals } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Help someone understand and manage anger constructively. Educational content only — not therapy.\n\nTrigger patterns: ${trigger_pattern||'various situations'}\nAnger style: ${anger_style||'explosive/internalized'}\nImpact on life: ${impact||'relationships and wellbeing'}\nGoals: ${goals||'respond instead of react'}\n\nRespond in JSON: { "anger_reframe": "healthy perspective on anger as information not enemy", "your_anger_profile": "understanding of their specific anger pattern based on what they shared", "the_neuroscience": "brief, accessible explanation of what happens in the brain/body during anger", "in_the_moment_toolkit": [{"technique":"name","steps":["step by step instructions"],"works_because":"brief explanation","time_needed":"seconds/minutes"}], "pattern_interrupt": "how to recognize the escalation ladder before it's too late", "root_exploration": "questions to understand what the anger is protecting or communicating", "communication_scripts": [{"situation":"trigger type","reactive_response":"what they might say now","constructive_response":"better alternative"}], "long_term_practices": ["habit that reduces baseline anger over time"], "relationship_repair": "how to address damage done during anger episodes", "professional_note": "when anger management therapy would be genuinely helpful" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO anger_managers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Trauma Educator
+app.post('/api/trauma/educate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { trauma_type, symptoms_experiencing, stage, learning_goals } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Provide trauma education and psychoeducation. Important: Educational content only — always encourage professional trauma therapy (EMDR, Somatic, CPT, etc.).\n\nTrauma type/context: ${trauma_type}\nSymptoms experiencing: ${symptoms_experiencing||'emotional dysregulation, flashbacks, avoidance'}\nStage: ${stage||'early awareness'}\nLearning goals: ${learning_goals||'understand what happened and why I feel this way'}\n\nRespond in JSON: { "you_are_not_broken": "validating, trauma-informed message", "what_trauma_does_to_the_brain": "accessible psychoeducation on trauma neuroscience — window of tolerance, nervous system responses", "why_symptoms_make_sense": "normalize their specific symptoms as survival responses", "the_window_of_tolerance": "explain this concept and how to recognize where they are", "grounding_techniques": [{"technique":"name","steps":["steps"],"when_to_use":"situation","what_it_does":"nervous system effect"}], "triggers_explained": "what triggers are and why the brain creates them", "trauma_responses": "fight/flight/freeze/fawn explained in accessible terms", "healing_is_nonlinear": "what the healing process actually looks like", "trauma_informed_therapies": [{"therapy":"name","how_it_works":"brief description","good_for":"type of trauma or symptom"}], "self_care_in_healing": ["practice that supports trauma healing — not replaces therapy"], "finding_help": "how to find a trauma-informed therapist" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO trauma_educators (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Mindset Coach
+app.post('/api/mindset/coach', requireAuth, async (req: any, res: any) => {
+  try {
+    const { limiting_belief, life_area, pattern, desired_shift } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Coach someone through shifting a limiting mindset or belief pattern.\n\nLimiting belief or pattern: ${limiting_belief}\nLife area affected: ${life_area||'multiple areas'}\nHow long this pattern: ${pattern||'years'}\nDesired shift: ${desired_shift||'more confident and expansive thinking'}\n\nRespond in JSON: { "belief_anatomy": "break down where this belief likely came from and what it's been protecting", "evidence_audit": {"supporting_evidence":"evidence that seems to support this belief","counter_evidence":"evidence that challenges or contradicts it","conclusion":"reframe based on fuller evidence"}, "cognitive_distortions": [{"distortion":"type of thinking error at play","example":"how it shows up in their specific belief","correction":"how to reframe it"}], "new_belief_options": [{"belief":"alternative belief statement","why_it_works":"why it's more accurate and useful","affirmation":"daily reminder version"}], "belief_shift_practices": [{"practice":"technique","instructions":"how to do it","timeline":"how long to practice"}], "identity_shift": "how to start thinking of yourself as someone who holds the new belief", "anticipate_resistance": "why the old belief will fight back and what to do", "environment_design": "how to change your environment to support the new mindset", "30_day_experiment": "a concrete 30-day experiment to test the new belief in real life" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO mindset_coaches (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Inner Child Work
+app.post('/api/inner/child', requireAuth, async (req: any, res: any) => {
+  try {
+    const { childhood_pattern, current_trigger, emotional_response, healing_intention } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Provide inner child work education and exercises. Educational content only — deep trauma work should be done with a therapist.\n\nPattern from childhood: ${childhood_pattern||'general childhood wounds'}\nCurrent triggers: ${current_trigger||'relationship conflicts, rejection'}\nEmotional response: ${emotional_response||'intense disproportionate reactions'}\nHealing intention: ${healing_intention||'better understand myself and respond more maturely'}\n\nRespond in JSON: { "inner_child_concept": "what the inner child actually is (psychologically) in accessible terms", "connection_to_present": "how their childhood pattern connects to their current triggers and responses", "what_your_inner_child_needs": "the core emotional needs that went unmet based on their pattern", "reparenting_explained": "what reparenting means and why it's powerful", "exercises": [{"exercise":"name","intention":"what it addresses","instructions":["step by step"],"what_might_come_up":"emotions or memories to be prepared for","integration":"what to do after"}], "self_talk_shift": [{"old_self_talk":"critical inner voice example","reparenting_response":"what a loving parent would say instead"}], "triggers_as_teachers": "how to use current triggers as windows into childhood wounds", "healing_milestones": "what healing inner child work actually looks like over time", "when_to_work_with_therapist": "why this work is often best done with professional support for deeper wounds", "daily_practice": "a simple daily inner child check-in practice" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO inner_child_workers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
