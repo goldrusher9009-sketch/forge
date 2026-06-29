@@ -1,3 +1,10 @@
+## v193.00 — Dream Mode Wave 21: Plot Twist Generator + Character Creator + World Builder + Dialogue Coach + Book Blurb Writer
+- 🌀 Plot Twist Generator: 5 unexpected twists with setup foreshadowing and shock rating
+- 👤 Character Creator: deep profile with wound, want, need, flaw, arc and quirks
+- 🌍 World Builder: full world with geography, society, history, magic rules and story hooks
+- 💬 Dialogue Coach: flat dialogue → compelling scene with subtext and pacing notes
+- 📖 Book Blurb Writer: 3 back-cover blurbs in different styles + taglines + comp titles
+
 ## v192.00 — Dream Mode Wave 20: Will Generator + Lease Analyzer + Dispute Letter + TOS Decoder + FOIA Request Writer
 - 📜 Will Generator: asset distribution outline + executor clauses + next steps (consult a lawyer)
 - 🏠 Lease Analyzer: red-flag detection, risk score, negotiate-these list, sign/avoid verdict

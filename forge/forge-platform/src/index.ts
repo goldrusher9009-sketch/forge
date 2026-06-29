@@ -173522,3 +173522,81 @@ app.post('/api/foia/write', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 21: Creative Writing AI ──
+
+db.prepare(`CREATE TABLE IF NOT EXISTS plot_twists (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, twists TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS characters (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, profile TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS worlds (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, world TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS dialogue_rewrites (id TEXT PRIMARY KEY, user_id TEXT, original TEXT, rewrite TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS book_blurbs (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, blurb TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Plot Twist Generator
+app.post('/api/plot-twist/generate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { story_summary, genre, current_situation, tone } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Generate 5 unexpected, compelling plot twists for this story.\n\nStory: ${story_summary}\nGenre: ${genre||'general fiction'}\nCurrent situation: ${current_situation||'midpoint of story'}\nTone: ${tone||'dramatic'}\n\nRespond in JSON: { "twists": [{ "title": "twist name", "description": "what happens", "setup_needed": "foreshadowing to plant earlier", "impact": "how this changes everything", "shock_level": number_1_to_10 }] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO plot_twists (id,user_id,context,twists) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Character Creator
+app.post('/api/character/create', requireAuth, async (req: any, res: any) => {
+  try {
+    const { role, genre, personality_seeds, story_context } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a rich, compelling fictional character.\n\nRole: ${role||'protagonist'}\nGenre: ${genre||'literary fiction'}\nPersonality seeds: ${personality_seeds||'complex, morally grey'}\nStory context: ${story_context||'contemporary setting'}\n\nRespond in JSON: { "name": "full name", "age": number, "appearance": "vivid physical description", "personality": "core traits and how they manifest", "backstory": "formative history in 3-4 sentences", "core_wound": "deepest psychological wound", "want": "what they consciously want", "need": "what they actually need", "flaw": "their fatal flaw", "strength": "their greatest strength", "voice": "how they speak and phrase things", "arc": "how they change by story's end", "quirks": ["quirk1","quirk2","quirk3"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO characters (id,user_id,context,profile) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// World Builder
+app.post('/api/world/build', requireAuth, async (req: any, res: any) => {
+  try {
+    const { genre, premise, tone, magic_tech_level } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a fictional world with depth and internal consistency.\n\nGenre: ${genre||'fantasy'}\nPremise: ${premise||'original world'}\nTone: ${tone||'epic'}\nMagic/tech level: ${magic_tech_level||'low magic'}\n\nRespond in JSON: { "world_name": "name", "tagline": "one-sentence pitch", "geography": "key locations and landscape", "history": "3 pivotal historical events that shaped this world", "society": { "structure": "social hierarchy", "culture": "customs and values", "conflicts": "tensions between groups" }, "magic_or_tech": "rules and limitations", "unique_elements": ["element1","element2","element3"], "story_hooks": ["hook1","hook2","hook3"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO worlds (id,user_id,context,world) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Dialogue Coach
+app.post('/api/dialogue/rewrite', requireAuth, async (req: any, res: any) => {
+  try {
+    const { dialogue, context, characters_involved, goal } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Rewrite this dialogue to be more compelling, natural, and emotionally resonant.\n\nOriginal dialogue:\n${dialogue}\n\nContext: ${context||'general scene'}\nCharacters: ${characters_involved||'two characters'}\nScene goal: ${goal||'create tension'}\n\nRespond in JSON: { "rewritten_dialogue": "the improved dialogue with stage directions", "what_changed": ["change1","change2","change3"], "subtext": "what is NOT being said but felt", "pacing_notes": "how to perform/read this", "alternatives": ["alternative line for key moment","another option"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO dialogue_rewrites (id,user_id,original,rewrite) VALUES (?,?,?,?)`).run(id, req.user.id, dialogue, JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Book Blurb Writer
+app.post('/api/blurb/write', requireAuth, async (req: any, res: any) => {
+  try {
+    const { title, genre, protagonist, conflict, stakes, tone } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write 3 back-cover book blurbs that will make readers buy this book immediately.\n\nTitle: ${title}\nGenre: ${genre||'fiction'}\nProtagonist: ${protagonist}\nCentral conflict: ${conflict}\nStakes: ${stakes||'everything'}\nTone: ${tone||'gripping'}\n\nRespond in JSON: { "blurbs": [{ "style": "short and punchy", "blurb": "150 word max back cover text" }, { "style": "character-led", "blurb": "opens with protagonist hook" }, { "style": "question hook", "blurb": "starts with provocative question" }], "taglines": ["tagline1","tagline2","tagline3"], "comp_titles": "comparable books for marketing" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO book_blurbs (id,user_id,context,blurb) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
