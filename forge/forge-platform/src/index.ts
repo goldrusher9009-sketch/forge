@@ -177881,3 +177881,97 @@ app.post('/api/wealth/map', requireAuth, async (req: AuthRequest, res) => {
     res.json({ roadmap });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 69: COMMUNICATION & SOCIAL SKILLS AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS small_talk_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, tips TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS public_speaking_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, speech_type TEXT, topic TEXT, coaching TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS active_listening_trainers (
+  id TEXT PRIMARY KEY, user_id TEXT, scenario TEXT, feedback TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS assertiveness_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, script TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS networking_message_writers (
+  id TEXT PRIMARY KEY, user_id TEXT, context TEXT, goal TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/smalltalk/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { situation, personality, struggle } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Help me get better at small talk.\nSituation: ${situation}\nPersonality: ${personality||'introverted'}\nMain struggle: ${struggle||'keeping conversation going'}\n\nProvide specific conversation starters, follow-up techniques, and strategies for making small talk feel natural and authentic.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const tips = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO small_talk_coaches (id,user_id,situation,tips) VALUES (?,?,?,?)`).run(id,userId,situation,tips);
+    res.json({ tips });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/publicspeaking/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { speech_type, topic, experience_level, concerns } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Coach me on public speaking.\nSpeech type: ${speech_type}\nTopic: ${topic}\nExperience level: ${experience_level||'beginner'}\nMain concerns: ${concerns||'nerves, forgetting content'}\n\nProvide preparation techniques, delivery tips, how to handle nerves, and structure advice for this specific speech type.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const coaching = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO public_speaking_coaches (id,user_id,speech_type,topic,coaching) VALUES (?,?,?,?,?)`).run(id,userId,speech_type,topic,coaching);
+    res.json({ coaching });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/activelistening/train', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { scenario, current_habits, goals } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Train me in active listening.\nScenario: ${scenario}\nCurrent habits: ${current_habits||'tend to think of response while others speak'}\nGoals: ${goals||'be more present and empathetic'}\n\nProvide active listening techniques, specific phrases to use, what to avoid, and practice exercises.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const feedback = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO active_listening_trainers (id,user_id,scenario,feedback) VALUES (?,?,?,?)`).run(id,userId,scenario,feedback);
+    res.json({ feedback });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/assertiveness/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { situation, current_response, desired_outcome } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Help me respond more assertively.\nSituation: ${situation}\nHow I currently respond: ${current_response||'avoid conflict or go along with things'}\nDesired outcome: ${desired_outcome||'stand my ground respectfully'}\n\nProvide assertive scripts, I-statements, and boundary-setting language for this specific situation.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const script = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO assertiveness_coaches (id,user_id,situation,script) VALUES (?,?,?,?)`).run(id,userId,situation,script);
+    res.json({ script });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/networking/message', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { context, goal, recipient_info, tone } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Write a networking message.\nContext: ${context}\nGoal: ${goal}\nRecipient: ${recipient_info||'professional contact'}\nTone: ${tone||'warm and professional'}\n\nCraft a genuine, personalized networking message that doesn't feel transactional. Include a clear but soft ask.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const message = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO networking_message_writers (id,user_id,context,goal,message) VALUES (?,?,?,?,?)`).run(id,userId,context,goal,message);
+    res.json({ message });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
