@@ -174373,3 +174373,80 @@ app.post('/api/satire/write', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 32: BUSINESS INTELLIGENCE AI ────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS market_analyses (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS biz_model_designs (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, model TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS pricing_models (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, model TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS partnership_proposals (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, proposal TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS exit_strategies (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Market Analysis Generator
+app.post('/api/market/analyze', requireAuth, async (req: any, res: any) => {
+  try {
+    const { industry, target_market, geography, stage } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Conduct a thorough market analysis.\n\nIndustry: ${industry}\nTarget market: ${target_market}\nGeography: ${geography||'global'}\nBusiness stage: ${stage||'early stage'}\n\nRespond in JSON: { "market_size": {"tam":"Total Addressable Market estimate","sam":"Serviceable Addressable Market","som":"Serviceable Obtainable Market (realistic 3yr target)"}, "growth_rate": "CAGR estimate and trend direction", "key_drivers": ["driver1","driver2","driver3"], "market_segments": [{"segment":"name","size":"relative size","growth":"fast/medium/slow","attractiveness":"why to target or avoid"}], "customer_profile": {"demographics":"who they are","psychographics":"what they care about","buying_triggers":["trigger1"],"pain_points":["pain1"]}, "competitive_landscape": {"intensity":"low/medium/high","key_players":["player1","player2"],"market_concentration":"fragmented/consolidated"}, "barriers_to_entry": ["barrier1","barrier2"], "opportunities": ["opportunity1","opportunity2"], "threats": ["threat1","threat2"], "recommended_entry_strategy": "how to enter this market" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO market_analyses (id,user_id,context,analysis) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Business Model Designer
+app.post('/api/bizmodel/design', requireAuth, async (req: any, res: any) => {
+  try {
+    const { idea, customers, value_prop, resources } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Design a complete business model canvas.\n\nBusiness idea: ${idea}\nTarget customers: ${customers}\nValue proposition: ${value_prop||'to be defined'}\nKey resources available: ${resources||'none specified'}\n\nRespond in JSON: { "value_proposition": "what unique value you deliver and to whom", "customer_segments": [{"segment":"name","size":"small/medium/large","willingness_to_pay":"low/medium/high","how_to_reach":"channel"}], "revenue_streams": [{"type":"subscription/transactional/freemium/licensing","description":"how it works","pricing_hint":"rough price point"}], "key_activities": ["core activity1","core activity2"], "key_resources": ["resource1","resource2"], "key_partnerships": ["partner type1","why you need them"], "cost_structure": {"fixed_costs":["cost1"],"variable_costs":["cost1"],"biggest_cost":"what this is"}, "channels": ["channel1","channel2"], "unit_economics_estimate": {"cac":"rough customer acquisition cost","ltv":"rough lifetime value","payback_period":"months to recoup CAC"}, "moat": "what makes this defensible" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO biz_model_designs (id,user_id,context,model) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Pricing Model Builder
+app.post('/api/pricing/model', requireAuth, async (req: any, res: any) => {
+  try {
+    const { product, market, competitors, costs, goals } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a comprehensive pricing model and strategy.\n\nProduct/service: ${product}\nMarket: ${market||'B2B SaaS'}\nCompetitor pricing: ${competitors||'unknown'}\nCost structure: ${costs||'unknown'}\nBusiness goals: ${goals||'growth'}\n\nRespond in JSON: { "recommended_model": "which pricing model to use and why", "price_points": [{"tier":"Free/Starter/Pro/Enterprise","price":"$/mo","what_included":["feature1"],"target_user":"who this is for"}], "psychological_pricing": "tricks to use (anchoring, charm pricing, etc.)", "freemium_strategy": "whether to use freemium and how", "discount_policy": "when/how to discount without devaluing", "price_increase_roadmap": "how to increase prices over time", "competitor_positioning": "how to price vs competition", "packaging_advice": "what to bundle/unbundle", "revenue_optimization": ["lever1 to optimize","lever2"], "pricing_test": "what to A/B test first" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO pricing_models (id,user_id,context,model) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Partnership Proposal Generator
+app.post('/api/partnership/propose', requireAuth, async (req: any, res: any) => {
+  try {
+    const { your_company, partner_company, partnership_type, mutual_benefits } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a compelling partnership proposal.\n\nYour company: ${your_company}\nProspective partner: ${partner_company}\nPartnership type: ${partnership_type||'strategic alliance'}\nMutual benefits: ${mutual_benefits||'to be identified'}\n\nRespond in JSON: { "executive_summary": "2-3 sentence hook explaining why this partnership makes sense", "their_problem": "what challenge or gap the partner has that you solve", "your_value": "what unique value you bring to them", "their_value": "what they bring to you (be honest — they need to hear it)", "partnership_structure": {"type":"rev share/co-marketing/technology integration/etc","terms_proposed":"rough terms","timeline":"proposed timeline"}, "joint_value_creation": "what neither party could do alone", "success_metrics": ["metric1 — how you'll know it's working","metric2"], "risk_mitigation": "how you protect both parties", "next_steps": ["step1: schedule intro call","step2: pilot proposal","step3:"], "email_opener": "opening email to send to initiate this partnership" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO partnership_proposals (id,user_id,context,proposal) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Exit Strategy Planner
+app.post('/api/exit/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { business_type, revenue, timeline, preferred_exit } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Plan a business exit strategy.\n\nBusiness type: ${business_type}\nCurrent revenue: ${revenue||'not disclosed'}\nTimeline to exit: ${timeline||'3-5 years'}\nPreferred exit type: ${preferred_exit||'open to options'}\n\nRespond in JSON: { "recommended_exit": "best exit path given context", "exit_options": [{"type":"acquisition/IPO/merger/MBO/acquihire","feasibility":"low/medium/high","valuation_multiple":"typical multiple","timeline":"how long to prepare","pros":["pro1"],"cons":["con1"]}], "valuation_drivers": ["what most increases your value","another driver"], "preparation_roadmap": [{"phase":"phase name","timeline":"months 1-6","actions":["action1","action2"],"milestone":"what to achieve"}], "metrics_to_maximize": [{"metric":"ARR/EBITDA/DAU/etc","why":"why acquirers care about this","target":"benchmark to hit"}], "red_flags_to_fix": ["thing that will kill your deal1","fix for it"], "legal_prep": ["key legal thing to do1","key legal thing2"], "advisor_team": ["who you need: M&A lawyer","investment banker","CFO"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO exit_strategies (id,user_id,context,strategy) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
