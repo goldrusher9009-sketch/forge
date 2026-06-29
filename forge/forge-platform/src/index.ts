@@ -174219,3 +174219,80 @@ app.post('/api/git/commit', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 30: PRODUCTIVITY & LIFE OS AI ───────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS time_audits (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, audit TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS second_brain_notes (id TEXT PRIMARY KEY, user_id TEXT, input TEXT, structured TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS weekly_plans (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS habit_designs (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, design TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS energy_maps (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, map TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Time Audit Analyzer
+app.post('/api/time/audit', requireAuth, async (req: any, res: any) => {
+  try {
+    const { activities, hours_per_week, goals } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Analyze how I spend my time and give me a complete audit.\n\nCurrent activities and time spent:\n${activities}\nWork hours per week: ${hours_per_week||40}\nMy goals: ${goals||'be more productive and fulfilled'}\n\nRespond in JSON: { "overall_score": 72, "assessment": "honest assessment of time allocation", "time_categories": [{"category":"Deep Work","current_hours":5,"recommended_hours":20,"gap":15,"impact":"high"}], "time_thieves": [{"activity":"checking email","hours_per_week":10,"opportunity_cost":"what you could do instead","fix":"how to reduce this"}], "quick_wins": ["immediate change1","immediate change2"], "reallocation_plan": [{"from":"low-value activity","to":"high-value activity","hours_to_shift":5,"expected_outcome":"result"}], "ideal_week_design": {"deep_work_blocks":"9-12pm Mon/Wed/Fri","shallow_work":"2-4pm daily","admin":"30min morning","learning":"7-8am daily"}, "30_day_challenge": "one specific change to make for 30 days" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO time_audits (id,user_id,context,audit) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Second Brain Note Structurer
+app.post('/api/secondbrain/structure', requireAuth, async (req: any, res: any) => {
+  try {
+    const { raw_notes, context } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Transform these raw notes into a structured second brain entry.\n\nRaw input:\n${raw_notes}\nContext: ${context||'general knowledge capture'}\n\nRespond in JSON: { "title": "concise title", "summary": "2-3 sentence summary of the key idea", "main_insights": ["insight1","insight2","insight3"], "action_items": ["specific action to take"], "questions_raised": ["question this sparked"], "connections": ["how this connects to other ideas/topics"], "tags": ["tag1","tag2"], "evergreen_note": "rewritten as a timeless principle or insight", "fleeting_to_permanent": "the core idea distilled to one sentence", "related_concepts": ["concept1","concept2"], "projects_this_applies_to": ["project or goal this is relevant to"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO second_brain_notes (id,user_id,input,structured) VALUES (?,?,?,?)`).run(id, req.user.id, raw_notes, JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Weekly Plan Builder
+app.post('/api/weekly/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { goals, commitments, energy_level, priorities } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Design a powerful weekly plan.\n\nThis week's goals: ${goals}\nFixed commitments: ${commitments||'none'}\nEnergy level this week: ${energy_level||'normal'}\nTop priorities: ${priorities||'get important things done'}\n\nRespond in JSON: { "weekly_theme": "one word or phrase for this week", "top_3_outcomes": ["must-achieve outcome 1","outcome 2","outcome 3"], "daily_plan": [{"day":"Monday","theme":"theme for the day","mit":"most important task","morning":"9am-12pm plan","afternoon":"1pm-5pm plan","evening":"optional evening work","review":"end-of-day check"}], "time_blocks": [{"block":"Deep Work 1","days":"Mon/Wed/Fri","time":"9-11am","task_type":"creative/strategic work"}], "buffer_time": "when to put buffer and why", "weekly_review_prompt": "question to ask at end of week", "anti_goals": ["what NOT to do this week"], "energy_protection": ["how to protect your energy"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO weekly_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Habit Design Engine
+app.post('/api/habit/design', requireAuth, async (req: any, res: any) => {
+  try {
+    const { habit_goal, current_routine, obstacles, motivation } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Design a habit using behavioral science principles.\n\nHabit I want to build: ${habit_goal}\nCurrent daily routine: ${current_routine||'not specified'}\nObstacles I face: ${obstacles||'unknown'}\nMy motivation: ${motivation||'general self-improvement'}\n\nRespond in JSON: { "habit_statement": "I will [cue] → [routine] → [reward]", "cue": {"type":"time/location/preceding-event/emotional-state","specific_cue":"exactly what triggers the habit"}, "minimum_viable_habit": "the 2-minute version to start with", "implementation_intention": "When X happens, I will do Y in location Z", "habit_stack": {"anchor_habit":"existing habit to attach to","sequence":"anchor → new habit"}, "friction_reducers": ["make it easier by doing X","remove obstacle Y"], "reward": {"immediate":"what you get immediately","eventual":"long-term payoff"}, "tracking_method": "how to track without it feeling like a chore", "obstacle_responses": [{"obstacle":"obstacle1","if_then_plan":"if X happens, then I will Y"}], "30_60_90_milestones": {"day_30":"what success looks like","day_60":"expansion","day_90":"habit fully formed"} }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO habit_designs (id,user_id,context,design) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Energy Map Builder
+app.post('/api/energy/map', requireAuth, async (req: any, res: any) => {
+  try {
+    const { typical_day, work_type, sleep_schedule, peak_times } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a personalized energy map to optimize my day.\n\nTypical day description: ${typical_day}\nWork type: ${work_type||'knowledge work'}\nSleep schedule: ${sleep_schedule||'11pm-7am'}\nWhen I feel most alert: ${peak_times||'unsure'}\n\nRespond in JSON: { "chronotype": "your chronotype (lion/bear/wolf/dolphin)", "energy_curve": [{"time":"6-8am","level":"low/medium/high","best_for":"activity type"},{"time":"8-10am","level":"high","best_for":"deep work"}], "peak_performance_windows": ["9-11am: creative work","2-3pm: meetings OK"], "cognitive_tasks_by_energy": {"high_energy":["complex decisions","writing","coding"],"medium_energy":["emails","meetings","calls"],"low_energy":["admin","filing","easy tasks"]}, "energy_drains": [{"drain":"back-to-back meetings","fix":"schedule buffer blocks"}], "energy_boosters": ["5min walk","cold water","breathing exercise"], "optimal_schedule_template": {"6am":"wake routine","9am":"peak deep work","12pm":"lunch/recovery","2pm":"meetings","4pm":"shallow work","6pm":"shutdown ritual"}, "nap_window": "best time for a 20-min nap if needed", "weekly_energy_rhythm": "how to structure Mon-Sun for sustained output" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO energy_maps (id,user_id,context,map) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
