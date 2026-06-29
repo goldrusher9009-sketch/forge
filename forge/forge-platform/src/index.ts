@@ -174835,3 +174835,80 @@ app.post('/api/grant/write', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 38: LEGAL & CIVIC AI ─────────────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS rights_explainers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS contract_drafters (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS complaint_writers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS policy_decoders (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS small_claims_coaches (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Rights Explainer
+app.post('/api/rights/explain', requireAuth, async (req: any, res: any) => {
+  try {
+    const { situation, jurisdiction, question } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Explain legal rights in plain language. NOT legal advice — general education only.\n\nSituation: ${situation}\nJurisdiction: ${jurisdiction||'United States (general)'}\nQuestion: ${question}\n\nRespond in JSON: { "disclaimer": "standard not-legal-advice disclaimer", "short_answer": "plain English answer to their question in 2-3 sentences", "relevant_rights": [{"right":"name of right or protection","explanation":"what it means in plain English","when_it_applies":"context","common_misconceptions":"what people get wrong about this"}], "what_you_can_do": ["actionable step"], "what_they_cannot_do": ["what the other party legally cannot do to you"], "documentation_advice": "what to document and how", "when_to_get_a_lawyer": "specific signals that this needs professional legal help", "free_resources": ["type of free resource available — legal aid, ombudsman, consumer protection agency"], "related_laws": ["law or regulation name with brief description"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO rights_explainers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Contract Drafter
+app.post('/api/contract/draft', requireAuth, async (req: any, res: any) => {
+  try {
+    const { contract_type, party_a, party_b, key_terms, jurisdiction } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Draft a simple contract template. For educational purposes — have a lawyer review before signing.\n\nContract type: ${contract_type}\nParty A: ${party_a}\nParty B: ${party_b}\nKey terms: ${key_terms}\nJurisdiction: ${jurisdiction||'United States'}\n\nRespond in JSON: { "contract_text": "full contract text with [BRACKETS] for fields to fill in", "key_clauses_explained": [{"clause":"clause name","explanation":"what it does and why it matters"}], "missing_terms": ["important thing not specified that you should clarify"], "red_flags": ["clause that often causes disputes — and why"], "negotiation_points": ["typical negotiation point in this type of contract"], "execution_checklist": ["step to properly execute this contract"], "jurisdiction_note": "how jurisdiction affects this contract type" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO contract_drafters (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Complaint Writer
+app.post('/api/complaint/write', requireAuth, async (req: any, res: any) => {
+  try {
+    const { issue, company, what_happened, desired_outcome, attempts_so_far } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write an effective formal complaint letter.\n\nIssue: ${issue}\nCompany/entity: ${company}\nWhat happened: ${what_happened}\nDesired outcome: ${desired_outcome}\nAttempts so far: ${attempts_so_far||'none'}\n\nRespond in JSON: { "formal_letter": "complete formal complaint letter ready to send", "escalation_path": [{"step":"escalation level","who":"who to contact","how":"method","when":"when to escalate"}], "regulatory_bodies": ["regulator or agency that oversees this type of complaint with brief description"], "legal_options": "brief overview of legal remedies available", "evidence_checklist": ["document or evidence to gather"], "tone_notes": "why this tone was chosen and what approach will be most effective", "follow_up_template": "shorter follow-up message if no response in 2 weeks" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO complaint_writers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Policy Decoder
+app.post('/api/policy/decode', requireAuth, async (req: any, res: any) => {
+  try {
+    const { policy_text, policy_type, your_concerns } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Decode this policy document into plain language.\n\nPolicy type: ${policy_type||'terms of service'}\nYour concerns: ${your_concerns||'what am I agreeing to?'}\nPolicy text: ${policy_text}\n\nRespond in JSON: { "tldr": "what this policy actually means in 3 sentences", "red_flags": [{"clause":"problematic language","risk":"what risk it creates for you","severity":"low/medium/high"}], "data_collection": "what data they collect and how they use it", "your_rights": ["right you retain under this policy"], "auto_renewals": "any auto-renewal or cancellation traps", "arbitration_clauses": "any mandatory arbitration or class-action waivers", "opt_outs": ["thing you can opt out of and how"], "changes_policy": "how they can change this agreement and whether they notify you", "summary_table": [{"topic":"area","their_position":"what the policy says","impact":"impact on you"}] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO policy_decoders (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Small Claims Coach
+app.post('/api/smallclaims/coach', requireAuth, async (req: any, res: any) => {
+  try {
+    const { dispute, amount, defendant, jurisdiction, evidence } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Coach someone through a small claims court case. General education only — not legal advice.\n\nDispute: ${dispute}\nAmount: ${amount||'under $10,000'}\nDefendant: ${defendant||'individual or business'}\nJurisdiction: ${jurisdiction||'United States'}\nEvidence available: ${evidence||'unknown'}\n\nRespond in JSON: { "case_strength": "honest assessment — strong/moderate/weak — with reasoning", "legal_theory": "the legal basis for the claim", "filing_steps": [{"step":"step name","action":"what to do","cost":"typical filing fee if applicable","tip":"insider tip"}], "evidence_to_gather": [{"item":"evidence item","why":"why it helps your case","how":"how to obtain or preserve it"}], "what_to_say": "script for presenting your case to the judge", "defendant_defenses": ["defense they might raise and how to counter it"], "settlement_advice": "should you settle and if so at what amount", "day_of_court_tips": ["tip for court day"], "if_you_win": "how to collect if you win judgment", "if_you_lose": "options if you lose" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO small_claims_coaches (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
