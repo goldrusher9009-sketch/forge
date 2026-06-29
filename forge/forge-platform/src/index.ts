@@ -178163,3 +178163,97 @@ app.post('/api/deepwork/schedule', requireAuth, async (req: AuthRequest, res) =>
     res.json({ plan });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 72: RELATIONSHIP & SOCIAL AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS conflict_mediators (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, mediation TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS appreciation_writers (
+  id TEXT PRIMARY KEY, user_id TEXT, recipient TEXT, relationship TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS social_anxiety_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, coaching TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS friend_reconnectors (
+  id TEXT PRIMARY KEY, user_id TEXT, friend_name TEXT, last_contact TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS family_legacy_writers (
+  id TEXT PRIMARY KEY, user_id TEXT, family_story TEXT, legacy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/conflict/mediate', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { situation, your_perspective, other_perspective, relationship_type } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Help me resolve this conflict as a neutral mediator.\nSituation: ${situation}\nMy perspective: ${your_perspective||'not specified'}\nOther person's perspective: ${other_perspective||'not specified'}\nRelationship type: ${relationship_type||'personal'}\n\nProvide neutral conflict mediation including: root cause analysis, both parties' valid points, common ground identification, and a step-by-step resolution path with specific conversation scripts.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const mediation = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO conflict_mediators (id,user_id,situation,mediation) VALUES (?,?,?,?)`).run(id,userId,situation,mediation);
+    res.json({ mediation });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/appreciation/write', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { recipient, relationship, specific_things, tone } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Write a heartfelt appreciation message.\nRecipient: ${recipient}\nRelationship: ${relationship||'friend'}\nSpecific things to appreciate: ${specific_things}\nTone: ${tone||'warm and sincere'}\n\nWrite a genuine, specific appreciation message that will deeply move the recipient. Include specific references, emotional depth, and a meaningful closing.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const message = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO appreciation_writers (id,user_id,recipient,relationship,message) VALUES (?,?,?,?,?)`).run(id,userId,recipient,relationship||'friend',message);
+    res.json({ message });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/socialanxiety/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { situation, anxiety_level, specific_fears, goal } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Coach me through social anxiety for this situation.\nSituation: ${situation}\nAnxiety level (1-10): ${anxiety_level||'7'}\nSpecific fears: ${specific_fears||'being judged, saying something wrong'}\nGoal: ${goal||'feel more comfortable'}\n\nProvide CBT-based coaching including: cognitive reframing of fears, physical anxiety management techniques, a preparation script for this situation, and a confidence-building mindset shift.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const coaching = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO social_anxiety_coaches (id,user_id,situation,coaching) VALUES (?,?,?,?)`).run(id,userId,situation,coaching);
+    res.json({ coaching });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/friend/reconnect', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { friend_name, last_contact, shared_memories, reason_drifted } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Help me reconnect with a friend I've lost touch with.\nFriend's name: ${friend_name}\nLast contact: ${last_contact||'a few years ago'}\nShared memories: ${shared_memories||'not specified'}\nWhy we drifted: ${reason_drifted||'just life getting busy'}\n\nWrite a natural, warm reconnection message that doesn't feel awkward or forced. Include a specific memory, acknowledge the time apart without over-explaining, and suggest a low-pressure way to catch up.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const message = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO friend_reconnectors (id,user_id,friend_name,last_contact,message) VALUES (?,?,?,?,?)`).run(id,userId,friend_name,last_contact||'',message);
+    res.json({ message });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/family/legacy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { family_member, stories, values, audience } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Help me write a family legacy story.\nFamily member: ${family_member}\nKey stories/moments: ${stories}\nCore values they embodied: ${values||'hard work, love, resilience'}\nAudience: ${audience||'future family members'}\n\nWrite a moving, narrative-style family legacy piece that captures this person's essence, their impact on the family, and the values they passed down. Make it something that can be treasured for generations.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const legacy = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO family_legacy_writers (id,user_id,family_story,legacy) VALUES (?,?,?,?)`).run(id,userId,stories,legacy);
+    res.json({ legacy });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
