@@ -179197,3 +179197,97 @@ app.post('/api/workflow/optimize', requireAuth, async (req: AuthRequest, res) =>
     res.json({ optimization });
   } catch (e: any) { res.json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 83: HEALTH & LONGEVITY AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS longevity_planners (
+  id TEXT PRIMARY KEY, user_id TEXT, age TEXT, biomarkers TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS vo2max_trainers (
+  id TEXT PRIMARY KEY, user_id TEXT, current_fitness TEXT, goal TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS stress_decoders (
+  id TEXT PRIMARY KEY, user_id TEXT, symptoms TEXT, triggers TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS recovery_optimizers (
+  id TEXT PRIMARY KEY, user_id TEXT, activity TEXT, recovery_methods TEXT, protocol TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS supplement_stacks (
+  id TEXT PRIMARY KEY, user_id TEXT, goals TEXT, conditions TEXT, stack TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/longevity/plan', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { age, current_habits, health_goals, family_history } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a longevity science expert (educational, not medical advice). Create a comprehensive longevity optimization plan.\nAge: ${age}\nCurrent habits: ${current_habits||'unknown'}\nHealth goals: ${health_goals}\nFamily history: ${family_history||'unknown'}\nProvide: hallmarks of aging to address, exercise protocol (zone 2, strength, VO2max), nutrition principles, sleep optimization, stress management, key biomarkers to track, and a 5-pillar longevity roadmap.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO longevity_planners (id,user_id,age,biomarkers,plan) VALUES (?,?,?,?,?)').run(id, userId, age, family_history, plan);
+    res.json({ plan });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/vo2max/train', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { current_fitness, sport, time_available } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a cardiovascular fitness and VO2max training expert. Design a VO2max improvement program.\nCurrent fitness: ${current_fitness}\nSport/activity: ${sport||'running'}\nTime available: ${time_available||'5 hours/week'}\nDeliver: VO2max explanation, 12-week periodized training plan, zone 2 vs. HIIT balance, weekly structure, key workouts (with intensities and durations), progress markers, and how to test VO2max at home.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO vo2max_trainers (id,user_id,current_fitness,goal,plan) VALUES (?,?,?,?,?)').run(id, userId, current_fitness, sport, plan);
+    res.json({ plan });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/stress/decode', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { symptoms, triggers, duration } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a stress physiology and resilience expert (educational, not medical advice). Decode and address chronic stress.\nSymptoms: ${symptoms}\nTriggers: ${triggers||'unknown'}\nDuration: ${duration||'months'}\nProvide: stress type analysis (acute/chronic/toxic), physiological impact explanation, HRV and cortisol insights, immediate stress-reset techniques, 30-day resilience protocol, lifestyle changes, and when to seek professional support.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const analysis = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO stress_decoders (id,user_id,symptoms,triggers,analysis) VALUES (?,?,?,?,?)').run(id, userId, symptoms, triggers, analysis);
+    res.json({ analysis });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/recovery/optimize', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { activity, soreness_level, current_recovery } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a recovery science and sports performance expert. Optimize recovery protocol.\nActivity: ${activity}\nSoreness level: ${soreness_level||'moderate'}\nCurrent recovery methods: ${current_recovery||'none'}\nDeliver: evidence-based recovery hierarchy, active vs passive recovery guidance, sleep optimization for recovery, nutrition timing (protein, carbs, hydration), modalities (ice, heat, compression, massage), HRV monitoring, and a weekly recovery schedule.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const protocol = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO recovery_optimizers (id,user_id,activity,recovery_methods,protocol) VALUES (?,?,?,?,?)').run(id, userId, activity, current_recovery, protocol);
+    res.json({ protocol });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
+
+app.post('/api/supplement/stack', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { goals, conditions, current_supplements } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) { res.json({ error: 'No API key' }); return; }
+    const messages = [{ role: 'user' as const, content: `You are a supplement science educator (this is NOT medical advice — consult your doctor). Create an evidence-based supplement education guide.\nGoals: ${goals}\nHealth conditions to consider: ${conditions||'none'}\nCurrent supplements: ${current_supplements||'none'}\nProvide: tier-1 evidence supplements for these goals, dosing guidelines from research, timing protocols, potential interactions to discuss with a doctor, what to avoid, and a morning/evening stack schedule. Always recommend consulting a healthcare provider.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const stack = result.replace(/```json\n?|```\n?/g, '').trim();
+    const id = uuidv4();
+    db.prepare('INSERT INTO supplement_stacks (id,user_id,goals,conditions,stack) VALUES (?,?,?,?,?)').run(id, userId, goals, conditions, stack);
+    res.json({ stack });
+  } catch (e: any) { res.json({ error: e.message }); }
+});
