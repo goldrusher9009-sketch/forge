@@ -175374,3 +175374,80 @@ app.post('/api/home/renovate', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 45: TRAVEL INTELLIGENCE AI ──────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS trip_architects (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS packing_optimizers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS local_intel (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS travel_budgeters (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS solo_travel_coaches (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Trip Architect
+app.post('/api/trip/architect', requireAuth, async (req: any, res: any) => {
+  try {
+    const { destination, duration, travel_style, group_size, interests } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Design a detailed travel itinerary.\n\nDestination: ${destination}\nDuration: ${duration}\nTravel style: ${travel_style||'balanced mix of culture and relaxation'}\nGroup: ${group_size||'solo'}\nInterests: ${interests||'food, culture, history, nature'}\n\nRespond in JSON: { "trip_overview": "what makes this trip special", "best_time_to_visit": "seasonal advice and why", "itinerary": [{"day":"Day N","theme":"day theme","morning":"morning activity with tip","afternoon":"afternoon activity with tip","evening":"evening activity or dining","accommodation_area":"where to stay this night","estimated_cost":"daily budget"}], "must_do": [{"experience":"essential experience","why":"why it's unmissable","booking_tip":"advance booking or logistics"}], "hidden_gems": [{"place":"off-the-beaten-path spot","what_makes_it_special":"why locals love it"}], "food_guide": [{"meal_type":"breakfast/lunch/dinner/snack","recommendation":"what to eat and where","price_range":"$/$$/$$$/$$$$"}], "practical_tips": ["tip specific to this destination and travel style"], "transportation": "how to get around efficiently", "cultural_etiquette": ["local custom to respect"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO trip_architects (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Packing Optimizer
+app.post('/api/packing/optimize', requireAuth, async (req: any, res: any) => {
+  try {
+    const { destination, duration, activities, luggage_type, season } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create an optimized packing list.\n\nDestination: ${destination}\nDuration: ${duration}\nActivities planned: ${activities||'sightseeing, dining, some hiking'}\nLuggage: ${luggage_type||'carry-on only'}\nSeason/weather: ${season||'varies'}\n\nRespond in JSON: { "packing_philosophy": "strategy for this trip", "clothing": [{"item":"specific item","quantity":"how many","notes":"why or tips"}], "toiletries": [{"item":"item","note":"travel-size or skip if destination has it"}], "tech_and_documents": [{"item":"essential item","tip":"packing or usage tip"}], "activity_specific": [{"activity":"activity","gear":["items needed"]}], "leave_behind": ["common item that's unnecessary or buyable at destination"], "security_and_safety": ["important document or safety item"], "space_savers": ["packing technique or dual-purpose item suggestion"], "one_bag_challenge": "can this trip be done in one carry-on? assessment and tips", "weight_estimate": "rough weight estimate and airline check-in note" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO packing_optimizers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Local Intel
+app.post('/api/local/intel', requireAuth, async (req: any, res: any) => {
+  try {
+    const { city, interests, budget_level, duration } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Give insider local knowledge for this destination.\n\nCity: ${city}\nInterests: ${interests||'food, culture, nature, nightlife'}\nBudget: ${budget_level||'mid-range'}\nDuration: ${duration||'5 days'}\n\nRespond in JSON: { "tourist_traps_to_skip": [{"trap":"overrated thing","skip_for":"better alternative"}], "local_secrets": [{"secret":"insider knowledge","where":"location or context","why_tourists_miss_it":"reason"}], "best_neighborhoods": [{"name":"neighborhood","vibe":"character","best_for":"type of traveler or activity"}], "food_like_a_local": [{"type":"meal type or food category","where_locals_go":"type of place","what_to_order":"specific dish or style","price":"cost range"}], "free_or_cheap_gems": ["activity that's free or very low cost"], "transportation_hacks": ["local transport tip that saves money or time"], "timing_secrets": ["best time of day or week for popular sites"], "phrases_to_know": [{"phrase":"local language phrase","pronunciation":"phonetic","when_to_use":"context"}], "cultural_context": "essential background to appreciate this place", "safety_intel": "honest safety notes for this destination" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO local_intel (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Travel Budgeter
+app.post('/api/travel/budget', requireAuth, async (req: any, res: any) => {
+  try {
+    const { destination, duration, travel_style, total_budget, group_size } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a realistic travel budget breakdown.\n\nDestination: ${destination}\nDuration: ${duration}\nTravel style: ${travel_style||'mid-range backpacker'}\nTotal budget: ${total_budget||'not set'}\nGroup size: ${group_size||'solo'}\n\nRespond in JSON: { "budget_summary": "honest assessment of budget feasibility", "daily_budget_estimate": "recommended daily spend", "cost_breakdown": [{"category":"expense type","daily_estimate":"per day cost","total_estimate":"full trip cost","tips":"how to reduce this cost"}], "splurge_vs_save": [{"item":"experience or category","verdict":"worth splurging or save money","reasoning":"why"}], "money_saving_hacks": ["specific tactic for this destination"], "currency_tips": "exchange rate, local payment norms, avoid these fees", "hidden_costs": ["expense travelers forget to budget for"], "free_experiences": ["great thing to do that costs nothing"], "total_estimated_range": {"budget":"budget traveler total","midrange":"mid-range total","comfort":"comfort traveler total"}, "booking_timing": "when to book flights, hotels for best prices" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO travel_budgeters (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Solo Travel Coach
+app.post('/api/solo/travel', requireAuth, async (req: any, res: any) => {
+  try {
+    const { destination, experience_level, concerns, traveler_type } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Coach someone on solo travel.\n\nDestination: ${destination}\nExperience level: ${experience_level||'first solo trip'}\nMain concerns: ${concerns||'safety, meeting people, getting lonely'}\nTraveler type: ${traveler_type||'introvert'}\n\nRespond in JSON: { "solo_advantage": "why solo travel is uniquely valuable", "safety_playbook": [{"situation":"scenario","action":"what to do","mindset":"how to think about it"}], "meeting_people": [{"method":"way to connect with others","best_for":"type of traveler or situation","how_to":"practical steps"}], "handling_loneliness": ["strategy for when solo gets hard"], "confidence_builders": ["first solo traveler skill to master early"], "first_day_blueprint": "what to do in the first 24 hours to get grounded", "booking_strategy": "accommodation types and why for solo travelers", "communication_plan": "how to stay in touch with home without being tethered", "solo_dining_mastery": ["tip for eating alone without discomfort"], "trusting_your_gut": "intuition advice for solo travel safety", "emergency_protocol": "what to do if something goes wrong" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO solo_travel_coaches (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
