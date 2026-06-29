@@ -1,3 +1,5 @@
+## v233.00 — Dream Mode Wave 61: Social Intelligence AI (Conversation Hacker + Charisma Coach + Networking Strategist + Conflict Mediator + Influence Builder)
+
 ## v232.00 — Dream Mode Wave 60: Science & Learning AI (Concept Decoder + Research Synthesizer + Debate Prep + Critical Thinker + Teaching Assistant)
 
 ## v231.00 — Dream Mode Wave 59: Career Acceleration AI (Promotion Roadmap + Salary Benchmark + Executive Presence + Offer Negotiator + Career Brand)

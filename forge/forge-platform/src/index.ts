@@ -177179,3 +177179,87 @@ app.post('/api/teaching/assist', requireAuth, async (req: AuthRequest, res) => {
     res.json(data);
   } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 61: SOCIAL INTELLIGENCE AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS conversation_hackers (
+  id TEXT PRIMARY KEY, user_id TEXT, goal TEXT, context TEXT, script TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS charisma_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, scenario TEXT, coaching TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS networking_strategists (
+  id TEXT PRIMARY KEY, user_id TEXT, goal TEXT, industry TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS conflict_mediators (
+  id TEXT PRIMARY KEY, user_id TEXT, conflict TEXT, parties TEXT, mediation TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS influence_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, objective TEXT, audience TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/conversation/hack', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { goal, context, relationship, challenge } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a social intelligence expert. Create a conversation strategy. Goal: ${goal}. Context: ${context}. Relationship: ${relationship}. Challenge: ${challenge}. Return JSON: { conversation_strategy, opening_lines: [3 options], rapport_builders: [5 techniques], key_questions_to_ask: [5 with follow-ups], active_listening_cues: [5], how_to_steer_conversation, handling_awkward_silences: [3 strategies], closing_the_conversation: { graceful_exits: [3], how_to_leave_lasting_impression }, word_choices_that_build_rapport, word_choices_to_avoid, body_language_tips: [5], conversation_flow_map }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO conversation_hackers VALUES (?,?,?,?,?,?)').run(uuidv4(), userId, goal, context, JSON.stringify(data), new Date().toISOString());
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/charisma/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { scenario, current_approach, desired_outcome } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a world-class charisma and social skills coach. Coach this person. Scenario: ${scenario}. Current approach: ${current_approach}. Desired outcome: ${desired_outcome}. Return JSON: { charisma_assessment: { presence_score, warmth_score, energy_score, authenticity_score }, what_charismatic_people_do_differently, your_specific_coaching: [7 tailored tips], vocal_techniques: [3 specific upgrades], eye_contact_strategy, humor_integration: [3 natural humor tips], storytelling_framework, making_people_feel_seen: [5 techniques], magnetic_energy_tips: [3], practice_exercises: [5 daily exercises], charisma_mantra }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO charisma_coaches VALUES (?,?,?,?)').run(uuidv4(), userId, scenario, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/networking/strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { goal, industry, current_network, time_available } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a networking strategist. Create a comprehensive networking plan. Goal: ${goal}. Industry: ${industry}. Current network: ${current_network || 'limited'}. Time available: ${time_available || '3 hours/week'}. Return JSON: { networking_goal_refined, target_people: [{ type, why, how_many, where_to_find }], outreach_templates: { cold_connection, warm_intro, follow_up, value_add_touch }, conversation_starters_by_context: { conferences, linkedin, coffee_chat, events }, giving_before_getting: [5 ways to add value], relationship_deepening_cadence, tracking_system, online_strategy: { linkedin_moves, community_platforms, content_strategy }, offline_strategy: { events, associations, coffee_chats }, 30_day_action_plan: [{ week, actions }], common_networking_mistakes_to_avoid: [5] }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO networking_strategists VALUES (?,?,?,?,?)').run(uuidv4(), userId, goal, industry, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/conflict/mediate', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { conflict_description, your_role, relationship_importance, desired_resolution } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a professional mediator and conflict resolution expert. Help resolve this conflict. Conflict: ${conflict_description}. Your role: ${your_role}. Relationship importance: ${relationship_importance}. Desired resolution: ${desired_resolution}. Return JSON: { conflict_analysis: { core_issue, underlying_needs_your_side, underlying_needs_other_side, power_dynamics }, emotional_readiness_check: [3 questions to ask yourself first], mediation_approach, opening_the_conversation: { setting, time, opening_statement }, listening_phase: { key_questions, validation_phrases, what_to_listen_for }, negotiation_phase: { finding_common_ground, proposing_solutions: [3 options with tradeoffs] }, agreement_phase: { what_to_put_in_writing, follow_up_plan }, scripts: { start_conversation, handle_defensiveness, propose_solution, close }, what_if_they_wont_engage, rebuilding_trust_after, when_to_walk_away }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO conflict_mediators VALUES (?,?,?,?,?)').run(uuidv4(), userId, conflict_description, your_role, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/influence/build', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { objective, audience, current_influence, ethical_constraints } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are an ethical influence expert. Create a principled influence strategy. Objective: ${objective}. Audience: ${audience}. Current influence level: ${current_influence}. Ethical constraints: ${ethical_constraints || 'none specified'}. Return JSON: { influence_principles: [3 ethical foundations], audience_psychology: { motivations, fears, values, communication_style }, credibility_builders: [5 ways to establish authority], reciprocity_tactics: [3 ethical ways], social_proof_strategy, commitment_and_consistency: [3 techniques], framing_your_message: { before, after, key_reframes }, persuasion_scripts: [3 scenarios with word-for-word scripts], objection_handling: [5 common objections with responses], long_game: [5 relationship-based influence moves], ethics_check: [3 questions to verify ethical alignment] }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO influence_builders VALUES (?,?,?,?,?)').run(uuidv4(), userId, objective, audience, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
