@@ -179573,3 +179573,90 @@ app.post('/api/climateaction/plan', requireAuth, async (req: AuthRequest, res) =
     res.json({ action_plan });
   } catch (e: any) { res.json({ error: e.message }); }
 });
+
+// ── Wave 87: Personal Brand & Creator AI ──────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS personal_brand_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, niche TEXT, audience TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS content_calendar_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, goals TEXT, platforms TEXT, calendar TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS bio_writers (
+  id TEXT PRIMARY KEY, user_id TEXT, background TEXT, tone TEXT, bio TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS audience_growth_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, platform TEXT, current_size TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS monetization_strategists (
+  id TEXT PRIMARY KEY, user_id TEXT, niche TEXT, audience_size TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/personalbrand/coach', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { niche, audience, current_presence } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a personal brand strategist. Build a complete personal branding plan.\nNiche: ${niche}\nTarget audience: ${audience}\nCurrent presence: ${current_presence || 'just starting'}\n\nProvide: brand positioning, unique value proposition, content pillars, platform strategy, voice/tone guide, 90-day action plan.` }
+    ]);
+    const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO personal_brand_coaches (id,user_id,niche,audience,plan) VALUES (?,?,?,?,?)').run(uuidv4(), userId, niche, audience, plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/contentcalendar/build', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { goals, platforms, frequency } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a content strategist. Create a 30-day content calendar.\nGoals: ${goals}\nPlatforms: ${platforms}\nPosting frequency: ${frequency || 'daily'}\n\nFor each week provide: content themes, specific post ideas, best times to post, content formats (video/image/text), engagement tactics, repurposing strategy.` }
+    ]);
+    const calendar = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO content_calendar_builders (id,user_id,goals,platforms,calendar) VALUES (?,?,?,?,?)').run(uuidv4(), userId, goals, platforms, calendar);
+    res.json({ calendar });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/bio/write', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { background, tone, platform } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a professional copywriter specializing in personal bios. Write compelling bios for multiple contexts.\nBackground: ${background}\nTone: ${tone || 'professional yet approachable'}\nPrimary platform: ${platform || 'LinkedIn'}\n\nWrite: Twitter/X bio (160 chars), LinkedIn headline, LinkedIn about section, Instagram bio, speaker bio, website about page intro. Make each feel natural for that platform.` }
+    ]);
+    const bio = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO bio_writers (id,user_id,background,tone,bio) VALUES (?,?,?,?,?)').run(uuidv4(), userId, background, tone, bio);
+    res.json({ bio });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/audience/grow', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { platform, current_size, niche } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are an audience growth expert. Create a tailored growth strategy.\nPlatform: ${platform}\nCurrent following: ${current_size || '0'}\nNiche: ${niche}\n\nProvide: algorithm optimization tips, content types that perform best, engagement tactics, collaboration strategies, hashtag/SEO strategy, posting cadence, specific 30-day growth challenge with daily actions.` }
+    ]);
+    const strategy = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO audience_growth_coaches (id,user_id,platform,current_size,strategy) VALUES (?,?,?,?,?)').run(uuidv4(), userId, platform, current_size, strategy);
+    res.json({ strategy });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/monetization/plan', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { niche, audience_size, skills } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a creator monetization expert. Build a comprehensive monetization roadmap.\nNiche: ${niche}\nAudience size: ${audience_size || 'growing'}\nSkills/assets: ${skills}\n\nProvide: monetization tiers by audience size, revenue streams ranked by effort/reward, pricing strategy, product ladder (free→paid→premium), launch sequence, income projection timeline, first $1000 fastest path.` }
+    ]);
+    const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO monetization_strategists (id,user_id,niche,audience_size,plan) VALUES (?,?,?,?,?)').run(uuidv4(), userId, niche, audience_size, plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
