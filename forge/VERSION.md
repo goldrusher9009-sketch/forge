@@ -1,3 +1,5 @@
+## v240.00 — Dream Mode Wave 68: Finance & Money AI (Debt Strategist + Investment Decoder + Credit Coach + Tax Optimizer + Wealth Mapper)
+
 ## v239.00 — Dream Mode Wave 67: Parenting & Family AI (Parenting Advisor + Bedtime Story Creator + Family Meeting Planner + Chore Chart Builder + College Prep Advisor)
 
 ## v238.00 — Dream Mode Wave 66: Health & Wellness AI (Meal Planner + Workout Designer + Sleep Optimizer + Stress Manager + Habit Stacker)

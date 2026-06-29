@@ -177787,3 +177787,97 @@ app.post('/api/college/prep', requireAuth, async (req: AuthRequest, res) => {
     res.json({ plan });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 68: FINANCE & MONEY AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS debt_strategists (
+  id TEXT PRIMARY KEY, user_id TEXT, debts TEXT, income TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS investment_decoders (
+  id TEXT PRIMARY KEY, user_id TEXT, term TEXT, context TEXT, explanation TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS credit_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, score TEXT, issues TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS tax_optimizers (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, income_type TEXT, advice TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS wealth_mappers (
+  id TEXT PRIMARY KEY, user_id TEXT, age TEXT, goals TEXT, timeline TEXT, roadmap TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/debt/strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { debts, monthly_income, monthly_expenses } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Create a debt elimination strategy.\nDebts: ${debts}\nMonthly income: ${monthly_income||'not specified'}\nMonthly expenses: ${monthly_expenses||'not specified'}\n\nCompare debt avalanche vs snowball methods, provide a payoff timeline, and prioritize which debts to attack first.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const strategy = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO debt_strategists (id,user_id,debts,income,strategy) VALUES (?,?,?,?,?)`).run(id,userId,debts,monthly_income||'',strategy);
+    res.json({ strategy });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investment/decode', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { term, context, experience_level } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Explain this investment concept in plain English.\nTerm/concept: ${term}\nContext: ${context||'general investing'}\nExperience level: ${experience_level||'beginner'}\n\nProvide a clear explanation, real-world analogy, pros/cons, and when this concept applies.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const explanation = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO investment_decoders (id,user_id,term,context,explanation) VALUES (?,?,?,?,?)`).run(id,userId,term,context||'',explanation);
+    res.json({ explanation });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/credit/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { credit_score, issues, goals } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Build a credit improvement plan.\nCurrent credit score: ${credit_score}\nCredit issues: ${issues||'none specified'}\nGoals: ${goals||'improve overall score'}\n\nProvide specific, actionable steps to improve the credit score, timeline estimates, and what to avoid.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO credit_coaches (id,user_id,score,issues,plan) VALUES (?,?,?,?,?)`).run(id,userId,credit_score,issues||'',plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/tax/optimize', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { situation, income_type, filing_status } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Tax optimization strategies (educational purposes only, not tax advice).\nSituation: ${situation}\nIncome type: ${income_type||'W-2 employee'}\nFiling status: ${filing_status||'single'}\n\nExplain common tax reduction strategies, deductions, and legal ways to minimize tax burden. Note: consult a CPA for personalized advice.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const advice = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO tax_optimizers (id,user_id,situation,income_type,advice) VALUES (?,?,?,?,?)`).run(id,userId,situation,income_type||'',advice);
+    res.json({ advice });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/wealth/map', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { age, current_savings, income, goals, timeline } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Create a wealth-building roadmap.\nAge: ${age}\nCurrent savings: ${current_savings||'unknown'}\nIncome: ${income||'not specified'}\nFinancial goals: ${goals}\nTimeline: ${timeline||'long-term'}\n\nProvide a phased wealth-building plan with milestones, investment allocation ideas, and key actions at each life stage.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const roadmap = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO wealth_mappers (id,user_id,age,goals,timeline,roadmap) VALUES (?,?,?,?,?,?)`).run(id,userId,age,goals,timeline||'long-term',roadmap);
+    res.json({ roadmap });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
