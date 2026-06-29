@@ -1,3 +1,5 @@
+## v222.00 — Dream Mode Wave 50: Difficult Convo Coach + Apology Crafter + Compliment Engineer + Boundary Setter + Love Language Guide
+
 ## v221.00 — Dream Mode Wave 49: Debt Strategist + Investment Decoder + Credit Score Coach + Tax Optimizer + Wealth Roadmapper
 
 ## v220.00 — Dream Mode Wave 48: Parenting Advisor + Family Meeting Planner + Chore Chart Builder + Bedtime Story Gen + College Prep Coach

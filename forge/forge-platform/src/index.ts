@@ -175765,3 +175765,83 @@ app.post('/api/wealth/roadmap', requireAuth, async (req: AuthRequest, res: Respo
     res.json({ id, ...result });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// Wave 50: Relationship & Communication AI
+const createRelationshipTables = () => {
+  db.prepare(`CREATE TABLE IF NOT EXISTS difficult_convos (id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, script TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS apology_crafters (id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, relationship TEXT, apology TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS compliment_engineers (id TEXT PRIMARY KEY, user_id TEXT, person TEXT, context TEXT, compliments TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS boundary_setters (id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, scripts TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS love_language_guides (id TEXT PRIMARY KEY, user_id TEXT, partner_type TEXT, guide TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+};
+createRelationshipTables();
+
+app.post('/api/difficult/convo', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { situation, relationship, what_you_want, what_you_fear } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a communication expert and therapist. Help someone have a difficult conversation.\n\nSituation: ${situation}\nRelationship: ${relationship}\nWhat you want to achieve: ${what_you_want||'resolve the issue'}\nWhat you fear: ${what_you_fear||'conflict'}\n\nReturn JSON:\n{\n  "reframe": "helpful way to think about this conversation",\n  "before_the_talk": ["preparation step"],\n  "opening_scripts": [{"tone": "direct/gentle/assertive", "script": "exact words to open"}],\n  "key_points_to_make": [{"point": "what to say", "how_to_say_it": "phrasing tip"}],\n  "phrases_to_avoid": [{"avoid": "what not to say", "say_instead": "better alternative"}],\n  "if_they_react_badly": [{"reaction": "type of pushback", "response": "how to respond"}],\n  "how_to_close": "how to end the conversation well",\n  "if_it_doesnt_go_well": "what to do next"\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO difficult_convos (id,user_id,situation,script) VALUES (?,?,?,?)`).run(id, userId, situation, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/apology/craft', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { what_happened, relationship, how_they_feel, delivery_method } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a relationship communication expert. Craft a genuine, effective apology.\n\nWhat happened: ${what_happened}\nRelationship: ${relationship}\nHow they might feel: ${how_they_feel||'hurt'}\nDelivery method: ${delivery_method||'in person'}\n\nReturn JSON:\n{\n  "apology_analysis": "what makes this apology situation unique",\n  "what_makes_apologies_fail": ["common mistake for this situation"],\n  "apology_versions": [{"style": "brief/full/written", "apology": "complete text"}],\n  "what_to_include": [{"element": "component", "why": "reason this matters", "example": "how to say it"}],\n  "follow_through_actions": ["concrete action to back up the apology"],\n  "give_them_space": "advice on timing and follow-up",\n  "if_they_dont_accept": "how to handle rejection"\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO apology_crafters (id,user_id,situation,relationship,apology) VALUES (?,?,?,?,?)`).run(id, userId, what_happened, relationship, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/compliment/engineer', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { person_description, context, relationship, goal } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a human connection expert. Create genuine, specific, memorable compliments.\n\nPerson: ${person_description}\nContext: ${context}\nRelationship: ${relationship||'acquaintance'}\nGoal: ${goal||'make them feel appreciated'}\n\nReturn JSON:\n{\n  "why_compliments_matter": "brief insight on compliment psychology",\n  "compliments": [{"type": "character/achievement/impact/appearance", "compliment": "specific compliment", "delivery_tip": "how to say it naturally"}],\n  "compliment_for_public": "one safe to say in front of others",\n  "compliment_for_private": "more personal one for one-on-one",\n  "written_note": "short message version",\n  "what_makes_compliments_land": ["principle for making compliments feel genuine"],\n  "timing_advice": "when and how to deliver"\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO compliment_engineers (id,user_id,person,context,compliments) VALUES (?,?,?,?,?)`).run(id, userId, person_description, context, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/boundary/set', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { situation, relationship, current_dynamic, boundary_needed } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a therapist specializing in boundaries and assertiveness. Help someone set a healthy boundary.\n\nSituation: ${situation}\nRelationship: ${relationship}\nCurrent dynamic: ${current_dynamic||'not described'}\nBoundary needed: ${boundary_needed}\n\nReturn JSON:\n{\n  "validation": "affirm that this boundary is valid and why",\n  "boundary_clarity": "clear statement of what the boundary actually is",\n  "scripts": [{"scenario": "context", "script": "exact words to say", "tone": "assertive/gentle/firm"}],\n  "their_likely_reactions": [{"reaction": "pushback type", "your_response": "how to hold the boundary"}],\n  "red_flags": ["sign this person is not respecting boundaries"],\n  "self_care_after": "how to process the emotions after setting the boundary",\n  "if_boundary_is_violated": "what to do next",\n  "internal_work": "belief or mindset shift that helps you hold this boundary"\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO boundary_setters (id,user_id,situation,scripts) VALUES (?,?,?,?)`).run(id, userId, situation, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/lovelanguage/guide', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { your_language, partner_language, relationship_type, current_challenge } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a relationship coach specializing in love languages.\n\nYour love language: ${your_language}\nPartner's love language: ${partner_language||'unknown'}\nRelationship type: ${relationship_type||'romantic partner'}\nCurrent challenge: ${current_challenge||'feeling disconnected'}\n\nReturn JSON:\n{\n  "language_mismatch_insight": "what happens when these two languages interact",\n  "your_language_guide": {"how_you_receive_love": "description", "what_drains_you": "what feels empty to you"},\n  "their_language_guide": {"what_fills_them_up": "description", "what_to_do_more_of": ["action"]},\n  "connection_ideas": [{"idea": "specific activity", "why_it_works": "bridges both languages", "effort_level": "low/medium/high"}],\n  "daily_habits": ["small daily action to strengthen connection"],\n  "conflict_through_love_language_lens": "how this mismatch shows up in arguments",\n  "scripts": [{"situation": "moment", "what_to_say": "exact words that speak their language"}],\n  "if_language_is_unknown": "how to discover their love language"\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO love_language_guides (id,user_id,partner_type,guide) VALUES (?,?,?,?)`).run(id, userId, relationship_type, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
