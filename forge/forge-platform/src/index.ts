@@ -176927,3 +176927,87 @@ Return JSON:
     res.json(parsed);
   } catch(e:any){ res.status(500).json({error:e.message}); }
 });
+
+// ============================================================
+// WAVE 58: CREATIVE AI STUDIO
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS story_worlds (
+  id TEXT PRIMARY KEY, user_id TEXT, genre TEXT, premise TEXT, world TEXT, characters TEXT, plot TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS lyric_crafters (
+  id TEXT PRIMARY KEY, user_id TEXT, theme TEXT, mood TEXT, style TEXT, lyrics TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS character_forges (
+  id TEXT PRIMARY KEY, user_id TEXT, archetype TEXT, story_context TEXT, character TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS plot_twist_engines (
+  id TEXT PRIMARY KEY, user_id TEXT, story_so_far TEXT, genre TEXT, twists TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS world_builders (
+  id TEXT PRIMARY KEY, user_id TEXT, setting TEXT, era TEXT, world_type TEXT, lore TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/story/world', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { genre, premise, style } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a master storyteller. Create a complete story world for this premise. Genre: ${genre}. Premise: ${premise}. Style: ${style || 'cinematic'}. Return JSON: { title, tagline, opening_hook, world_description, protagonist: { name, age, background, motivation, flaw, superpower }, antagonist: { name, role, motivation, methods }, supporting_cast: [{ name, role, relationship }], act_1_setup, act_2_conflict, act_3_resolution, theme, emotional_core, first_chapter_opening (500 words) }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO story_worlds VALUES (?,?,?,?,?,?,?,?)').run(uuidv4(), userId, genre, premise, JSON.stringify(data), JSON.stringify(data.supporting_cast), JSON.stringify({ act1: data.act_1_setup, act2: data.act_2_conflict, act3: data.act_3_resolution }), new Date().toISOString());
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/lyric/craft', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { theme, mood, style, personal_story } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a Grammy-winning lyricist. Write complete song lyrics. Theme: ${theme}. Mood: ${mood}. Style/genre: ${style}. Personal story to draw from: ${personal_story || 'universal human experience'}. Return JSON: { song_title, genre_style, tempo_feel, verse_1, pre_chorus, chorus, verse_2, bridge, outro, hook_analysis, rhyme_scheme, production_notes, alternative_chorus, behind_the_lyrics }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO lyric_crafters VALUES (?,?,?,?,?,?,?)').run(uuidv4(), userId, theme, mood, style, JSON.stringify(data), new Date().toISOString());
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/character/forge', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { archetype, story_context, depth_level } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a character development expert. Forge a deeply compelling character. Archetype: ${archetype}. Story context: ${story_context}. Return JSON: { name, age, appearance, voice_description, backstory, core_wound, greatest_fear, deepest_desire, fatal_flaw, hidden_strength, personality_traits, speech_patterns, quirks, moral_code, relationships, character_arc, pivotal_scene, dialogue_sample (200 words showing their voice), psychological_profile, what_makes_them_unforgettable }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO character_forges VALUES (?,?,?,?,?)').run(uuidv4(), userId, archetype, story_context, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/plot/twist', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { story_so_far, genre, tone } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a master plot architect. Generate shocking, earned plot twists. Story so far: ${story_so_far}. Genre: ${genre}. Tone: ${tone || 'dramatic'}. Return JSON: { twists: [{ twist_name, the_reveal, setup_clues_already_present, emotional_impact, how_to_execute, dialogue_scene_example, aftermath }] (5 twists of escalating boldness), best_twist_recommendation, how_to_foreshadow, reader_reaction_prediction }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO plot_twist_engines VALUES (?,?,?,?,?)').run(uuidv4(), userId, story_so_far, genre, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/world/build', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { setting, era, world_type, tone } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a worldbuilding expert (Tolkien-level). Build a complete fictional world. Setting: ${setting}. Era: ${era}. World type: ${world_type} (fantasy/sci-fi/dystopian/etc). Tone: ${tone || 'epic'}. Return JSON: { world_name, tagline, geography: { continents, climates, notable_locations }, history: { founding_myth, key_epochs, recent_events }, societies: [{ name, culture, values, conflicts }], magic_or_technology_system: { name, rules, limitations, source }, economy, politics, religion_or_philosophy, languages, flora_and_fauna, hidden_secrets, story_hooks: [5 compelling story starters], visual_mood_board_description, author_notes }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO world_builders VALUES (?,?,?,?,?,?)').run(uuidv4(), userId, setting, era, world_type, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
