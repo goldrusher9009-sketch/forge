@@ -174065,3 +174065,80 @@ app.post('/api/burnout/assess', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 28: LEARNING & EDUCATION AI ─────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS study_plans (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS concept_maps (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, map TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS exam_preps (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, prep TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS skill_roadmaps (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, roadmap TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS socratic_sessions (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, session TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Study Plan Generator
+app.post('/api/study/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { subject, goal, time_available, deadline, current_level } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a detailed study plan.\n\nSubject: ${subject}\nGoal: ${goal||'master the fundamentals'}\nTime per day: ${time_available||'1 hour'}\nDeadline: ${deadline||'4 weeks'}\nCurrent level: ${current_level||'beginner'}\n\nRespond in JSON: { "overview": "what this plan achieves", "weekly_plan": [{"week":1,"focus":"topic","daily_sessions":[{"day":"Mon","topic":"subtopic","activity":"read/practice/review","duration":"30 min"}],"milestone":"what to know by end of week"}], "resources_needed": ["resource1","resource2"], "practice_strategy": "how to apply knowledge", "retention_techniques": ["spaced repetition tip","active recall tip"], "accountability_system": "how to stay on track" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO study_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Concept Map Builder
+app.post('/api/concept/map', requireAuth, async (req: any, res: any) => {
+  try {
+    const { topic, depth } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a comprehensive concept map for learning.\n\nTopic: ${topic}\nDepth: ${depth||'intermediate'}\n\nRespond in JSON: { "core_concept": "topic name", "definition": "one-sentence definition", "prerequisites": ["concept1","concept2"], "key_components": [{"name":"component","description":"what it is","importance":"why it matters","sub_concepts":["sub1","sub2"]}], "connections": [{"from":"concept A","to":"concept B","relationship":"how they connect"}], "common_misconceptions": [{"misconception":"wrong belief","reality":"correct understanding"}], "real_world_applications": ["application1","application2"], "mastery_indicators": ["sign you understand it","another sign"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO concept_maps (id,user_id,topic,map) VALUES (?,?,?,?)`).run(id, req.user.id, topic, JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Exam Prep Generator
+app.post('/api/exam/prep', requireAuth, async (req: any, res: any) => {
+  try {
+    const { exam_name, topics, days_until_exam, weak_areas } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create an exam preparation guide.\n\nExam: ${exam_name}\nTopics to cover: ${topics}\nDays until exam: ${days_until_exam||14}\nWeak areas: ${weak_areas||'none specified'}\n\nRespond in JSON: { "strategy": "overall exam strategy", "daily_schedule": [{"day":1,"focus":"topic","tasks":["task1","task2"],"review":"what to review"}], "practice_questions": [{"question":"question text","answer":"correct answer","explanation":"why this is correct"}], "high_yield_topics": ["most important topic1","topic2"], "memory_tricks": [{"concept":"name","trick":"mnemonic or trick"}], "day_before_tips": ["tip1","tip2"], "exam_day_strategy": "time management and approach" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO exam_preps (id,user_id,context,prep) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Skill Roadmap Builder
+app.post('/api/skill/roadmap', requireAuth, async (req: any, res: any) => {
+  try {
+    const { skill, current_level, goal_level, time_commitment } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a skill development roadmap.\n\nSkill: ${skill}\nCurrent level: ${current_level||'complete beginner'}\nGoal: ${goal_level||'job-ready / proficient'}\nTime per week: ${time_commitment||'10 hours'}\n\nRespond in JSON: { "total_timeline": "estimated time to reach goal", "phases": [{"phase":1,"name":"phase name","duration":"X weeks","skills_to_learn":["skill1","skill2"],"projects":["project1"],"milestone":"what you can do at end","resources":[{"type":"course/book/tutorial","name":"resource name","why":"why this one"}]}], "practice_projects": [{"difficulty":"beginner/intermediate","project":"project idea","skills_practiced":["skill1"]}], "portfolio_advice": "what to build to show employers/clients", "common_mistakes": ["mistake1","mistake2"], "community_resources": ["community1","community2"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO skill_roadmaps (id,user_id,context,roadmap) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Socratic Learning Session
+app.post('/api/socratic/learn', requireAuth, async (req: any, res: any) => {
+  try {
+    const { topic, current_understanding, learning_goal } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Design a Socratic learning session to deepen understanding.\n\nTopic: ${topic}\nCurrent understanding: ${current_understanding||'basic awareness'}\nLearning goal: ${learning_goal||'deep conceptual understanding'}\n\nRespond in JSON: { "session_overview": "what this session will accomplish", "opening_question": "provocative question to start thinking", "discovery_sequence": [{"question":"question to ask","why":"what insight this unlocks","expected_revelation":"what learner should discover"}], "common_wrong_answers": [{"wrong_answer":"what they might say","gentle_redirect":"how to guide them further"}], "key_insights": ["insight1","insight2","insight3"], "synthesis_prompt": "final question that pulls it all together", "further_exploration": ["rabbit hole1","rabbit hole2"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO socratic_sessions (id,user_id,topic,session) VALUES (?,?,?,?)`).run(id, req.user.id, topic, JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});

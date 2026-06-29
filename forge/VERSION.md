@@ -1,3 +1,5 @@
+## v200.00 — Dream Mode Wave 28: Study Plan + Concept Map + Exam Prep + Skill Roadmap + Socratic Learning
+
 ## v199.00 — Dream Mode Wave 27: Anxiety Toolkit + CBT Exercise + Self-Care Plan + Boundary Scripts + Burnout Assessment
 
 ## v198.00 — Dream Mode Wave 26: Debt Payoff Planner + Budget Builder + Investment Explainer + FIRE Calculator + Side Hustle Planner
