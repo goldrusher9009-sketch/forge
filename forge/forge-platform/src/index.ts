@@ -176078,3 +176078,160 @@ Return JSON:
     res.json(parsed);
   } catch(e:any){ res.status(500).json({error:e.message}); }
 });
+
+// ── Wave 53: Health & Biohacking AI ──────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS biohack_optimizers (id TEXT PRIMARY KEY, user_id TEXT, goal TEXT, current_routine TEXT, bio_markers TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS vo2max_trainers (id TEXT PRIMARY KEY, user_id TEXT, current_fitness TEXT, goal TEXT, schedule TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS cold_therapy_coaches (id TEXT PRIMARY KEY, user_id TEXT, experience TEXT, goals TEXT, schedule TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS supplement_stacks (id TEXT PRIMARY KEY, user_id TEXT, goals TEXT, current_supps TEXT, budget TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS sleep_architects (id TEXT PRIMARY KEY, user_id TEXT, current_sleep TEXT, issues TEXT, schedule TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+app.post('/api/biohack/optimize', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { goal, current_routine, bio_markers, biggest_issue } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Create a personalized biohacking optimization protocol.
+Primary goal: ${goal}
+Current routine: ${current_routine || 'not specified'}
+Known bio markers: ${bio_markers || 'not specified'}
+Biggest issue: ${biggest_issue || 'not specified'}
+
+Return JSON:
+{
+  "optimization_philosophy": "your personalized biohacking principle",
+  "quick_wins": [{"intervention": string, "mechanism": string, "timeline": string, "evidence_level": string}],
+  "morning_protocol": [{"time": string, "action": string, "why": string}],
+  "evening_protocol": [{"time": string, "action": string, "why": string}],
+  "weekly_interventions": [{"day": string, "intervention": string, "purpose": string}],
+  "metrics_to_track": [{"metric": string, "tool": string, "frequency": string, "target": string}],
+  "avoid_list": [{"thing": string, "reason": string}],
+  "month_1_focus": string,
+  "expected_results": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO biohack_optimizers (id,user_id,goal,current_routine,bio_markers,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(),userId,goal,current_routine,bio_markers,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/vo2max/train', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { current_fitness, vo2max_estimate, goal, weekly_hours, preferred_activity } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Design a VO2max and cardiovascular fitness training program.
+Current fitness: ${current_fitness || 'moderate'}
+VO2max estimate: ${vo2max_estimate || 'unknown'}
+Goal: ${goal || 'improve VO2max'}
+Weekly hours available: ${weekly_hours || '4-5'}
+Preferred activity: ${preferred_activity || 'running'}
+
+Return JSON:
+{
+  "current_assessment": string,
+  "target_vo2max": string,
+  "training_zones": [{"zone": string, "heart_rate": string, "feel": string, "purpose": string}],
+  "weekly_plan": [{"session": string, "duration": string, "zone": string, "details": string}],
+  "key_workouts": [{"name": string, "protocol": string, "frequency": string, "why_it_works": string}],
+  "progression": {"week_4": string, "week_8": string, "week_12": string},
+  "recovery_non_negotiables": [string],
+  "nutrition_timing": [{"timing": string, "what": string, "why": string}],
+  "expected_gains": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO vo2max_trainers (id,user_id,current_fitness,goal,schedule,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(),userId,current_fitness,goal,weekly_hours,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/cold/therapy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { experience_level, goals, access, schedule } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Design a cold therapy protocol for health optimization.
+Experience level: ${experience_level || 'beginner'}
+Goals: ${goals || 'general health, resilience'}
+Access: ${access || 'cold shower only'}
+Schedule: ${schedule || 'daily'}
+
+Return JSON:
+{
+  "protocol_overview": string,
+  "week_by_week": [{"week": string, "duration_seconds": number, "temp": string, "technique": string}],
+  "breathing_protocol": {"before": string, "during": string, "after": string},
+  "timing_guidelines": [{"time_of_day": string, "benefit": string, "avoid_if": string}],
+  "adaptation_signs": [string],
+  "contraindications": [string],
+  "advanced_techniques": [{"name": string, "protocol": string, "for_who": string}],
+  "science_summary": string,
+  "common_mistakes": [string]
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO cold_therapy_coaches (id,user_id,experience,goals,schedule,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(),userId,experience_level,goals,schedule,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/supplement/stack', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { goals, current_supplements, budget, health_conditions } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Build an evidence-based supplement stack for optimization goals.
+Goals: ${goals}
+Current supplements: ${current_supplements || 'none'}
+Monthly budget: ${budget || 'flexible'}
+Health conditions/notes: ${health_conditions || 'none'}
+
+IMPORTANT: This is for informational purposes. Always consult a healthcare provider.
+
+Return JSON:
+{
+  "stack_philosophy": string,
+  "foundational": [{"supplement": string, "dose": string, "timing": string, "evidence": string, "purpose": string, "cost_monthly": string}],
+  "performance": [{"supplement": string, "dose": string, "timing": string, "evidence": string, "purpose": string}],
+  "cut_from_current": [{"supplement": string, "reason": string, "save": string}],
+  "synergies": [{"combo": string, "enhanced_effect": string}],
+  "cycling_protocol": string,
+  "total_cost_estimate": string,
+  "quality_brands": [{"supplement": string, "recommended_brands": string}],
+  "medical_disclaimer": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO supplement_stacks (id,user_id,goals,current_supps,budget,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(),userId,goals,current_supplements,budget,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/sleep/architect', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { current_sleep_hours, sleep_issues, wake_time, sleep_goal, environment } = req.body;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const result = await callLLM(provider, apiKey, model, [{role:'user',content:`Design a complete sleep optimization system.
+Current sleep hours: ${current_sleep_hours || '6-7'}
+Sleep issues: ${sleep_issues || 'not specified'}
+Desired wake time: ${wake_time || 'not specified'}
+Sleep goal: ${sleep_goal || 'improve quality and duration'}
+Sleep environment: ${environment || 'standard bedroom'}
+
+Return JSON:
+{
+  "sleep_diagnosis": string,
+  "target_schedule": {"bedtime": string, "wake_time": string, "sleep_window": string},
+  "wind_down_protocol": [{"time_before_bed": string, "action": string, "why": string}],
+  "environment_optimization": [{"factor": string, "target": string, "tool": string}],
+  "morning_anchors": [{"time": string, "action": string, "effect_on_sleep": string}],
+  "nutrition_for_sleep": [{"timing": string, "what_to_eat": string, "what_to_avoid": string}],
+  "sleep_supplements": [{"supplement": string, "dose": string, "timing": string, "note": string}],
+  "chronotype_tips": string,
+  "week_1_focus": string,
+  "expected_improvement": string
+}`}]);
+    const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare(`INSERT INTO sleep_architects (id,user_id,current_sleep,issues,schedule,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(),userId,current_sleep_hours,sleep_issues,wake_time,JSON.stringify(parsed));
+    res.json(parsed);
+  } catch(e:any){ res.status(500).json({error:e.message}); }
+});
