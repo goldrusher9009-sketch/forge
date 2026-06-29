@@ -174989,3 +174989,80 @@ app.post('/api/learning/style', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 40: ENVIRONMENT & SUSTAINABILITY AI ──────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS carbon_auditors (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS eco_habit_builders (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS sustainability_planners (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS climate_explainers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS green_home_advisors (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Carbon Auditor
+app.post('/api/carbon/audit', requireAuth, async (req: any, res: any) => {
+  try {
+    const { diet, transportation, home_energy, shopping_habits, travel } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Audit personal carbon footprint and provide reduction strategies.\n\nDiet: ${diet||'omnivore'}\nTransportation: ${transportation||'car commuter'}\nHome energy: ${home_energy||'standard electricity'}\nShopping habits: ${shopping_habits||'typical consumer'}\nTravel: ${travel||'occasional flights'}\n\nRespond in JSON: { "estimated_footprint": "approximate annual CO2 in tons with context (average American is ~16 tons)", "breakdown": [{"category":"area of life","tons_co2":"estimate","percentage":"% of total","context":"how this compares to average"}], "biggest_wins": [{"action":"change to make","co2_saved":"tons saved per year","difficulty":"easy/medium/hard","cost_impact":"saves money/costs more/neutral","co2_per_dollar":"efficiency metric"}], "quick_wins": ["easy change with meaningful impact"], "lifestyle_shifts": ["bigger change worth considering"], "offset_options": "how to offset remaining emissions", "30_day_challenge": "specific challenge to reduce footprint this month", "progress_metrics": "how to measure your improvement" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO carbon_auditors (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Eco Habit Builder
+app.post('/api/eco/habits', requireAuth, async (req: any, res: any) => {
+  try {
+    const { current_habits, lifestyle, motivation, barriers } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build sustainable eco habits personalized to this person.\n\nCurrent habits: ${current_habits||'none'}\nLifestyle: ${lifestyle||'busy professional'}\nMotivation: ${motivation||'general environmental concern'}\nBarriers: ${barriers||'time and cost'}\n\nRespond in JSON: { "habit_stack": [{"eco_habit":"new habit","attach_to":"existing habit to pair it with","time_required":"minutes per day/week","impact":"environmental benefit","savings":"money saved if any","starter_version":"tiny version to start with"}], "weekly_schedule": "day-by-day eco habit schedule", "shopping_swaps": [{"replace":"thing to stop buying","with":"sustainable alternative","savings":"cost comparison"}], "home_audit": "what to audit at home this weekend", "community_actions": ["collective action beyond individual habits"], "motivation_anchor": "personalized reminder of why this matters", "30_60_90_plan": "habit progression plan" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO eco_habit_builders (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Sustainability Planner
+app.post('/api/sustainability/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { entity_type, size, current_practices, goals, budget } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a sustainability plan for a ${entity_type||'small business'}.\n\nSize: ${size||'10-50 people'}\nCurrent practices: ${current_practices||'none'}\nGoals: ${goals||'reduce environmental impact'}\nBudget: ${budget||'limited'}\n\nRespond in JSON: { "baseline_assessment": "starting point analysis", "priority_actions": [{"action":"specific initiative","timeline":"when to implement","cost":"investment required","roi":"return on investment","impact":"environmental benefit","difficulty":"easy/medium/hard"}], "quick_wins": ["action implementable in under 30 days at low cost"], "policy_changes": ["internal policy to adopt"], "supplier_criteria": "sustainability criteria for vendors and suppliers", "metrics_to_track": [{"metric":"what to measure","baseline":"how to establish","target":"ambitious but achievable goal","reporting_frequency":"how often to review"}], "certification_path": "relevant certifications to pursue (B Corp, LEED, etc.)", "stakeholder_communication": "how to communicate this to employees, customers, investors", "year_one_roadmap": "month-by-month plan for the first year" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO sustainability_planners (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Climate Explainer
+app.post('/api/climate/explain', requireAuth, async (req: any, res: any) => {
+  try {
+    const { topic, audience, depth, angle } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Explain this climate topic with scientific accuracy and accessible language.\n\nTopic: ${topic}\nAudience: ${audience||'general public'}\nDepth: ${depth||'moderate'}\nAngle: ${angle||'balanced and science-based'}\n\nRespond in JSON: { "core_explanation": "what is actually happening — clear and accurate", "the_science": "the mechanism behind it — no jargon", "scale_context": "put numbers in perspective (how big is big?)", "timeline": "when effects happen — near/medium/long term", "regional_variation": "how different places are affected differently", "common_misconceptions": [{"myth":"what people get wrong","reality":"what's actually true","why_it_matters":"why the misconception is harmful"}], "what_is_being_done": "policy, technology, and behavioral responses", "what_individuals_can_do": ["concrete action"], "what_optimists_say": "reasons for realistic hope", "further_reading": ["type of source for deeper learning"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO climate_explainers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Green Home Advisor
+app.post('/api/home/green', requireAuth, async (req: any, res: any) => {
+  try {
+    const { home_type, ownership, location, budget, priorities } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Advise on making a home more sustainable and energy-efficient.\n\nHome type: ${home_type||'single family house'}\nOwnership: ${ownership||'owner'}\nLocation/climate: ${location||'temperate'}\nBudget: ${budget||'moderate'}\nPriorities: ${priorities||'lower bills and environmental impact'}\n\nRespond in JSON: { "energy_audit_checklist": ["thing to check in a home energy audit"], "upgrades_by_roi": [{"upgrade":"specific upgrade","cost":"typical cost","annual_savings":"dollars saved","payback_period":"years to break even","co2_impact":"tons CO2 saved","incentives":"tax credits or rebates available"}], "free_actions": ["zero-cost change to make this week"], "appliance_guide": "what appliances to prioritize replacing and with what", "solar_assessment": "is solar worth it — factors to consider", "water_conservation": ["water-saving action or upgrade"], "insulation_tips": "where heat loss typically happens and how to fix it", "smart_home": "tech that actually saves energy vs marketing gimmick", "local_programs": "types of utility rebate and local incentive programs to look for", "renter_options": "sustainable changes even renters can make" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO green_home_advisors (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});

@@ -1,3 +1,5 @@
+## v212.00 — Dream Mode Wave 40: Carbon Auditor + Eco Habit Builder + Sustainability Planner + Climate Explainer + Green Home Advisor
+
 ## v211.00 — Dream Mode Wave 39: Parenting Coach + Lesson Planner + College Advisor + Behavior Decoder + Learning Style Map
 
 ## v210.00 — Dream Mode Wave 38: Rights Explainer + Contract Drafter + Complaint Writer + Policy Decoder + Small Claims Coach
