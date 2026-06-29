@@ -175220,3 +175220,80 @@ app.post('/api/fantasy/advise', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 43: MUSIC & AUDIO AI ─────────────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS lyric_writers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS music_theorists (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS playlist_curators (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS practice_schedulers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS music_pitch_writers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Lyric Writer
+app.post('/api/lyrics/write', requireAuth, async (req: any, res: any) => {
+  try {
+    const { theme, genre, mood, perspective, style_reference } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write original song lyrics.\n\nTheme: ${theme}\nGenre: ${genre||'pop'}\nMood: ${mood||'emotional'}\nPerspective: ${perspective||'first person'}\nStyle reference: ${style_reference||'contemporary'}\n\nRespond in JSON: { "song_title": "evocative title", "structure": "verse-chorus-bridge structure used", "lyrics": {"intro":"intro lines if any","verse1":"full first verse","pre_chorus":"pre-chorus if applicable","chorus":"full chorus — this is the hook","verse2":"full second verse","bridge":"bridge section","outro":"outro or final chorus variation"}, "hook_analysis": "what makes the chorus memorable", "rhyme_scheme": "rhyme scheme used (ABAB etc)", "themes_explored": ["deeper meaning or theme"], "production_notes": "genre-appropriate production suggestions", "alternative_chorus": "alternate version of the chorus to compare" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO lyric_writers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Music Theorist
+app.post('/api/music/theory', requireAuth, async (req: any, res: any) => {
+  try {
+    const { concept, skill_level, instrument, application } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Explain music theory and its practical application.\n\nConcept: ${concept}\nSkill level: ${skill_level||'intermediate'}\nInstrument: ${instrument||'any'}\nApplication: ${application||'songwriting and performance'}\n\nRespond in JSON: { "concept_explained": "clear explanation without jargon", "why_it_matters": "how this makes you a better musician", "the_fundamentals": "core rules and exceptions", "examples_in_songs": [{"song":"well known song","how_it_uses_concept":"specific application"}], "exercises": [{"exercise":"practice activity","purpose":"what it trains","duration":"how long to practice"}], "on_your_instrument": "how to apply this specifically to the stated instrument", "common_confusions": [{"confusion":"what people misunderstand","clarification":"what's actually true"}], "next_concepts": ["related theory to learn after mastering this"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO music_theorists (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Playlist Curator
+app.post('/api/playlist/curate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { mood, activity, genre_preferences, energy_level, duration } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Curate a perfect playlist for this moment.\n\nMood: ${mood}\nActivity: ${activity||'general listening'}\nGenre preferences: ${genre_preferences||'open'}\nEnergy level: ${energy_level||'medium'}\nDuration: ${duration||'1 hour'}\n\nRespond in JSON: { "playlist_name": "creative playlist name", "vibe_description": "2-sentence description of the sonic journey", "tracks": [{"artist":"artist name","song":"song title","why":"why it fits here","energy":"low/medium/high","transition_note":"how it flows from previous track"}], "arc": "how energy and mood shift throughout the playlist", "discovery_picks": ["lesser known song that fits perfectly"], "skip_if": "listener profile who won't enjoy this", "similar_playlists": ["type of playlist to also explore"], "best_listening_context": "ideal setting — headphones, speakers, background" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO playlist_curators (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Practice Scheduler
+app.post('/api/practice/schedule', requireAuth, async (req: any, res: any) => {
+  try {
+    const { instrument, skill_level, goals, available_time, weaknesses } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Design an effective instrument practice schedule.\n\nInstrument: ${instrument}\nSkill level: ${skill_level||'intermediate'}\nGoals: ${goals||'general improvement'}\nDaily practice time available: ${available_time||'30 minutes'}\nKnown weaknesses: ${weaknesses||'technique and timing'}\n\nRespond in JSON: { "practice_philosophy": "approach to make practice maximally effective", "daily_schedule": [{"block":"time block name","duration":"minutes","focus":"what to practice","specific_exercises":["exercise with description"],"tempo_guidance":"BPM or speed progression"}], "weekly_structure": "how to vary practice across the week", "deliberate_practice_tips": ["how to practice with full focus"], "warm_up_routine": "5-10 minute warm-up sequence", "goal_milestones": [{"goal":"milestone","how_to_know":"measurement criterion","timeline":"realistic estimate"}], "plateau_busters": ["technique for when progress stalls"], "recording_yourself": "how to use recordings to accelerate improvement" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO practice_schedulers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Music Pitch Writer
+app.post('/api/music/pitch', requireAuth, async (req: any, res: any) => {
+  try {
+    const { artist_name, genre, sound_description, target, ask } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Write a compelling music industry pitch.\n\nArtist name: ${artist_name}\nGenre: ${genre}\nSound description: ${sound_description}\nTarget (label, playlist, venue, press): ${target||'record label'}\nAsk: ${ask||'record deal'}\n\nRespond in JSON: { "one_liner": "single sentence that captures the artist", "bio": "compelling 3-paragraph artist bio", "pitch_email": "complete pitch email subject + body", "elevator_pitch": "30-second verbal pitch", "comparable_artists": "sounds like X meets Y — chosen strategically", "what_makes_them_different": "unique angle that stands out in pitches", "social_proof_suggestions": "what metrics or achievements to highlight", "call_to_action": "specific, confident ask", "common_mistakes_to_avoid": ["pitch mistake that gets emails deleted"], "follow_up_template": "follow-up message if no response in 2 weeks" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO music_pitch_writers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
