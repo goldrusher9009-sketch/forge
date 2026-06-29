@@ -177975,3 +177975,97 @@ app.post('/api/networking/message', requireAuth, async (req: AuthRequest, res) =
     res.json({ message });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 70: CREATIVITY & WRITING AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS character_name_generators (
+  id TEXT PRIMARY KEY, user_id TEXT, genre TEXT, traits TEXT, names TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS writing_prompt_engines (
+  id TEXT PRIMARY KEY, user_id TEXT, genre TEXT, mood TEXT, prompt TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS plot_hole_detectors (
+  id TEXT PRIMARY KEY, user_id TEXT, story_summary TEXT, issues TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS dialogue_polishers (
+  id TEXT PRIMARY KEY, user_id TEXT, original TEXT, context TEXT, polished TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS book_title_generators (
+  id TEXT PRIMARY KEY, user_id TEXT, synopsis TEXT, genre TEXT, titles TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/character/names', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { genre, traits, setting, count } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Generate character names for a story.\nGenre: ${genre}\nCharacter traits: ${traits}\nSetting/world: ${setting||'contemporary'}\nNumber of names: ${count||10}\n\nProvide ${count||10} unique, memorable character names with brief etymology or meaning notes. Include first and last names.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const names = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO character_name_generators (id,user_id,genre,traits,names) VALUES (?,?,?,?,?)`).run(id,userId,genre,traits,names);
+    res.json({ names });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/writing/prompt', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { genre, mood, length, include_twist } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Generate creative writing prompts.\nGenre: ${genre||'any'}\nMood: ${mood||'any'}\nStory length target: ${length||'short story'}\nInclude a twist: ${include_twist||'yes'}\n\nCreate 5 unique, specific writing prompts that spark imagination. Include setting, conflict seed, and a character detail for each.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const prompt = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO writing_prompt_engines (id,user_id,genre,mood,prompt) VALUES (?,?,?,?,?)`).run(id,userId,genre||'any',mood||'any',prompt);
+    res.json({ prompt });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/plothole/detect', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { story_summary, genre, chapters } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Analyze this story for plot holes and inconsistencies.\nGenre: ${genre||'fiction'}\nStory summary: ${story_summary}\nChapters/scenes: ${chapters||'not specified'}\n\nIdentify plot holes, timeline inconsistencies, character motivation gaps, and logic problems. For each issue, suggest how to fix it.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const issues = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO plot_hole_detectors (id,user_id,story_summary,issues) VALUES (?,?,?,?)`).run(id,userId,story_summary,issues);
+    res.json({ issues });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dialogue/polish', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { original, context, characters, style } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Polish this dialogue to make it more natural and engaging.\nOriginal dialogue:\n${original}\n\nContext: ${context||'general fiction'}\nCharacters: ${characters||'not specified'}\nStyle: ${style||'natural, authentic'}\n\nRewrite the dialogue to feel more natural, reveal character, and advance the scene. Explain what you changed and why.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const polished = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO dialogue_polishers (id,user_id,original,context,polished) VALUES (?,?,?,?,?)`).run(id,userId,original,context||'',polished);
+    res.json({ polished });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/book/title', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { synopsis, genre, tone, keywords } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Generate book title ideas.\nSynopsis: ${synopsis}\nGenre: ${genre||'fiction'}\nTone: ${tone||'literary'}\nKeywords to consider: ${keywords||'none'}\n\nGenerate 15 compelling book title options with subtitle suggestions. Group them by approach (mysterious, straightforward, metaphorical, etc.) and note the appeal of each.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const titles = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO book_title_generators (id,user_id,synopsis,genre,titles) VALUES (?,?,?,?,?)`).run(id,userId,synopsis,genre||'fiction',titles);
+    res.json({ titles });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
