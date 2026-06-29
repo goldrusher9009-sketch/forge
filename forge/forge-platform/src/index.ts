@@ -178539,3 +178539,97 @@ app.post('/api/preventivehealth/plan', requireAuth, async (req: AuthRequest, res
     res.json({ plan });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 76: CONTENT CREATION & MEDIA AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS youtube_script_writers (
+  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, script TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS tiktok_hook_generators (
+  id TEXT PRIMARY KEY, user_id TEXT, content TEXT, hooks TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS podcast_episode_planners (
+  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS thumbnail_concept_makers (
+  id TEXT PRIMARY KEY, user_id TEXT, video_topic TEXT, concepts TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS content_repurposers_v2 (
+  id TEXT PRIMARY KEY, user_id TEXT, original TEXT, repurposed TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/youtube/script', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { topic, target_audience, video_length, style } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Write a complete YouTube video script.\nTopic: ${topic}\nTarget audience: ${target_audience||'general'}\nVideo length: ${video_length||'8-10 minutes'}\nStyle: ${style||'educational and engaging'}\n\nWrite a full script including: attention-grabbing hook (first 30 seconds), intro with value promise, main content in 3-5 sections with transitions, engagement prompts (like/subscribe), and strong outro with CTA. Include [B-ROLL] and [GRAPHIC] cues.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const script = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO youtube_script_writers (id,user_id,topic,script) VALUES (?,?,?,?)`).run(id,userId,topic,script);
+    res.json({ script });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/tiktok/hooks', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { content_idea, niche, target_emotion } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Generate 10 high-converting TikTok video hooks.\nContent idea: ${content_idea}\nNiche: ${niche||'general'}\nTarget emotion: ${target_emotion||'curiosity and surprise'}\n\nCreate 10 scroll-stopping opening lines for TikTok videos. Each hook should be under 10 words, trigger immediate curiosity or emotion, and make viewers unable to scroll past. Include variety: question hooks, story hooks, controversy hooks, revelation hooks, and relatability hooks.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const hooks = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO tiktok_hook_generators (id,user_id,content,hooks) VALUES (?,?,?,?)`).run(id,userId,content_idea,hooks);
+    res.json({ hooks });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/podcast/plan', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { topic, guest_name, show_type, target_length } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Plan a podcast episode.\nTopic: ${topic}\nGuest (if any): ${guest_name||'solo episode'}\nShow type: ${show_type||'interview/discussion'}\nTarget length: ${target_length||'45-60 minutes'}\n\nCreate a complete episode plan including: episode title and description for show notes, segment breakdown with timing, 10-15 interview questions that go deep (not surface-level), icebreaker questions, key talking points, listener takeaways, and promotional angles for social media.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const plan = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO podcast_episode_planners (id,user_id,topic,plan) VALUES (?,?,?,?)`).run(id,userId,topic,plan);
+    res.json({ plan });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/thumbnail/concept', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { video_topic, channel_style, target_emotion, competitor_thumbnails } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Generate YouTube thumbnail concepts that maximize click-through rate.\nVideo topic: ${video_topic}\nChannel style: ${channel_style||'professional'}\nTarget emotion to trigger: ${target_emotion||'curiosity'}\nCompetitor thumbnails: ${competitor_thumbnails||'standard talking head'}\n\nCreate 5 thumbnail concepts. For each: describe the visual composition, text overlay (max 4 words), color scheme, facial expression or visual element, and why this would outperform typical thumbnails for this topic.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const concepts = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO thumbnail_concept_makers (id,user_id,video_topic,concepts) VALUES (?,?,?,?)`).run(id,userId,video_topic,concepts);
+    res.json({ concepts });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/repurpose', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { original_content, original_format, target_platforms } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Repurpose this content for multiple platforms.\nOriginal content: ${original_content}\nOriginal format: ${original_format||'blog post'}\nTarget platforms: ${target_platforms||'Twitter/X, LinkedIn, Instagram, TikTok'}\n\nRepurpose the content for each platform with platform-native formatting: Twitter thread with hooks, LinkedIn thought leadership post, Instagram caption with hashtags, TikTok script hook. Each should feel native to the platform, not copy-pasted.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const repurposed = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO content_repurposers_v2 (id,user_id,original,repurposed) VALUES (?,?,?,?)`).run(id,userId,original_content.substring(0,500),repurposed);
+    res.json({ repurposed });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
