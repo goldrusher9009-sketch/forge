@@ -179921,3 +179921,90 @@ app.post('/api/networth/build', requireAuth, async (req: AuthRequest, res) => {
     res.json({ roadmap });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── Wave 91: Science & Research AI ────────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS research_paper_decoders (
+  id TEXT PRIMARY KEY, user_id TEXT, paper TEXT, summary TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS hypothesis_generators (
+  id TEXT PRIMARY KEY, user_id TEXT, field TEXT, observation TEXT, hypotheses TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS experiment_designers (
+  id TEXT PRIMARY KEY, user_id TEXT, hypothesis TEXT, constraints TEXT, design TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS science_explainers (
+  id TEXT PRIMARY KEY, user_id TEXT, concept TEXT, level TEXT, explanation TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS literature_reviewers (
+  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, review TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/researchpaper/decode', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { paper_text, audience_level } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a science communicator and research analyst. Decode this research paper for the specified audience.\nPaper/Abstract: ${paper_text}\nAudience level: ${audience_level || 'educated non-specialist'}\n\nProvide: one-paragraph plain-English summary, key findings (bulleted), methodology explanation, limitations and caveats, real-world implications, how this fits into the broader field, questions this raises for future research, credibility assessment.` }
+    ]);
+    const summary = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO research_paper_decoders (id,user_id,paper,summary) VALUES (?,?,?,?)').run(uuidv4(), userId, paper_text?.slice(0,500), summary);
+    res.json({ summary });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hypothesis/generate', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { field, observation, background } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a scientific hypothesis and research design expert. Generate testable hypotheses.\nField: ${field}\nObservation or question: ${observation}\nBackground knowledge: ${background || 'general'}\n\nProvide: 5 specific testable hypotheses (null + alternative form), ranked by novelty and feasibility, variables for each (independent, dependent, controlled), predicted outcomes, potential confounders, falsifiability assessment, which hypothesis would be most publishable.` }
+    ]);
+    const hypotheses = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO hypothesis_generators (id,user_id,field,observation,hypotheses) VALUES (?,?,?,?,?)').run(uuidv4(), userId, field, observation, hypotheses);
+    res.json({ hypotheses });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/experiment/design', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { hypothesis, constraints, field } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a research methodology expert. Design a rigorous experiment.\nHypothesis: ${hypothesis}\nConstraints: ${constraints || 'limited budget, 3-month timeline'}\nField: ${field || 'general science'}\n\nProvide: experimental design type (RCT, observational, etc.), sample size calculation, control group design, measurement protocol, statistical analysis plan, potential confounders and controls, ethical considerations, materials/equipment list, step-by-step procedure, expected timeline.` }
+    ]);
+    const design = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO experiment_designers (id,user_id,hypothesis,constraints,design) VALUES (?,?,?,?,?)').run(uuidv4(), userId, hypothesis, constraints, design);
+    res.json({ design });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/science/explain', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { concept, level, context } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a masterful science educator. Explain this concept at the specified level.\nConcept: ${concept}\nExplanation level: ${level || 'curious adult, no science background'}\nContext: ${context || 'general curiosity'}\n\nProvide: intuitive first explanation (no jargon), key analogy that captures the essence, step-by-step conceptual build-up, common misconceptions corrected, why this matters in the real world, how it connects to everyday experience, one mind-blowing implication, questions to explore further.` }
+    ]);
+    const explanation = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO science_explainers (id,user_id,concept,level,explanation) VALUES (?,?,?,?,?)').run(uuidv4(), userId, concept, level, explanation);
+    res.json({ explanation });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/literature/review', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { topic, scope, purpose } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a research librarian and academic reviewer. Conduct a literature review on this topic.\nTopic: ${topic}\nScope: ${scope || 'last 10 years'}\nPurpose: ${purpose || 'understanding the field'}\n\nProvide: field overview and key paradigms, major theoretical frameworks, landmark studies and findings, current debates and controversies, consensus vs contested areas, methodological trends, gaps in the literature, emerging research directions, recommended key papers to read, how to search for more (databases, keywords).` }
+    ]);
+    const review = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
+    db.prepare('INSERT INTO literature_reviewers (id,user_id,topic,review) VALUES (?,?,?,?)').run(uuidv4(), userId, topic, review);
+    res.json({ review });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
