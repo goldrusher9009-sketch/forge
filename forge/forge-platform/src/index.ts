@@ -178633,3 +178633,97 @@ app.post('/api/content/repurpose', requireAuth, async (req: AuthRequest, res) =>
     res.json({ repurposed });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 77: CAREER & PROFESSIONAL DEVELOPMENT AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS performance_review_writers (
+  id TEXT PRIMARY KEY, user_id TEXT, achievements TEXT, review TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS linkedin_content_creators (
+  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, post TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS career_gap_explainers (
+  id TEXT PRIMARY KEY, user_id TEXT, gap TEXT, explanation TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS executive_presence_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, coaching TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS workplace_boundary_setters (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, scripts TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/perfreview/write', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { achievements, role, time_period, tone } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Write a compelling self-performance review.\nAchievements: ${achievements}\nRole: ${role||'professional'}\nTime period: ${time_period||'past year'}\nTone: ${tone||'confident but not arrogant'}\n\nWrite a polished self-review that quantifies impact wherever possible, uses strong action verbs, highlights both results and growth, and positions the person for promotion/raise consideration. Include strengths, key accomplishments, and areas of growth.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const review = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO performance_review_writers (id,user_id,achievements,review) VALUES (?,?,?,?)`).run(id,userId,achievements,review);
+    res.json({ review });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/linkedin/content', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { topic, angle, personal_story, call_to_action } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Write a high-engagement LinkedIn post.\nTopic: ${topic}\nAngle/perspective: ${angle||'thought leadership'}\nPersonal story to include: ${personal_story||'optional'}\nCall to action: ${call_to_action||'invite discussion'}\n\nWrite a LinkedIn post that starts with a scroll-stopping first line, builds to an insight or story, delivers real value, and ends with engagement. Use LinkedIn-native formatting (short paragraphs, strategic line breaks). Aim for 150-300 words.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const post = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO linkedin_content_creators (id,user_id,topic,post) VALUES (?,?,?,?)`).run(id,userId,topic,post);
+    res.json({ post });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/careergap/explain', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { gap_duration, gap_reason, what_you_did, target_role } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Help me explain a career gap confidently in interviews.\nGap duration: ${gap_duration}\nReal reason: ${gap_reason}\nWhat I did during gap: ${what_you_did||'various things'}\nTarget role: ${target_role||'professional role'}\n\nProvide: 1) A concise, confident interview answer (under 60 seconds), 2) A resume-friendly way to address it, 3) How to reframe it as a strength, 4) 3 follow-up questions the interviewer might ask and how to answer them.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const explanation = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO career_gap_explainers (id,user_id,gap,explanation) VALUES (?,?,?,?)`).run(id,userId,gap_reason,explanation);
+    res.json({ explanation });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/execpresence/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { situation, current_behavior, target_level, industry } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Coach me on building executive presence.\nSituation: ${situation}\nMy current behavior: ${current_behavior||'unsure'}\nTarget level: ${target_level||'senior leader'}\nIndustry: ${industry||'corporate'}\n\nProvide executive presence coaching including: specific behaviors to adopt, language patterns leaders use, how to command a room, gravitas-building techniques, common mistakes that undermine credibility, and a 30-day executive presence practice plan.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const coaching = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO executive_presence_coaches (id,user_id,situation,coaching) VALUES (?,?,?,?)`).run(id,userId,situation,coaching);
+    res.json({ coaching });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/workboundary/set', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { situation, boundary_needed, relationship_type, communication_style } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Help me set professional boundaries at work.\nSituation: ${situation}\nBoundary needed: ${boundary_needed}\nRelationship type: ${relationship_type||'colleague'}\nPreferred communication style: ${communication_style||'direct but diplomatic'}\n\nProvide: 1) Scripts for setting this boundary in person, 2) Scripts for email/message, 3) How to handle pushback, 4) How to maintain the boundary over time, 5) What to do if the boundary is repeatedly violated.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const scripts = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO workplace_boundary_setters (id,user_id,situation,scripts) VALUES (?,?,?,?)`).run(id,userId,situation,scripts);
+    res.json({ scripts });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
