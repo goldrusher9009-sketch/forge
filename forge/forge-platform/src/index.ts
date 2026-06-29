@@ -175066,3 +175066,80 @@ app.post('/api/home/green', requireAuth, async (req: any, res: any) => {
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── WAVE 41: FOOD & CULINARY AI ───────────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS flavor_profilers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS meal_planners_v2 (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS recipe_inventors (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS wine_pairers (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS cooking_coaches (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+// Flavor Profiler
+app.post('/api/flavor/profile', requireAuth, async (req: any, res: any) => {
+  try {
+    const { favorite_foods, disliked_foods, dietary_restrictions, cuisine_preferences } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Build a detailed flavor profile and personalized food recommendations.\n\nFavorite foods: ${favorite_foods}\nDisliked foods: ${disliked_foods||'none'}\nDietary restrictions: ${dietary_restrictions||'none'}\nCuisine preferences: ${cuisine_preferences||'open to anything'}\n\nRespond in JSON: { "flavor_profile": {"dominant_preferences":["flavor characteristic"],"texture_preferences":["texture they likely enjoy"],"aversion_patterns":["what the dislikes suggest"],"adventurousness":"conservative/moderate/adventurous"}, "taste_science": "why they like what they like — sensory science explanation", "cuisines_to_explore": [{"cuisine":"cuisine name","why":"why they'd love it","gateway_dish":"best first dish to try"}], "ingredient_loves": ["ingredient they'd probably love even if unfamiliar"], "flavor_combinations": ["pairing they'd enjoy"], "restaurant_ordering": "how to order at restaurants based on this profile", "hidden_gems": ["unusual food that matches their profile"], "cooking_style": "what cooking techniques would suit their palate" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO flavor_profilers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Meal Planner v2
+app.post('/api/meal/plan', requireAuth, async (req: any, res: any) => {
+  try {
+    const { goals, dietary_restrictions, household_size, budget_per_week, cooking_time, skill_level } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Create a complete weekly meal plan.\n\nGoals: ${goals||'balanced nutrition'}\nDietary restrictions: ${dietary_restrictions||'none'}\nHousehold size: ${household_size||'2 adults'}\nWeekly budget: ${budget_per_week||'$150'}\nCooking time available: ${cooking_time||'30-45 min weeknights'}\nSkill level: ${skill_level||'intermediate'}\n\nRespond in JSON: { "weekly_plan": {"monday":{"breakfast":"dish","lunch":"dish","dinner":"dish"},"tuesday":{"breakfast":"dish","lunch":"dish","dinner":"dish"},"wednesday":{"breakfast":"dish","lunch":"dish","dinner":"dish"},"thursday":{"breakfast":"dish","lunch":"dish","dinner":"dish"},"friday":{"breakfast":"dish","lunch":"dish","dinner":"dish"},"saturday":{"breakfast":"dish","lunch":"dish","dinner":"dish"},"sunday":{"breakfast":"dish","lunch":"dish","dinner":"dish"}}, "shopping_list": [{"category":"produce/protein/pantry/dairy","items":["item with quantity"]}], "prep_strategy": "Sunday prep tips to make the week easier", "batch_cooking": ["component to make in bulk"], "estimated_cost": "total weekly cost estimate", "nutrition_highlights": "key nutritional benefits of this plan", "swap_options": "easy swaps if missing an ingredient" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO meal_planners_v2 (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Recipe Inventor
+app.post('/api/recipe/invent', requireAuth, async (req: any, res: any) => {
+  try {
+    const { ingredients, cuisine_style, meal_type, dietary_restrictions, skill_level } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Invent an original recipe from these ingredients.\n\nIngredients available: ${ingredients}\nCuisine style: ${cuisine_style||'any'}\nMeal type: ${meal_type||'dinner'}\nDietary restrictions: ${dietary_restrictions||'none'}\nSkill level: ${skill_level||'intermediate'}\n\nRespond in JSON: { "recipe_name": "creative, appealing name", "description": "2-sentence description that makes you want to eat it", "serves": "serving size", "time": {"prep":"minutes","cook":"minutes","total":"minutes"}, "difficulty": "easy/medium/hard", "ingredients": [{"amount":"quantity","unit":"unit","ingredient":"name","notes":"prep note if needed"}], "instructions": [{"step":1,"action":"what to do","technique_tip":"pro tip for this step"}], "flavor_profile": "description of how it tastes", "plating": "how to plate and garnish", "variations": ["easy variation to try"], "wine_pairing": "beverage suggestion", "storage": "how to store leftovers" }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO recipe_inventors (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wine Pairer
+app.post('/api/wine/pair', requireAuth, async (req: any, res: any) => {
+  try {
+    const { dish, occasion, budget, preferences } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Recommend wine (or beverage) pairings.\n\nDish: ${dish}\nOccasion: ${occasion||'casual dinner'}\nBudget: ${budget||'$15-30'}\nPreferences: ${preferences||'open to anything'}\n\nRespond in JSON: { "primary_pairing": {"wine":"specific wine type/region","why":"why it works with the dish","flavor_bridge":"specific flavors that connect wine and food","serving_temp":"ideal serving temperature","glass_type":"glass to use"}, "alternatives": [{"wine":"alternative option","why":"reasoning","budget_note":"value note"}], "if_no_wine": [{"beverage":"non-wine option","why":"pairing logic"}], "ordering_tips": "how to ask a sommelier or wine shop staff", "what_to_avoid": "wines or styles that clash with this dish", "tasting_notes": "what to notice in the wine with this food", "budget_picks": ["specific value bottles to look for"] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO wine_pairers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Cooking Coach
+app.post('/api/cooking/coach', requireAuth, async (req: any, res: any) => {
+  try {
+    const { skill_level, technique_to_learn, dish_goal, equipment } = req.body;
+    const { provider, apiKey, model } = await getUserLLMKey(req.user.id);
+    const messages = [{ role: 'user', content: `Teach a cooking technique or skill.\n\nSkill level: ${skill_level||'beginner'}\nTechnique to learn: ${technique_to_learn}\nGoal dish: ${dish_goal||'any'}\nEquipment available: ${equipment||'standard home kitchen'}\n\nRespond in JSON: { "technique_explained": "what this technique is and why chefs use it", "the_science": "why it works — what's happening chemically/physically", "step_by_step": [{"step":"action","visual_cue":"what to look for","common_mistake":"what beginners get wrong","fix":"how to correct it"}], "practice_exercise": "simple dish to practice just this technique", "temperature_guide": "heat levels and when to use them (if applicable)", "timing_guide": "how to know when it's done — not just time but senses", "equipment_tips": "best tool for the job and substitutes", "skill_progression": "once you master this, what to learn next", "chef_secrets": ["professional trick that elevates this technique"], "troubleshooting": [{"problem":"common failure","cause":"why it happened","solution":"how to fix it"}] }` }];
+    const raw = await callLLM(provider, apiKey, model, messages);
+    const data = JSON.parse(raw.replace(/```json\n?|```\n?/g,'').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO cooking_coaches (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
+    res.json({ id, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
