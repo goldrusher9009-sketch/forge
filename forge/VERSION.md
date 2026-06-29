@@ -1,3 +1,5 @@
+## v232.00 — Dream Mode Wave 60: Science & Learning AI (Concept Decoder + Research Synthesizer + Debate Prep + Critical Thinker + Teaching Assistant)
+
 ## v231.00 — Dream Mode Wave 59: Career Acceleration AI (Promotion Roadmap + Salary Benchmark + Executive Presence + Offer Negotiator + Career Brand)
 
 ## v230.00 — Dream Mode Wave 58: Creative AI Studio (Story World + Lyric Crafter + Character Forge + Plot Twist Engine + World Builder)

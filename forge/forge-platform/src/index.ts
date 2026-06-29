@@ -177095,3 +177095,87 @@ app.post('/api/career/brand', requireAuth, async (req: AuthRequest, res) => {
     res.json(data);
   } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 60: SCIENCE & LEARNING AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS concept_decoders (
+  id TEXT PRIMARY KEY, user_id TEXT, concept TEXT, level TEXT, explanation TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS research_synthesizers (
+  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, synthesis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS debate_preparers (
+  id TEXT PRIMARY KEY, user_id TEXT, position TEXT, topic TEXT, prep TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS critical_thinkers (
+  id TEXT PRIMARY KEY, user_id TEXT, claim TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS teaching_assistants (
+  id TEXT PRIMARY KEY, user_id TEXT, subject TEXT, student_level TEXT, lesson TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/concept/decode', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { concept, level, context } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a brilliant teacher. Explain this concept perfectly for the target level. Concept: ${concept}. Level: ${level} (eli5/beginner/intermediate/expert). Context: ${context || 'general'}. Return JSON: { concept_name, one_sentence_summary, core_insight, analogy, explanation_by_level: { simple, detailed, technical }, how_it_works_step_by_step: [steps], common_misconceptions: [{ myth, truth }], why_it_matters, real_world_examples: [3 examples], related_concepts: [5 concepts], deeper_questions_to_explore: [3 questions], test_your_understanding: [3 questions with answers] }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO concept_decoders VALUES (?,?,?,?,?,?)').run(uuidv4(), userId, concept, level, JSON.stringify(data), new Date().toISOString());
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/research/synthesize', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { topic, purpose, depth } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a research synthesis expert. Create a comprehensive synthesis on this topic. Topic: ${topic}. Purpose: ${purpose}. Depth: ${depth || 'thorough'}. Return JSON: { topic, executive_summary (200 words), key_findings: [{ finding, evidence, significance }], consensus_view, areas_of_debate, strongest_counterarguments: [3], emerging_research_directions, practical_implications: [5], key_thinkers_and_sources: [5], timeline_of_key_developments: [{ year, development }], what_we_still_dont_know, recommended_reading: [5 book/paper suggestions], bottom_line }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO research_synthesizers VALUES (?,?,?,?)').run(uuidv4(), userId, topic, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/debate/prep', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { topic, your_position, debate_format, opponent_likely_args } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a championship debate coach. Prepare for this debate. Topic: ${topic}. Position: ${your_position}. Format: ${debate_format || 'open discussion'}. Opponent args: ${opponent_likely_args || 'unknown'}. Return JSON: { your_position_statement, core_arguments: [{ argument, evidence, emotional_appeal, logical_structure }], killer_statistics: [5 stats], opening_statement (150 words), closing_statement (100 words), rebuttals: [{ opponent_argument, your_rebuttal, evidence }], rhetorical_techniques: [5 techniques with examples], trap_questions_to_set: [3], questions_to_avoid: [3], winning_mindset, practice_questions: [5] }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO debate_preparers VALUES (?,?,?,?,?)').run(uuidv4(), userId, your_position, topic, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/critical/think', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { claim, source, context } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a critical thinking expert and logician. Analyze this claim rigorously. Claim: "${claim}". Source: ${source || 'unknown'}. Context: ${context || 'none'}. Return JSON: { claim_restated, credibility_score (1-10), logical_fallacies_detected: [{ fallacy, where_it_appears, explanation }], evidence_quality: { strength, gaps, what_would_strengthen_it }, steelman (strongest version of this argument), counter_arguments: [3 strong ones], hidden_assumptions: [3-5], what_questions_to_ask: [5], alternative_explanations: [3], bias_check: { potential_biases_in_claim, potential_biases_in_sources }, verdict, how_to_investigate_further }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO critical_thinkers VALUES (?,?,?,?)').run(uuidv4(), userId, claim, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/teaching/assist', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { subject, student_level, learning_goal, teaching_style } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [{ role: 'user', content: `You are a master educator. Create a complete lesson plan. Subject: ${subject}. Student level: ${student_level}. Goal: ${learning_goal}. Style: ${teaching_style || 'interactive'}. Return JSON: { lesson_title, objectives: [3-5], prerequisite_knowledge, hook_activity (5 min), direct_instruction: { content_outline, key_vocabulary, visual_aids_needed }, guided_practice: { activity, steps, common_mistakes_to_watch }, independent_practice: { assignment, rubric }, differentiation: { for_struggling, for_advanced }, assessment_questions: [5 with answers], extension_activities: [3], real_world_connection, memorable_summary, homework_suggestion, teacher_tips: [5] }` }]);
+    const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
+    db.prepare('INSERT INTO teaching_assistants VALUES (?,?,?,?,?)').run(uuidv4(), userId, subject, student_level, JSON.stringify(data));
+    res.json(data);
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
