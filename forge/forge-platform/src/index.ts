@@ -175845,3 +175845,83 @@ app.post('/api/lovelanguage/guide', requireAuth, async (req: AuthRequest, res: R
     res.json({ id, ...result });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// Wave 51: Productivity & Time Mastery AI
+const createProductivityTables = () => {
+  db.prepare(`CREATE TABLE IF NOT EXISTS deep_work_planners (id TEXT PRIMARY KEY, user_id TEXT, schedule TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS procrastination_busters (id TEXT PRIMARY KEY, user_id TEXT, task TEXT, blockers TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS email_zero_coaches (id TEXT PRIMARY KEY, user_id TEXT, inbox_state TEXT, system TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS meeting_eliminators (id TEXT PRIMARY KEY, user_id TEXT, meeting_schedule TEXT, audit TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+  db.prepare(`CREATE TABLE IF NOT EXISTS pkm_architects (id TEXT PRIMARY KEY, user_id TEXT, current_system TEXT, design TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+};
+createProductivityTables();
+
+app.post('/api/deepwork/plan', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { schedule, work_type, environment, biggest_distraction } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a deep work expert trained in Cal Newport's methodology and neuroscience of focus.\n\nCurrent schedule: ${schedule}\nWork type: ${work_type||'knowledge work'}\nEnvironment: ${environment||'home office'}\nBiggest distraction: ${biggest_distraction||'phone/internet'}\n\nDesign a personalized deep work system. Return JSON:\n{\n  "deep_work_philosophy": "personalized approach for this person",\n  "optimal_deep_work_windows": [{"window": "time block", "duration": "length", "why": "biological/schedule reason"}],\n  "weekly_deep_work_schedule": [{"day": "Mon-Sun", "blocks": "time and focus", "total_hours": "X"}],\n  "shutdown_ritual": ["step to end work day cleanly"],\n  "environment_design": [{"change": "modification", "impact": "why this helps focus"}],\n  "distraction_protocol": {"phone": "exact strategy", "internet": "exact strategy", "people": "exact strategy"},\n  "ramp_up_plan": {"week1": "starting point", "week4": "goal", "week8": "mastery"},\n  "metrics_to_track": ["what to measure"],\n  "what_deep_work_enables": "what becomes possible with 4+ hours of deep work daily"\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO deep_work_planners (id,user_id,schedule,plan) VALUES (?,?,?,?)`).run(id, userId, schedule, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/procrastination/bust', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { task, how_long_avoiding, root_cause, deadline } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a behavioral psychologist and productivity coach specializing in procrastination.\n\nTask being avoided: ${task}\nHow long avoiding: ${how_long_avoiding||'a while'}\nSuspected root cause: ${root_cause||'not sure'}\nDeadline: ${deadline||'no deadline'}\n\nDiagnose and solve this procrastination. Return JSON:\n{\n  "procrastination_diagnosis": {"type": "fear/perfectionism/overwhelm/boredom/unclear", "root_cause": "real reason", "underlying_belief": "the hidden thought driving avoidance"},\n  "reframe": "new way to think about this task",\n  "2_minute_start": "the absolute smallest first action to break inertia",\n  "task_breakdown": [{"micro_step": "tiny action", "time": "minutes", "makes_it_easier_because": "reason"}],\n  "temptation_bundling": "pair this with something enjoyable",\n  "environment_hack": "physical/digital change to make starting easier",\n  "if_you_still_resist": ["escalation technique"],\n  "after_you_start_plan": "how to stay in it once begun",\n  "completion_reward": "meaningful reward to set in advance"\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO procrastination_busters (id,user_id,task,blockers,plan) VALUES (?,?,?,?,?)`).run(id, userId, task, root_cause, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/email/zero', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { inbox_count, email_types, time_spent_daily, pain_points } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are an inbox management expert.\n\nInbox count: ${inbox_count||'overflowing'}\nTypes of email: ${email_types||'work + personal'}\nTime spent on email daily: ${time_spent_daily||'too much'}\nPain points: ${pain_points||'overwhelmed'}\n\nDesign a complete inbox zero system. Return JSON:\n{\n  "inbox_zero_philosophy": "mindset shift needed",\n  "one_time_reset": [{"step": "action to take once", "time_needed": "estimate"}],\n  "folder_system": [{"folder": "name", "what_goes_here": "criteria", "how_often_to_check": "frequency"}],\n  "processing_rules": [{"email_type": "category", "action": "what to do immediately", "time_limit": "seconds/minutes"}],\n  "daily_routine": [{"time": "when", "action": "what to do", "duration": "minutes"}],\n  "templates_to_create": [{"template_name": "type", "for": "when to use"}],\n  "unsubscribe_protocol": "how to eliminate inbox noise",\n  "time_target": "how long email should take per day after this system",\n  "tools_to_consider": ["app or feature to help"]\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO email_zero_coaches (id,user_id,inbox_state,system) VALUES (?,?,?,?)`).run(id, userId, inbox_count, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/meeting/audit', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { weekly_meetings, meeting_types, hours_in_meetings, role } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a meeting optimization consultant.\n\nWeekly meetings: ${weekly_meetings}\nMeeting types: ${meeting_types||'status updates, 1:1s, planning'}\nHours in meetings per week: ${hours_in_meetings||'unknown'}\nRole: ${role||'knowledge worker'}\n\nAudit and redesign their meeting life. Return JSON:\n{\n  "meeting_reality_check": "honest assessment of current situation",\n  "meetings_to_eliminate": [{"meeting": "type", "reason": "why it's unnecessary", "alternative": "what to do instead"}],\n  "meetings_to_reduce": [{"meeting": "type", "current": "frequency", "better": "new frequency", "how": "make it work"}],\n  "async_alternatives": [{"replaces": "meeting type", "tool": "suggestion", "how": "implementation"}],\n  "meeting_rules": ["rule for how you run meetings going forward"],\n  "template_agendas": [{"meeting_type": "type", "agenda": "structure", "time": "duration"}],\n  "how_to_decline": [{"scenario": "situation", "script": "polite decline"}],\n  "time_reclaimed": "estimated hours per week saved",\n  "what_to_do_with_reclaimed_time": "how to use the saved hours"\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO meeting_eliminators (id,user_id,meeting_schedule,audit) VALUES (?,?,?,?)`).run(id, userId, weekly_meetings, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/pkm/design', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { current_tools, what_fails, role, knowledge_goals } = req.body;
+  const userId = req.user!.id;
+  try {
+    const { provider, apiKey, model } = await getUserLLMKey(userId);
+    const messages = [{ role: 'user' as const, content: `You are a Personal Knowledge Management (PKM) expert familiar with Zettelkasten, PARA, Building a Second Brain, and other methodologies.\n\nCurrent tools: ${current_tools||'random notes apps'}\nWhat fails: ${what_fails||'notes are never found again'}\nRole: ${role||'knowledge worker'}\nKnowledge goals: ${knowledge_goals||'learn and remember better'}\n\nDesign a personalized PKM system. Return JSON:\n{\n  "pkm_diagnosis": "what's wrong with current system",\n  "recommended_methodology": {"name": "approach", "why_for_you": "reason this fits your situation"},\n  "system_design": {"capture": "how to capture everything", "organize": "how to organize", "distill": "how to extract value", "express": "how to use knowledge"},\n  "tool_stack": [{"tool": "name", "purpose": "role in system", "replaces": "what it fixes"}],\n  "folder_structure": [{"folder": "name", "what_goes_here": "criteria"}],\n  "daily_workflow": [{"action": "step", "when": "time", "time_needed": "minutes"}],\n  "weekly_review": ["review step"],\n  "linking_strategy": "how to connect notes so you find things again",\n  "quick_start": ["first 3 things to do to start this system today"]\n}` }];
+    const content = await callLLM(provider, apiKey, model, messages);
+    const result = JSON.parse(content.replace(/```json\n?|```\n?/g, '').trim());
+    const id = uuidv4();
+    db.prepare(`INSERT INTO pkm_architects (id,user_id,current_system,design) VALUES (?,?,?,?)`).run(id, userId, current_tools, JSON.stringify(result));
+    res.json({ id, ...result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
