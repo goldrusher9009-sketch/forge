@@ -178351,3 +178351,97 @@ app.post('/api/knowledge/connect', requireAuth, async (req: AuthRequest, res) =>
     res.json({ connections });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 74: ENTREPRENEURSHIP & STARTUP AI
+// ============================================================
+db.prepare(`CREATE TABLE IF NOT EXISTS pivot_advisors (
+  id TEXT PRIMARY KEY, user_id TEXT, current_model TEXT, advice TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS fundraising_coaches (
+  id TEXT PRIMARY KEY, user_id TEXT, startup TEXT, strategy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS unit_economics_analyzers (
+  id TEXT PRIMARY KEY, user_id TEXT, metrics TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS product_market_fit_checkers (
+  id TEXT PRIMARY KEY, user_id TEXT, product TEXT, assessment TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS startup_legal_guides (
+  id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, guidance TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.post('/api/pivot/advise', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { current_model, problem_signals, resources, target_market } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Advise me on whether and how to pivot my startup.\nCurrent business model: ${current_model}\nProblem signals: ${problem_signals||'slow growth, poor retention'}\nAvailable resources: ${resources||'small team, limited runway'}\nTarget market: ${target_market||'unknown'}\n\nAnalyze the pivot decision: Should I pivot or persist? If pivot, provide 3 specific pivot options with rationale, risk assessment, and a 90-day pivot execution plan.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const advice = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO pivot_advisors (id,user_id,current_model,advice) VALUES (?,?,?,?)`).run(id,userId,current_model,advice);
+    res.json({ advice });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fundraising/coach', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { stage, traction, ask_amount, use_of_funds, industry } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Coach me on fundraising for my startup.\nStage: ${stage||'pre-seed'}\nTraction: ${traction||'early users'}\nAsk amount: ${ask_amount||'$500K'}\nUse of funds: ${use_of_funds||'product and team'}\nIndustry: ${industry||'SaaS'}\n\nProvide a fundraising strategy including: right investor type to target, pitch narrative framework, key metrics to highlight, common objections and responses, and a 60-day outreach plan.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const strategy = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO fundraising_coaches (id,user_id,startup,strategy) VALUES (?,?,?,?)`).run(id,userId,industry||'startup',strategy);
+    res.json({ strategy });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/uniteconomics/analyze', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { cac, ltv, churn_rate, arpu, gross_margin, payback_period } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Analyze my startup's unit economics.\nCAC: ${cac||'unknown'}\nLTV: ${ltv||'unknown'}\nChurn rate: ${churn_rate||'unknown'}\nARPU: ${arpu||'unknown'}\nGross margin: ${gross_margin||'unknown'}\nPayback period: ${payback_period||'unknown'}\n\nProvide a detailed unit economics analysis: health assessment, LTV:CAC ratio, benchmark comparison for B2B SaaS, top 3 levers to improve economics, and what these numbers suggest about scalability.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const analysis = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO unit_economics_analyzers (id,user_id,metrics,analysis) VALUES (?,?,?,?)`).run(id,userId,JSON.stringify({cac,ltv,churn_rate}),analysis);
+    res.json({ analysis });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/pmf/check', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, user_feedback, retention, nps, usage_patterns } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Assess my product-market fit.\nProduct: ${product}\nUser feedback: ${user_feedback||'mixed'}\nRetention: ${retention||'unknown'}\nNPS: ${nps||'unknown'}\nUsage patterns: ${usage_patterns||'unknown'}\n\nProvide a PMF assessment using the Sean Ellis test framework and other indicators. Score PMF 1-10, identify the strongest and weakest PMF signals, and give a specific roadmap to improve PMF.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const assessment = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO product_market_fit_checkers (id,user_id,product,assessment) VALUES (?,?,?,?)`).run(id,userId,product,assessment);
+    res.json({ assessment });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startuplegal/guide', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { stage, situation, jurisdiction, specific_question } = req.body;
+    const userId = req.userId!;
+    const key = await getUserLLMKey(userId, 'anthropic');
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const messages = [{ role: 'user' as const, content: `Provide startup legal education (not legal advice — consult a lawyer for your specific situation).\nStartup stage: ${stage||'early'}\nSituation: ${situation}\nJurisdiction: ${jurisdiction||'US'}\nSpecific question: ${specific_question||'general guidance'}\n\nExplain the key legal considerations, common mistakes founders make in this situation, what documents are typically needed, and when to involve a lawyer vs. use standard templates. Note: This is educational only, not legal advice.` }];
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', messages);
+    const guidance = result.replace(/```json\n?|```\n?/g,'').trim();
+    const id = uuidv4();
+    db.prepare(`INSERT INTO startup_legal_guides (id,user_id,situation,guidance) VALUES (?,?,?,?)`).run(id,userId,situation,guidance);
+    res.json({ guidance });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
