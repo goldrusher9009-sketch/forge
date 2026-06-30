@@ -3445,6 +3445,13 @@ export default function ForgeApp() {
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Auto-resize textarea as user types
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 200) + 'px';
+  }, [input]);
   const eventSourceRef = useRef<EventSource | null>(null);
 
   // -- Inject global animation styles once -----------------------------------
@@ -8776,7 +8783,7 @@ export default function ForgeApp() {
                         }
                       }}
                       placeholder={sending ? (pendingMessage ? `Queued: "${pendingMessage.slice(0,40)}…"` : 'AI is thinking… press Enter to queue') : (activeThread ? 'Message… or type / for commands' : 'Start a conversation… or type / for commands')}
-                      rows={isMobile ? 2 : 3} style={{ width:'100%', padding: isMobile ? '10px 12px 40px' : '14px 16px 44px', background:'transparent', border:'none', color:'var(--fg-text)', fontSize: isMobile ? 15 : 14, resize:'none', outline:'none', lineHeight:1.6, boxSizing:'border-box' }} />
+                      rows={1} style={{ width:'100%', padding: isMobile ? '10px 12px 40px' : '14px 16px 44px', background:'transparent', border:'none', color:'var(--fg-text)', fontSize: isMobile ? 15 : 14, resize:'none', outline:'none', lineHeight:1.6, boxSizing:'border-box', minHeight: isMobile ? 44 : 52, maxHeight:200, overflowY:'auto' }} />
                     <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                       <div style={{ display:'flex', gap:5, flexWrap:'wrap', alignItems:'center' }}>
                         {/* Slash command button */}
