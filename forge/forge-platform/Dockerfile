@@ -7,8 +7,8 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 
-RUN NODE_OPTIONS="--max-old-space-size=4096" npx esbuild src/index.ts src/autonomy.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist
+RUN NODE_OPTIONS="--max-old-space-size=4096" npx esbuild src/index.ts src/autonomy.ts src/hermes.ts src/operator.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist
 
 EXPOSE 3000
 
-CMD ["node", "--max-old-space-size=2048", "dist/index.js"]
+CMD ["node", "--max-old-space-size=4096", "dist/index.js"]
