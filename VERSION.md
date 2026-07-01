@@ -1,3 +1,8 @@
+## v300.00 - Wave 97+98 (2026-07-01)
+- Wave 97: Contract Analyzer, Finance Optimizer, Viral Formula, Decision Matrix, Skill Gap Analyzer
+- Wave 98: Pitch Deck Builder, Mind Map Generator, Habit Stack Builder, Debate Prep AI, Brand Story Crafter
+- Backend routes in dist v300, frontend wired in ForgeApp.tsx
+
 ## v275.00 — Backend fix: add getDb() shim + convert async db calls to sync better-sqlite3; fixes /api/workspace/templates 500 error
 
 ## v274.00 — Fix: React error #310 — converted 24 IIFE JSX blocks to proper named components, eliminating hooks-order crash on tab switch
