@@ -180105,8 +180105,9 @@ app.post('/api/teammotivation/design', requireAuth, async (req: AuthRequest, res
     ], 800);
     res.json({ result });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
-});n system design, and 30-day implementation plan. Be specific and actionable.` }
-    ], 800);
-    res.json({ result });
-  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Forge API running on port ${PORT}`);
 });
