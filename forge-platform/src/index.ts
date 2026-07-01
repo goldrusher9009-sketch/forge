@@ -180362,6 +180362,80 @@ app.post('/api/team/retro', requireAuth, async (req: AuthRequest, res) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// ── Wave 96: Code Tutor + Emotion Map + Podcast Guest Pitch + MVP Scoper + Review Responder ──
+db.prepare(`CREATE TABLE IF NOT EXISTS code_tutors (id TEXT PRIMARY KEY, user_id TEXT, code TEXT, explanation TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS emotion_maps (id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, map TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS podcast_pitches (id TEXT PRIMARY KEY, user_id TEXT, show TEXT, pitch TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS mvp_scopes (id TEXT PRIMARY KEY, user_id TEXT, idea TEXT, scope TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS review_responses (id TEXT PRIMARY KEY, user_id TEXT, review TEXT, response TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+app.post('/api/code/tutor', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { code, language, question } = req.body;
+  if (!code) return res.status(400).json({ error: 'code required' });
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a patient, expert coding tutor. Teach this code like a mentor, not a reference manual.\nLanguage: ${language || 'auto-detect'}\nQuestion: ${question || 'Explain this code'}\n\nCode:\n\`\`\`\n${code.slice(0,3000)}\n\`\`\`\n\nProvide: plain English explanation (line by line for complex parts), why each piece exists (design reasoning), potential bugs or improvements, a simpler alternative if one exists, a harder challenge to try next. Use analogies for complex concepts.` }
+    ], 900);
+    db.prepare('INSERT INTO code_tutors (id,user_id,code,explanation) VALUES (?,?,?,?)').run(uuidv4(), userId, code.slice(0,500), result);
+    res.json({ explanation: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/emotion/map', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { situation, feelings } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are an emotional intelligence expert and therapist. Create an emotion map for this situation.\nSituation: ${situation}\nCurrent feelings described: ${feelings || 'not specified'}\n\nProvide: primary emotion identification, secondary emotions beneath it, body sensation map (where feelings live physically), emotion wheel placement, root need analysis (what core need is unmet), healthy expression options, regulation technique for right now, reframe perspective, and one compassionate truth to hold. Be warm and non-judgmental.` }
+    ], 800);
+    db.prepare('INSERT INTO emotion_maps (id,user_id,situation,map) VALUES (?,?,?,?)').run(uuidv4(), userId, situation, result);
+    res.json({ map: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/podcast/pitch', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { show_name, your_expertise, your_story, episode_ideas } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a podcast booking expert. Write a compelling guest pitch.\nShow: ${show_name || 'target podcast'}\nYour expertise: ${your_expertise}\nYour story/credibility: ${your_story || 'not provided'}\nEpisode ideas: ${episode_ideas || 'flexible'}\n\nWrite: subject line (A/B options), personalized opening (show you listened), authority hook (why you specifically), 3 episode concepts with listener value, social proof bullets, easy booking CTA, PS line. Keep it under 200 words but punchy. Also provide follow-up email sequence (3 emails).` }
+    ], 800);
+    db.prepare('INSERT INTO podcast_pitches (id,user_id,show,pitch) VALUES (?,?,?,?)').run(uuidv4(), userId, show_name, result);
+    res.json({ pitch: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mvp/scope', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { idea, target_users, timeline, resources } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a product strategist and startup advisor. Scope the perfect MVP.\nIdea: ${idea}\nTarget users: ${target_users || 'early adopters'}\nTimeline: ${timeline || '8 weeks'}\nResources: ${resources || 'solo founder, limited budget'}\n\nProvide: core value proposition (1 sentence), ruthless feature cut (what to EXCLUDE and why), MVP feature list (must-have only), tech stack recommendation, week-by-week build plan, validation milestone (how to know it works), first 10 users acquisition plan, key metrics to track, biggest risk and mitigation. Be brutally focused.` }
+    ], 900);
+    db.prepare('INSERT INTO mvp_scopes (id,user_id,idea,scope) VALUES (?,?,?,?)').run(uuidv4(), userId, idea, result);
+    res.json({ scope: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/review/respond', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { review, rating, business_type } = req.body;
+  if (!review) return res.status(400).json({ error: 'review required' });
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a reputation management expert. Write the perfect response to this customer review.\nBusiness type: ${business_type || 'business'}\nRating: ${rating || '?'}/5 stars\nReview: "${review}"\n\nWrite 3 response options:\n1. SHORT (2-3 sentences) — for positive reviews\n2. MEDIUM (4-5 sentences) — balanced\n3. FULL (6-8 sentences) — for negative reviews needing full address\n\nEach response should: acknowledge specifically, thank genuinely, address concerns (if negative), show character, invite further conversation (if needed). Never be defensive. Turn negatives into trust builders.` }
+    ], 700);
+    db.prepare('INSERT INTO review_responses (id,user_id,review,response) VALUES (?,?,?,?)').run(uuidv4(), userId, review.slice(0,500), result);
+    res.json({ responses: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Forge API running on port ${PORT}`);
