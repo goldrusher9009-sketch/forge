@@ -210282,3 +210282,130 @@ Be specific and actionable.` }
     ], 1e3);
     const scoreMatch = result.match(/SCORE[:\s]+(\d+)/i);
     const score = parseInt(s
+core_score = parseInt(scoreMatch ? scoreMatch[1] : "50");
+    db.prepare("INSERT OR IGNORE INTO resume_scores (id,user_id,resume_text,job_desc,score,feedback) VALUES (?,?,?,?,?,?)").run(uuidv4(), userId, resume_text.slice(0, 500), job_description ? job_description.slice(0, 200) : "", core_score, result);
+    res.json({ score: core_score, feedback: result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Wave 97 routes
+app.post("/api/finance/optimize", requireAuth, async (req, res) => {
+  const userId = req.user.id;
+  const { income, expenses, debts, goals, savings_rate } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, "anthropic");
+    const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [
+      { role: "user", content: `You are a personal finance optimizer. Analyze finances and create an actionable plan.\nMonthly income: $${income}\nExpenses: ${expenses}\nDebts: ${debts || "none"}\nFinancial goals: ${goals || "build wealth"}\nCurrent savings rate: ${savings_rate || 0}%\n\nProvide:\n1. Financial Health Score (0-100) with breakdown\n2. Budget optimization (50/30/20 rule applied)\n3. Debt payoff strategy (avalanche vs snowball)\n4. Emergency fund status and target\n5. Investment allocation suggestion\n6. 3 quick wins this month\n7. 12-month financial roadmap with milestones\n8. One thing to automate immediately` }
+    ]);
+    res.json({ optimization: result });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/content/viral-formula", requireAuth, async (req, res) => {
+  const userId = req.user.id;
+  const { topic, platform, niche, target_emotion } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, "anthropic");
+    const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [
+      { role: "user", content: `You are a viral content strategist. Create a viral content formula.\nTopic: ${topic}\nPlatform: ${platform}\nNiche: ${niche || "general"}\nTarget emotion: ${target_emotion || "curiosity"}\n\nProvide:\n1. 5 viral hook variations (pattern interrupt, curiosity gap, controversy, story, data)\n2. Content structure (hook → conflict → resolution → CTA)\n3. Engagement bait questions\n4. 10 platform-specific hashtags\n5. Best posting times for ${platform}\n6. Amplification strategy (first 30 min after posting)\n7. Caption template\n8. A/B test variation` }
+    ]);
+    res.json({ formula: result });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/decision/matrix", requireAuth, async (req, res) => {
+  const userId = req.user.id;
+  const { decision, options, criteria, stakes } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, "anthropic");
+    const optList = Array.isArray(options) ? options.join(", ") : options;
+    const critList = criteria ? (Array.isArray(criteria) ? criteria.join(", ") : criteria) : "cost, time, risk, impact, alignment";
+    const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [
+      { role: "user", content: `You are a decision architect. Analyze this decision rigorously.\nDecision: ${decision}\nOptions: ${optList}\nCriteria: ${critList}\nStakes: ${stakes || "medium"}\n\nProvide:\n1. Weighted decision matrix (score each option 1-10)\n2. Recommended option with confidence %\n3. Regret minimization analysis\n4. Pre-mortem (what could go wrong)\n5. Second-order consequences\n6. What info would change your decision\n7. Final recommendation in one sentence` }
+    ]);
+    res.json({ matrix: result });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/career/skill-gap", requireAuth, async (req, res) => {
+  const userId = req.user.id;
+  const { current_role, target_role, current_skills, timeline_months } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, "anthropic");
+    const skillList = Array.isArray(current_skills) ? current_skills.join(", ") : (current_skills || "not specified");
+    const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [
+      { role: "user", content: `You are a career development expert. Analyze the skill gap.\nCurrent role: ${current_role}\nTarget role: ${target_role}\nCurrent skills: ${skillList}\nTimeline: ${timeline_months || 12} months\n\nProvide:\n1. Gap Score (0-100)\n2. Critical missing skills (must-have vs nice-to-have)\n3. Month-by-month learning roadmap\n4. Free resources for each skill\n5. Portfolio projects to build\n6. Communities to join\n7. Timeline reality check\n8. First action this week` }
+    ]);
+    res.json({ analysis: result });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 98 routes
+app.post("/api/pitch/deck-builder", requireAuth, async (req, res) => {
+  const userId = req.user.id;
+  const { company_name, problem, solution, market_size, traction, ask } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, "anthropic");
+    const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [
+      { role: "user", content: `You are a top-tier pitch deck consultant. Build a complete pitch narrative.\nCompany: ${company_name}\nProblem: ${problem}\nSolution: ${solution}\nMarket size: ${market_size || "unknown"}\nTraction: ${traction || "pre-revenue"}\nAsk: ${ask || "unknown"}\n\nProvide slide-by-slide content:\n1. Title (tagline)\n2. Problem\n3. Solution\n4. Market (TAM/SAM/SOM)\n5. Product\n6. Business model\n7. Traction\n8. Team\n9. Competition\n10. The Ask\n\nAlso: investor objections to prepare for, defensibility moat.` }
+    ]);
+    res.json({ deck: result });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/mindmap/generate", requireAuth, async (req, res) => {
+  const userId = req.user.id;
+  const { topic, depth, purpose } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, "anthropic");
+    const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [
+      { role: "user", content: `You are a knowledge architect. Create a comprehensive mind map for: ${topic}\nDepth: ${depth || 3} levels\nPurpose: ${purpose || "general understanding"}\n\nStructure as a text mind map with branches and sub-branches. Also provide 5 key insights, 3 surprising connections to other fields, best way to learn this topic, top 3 resources.` }
+    ]);
+    res.json({ mindmap: result });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/habit/stack-builder", requireAuth, async (req, res) => {
+  const userId = req.user.id;
+  const { existing_habits, goals, available_time, chronotype } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, "anthropic");
+    const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [
+      { role: "user", content: `You are a behavior design expert (BJ Fogg + James Clear). Design an optimal habit stack.\nExisting habits: ${existing_habits || "morning coffee, brush teeth"}\nGoals: ${goals}\nAvailable time: ${available_time || "30 minutes"}/day\nChronotype: ${chronotype || "morning person"}\n\nProvide: habit audit, 3 habit stacks (anchor→new), morning routine, evening routine, minimum viable version for bad days, environment design, tracking method, recovery plan.` }
+    ]);
+    res.json({ stack: result });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/debate/prep", requireAuth, async (req, res) => {
+  const userId = req.user.id;
+  const { topic, your_position, context, opponent_likely_arguments } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, "anthropic");
+    const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [
+      { role: "user", content: `You are a master debater and rhetoric coach. Prepare a debate strategy.\nTopic: ${topic}\nYour position: ${your_position}\nContext: ${context || "general discussion"}\nExpected opponent arguments: ${opponent_likely_arguments || "unknown"}\n\nProvide: 3 strongest arguments, steel-man of opposition, rebuttals to top 5 counterarguments, logical fallacies to watch, opening statement (30s), closing statement (30s), killer question to ask, safe concessions.` }
+    ]);
+    res.json({ prep: result });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/story/brand", requireAuth, async (req, res) => {
+  const userId = req.user.id;
+  const { founder_background, company_mission, turning_point, customer_impact } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, "anthropic");
+    const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [
+      { role: "user", content: `You are a brand storytelling expert. Craft a compelling brand origin story.\nFounder background: ${founder_background}\nMission: ${company_mission}\nTurning point: ${turning_point}\nCustomer impact: ${customer_impact || "unknown"}\n\nProvide: Hero's Journey narrative, the villain (problem), transformation (before→after), 3 story versions (1-sentence, 1-paragraph, 2-minute), emotional hooks, what to leave out, how to tell it on website/pitch/social/press, 3 tagline options.` }
+    ]);
+    res.json({ story: result });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get("/health", (_req, res) => res.json({ status: "ok", environment: process.env.NODE_ENV || "production", timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "v300.00" }));
+app.get("/api/version", (_req, res) => res.json({ version: "v300.00", build: "production", timestamp: (/* @__PURE__ */ new Date()).toISOString() }));
+
+app.listen(PORT, () => {
+  console.log(`Forge API running on port ${PORT}`);
+});

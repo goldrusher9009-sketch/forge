@@ -180097,154 +180097,133 @@ app.post('/api/executivepresence/build', requireAuth, async (req: AuthRequest, r
 
 app.post('/api/teammotivation/design', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
-  const { team_type, issues, goals } = req.body;
+  const { team_t  const { team_type, motivation_challenges, team_size, culture } = req.body;
   try {
     const key = await getUserLLMKey(userId, 'anthropic');
     const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
-      { role: 'user', content: `You are a team dynamics and organizational psychology expert. Design a team motivation system.\nTeam type: ${team_type}\nCurrent issues: ${issues || 'low energy, unclear purpose'}\nGoals: ${goals || 'high performance'}\n\nProvide: motivation audit (intrinsic vs extrinsic), individual motivation mapping tool, team rituals to implement, recognition system design, and 30-day implementation plan. Be specific and actionable.` }
-    ], 800);
-    res.json({ result });
+      { role: 'user', content: `You are a team motivation and engagement expert. Design a comprehensive motivation system.\nTeam type: ${team_type}\nChallenges: ${motivation_challenges}\nTeam size: ${team_size || 'unknown'}\nCulture: ${culture || 'corporate'}\n\nProvide: motivation audit (current state assessment), intrinsic vs extrinsic motivation balance, recognition framework (peer, manager, company), team rituals and ceremonies, psychological safety initiatives, growth and development pathways, quick wins for this week, 30-day implementation plan.` }
+    ]);
+    res.json({ plan: result });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-// ── Wave 93: Smart Daily Digest + NL Workflow Builder + Meeting Summarizer ───
-db.prepare(`CREATE TABLE IF NOT EXISTS daily_digests (
-  id TEXT PRIMARY KEY, user_id TEXT, digest TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS nl_workflows (
-  id TEXT PRIMARY KEY, user_id TEXT, description TEXT, workflow_json TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS meeting_summaries (
-  id TEXT PRIMARY KEY, user_id TEXT, transcript TEXT, summary TEXT, action_items TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS voice_journals (
-  id TEXT PRIMARY KEY, user_id TEXT, entry TEXT, mood TEXT, insights TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS content_calendars (
-  id TEXT PRIMARY KEY, user_id TEXT, niche TEXT, calendar TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`).run();
-
-app.get('/api/digest/daily', requireAuth, async (req: AuthRequest, res) => {
+// Wave 97 missing routes
+app.post('/api/finance/optimize', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
-  try {
-    const key = await getUserLLMKey(userId, 'anthropic');
-    const threads = db.prepare('SELECT COUNT(*) as c FROM threads WHERE user_id=? AND date(created_at)=date("now")').get(userId) as any;
-    const messages = db.prepare('SELECT COUNT(*) as c FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?)').get(userId) as any;
-    const agents = db.prepare('SELECT COUNT(*) as c FROM agents WHERE user_id=?').get(userId) as any;
-    const context = `User stats: ${threads?.c||0} threads today, ${messages?.c||0} total messages, ${agents?.c||0} agents configured.`;
-    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
-      { role: 'user', content: `Generate a motivating, personalized daily digest for a power user of an AI platform.\n${context}\nInclude: productivity tip of the day, AI prompt of the day, suggested focus area, quick win challenge, and an inspiring quote. Keep it energetic and actionable. Format with clear sections.` }
-    ], 600);
-    db.prepare('INSERT INTO daily_digests (id,user_id,digest) VALUES (?,?,?)').run(uuidv4(), userId, result);
-    res.json({ digest: result, stats: { threads: threads?.c||0, messages: messages?.c||0, agents: agents?.c||0 } });
-  } catch(e:any) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/workflow/build', requireAuth, async (req: AuthRequest, res) => {
-  const userId = req.user!.id;
-  const { description } = req.body;
+  const { income, expenses, debts, goals, savings_rate } = req.body;
   try {
     const key = await getUserLLMKey(userId, 'anthropic');
     const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
-      { role: 'user', content: `You are a workflow automation expert. Convert this natural language description into a structured automation workflow.\nDescription: ${description}\n\nReturn a JSON workflow with: { "name": string, "trigger": { "type": string, "config": {} }, "steps": [{ "id": string, "name": string, "action": string, "config": {}, "next": string|null }], "description": string, "estimated_time_saved": string }. Make it practical and immediately actionable.` }
-    ], 800);
-    const clean = result.replace(/```json\n?|```\n?/g, '').trim();
-    let workflow;
-    try { workflow = JSON.parse(clean); } catch { workflow = { raw: clean }; }
-    db.prepare('INSERT INTO nl_workflows (id,user_id,description,workflow_json) VALUES (?,?,?,?)').run(uuidv4(), userId, description, JSON.stringify(workflow));
-    res.json({ workflow });
+      { role: 'user', content: `You are a personal finance optimizer. Analyze finances and create an actionable plan.\nMonthly income: $${income}\nExpenses: ${expenses}\nDebts: ${debts || 'none'}\nFinancial goals: ${goals || 'build wealth'}\nCurrent savings rate: ${savings_rate || 0}%\n\nProvide:\n1. Financial Health Score (0-100) with breakdown\n2. Budget optimization (50/30/20 rule applied to their situation)\n3. Debt payoff strategy (avalanche vs snowball recommendation)\n4. Emergency fund status and target\n5. Investment allocation suggestion\n6. 3 quick wins this month\n7. 12-month financial roadmap with milestones\n8. One thing to automate immediately` }
+    ]);
+    res.json({ optimization: result });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/workflow/list', requireAuth, (req: AuthRequest, res) => {
+app.post('/api/content/viral-formula', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
-  try {
-    const workflows = db.prepare('SELECT * FROM nl_workflows WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId) as any[];
-    res.json({ workflows: workflows.map(w => ({ ...w, workflow_json: JSON.parse(w.workflow_json || '{}') })) });
-  } catch(e:any) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/meeting/summarize', requireAuth, async (req: AuthRequest, res) => {
-  const userId = req.user!.id;
-  const { transcript, meeting_type } = req.body;
-  if (!transcript) return res.status(400).json({ error: 'transcript required' });
+  const { topic, platform, niche, target_emotion } = req.body;
   try {
     const key = await getUserLLMKey(userId, 'anthropic');
     const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
-      { role: 'user', content: `You are an expert meeting analyst. Analyze this ${meeting_type||'business'} meeting transcript.\n\nTranscript:\n${transcript.slice(0,4000)}\n\nProvide:\n1. EXECUTIVE SUMMARY (3-4 sentences)\n2. KEY DECISIONS MADE (bullet list)\n3. ACTION ITEMS (with owner and deadline if mentioned)\n4. OPEN QUESTIONS (unresolved items)\n5. NEXT STEPS\n6. SENTIMENT (overall tone: positive/neutral/tense)\n\nFormat clearly with headers.` }
-    ], 1000);
-    const actionItems = result.match(/action items?[:\n]+([\s\S]*?)(?=\n[A-Z#]|\n\n[A-Z]|open questions|next steps|$)/i)?.[1] || '';
-    db.prepare('INSERT INTO meeting_summaries (id,user_id,transcript,summary,action_items) VALUES (?,?,?,?,?)').run(uuidv4(), userId, transcript.slice(0,2000), result, actionItems);
-    res.json({ summary: result });
+      { role: 'user', content: `You are a viral content strategist. Create a viral content formula.\nTopic: ${topic}\nPlatform: ${platform}\nNiche: ${niche || 'general'}\nTarget emotion: ${target_emotion || 'curiosity'}\n\nProvide:\n1. 5 viral hook variations (pattern interrupt, curiosity gap, controversy, story, data)\n2. Content structure (hook → conflict → resolution → CTA)\n3. Engagement bait questions to ask\n4. 10 platform-specific hashtags\n5. Best posting times for ${platform}\n6. Amplification strategy (first 30 min after posting)\n7. Caption template\n8. A/B test variation to try` }
+    ]);
+    res.json({ formula: result });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/meeting/history', requireAuth, (req: AuthRequest, res) => {
+app.post('/api/decision/matrix', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
+  const { decision, options, criteria, stakes } = req.body;
   try {
-    const meetings = db.prepare('SELECT id,summary,action_items,created_at FROM meeting_summaries WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId);
-    res.json({ meetings });
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const optList = Array.isArray(options) ? options.join(', ') : options;
+    const critList = criteria ? (Array.isArray(criteria) ? criteria.join(', ') : criteria) : 'cost, time, risk, impact, alignment';
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a decision architect using multiple frameworks. Analyze this decision rigorously.\nDecision: ${decision}\nOptions: ${optList}\nCriteria: ${critList}\nStakes: ${stakes || 'medium'}\n\nProvide:\n1. Weighted decision matrix (score each option 1-10 on each criterion)\n2. Recommended option with confidence %\n3. Regret minimization analysis (which choice will you regret least in 10 years?)\n4. Pre-mortem (what could go wrong with top choice)\n5. Second-order consequences\n6. What information would change your decision\n7. The decision you're avoiding making\n8. Final recommendation in one sentence` }
+    ]);
+    res.json({ matrix: result });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/journal/voice', requireAuth, async (req: AuthRequest, res) => {
+app.post('/api/career/skill-gap', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
-  const { entry } = req.body;
+  const { current_role, target_role, current_skills, timeline_months } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const skillList = Array.isArray(current_skills) ? current_skills.join(', ') : (current_skills || 'not specified');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a career development expert and skills coach. Analyze the skill gap and create a learning roadmap.\nCurrent role: ${current_role}\nTarget role: ${target_role}\nCurrent skills: ${skillList}\nTimeline: ${timeline_months || 12} months\n\nProvide:\n1. Gap Score (0-100, where 100 = fully ready)\n2. Critical missing skills (must-have vs nice-to-have)\n3. Month-by-month learning roadmap\n4. Free resources for each skill (YouTube, courses, books)\n5. Portfolio projects to build credibility\n6. People to follow / communities to join\n7. Timeline reality check (is ${timeline_months} months realistic?)\n8. First action to take this week` }
+    ]);
+    res.json({ analysis: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 98 — 5 new AI tools
+app.post('/api/pitch/deck-builder', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company_name, problem, solution, market_size, traction, ask } = req.body;
   try {
     const key = await getUserLLMKey(userId, 'anthropic');
     const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
-      { role: 'user', content: `You are a compassionate journaling coach and psychologist. Analyze this journal entry with warmth and insight.\n\nEntry: ${entry}\n\nProvide:\n1. MOOD DETECTION (primary emotion + intensity 1-10)\n2. KEY THEMES (what this entry is really about)\n3. COGNITIVE PATTERNS (any limiting beliefs or thought patterns noticed)\n4. STRENGTHS SHOWN (positive aspects to celebrate)\n5. GENTLE REFLECTION QUESTION (one powerful question to go deeper)\n6. AFFIRMATION (personalized for this entry)\n\nBe warm, non-judgmental, and insightful.` }
-    ], 700);
-    const moodMatch = result.match(/mood[:\s]+([^\n]+)/i);
-    const mood = moodMatch?.[1]?.trim() || 'reflective';
-    db.prepare('INSERT INTO voice_journals (id,user_id,entry,mood,insights) VALUES (?,?,?,?,?)').run(uuidv4(), userId, entry, mood, result);
-    res.json({ insights: result, mood });
+      { role: 'user', content: `You are a top-tier pitch deck consultant who has helped companies raise $500M+. Build a complete pitch narrative.\nCompany: ${company_name}\nProblem: ${problem}\nSolution: ${solution}\nMarket size: ${market_size || 'unknown'}\nTraction: ${traction || 'pre-revenue'}\nAsk: ${ask || 'unknown'}\n\nProvide slide-by-slide content:\n1. Title slide (tagline)\n2. Problem (pain point + who suffers)\n3. Solution (your insight)\n4. Market size (TAM/SAM/SOM)\n5. Product (key features + demo note)\n6. Business model (how you make money)\n7. Traction (metrics that matter)\n8. Team (why you'll win)\n9. Competition (positioning matrix)\n10. The Ask (use of funds + milestones)\n\nAlso: investor objections to prepare for, what makes this defensible.` }
+    ]);
+    res.json({ deck: result });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/content/calendar', requireAuth, async (req: AuthRequest, res) => {
+app.post('/api/mindmap/generate', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
-  const { niche, platforms, weeks } = req.body;
+  const { topic, depth, purpose } = req.body;
   try {
     const key = await getUserLLMKey(userId, 'anthropic');
     const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
-      { role: 'user', content: `You are a viral content strategist. Create a ${weeks||4}-week content calendar.\nNiche: ${niche}\nPlatforms: ${platforms||'LinkedIn, Twitter, Instagram'}\n\nFor each week provide 5 post ideas with: platform, content type (reel/post/thread/story), hook line, core message, call-to-action, best posting time. Focus on content that drives engagement and growth. Include 1 viral-bait idea per week.` }
-    ], 1000);
-    db.prepare('INSERT INTO content_calendars (id,user_id,niche,calendar) VALUES (?,?,?,?)').run(uuidv4(), userId, niche, result);
-    res.json({ calendar: result });
+      { role: 'user', content: `You are a knowledge architect. Create a comprehensive mind map for: ${topic}\nDepth: ${depth || 3} levels\nPurpose: ${purpose || 'general understanding'}\n\nStructure as:\nCENTRAL IDEA: ${topic}\n\nBRANCH 1: [Main concept]\n  Sub: [Detail]\n  Sub: [Detail]\n    Sub-sub: [Specific]\n\n(Continue for all major branches)\n\nAlso provide:\n- 5 key insights about this topic\n- 3 surprising connections to other fields\n- Best way to learn this topic\n- Top 3 resources` }
+    ]);
+    res.json({ mindmap: result });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-// ── Wave 94: AI Cold Email Analyzer + Pricing Page Writer + Product Launch Plan + Energy Audit + Storyteller ──
-db.prepare(`CREATE TABLE IF NOT EXISTS cold_email_analyses (id TEXT PRIMARY KEY, user_id TEXT, email TEXT, score INTEGER, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS pricing_pages (id TEXT PRIMARY KEY, user_id TEXT, product TEXT, page_copy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS product_launches (id TEXT PRIMARY KEY, user_id TEXT, product TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS energy_audits (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, audit TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-db.prepare(`CREATE TABLE IF NOT EXISTS story_scripts (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, script TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-
-app.post('/api/coldemail/analyze', requireAuth, async (req: AuthRequest, res) => {
+app.post('/api/habit/stack-builder', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: 'email required' });
+  const { existing_habits, goals, available_time, chronotype } = req.body;
   try {
     const key = await getUserLLMKey(userId, 'anthropic');
     const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
-      { role: 'user', content: `You are a cold email expert with 10+ years experience. Analyze this cold email and give brutally honest feedback.\n\nEmail:\n${email}\n\nProvide:\n1. SCORE (0-100 with breakdown by: subject line 20pts, opening 20pts, value prop 20pts, social proof 15pts, CTA 15pts, personalization 10pts)\n2. WHAT WORKS (specific strengths)\n3. CRITICAL FIXES (top 3 improvements that will 2x response rate)\n4. REWRITTEN VERSION (improved email)\n5. A/B TEST IDEA (one element to test)\n\nBe specific and actionable.` }
-    ], 1000);
-    const scoreMatch = result.match(/SCORE[:\s]+(\d+)/i);
-    const score = parseInt(scoreMatch?.[1] || '50');
-    db.prepare('INSERT INTO cold_email_analyses (id,user_id,email,score,analysis) VALUES (?,?,?,?,?)').run(uuidv4(), userId, email.slice(0,1000), score, result);
-    res.json({ analysis: result, score });
+      { role: 'user', content: `You are a behavior design expert (BJ Fogg + James Clear methodology). Design an optimal habit stack.\nExisting habits: ${existing_habits || 'morning coffee, brush teeth'}\nGoals: ${goals}\nAvailable time: ${available_time || '30 minutes'}/day\nChronotype: ${chronotype || 'morning person'}\n\nProvide:\n1. Habit audit (keep, modify, drop from existing)\n2. Habit stacks (anchor habit → new habit × 3 stacks)\n3. Morning routine (optimized for their chronotype)\n4. Evening routine\n5. Minimum viable version for bad days\n6. Environment design changes\n7. Tracking method\n8. What to do when you miss a day` }
+    ]);
+    res.json({ stack: result });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/pricing/write', requireAuth, async (req: AuthRequest, res) => {
+app.post('/api/debate/prep', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
-  const { product, tiers, target_audience } = req.body;
+  const { topic, your_position, context, opponent_likely_arguments } = req.body;
   try {
     const key = await getUserLLMKey(userId, 'anthropic');
     const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
-      { role: 'user', content: `You are a conversion copywriter specializing in SaaS pricing pages. Write compelling pricing page copy.\nProduct: ${product}\nTiers: ${tiers || 'Free, Pro, Enterprise'}\nTarget audience: ${target_audience || 'small businesses'}\n\nProvide: headline, subheadline, tier names + taglines + feature lists + CTAs, FAQ section (5 questions), objection-handling copy, and urgency/scarcity element. Make it conversion-optimized and psychologically compelling.` }
+      { role: 'user', content: `You are a master debater and rhetoric coach. Prepare a comprehensive debate strategy.\nTopic: ${topic}\nYour position: ${your_position}\nContext: ${context || 'general discussion'}\nExpected opponent arguments: ${opponent_likely_arguments || 'unknown'}\n\nProvide:\n1. Your 3 strongest arguments (with evidence/data)\n2. Steel-man of the opposing view\n3. Rebuttals to top 5 counterarguments\n4. Logical fallacies to watch for\n5. Emotional vs logical appeal balance\n6. Opening statement (30 seconds)\n7. Closing statement (30 seconds)\n8. Killer question to ask your opponent\n9. Concessions you can safely make (builds credibility)\n10. Red lines — things you cannot concede` }
+    ]);
+    res.json({ prep: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/story/brand', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { founder_background, company_mission, turning_point, customer_impact } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a brand storytelling expert. Craft a compelling brand origin story.\nFounder background: ${founder_background}\nMission: ${company_mission}\nTurning point / why you started: ${turning_point}\nCustomer impact: ${customer_impact || 'unknown'}\n\nProvide:\n1. Hero's Journey narrative (the founder story)\n2. The villain (problem / industry status quo)\n3. The transformation (before → after for customers)\n4. 3 versions: 1-sentence, 1-paragraph, full 2-minute story\n5. Emotional hooks to emphasize\n6. What to leave out (oversharing kills brand stories)\n7. How to tell it on: website About page, investor pitch, social media, press interviews\n8. Memorable tagline options (3 variations)` }
+    ]);
+    res.json({ story: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.listen(PORT, () => {
+  console.log(`Forge API running on port ${PORT}`);
+});
+ content: `You are a conversion copywriter specializing in SaaS pricing pages. Write compelling pricing page copy.\nProduct: ${product}\nTiers: ${tiers || 'Free, Pro, Enterprise'}\nTarget audience: ${target_audience || 'small businesses'}\n\nProvide: headline, subheadline, tier names + taglines + feature lists + CTAs, FAQ section (5 questions), objection-handling copy, and urgency/scarcity element. Make it conversion-optimized and psychologically compelling.` }
     ], 1000);
     db.prepare('INSERT INTO pricing_pages (id,user_id,product,page_copy) VALUES (?,?,?,?)').run(uuidv4(), userId, product, result);
     res.json({ copy: result });
