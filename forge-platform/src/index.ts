@@ -180215,6 +180215,153 @@ app.post('/api/content/calendar', requireAuth, async (req: AuthRequest, res) => 
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// ── Wave 94: AI Cold Email Analyzer + Pricing Page Writer + Product Launch Plan + Energy Audit + Storyteller ──
+db.prepare(`CREATE TABLE IF NOT EXISTS cold_email_analyses (id TEXT PRIMARY KEY, user_id TEXT, email TEXT, score INTEGER, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS pricing_pages (id TEXT PRIMARY KEY, user_id TEXT, product TEXT, page_copy TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS product_launches (id TEXT PRIMARY KEY, user_id TEXT, product TEXT, plan TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS energy_audits (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, audit TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS story_scripts (id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, script TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+app.post('/api/coldemail/analyze', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'email required' });
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a cold email expert with 10+ years experience. Analyze this cold email and give brutally honest feedback.\n\nEmail:\n${email}\n\nProvide:\n1. SCORE (0-100 with breakdown by: subject line 20pts, opening 20pts, value prop 20pts, social proof 15pts, CTA 15pts, personalization 10pts)\n2. WHAT WORKS (specific strengths)\n3. CRITICAL FIXES (top 3 improvements that will 2x response rate)\n4. REWRITTEN VERSION (improved email)\n5. A/B TEST IDEA (one element to test)\n\nBe specific and actionable.` }
+    ], 1000);
+    const scoreMatch = result.match(/SCORE[:\s]+(\d+)/i);
+    const score = parseInt(scoreMatch?.[1] || '50');
+    db.prepare('INSERT INTO cold_email_analyses (id,user_id,email,score,analysis) VALUES (?,?,?,?,?)').run(uuidv4(), userId, email.slice(0,1000), score, result);
+    res.json({ analysis: result, score });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/pricing/write', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, tiers, target_audience } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a conversion copywriter specializing in SaaS pricing pages. Write compelling pricing page copy.\nProduct: ${product}\nTiers: ${tiers || 'Free, Pro, Enterprise'}\nTarget audience: ${target_audience || 'small businesses'}\n\nProvide: headline, subheadline, tier names + taglines + feature lists + CTAs, FAQ section (5 questions), objection-handling copy, and urgency/scarcity element. Make it conversion-optimized and psychologically compelling.` }
+    ], 1000);
+    db.prepare('INSERT INTO pricing_pages (id,user_id,product,page_copy) VALUES (?,?,?,?)').run(uuidv4(), userId, product, result);
+    res.json({ copy: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/launch/plan', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, launch_date, audience, budget } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a product launch strategist. Create a complete launch plan.\nProduct: ${product}\nLaunch date: ${launch_date || 'in 30 days'}\nTarget audience: ${audience || 'early adopters'}\nBudget: ${budget || 'bootstrap'}\n\nProvide: pre-launch checklist (T-30, T-14, T-7, T-1), launch day timeline (hour by hour), channels to activate, content to prepare, influencers to contact, metrics to track, post-launch follow-up plan. Make it actionable and specific.` }
+    ], 1000);
+    db.prepare('INSERT INTO product_launches (id,user_id,product,plan) VALUES (?,?,?,?)').run(uuidv4(), userId, product, result);
+    res.json({ plan: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/energy/audit', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { schedule, sleep, exercise, diet, stress } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a biohacker and performance coach. Conduct a complete energy audit.\nCurrent schedule: ${schedule || 'standard 9-5'}\nSleep: ${sleep || '6-7 hours'}\nExercise: ${exercise || 'occasional'}\nDiet: ${diet || 'mixed'}\nStress level: ${stress || 'moderate'}\n\nProvide: energy leak analysis, chronotype assessment, 5 quick wins (implementable today), morning protocol, afternoon protocol, evening wind-down, supplement suggestions, sleep optimization hacks, peak performance schedule. Be evidence-based and specific.` }
+    ], 900);
+    db.prepare('INSERT INTO energy_audits (id,user_id,context,audit) VALUES (?,?,?,?)').run(uuidv4(), userId, schedule, result);
+    res.json({ audit: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/story/script', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { topic, platform, duration, style } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a viral storytelling expert for ${platform||'YouTube/TikTok'}. Write a compelling story script.\nTopic: ${topic}\nDuration: ${duration||'60 seconds'}\nStyle: ${style||'educational-entertaining'}\n\nStructure using the HOOK-STORY-LESSON-CTA framework:\n1. HOOK (first 3 seconds — pattern interrupt)\n2. STORY (relatable narrative with tension)\n3. LESSON (insight or value)\n4. CTA (clear next step)\n\nInclude: exact words to say, camera direction notes, B-roll suggestions, thumbnail concept, caption, and hashtags.` }
+    ], 900);
+    db.prepare('INSERT INTO story_scripts (id,user_id,topic,script) VALUES (?,?,?,?)').run(uuidv4(), userId, topic, result);
+    res.json({ script: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Wave 95: Job Scout + Newsletter Architecture + Habit DNA + Sales Page + Team Retro ──
+db.prepare(`CREATE TABLE IF NOT EXISTS job_scouts (id TEXT PRIMARY KEY, user_id TEXT, role TEXT, results TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS newsletter_archs (id TEXT PRIMARY KEY, user_id TEXT, niche TEXT, architecture TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS habit_dnas (id TEXT PRIMARY KEY, user_id TEXT, habits TEXT, analysis TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS sales_pages (id TEXT PRIMARY KEY, user_id TEXT, product TEXT, page TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS team_retros (id TEXT PRIMARY KEY, user_id TEXT, context TEXT, retro TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+
+app.post('/api/jobscout/search', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { role, skills, experience, location } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a career strategist and talent market expert. Help this person find and land their ideal job.\nTarget role: ${role}\nSkills: ${skills || 'not specified'}\nExperience level: ${experience || 'mid-level'}\nLocation preference: ${location || 'remote'}\n\nProvide: top 10 companies to target (with reasoning), job boards to focus on, keywords to use in search, resume optimization tips for this role, LinkedIn optimization checklist, 30-second elevator pitch, networking message template, and 30-day job search action plan.` }
+    ], 900);
+    db.prepare('INSERT INTO job_scouts (id,user_id,role,results) VALUES (?,?,?,?)').run(uuidv4(), userId, role, result);
+    res.json({ results: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/newsletter/architecture', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { niche, audience_size, monetization } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a newsletter growth expert. Design a complete newsletter architecture.\nNiche: ${niche}\nCurrent audience: ${audience_size || 'starting from 0'}\nMonetization goal: ${monetization || 'sponsorships + paid tier'}\n\nProvide: newsletter name ideas, unique angle/positioning, content pillars, format template, cadence recommendation, growth tactics (first 1000 subscribers), monetization timeline, referral program design, subject line formula, and 4-week content calendar to start.` }
+    ], 900);
+    db.prepare('INSERT INTO newsletter_archs (id,user_id,niche,architecture) VALUES (?,?,?,?)').run(uuidv4(), userId, niche, result);
+    res.json({ architecture: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/habit/dna', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { current_habits, goals, struggles } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a behavioral scientist and habit design expert. Analyze this person's habit DNA.\nCurrent habits: ${current_habits || 'none described'}\nGoals: ${goals || 'build better habits'}\nStruggles: ${struggles || 'consistency'}\n\nProvide: habit personality assessment (analyzer, achiever, connector, nurturer), keystone habit identification, habit stacking opportunities, environment design recommendations, reward system design, 21-day habit installation protocol, accountability system, and failure recovery protocol. Make it personalized and science-backed.` }
+    ], 900);
+    db.prepare('INSERT INTO habit_dnas (id,user_id,habits,analysis) VALUES (?,?,?,?)').run(uuidv4(), userId, current_habits, result);
+    res.json({ analysis: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/salespage/write', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, price, audience, transformation } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a direct response copywriter. Write a high-converting sales page.\nProduct: ${product}\nPrice: ${price || 'not specified'}\nTarget audience: ${audience || 'general'}\nCore transformation: ${transformation || 'solve a problem'}\n\nWrite a complete sales page with: headline (+ 3 alternatives), hook story, problem agitation, solution reveal, features→benefits breakdown, social proof placeholders, objection handling, guarantee, CTA (+ urgency element), P.S. line. Use persuasion psychology (scarcity, social proof, authority, reciprocity).` }
+    ], 1200);
+    db.prepare('INSERT INTO sales_pages (id,user_id,product,page) VALUES (?,?,?,?)').run(uuidv4(), userId, product, result);
+    res.json({ page: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/team/retro', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { team_context, sprint_goal, what_happened, team_size } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are an agile coach facilitating a team retrospective.\nTeam: ${team_size || '5'} people\nSprint goal: ${sprint_goal || 'not specified'}\nContext: ${team_context}\nWhat happened: ${what_happened || 'standard sprint'}\n\nFacilitate a complete retro with: warm-up activity, What went well (5 items), What didn't go well (5 items), Action items (3 specific, assignable), Process improvement proposal, Team health check (1-10 on: collaboration, communication, velocity, quality, morale), Next sprint focus, and one team celebration moment to recognize.` }
+    ], 800);
+    db.prepare('INSERT INTO team_retros (id,user_id,context,retro) VALUES (?,?,?,?)').run(uuidv4(), userId, team_context, result);
+    res.json({ retro: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Forge API running on port ${PORT}`);
