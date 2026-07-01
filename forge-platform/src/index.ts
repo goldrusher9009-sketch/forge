@@ -180439,3 +180439,105 @@ app.post('/api/review/respond', requireAuth, async (req: AuthRequest, res) => {
 app.listen(PORT, () => {
   console.log(`Forge API running on port ${PORT}`);
 });
+
+// ── Wave 97: AI Tools ─────────────────────────────────────────────────────────
+
+// B9701 — Contract Analyzer
+app.post('/api/contract/analyze', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { contract_text, contract_type = 'general', perspective = 'buyer' } = req.body;
+  if (!contract_text) return res.status(400).json({ error: 'contract_text required' });
+  const db = getDb();
+  try {
+    const key = await getUserKey(userId, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({
+      model: 'claude-3-5-haiku-20241022', max_tokens: 2000,
+      messages: [{ role: 'user', content: `Analyze this ${contract_type} contract from the ${perspective} perspective. Contract:\n\n${contract_text.slice(0,4000)}\n\nProvide: 1) RISK SCORE (1-10), 2) TOP 5 RED FLAGS with severity (high/medium/low), 3) MISSING CLAUSES that should be added, 4) FAVORABLE TERMS to keep, 5) NEGOTIATION POINTS (what to push back on), 6) PLAIN ENGLISH SUMMARY of key obligations. Format as structured JSON.` }]
+    });
+    const result = msg.content[0].type === 'text' ? msg.content[0].text : '';
+    db.prepare('INSERT OR IGNORE INTO ai_tool_usage (id,user_id,tool,created_at) VALUES (?,?,?,?)').run(uuidv4(), userId, 'contract_analyzer', new Date().toISOString());
+    res.json({ analysis: result, contract_type, perspective });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// B9702 — Personal Finance Optimizer
+app.post('/api/finance/optimize', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { income, expenses, debts, goals, savings_rate } = req.body;
+  if (!income) return res.status(400).json({ error: 'income required' });
+  const db = getDb();
+  try {
+    const key = await getUserKey(userId, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({
+      model: 'claude-3-5-haiku-20241022', max_tokens: 2000,
+      messages: [{ role: 'user', content: `Personal finance optimization. Income: $${income}/mo. Expenses: ${JSON.stringify(expenses||{})}. Debts: ${JSON.stringify(debts||[])}. Goals: ${goals||'build wealth'}. Current savings rate: ${savings_rate||0}%.\n\nProvide: 1) FINANCIAL HEALTH SCORE (1-100) with breakdown, 2) BUDGET OPTIMIZATION (where to cut, specific amounts), 3) DEBT PAYOFF STRATEGY (avalanche vs snowball recommendation), 4) INVESTMENT ALLOCATION for remaining income, 5) 3-MONTH QUICK WINS (specific actions), 6) 12-MONTH ROADMAP with milestones, 7) EMERGENCY FUND STATUS. Be specific with dollar amounts.` }]
+    });
+    const result = msg.content[0].type === 'text' ? msg.content[0].text : '';
+    db.prepare('INSERT OR IGNORE INTO ai_tool_usage (id,user_id,tool,created_at) VALUES (?,?,?,?)').run(uuidv4(), userId, 'finance_optimizer', new Date().toISOString());
+    res.json({ optimization: result, income });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// B9703 — Viral Content Formula
+app.post('/api/content/viral-formula', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { topic, platform = 'twitter', niche, target_emotion = 'curiosity' } = req.body;
+  if (!topic) return res.status(400).json({ error: 'topic required' });
+  const db = getDb();
+  try {
+    const key = await getUserKey(userId, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({
+      model: 'claude-3-5-haiku-20241022', max_tokens: 2000,
+      messages: [{ role: 'user', content: `Create a viral content formula for: "${topic}" on ${platform}. Niche: ${niche||'general'}. Target emotion: ${target_emotion}.\n\nGenerate: 1) VIRAL HOOK (5 variations using different psychological triggers), 2) CONTENT STRUCTURE (optimal format for this platform), 3) ENGAGEMENT BAIT (question/poll/CTA that drives comments), 4) HASHTAG STRATEGY (10 tags: 3 large/4 medium/3 niche), 5) BEST POSTING TIME for this niche, 6) THREAD/CAROUSEL OUTLINE if applicable, 7) VIRAL AMPLIFICATION TACTICS (reply strategy, DM strategy). Include character counts for each element.` }]
+    });
+    const result = msg.content[0].type === 'text' ? msg.content[0].text : '';
+    db.prepare('INSERT OR IGNORE INTO ai_tool_usage (id,user_id,tool,created_at) VALUES (?,?,?,?)').run(uuidv4(), userId, 'viral_formula', new Date().toISOString());
+    res.json({ formula: result, topic, platform });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// B9704 — Decision Matrix Builder
+app.post('/api/decision/matrix', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { decision, options, criteria, stakes = 'medium' } = req.body;
+  if (!decision || !options) return res.status(400).json({ error: 'decision and options required' });
+  const db = getDb();
+  try {
+    const key = await getUserKey(userId, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({
+      model: 'claude-3-5-haiku-20241022', max_tokens: 2000,
+      messages: [{ role: 'user', content: `Build a decision matrix for: "${decision}". Options: ${JSON.stringify(options)}. Criteria: ${JSON.stringify(criteria||['cost','time','risk','impact'])}. Stakes: ${stakes}.\n\nProvide: 1) WEIGHTED DECISION MATRIX (score each option on each criterion 1-10, with weights), 2) WINNER with reasoning, 3) RISK ANALYSIS (what could go wrong with top choice), 4) REGRET MINIMIZATION (will you regret this in 5 years?), 5) REVERSIBILITY SCORE (how easy to undo), 6) SECOND-ORDER EFFECTS (downstream consequences), 7) FINAL RECOMMENDATION with confidence level. Format matrix as a table.` }]
+    });
+    const result = msg.content[0].type === 'text' ? msg.content[0].text : '';
+    db.prepare('INSERT OR IGNORE INTO ai_tool_usage (id,user_id,tool,created_at) VALUES (?,?,?,?)').run(uuidv4(), userId, 'decision_matrix', new Date().toISOString());
+    res.json({ matrix: result, decision, options });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// B9705 — Skill Gap Analyzer
+app.post('/api/career/skill-gap', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { current_role, target_role, current_skills, timeline_months = 12 } = req.body;
+  if (!current_role || !target_role) return res.status(400).json({ error: 'current_role and target_role required' });
+  const db = getDb();
+  try {
+    const key = await getUserKey(userId, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({
+      model: 'claude-3-5-haiku-20241022', max_tokens: 2000,
+      messages: [{ role: 'user', content: `Skill gap analysis. Current: ${current_role}. Target: ${target_role}. Current skills: ${JSON.stringify(current_skills||[])}. Timeline: ${timeline_months} months.\n\nProvide: 1) GAP SCORE (how far away you are, 1-10), 2) CRITICAL SKILLS MISSING (ranked by importance, with learning time estimate), 3) TRANSFERABLE SKILLS you already have, 4) LEARNING ROADMAP (month-by-month plan), 5) FREE RESOURCES for each skill (courses, books, projects), 6) PORTFOLIO PROJECTS to build credibility, 7) NETWORKING STRATEGY (who to connect with), 8) REALISTIC TIMELINE ASSESSMENT (is ${timeline_months} months achievable?). Be brutally honest.` }]
+    });
+    const result = msg.content[0].type === 'text' ? msg.content[0].text : '';
+    db.prepare('INSERT OR IGNORE INTO ai_tool_usage (id,user_id,tool,created_at) VALUES (?,?,?,?)').run(uuidv4(), userId, 'skill_gap', new Date().toISOString());
+    res.json({ analysis: result, current_role, target_role, timeline_months });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
