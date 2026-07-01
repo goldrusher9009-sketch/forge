@@ -2435,10 +2435,13 @@ const MARKETPLACE_APPS = [
 ];
 
 app.get('/api/marketplace', requireAuth, (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const installed = db.prepare('SELECT app_id FROM marketplace_installs WHERE user_id=?').all(userId) as any[];
-  const installedIds = new Set(installed.map((r:any) => r.app_id));
-  res.json({ success:true, data: MARKETPLACE_APPS.map(a => ({ ...a, installed: installedIds.has(a.id) })) });
+  try {
+    const userId = req.user!.id || req.user!.sub;
+    db.exec(`CREATE TABLE IF NOT EXISTS marketplace_installs (id TEXT PRIMARY KEY, user_id TEXT, app_id TEXT, installed_at TEXT)`);
+    const installed = db.prepare('SELECT app_id FROM marketplace_installs WHERE user_id=?').all(userId) as any[];
+    const installedIds = new Set(installed.map((r:any) => r.app_id));
+    res.json({ success:true, data: MARKETPLACE_APPS.map(a => ({ ...a, installed: installedIds.has(a.id) })) });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/marketplace/:appId/install', requireAuth, (req: AuthRequest, res) => {
@@ -7244,7 +7247,8 @@ app.get('/api/workspace/digest', authMiddleware, async (req: any, res) => {
     const today = new Date().toISOString().slice(0,10);
     const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
     const threads = db.prepare('SELECT COUNT(*) as c FROM threads WHERE user_id=? AND date(created_at)=?').get(userId, today) as any;
-    const messages = db.prepare('SELECT COUNT(*) as c, SUM(tokens_used) as t FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) AND date(created_at)=?').get(userId, today) as any;
+    let messages: any = { c: 0, t: 0 };
+    try { messages = db.prepare('SELECT COUNT(*) as c, SUM(tokens_used) as t FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) AND date(created_at)=?').get(userId, today) as any; } catch { messages = db.prepare('SELECT COUNT(*) as c FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) AND date(created_at)=?').get(userId, today) as any; }
     const notes = db.prepare("SELECT COUNT(*) as c FROM notes WHERE user_id=? AND date(created_at)>=?").get(userId, yesterday) as any;
     const topThread = db.prepare('SELECT title, (SELECT COUNT(*) FROM messages WHERE thread_id=threads.id) as msg_count FROM threads WHERE user_id=? ORDER BY updated_at DESC LIMIT 1').get(userId) as any;
     res.json({
