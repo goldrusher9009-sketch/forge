@@ -1,3 +1,21 @@
+## v272.00 — Fix: 485 React hook violations (useState in conditional IIFEs) — all tabs now stable, no more crash on navigation
+
+## v271.00 — Backend fixes: analytics column fix (total_tokens), +/api/runs, /api/hooks, /api/user/profile, PUT /api/keys
+
+## v270.00 — Dream Mode Wave 98: Social & Finance AI (Twitter Bio + Speaking Prep + Debt Destroyer + Product Update Announcer + Therapy Journal)
+
+## v269.00 — Dream Mode Wave 97: Dev & Life AI (Code Tutor + Emotion Mapper + Podcast Guest Prep + MVP Scoper + Review Responder)
+
+## v268.00 — Dream Mode Wave 96: Career & Growth AI (Job Scout + Newsletter Architect + Habit DNA + Sales Page Writer + Team Retro Facilitator)
+
+## v267.00 — Dream Mode Wave 95: Business & Wellbeing AI (Pricing Page Architect + Legal Ease + Product Launch Planner + Energy Audit + Brand Story Engine)
+
+## v266.00 — Dream Mode Wave 94: Creator & Marketing AI (Script Writer + Thread Generator + Cold Outreach Sequence + SEO Blog Writer + Ad Copy Generator)
+
+## v265.01 — Critical auth fix: forge_token now set in localStorage on login/reload/token-refresh (was causing all API calls to fail silently after login)
+
+## v265.00 — Dream Mode Wave 93: Pitch & Productivity AI (AI Pitch Coach + Viral Idea Generator + Meeting Assassin + Procrastination Autopsy + Second Brain Builder)
+
 ## v264.00 — Dream Mode Wave 92: Leadership & Executive AI (Leadership Style Coach + Executive Presence Builder + Team Motivation Designer + Strategic Thinker + Feedback Culture Builder)
 
 ## v263.00 — Dream Mode Wave 91: Science & Research AI (Research Paper Decoder + Hypothesis Generator + Experiment Designer + Science Explainer + Literature Reviewer)

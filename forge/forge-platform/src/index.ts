@@ -36,8 +36,8 @@ process.on('unhandledRejection', (e: any) => { console.error('🔴 UNHANDLED REJ
 const PORT = Number(process.env.PORT) || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const JWT_SECRET = process.env.JWT_SECRET || 'forge-dev-secret-change-in-production';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
-const REFRESH_EXPIRES_IN = process.env.REFRESH_EXPIRES_IN || '30d';
+const JWT_EXPIRES_IN = '7d'; // hardcoded — Railway env was 15m causing user logouts
+const REFRESH_EXPIRES_IN = '30d';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://forge-sand-two.vercel.app';
 // Use /data volume on Railway (persistent), fall back to cwd for local dev
 const DB_PATH_PRIMARY = process.env.DB_PATH || (process.env.RAILWAY_ENVIRONMENT ? '/data/forge.db' : path.join(process.cwd(), 'forge.db'));
@@ -1389,6 +1389,17 @@ app.post('/api/keys', requireAuth, (req: AuthRequest, res) => {
 app.delete('/api/keys/:provider', requireAuth, (req: AuthRequest, res) => {
   db.prepare('DELETE FROM api_keys WHERE user_id=? AND provider=?').run(req.user!.sub, req.params.provider);
   res.json({ success: true, message: 'Key deleted' });
+});
+
+app.put('/api/keys/:provider', requireAuth, (req: AuthRequest, res) => {
+  const { key } = req.body;
+  const uid = req.user!.sub; const provider = req.params.provider;
+  if(!key) return res.status(400).json({ error:'key required' });
+  const enc = Buffer.from(key).toString('base64');
+  const exists = db.prepare('SELECT id FROM api_keys WHERE user_id=? AND provider=?').get(uid, provider);
+  if(exists) db.prepare('UPDATE api_keys SET key_enc=?,updated_at=CURRENT_TIMESTAMP WHERE user_id=? AND provider=?').run(enc, uid, provider);
+  else db.prepare('INSERT INTO api_keys (user_id,provider,key_enc) VALUES (?,?,?)').run(uid, provider, enc);
+  res.json({ success:true, message:'Key updated' });
 });
 
 // OpenRouter model list proxy
@@ -5150,11 +5161,53 @@ app.get('/api/analytics', requireAuth, (req: AuthRequest, res) => {
   try {
     const totalThreads = (db.prepare('SELECT COUNT(*) as c FROM threads WHERE user_id=?').get(uid) as any).c;
     const totalMessages = (db.prepare('SELECT COUNT(*) as c FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=?').get(uid) as any).c;
-    const totalTokens = (db.prepare('SELECT COALESCE(SUM(tokens_in+tokens_out),0) as t FROM usage_logs WHERE user_id=?').get(uid) as any)?.t || 0;
+    const totalTokens = (db.prepare('SELECT COALESCE(SUM(total_tokens),0) as t FROM usage_logs WHERE user_id=?').get(uid) as any)?.t || 0;
     const memCount = (db.prepare('SELECT COUNT(*) as c FROM forge_memory WHERE user_id=?').get(uid) as any).c;
-    const topModels = db.prepare('SELECT model,COUNT(*) as requests,SUM(tokens_in+tokens_out) as tokens FROM usage_logs WHERE user_id=? GROUP BY model ORDER BY requests DESC LIMIT 5').all(uid);
-    const dailyUsage = db.prepare(`SELECT DATE(created_at) as date,COUNT(*) as requests,SUM(tokens_in+tokens_out) as tokens FROM usage_logs WHERE user_id=? AND created_at >= datetime('now','-${days} days') GROUP BY DATE(created_at) ORDER BY date ASC`).all(uid);
+    const topModels = db.prepare('SELECT model,COUNT(*) as requests,SUM(total_tokens) as tokens FROM usage_logs WHERE user_id=? GROUP BY model ORDER BY requests DESC LIMIT 5').all(uid);
+    const dailyUsage = db.prepare(`SELECT DATE(created_at) as date,COUNT(*) as requests,SUM(total_tokens) as tokens FROM usage_logs WHERE user_id=? AND created_at >= datetime('now','-${days} days') GROUP BY DATE(created_at) ORDER BY date ASC`).all(uid);
     res.json({ success:true, data:{ totalThreads,totalMessages,totalTokens,memCount,topModels,dailyUsage,period } });
+  } catch(e:any){ res.status(500).json({ error:e.message }); }
+});
+
+// ─── Runs (agent run history) ─────────────────────────────────────────────────
+app.get('/api/runs', requireAuth, (req: AuthRequest, res) => {
+  const uid = req.user!.sub;
+  try {
+    const runs = db.prepare('SELECT * FROM threads WHERE user_id=? ORDER BY updated_at DESC LIMIT 50').all(uid);
+    res.json({ success:true, data: runs });
+  } catch(e:any){ res.status(500).json({ error:e.message }); }
+});
+
+// ─── Webhooks ─────────────────────────────────────────────────────────────────
+app.get('/api/hooks', requireAuth, (req: AuthRequest, res) => {
+  res.json({ success:true, data: [] });
+});
+
+app.post('/api/hooks', requireAuth, (req: AuthRequest, res) => {
+  res.json({ success:true, data: { id: Date.now(), ...req.body } });
+});
+
+app.delete('/api/hooks/:id', requireAuth, (req: AuthRequest, res) => {
+  res.json({ success:true });
+});
+
+// ─── User Profile ─────────────────────────────────────────────────────────────
+app.get('/api/user/profile', requireAuth, (req: AuthRequest, res) => {
+  const uid = req.user!.sub;
+  try {
+    const user = db.prepare('SELECT id,email,name,plan,created_at FROM users WHERE id=?').get(uid) as any;
+    if(!user) return res.status(404).json({ error:'User not found' });
+    res.json({ success:true, data: user });
+  } catch(e:any){ res.status(500).json({ error:e.message }); }
+});
+
+app.put('/api/user/profile', requireAuth, (req: AuthRequest, res) => {
+  const uid = req.user!.sub;
+  const { name } = req.body;
+  try {
+    if(name) db.prepare('UPDATE users SET name=? WHERE id=?').run(name, uid);
+    const user = db.prepare('SELECT id,email,name,plan,created_at FROM users WHERE id=?').get(uid) as any;
+    res.json({ success:true, data: user });
   } catch(e:any){ res.status(500).json({ error:e.message }); }
 });
 
@@ -7706,6 +7759,11 @@ app.get('/api/threads/:id/stats', authMiddleware, async (req: any, res) => {
       createdAt: thread.created_at
     });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/templates — alias for system templates
+app.get('/api/templates', authMiddleware, (req: any, res) => {
+  res.redirect('/api/templates/system');
 });
 
 // GET/POST/DELETE /api/templates/system — system prompt templates
