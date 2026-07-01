@@ -1,3 +1,5 @@
+## v275.00 — Backend fix: add getDb() shim + convert async db calls to sync better-sqlite3; fixes /api/workspace/templates 500 error
+
 ## v274.00 — Fix: React error #310 — converted 24 IIFE JSX blocks to proper named components, eliminating hooks-order crash on tab switch
 
 ## v272.00 — Fix: 485 React hook violations (useState in conditional IIFEs) — all tabs now stable, no more crash on navigation
