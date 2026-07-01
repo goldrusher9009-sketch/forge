@@ -180097,4 +180097,12 @@ app.post('/api/teammotivation/design', requireAuth, async (req: AuthRequest, res
   try {
     const key = await getUserLLMKey(userId, 'anthropic');
     const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
-      { role: 'user', content: `You are a team dynamics and organizational psychology expert. Design a team motivation system.\nTeam type: ${team_type}\nCurrent issues: ${issues || 'low energy, unclear purpose'}\nGoals: ${goals || 'high performance'}\n\nProvide: motivatio
+      { role: 'user', content: `You are a team dynamics and organizational psychology expert. Design a team motivation system.\nTeam type: ${team_type}\nCurrent issues: ${issues || 'low energy, unclear purpose'}\nGoals: ${goals || 'high performance'}\n\nProvide: motivation audit (intrinsic vs extrinsic), individual motivation mapping tool, team rituals to implement, recognition system design, and 30-day implementation plan. Be specific and actionable.` }
+    ], 800);
+    res.json({ result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});n system design, and 30-day implementation plan. Be specific and actionable.` }
+    ], 800);
+    res.json({ result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
