@@ -19414,6 +19414,156 @@ function ForgeTab_iife_billing() {
         ); } catch(e:any) { return <div style={{padding:32,color:'var(--fg-red)'}}><h3>Billing Error</h3><pre style={{fontSize:12,whiteSpace:'pre-wrap'}}>{String(e?.message||e)}</pre><p style={{fontSize:12,color:'var(--fg-text3)'}}>Try refreshing the page.</p></div>; }
 }
 
+function ForgeTab_contractanalyzer97() {
+  const [contractText, setContractText] = React.useState('');
+  const [contractType, setContractType] = React.useState('general');
+  const [perspective, setPerspective] = React.useState('buyer');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>📜 Contract Analyzer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>AI-powered contract risk analysis with red flags, negotiation points, and plain English summary.</p>
+      <div style={{display:'flex',gap:'1rem',marginBottom:'1rem'}}>
+        <select value={contractType} onChange={(e:any)=>setContractType(e.target.value)} style={{flex:1,padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="general">General Contract</option>
+          <option value="employment">Employment Agreement</option>
+          <option value="nda">NDA</option>
+          <option value="saas">SaaS Agreement</option>
+          <option value="freelance">Freelance Contract</option>
+          <option value="lease">Lease Agreement</option>
+        </select>
+        <select value={perspective} onChange={(e:any)=>setPerspective(e.target.value)} style={{flex:1,padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="buyer">Buyer / Client</option>
+          <option value="seller">Seller / Vendor</option>
+          <option value="employee">Employee</option>
+          <option value="employer">Employer</option>
+          <option value="neutral">Neutral</option>
+        </select>
+      </div>
+      <textarea value={contractText} onChange={(e:any)=>setContractText(e.target.value)} placeholder="Paste contract text here..." rows={10} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!contractText.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/contract/analyze',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({contract_text:contractText,contract_type:contractType,perspective})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!contractText.trim()?0.5:1}}>{loading?'Analyzing...':'Analyze Contract'}</button>
+      {result?.analysis && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.analysis}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_financeoptimizer97() {
+  const [income, setIncome] = React.useState('');
+  const [expenses, setExpenses] = React.useState('');
+  const [debts, setDebts] = React.useState('');
+  const [goals, setGoals] = React.useState('');
+  const [savingsRate, setSavingsRate] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>💰 Finance Optimizer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Financial health score, budget optimization, debt payoff strategy, and 12-month roadmap.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={income} onChange={(e:any)=>setIncome(e.target.value)} placeholder="Monthly income ($)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={savingsRate} onChange={(e:any)=>setSavingsRate(e.target.value)} placeholder="Savings rate (%)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <textarea value={expenses} onChange={(e:any)=>setExpenses(e.target.value)} placeholder="Monthly expenses (rent: $1500, food: $400...)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <textarea value={debts} onChange={(e:any)=>setDebts(e.target.value)} placeholder="Debts (student loan $30k@6%, credit card $5k@22%...)" rows={2} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={goals} onChange={(e:any)=>setGoals(e.target.value)} placeholder="Financial goals (buy house, retire at 50...)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem',boxSizing:'border-box' as any}} />
+      <button disabled={loading||!income.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/finance/optimize',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({income:Number(income),expenses,debts,goals,savings_rate:Number(savingsRate)})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#059669',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!income.trim()?0.5:1}}>{loading?'Optimizing...':'Optimize My Finances'}</button>
+      {result?.optimization && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.optimization}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_viralformula97() {
+  const [topic, setTopic] = React.useState('');
+  const [platform, setPlatform] = React.useState('twitter');
+  const [niche, setNiche] = React.useState('');
+  const [emotion, setEmotion] = React.useState('curiosity');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🚀 Viral Content Formula</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Viral hooks, engagement bait, hashtag strategy, and posting time recommendations.</p>
+      <input value={topic} onChange={(e:any)=>setTopic(e.target.value)} placeholder="Content topic or idea..." style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={platform} onChange={(e:any)=>setPlatform(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="twitter">Twitter/X</option><option value="linkedin">LinkedIn</option><option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="reddit">Reddit</option>
+        </select>
+        <input value={niche} onChange={(e:any)=>setNiche(e.target.value)} placeholder="Niche (SaaS, fitness...)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <select value={emotion} onChange={(e:any)=>setEmotion(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="curiosity">Curiosity</option><option value="fear">Fear/FOMO</option><option value="inspiration">Inspiration</option><option value="controversy">Controversy</option><option value="humor">Humor</option>
+        </select>
+      </div>
+      <button disabled={loading||!topic.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/content/viral-formula',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({topic,platform,niche,target_emotion:emotion})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!topic.trim()?0.5:1}}>{loading?'Creating...':'Generate Viral Formula'}</button>
+      {result?.formula && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.formula}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_decisionmatrix97() {
+  const [decision, setDecision] = React.useState('');
+  const [options, setOptions] = React.useState('');
+  const [criteria, setCriteria] = React.useState('');
+  const [stakes, setStakes] = React.useState('medium');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🧮 Decision Matrix</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Weighted scoring, risk analysis, regret minimization, and second-order consequences.</p>
+      <input value={decision} onChange={(e:any)=>setDecision(e.target.value)} placeholder="Decision you're facing..." style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={options} onChange={(e:any)=>setOptions(e.target.value)} placeholder="Options (comma-separated: stay at job, quit and freelance, start startup)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={criteria} onChange={(e:any)=>setCriteria(e.target.value)} placeholder="Criteria (optional: money, freedom, risk, impact)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={stakes} onChange={(e:any)=>setStakes(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="low">Low stakes</option><option value="medium">Medium stakes</option><option value="high">High stakes — life-changing</option>
+      </select>
+      <button disabled={loading||!decision.trim()||!options.trim()} onClick={async()=>{setLoading(true);setResult(null);const opts=options.split(',').map((s:string)=>s.trim()).filter(Boolean);const crits=criteria?criteria.split(',').map((s:string)=>s.trim()).filter(Boolean):undefined;try{const r=await fetch(API+'/api/decision/matrix',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({decision,options:opts,criteria:crits,stakes})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#6366f1',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!decision.trim()||!options.trim()?0.5:1}}>{loading?'Building Matrix...':'Build Decision Matrix'}</button>
+      {result?.matrix && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.matrix}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_skillgap97() {
+  const [currentRole, setCurrentRole] = React.useState('');
+  const [targetRole, setTargetRole] = React.useState('');
+  const [currentSkills, setCurrentSkills] = React.useState('');
+  const [timeline, setTimeline] = React.useState('12');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🎯 Skill Gap Analyzer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Month-by-month learning roadmap with free resources, portfolio projects, and timeline reality check.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={currentRole} onChange={(e:any)=>setCurrentRole(e.target.value)} placeholder="Current role (Marketing Manager)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={targetRole} onChange={(e:any)=>setTargetRole(e.target.value)} placeholder="Target role (Product Manager at FAANG)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <input value={currentSkills} onChange={(e:any)=>setCurrentSkills(e.target.value)} placeholder="Current skills (comma-separated)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={timeline} onChange={(e:any)=>setTimeline(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option><option value="24">24 months</option>
+      </select>
+      <button disabled={loading||!currentRole.trim()||!targetRole.trim()} onClick={async()=>{setLoading(true);setResult(null);const skills=currentSkills?currentSkills.split(',').map((s:string)=>s.trim()).filter(Boolean):[];try{const r=await fetch(API+'/api/career/skill-gap',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({current_role:currentRole,target_role:targetRole,current_skills:skills,timeline_months:Number(timeline)})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0891b2',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!currentRole.trim()||!targetRole.trim()?0.5:1}}>{loading?'Analyzing...':'Analyze Skill Gap'}</button>
+      {result?.analysis && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.analysis}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
 export default function ForgeApp() {
   const [user, setUser] = useState<User | null>(null);
 
@@ -19608,7 +19758,7 @@ export default function ForgeApp() {
   const [fastingWindows, setFastingWindows] = useState<any>({rows:[],total:0,completed:0});
   const [incidentSeverity, setIncidentSeverity] = useState<any>({rows:[],total:0,open:0});
   const [readingLog, setReadingLog] = useState<any>({rows:[],total:0,finished:0,reading:0,avg_rating:0});
-  const [apiKeys, setApiKeys] = useState<any>({rows:[],total:0,active:0,expired:0});
+  const [apiKeysDashboard, setApiKeysDashboard] = useState<any>({rows:[],total:0,active:0,expired:0});
   const [headlineScorer, setHeadlineScorer] = useState<any[]>([]);
   const [habitChains, setHabitChains] = useState<any>({rows:[],total:0,total_links:0,max_streak:0});
   const [sprintBoard, setSprintBoard] = useState<any>({rows:[],total:0,active:0,avg_velocity:0});
@@ -26132,6 +26282,11 @@ export default function ForgeApp() {
             { id:'debtplan98', icon:'💳', label:'Debt Destroyer Plan' },
             { id:'productupdate98', icon:'📦', label:'Product Update Announcer' },
             { id:'therapyjournal98', icon:'🌿', label:'Therapy Journal' },
+            { id:'contractanalyzer97', icon:'📜', label:'Contract Analyzer' },
+            { id:'financeoptimizer97', icon:'💰', label:'Finance Optimizer' },
+            { id:'viralformula97', icon:'🚀', label:'Viral Content Formula' },
+            { id:'decisionmatrix97', icon:'🧮', label:'Decision Matrix AI' },
+            { id:'skillgap97', icon:'🎯', label:'Skill Gap Analyzer' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -47696,6 +47851,11 @@ export default function ForgeApp() {
 {(mainTab as string) === 'mvpscoper97' && <ForgeTab_mvpscoper97 />}
 
 {(mainTab as string) === 'reviewrespond97' && <ForgeTab_reviewrespond97 />}
+        {(mainTab as string) === 'contractanalyzer97' && <ForgeTab_contractanalyzer97 />}
+        {(mainTab as string) === 'financeoptimizer97' && <ForgeTab_financeoptimizer97 />}
+        {(mainTab as string) === 'viralformula97' && <ForgeTab_viralformula97 />}
+        {(mainTab as string) === 'decisionmatrix97' && <ForgeTab_decisionmatrix97 />}
+        {(mainTab as string) === 'skillgap97' && <ForgeTab_skillgap97 />}
 
 {(mainTab as string) === 'twitterbio98' && <ForgeTab_twitterbio98 />}
 
