@@ -180110,3 +180110,43 @@ app.post('/api/teammotivation/design', requireAuth, async (req: AuthRequest, res
     res.json({ result });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+  const { team_type, issues, goals } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a team dynamics and organizational psychology expert. Design a team motivation system.\nTeam type: ${team_type}\nCurrent issues: ${issues || 'low energy, unclear purpose'}\nGoals: ${goals || 'high performance'}\n\nProvide: motivation audit (intrinsic vs extrinsic), individual motivation mapping tool, team rituals to implement, recognition system design, and 30-day implementation plan. Be specific and actionable.` }
+    ], 800);
+    res.json({ result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategicthinking/analyze', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { challenge, context } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a strategic thinking coach. Analyze this challenge with strategic depth.\nChallenge: ${challenge}\nContext: ${context || 'business environment'}\n\nProvide: first-principles breakdown, second-order effects, 3 strategic options with pros/cons, recommended path, key risks and mitigations, 90-day execution roadmap.` }
+    ], 800);
+    db.prepare('INSERT INTO strategic_thinkers (id,user_id,challenge,context,strategy) VALUES (?,?,?,?,?)').run(uuidv4(), userId, challenge, context, result);
+    res.json({ result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/feedbackculture/build', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { org_context, current_state } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are an organizational culture expert. Build a feedback culture.\nOrg context: ${org_context}\nCurrent state: ${current_state || 'feedback is rare or feared'}\n\nProvide: feedback culture audit, psychological safety assessment, 5 rituals to introduce, manager training outline, feedback frameworks to teach (SBI, COIN, etc.), 60-day rollout plan.` }
+    ], 800);
+    db.prepare('INSERT INTO feedback_culture_builders (id,user_id,org_context,current_state,plan) VALUES (?,?,?,?,?)').run(uuidv4(), userId, org_context, current_state, result);
+    res.json({ result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Forge API running on port ${PORT}`);
+});
