@@ -180436,7 +180436,6 @@ app.post('/api/review/respond', requireAuth, async (req: AuthRequest, res) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Forge API running on port ${PORT}`);
 });

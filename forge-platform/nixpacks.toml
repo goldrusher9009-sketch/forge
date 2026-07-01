@@ -2,13 +2,13 @@
 providers = ["node"]
 
 [phases.setup]
-nixPkgs = ["nodejs_20", "python3", "gcc", "gnumake"]
+nixPkgs = ["nodejs_20"]
 
 [phases.install]
 cmds = ["npm install"]
 
 [phases.build]
-cmds = ["NODE_OPTIONS='--max-old-space-size=8192' npx esbuild src/index.ts src/autonomy.ts src/hermes.ts src/operator.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist"]
+cmds = ["node_modules/.bin/esbuild src/index.ts --bundle=false --platform=node --outdir=dist --log-level=warning"]
 
 [start]
 cmd = "node --max-old-space-size=4096 dist/index.js"
