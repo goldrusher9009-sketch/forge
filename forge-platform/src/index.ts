@@ -180107,6 +180107,114 @@ app.post('/api/teammotivation/design', requireAuth, async (req: AuthRequest, res
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// ── Wave 93: Smart Daily Digest + NL Workflow Builder + Meeting Summarizer ───
+db.prepare(`CREATE TABLE IF NOT EXISTS daily_digests (
+  id TEXT PRIMARY KEY, user_id TEXT, digest TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS nl_workflows (
+  id TEXT PRIMARY KEY, user_id TEXT, description TEXT, workflow_json TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS meeting_summaries (
+  id TEXT PRIMARY KEY, user_id TEXT, transcript TEXT, summary TEXT, action_items TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS voice_journals (
+  id TEXT PRIMARY KEY, user_id TEXT, entry TEXT, mood TEXT, insights TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS content_calendars (
+  id TEXT PRIMARY KEY, user_id TEXT, niche TEXT, calendar TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`).run();
+
+app.get('/api/digest/daily', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const threads = db.prepare('SELECT COUNT(*) as c FROM threads WHERE user_id=? AND date(created_at)=date("now")').get(userId) as any;
+    const messages = db.prepare('SELECT COUNT(*) as c FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?)').get(userId) as any;
+    const agents = db.prepare('SELECT COUNT(*) as c FROM agents WHERE user_id=?').get(userId) as any;
+    const context = `User stats: ${threads?.c||0} threads today, ${messages?.c||0} total messages, ${agents?.c||0} agents configured.`;
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `Generate a motivating, personalized daily digest for a power user of an AI platform.\n${context}\nInclude: productivity tip of the day, AI prompt of the day, suggested focus area, quick win challenge, and an inspiring quote. Keep it energetic and actionable. Format with clear sections.` }
+    ], 600);
+    db.prepare('INSERT INTO daily_digests (id,user_id,digest) VALUES (?,?,?)').run(uuidv4(), userId, result);
+    res.json({ digest: result, stats: { threads: threads?.c||0, messages: messages?.c||0, agents: agents?.c||0 } });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/workflow/build', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { description } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a workflow automation expert. Convert this natural language description into a structured automation workflow.\nDescription: ${description}\n\nReturn a JSON workflow with: { "name": string, "trigger": { "type": string, "config": {} }, "steps": [{ "id": string, "name": string, "action": string, "config": {}, "next": string|null }], "description": string, "estimated_time_saved": string }. Make it practical and immediately actionable.` }
+    ], 800);
+    const clean = result.replace(/```json\n?|```\n?/g, '').trim();
+    let workflow;
+    try { workflow = JSON.parse(clean); } catch { workflow = { raw: clean }; }
+    db.prepare('INSERT INTO nl_workflows (id,user_id,description,workflow_json) VALUES (?,?,?,?)').run(uuidv4(), userId, description, JSON.stringify(workflow));
+    res.json({ workflow });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/workflow/list', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  try {
+    const workflows = db.prepare('SELECT * FROM nl_workflows WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId) as any[];
+    res.json({ workflows: workflows.map(w => ({ ...w, workflow_json: JSON.parse(w.workflow_json || '{}') })) });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/meeting/summarize', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { transcript, meeting_type } = req.body;
+  if (!transcript) return res.status(400).json({ error: 'transcript required' });
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are an expert meeting analyst. Analyze this ${meeting_type||'business'} meeting transcript.\n\nTranscript:\n${transcript.slice(0,4000)}\n\nProvide:\n1. EXECUTIVE SUMMARY (3-4 sentences)\n2. KEY DECISIONS MADE (bullet list)\n3. ACTION ITEMS (with owner and deadline if mentioned)\n4. OPEN QUESTIONS (unresolved items)\n5. NEXT STEPS\n6. SENTIMENT (overall tone: positive/neutral/tense)\n\nFormat clearly with headers.` }
+    ], 1000);
+    const actionItems = result.match(/action items?[:\n]+([\s\S]*?)(?=\n[A-Z#]|\n\n[A-Z]|open questions|next steps|$)/i)?.[1] || '';
+    db.prepare('INSERT INTO meeting_summaries (id,user_id,transcript,summary,action_items) VALUES (?,?,?,?,?)').run(uuidv4(), userId, transcript.slice(0,2000), result, actionItems);
+    res.json({ summary: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/meeting/history', requireAuth, (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  try {
+    const meetings = db.prepare('SELECT id,summary,action_items,created_at FROM meeting_summaries WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(userId);
+    res.json({ meetings });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/journal/voice', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { entry } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a compassionate journaling coach and psychologist. Analyze this journal entry with warmth and insight.\n\nEntry: ${entry}\n\nProvide:\n1. MOOD DETECTION (primary emotion + intensity 1-10)\n2. KEY THEMES (what this entry is really about)\n3. COGNITIVE PATTERNS (any limiting beliefs or thought patterns noticed)\n4. STRENGTHS SHOWN (positive aspects to celebrate)\n5. GENTLE REFLECTION QUESTION (one powerful question to go deeper)\n6. AFFIRMATION (personalized for this entry)\n\nBe warm, non-judgmental, and insightful.` }
+    ], 700);
+    const moodMatch = result.match(/mood[:\s]+([^\n]+)/i);
+    const mood = moodMatch?.[1]?.trim() || 'reflective';
+    db.prepare('INSERT INTO voice_journals (id,user_id,entry,mood,insights) VALUES (?,?,?,?,?)').run(uuidv4(), userId, entry, mood, result);
+    res.json({ insights: result, mood });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/calendar', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { niche, platforms, weeks } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a viral content strategist. Create a ${weeks||4}-week content calendar.\nNiche: ${niche}\nPlatforms: ${platforms||'LinkedIn, Twitter, Instagram'}\n\nFor each week provide 5 post ideas with: platform, content type (reel/post/thread/story), hook line, core message, call-to-action, best posting time. Focus on content that drives engagement and growth. Include 1 viral-bait idea per week.` }
+    ], 1000);
+    db.prepare('INSERT INTO content_calendars (id,user_id,niche,calendar) VALUES (?,?,?,?)').run(uuidv4(), userId, niche, result);
+    res.json({ calendar: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Forge API running on port ${PORT}`);
