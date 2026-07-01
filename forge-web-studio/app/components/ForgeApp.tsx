@@ -19564,6 +19564,143 @@ function ForgeTab_skillgap97() {
 }
 
 
+function ForgeTab_pitchdeckbuilder98() {
+  const [companyName, setCompanyName] = React.useState('');
+  const [problem, setProblem] = React.useState('');
+  const [solution, setSolution] = React.useState('');
+  const [marketSize, setMarketSize] = React.useState('');
+  const [traction, setTraction] = React.useState('');
+  const [ask, setAsk] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>📊 Pitch Deck Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Full 10-slide pitch narrative — problem, solution, market, traction, team, ask. Investor-ready.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={companyName} onChange={(e:any)=>setCompanyName(e.target.value)} placeholder="Company name" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={ask} onChange={(e:any)=>setAsk(e.target.value)} placeholder="Fundraise ask (e.g. $500K seed)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <textarea value={problem} onChange={(e:any)=>setProblem(e.target.value)} placeholder="Problem you're solving..." rows={2} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <textarea value={solution} onChange={(e:any)=>setSolution(e.target.value)} placeholder="Your solution..." rows={2} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <input value={marketSize} onChange={(e:any)=>setMarketSize(e.target.value)} placeholder="Market size (e.g. $50B TAM)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={traction} onChange={(e:any)=>setTraction(e.target.value)} placeholder="Traction (e.g. $10K MRR, 500 users)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <button disabled={loading||!companyName.trim()||!problem.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/pitch/deck-builder',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({company_name:companyName,problem,solution,market_size:marketSize,traction,ask})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!companyName.trim()||!problem.trim()?0.5:1}}>{loading?'Building Deck...':'Build My Pitch Deck'}</button>
+      {result?.deck && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.deck}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_mindmapgen98() {
+  const [topic, setTopic] = React.useState('');
+  const [depth, setDepth] = React.useState('3');
+  const [purpose, setPurpose] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🗺️ Mind Map Generator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>AI-generated hierarchical mind maps with key insights, surprising connections, and learning resources.</p>
+      <input value={topic} onChange={(e:any)=>setTopic(e.target.value)} placeholder="Topic to map (e.g. Machine Learning, Stoicism, Blockchain)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={depth} onChange={(e:any)=>setDepth(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="2">2 levels (overview)</option><option value="3">3 levels (standard)</option><option value="4">4 levels (deep)</option>
+        </select>
+        <input value={purpose} onChange={(e:any)=>setPurpose(e.target.value)} placeholder="Purpose (exam prep, project planning...)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <button disabled={loading||!topic.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/mindmap/generate',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({topic,depth:Number(depth),purpose})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0891b2',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!topic.trim()?0.5:1}}>{loading?'Mapping...':'Generate Mind Map'}</button>
+      {result?.mindmap && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',fontFamily:'monospace'}}>{result.mindmap}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_habitstack98() {
+  const [existingHabits, setExistingHabits] = React.useState('');
+  const [goals, setGoals] = React.useState('');
+  const [availableTime, setAvailableTime] = React.useState('30');
+  const [chronotype, setChronotype] = React.useState('morning');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🔗 Habit Stack Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>BJ Fogg + James Clear methodology. Design habit stacks anchored to what you already do.</p>
+      <input value={existingHabits} onChange={(e:any)=>setExistingHabits(e.target.value)} placeholder="Existing habits (e.g. morning coffee, brush teeth, commute)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={goals} onChange={(e:any)=>setGoals(e.target.value)} placeholder="Goals to achieve (e.g. read more, exercise, meditate)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={availableTime} onChange={(e:any)=>setAvailableTime(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="15">15 min/day</option><option value="30">30 min/day</option><option value="60">1 hour/day</option><option value="120">2+ hours/day</option>
+        </select>
+        <select value={chronotype} onChange={(e:any)=>setChronotype(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="morning">Morning person (early bird)</option><option value="night">Night owl</option><option value="flexible">Flexible</option>
+        </select>
+      </div>
+      <button disabled={loading||!goals.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/habit/stack-builder',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({existing_habits:existingHabits,goals,available_time:availableTime+' minutes',chronotype})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#059669',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!goals.trim()?0.5:1}}>{loading?'Building Stack...':'Build My Habit Stack'}</button>
+      {result?.stack && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.stack}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_debateprep98() {
+  const [topic, setTopic] = React.useState('');
+  const [yourPosition, setYourPosition] = React.useState('');
+  const [context, setContext] = React.useState('');
+  const [opponentArgs, setOpponentArgs] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>⚔️ Debate Prep</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Arguments, rebuttals, steel-man of opposition, opening/closing statements, killer questions.</p>
+      <input value={topic} onChange={(e:any)=>setTopic(e.target.value)} placeholder="Debate topic" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={yourPosition} onChange={(e:any)=>setYourPosition(e.target.value)} placeholder="Your position / stance" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={context} onChange={(e:any)=>setContext(e.target.value)} placeholder="Context (e.g. job interview, family dinner, formal debate)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={opponentArgs} onChange={(e:any)=>setOpponentArgs(e.target.value)} placeholder="Expected opponent arguments (optional)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem',boxSizing:'border-box' as any}} />
+      <button disabled={loading||!topic.trim()||!yourPosition.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/debate/prep',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({topic,your_position:yourPosition,context,opponent_likely_arguments:opponentArgs})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!topic.trim()||!yourPosition.trim()?0.5:1}}>{loading?'Preparing...':'Prep My Debate'}</button>
+      {result?.prep && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.prep}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_brandstory98() {
+  const [founderBg, setFounderBg] = React.useState('');
+  const [mission, setMission] = React.useState('');
+  const [turningPoint, setTurningPoint] = React.useState('');
+  const [customerImpact, setCustomerImpact] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>📖 Brand Story Crafter</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Hero's Journey narrative, 3 story versions (1-sentence to 2-minute), tagline options, platform-specific formats.</p>
+      <textarea value={founderBg} onChange={(e:any)=>setFounderBg(e.target.value)} placeholder="Founder background / your story..." rows={2} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={mission} onChange={(e:any)=>setMission(e.target.value)} placeholder="Company mission" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={turningPoint} onChange={(e:any)=>setTurningPoint(e.target.value)} placeholder="The turning point — why did you start this?" rows={2} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={customerImpact} onChange={(e:any)=>setCustomerImpact(e.target.value)} placeholder="Customer impact / transformation" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem',boxSizing:'border-box' as any}} />
+      <button disabled={loading||!founderBg.trim()||!mission.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/story/brand',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({founder_background:founderBg,company_mission:mission,turning_point:turningPoint,customer_impact:customerImpact})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#d97706',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!founderBg.trim()||!mission.trim()?0.5:1}}>{loading?'Crafting Story...':'Craft My Brand Story'}</button>
+      {result?.story && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.story}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
 export default function ForgeApp() {
   const [user, setUser] = useState<User | null>(null);
 
@@ -26287,6 +26424,11 @@ export default function ForgeApp() {
             { id:'viralformula97', icon:'🚀', label:'Viral Content Formula' },
             { id:'decisionmatrix97', icon:'🧮', label:'Decision Matrix AI' },
             { id:'skillgap97', icon:'🎯', label:'Skill Gap Analyzer' },
+            { id:'pitchdeckbuilder98', icon:'📊', label:'Pitch Deck Builder' },
+            { id:'mindmapgen98', icon:'🗺️', label:'Mind Map Generator' },
+            { id:'habitstack98', icon:'🔗', label:'Habit Stack Builder' },
+            { id:'debateprep98', icon:'⚔️', label:'Debate Prep AI' },
+            { id:'brandstory98', icon:'📖', label:'Brand Story Crafter' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -47856,6 +47998,11 @@ export default function ForgeApp() {
         {(mainTab as string) === 'viralformula97' && <ForgeTab_viralformula97 />}
         {(mainTab as string) === 'decisionmatrix97' && <ForgeTab_decisionmatrix97 />}
         {(mainTab as string) === 'skillgap97' && <ForgeTab_skillgap97 />}
+        {(mainTab as string) === 'pitchdeckbuilder98' && <ForgeTab_pitchdeckbuilder98 />}
+        {(mainTab as string) === 'mindmapgen98' && <ForgeTab_mindmapgen98 />}
+        {(mainTab as string) === 'habitstack98' && <ForgeTab_habitstack98 />}
+        {(mainTab as string) === 'debateprep98' && <ForgeTab_debateprep98 />}
+        {(mainTab as string) === 'brandstory98' && <ForgeTab_brandstory98 />}
 
 {(mainTab as string) === 'twitterbio98' && <ForgeTab_twitterbio98 />}
 
