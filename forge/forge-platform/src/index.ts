@@ -57,6 +57,8 @@ try {
 }
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
+// Compatibility shim — some routes call getDb() expecting the sync db instance
+function getDb() { return db; }
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -171,7 +173,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v144.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v329.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -2433,10 +2435,13 @@ const MARKETPLACE_APPS = [
 ];
 
 app.get('/api/marketplace', requireAuth, (req: AuthRequest, res) => {
-  const userId = req.user!.sub;
-  const installed = db.prepare('SELECT app_id FROM marketplace_installs WHERE user_id=?').all(userId) as any[];
-  const installedIds = new Set(installed.map((r:any) => r.app_id));
-  res.json({ success:true, data: MARKETPLACE_APPS.map(a => ({ ...a, installed: installedIds.has(a.id) })) });
+  try {
+    const userId = req.user!.id || req.user!.sub;
+    db.exec(`CREATE TABLE IF NOT EXISTS marketplace_installs (id TEXT PRIMARY KEY, user_id TEXT, app_id TEXT, installed_at TEXT)`);
+    const installed = db.prepare('SELECT app_id FROM marketplace_installs WHERE user_id=?').all(userId) as any[];
+    const installedIds = new Set(installed.map((r:any) => r.app_id));
+    res.json({ success:true, data: MARKETPLACE_APPS.map(a => ({ ...a, installed: installedIds.has(a.id) })) });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/marketplace/:appId/install', requireAuth, (req: AuthRequest, res) => {
@@ -6253,8 +6258,7 @@ app.delete('/api/notes/:id', requireAuth, (req: any, res: any) => {
 // POST /api/messages/:id/diff-explain — explain code diff in a message
 app.post('/api/messages/:id/diff-explain', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
-    const msg = await db.get('SELECT * FROM messages WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    const msg = db.prepare('SELECT * FROM messages WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
     if (!msg) return res.status(404).json({ error: 'Message not found' });
     const content = msg.content || '';
     // Extract code blocks
@@ -6278,8 +6282,7 @@ app.post('/api/messages/:id/diff-explain', requireAuth, async (req: any, res) =>
 // GET /api/threads/:id/session-replay — ordered message list with timing deltas for replay
 app.get('/api/threads/:id/session-replay', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
-    const thread = await db.get('SELECT * FROM threads WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
     if (!thread) return res.status(404).json({ error: 'Thread not found' });
     const messages = await db.all(
       'SELECT id, role, content, created_at, model FROM messages WHERE thread_id=? ORDER BY created_at ASC',
@@ -6298,8 +6301,7 @@ app.get('/api/threads/:id/session-replay', requireAuth, async (req: any, res) =>
 // POST /api/threads/:id/smart-rename — AI-suggested title from first N messages
 app.post('/api/threads/:id/smart-rename', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
-    const thread = await db.get('SELECT * FROM threads WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
     if (!thread) return res.status(404).json({ error: 'Thread not found' });
     const messages = await db.all(
       'SELECT role, content FROM messages WHERE thread_id=? ORDER BY created_at ASC LIMIT 6',
@@ -6315,7 +6317,7 @@ app.post('/api/threads/:id/smart-rename', requireAuth, async (req: any, res) => 
     const suggestedTitle = keyWords.length >= 2 ? keyWords.slice(0, 5).map(w => w.charAt(0).toUpperCase()+w.slice(1)).join(' ') : (thread.title || 'Untitled Thread');
     const apply = req.body?.apply === true;
     if (apply) {
-      await db.run('UPDATE threads SET title=? WHERE id=?', [suggestedTitle, req.params.id]);
+      db.prepare('UPDATE threads SET title=? WHERE id=?').run(suggestedTitle, req.params.id);
     }
     res.json({ originalTitle: thread.title, suggestedTitle, changed: apply, messageCount: messages.length });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
@@ -6324,8 +6326,7 @@ app.post('/api/threads/:id/smart-rename', requireAuth, async (req: any, res) => 
 // GET /api/threads/:id/token-breakdown — per-message estimated token counts + cost
 app.get('/api/threads/:id/token-breakdown', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
-    const thread = await db.get('SELECT * FROM threads WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
     if (!thread) return res.status(404).json({ error: 'Thread not found' });
     const messages = await db.all(
       'SELECT id, role, content, model, created_at FROM messages WHERE thread_id=? ORDER BY created_at ASC',
@@ -6363,13 +6364,12 @@ app.get('/api/threads/:id/token-breakdown', requireAuth, async (req: any, res) =
 // GET /api/stats/daily-tokens — daily token usage (estimated) last 30 days
 app.get('/api/stats/daily-tokens', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
-    const rows = await db.all(`
+    const rows = db.prepare(`
       SELECT date(created_at) as day,
         SUM(CASE WHEN role='user' THEN CAST(length(content)/4 AS INT) ELSE 0 END) as inputTokens,
         SUM(CASE WHEN role='assistant' THEN CAST(length(content)/4 AS INT) ELSE 0 END) as outputTokens
       FROM messages WHERE user_id=? AND created_at >= date('now','-30 days')
-      GROUP BY day ORDER BY day ASC`, [req.user.id]);
+      GROUP BY day ORDER BY day ASC`).all(req.user.id);
     res.json({ days: rows.map((r: any) => ({ ...r, totalTokens: (r.inputTokens||0)+(r.outputTokens||0) })) });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
@@ -6377,10 +6377,9 @@ app.get('/api/stats/daily-tokens', requireAuth, async (req: any, res) => {
 // GET /api/threads/:id/similar — find semantically similar threads by title/keyword overlap
 app.get('/api/threads/:id/similar', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
-    const thread = await db.get('SELECT * FROM threads WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
     if (!thread) return res.status(404).json({ error: 'Thread not found' });
-    const allThreads = await db.all('SELECT id, title FROM threads WHERE user_id=? AND id!=?', [req.user.id, req.params.id]);
+    const allThreads = db.prepare('SELECT id, title FROM threads WHERE user_id=? AND id!=?').all(req.user.id, req.params.id);
     const titleWords = new Set((thread.title||'').toLowerCase().split(/\W+/).filter((w: string) => w.length > 3));
     const scored = allThreads.map((t: any) => {
       const words = new Set((t.title||'').toLowerCase().split(/\W+/).filter((w: string) => w.length > 3));
@@ -6400,13 +6399,12 @@ app.get('/api/threads/:id/similar', requireAuth, async (req: any, res) => {
 // GET /api/personas — list user chat personas
 app.get('/api/personas', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
-    await db.run(`CREATE TABLE IF NOT EXISTS personas (
+    db.prepare(`CREATE TABLE IF NOT EXISTS personas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER, name TEXT, description TEXT, system_prompt TEXT,
       avatar TEXT DEFAULT '🤖', is_active INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-    const rows = await db.all('SELECT * FROM personas WHERE user_id=? ORDER BY created_at DESC', [req.user.id]);
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    const rows = db.prepare('SELECT * FROM personas WHERE user_id=? ORDER BY created_at DESC').all(req.user.id);
     res.json({ personas: rows });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
@@ -6414,16 +6412,14 @@ app.get('/api/personas', requireAuth, async (req: any, res) => {
 // POST /api/personas — create persona
 app.post('/api/personas', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
-    await db.run(`CREATE TABLE IF NOT EXISTS personas (
+    db.prepare(`CREATE TABLE IF NOT EXISTS personas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER, name TEXT, description TEXT, system_prompt TEXT,
       avatar TEXT DEFAULT '🤖', is_active INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
     const { name, description, system_prompt, avatar } = req.body;
     if (!name || !system_prompt) return res.status(400).json({ error: 'name and system_prompt required' });
-    const r = await db.run('INSERT INTO personas (user_id,name,description,system_prompt,avatar) VALUES (?,?,?,?,?)',
-      [req.user.id, name, description||'', system_prompt, avatar||'🤖']);
+    const r = db.prepare('INSERT INTO personas (user_id,name,description,system_prompt,avatar) VALUES (?,?,?,?,?)').run(req.user.id, name, description||'', system_prompt, avatar||'🤖');
     res.json({ id: r.lastID, name, description, system_prompt, avatar: avatar||'🤖' });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
@@ -6431,10 +6427,8 @@ app.post('/api/personas', requireAuth, async (req: any, res) => {
 // PUT /api/personas/:id — update persona
 app.put('/api/personas/:id', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
     const { name, description, system_prompt, avatar, is_active } = req.body;
-    await db.run('UPDATE personas SET name=COALESCE(?,name), description=COALESCE(?,description), system_prompt=COALESCE(?,system_prompt), avatar=COALESCE(?,avatar), is_active=COALESCE(?,is_active) WHERE id=? AND user_id=?',
-      [name, description, system_prompt, avatar, is_active, req.params.id, req.user.id]);
+    db.prepare('UPDATE personas SET name=COALESCE(?,name), description=COALESCE(?,description), system_prompt=COALESCE(?,system_prompt), avatar=COALESCE(?,avatar), is_active=COALESCE(?,is_active) WHERE id=? AND user_id=?').run(name, description, system_prompt, avatar, is_active, req.params.id, req.user.id);
     res.json({ ok: true });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
@@ -6442,8 +6436,7 @@ app.put('/api/personas/:id', requireAuth, async (req: any, res) => {
 // DELETE /api/personas/:id — delete persona
 app.delete('/api/personas/:id', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
-    await db.run('DELETE FROM personas WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    db.prepare('DELETE FROM personas WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
     res.json({ ok: true });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
@@ -6451,10 +6444,8 @@ app.delete('/api/personas/:id', requireAuth, async (req: any, res) => {
 // POST /api/focus/start — start a focus session
 app.post('/api/focus/start', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
     const { thread_id, duration_minutes } = req.body;
-    const r = await db.run('INSERT INTO focus_sessions (user_id,thread_id,started_at,planned_minutes) VALUES (?,?,CURRENT_TIMESTAMP,?)',
-      [req.user.id, thread_id||null, duration_minutes||25]);
+    const r = db.prepare('INSERT INTO focus_sessions (user_id,thread_id,started_at,planned_minutes) VALUES (?,?,CURRENT_TIMESTAMP,?)').run(req.user.id, thread_id||null, duration_minutes||25);
     res.json({ sessionId: r.lastID, startedAt: new Date().toISOString(), plannedMinutes: duration_minutes||25 });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
@@ -6462,13 +6453,12 @@ app.post('/api/focus/start', requireAuth, async (req: any, res) => {
 // POST /api/focus/end — end focus session
 app.post('/api/focus/end', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
     const { session_id } = req.body;
-    const sess = await db.get('SELECT * FROM focus_sessions WHERE id=? AND user_id=?', [session_id, req.user.id]);
+    const sess = db.prepare('SELECT * FROM focus_sessions WHERE id=? AND user_id=?').get(session_id, req.user.id);
     if (!sess) return res.status(404).json({ error: 'Session not found' });
     const started = new Date(sess.started_at).getTime();
     const actualMinutes = Math.round((Date.now() - started) / 60000);
-    await db.run('UPDATE focus_sessions SET ended_at=CURRENT_TIMESTAMP, actual_minutes=? WHERE id=?', [actualMinutes, session_id]);
+    db.prepare('UPDATE focus_sessions SET ended_at=CURRENT_TIMESTAMP, actual_minutes=? WHERE id=?').run(actualMinutes, session_id);
     res.json({ ok: true, actualMinutes, plannedMinutes: sess.planned_minutes });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
@@ -6476,14 +6466,12 @@ app.post('/api/focus/end', requireAuth, async (req: any, res) => {
 // POST /api/messages/:id/reply — create a reply to a message (threaded)
 app.post('/api/messages/:id/reply', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
-    await db.run('ALTER TABLE messages ADD COLUMN parent_id INTEGER').catch(() => {});
-    const parent = await db.get('SELECT * FROM messages WHERE id=?', [req.params.id]);
+    db.prepare('ALTER TABLE messages ADD COLUMN parent_id INTEGER').run().catch(() => {});
+    const parent = db.prepare('SELECT * FROM messages WHERE id=?').get(req.params.id);
     if (!parent) return res.status(404).json({ error: 'Parent message not found' });
     const { content } = req.body;
     if (!content) return res.status(400).json({ error: 'content required' });
-    const r = await db.run('INSERT INTO messages (thread_id,user_id,role,content,parent_id,created_at) VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)',
-      [parent.thread_id, req.user.id, 'user', content, req.params.id]);
+    const r = db.prepare('INSERT INTO messages (thread_id,user_id,role,content,parent_id,created_at) VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)').run(parent.thread_id, req.user.id, 'user', content, req.params.id);
     res.json({ id: r.lastID, parent_id: req.params.id, thread_id: parent.thread_id, content, role: 'user' });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
@@ -6491,7 +6479,6 @@ app.post('/api/messages/:id/reply', requireAuth, async (req: any, res) => {
 // GET /api/messages/:id/replies — get replies to a message
 app.get('/api/messages/:id/replies', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
     const replies = await db.all(
       'SELECT * FROM messages WHERE parent_id=? ORDER BY created_at ASC',
       [req.params.id]
@@ -6503,10 +6490,9 @@ app.get('/api/messages/:id/replies', requireAuth, async (req: any, res) => {
 // GET /api/threads/:id/export/markdown — export thread as markdown doc
 app.get('/api/threads/:id/export/markdown', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
-    const thread = await db.get('SELECT * FROM threads WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    const thread = db.prepare('SELECT * FROM threads WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
     if (!thread) return res.status(404).json({ error: 'Thread not found' });
-    const messages = await db.all('SELECT * FROM messages WHERE thread_id=? ORDER BY created_at ASC', [req.params.id]);
+    const messages = db.prepare('SELECT * FROM messages WHERE thread_id=? ORDER BY created_at ASC').all(req.params.id);
     const lines: string[] = [
       `# ${thread.title || 'Untitled Thread'}`,
       `> Exported from Forge · ${new Date().toLocaleDateString()}`,
@@ -6532,13 +6518,12 @@ app.get('/api/threads/:id/export/markdown', requireAuth, async (req: any, res) =
 // GET /api/workspace/templates — list workspace templates
 app.get('/api/workspace/templates', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
-    await db.run(`CREATE TABLE IF NOT EXISTS workspace_templates (
+    db.prepare(`CREATE TABLE IF NOT EXISTS workspace_templates (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER, name TEXT, description TEXT, category TEXT,
       system_prompt TEXT, starter_message TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-    const rows = await db.all('SELECT * FROM workspace_templates WHERE user_id=? OR user_id IS NULL ORDER BY category,name', [req.user.id]);
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    const rows = db.prepare('SELECT * FROM workspace_templates WHERE user_id=? OR user_id IS NULL ORDER BY category,name').all(req.user.id);
     // Add built-in templates if none exist
     if (rows.length === 0) {
       const builtins = [
@@ -6549,10 +6534,9 @@ app.get('/api/workspace/templates', requireAuth, async (req: any, res) => {
         { name:'Data Analyst', category:'data', description:'Analyze data and explain insights', system_prompt:'You are a data analyst. Help interpret data, suggest visualizations, and explain statistical concepts clearly.', starter_message:'Analyze this data:' },
       ];
       for (const t of builtins) {
-        await db.run('INSERT INTO workspace_templates (name,category,description,system_prompt,starter_message) VALUES (?,?,?,?,?)',
-          [t.name, t.category, t.description, t.system_prompt, t.starter_message]);
+        db.prepare('INSERT INTO workspace_templates (name,category,description,system_prompt,starter_message) VALUES (?,?,?,?,?)').run(t.name, t.category, t.description, t.system_prompt, t.starter_message);
       }
-      const fresh = await db.all('SELECT * FROM workspace_templates ORDER BY category,name');
+      const fresh = db.prepare('SELECT * FROM workspace_templates ORDER BY category,name').all();
       return res.json({ templates: fresh });
     }
     res.json({ templates: rows });
@@ -6562,16 +6546,14 @@ app.get('/api/workspace/templates', requireAuth, async (req: any, res) => {
 // POST /api/workspace/templates — save custom template
 app.post('/api/workspace/templates', requireAuth, async (req: any, res) => {
   try {
-    const db = await getDb();
-    await db.run(`CREATE TABLE IF NOT EXISTS workspace_templates (
+    db.prepare(`CREATE TABLE IF NOT EXISTS workspace_templates (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER, name TEXT, description TEXT, category TEXT,
       system_prompt TEXT, starter_message TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
     const { name, description, category, system_prompt, starter_message } = req.body;
     if (!name) return res.status(400).json({ error: 'name required' });
-    const r = await db.run('INSERT INTO workspace_templates (user_id,name,description,category,system_prompt,starter_message) VALUES (?,?,?,?,?,?)',
-      [req.user.id, name, description||'', category||'custom', system_prompt||'', starter_message||'']);
+    const r = db.prepare('INSERT INTO workspace_templates (user_id,name,description,category,system_prompt,starter_message) VALUES (?,?,?,?,?,?)').run(req.user.id, name, description||'', category||'custom', system_prompt||'', starter_message||'');
     res.json({ id: r.lastID, name, category: category||'custom' });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
@@ -7265,7 +7247,8 @@ app.get('/api/workspace/digest', authMiddleware, async (req: any, res) => {
     const today = new Date().toISOString().slice(0,10);
     const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
     const threads = db.prepare('SELECT COUNT(*) as c FROM threads WHERE user_id=? AND date(created_at)=?').get(userId, today) as any;
-    const messages = db.prepare('SELECT COUNT(*) as c, SUM(tokens_used) as t FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) AND date(created_at)=?').get(userId, today) as any;
+    let messages: any = { c: 0, t: 0 };
+    try { messages = db.prepare('SELECT COUNT(*) as c, SUM(tokens_used) as t FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) AND date(created_at)=?').get(userId, today) as any; } catch { messages = db.prepare('SELECT COUNT(*) as c FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id=?) AND date(created_at)=?').get(userId, today) as any; }
     const notes = db.prepare("SELECT COUNT(*) as c FROM notes WHERE user_id=? AND date(created_at)>=?").get(userId, yesterday) as any;
     const topThread = db.prepare('SELECT title, (SELECT COUNT(*) FROM messages WHERE thread_id=threads.id) as msg_count FROM threads WHERE user_id=? ORDER BY updated_at DESC LIMIT 1').get(userId) as any;
     res.json({
@@ -180114,42 +180097,3728 @@ app.post('/api/executivepresence/build', requireAuth, async (req: AuthRequest, r
 
 app.post('/api/teammotivation/design', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
-  const { team_type, issues, goals } = req.body;
+  const { team_type, motivation_challenges, team_size, culture } = req.body;
   try {
     const key = await getUserLLMKey(userId, 'anthropic');
     const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
-      { role: 'user', content: `You are a team dynamics and organizational psychology expert. Design a team motivation system.\nTeam type: ${team_type}\nCurrent issues: ${issues || 'low energy, unclear purpose'}\nGoals: ${goals || 'high performance'}\n\nProvide: motivation audit (intrinsic vs extrinsic), individual motivation mapping tool, team rituals to implement, recognition system design, autonomy/mastery/purpose framework application, how to handle low performers, psychological safety practices, 30-day motivation sprint.` }
+      { role: 'user', content: `You are a team motivation and engagement expert. Design a comprehensive motivation system.\nTeam type: ${team_type}\nChallenges: ${motivation_challenges}\nTeam size: ${team_size || 'unknown'}\nCulture: ${culture || 'corporate'}\n\nProvide: motivation audit (current state assessment), intrinsic vs extrinsic motivation balance, recognition framework (peer, manager, company), team rituals and ceremonies, psychological safety initiatives, growth and development pathways, quick wins for this week, 30-day implementation plan.` }
     ]);
-    const strategy = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
-    db.prepare('INSERT INTO team_motivation_designers (id,user_id,team_type,issues,strategy) VALUES (?,?,?,?,?)').run(uuidv4(), userId, team_type, issues, strategy);
-    res.json({ strategy });
+    res.json({ plan: result });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/strategy/think', requireAuth, async (req: AuthRequest, res) => {
+// Wave 97 missing routes
+app.post('/api/finance/optimize', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
-  const { challenge, context, constraints } = req.body;
+  const { income, expenses, debts, goals, savings_rate } = req.body;
   try {
     const key = await getUserLLMKey(userId, 'anthropic');
     const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
-      { role: 'user', content: `You are a strategic advisor and systems thinker. Develop a comprehensive strategy for this challenge.\nChallenge: ${challenge}\nContext: ${context}\nConstraints: ${constraints || 'standard business constraints'}\n\nProvide: situation analysis (forces at play), 3 strategic options with trade-offs, recommended path with rationale, key assumptions to validate, quick wins in first 30 days, risks and mitigation, success metrics, decision tree for key choice points, what to watch for that would change the strategy.` }
+      { role: 'user', content: `You are a personal finance optimizer. Analyze finances and create an actionable plan.\nMonthly income: $${income}\nExpenses: ${expenses}\nDebts: ${debts || 'none'}\nFinancial goals: ${goals || 'build wealth'}\nCurrent savings rate: ${savings_rate || 0}%\n\nProvide:\n1. Financial Health Score (0-100) with breakdown\n2. Budget optimization (50/30/20 rule applied to their situation)\n3. Debt payoff strategy (avalanche vs snowball recommendation)\n4. Emergency fund status and target\n5. Investment allocation suggestion\n6. 3 quick wins this month\n7. 12-month financial roadmap with milestones\n8. One thing to automate immediately` }
     ]);
-    const strategy = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
-    db.prepare('INSERT INTO strategic_thinkers (id,user_id,challenge,context,strategy) VALUES (?,?,?,?,?)').run(uuidv4(), userId, challenge, context, strategy);
-    res.json({ strategy });
+    res.json({ optimization: result });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/feedbackculture/build', requireAuth, async (req: AuthRequest, res) => {
+app.post('/api/content/viral-formula', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
-  const { org_context, current_state, team_size } = req.body;
+  const { topic, platform, niche, target_emotion } = req.body;
   try {
     const key = await getUserLLMKey(userId, 'anthropic');
     const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
-      { role: 'user', content: `You are an organizational culture and feedback systems expert. Build a feedback culture.\nOrg context: ${org_context}\nCurrent feedback culture: ${current_state || 'little to no feedback'}\nTeam size: ${team_size || 'small team'}\n\nProvide: feedback culture assessment, psychological safety foundation steps, feedback frameworks to adopt (SBI, COIN, etc.), cadence design (1:1s, retrospectives, 360s), how to train people to give and receive feedback, manager modeling behaviors, how to handle defensive reactions, 90-day culture change plan.` }
+      { role: 'user', content: `You are a viral content strategist. Create a viral content formula.\nTopic: ${topic}\nPlatform: ${platform}\nNiche: ${niche || 'general'}\nTarget emotion: ${target_emotion || 'curiosity'}\n\nProvide:\n1. 5 viral hook variations (pattern interrupt, curiosity gap, controversy, story, data)\n2. Content structure (hook → conflict → resolution → CTA)\n3. Engagement bait questions to ask\n4. 10 platform-specific hashtags\n5. Best posting times for ${platform}\n6. Amplification strategy (first 30 min after posting)\n7. Caption template\n8. A/B test variation to try` }
     ]);
-    const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, '').trim();
-    db.prepare('INSERT INTO feedback_culture_builders (id,user_id,org_context,current_state,plan) VALUES (?,?,?,?,?)').run(uuidv4(), userId, org_context, current_state, plan);
+    res.json({ formula: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/decision/matrix', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { decision, options, criteria, stakes } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const optList = Array.isArray(options) ? options.join(', ') : options;
+    const critList = criteria ? (Array.isArray(criteria) ? criteria.join(', ') : criteria) : 'cost, time, risk, impact, alignment';
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a decision architect using multiple frameworks. Analyze this decision rigorously.\nDecision: ${decision}\nOptions: ${optList}\nCriteria: ${critList}\nStakes: ${stakes || 'medium'}\n\nProvide:\n1. Weighted decision matrix (score each option 1-10 on each criterion)\n2. Recommended option with confidence %\n3. Regret minimization analysis (which choice will you regret least in 10 years?)\n4. Pre-mortem (what could go wrong with top choice)\n5. Second-order consequences\n6. What information would change your decision\n7. The decision you're avoiding making\n8. Final recommendation in one sentence` }
+    ]);
+    res.json({ matrix: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/skill-gap', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { current_role, target_role, current_skills, timeline_months } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const skillList = Array.isArray(current_skills) ? current_skills.join(', ') : (current_skills || 'not specified');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a career development expert and skills coach. Analyze the skill gap and create a learning roadmap.\nCurrent role: ${current_role}\nTarget role: ${target_role}\nCurrent skills: ${skillList}\nTimeline: ${timeline_months || 12} months\n\nProvide:\n1. Gap Score (0-100, where 100 = fully ready)\n2. Critical missing skills (must-have vs nice-to-have)\n3. Month-by-month learning roadmap\n4. Free resources for each skill (YouTube, courses, books)\n5. Portfolio projects to build credibility\n6. People to follow / communities to join\n7. Timeline reality check (is ${timeline_months} months realistic?)\n8. First action to take this week` }
+    ]);
+    res.json({ analysis: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 98 — 5 new AI tools
+app.post('/api/pitch/deck-builder', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company_name, problem, solution, market_size, traction, ask } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a top-tier pitch deck consultant who has helped companies raise $500M+. Build a complete pitch narrative.\nCompany: ${company_name}\nProblem: ${problem}\nSolution: ${solution}\nMarket size: ${market_size || 'unknown'}\nTraction: ${traction || 'pre-revenue'}\nAsk: ${ask || 'unknown'}\n\nProvide slide-by-slide content:\n1. Title slide (tagline)\n2. Problem (pain point + who suffers)\n3. Solution (your insight)\n4. Market size (TAM/SAM/SOM)\n5. Product (key features + demo note)\n6. Business model (how you make money)\n7. Traction (metrics that matter)\n8. Team (why you'll win)\n9. Competition (positioning matrix)\n10. The Ask (use of funds + milestones)\n\nAlso: investor objections to prepare for, what makes this defensible.` }
+    ]);
+    res.json({ deck: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mindmap/generate', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { topic, depth, purpose } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a knowledge architect. Create a comprehensive mind map for: ${topic}\nDepth: ${depth || 3} levels\nPurpose: ${purpose || 'general understanding'}\n\nStructure as:\nCENTRAL IDEA: ${topic}\n\nBRANCH 1: [Main concept]\n  Sub: [Detail]\n  Sub: [Detail]\n    Sub-sub: [Specific]\n\n(Continue for all major branches)\n\nAlso provide:\n- 5 key insights about this topic\n- 3 surprising connections to other fields\n- Best way to learn this topic\n- Top 3 resources` }
+    ]);
+    res.json({ mindmap: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/habit/stack-builder', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { existing_habits, goals, available_time, chronotype } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a behavior design expert (BJ Fogg + James Clear methodology). Design an optimal habit stack.\nExisting habits: ${existing_habits || 'morning coffee, brush teeth'}\nGoals: ${goals}\nAvailable time: ${available_time || '30 minutes'}/day\nChronotype: ${chronotype || 'morning person'}\n\nProvide:\n1. Habit audit (keep, modify, drop from existing)\n2. Habit stacks (anchor habit → new habit × 3 stacks)\n3. Morning routine (optimized for their chronotype)\n4. Evening routine\n5. Minimum viable version for bad days\n6. Environment design changes\n7. Tracking method\n8. What to do when you miss a day` }
+    ]);
+    res.json({ stack: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/debate/prep', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { topic, your_position, context, opponent_likely_arguments } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a master debater and rhetoric coach. Prepare a comprehensive debate strategy.\nTopic: ${topic}\nYour position: ${your_position}\nContext: ${context || 'general discussion'}\nExpected opponent arguments: ${opponent_likely_arguments || 'unknown'}\n\nProvide:\n1. Your 3 strongest arguments (with evidence/data)\n2. Steel-man of the opposing view\n3. Rebuttals to top 5 counterarguments\n4. Logical fallacies to watch for\n5. Emotional vs logical appeal balance\n6. Opening statement (30 seconds)\n7. Closing statement (30 seconds)\n8. Killer question to ask your opponent\n9. Concessions you can safely make (builds credibility)\n10. Red lines — things you cannot concede` }
+    ]);
+    res.json({ prep: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/story/brand', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { founder_background, company_mission, turning_point, customer_impact } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a brand storytelling expert. Craft a compelling brand origin story.\nFounder background: ${founder_background}\nMission: ${company_mission}\nTurning point / why you started: ${turning_point}\nCustomer impact: ${customer_impact || 'unknown'}\n\nProvide:\n1. Hero's Journey narrative (the founder story)\n2. The villain (problem / industry status quo)\n3. The transformation (before → after for customers)\n4. 3 versions: 1-sentence, 1-paragraph, full 2-minute story\n5. Emotional hooks to emphasize\n6. What to leave out (oversharing kills brand stories)\n7. How to tell it on: website About page, investor pitch, social media, press interviews\n8. Memorable tagline options (3 variations)` }
+    ]);
+    res.json({ story: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.listen(PORT, () => {
+  console.log(`Forge API running on port ${PORT}`);
+});
+
+// ── WAVE 99 ────────────────────────────────────────────────────────────────
+
+app.post('/api/email/cold-personalize', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { prospect, prospect_role, your_product, pain_point, tone } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a world-class cold email copywriter. Write a hyper-personalized cold email.\nProspect: ${prospect}\nTheir role: ${prospect_role || 'unknown'}\nYour product/service: ${your_product}\nTheir pain point: ${pain_point || 'unknown'}\nTone: ${tone || 'professional'}\n\nProvide:\n1. Subject line (3 variations — curiosity, direct, personalized)\n2. Main email body (under 120 words, no fluff)\n3. P.S. line\n4. Follow-up email #1 (day 3)\n5. Follow-up email #2 (day 7, breakup email)\n6. Anti-spam checklist\n7. Best send time recommendation\n8. Personalization variables to swap in` }
+    ]);
+    res.json({ email: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/seo/content-brief', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { keyword, audience, content_type, competitors } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are an SEO content strategist. Create a comprehensive content brief.\nTarget keyword: ${keyword}\nAudience: ${audience || 'general'}\nContent type: ${content_type || 'blog'}\nCompetitor URLs: ${competitors || 'none provided'}\n\nProvide:\n1. Recommended title tag (under 60 chars) — 3 variations\n2. Meta description (under 155 chars)\n3. H1 headline\n4. H2 sections with H3 subsections (full outline)\n5. Target word count range\n6. Primary keyword + 8-10 semantic/LSI keywords to include\n7. Search intent analysis (informational/commercial/transactional)\n8. Internal link opportunities (generic)\n9. Schema markup type to use\n10. Content differentiation angle vs typical results\n11. CTA recommendation` }
+    ]);
+    res.json({ brief: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/draft-document', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { doc_type, party1, party2, key_terms, jurisdiction } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a legal document drafter. Draft a ${doc_type} agreement.\nParty 1: ${party1}\nParty 2: ${party2}\nKey terms: ${key_terms || 'standard'}\nJurisdiction: ${jurisdiction || 'US'}\n\nIMPORTANT: Include disclaimer that this is AI-generated and not legal advice.\n\nDraft the full document with:\n1. Proper legal heading and date placeholder\n2. Recitals / background\n3. All standard clauses for this document type\n4. Key terms from input incorporated\n5. Signature blocks for both parties\n6. Notarization block if applicable\n7. [BRACKETED PLACEHOLDERS] for anything that needs customization\n8. Brief notes on what to customize before signing` }
+    ]);
+    res.json({ document: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/meeting/extract-actions', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { transcript, meeting_type } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are an expert meeting facilitator. Extract structured information from this ${meeting_type || 'general'} meeting.\n\nTranscript/Notes:\n${transcript}\n\nExtract and structure:\n1. ACTION ITEMS (format: [Owner] — Task — Due date or ASAP)\n2. DECISIONS MADE (numbered list)\n3. KEY DISCUSSION POINTS (brief bullets)\n4. OPEN QUESTIONS / PARKING LOT\n5. BLOCKERS identified\n6. NEXT MEETING agenda suggestions\n7. FOLLOW-UP EMAIL (ready to send, professional tone, includes all action items)\n\nBe specific with owners and deadlines where mentioned. Mark unclear ownership as [TBD].` }
+    ]);
+    res.json({ actions: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/prd', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { feature_name, problem, target_user, success_metrics, constraints } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a senior product manager. Write a complete PRD for: ${feature_name}\n\nProblem: ${problem}\nTarget user: ${target_user || 'unknown'}\nSuccess metrics: ${success_metrics || 'TBD'}\nConstraints/Out of scope: ${constraints || 'none'}\n\nPRD structure:\n1. EXECUTIVE SUMMARY (2-3 sentences)\n2. PROBLEM STATEMENT & USER PAIN\n3. GOALS & SUCCESS METRICS (quantified)\n4. USER STORIES (format: As a [user], I want to [action] so that [benefit]) — 5-8 stories\n5. ACCEPTANCE CRITERIA (for each major story)\n6. FUNCTIONAL REQUIREMENTS (numbered)\n7. NON-FUNCTIONAL REQUIREMENTS (performance, security, scalability)\n8. OUT OF SCOPE\n9. EDGE CASES & ERROR STATES\n10. DEPENDENCIES\n11. TIMELINE ESTIMATE (rough)\n12. OPEN QUESTIONS` }
+    ]);
+    res.json({ prd: result });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 100 ───────────────────────────────────────────────────────────────
+
+app.post('/api/video/youtube-script', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { topic, audience, hook, duration, style } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a top YouTube scriptwriter who has written for channels with 1M+ subscribers. Write a complete ${duration}-minute ${style} video script.\nTopic: ${topic}\nAudience: ${audience || 'general'}\nHook idea: ${hook || 'create a compelling hook'}\n\nScript structure:\n[HOOK - 0:00-0:30]\n(First 30 seconds — must stop scroll and create curiosity gap)\n\n[INTRO - 0:30-1:00]\n(Channel intro + what viewer will learn/get)\n\n[MAIN CONTENT]\n(Full scripted content with [TIMESTAMP] markers every 2-3 minutes)\n(Include pattern interrupts, re-engagement loops every 2 min)\n(Add [B-ROLL SUGGESTION] notes)\n\n[CTA MIDDLE]\n(Soft subscribe/like mention)\n\n[CONCLUSION]\n(Summary + strong CTA)\n\n[END SCREEN - final 20 seconds]\n\nAlso provide:\n- THUMBNAIL concept (3 options)\n- TITLE options (5, including keyword-rich and clickbait variations)\n- DESCRIPTION (SEO-optimized, first 150 chars most important)\n- TAGS (20 relevant tags)\n- CHAPTERS for video description` }
+    ]);
+    res.json({ script: result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/app/store-description', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { app_name, category, features, target_user, platform } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are an ASO (App Store Optimization) expert. Write store descriptions for: ${app_name}\nCategory: ${category}\nFeatures: ${features}\nTarget user: ${target_user || 'general'}\nPlatform: ${platform || 'both'}\n\nProvide:\n1. APP STORE (iOS) - Full description (max 4000 chars)\n   - First 255 chars (above fold — most important)\n   - Feature bullets (with emojis)\n   - Social proof section\n   - CTA\n2. SUBTITLE (max 30 chars) — 3 options\n3. GOOGLE PLAY - Short description (max 80 chars)\n4. GOOGLE PLAY - Full description (max 4000 chars)\n5. PRIMARY KEYWORD suggestions (5)\n6. SCREENSHOT CAPTIONS (5 screens, 1-2 lines each)\n7. WHAT'S NEW / UPDATE text template\n8. RATING prompt strategy` }
+    ]);
+    res.json({ description: result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/changelog', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { changes, version, product, audience } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a technical writer who makes changelogs that users actually love to read. Transform these raw changes into polished release notes.\nProduct: ${product || 'the product'}\nVersion: ${version || 'latest'}\nAudience: ${audience || 'users'}\nRaw changes:\n${changes}\n\nProvide:\n1. CHANGELOG (formatted, categorized: New Features / Improvements / Bug Fixes / Breaking Changes)\n2. RELEASE ANNOUNCEMENT (tweet-length, exciting)\n3. EMAIL ANNOUNCEMENT (subject + body for users)\n4. IN-APP NOTIFICATION copy (under 100 chars)\n5. BLOG POST OUTLINE for major features\n6. DEVELOPER NOTES (technical details for ${audience === 'developers' ? 'devs' : 'any developers reading'})\n\nGuidelines: Lead with user benefits, not technical implementation. Use active voice. Be specific about improvements (e.g. "50% faster" not "improved performance").` }
+    ]);
+    res.json({ changelog: result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/linkedin/company-page', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company_name, industry, mission, size, key_products } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are a LinkedIn brand strategist. Write compelling company page copy for: ${company_name}\nIndustry: ${industry}\nMission/What you do: ${mission}\nCompany size: ${size}\nKey products/services: ${key_products || 'not specified'}\n\nProvide:\n1. TAGLINE (under 120 chars) — 3 variations\n2. ABOUT SECTION (2000 chars max)\n   - Hook first sentence\n   - Problem you solve\n   - How you solve it\n   - Who you serve\n   - Why you're different\n   - Culture/values (1 sentence)\n   - CTA\n3. SPECIALTIES (20 keywords for LinkedIn's specialties field)\n4. CONTENT PILLAR ideas (5 recurring post types)\n5. FEATURED SECTION ideas (what to pin)\n6. LIFE TAB copy suggestions\n7. FIRST 5 POST IDEAS (for launch/relaunch)` }
+    ]);
+    res.json({ page: result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/grant/proposal', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { org_name, project_title, problem, solution, amount, grant_type } = req.body;
+  try {
+    const key = await getUserLLMKey(userId, 'anthropic');
+    const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
+      { role: 'user', content: `You are an expert grant writer with a 70%+ success rate. Write a compelling ${grant_type} grant proposal.\nOrganization: ${org_name}\nProject: ${project_title || 'the project'}\nProblem: ${problem}\nSolution: ${solution}\nAmount requested: ${amount || 'not specified'}\n\nFull proposal:\n1. EXECUTIVE SUMMARY (1 page max)\n2. ORGANIZATION BACKGROUND (template with [BRACKETS] to fill in)\n3. STATEMENT OF NEED (data-driven, compelling)\n4. PROJECT DESCRIPTION\n   - Goals & Objectives (SMART format)\n   - Methodology / Activities\n   - Timeline (6-12 month)\n   - Staffing plan\n5. EVALUATION PLAN (how you'll measure success)\n6. SUSTAINABILITY PLAN (how project continues after grant)\n7. BUDGET NARRATIVE (categories with justification)\n8. LETTERS OF SUPPORT template\n9. COMMON REVIEWER CONCERNS for this grant type + how to address them` }
+    ]);
+    res.json({ proposal: result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 101 ────────────────────────────────────────────────────────────────
+
+app.post('/api/social/thread', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { topic, platform = 'twitter', angle = 'educational', audience = '' } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const platformInstr = platform === 'linkedin' ? 'LinkedIn long-form thread' : platform === 'both' ? 'Twitter/X and LinkedIn versions' : 'Twitter/X thread';
+    const prompt = `Create a viral ${platformInstr} about: "${topic}"\nAngle: ${angle}\nAudience: ${audience || 'general professional audience'}\n\nFor Twitter/X: 8-15 tweets, each under 280 chars, numbered (1/N), hook tweet first, end with CTA.\nFor LinkedIn: 8-12 paragraphs, hook opener, double line breaks, emoji sparingly, end with question for engagement.\nMake it genuinely valuable and shareable. Include relevant hooks, transitions, and engagement triggers.`;
+    const result = await callLLM(provider, key, prompt, 1200);
+    res.json({ thread: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ux/audit', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product_type, description, user_goal, known_issues } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Perform a heuristic UX audit for a ${product_type}.\n\nProduct description: ${description}\nPrimary user goal: ${user_goal || 'complete the main action'}\nKnown issues: ${known_issues || 'none specified'}\n\nAudit report should include:\n1. CRITICAL ISSUES (conversion killers) — list each with: problem, why it hurts, specific fix\n2. HIGH PRIORITY (friction points) — same format\n3. MEDIUM PRIORITY (polish)\n4. QUICK WINS (easy + high impact)\n5. Nielsen Heuristics violated\n6. Recommended A/B tests\n7. Priority fix roadmap (30-day plan)\n\nBe specific, actionable, and reference UX best practices.`;
+    const result = await callLLM(provider, key, prompt, 1400);
+    res.json({ audit: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/pricing/tiers', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, target_market, competitors, model, current_price } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Design pricing tiers for this product:\nProduct: ${product}\nTarget market: ${target_market}\nPricing model: ${model}\nCompetitors: ${competitors || 'not specified'}\nCurrent price: ${current_price || 'not set'}\n\nDeliver:\n1. 3-4 PRICING TIERS with: tier name (creative + descriptive), monthly price, annual price, target persona, 6-8 features included, what's NOT included, upgrade trigger\n2. PRICING PSYCHOLOGY: anchor tier, most-popular recommendation, decoy pricing strategy\n3. FEATURE DIFFERENTIATION matrix\n4. FREEMIUM or trial recommendation\n5. UPGRADE TRIGGERS: what gets users to upgrade (usage limits, power features)\n6. PRICING PAGE copy suggestions\n7. Common objections + responses\n\nBase on value metrics, not cost. Make the middle tier most attractive.`;
+    const result = await callLLM(provider, key, prompt, 1400);
+    res.json({ pricing: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/onboarding-flow', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, user_type, aha_moment, drop_off } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Design an onboarding flow for:\nProduct: ${product}\nUser type: ${user_type || 'general user'}\nAha moment: ${aha_moment || 'not specified'}\nCurrent drop-off point: ${drop_off || 'unknown'}\n\nDeliver a complete onboarding flow:\n1. PRE-SIGNUP: landing page hook, value prop, social proof placement\n2. SIGNUP FLOW: form fields (minimum viable), friction reducers, progress indicator\n3. WELCOME SCREEN: personalization questions (max 3), skip option, value reinforcement\n4. ACTIVATION STEPS (numbered, each with): step name, action required, time estimate, copy/CTA, success state, what happens next\n5. AHA MOMENT DESIGN: how to engineer reaching it in <5 min\n6. FIRST WEEK EMAILS: day 0, 1, 3, 7 — subject lines + hook sentences\n7. IN-APP TOOLTIPS: 3-5 key moments for contextual guidance\n8. DROP-OFF RECOVERY: exit intent, re-engagement triggers\n9. SUCCESS METRICS: activation rate targets, D1/D7/D30 retention goals\n\nTime-to-value should be under 5 minutes.`;
+    const result = await callLLM(provider, key, prompt, 1500);
+    res.json({ flow: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/pr/press-release', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { headline, company, announcement, quote, release_type } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Write an AP-style press release for a ${release_type}:\nCompany: ${company}\nHeadline idea: ${headline || 'generate compelling headline'}\nAnnouncement details: ${announcement}\nExecutive quote: ${quote || 'generate an appropriate quote'}\n\nFormat:\n1. FOR IMMEDIATE RELEASE\n2. HEADLINE (2-3 options, punchy, newsy)\n3. SUBHEADLINE\n4. DATELINE — City, Date — \n5. LEAD PARAGRAPH (who, what, when, where, why — 1 paragraph)\n6. BODY (2-3 paragraphs, inverted pyramid, most important first)\n7. EXECUTIVE QUOTE (name, title, company)\n8. SUPPORTING DETAILS (data, features, context)\n9. ABOUT [Company] (2-3 sentences boilerplate)\n10. MEDIA CONTACT block\n11. ### (end mark)\n\nTone: professional, newsy, not salesy. Journalists should want to cover this.`;
+    const result = await callLLM(provider, key, prompt, 1200);
+    res.json({ release: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 102 ────────────────────────────────────────────────────────────────
+
+app.post('/api/dev/api-docs', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { endpoint_type, spec, doc_style } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Generate ${doc_style} API documentation for a ${endpoint_type} API.\n\nSpecs provided:\n${spec}\n\nGenerate comprehensive docs including:\n1. Overview + authentication\n2. For each endpoint: description, HTTP method, URL, path params, query params, request body (with types + examples), response (success + error, with typed examples)\n3. Code examples in curl, JavaScript fetch, and Python requests\n4. Error codes reference table\n5. Rate limiting notes\n6. Changelog / version info\n\nMake it developer-friendly, with clear examples and copy-pasteable code.`;
+    const result = await callLLM(provider, key, prompt, 1600);
+    res.json({ docs: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/breakeven', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { fixed_costs, variable_cost, price, business_type, current_revenue } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const fc = parseFloat(fixed_costs) || 0;
+    const vc = parseFloat(variable_cost) || 0;
+    const p = parseFloat(price) || 0;
+    const cr = parseFloat(current_revenue) || 0;
+    const margin = p - vc;
+    const breakeven_units = margin > 0 ? Math.ceil(fc / margin) : null;
+    const breakeven_revenue = breakeven_units ? breakeven_units * p : null;
+    const prompt = `Perform a breakeven analysis for a ${business_type} business.\n\nFinancials:\n- Fixed costs: $${fc}/month\n- Variable cost per unit: $${vc}\n- Price per unit: $${p}\n- Contribution margin: $${margin}\n- Breakeven units: ${breakeven_units || 'N/A (margin is 0 or negative)'}\n- Breakeven revenue: $${breakeven_revenue || 'N/A'}\n- Current monthly revenue: $${cr}\n${cr > 0 ? `- Current units: ~${Math.round(cr/p)}` : ''}\n${cr > 0 && breakeven_revenue ? `- Status: ${cr >= breakeven_revenue ? '✅ PROFITABLE' : `❌ ${Math.round(((breakeven_revenue-cr)/breakeven_revenue)*100)}% below breakeven`}` : ''}\n\nProvide:\n1. EXECUTIVE SUMMARY with breakeven analysis\n2. SCENARIO ANALYSIS: breakeven at 3 different price points\n3. PATH TO PROFITABILITY: specific actions with expected impact\n4. COST REDUCTION OPPORTUNITIES\n5. REVENUE LEVERS to hit breakeven faster\n6. 3-MONTH PROJECTION with monthly milestones\n7. UNIT ECONOMICS BENCHMARK vs industry norms for ${business_type}\n8. KEY RISKS to profitability`;
+    const result = await callLLM(provider, key, prompt, 1400);
+    res.json({ analysis: result, breakeven_units, breakeven_revenue, margin });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/job-description', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { role, company, level, remote, skills, culture } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Write an inclusive, compelling job description for:\nRole: ${role} (${level})\nCompany: ${company || 'a fast-growing startup'}\nWork type: ${remote}\nRequired skills: ${skills || 'not specified'}\nCulture: ${culture || 'collaborative and innovative'}\n\nStructure:\n1. ROLE HOOK (2-3 sentences that sell the opportunity)\n2. ABOUT US (4-5 sentences, mission-driven, authentic)\n3. THE ROLE (what you'll actually be doing — use action verbs, be specific)\n4. WHAT YOU'LL DO (5-7 bullet points, outcomes-focused)\n5. WHAT WE'RE LOOKING FOR (required: 4-5 items; nice-to-have: 3-4 items)\n6. WHAT WE OFFER (compensation range placeholder, benefits, growth)\n7. OUR PROCESS (interview steps)\n8. DIVERSITY STATEMENT (authentic, not boilerplate)\n\nGuidelines:\n- Remove gendered language (use 'you' not 'he/she')\n- Avoid jargon like 'rockstar', 'ninja', 'guru'\n- Focus on outcomes over years of experience\n- Include salary range placeholder\n- Keep requirements realistic (not 10 years of 2-year-old tech)`;
+    const result = await callLLM(provider, key, prompt, 1400);
+    res.json({ jd: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/feedback-analyze', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { feedback, source, product } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Analyze this customer feedback for ${product || 'a product'} from ${source}:\n\n${feedback}\n\nProvide:\n1. SENTIMENT BREAKDOWN: % positive / neutral / negative with evidence\n2. TOP THEMES (ranked by frequency): theme name + count + representative quotes\n3. BUG REPORTS / ISSUES: specific bugs or errors mentioned\n4. FEATURE REQUESTS: requested features, ranked by demand\n5. PRAISE POINTS: what customers love (use in marketing)\n6. CHURN SIGNALS: things that make customers leave or consider leaving\n7. NPS ESTIMATE: based on language and sentiment\n8. PRODUCT INSIGHTS: non-obvious patterns or correlations\n9. QUICK WINS: 3 changes that would most improve satisfaction\n10. ROADMAP RECOMMENDATIONS: prioritized list based on feedback\n\nBe specific, quote the feedback, and make it actionable.`;
+    const result = await callLLM(provider, key, prompt, 1400);
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/competitive/teardown', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { competitor, your_product, angle } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompts: Record<string, string> = {
+      pricing: `Analyze the pricing strategy of ${competitor}. Cover: tier structure, value anchoring, price-to-value ratio, hidden costs, discount strategy, vs industry norms, attack angles for competitors.`,
+      messaging: `Tear down ${competitor}'s messaging and positioning. Cover: headline/tagline analysis, value proposition, target persona assumptions, emotional triggers used, claims made, what they avoid saying, gaps you could exploit.`,
+      product: `Analyze ${competitor}'s product from a competitive standpoint. Cover: core features, UX/UI strengths and weaknesses, missing features, technical limitations, integration ecosystem, mobile vs web, performance, areas where they cut corners.`,
+      battlecard: `Create a sales battlecard against ${competitor}. Format: \n- WHY WE WIN vs them (5 points with proof)\n- THEIR WEAK SPOTS (exploitable gaps)\n- OBJECTIONS when prospects mention them + our responses\n- TRAP QUESTIONS to ask that expose their weaknesses\n- PROOF POINTS (metrics, testimonials angle)\n- ONE SENTENCE positioning statement against them`,
+      full: `Perform a comprehensive competitor teardown of ${competitor}${your_product ? ` vs ${your_product}` : ''}.\n\nCover:\n1. COMPANY OVERVIEW (funding, size, market position, growth signals)\n2. PRODUCT ANALYSIS (features, UX, technical strengths/weaknesses, missing capabilities)\n3. PRICING TEARDOWN (tiers, value anchoring, hidden costs)\n4. MESSAGING & POSITIONING (ICP, value prop, emotional triggers, gaps)\n5. GO-TO-MARKET (channels, content strategy, partnerships)\n6. CUSTOMER SENTIMENT (what users love/hate, churn reasons)\n7. COMPETITIVE GAPS (where they're weak, underserved segments)\n8. ATTACK STRATEGY (how to win deals against them)\n9. SALES BATTLECARD (objections + responses, trap questions)\n10. DIFFERENTIATION OPPORTUNITIES (where you can own the narrative)`
+    };
+    const prompt = prompts[angle] || prompts.full;
+    const result = await callLLM(provider, key, prompt, 1600);
+    res.json({ teardown: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 103 ────────────────────────────────────────────────────────────────
+
+app.post('/api/email/subject-lines', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { topic, audience, email_type, tone } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Generate 20+ email subject lines for a ${email_type} email.\nTopic: ${topic}\nAudience: ${audience || 'general'}\nTone: ${tone}\n\nOrganize into categories:\n1. CURIOSITY GAPS (make them wonder)\n2. BENEFIT-DRIVEN (clear value in subject)\n3. URGENCY / FOMO (time/scarcity)\n4. PERSONALIZATION tokens (use [Name], [Company] etc)\n5. QUESTION-BASED\n6. NUMBERS & DATA\n7. BOLD / CONTROVERSIAL\n8. EMOJI-ENHANCED (2-3 options)\n\nFor each subject line:\n- Rate estimated open rate: HIGH/MEDIUM/LOW\n- Flag spam trigger words\n- Preview text suggestion (40 chars)\n\nThen recommend TOP 3 to A/B test and explain why.`;
+    const result = await callLLM(provider, key, prompt, 1400);
+    res.json({ subjects: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/handle-objection', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { objection, product, stage } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Handle this sales objection at the ${stage} stage:\nObjection: "${objection}"\nProduct: ${product || 'not specified'}\n\nProvide:\n1. OBJECTION DIAGNOSIS: what's the real concern behind it (often not what they say)\n2. PSYCHOLOGY: why this objection happens + what it reveals\n3. THE WRONG WAY to respond (common mistakes)\n4. RESPONSE SCRIPT A — Acknowledge + Reframe (word-for-word script)\n5. RESPONSE SCRIPT B — Flip the objection (make it a reason to buy)\n6. RESPONSE SCRIPT C — Story/social proof approach\n7. FOLLOW-UP QUESTIONS to uncover the real blocker\n8. DEAL BREAKER vs SMOKSCREEN: how to tell if it's real\n9. NEXT STEP after handling it`;
+    const result = await callLLM(provider, key, prompt, 1200);
+    res.json({ response: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/pitch/feedback', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { pitch_content, audience, stage } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `You are a ${audience} who has reviewed 500+ pitches at the ${stage} stage. Give BRUTAL, honest feedback.\n\nPitch content:\n${pitch_content}\n\nFeedback structure:\n1. FIRST IMPRESSION (10 seconds): what does it feel like? what's missing instantly?\n2. SLIDE-BY-SLIDE CRITIQUE: for each slide/section — what works, what doesn't, what questions it raises\n3. THE BIG HOLES: what every investor will ask that isn't answered\n4. MARKET SIZING: is the TAM/SAM/SOM believable?\n5. TEAM CREDIBILITY: what's missing or weak\n6. BUSINESS MODEL clarity: is it obvious how you make money?\n7. TRACTION: is there enough proof?\n8. VERDICT: PASS / CONDITIONAL PASS / FAIL — with 3 things that must change\n9. REWRITE SUGGESTIONS: specific copy improvements for weak slides\n\nDon't be polite. Be the partner who gives feedback behind closed doors.`;
+    const result = await callLLM(provider, key, prompt, 1500);
+    res.json({ feedback: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/business/niche-finder', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { skills, interests, experience, goal } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Find profitable niches for someone with:\nSkills: ${skills}\nInterests: ${interests || 'not specified'}\nExperience: ${experience || 'not specified'}\nGoal: ${goal}\n\nIdentify 5-7 niche opportunities, for each:\n1. NICHE NAME & DESCRIPTION\n2. TARGET CUSTOMER (specific persona)\n3. THEIR PAIN POINT (what keeps them up at night)\n4. REVENUE POTENTIAL (realistic range for ${goal})\n5. MARKET SIZE (rough estimate)\n6. COMPETITION LEVEL: Low/Medium/High\n7. BARRIER TO ENTRY: how hard to start\n8. MONETIZATION MODEL for ${goal}\n9. VALIDATION STEPS: how to test in 2 weeks\n10. QUICK WIN: first $1K path\n\nThen give:\n- TOP PICK with detailed reasoning\n- RED FLAGS to avoid\n- ADJACENT NICHES to explore`;
+    const result = await callLLM(provider, key, prompt, 1400);
+    res.json({ niches: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/repurpose', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { original_content, source_format, targets } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const targetList = (targets || []).join(', ');
+    const prompt = `Repurpose this ${source_format} into these formats: ${targetList}\n\nOriginal content:\n${original_content}\n\nFor each target format, generate platform-optimized content:\n- TWITTER: thread (8-12 tweets numbered 1/N, each <280 chars) + standalone tweet option\n- LINKEDIN: long-form post (hook, 5-8 paragraphs, CTA, hashtags)\n- EMAIL: newsletter section (subject line + body, 150-250 words)\n- INSTAGRAM: caption (hook, body, 5 hashtags, story prompt)\n- TIKTOK: script (hook 0-3s, body, CTA, trending sounds suggestion)\n- YOUTUBE: title options, description, chapters, tags\n- PODCAST: talking points outline + intro/outro scripts\n- NEWSLETTER: standalone section with different angle\n- REDDIT: best subreddits to post + adapted post format\n\nOnly generate the requested formats. Keep the core message but adapt tone, length, and format for each platform.`;
+    const result = await callLLM(provider, key, prompt, 1800);
+    res.json({ repurposed: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 104 ────────────────────────────────────────────────────────────────
+
+app.post('/api/sales/script', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, target_role, call_type, pain_point } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Write a word-for-word ${call_type} sales script.\nProduct: ${product}\nTarget: ${target_role || 'decision maker'}\nPain point: ${pain_point || 'not specified'}\n\nScript format:\n[OPENING] — hook first 10 seconds, pattern interrupt\n[PERMISSION] — get them to agree to continue\n[DISCOVERY QUESTIONS] — 3-5 questions to uncover pain (SPIN technique)\n[TRANSITION] — bridge from pain to solution\n[PITCH] — 60-second value proposition, customer language\n[DEMO/PROOF POINT] — one compelling story or stat\n[TRIAL CLOSE] — temperature check\n[OBJECTION HANDLING] — top 3 likely objections with responses\n[CLOSE] — 2 closing options (direct + soft)\n[NEXT STEPS] — calendar lock\n\nInclude:\n- Exact words in quotes\n- Stage directions in [brackets]\n- Timing estimates\n- What NOT to say\n- Voicemail version (if cold call)`;
+    const result = await callLLM(provider, key, prompt, 1600);
+    res.json({ script: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/copy/landing-page', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, audience, main_benefit, section } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const sectionMap: Record<string, string> = {
+      hero: 'hero section: headline (H1), subheadline, 3 bullet proof points, primary CTA button text, secondary CTA, hero image description',
+      features: 'features/benefits section: section headline, 6 feature blocks each with icon description, title, 2-sentence benefit-focused description',
+      faq: 'FAQ section: 8-10 questions with answers covering pricing, how it works, security, comparison to alternatives, results timeline',
+      cta: '3 CTA section variations: urgency-based, benefit-based, risk-reversal based — each with headline, subtext, button copy',
+      pricing: 'pricing section: section headline, trust line, tier comparison copy, most popular badge, CTA for each tier, money-back guarantee copy',
+      full: 'complete landing page: hero, social proof bar, problem section, solution/features, how it works, testimonials (write 3), pricing teaser, FAQ (5 Qs), final CTA'
+    };
+    const prompt = `Write high-converting landing page copy.\nProduct: ${product}\nAudience: ${audience}\nCore benefit: ${main_benefit || 'solve their biggest problem'}\n\nGenerate the ${sectionMap[section] || sectionMap.full}.\n\nPrinciples: clarity over cleverness, specific over vague, benefits not features, address objections proactively, use customer language, create urgency without being pushy, social proof integration points.`;
+    const result = await callLLM(provider, key, prompt, 1600);
+    res.json({ copy: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investor/update', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { company_name, period, metrics, highlights, asks } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Write a professional investor update email for ${company_name || 'our company'} covering ${period || 'this period'}.\n\nMetrics: ${metrics}\nHighlights/Challenges: ${highlights || 'not specified'}\nAsks: ${asks || 'none specified'}\n\nFormat:\nSubject: [company] Update — [Period]\n\n[Opening: 1 sentence framing the period]\n\n📊 KEY METRICS\n[Format metrics clearly with MoM or YoY comparisons if calculable]\n\n🏆 WINS\n[3-5 bullets, specific and evidence-based]\n\n⚠️ CHALLENGES\n[1-3 honest challenges — investors respect candor]\n\n🔮 NEXT 30/60/90 DAYS\n[What you're focused on, what success looks like]\n\n🙏 ASKS\n[Specific, actionable requests from investors]\n\n[Closing line]\n\nTone: Confident but honest. Transparent about challenges. Investors invest in founders as much as companies — show resilience and clarity of thought.`;
+    const result = await callLLM(provider, key, prompt, 1200);
+    res.json({ update: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/bug-report', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { bug_description, steps, expected, actual, stack_trace, platform } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Generate a professional bug report for a ${platform} application.\n\nBug description: ${bug_description}\nSteps to reproduce: ${steps || 'not provided'}\nExpected: ${expected || 'not specified'}\nActual: ${actual || 'not specified'}\nStack trace: ${stack_trace || 'none'}\n\nCreate a complete bug report:\n## Bug Report\n**Title:** [Concise, descriptive title]\n**Severity:** [Critical/High/Medium/Low with justification]\n**Priority:** [P0/P1/P2/P3]\n**Platform:** ${platform}\n**Reporter:** [REPORTER_NAME]\n**Date:** ${new Date().toISOString().split('T')[0]}\n\n### Description\n[Clear description of the issue]\n\n### Steps to Reproduce\n1. [Step 1]\n2. [Step 2]\n...\n\n### Expected Behavior\n[What should happen]\n\n### Actual Behavior\n[What actually happens]\n\n### Error Output\n\`\`\`\n[Stack trace or error message]\n\`\`\`\n\n### Root Cause Analysis\n[Likely cause based on the evidence]\n\n### Suggested Fix\n[Technical recommendation]\n\n### Affected Users/Impact\n[Who is impacted and how]\n\n### Workaround\n[Temporary workaround if any]\n\n### Labels\n[Suggested tags/labels]`;
+    const result = await callLLM(provider, key, prompt, 1200);
+    res.json({ report: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/storytell', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { data, audience, goal, context } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Transform this data into a compelling narrative for ${audience || 'a business audience'}.\nGoal: ${goal}\nContext: ${context || 'business performance'}\n\nData:\n${data}\n\nCreate:\n1. THE HEADLINE: One sentence that captures the most important insight\n2. THE STORY (narrative arc):\n   - Context: where we were / what we expected\n   - What happened: the key data points, translated into plain English\n   - Why it matters: business impact and implications\n   - What's next: recommended action or what to watch\n3. KEY INSIGHTS (3-5 bullets): non-obvious patterns, anomalies, correlations\n4. THE RISK: what the data doesn't show, caveats, data quality flags\n5. CALL TO ACTION: specific decision or next step this data supports\n6. VISUALIZATION SUGGESTION: what chart type would best show this\n\nWrite in plain English. No jargon. If a 5th grader can't understand it, simplify.`;
+    const result = await callLLM(provider, key, prompt, 1400);
+    res.json({ story: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 105 ────────────────────────────────────────────────────────────────
+
+app.post('/api/marketing/personas', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, market, existing_data, count = 3 } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Create ${count} detailed customer personas for:\nProduct: ${product}\nMarket: ${market || 'general'}\nExisting data: ${existing_data || 'none'}\n\nFor each persona:\n## PERSONA [N]: [Creative Name] — [Title/Role]\n**Photo description:** [vivid description]\n**Demographics:** Age, location, income, education, family\n**Job/Role:** Title, company size, industry, responsibilities\n**Goals:** Top 3 professional and personal goals\n**Pain Points:** Top 3 pains your product addresses (be specific)\n**Current Solution:** What they use now, why it's failing them\n**Buying Trigger:** What makes them search for a solution TODAY\n**Decision Factors:** What they evaluate (price, features, support, etc.)\n**Objections:** Top 2-3 reasons they'd say no\n**Preferred Channels:** Where they consume content, learn, buy\n**Quote:** One sentence in their voice that captures their frustration\n**How to Win Them:** 3 specific tactics to acquire and retain this persona\n**Red Flags:** Signs this persona is a bad fit`;
+    const result = await callLLM(provider, key, prompt, 1800);
+    res.json({ personas: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/sop', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { process, role, tools, format } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Write a Standard Operating Procedure (SOP) in ${format} format.\nProcess: ${process}\nPerformed by: ${role || 'team member'}\nTools used: ${tools || 'not specified'}\n\nSOP structure:\n# [PROCESS TITLE]\n**Version:** 1.0 | **Owner:** ${role || 'Process Owner'} | **Last Updated:** ${new Date().toISOString().split('T')[0]}\n\n## Purpose\n[Why this process exists, what problem it solves]\n\n## Scope\n[Who this applies to, when it applies]\n\n## Prerequisites\n[What must be true/ready before starting]\n\n## Tools Required\n[List with links/locations]\n\n## Process Steps\n[Numbered steps with: action, who, how long, output/checkpoint]\n\n## Decision Points\n[If/then branches with clear criteria]\n\n## Common Mistakes\n[Top 3-5 errors and how to avoid them]\n\n## Troubleshooting\n[Common issues and fixes]\n\n## Quality Checks\n[How to verify it was done correctly]\n\n## Escalation\n[When and who to escalate to]\n\n## Revision History\n[Table placeholder]`;
+    const result = await callLLM(provider, key, prompt, 1500);
+    res.json({ sop: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/okrs', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { company, mission, quarter, focus, level } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Generate ${level}-level OKRs for ${company || 'our company'} for ${quarter}.\nMission: ${mission || 'not specified'}\nStrategic focus: ${focus}\n\nGenerate 3-4 Objectives, each with 3-4 Key Results.\n\nFormat for each:\n## OBJECTIVE [N]: [Inspiring, qualitative statement]\n*Why this matters: [1-2 sentences on strategic importance]*\n\n**KR 1:** [Specific, measurable, time-bound metric] — Baseline: X → Target: Y\n**KR 2:** ...\n**KR 3:** ...\n\nScoring guide: 0.0-0.3 = missed, 0.4-0.6 = partial, 0.7-1.0 = achieved (0.7 = success, 1.0 = stretch)\n\nAlso include:\n- OKR ALIGNMENT: how these connect to the annual mission\n- ANTI-GOALS: 3 things explicitly NOT being prioritized this quarter\n- CHECK-IN CADENCE: recommended weekly/monthly review format\n- COMMON OKR MISTAKES to avoid with these specific OKRs\n\nMake Objectives inspiring but grounded. Key Results must be measurable with numbers.`;
+    const result = await callLLM(provider, key, prompt, 1500);
+    res.json({ okrs: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/retro', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { sprint_goal, team_size, went_well, issues, format } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Facilitate a sprint retrospective using the ${format} format.\nSprint goal: ${sprint_goal}\nTeam size: ${team_size || 5}\nWent well: ${went_well || 'not specified'}\nIssues/blockers: ${issues || 'not specified'}\n\nDeliverables:\n## RETROSPECTIVE REPORT — ${new Date().toISOString().split('T')[0]}\n\n### 1. SPRINT SUMMARY\n[Brief assessment: did we meet the goal? why/why not]\n\n### 2. ${format.toUpperCase()} ANALYSIS\n[Apply the ${format} framework to the inputs provided, organizing themes]\n\n### 3. DISCUSSION PROMPTS\n[5-7 powerful questions for the team to discuss, ordered by priority]\n\n### 4. ROOT CAUSE ANALYSIS\n[For top 2-3 issues: what's the real underlying cause?]\n\n### 5. ACTION ITEMS\n[5 specific, assignable action items with: what, who (role), by when, success criteria]\n\n### 6. TEAM HEALTH INDICATORS\n[Based on the inputs: assess collaboration, technical debt, process health, morale]\n\n### 7. EXPERIMENTS TO TRY\n[2-3 low-cost experiments to run next sprint to test improvements]\n\n### 8. PARKING LOT\n[Topics that came up but need separate discussion]`;
+    const result = await callLLM(provider, key, prompt, 1400);
+    res.json({ retro: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/email/sequence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, audience, seq_type, email_count = 5, goal } = req.body;
+    const userId = req.userId!;
+    const { key, provider } = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {};
+    if (!key) return res.status(402).json({ error: 'No LLM key' });
+    const prompt = `Write a ${email_count}-email ${seq_type} sequence.\nProduct: ${product}\nAudience: ${audience}\nConversion goal: ${goal || 'convert to paid customer'}\n\nFor each email:\n---\n## EMAIL [N] OF ${email_count}\n**Send timing:** [Day X / trigger event]\n**Subject line:** [subject] | A/B: [alternative subject]\n**Preview text:** [40-char preview]\n**From name:** [recommendation]\n\n**Body:**\n[Full email copy — opening hook, body, CTA]\n\n**CTA:** [Button text + destination]\n**If no open after Xh:** [follow-up action]\n---\n\nSequence design principles:\n- Email 1: Deliver immediate value, set expectations\n- Middle emails: Build trust, overcome objections, show proof\n- Final emails: Urgency, last chance, re-frame\n\nAlso include:\n- SEQUENCE MAP: visual flow of the sequence\n- A/B TEST IDEAS: 3 things to test\n- EXIT CONDITIONS: when to remove someone from sequence\n- PERFORMANCE BENCHMARKS: expected open/click rates`;
+    const result = await callLLM(provider, key, prompt, 2000);
+    res.json({ sequence: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 106: Churn Predictor, PH Launch Kit, Affiliate, Referral, Partnership Pitch ──
+app.post('/api/retention/churn-analysis', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { signals, product, segment } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are an expert in SaaS retention and customer success. Analyze the following churn signals for a ${product || 'SaaS product'} targeting ${segment} customers, then produce a prioritized retention playbook.
+
+CHURN SIGNALS OBSERVED:
+${signals}
+
+Produce:
+1. CHURN RISK ASSESSMENT — severity (Critical/High/Medium/Low), likely root causes ranked by probability
+2. CUSTOMER SEGMENTATION — which customer segments are most at risk and why
+3. IMMEDIATE ACTIONS (this week) — 5 specific interventions with owner and expected impact
+4. 30-DAY RETENTION PLAYBOOK — week-by-week actions: outreach scripts, feature nudges, success milestones
+5. EARLY WARNING SYSTEM — 8 leading indicators to monitor before churn happens, with suggested alert thresholds
+6. WIN-BACK STRATEGY — if customer does churn, playbook to re-engage within 90 days
+7. METRICS TO TRACK — key retention KPIs with targets
+
+Be specific, tactical, and prioritized.`;
+    const analysis = await callLLM(provider, key, prompt, 2000);
+    res.json({ analysis });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/ph-launch', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { product, tagline, target_hunters, launch_date } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a Product Hunt launch expert who has helped 50+ products reach #1. Create a complete launch kit for:
+
+PRODUCT: ${product}
+CURRENT TAGLINE: ${tagline || 'Generate one'}
+TARGET HUNTERS/COMMUNITIES: ${target_hunters || 'Tech, SaaS, indie hackers'}
+LAUNCH DATE: ${launch_date || 'TBD'}
+
+Deliver:
+1. TAGLINES — 5 options (max 60 chars each), ranked from most to least punchy
+2. PRODUCT DESCRIPTION — 260-char version + full description (highlight the "aha moment")
+3. GALLERY COPY — caption for each of 5 screenshot slots (problem → solution → features → social proof → CTA)
+4. MAKER COMMENT — authentic first comment from founder (200 words, personal story + invite discussion)
+5. TOPIC TAGS — 5 best tags to select
+6. PRE-LAUNCH 30-DAY PLAN — week-by-week: community warm-up, teaser posts, notification building, launch day schedule
+7. LAUNCH DAY CHECKLIST — hour-by-hour from midnight PST
+8. OUTREACH TEMPLATES — DM template for hunters, email to early users, Twitter/X announcement thread
+9. POST-LAUNCH FOLLOW-UP — how to convert PH upvotes to signups
+
+Make this a #1 Product of the Day kit.`;
+    const kit = await callLLM(provider, key, prompt, 2200);
+    res.json({ kit });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/affiliate-program', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { product, price, margin, target_affiliates } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are an affiliate marketing strategist. Design a profitable affiliate program for:
+
+PRODUCT: ${product}
+PRICING: ${price || 'Not specified'}
+GROSS MARGIN: ${margin || 'Not specified'}
+TARGET AFFILIATES: ${target_affiliates || 'Content creators, bloggers, agencies'}
+
+Design a complete program including:
+1. COMMISSION STRUCTURE — base rate, tiers, recurring vs one-time, cookie window, payout minimums
+2. AFFILIATE TIERS — Bronze/Silver/Gold/Platinum with requirements and perks for each
+3. ECONOMICS — unit economics per affiliate tier, break-even analysis, projected ROI at different scales
+4. RECRUITMENT PITCH — email template to recruit top affiliates (lead with their benefit)
+5. AFFILIATE TOOLKIT — what assets/copy/tracking to provide affiliates
+6. LEGAL FRAMEWORK — key terms to include (FTC disclosure, exclusivity, brand guidelines, termination)
+7. PLATFORM RECOMMENDATION — best affiliate tracking platforms with pros/cons for this use case
+8. LAUNCH PLAN — 90-day affiliate recruitment and activation plan
+9. FRAUD PREVENTION — guardrails against click fraud, cookie stuffing, self-referrals
+
+Make the commission compelling enough to recruit quality affiliates while protecting margins.`;
+    const program = await callLLM(provider, key, prompt, 2000);
+    res.json({ program });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/referral-program', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { product, ltv, reward_type, mechanic } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a viral growth expert. Design a referral program that creates a viral loop for:
+
+PRODUCT: ${product}
+CUSTOMER LTV: ${ltv || 'Not specified'}
+REWARD TYPE: ${reward_type || 'Two-sided'}
+REWARD MECHANIC: ${mechanic || 'Discount / credit'}
+
+Produce a complete referral program design:
+1. CORE MECHANICS — reward structure with exact amounts/percentages and justification
+2. VIRAL COEFFICIENT MATH — estimated K-factor, payback period, CAC vs referral cost comparison
+3. REFERRAL FLOW — step-by-step user journey from invite to reward (include friction points to eliminate)
+4. IN-APP INVITE TRIGGERS — 5 optimal moments to prompt referrals (based on user behavior signals)
+5. MESSAGING TEMPLATES:
+   - In-app referral invite copy (3 variants)
+   - Email invite templates (sender → recipient)
+   - Social share copy for Twitter/X, LinkedIn, WhatsApp
+   - Post-signup "you've been invited" welcome flow
+6. ANTI-FRAUD GUARDRAILS — rules to prevent abuse (IP checks, payout delays, review thresholds)
+7. TECH REQUIREMENTS — minimal implementation checklist (tracking, unique links, reward fulfillment)
+8. SUCCESS METRICS — KPIs to track (viral coefficient, referral conversion rate, referred user LTV ratio)
+9. CASE STUDY BENCHMARKS — what great referral programs achieve; how this design compares
+
+Make it simple enough to launch in 2 weeks, powerful enough to scale.`;
+    const program = await callLLM(provider, key, prompt, 2000);
+    res.json({ program });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/business/partnership-pitch', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { your_company, partner_company, partner_type, value_for_them } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are an expert at crafting B2B partnership proposals that actually get replies. Write a compelling partnership pitch for:
+
+PROPOSING COMPANY: ${your_company}
+TARGET PARTNER: ${partner_company}
+PARTNERSHIP TYPE: ${partner_type || 'Strategic partnership'}
+VALUE FOR THEM: ${value_for_them || 'To be identified'}
+
+Deliver:
+1. PARTNERSHIP THESIS — one crisp paragraph on why this makes strategic sense for THEM (not you)
+2. COLD OUTREACH EMAIL — subject line + 200-word email that leads with their benefit, includes specific proof points, and has a low-friction CTA (not "get on a call immediately")
+3. EXECUTIVE PROPOSAL (1-pager) — headline, problem they face, our solution, mutual benefit breakdown, success metrics, ask, and next steps
+4. VALUE EXCHANGE MATRIX — specific value each party gets (revenue, customers, product, brand, data)
+5. OBJECTION RESPONSES — answers to "why would we do this?", "what's in it for us?", "why now?", "why you?"
+6. PARTNERSHIP TERMS TO PROPOSE — key commercial terms (rev share, exclusivity period, SLA, marketing commitments, exit clause)
+7. ESCALATION PATH — if the first contact doesn't respond, how to reach decision-maker
+8. SUCCESS MILESTONES — 30/60/90-day checkpoints to prove the partnership is working
+
+Lead with THEIR benefit. Make it impossible for them to say no.`;
+    const pitch = await callLLM(provider, key, prompt, 2000);
+    res.json({ pitch });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 107: Grant Writer, Board Deck, Hiring Funnel, GTM Planner, Moat Analyzer ──
+app.post('/api/writing/grant', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { org, grant_type, amount, mission } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are an expert grant writer who has secured $50M+ in funding for nonprofits and startups. Write a compelling grant proposal for:
+
+ORGANIZATION: ${org}
+GRANT TYPE: ${grant_type || 'Government/Foundation'}
+AMOUNT REQUESTED: ${amount || 'To be determined'}
+PROJECT: ${mission}
+
+Write a complete proposal with these sections:
+1. EXECUTIVE SUMMARY (200 words) — compelling overview that hooks the reviewer immediately
+2. STATEMENT OF NEED — quantified problem with statistics and urgency; explain why this organization, why now
+3. PROJECT DESCRIPTION / NARRATIVE — detailed plan with specific activities, timeline, milestones, and methodology
+4. GOALS & MEASURABLE OBJECTIVES — 5 SMART objectives with metrics and evaluation criteria
+5. EVALUATION PLAN — how you'll measure success, data collection methods, reporting cadence
+6. ORGANIZATIONAL CAPACITY — credentials, past successes, team qualifications, relevant partnerships
+7. BUDGET NARRATIVE — line-item justification for how the requested amount will be spent
+8. SUSTAINABILITY PLAN — how the project continues after grant funding ends
+9. CONCLUSION — powerful closing that reinforces urgency and organizational fit
+
+Use professional grant-writing language. Be specific, data-driven, and compelling.`;
+    const proposal = await callLLM(provider, key, prompt, 2500);
+    res.json({ proposal });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/exec/board-deck', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { company, period, metrics, deck_type } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a veteran CEO and board member. Create a complete board presentation for:
+
+COMPANY: ${company}
+PERIOD: ${period || 'Current quarter'}
+DECK TYPE: ${deck_type || 'Quarterly board update'}
+KEY DATA: ${metrics}
+
+Produce a slide-by-slide board deck:
+
+SLIDE 1: EXECUTIVE SUMMARY — 3 bullets: biggest win, biggest challenge, key ask
+SLIDE 2: COMPANY SNAPSHOT — KPIs dashboard (ARR/revenue, growth rate, burn, runway, headcount)
+SLIDE 3: FINANCIAL PERFORMANCE — vs. prior period, vs. budget; explain variances
+SLIDE 4: PRODUCT MILESTONES — shipped vs. roadmap; top user metrics; NPS/retention
+SLIDE 5: GO-TO-MARKET — pipeline, new logos, churn, CAC, LTV trends
+SLIDE 6: OPERATIONAL HIGHLIGHTS — team updates, hiring, key wins by function
+SLIDE 7: RISKS & MITIGATIONS — top 3 risks with RAG status and mitigation plan
+SLIDE 8: UPCOMING QUARTER PLAN — priorities, OKRs, milestones with owners
+SLIDE 9: ASKS OF THE BOARD — specific decisions, intros, or resources needed
+SLIDE 10: APPENDIX — detailed supporting data
+
+For each slide: TITLE, HEADLINE (the one sentence a director should remember), TALKING POINTS (3-5 bullets), and SPEAKER NOTES.
+
+Make it precise, honest, and decision-focused. Boards hate spin.`;
+    const deck = await callLLM(provider, key, prompt, 2500);
+    res.json({ deck });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/hiring-funnel', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { role, stage, volume, pain_points } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a talent acquisition expert and organizational psychologist. Optimize the hiring funnel for:
+
+ROLE(S): ${role}
+COMPANY STAGE: ${stage || 'Startup'}
+HIRING VOLUME: ${volume || 'Medium'}
+CURRENT PAIN POINTS: ${pain_points}
+
+Analyze and prescribe:
+1. FUNNEL DIAGNOSIS — identify which stage is breaking (awareness, applicants, screening, interviews, offers, acceptances)
+2. CONVERSION BENCHMARKS — industry benchmarks for each funnel stage at this company stage
+3. TOP 3 ROOT CAUSES — most likely reasons for the pain points described
+4. QUICK WINS (this week) — 5 changes that can be implemented immediately
+5. 30-DAY FIXES — structural improvements with implementation steps
+6. SOURCING STRATEGY — best channels for this role/stage with expected conversion rates
+7. SCREENING OPTIMIZATION — application questions or async assessments to improve quality without adding friction
+8. INTERVIEW PROCESS REDESIGN — optimal number of stages, format, and time-to-decision for this role
+9. OFFER STRATEGY — how to improve offer acceptance rate (compensation transparency, close calls, equity education)
+10. EMPLOYER BRAND QUICK WINS — 3 things to improve Glassdoor/LinkedIn presence this month
+
+Include specific templates, scripts, and tools to implement each recommendation.`;
+    const analysis = await callLLM(provider, key, prompt, 2000);
+    res.json({ analysis });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/gtm-plan', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { product, icp, stage, budget } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a go-to-market strategist who has launched 30+ B2B products. Build a complete GTM plan for:
+
+PRODUCT: ${product}
+ICP (Ideal Customer Profile): ${icp}
+STAGE: ${stage || 'Pre-launch'}
+BUDGET: ${budget || 'Not specified'}
+
+Deliver a complete GTM strategy:
+1. POSITIONING STATEMENT — one sentence that makes the ICP say "that's exactly what I need"
+2. MESSAGING HIERARCHY — core value prop → 3 pillars → proof points for each pillar
+3. CHANNEL STRATEGY — ranked channels by expected ROI for this ICP; budget allocation across channels
+4. SALES MOTION — recommended sales model (PLG, inside sales, field sales, channel/partner) and why
+5. PRICING & PACKAGING — recommended structure with rationale based on ICP buying behavior
+6. 90-DAY LAUNCH PLAN:
+   - Days 1-30: Foundation (ICP validation, messaging, assets)
+   - Days 31-60: Activation (first pipeline, partnerships, content)
+   - Days 61-90: Scale (paid channels, hiring signals, process)
+7. LEADING INDICATORS — what metrics to watch in the first 90 days to know if GTM is working
+8. COMPETITIVE DIFFERENTIATION — how to position against top 3 competitors in sales conversations
+9. ENABLEMENT TOOLKIT — 5 assets to build before launch (what they are + why each)
+10. FAILURE MODES — top 3 GTM mistakes for this type of product and how to avoid them
+
+Be opinionated. Make specific recommendations, not "it depends."`;
+    const plan = await callLLM(provider, key, prompt, 2500);
     res.json({ plan });
-  } catch(e:any) { res.status(500).json({ error: e.message }); }
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/moat-analysis', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { company, competitors, strengths } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a competitive strategy expert trained in Porter's Five Forces, Buffett's economic moats, and Hamilton Helmer's 7 Powers. Analyze the competitive moat for:
+
+COMPANY: ${company}
+COMPETITORS: ${competitors}
+CURRENT PERCEIVED STRENGTHS: ${strengths}
+
+Produce a rigorous moat analysis:
+1. MOAT SCORECARD — rate each moat type (1-10) with honest assessment:
+   - Network Effects (direct, indirect, data)
+   - Switching Costs (contractual, learning, data lock-in)
+   - Cost Advantages (scale, process, geography)
+   - Intangible Assets (brand, IP, regulatory, data)
+   - Efficient Scale (natural monopoly dynamics)
+   - Counter-positioning (legacy incumbents can't replicate)
+
+2. STRONGEST MOAT IDENTIFIED — which 1-2 moats are genuinely defensible and why
+
+3. MOAT GAPS — where you're exposed and competitors can attack
+
+4. COMPETITOR THREAT MATRIX — for each competitor: their moat, their attack vector, timeline risk
+
+5. MOAT DEEPENING ROADMAP — 5 specific investments to strengthen the primary moat over 12 months
+
+6. MOAT-DESTROYING RISKS — technology shifts, regulation, or market changes that could invalidate your moat
+
+7. PRICING POWER TEST — honest assessment: can you raise prices 10% without losing customers? Why or why not?
+
+8. INVESTOR NARRATIVE — how to articulate this moat to sophisticated investors in 3 sentences
+
+Be brutally honest. Weak moats described as strong are dangerous.`;
+    const analysis = await callLLM(provider, key, prompt, 2200);
+    res.json({ analysis });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 108: Pitch Scorer, Revenue Model, Journey Mapper, Crisis Comms, Due Diligence ──
+app.post('/api/investor/score-pitch', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { pitch, stage, investor_type } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a partner at a top-tier VC fund who has reviewed 5,000+ pitch decks. Score this ${stage} pitch targeting ${investor_type} investors:
+
+PITCH CONTENT:
+${pitch}
+
+Score each section 1-10 and provide specific feedback:
+
+OVERALL SCORE: X/10 — FUNDABILITY VERDICT: [Pass/Maybe/No]
+
+SLIDE-BY-SLIDE SCORING:
+1. PROBLEM (X/10) — [What's good] [What's missing] [Rewrite suggestion]
+2. SOLUTION (X/10) — [feedback]
+3. MARKET SIZE (X/10) — [Is TAM/SAM/SOM credible? Red flags?]
+4. PRODUCT (X/10) — [Demo quality, differentiation, technical defensibility]
+5. TRACTION (X/10) — [Is it real? Is it impressive for this stage?]
+6. TEAM (X/10) — [Do they have the right to win?]
+7. BUSINESS MODEL (X/10) — [Unit economics, path to profitability]
+8. COMPETITION (X/10) — [Honest? Missing competitors? Positioning clear?]
+9. FINANCIALS (X/10) — [Assumptions realistic? Ask appropriate?]
+10. ASK & USE OF FUNDS (X/10) — [Clear? Milestone-based?]
+
+TOP 3 STRENGTHS — what makes this fundable
+TOP 3 FATAL FLAWS — what will get this passed on
+SPECIFIC REWRITES — exact text changes for the 3 weakest slides
+QUESTIONS THIS WILL GET — 5 hardest questions investors will ask, with suggested answers
+
+Be the honest partner who gives real feedback, not the polite one who gives empty encouragement.`;
+    const feedback = await callLLM(provider, key, prompt, 2500);
+    res.json({ feedback });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/revenue-model', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { product, model_type, inputs, horizon } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a CFO and financial modeler. Build a structured ${horizon} revenue model for:
+
+PRODUCT: ${product}
+REVENUE MODEL TYPE: ${model_type}
+KEY INPUTS / ASSUMPTIONS: ${inputs || 'Not provided — use reasonable defaults for an early-stage company'}
+
+Deliver:
+
+1. MODEL ASSUMPTIONS TABLE — all key inputs with base case values and sensitivity range
+   (growth rate, churn, CAC, LTV, ACV, conversion rates, headcount, pricing, etc.)
+
+2. ${horizon.replace('year','')}-YEAR REVENUE PROJECTIONS — monthly for Y1, quarterly for Y2+:
+   - New customers / ARR added
+   - Churned customers / ARR lost  
+   - Net new ARR
+   - Total ARR / MRR
+   - Revenue recognized
+
+3. UNIT ECONOMICS:
+   - CAC payback period
+   - LTV:CAC ratio
+   - Gross margin
+   - Net Revenue Retention
+   - Magic Number (sales efficiency)
+
+4. THREE SCENARIOS:
+   - Bear case (50% of base assumptions)
+   - Base case
+   - Bull case (150% of base assumptions)
+   - Key driver that changes each scenario
+
+5. PATH TO $1M / $10M ARR — milestones, timeline, team size required
+
+6. KEY LEVERS — which 3 variables most impact the model; what 1% improvement in each is worth
+
+7. INVESTOR-READY SUMMARY — one paragraph narrative on the model for a pitch deck
+
+Format numbers clearly with $ and comma separators.`;
+    const model = await callLLM(provider, key, prompt, 2500);
+    res.json({ model });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/journey-map', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { product, persona, stage } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a CX design expert and customer researcher. Map the ${stage} customer journey for:
+
+PRODUCT: ${product}
+PERSONA: ${persona}
+
+Create a detailed journey map with these elements for each stage:
+
+${stage === 'full' ? 'STAGES: Awareness → Consideration → Purchase → Onboarding → Adoption → Expansion → Advocacy' : `STAGES: Relevant stages for ${stage}`}
+
+For EACH STAGE, provide:
+📍 TOUCHPOINTS — every interaction point (ads, website, sales call, product, email, support, etc.)
+💭 CUSTOMER THOUGHTS — what they're thinking at this moment
+❤️ EMOTIONS — emotional state (frustrated, curious, excited, confused, delighted) — use emoji scale
+🚧 PAIN POINTS — specific friction, confusion, or unmet expectations
+✅ JOBS TO BE DONE — what they're trying to accomplish
+🎯 OPPORTUNITIES — specific improvements to make this stage better
+📊 KEY METRICS — what to measure at this stage (conversion rate, time-in-stage, NPS, etc.)
+
+END WITH:
+TOP 5 MOMENTS OF TRUTH — the highest-impact touchpoints that make or break the relationship
+QUICK WINS — 3 improvements you can implement this month
+INVESTMENT PRIORITIES — where to focus resources for maximum CX improvement`;
+    const map = await callLLM(provider, key, prompt, 2500);
+    res.json({ map });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/comms/crisis', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { company, crisis, crisis_type, audiences } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a veteran crisis communications consultant who has managed PR crises for Fortune 500 companies. Write crisis communications for:
+
+COMPANY: ${company}
+CRISIS TYPE: ${crisis_type}
+SITUATION: ${crisis}
+AUDIENCES: ${audiences || 'All: customers, press, employees, investors, social media'}
+
+Deliver a complete crisis comms package:
+
+1. HOLDING STATEMENT (immediate — within 1 hour)
+   A brief statement acknowledging the situation without admitting liability before facts are confirmed.
+
+2. RESPONSE TIMELINE — minute-by-minute protocol:
+   - 0-1 hour: internal response team activation
+   - 1-4 hours: initial public acknowledgment
+   - 4-24 hours: full statement
+   - 24-72 hours: resolution updates
+   - Post-crisis: follow-up and learnings
+
+3. COMMUNICATIONS BY AUDIENCE:
+   CUSTOMERS — email + in-app message
+   PRESS — official statement + media holding line
+   EMPLOYEES — internal Slack/email
+   INVESTORS — board/investor notification
+   SOCIAL MEDIA — Twitter/X, LinkedIn posts
+
+4. FAQ DOCUMENT — 10 likely questions with approved answers
+
+5. THINGS TO NEVER SAY — phrases that will make it worse
+
+6. SPOKESPERSON PREP — key messages to stay on, what to deflect, body language guidance
+
+7. POST-CRISIS RECOVERY PLAN — 30-day plan to restore trust
+
+Keep all communications honest, empathetic, and action-oriented. Avoid corporate speak.`;
+    const comms = await callLLM(provider, key, prompt, 2500);
+    res.json({ comms });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/due-diligence', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { deal_type, company, context } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a seasoned investment professional and M&A advisor. Generate a comprehensive due diligence checklist for:
+
+DEAL TYPE: ${deal_type}
+COMPANY: ${company}
+CONTEXT: ${context || 'Standard evaluation'}
+
+Produce a complete DD framework:
+
+1. DOCUMENT REQUEST LIST — every document to request, organized by category:
+   - Corporate/Legal (articles, cap table, board minutes, IP assignments...)
+   - Financial (P&L, balance sheet, cash flow, AR aging, contracts...)
+   - Product/Technology (architecture, security audits, IP ownership...)
+   - Commercial (customer contracts, pipeline, churn data, NPS...)
+   - Team/HR (org chart, employment agreements, option pool, key person risk...)
+   - Operations (vendor contracts, insurance, compliance...)
+
+2. KEY QUESTIONS BY CATEGORY — 50+ questions total, the ones that separate good deals from bad
+
+3. RED FLAGS CHECKLIST — 20 warning signs that indicate serious problems
+
+4. FINANCIAL ANALYSIS FRAMEWORK — specific numbers to verify and ratios to calculate
+
+5. REFERENCE CHECK SCRIPT — questions for customers, former employees, investors
+
+6. DEAL KILLERS — absolute no-go conditions for this deal type
+
+7. NEGOTIATION LEVERAGE POINTS — common findings that justify price adjustments
+
+8. TIMELINE — realistic DD timeline with week-by-week milestones
+
+9. SYNTHESIS TEMPLATE — how to organize findings into a go/no-go recommendation
+
+Flag which items are most critical vs. nice-to-have.`;
+    const checklist = await callLLM(provider, key, prompt, 2500);
+    res.json({ checklist });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 109: Contract Gen, Cap Table, Investor Update, Cold Email Seq, Podcast Script ──
+app.post('/api/legal/contract', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { contract_type, party1, party2, terms, jurisdiction } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are an experienced corporate attorney specializing in startup and commercial law. Generate a professional ${contract_type} template for:
+
+PARTY 1: ${party1}
+PARTY 2: ${party2}
+JURISDICTION: ${jurisdiction}
+KEY TERMS: ${terms || 'Standard terms'}
+
+Generate a complete, professional contract template with:
+- Proper legal formatting (numbered sections, definitions, etc.)
+- All standard clauses for this contract type
+- Blank fields marked as [BRACKETED PLACEHOLDERS] for customization
+- Appropriate jurisdiction-specific language
+
+IMPORTANT DISCLAIMER to include at top: "TEMPLATE FOR INFORMATIONAL PURPOSES ONLY. This template does not constitute legal advice. Have a licensed attorney review before signing."
+
+Include these sections as appropriate for a ${contract_type}:
+1. Parties and Effective Date
+2. Definitions
+3. Core obligations of each party
+4. Payment terms (if applicable)
+5. Term and termination
+6. Intellectual property
+7. Confidentiality
+8. Representations and warranties
+9. Limitation of liability / indemnification
+10. Dispute resolution / governing law
+11. Miscellaneous (severability, entire agreement, amendments)
+12. Signature blocks
+
+Make it professional, clear, and balanced.`;
+    const contract = await callLLM(provider, key, prompt, 3000);
+    res.json({ contract });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/cap-table', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { founders, round, pre_money, raise_amount, option_pool } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a startup CFO and cap table expert. Model this cap table through a funding round:
+
+CURRENT SHAREHOLDERS:
+${founders}
+
+ROUND: ${round}
+PRE-MONEY VALUATION: ${pre_money}
+RAISE AMOUNT: ${raise_amount}
+OPTION POOL (post-money): ${option_pool}%
+
+Calculate and present:
+
+1. PRE-ROUND CAP TABLE
+   | Shareholder | Shares | % Ownership |
+   (calculate shares based on provided percentages)
+
+2. ROUND MECHANICS
+   - Pre-money valuation: ${pre_money}
+   - Raise: ${raise_amount}
+   - Post-money valuation: [calculated]
+   - Price per share: [calculated]
+   - New shares issued to investors: [calculated]
+   - Option pool increase needed: [calculated]
+
+3. POST-ROUND CAP TABLE (FULLY DILUTED)
+   | Shareholder | Shares | % Pre-Round | % Post-Round | Dilution |
+   Show each founder, existing investors, new investors, option pool
+
+4. DILUTION ANALYSIS
+   - Each founder's dilution from this round
+   - Effective pre-money accounting for option pool expansion (show "true" pre-money)
+   - Total dilution if option pool was fully granted
+
+5. LIQUIDATION PREFERENCES (if applicable)
+   - Assumed preference: 1x non-participating
+   - Liquidation waterfall at: $${pre_money.replace(/[^0-9]/g,'')}M, 2x, 5x exits
+
+6. KEY OBSERVATIONS
+   - Is the pre-money reasonable for this stage?
+   - Any cap table red flags?
+   - Suggested negotiation points
+
+Show all math clearly. Flag if any assumptions were made.`;
+    const model = await callLLM(provider, key, prompt, 2000);
+    res.json({ model });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investor/update', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { company, period, highlights, format } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a successful founder known for writing the best investor updates in your portfolio. Write a ${format} investor update for:
+
+COMPANY: ${company}
+PERIOD: ${period || 'Recent period'}
+HIGHLIGHTS & METRICS: ${highlights}
+
+Write a compelling investor update that follows the best practices:
+
+SUBJECT LINE: [3 options — one metric-led, one milestone-led, one narrative-led]
+
+EMAIL BODY:
+
+TLDR: [2-sentence summary — the most important thing that happened this period]
+
+📈 METRICS DASHBOARD
+- ARR/MRR: [from data]
+- Growth: [from data]
+- Customers: [from data]
+- Burn / Runway: [from data]
+- [Other key metrics]
+
+✅ WINS THIS ${format === 'monthly' ? 'MONTH' : format === 'quarterly' ? 'QUARTER' : 'PERIOD'}
+[3-5 specific wins with context on why they matter]
+
+🔴 CHALLENGES & WHAT WE'RE DOING
+[1-3 honest challenges with your response plan — investors respect honesty]
+
+🔮 FOCUS NEXT ${format === 'monthly' ? 'MONTH' : 'QUARTER'}
+[3-5 specific, measurable goals]
+
+🙋 ASKS — HOW YOU CAN HELP
+[2-3 specific, actionable asks — intros, expertise, referrals]
+
+[Warm closing]
+
+NOTES:
+- Be honest about challenges — never spin
+- Specific asks dramatically increase investor engagement
+- Keep it under 400 words unless there's a major event
+- The best updates make investors want to forward it to their partners`;
+    const update = await callLLM(provider, key, prompt, 1800);
+    res.json({ update });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/cold-sequence', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { product, prospect, goal, seq_length } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a B2B sales expert who has written cold email sequences with 40%+ reply rates. Write a ${seq_length}-email cold outreach sequence to:
+
+PRODUCT: ${product}
+PROSPECT: ${prospect}
+GOAL: ${goal}
+
+Write each email with:
+- EMAIL N OF ${seq_length}
+- SEND TIMING: [when to send relative to previous email]
+- SUBJECT LINE: [2-3 A/B variants]
+- BODY: [full email copy, under 100 words each]
+- PERSONALIZATION HOOK: [where/how to customize for specific prospects]
+- P.S. LINE: (use on emails 1 and 3)
+
+SEQUENCE STRATEGY:
+Email 1: Pattern interrupt + clear value + soft CTA
+Email 2: Different angle (social proof or case study)
+Email 3: Tackle a specific pain point with insight
+Email 4: "Did I lose you?" / breakup framing
+Email 5+: Useful content / long-term play
+
+RULES:
+- Never use "I hope this finds you well"
+- Lead with THEM, not you
+- One ask per email
+- Subject lines under 6 words
+- No attachments in cold outreach
+
+END WITH: SEQUENCE PERFORMANCE BENCHMARKS — what good looks like for open rate, reply rate, and meeting book rate for this type of outreach.`;
+    const sequence = await callLLM(provider, key, prompt, 2000);
+    res.json({ sequence });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/podcast-script', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { show, topic, format, duration } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are an award-winning podcast producer and scriptwriter. Write a complete ${duration}-minute ${format} podcast script for:
+
+SHOW: ${show}
+EPISODE TOPIC: ${topic}
+
+Deliver a production-ready script:
+
+EPISODE METADATA
+- Episode title (5 options)
+- Show notes description (150 words)
+- Chapter markers with timestamps
+- Key quotes for social clips
+
+PRE-SHOW CHECKLIST
+[Technical and content prep]
+
+SCRIPT: [TIME MARKERS THROUGHOUT]
+
+[0:00] COLD OPEN / HOOK
+A compelling 60-second opening that hooks listeners before the intro music
+
+[1:00] SHOW INTRO & EPISODE INTRO
+[Host introduces show, episode, and guest if applicable]
+
+[3:00] SEGMENT 1 — SETUP / BACKSTORY
+[Questions/content for this segment — with actual scripted questions for interview format]
+
+[10:00] SEGMENT 2 — CORE CONTENT / DEEP DIVE
+[The meat of the episode — 8-10 specific interview questions or content points]
+
+[${parseInt(duration)-10}:00] SEGMENT 3 — ACTIONABLE TAKEAWAYS
+[Rapid-fire or summary section]
+
+[${parseInt(duration)-5}:00] OUTRO
+[CTA, subscribe ask, next episode tease]
+
+SHOW NOTES TEMPLATE — copy/paste ready for blog post or newsletter
+SOCIAL CLIP TIMESTAMPS — 3 best moments for short-form content`;
+    const script = await callLLM(provider, key, prompt, 2500);
+    res.json({ script });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 110: Newsletter, Ad Copy, A/B Test, Webinar Script, Case Study ──
+app.post('/api/content/newsletter', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { brand, topic, audience, format, length } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const wordCount = length === 'short' ? '300-500' : length === 'long' ? '1000-1500' : '600-900';
+    const prompt = `You are an award-winning newsletter writer with 100k+ subscribers. Write a complete ${format} newsletter issue for:
+
+NEWSLETTER: ${brand}
+AUDIENCE: ${audience || 'General professional audience'}
+THIS ISSUE'S TOPIC: ${topic}
+TARGET LENGTH: ${wordCount} words
+
+Write a complete, ready-to-send newsletter:
+
+SUBJECT LINE OPTIONS (5 variants):
+1. [Curiosity gap] 
+2. [Direct benefit]
+3. [Number/list]
+4. [Question]
+5. [Bold claim]
+
+PREVIEW TEXT: [One line that complements each subject line]
+
+---
+
+[NEWSLETTER BODY — ${wordCount} words, ${format} format]
+
+HOOK (first 2 sentences — must make reader stop scrolling)
+
+[Main content — write the full ${format} piece. For educational: teach something concrete. For curated: pick 4-5 items with your take. For story: arc with lesson. For opinion: argue your thesis. For listicle: 5-7 actionable items.]
+
+CALL TO ACTION:
+[Primary CTA — one clear next step]
+
+---
+
+SOCIAL TEASERS:
+Twitter/X thread hook
+LinkedIn post version (first 2 lines to expand)
+Instagram caption
+
+The newsletter should feel like it came from a smart friend, not a brand. Voice: direct, specific, slightly irreverent.`;
+    const newsletter = await callLLM(provider, key, prompt, 2500);
+    res.json({ newsletter });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/ad-copy', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { product, audience, platform, goal } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a performance marketing expert who has managed $50M+ in ad spend. Write ${platform} ad copy to achieve ${goal} for:
+
+PRODUCT: ${product}
+TARGET AUDIENCE: ${audience}
+PLATFORM: ${platform}
+GOAL: ${goal}
+
+Generate complete ad copy sets:
+
+SET 1 — PAIN-FOCUSED
+Primary Text / Body Copy: [platform-appropriate length]
+Headline: [3 variants, character-limit compliant for ${platform}]
+Description: [if applicable]
+CTA: [button text]
+Hook: [first sentence that stops the scroll]
+
+SET 2 — BENEFIT-FOCUSED  
+[Same structure]
+
+SET 3 — SOCIAL PROOF / FOMO
+[Same structure]
+
+SET 4 — DIRECT OFFER
+[Same structure]
+
+SET 5 — CURIOSITY / PATTERN INTERRUPT
+[Same structure]
+
+PLATFORM-SPECIFIC NOTES for ${platform}:
+- Character limits to respect
+- Image/creative direction for each ad
+- Targeting suggestions
+- Bidding strategy recommendation
+
+TESTING PRIORITY: Which 2 sets to test first and why.
+SUCCESS METRICS: What open/click/conversion rates to benchmark against for this platform and goal.`;
+    const copy = await callLLM(provider, key, prompt, 2000);
+    res.json({ copy });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/ab-variants', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { product, current_copy, goal, element } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a conversion rate optimization (CRO) expert. Generate A/B test variants for:
+
+PRODUCT: ${product}
+GOAL: ${goal}
+ELEMENT TO TEST: ${element}
+CURRENT COPY: ${current_copy || 'Not provided — generate from scratch based on product'}
+
+Create a structured A/B testing plan:
+
+ANALYSIS OF CURRENT COPY (if provided):
+- What's working
+- Conversion killers
+- Biggest opportunity
+
+VARIANT A — CONTROL (or baseline if no current copy)
+[Full copy for this element]
+HYPOTHESIS: Why this should work
+WINNING SIGNAL: What metric indicates this wins
+
+VARIANT B — [ANGLE: e.g., Outcome-focused]
+[Full copy]
+HYPOTHESIS + WINNING SIGNAL
+
+VARIANT C — [ANGLE: e.g., Pain-focused]  
+[Full copy]
+HYPOTHESIS + WINNING SIGNAL
+
+VARIANT D — [ANGLE: e.g., Social proof-led]
+[Full copy]
+HYPOTHESIS + WINNING SIGNAL
+
+VARIANT E — [ANGLE: e.g., Urgency/FOMO]
+[Full copy]
+HYPOTHESIS + WINNING SIGNAL
+
+TESTING PROTOCOL:
+- Recommended test duration
+- Sample size needed for statistical significance
+- Primary metric to optimize
+- Secondary metrics to watch
+- How to declare a winner
+
+QUICK WINS: 3 changes to make immediately without testing (high confidence, low risk)`;
+    const variants = await callLLM(provider, key, prompt, 2000);
+    res.json({ variants });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/webinar-script', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { topic, audience, duration, webinar_type } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a professional webinar producer and presentation coach. Write a complete ${duration}-minute ${webinar_type} webinar script for:
+
+TOPIC: ${topic}
+AUDIENCE: ${audience}
+
+Produce a production-ready script:
+
+PRE-WEBINAR CHECKLIST
+[Tech setup, slide prep, 5-minute pre-go-live tasks]
+
+WEBINAR SCRIPT:
+
+[0:00] PRE-START HOLDING MUSIC / SLIDE
+"We'll be starting in just a moment..."
+
+[1:00] WELCOME & HOUSEKEEPING (scripted)
+- Thank attendees / introduce yourself
+- Housekeeping (recording, Q&A, chat)
+- Agenda preview
+
+[3:00] CREDIBILITY MOMENT (scripted)
+Why you're qualified to speak on this
+
+[5:00] HOOK — THE BIG PROMISE
+The transformation attendees will achieve by the end
+
+[8:00] AGENDA REVEAL
+Preview the 3-4 main sections
+
+[10:00] SECTION 1: [Title]
+[Scripted content + slide notes + ENGAGEMENT PROMPT]
+
+[${Math.round(parseInt(duration)*0.35)}:00] SECTION 2: [Title]
+[Scripted content + engagement]
+
+[${Math.round(parseInt(duration)*0.55)}:00] SECTION 3: [Title]
+[Scripted content + engagement]
+
+[${parseInt(duration)-10}:00] Q&A SECTION
+[10 anticipated questions with scripted answers]
+
+[${parseInt(duration)-3}:00] CLOSE & CTA (if ${webinar_type === 'sales' ? 'pitch' : 'soft CTA'})
+[Scripted close]
+
+ENGAGEMENT PROMPTS to use throughout (poll questions, chat prompts, reaction requests)
+
+POST-WEBINAR FOLLOW-UP EMAIL sequence (3 emails)`;
+    const script = await callLLM(provider, key, prompt, 2500);
+    res.json({ script });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/case-study', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { customer, product, results, format } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a B2B content marketer and storyteller. Write a compelling ${format} customer case study for:
+
+CUSTOMER: ${customer}
+PRODUCT USED: ${product}
+STORY & RESULTS: ${results}
+
+Write a ${format} case study using the Problem-Solution-Results framework:
+
+${format === 'long' ? `FULL CASE STUDY (800-1200 words):
+
+TITLE: [Outcome-focused headline, e.g., "How [Customer] Achieved [Result] in [Timeframe]"]
+
+EXECUTIVE SUMMARY (2-3 sentences): 
+The most compelling numbers upfront.
+
+THE CHALLENGE:
+- What problem was [Customer] facing before [Product]?
+- What was the business impact of not solving this?
+- What had they tried before?
+- A quote from their team about the pain
+
+THE SOLUTION:
+- Why did they choose [Product]?
+- How did they implement it?
+- What does their workflow look like now?
+
+THE RESULTS:
+[Highlight 3-5 specific, quantified results]
+- Metric 1: Before → After
+- Metric 2: Before → After
+- Metric 3: Before → After
+[Key quote from customer champion]
+
+WHAT'S NEXT:
+Future plans with [Product]
+
+ABOUT [CUSTOMER]:
+[2-sentence company description]
+
+KEY STATS BOX: [3 numbers for pull-quote graphic]` : 
+format === 'short' ? `ONE-PAGER (300 words):
+Title + 3-sentence overview + Challenge + Solution + 3 key results (numbers) + Customer quote` :
+`STRUCTURED SECTIONS with headers, bullet points, pull quotes, and stat callouts ready for design`}
+
+Also provide:
+- 3 CUSTOMER QUOTES to generate/suggest (based on the story)
+- SOCIAL PROOF SNIPPETS (Twitter/LinkedIn versions)
+- SALES ENABLEMENT NOTES: When/how sales should use this case study`;
+    const case_study = await callLLM(provider, key, prompt, 2500);
+    res.json({ case_study });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 111: Tech Doc, Changelog, Feature Flag, Load Test, Threat Model ──
+app.post('/api/dev/tech-doc', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { feature, doc_type, audience, tech_stack } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a senior technical writer at Stripe or Twilio — known for writing the clearest developer docs in the industry. Write ${doc_type} documentation for:
+
+WHAT TO DOCUMENT: ${feature}
+TECH STACK: ${tech_stack || 'Not specified'}
+AUDIENCE: ${audience}
+
+Generate complete, production-ready ${doc_type} documentation:
+
+${doc_type === 'api-reference' ? `
+# [API/Endpoint Name]
+
+## Overview
+Brief description of what this does and when to use it.
+
+## Base URL
+\`\`\`
+https://api.example.com/v1
+\`\`\`
+
+## Authentication
+How to authenticate requests.
+
+## Endpoints
+
+### [METHOD] /path/to/endpoint
+
+**Description:** What this endpoint does
+
+**Request**
+\`\`\`http
+METHOD /path HTTP/1.1
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "field1": "string",
+  "field2": 123
+}
+\`\`\`
+
+**Parameters**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| field1 | string | Yes | Description |
+| field2 | integer | No | Description |
+
+**Response**
+\`\`\`json
+{
+  "id": "abc123",
+  "status": "success",
+  "data": {}
+}
+\`\`\`
+
+**Response Fields**
+| Field | Type | Description |
+|-------|------|-------------|
+
+**Error Codes**
+| Code | Message | Description |
+|------|---------|-------------|
+| 400 | Bad Request | ... |
+| 401 | Unauthorized | ... |
+| 429 | Rate Limited | ... |
+| 500 | Server Error | ... |
+
+**Code Examples**
+\`\`\`javascript
+// Node.js
+\`\`\`
+\`\`\`python
+# Python
+\`\`\`
+\`\`\`curl
+# cURL
+\`\`\`
+
+**Rate Limits:** [details]
+**Webhooks:** [if applicable]
+` : doc_type === 'readme' ? `
+# Project Name
+
+[![Build Status](badge)](link) [![Version](badge)](link)
+
+> One-line description of what this does.
+
+## Features
+- Feature 1
+- Feature 2
+
+## Quick Start
+\`\`\`bash
+npm install
+\`\`\`
+
+## Installation
+[Step by step]
+
+## Configuration
+[Environment variables table]
+
+## Usage
+[Code examples]
+
+## API Reference
+[Link or inline]
+
+## Contributing
+[How to contribute]
+
+## License
+[License info]
+` : `[Complete ${doc_type} documentation for ${feature}]`}
+
+Make it clear, scannable, and include runnable code examples. Technical accuracy over verbosity.`;
+    const doc = await callLLM(provider, key, prompt, 2500);
+    res.json({ doc });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/changelog', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { commits, product, version, audience } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a technical writer who excels at translating raw engineering commits into clear, useful changelogs. Transform these commits into a polished changelog for ${audience}:
+
+PRODUCT: ${product}
+VERSION: ${version || 'Latest'}
+RAW COMMITS / NOTES:
+${commits}
+
+Generate a complete changelog following Keep a Changelog format:
+
+# ${product} ${version || 'Changelog'}
+*Released: [date]*
+
+## Summary
+[2-sentence executive summary of this release]
+
+## ✨ New Features
+[Group related features together. For each: what it is, what problem it solves, how to use it]
+
+## 🐛 Bug Fixes
+[Each fix: what was broken, what the impact was, what was fixed]
+
+## 🔧 Improvements
+[Performance, UX, DX improvements]
+
+## 💥 Breaking Changes
+[HIGHLIGHT ANY BREAKING CHANGES. What changed, migration steps, deprecated methods]
+
+## 📦 Dependencies
+[Updated dependencies worth noting]
+
+## Migration Guide
+[If any breaking changes, step-by-step migration instructions]
+
+---
+Tailor language for ${audience}: ${audience === 'developers' ? 'technical, precise, include code snippets for breaking changes' : audience === 'end-users' ? 'plain English, focus on what improved for them' : 'balanced technical and business impact'}.`;
+    const changelog = await callLLM(provider, key, prompt, 1500);
+    res.json({ changelog });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/feature-flag', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { feature, rollout_type, platform, risks } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a staff engineer specializing in progressive delivery and feature management. Design a ${rollout_type} feature flag strategy for:
+
+FEATURE: ${feature}
+ROLLOUT TYPE: ${rollout_type}
+PLATFORM: ${platform || 'Generic feature flag system'}
+KNOWN RISKS: ${risks || 'None specified'}
+
+Deliver a complete feature flag rollout plan:
+
+1. FLAG CONFIGURATION
+   - Flag name (kebab-case, descriptive)
+   - Flag type (boolean / multivariate / experiment)
+   - Default value (off/on/variant)
+   - Targeting rules configuration
+   - Prerequisite flags (if any)
+
+2. ROLLOUT STAGES
+   Stage 1: [% or cohort] — Criteria, duration, success metrics
+   Stage 2: [% or cohort] — Criteria, duration, success metrics
+   Stage 3: [% or cohort] — Criteria, duration, success metrics
+   Full GA: Criteria to graduate to 100%
+
+3. MONITORING & ALERTING
+   - Key metrics to watch during rollout
+   - Alert thresholds that trigger pause/rollback
+   - Dashboard queries to set up
+   - Error rate baseline vs. threshold
+
+4. KILL SWITCH PROTOCOL
+   - Who can trigger rollback
+   - Rollback command / steps
+   - Communication template for rollback
+   - Post-rollback investigation checklist
+
+5. CODE IMPLEMENTATION GUIDE
+   \`\`\`javascript
+   // Example flag check pattern
+   \`\`\`
+   - Where to add the flag check in code
+   - How to handle the off state (legacy path)
+   - Cleanup checklist when flag is removed
+
+6. STAKEHOLDER COMMUNICATION
+   - What to tell users during rollout
+   - Internal Slack/update template
+
+7. FLAG CLEANUP PLAN
+   - When to remove the flag
+   - Cleanup PR checklist`;
+    const plan = await callLLM(provider, key, prompt, 2000);
+    res.json({ plan });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/load-test', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { system, endpoints, expected_load, tool } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a performance engineering expert. Design a comprehensive load testing strategy for:
+
+SYSTEM: ${system}
+CRITICAL ENDPOINTS: ${endpoints || 'All endpoints'}
+EXPECTED PEAK LOAD: ${expected_load || 'Not specified'}
+TOOL: ${tool}
+
+Deliver a complete load testing plan:
+
+1. TEST SCENARIOS
+   a) Smoke Test: 1-5 VUs, 1 min — verify basic functionality
+   b) Load Test: Ramp to expected load, sustain 10 min — normal operation
+   c) Stress Test: Ramp to 150% expected load — find breaking point
+   d) Spike Test: Sudden 10x traffic spike — simulate viral event
+   e) Soak Test: 80% load for 2+ hours — find memory leaks
+
+2. ${tool.toUpperCase()} SCRIPT
+\`\`\`javascript
+${tool === 'k6' ? `import http from 'k6/http';
+import { check, sleep } from 'k6';
+import { Rate } from 'k6/metrics';
+
+const errorRate = new Rate('errors');
+
+export const options = {
+  stages: [
+    { duration: '2m', target: 10 },   // ramp up
+    { duration: '5m', target: 50 },   // sustain
+    { duration: '2m', target: 0 },    // ramp down
+  ],
+  thresholds: {
+    http_req_duration: ['p(95)<500'], // 95% under 500ms
+    errors: ['rate<0.01'],             // < 1% errors
+  },
+};
+
+export default function() {
+  // [Generated test for: ${endpoints}]
+  const res = http.get('https://your-api.com/endpoint');
+  check(res, { 'status is 200': (r) => r.status === 200 });
+  errorRate.add(res.status !== 200);
+  sleep(1);
+}` : `# ${tool} script for ${endpoints}`}
+\`\`\`
+
+3. PERFORMANCE THRESHOLDS (Pass/Fail Criteria)
+   - P50 response time: < X ms
+   - P95 response time: < X ms
+   - P99 response time: < X ms
+   - Error rate: < X%
+   - Throughput: > X req/sec
+   - CPU/Memory limits
+
+4. PRE-TEST CHECKLIST
+   [Environment prep, monitoring setup, data seeding]
+
+5. RESULTS ANALYSIS FRAMEWORK
+   - Metrics to capture
+   - Bottleneck identification methodology
+   - How to read the ${tool} output
+   - Common failure patterns and causes
+
+6. INFRASTRUCTURE RECOMMENDATIONS
+   Based on ${expected_load || 'estimated load'}, recommended:
+   - Instance count and type
+   - Database connection pool size
+   - Cache strategy
+   - CDN configuration`;
+    const plan = await callLLM(provider, key, prompt, 2200);
+    res.json({ plan });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/threat-model', requireAuth, async (req: AuthRequest, res: express.Response) => {
+  try {
+    const { system, architecture, data_types, framework } = req.body;
+    const userId = req.userId!;
+    const keyData = await getUserKey(userId, 'anthropic') || await getUserKey(userId, 'openai') || {} as any;
+    const { key, provider } = keyData;
+    if (!key) return res.status(402).json({ error: 'No LLM key configured' });
+    const prompt = `You are a senior security engineer and application security expert. Perform a ${framework} threat model for:
+
+SYSTEM: ${system}
+ARCHITECTURE: ${architecture}
+SENSITIVE DATA: ${data_types || 'Standard user data'}
+
+Produce a comprehensive threat model:
+
+1. SYSTEM OVERVIEW & TRUST BOUNDARIES
+   - Data flow diagram description
+   - Trust zones and boundaries
+   - Entry points and exit points
+   - Privilege levels
+
+2. ${framework} THREAT ANALYSIS
+
+${framework === 'STRIDE' ? `SPOOFING THREATS
+| Threat | Target | Severity | Likelihood | Mitigation |
+|--------|--------|----------|------------|------------|
+[List threats]
+
+TAMPERING THREATS
+[Same table]
+
+REPUDIATION THREATS
+[Same table]
+
+INFORMATION DISCLOSURE THREATS
+[Same table]
+
+DENIAL OF SERVICE THREATS
+[Same table]
+
+ELEVATION OF PRIVILEGE THREATS
+[Same table]` : framework === 'OWASP' ? `OWASP TOP 10 ASSESSMENT
+For each of the OWASP Top 10 (2021), rate: Risk Level, Current Exposure, Mitigation Status` : `[${framework} analysis for this system]`}
+
+3. RISK REGISTER (Top 10 Threats Prioritized)
+   | # | Threat | Impact | Probability | Risk Score | Priority |
+   |---|--------|--------|-------------|------------|----------|
+   [Populated with real threats from analysis]
+
+4. MITIGATIONS BY PRIORITY
+   CRITICAL (fix immediately):
+   HIGH (fix this sprint):
+   MEDIUM (fix this quarter):
+   LOW (backlog):
+
+5. SECURITY CONTROLS INVENTORY
+   Currently in place vs. recommended vs. gaps
+
+6. COMPLIANCE CONSIDERATIONS
+   GDPR / SOC 2 / HIPAA / PCI-DSS — which apply and key requirements
+
+7. SECURITY TEST CASES
+   10 specific penetration testing scenarios to validate mitigations`;
+    const model = await callLLM(provider, key, prompt, 2500);
+    res.json({ model });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 112 ROUTES ───────────────────────────────────────────────────────────
+
+app.post('/api/ai/prompt-engineer', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { task, style } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a world-class prompt engineer. Generate an optimized prompt for the following task using the specified technique.
+
+TASK: ${task}
+TECHNIQUE: ${style}
+
+Create a complete, production-ready prompt that maximizes LLM performance. Include:
+
+1. SYSTEM PROMPT (if applicable for role-based)
+2. THE OPTIMIZED PROMPT
+   [Full prompt text, ready to copy-paste]
+3. KEY DESIGN DECISIONS
+   - Why this structure works for this task
+   - Critical elements included and why
+4. VARIABLES TO CUSTOMIZE
+   [Bracketed placeholders the user should fill in]
+5. EXPECTED OUTPUT FORMAT
+   [What a good response looks like]
+6. TIPS FOR BEST RESULTS
+   - Temperature setting recommendation
+   - Model recommendations
+   - Edge cases to watch for`;
+    const result = await callLLM(provider, key, prompt, 2000);
+    res.json({ prompt: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/model-selector', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { useCase, priority } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are an AI infrastructure expert with deep knowledge of all major LLM providers. Recommend the best model(s) for this use case.
+
+USE CASE: ${useCase}
+PRIORITY: ${priority}
+
+Provide a detailed analysis covering:
+
+1. TOP RECOMMENDATION
+   Model: [Provider / Model name]
+   Why: [Specific reasons this wins for their use case]
+
+2. COMPARISON TABLE
+   | Model | Provider | Cost/1M tokens | Context | Speed | Quality | Best for |
+   [Include top 5 relevant models: GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro, Llama 3.1, Mistral, etc.]
+
+3. COST ESTIMATE
+   For their specific use case, estimated monthly cost at 3 scale tiers:
+   - 1,000 requests/day: $X/month
+   - 10,000 requests/day: $X/month
+   - 100,000 requests/day: $X/month
+
+4. IMPLEMENTATION GUIDE
+   - API endpoint
+   - Recommended settings (temperature, max_tokens)
+   - Fallback model if primary is unavailable
+
+5. WATCH OUT FOR
+   - Limitations of the recommended model for this use case
+   - When to switch models`;
+    const recommendation = await callLLM(provider, key, prompt, 2000);
+    res.json({ recommendation });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/pipeline-designer', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { sources, destination, transformations } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a senior data engineer. Design a complete data pipeline architecture for this requirement.
+
+SOURCES: ${sources}
+DESTINATION: ${destination}
+TRANSFORMATIONS: ${transformations || 'Standard cleaning and normalization'}
+
+Deliver a comprehensive pipeline design:
+
+1. ARCHITECTURE OVERVIEW
+   [ASCII diagram showing data flow: Source → Ingestion → Transform → Load → Destination]
+
+2. RECOMMENDED STACK
+   - Ingestion: [Tool + why, e.g. Airbyte, Fivetran, custom scripts]
+   - Orchestration: [e.g. Airflow, Prefect, dbt Cloud]
+   - Transformation: [e.g. dbt, Spark, pandas]
+   - Storage: [staging area + final destination setup]
+
+3. PIPELINE CODE (dbt or Python)
+   [Working code skeleton for the core transformation]
+
+4. SCHEDULING & MONITORING
+   - Recommended run frequency
+   - Key metrics to monitor
+   - Alerting setup
+
+5. DATA QUALITY CHECKS
+   - 5 specific tests to add
+   - How to handle failures
+
+6. ESTIMATED COSTS & TIMELINE
+   - Infrastructure cost estimate
+   - Implementation time estimate`;
+    const design = await callLLM(provider, key, prompt, 2500);
+    res.json({ design });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ml/experiment-tracker', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { hypothesis, modelType, dataset } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a senior ML engineer and data scientist. Create a complete experiment plan for this ML task.
+
+HYPOTHESIS: ${hypothesis}
+MODEL TYPE: ${modelType}
+DATASET: ${dataset || 'Not specified'}
+
+Generate a rigorous experiment tracking document:
+
+1. EXPERIMENT CARD
+   Name: [Descriptive experiment name]
+   Hypothesis: ${hypothesis}
+   Success Criteria: [Specific metric thresholds]
+   
+2. BASELINE
+   - Current performance: [metric + value]
+   - Baseline model: [simplest reasonable model]
+   - Expected improvement: [realistic range]
+
+3. EXPERIMENT DESIGN
+   - Features to test: [list with rationale]
+   - Model candidates: [3-5 models to try, ordered by complexity]
+   - Hyperparameter search space: [key params and ranges]
+   - Cross-validation strategy: [k-fold, time-split, etc.]
+
+4. EVALUATION METRICS
+   Primary: [main metric]
+   Secondary: [2-3 supporting metrics]
+   Business metric: [how this translates to business value]
+
+5. TRACKING CODE (MLflow / W&B)
+\`\`\`python
+import mlflow
+
+with mlflow.start_run(run_name="experiment_v1"):
+    # Log parameters
+    mlflow.log_params({...})
+    # Train model
+    # Log metrics
+    mlflow.log_metrics({...})
+    # Log model
+    mlflow.sklearn.log_model(model, "model")
+\`\`\`
+
+6. RESULTS TEMPLATE
+   | Run | Features | Model | CV Score | Test Score | Notes |
+   
+7. GO/NO-GO CRITERIA
+   - Ship if: [specific threshold]
+   - Iterate if: [what to try next]
+   - Abandon if: [when to stop]`;
+    const plan = await callLLM(provider, key, prompt, 2500);
+    res.json({ plan });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/vector-db-designer', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { content, scale, useCase } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a vector database architect with expertise in RAG systems and semantic search. Design a complete vector database architecture.
+
+CONTENT TO INDEX: ${content}
+SCALE: ${scale}
+USE CASE: ${useCase}
+
+Deliver a production-ready vector DB design:
+
+1. RECOMMENDED VECTOR DATABASE
+   Primary: [e.g. Pinecone, Weaviate, Qdrant, pgvector, Chroma]
+   Why: [specific reasons for this use case and scale]
+   Alternative: [backup option]
+
+2. EMBEDDING MODEL SELECTION
+   Model: [e.g. text-embedding-3-large, all-MiniLM-L6-v2, BGE-M3]
+   Dimensions: [number]
+   Cost: [$X per 1M tokens]
+   Why this model: [reasoning]
+
+3. CHUNKING STRATEGY
+   - Chunk size: [tokens/characters]
+   - Overlap: [amount and why]
+   - Chunking method: [fixed, semantic, recursive, by section]
+   - Metadata to store: [list of fields]
+
+4. INDEX CONFIGURATION
+   - Distance metric: [cosine / euclidean / dot product + why]
+   - Index type: [HNSW / IVF / Flat + settings]
+   - Namespace/collection structure
+
+5. RETRIEVAL PIPELINE
+\`\`\`python
+# Complete retrieval code
+def retrieve(query: str, k: int = 5):
+    # Embed query
+    # Search vector DB
+    # Rerank if needed
+    # Return with metadata
+    pass
+\`\`\`
+
+6. PERFORMANCE & COST ESTIMATE
+   - Indexing cost for current content
+   - Query latency at scale: [ms]
+   - Monthly cost at [scale] queries/day
+
+7. PRODUCTION CHECKLIST
+   □ Metadata filtering setup
+   □ Hybrid search (vector + keyword)
+   □ Reranking layer
+   □ Caching strategy
+   □ Monitoring / drift detection`;
+    const design = await callLLM(provider, key, prompt, 2500);
+    res.json({ design });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 113 ROUTES ───────────────────────────────────────────────────────────
+
+app.post('/api/analytics/cohort-analyzer', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, cohortType, metric } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a growth analytics expert. Design a complete cohort analysis framework.
+
+PRODUCT: ${product}
+COHORT TYPE: ${cohortType}
+KEY METRIC: ${metric}
+
+Deliver:
+
+1. COHORT DEFINITION
+   How to define and segment cohorts for this analysis
+
+2. SQL QUERY (PostgreSQL)
+\`\`\`sql
+-- Complete cohort analysis query
+WITH cohorts AS (
+  -- Define cohort assignment
+),
+cohort_activity AS (
+  -- Track activity per period
+)
+SELECT ...
+FROM cohorts
+JOIN cohort_activity ...
+\`\`\`
+
+3. EXPECTED OUTPUT FORMAT
+   | Cohort | Week 0 | Week 1 | Week 2 | Week 4 | Week 8 |
+   [Show what good vs bad retention curves look like]
+
+4. INDUSTRY BENCHMARKS
+   - Best-in-class ${metric} for ${cohortType} cohorts by company type
+   - What your numbers likely mean
+
+5. TOP 5 INSIGHTS TO LOOK FOR
+   - Specific patterns that indicate problems or opportunities
+
+6. IMPROVEMENT PLAYBOOK
+   Based on common cohort patterns, the top 5 interventions to improve ${metric}`;
+    const analysis = await callLLM(provider, key, prompt, 2500);
+    res.json({ analysis });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/analytics/funnel-builder', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, steps, goal } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a conversion optimization expert. Analyze this funnel and provide a complete optimization plan.
+
+PRODUCT: ${product}
+FUNNEL STEPS: ${steps}
+OPTIMIZATION GOAL: ${goal}
+
+Deliver:
+
+1. FUNNEL VISUALIZATION
+   [ASCII art showing each step with typical conversion rates]
+   Step 1 (100%) → Step 2 (X%) → Step 3 (X%) → ... → Final (X%)
+
+2. INDUSTRY BENCHMARKS
+   Typical conversion rates for each step in this type of funnel
+
+3. BIGGEST DROP-OFF POINTS
+   Ranked by impact: which step leaking the most value and why
+
+4. OPTIMIZATION TACTICS (Top 10)
+   For each tactic:
+   - What to change
+   - Expected lift: X%
+   - Implementation difficulty: Easy/Medium/Hard
+   - How to A/B test it
+
+5. QUICK WINS (implement this week)
+   3 changes with highest impact-to-effort ratio
+
+6. MEASUREMENT PLAN
+   - KPIs to track
+   - SQL query to measure funnel performance
+   - Dashboard metrics to monitor
+
+7. 90-DAY ROADMAP
+   Week 1-2: [Quick wins]
+   Month 1: [Core experiments]
+   Month 2-3: [Bigger bets]`;
+    const funnel = await callLLM(provider, key, prompt, 2500);
+    res.json({ funnel });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/analytics/retention-dashboard', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, currentRetention, churnReasons } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a retention specialist. Build a complete retention measurement and improvement framework.
+
+PRODUCT: ${product}
+CURRENT RETENTION: ${currentRetention || 'Not provided'}
+KNOWN CHURN REASONS: ${churnReasons || 'Not provided'}
+
+Deliver:
+
+1. RETENTION SCORECARD
+   Key metrics to track with targets:
+   | Metric | How to Calculate | Current | Target | World-Class |
+   
+2. RETENTION BENCHMARKS
+   Industry averages for this type of product (D1, D7, D30, D90, annual)
+
+3. EARLY WARNING INDICATORS
+   5 leading indicators that predict churn before it happens (with SQL)
+
+4. SEGMENTATION FRAMEWORK
+   How to segment users by retention risk (power users, at-risk, churned)
+
+5. INTERVENTION PLAYBOOK
+   Triggered campaigns for each segment:
+   - Power users: [how to deepen engagement]
+   - At-risk: [re-engagement sequence]
+   - Day-1 drop-offs: [onboarding fix]
+
+6. RETENTION IMPROVEMENT EXPERIMENTS
+   Top 5 experiments to run ranked by expected impact
+
+7. SQL QUERIES
+   - Retention rate by cohort
+   - Churn prediction score
+   - Engagement score calculation`;
+    const dashboard = await callLLM(provider, key, prompt, 2500);
+    res.json({ dashboard });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/analytics/ab-stats', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { control, treatment, metric, significance } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a statistician and growth analyst. Analyze this A/B test result and provide a complete statistical interpretation.
+
+CONTROL (A): ${control}
+TREATMENT (B): ${treatment}
+METRIC: ${metric}
+CONFIDENCE LEVEL: ${significance}%
+
+Provide:
+
+1. STATISTICAL SUMMARY
+   - Control rate: X%
+   - Treatment rate: X%
+   - Relative lift: +X%
+   - Absolute lift: +X pp
+   - Statistical significance: [Significant / Not significant]
+   - P-value: approximately X
+   - Confidence interval for lift: [X%, X%]
+
+2. SAMPLE SIZE ASSESSMENT
+   - Was the test adequately powered?
+   - Minimum detectable effect at current sample size
+   - Sample size needed for 80% power to detect this lift
+
+3. DECISION RECOMMENDATION
+   [Clear GO / NO-GO / CONTINUE TESTING with reasoning]
+
+4. BUSINESS IMPACT PROJECTION
+   If this lift holds at scale:
+   - Monthly impact (estimate based on provided numbers)
+   - Annual impact
+   - Revenue or conversion value (if calculable)
+
+5. STATISTICAL CAVEATS
+   - Multiple testing concerns
+   - Novelty effect risk
+   - Segment heterogeneity to check
+   - How long to run for reliable results
+
+6. NEXT STEPS
+   What to do based on the result`;
+    const analysis = await callLLM(provider, key, prompt, 2000);
+    res.json({ analysis });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/analytics/ltv-predictor', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { business, metrics, model } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a financial modeling expert specializing in customer lifetime value. Predict and analyze LTV for this business.
+
+BUSINESS: ${business}
+METRICS: ${metrics || 'Not provided'}
+REVENUE MODEL: ${model}
+
+Deliver:
+
+1. LTV CALCULATION
+   Using the ${model} model:
+   
+   Basic LTV = [formula with numbers plugged in]
+   Discounted LTV (10% discount rate) = $X
+   
+   Show all assumptions and math clearly.
+
+2. LTV SENSITIVITY ANALYSIS
+   | Scenario | Churn Change | ARPU Change | LTV |
+   | Bear case | +2% churn | -10% ARPU | $X |
+   | Base case | current | current | $X |
+   | Bull case | -1% churn | +10% ARPU | $X |
+
+3. LTV:CAC RATIO ASSESSMENT
+   Current ratio: X:1
+   Healthy target: 3:1+
+   Assessment: [Healthy / Concerning / Critical]
+
+4. TOP LTV LEVERS (ranked by impact)
+   For each lever:
+   - Current value → Target value
+   - LTV impact: +$X (+X%)
+   - How to move this metric
+
+5. COHORT LTV PREDICTION
+   Expected LTV at months 3, 6, 12, 24, 36
+
+6. SEGMENTATION OPPORTUNITY
+   Which customer segments likely have 2-3x higher LTV and how to identify them
+
+7. PAYBACK PERIOD
+   Time to recover CAC at current LTV trajectory`;
+    const prediction = await callLLM(provider, key, prompt, 2500);
+    res.json({ prediction });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 114 ROUTES ───────────────────────────────────────────────────────────
+
+app.post('/api/product/jtbd', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, customer } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a Jobs-to-be-Done expert trained in the Christensen/Ulwick methodology. Map the complete JTBD framework for this product.
+
+PRODUCT: ${product}
+TARGET CUSTOMER: ${customer}
+
+Deliver:
+
+1. CORE FUNCTIONAL JOB
+   The main job customers hire this product to do
+   Format: "When [situation], help me [motivation] so I can [outcome]"
+
+2. RELATED JOBS MAP
+   | Job Type | Job Statement | Importance | Satisfaction |
+   Functional jobs (8-10):
+   Emotional jobs (4-5):
+   Social jobs (3-4):
+
+3. DESIRED OUTCOMES (Outcome-Driven Innovation)
+   Top 10 outcomes customers want, ranked by opportunity score:
+   Opportunity = Importance + max(Importance - Satisfaction, 0)
+   
+   | # | Outcome Statement | Importance | Satisfaction | Score |
+   
+4. UNDERSERVED OUTCOMES (Build These)
+   Top 3 outcomes where Importance > 7 and Satisfaction < 5
+
+5. OVERSERVED OUTCOMES (Simplify These)
+   Areas where satisfaction > importance — potential to cut scope
+
+6. COMPETING SOLUTIONS
+   Non-obvious competitors — other ways customers currently do this job
+
+7. POSITIONING RECOMMENDATION
+   How to position the product based on the most underserved job`;
+    const map = await callLLM(provider, key, prompt, 2500);
+    res.json({ map });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, currentPricing, competitors, goal } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a SaaS pricing strategist. Design a complete pricing strategy.
+
+PRODUCT: ${product}
+CURRENT PRICING: ${currentPricing || 'None'}
+COMPETITORS: ${competitors || 'Not provided'}
+GOAL: ${goal}
+
+Deliver:
+
+1. RECOMMENDED PRICING MODEL
+   [Value-based / Cost-plus / Competitive / Freemium / Usage-based]
+   Why this model fits
+
+2. PRICING TIERS (3-4 tiers)
+   | Tier | Price | Target Segment | Key Features | Limits |
+   Design tiers that maximize expansion revenue
+
+3. PRICING PSYCHOLOGY TACTICS
+   - Anchoring strategy
+   - Decoy pricing if applicable
+   - Annual vs monthly discount (recommend X%)
+   - Free trial / freemium structure
+
+4. VALUE METRIC
+   What to charge for (users, usage, features, outcomes)
+   Why this metric aligns incentives
+
+5. COMPETITOR POSITIONING
+   | Competitor | Price | Your Position | Differentiation |
+
+6. REVENUE IMPACT ESTIMATE
+   If you implement this strategy:
+   - Expected conversion rate change
+   - Expected ARPU change
+   - Expected LTV change
+
+7. IMPLEMENTATION PLAN
+   - Week 1-2: [Preparation]
+   - Week 3-4: [Testing]
+   - Month 2: [Full rollout]
+   - Grandfather clauses for existing customers`;
+    const strategy = await callLLM(provider, key, prompt, 2500);
+    res.json({ strategy });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/north-star', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, currentMetrics, stage } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a product strategy expert. Identify the North Star Metric and build a complete metric framework.
+
+PRODUCT: ${product}
+CURRENT METRICS: ${currentMetrics || 'Not provided'}
+COMPANY STAGE: ${stage}
+
+Deliver:
+
+1. NORTH STAR METRIC RECOMMENDATION
+   Metric name: [e.g. "Weekly Active Projects"]
+   Definition: [Exact calculation]
+   Why this is the right North Star: [3 reasons]
+   
+2. NORTH STAR TREE
+   North Star → Input Metrics (3-5) → Leading Indicators
+   
+   For each input metric:
+   - Team responsible
+   - How to move it
+   - Current benchmark vs. target
+
+3. METRIC VALIDATION TEST
+   Does your North Star pass these checks?
+   ✓ Captures value delivered to users
+   ✓ Predictive of long-term revenue
+   ✓ Measurable weekly
+   ✓ Actionable by product team
+   ✓ Not gameable
+
+4. COMPETITOR NORTH STARS
+   What top companies in this space likely use as North Star
+
+5. METRICS TO RETIRE
+   Vanity metrics to stop tracking (and why)
+
+6. DASHBOARD STRUCTURE
+   Primary (review daily): [metrics]
+   Secondary (review weekly): [metrics]
+   Strategic (review monthly): [metrics]
+
+7. FIRST 30 DAYS
+   How to start measuring and moving the North Star immediately`;
+    const framework = await callLLM(provider, key, prompt, 2500);
+    res.json({ framework });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/okr-generator', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { company, goals, quarter, level } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are an OKR coach who has worked with Google, Spotify, and top startups. Generate world-class OKRs.
+
+COMPANY/TEAM: ${company}
+STRATEGIC GOALS: ${goals}
+QUARTER: ${quarter}
+LEVEL: ${level}
+
+Generate 3-4 OKRs in this format:
+
+## OBJECTIVE 1: [Ambitious, inspiring, qualitative goal]
+*Why it matters: [one line]*
+
+**KR 1.1:** [Specific metric] from [current] to [target] by [date]
+**KR 1.2:** [Specific metric] from [current] to [target] by [date]  
+**KR 1.3:** [Specific metric] from [current] to [target] by [date]
+
+[Repeat for all objectives]
+
+---
+
+OKR QUALITY CHECKLIST:
+For each OKR, confirm:
+□ Objective is inspiring and uses action verbs
+□ Key Results are measurable with specific numbers
+□ 70% achievement would be considered success
+□ No activity-based KRs (no "Launch X" — instead "X users use feature")
+□ Each KR is independently measurable
+
+COMMON MISTAKES TO AVOID:
+[List 3-5 mistakes in these specific OKRs and how to fix them]
+
+CROSS-TEAM DEPENDENCIES:
+[What other teams need to contribute to hit these OKRs]`;
+    const okrs = await callLLM(provider, key, prompt, 2500);
+    res.json({ okrs });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/user-personas', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, research, count } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a UX researcher and product strategist. Create ${count} detailed user personas.
+
+PRODUCT: ${product}
+EXISTING RESEARCH: ${research || 'None provided — use best judgment'}
+
+For each persona, provide:
+
+## PERSONA [N]: [Full Name], [Age] — [Job Title]
+
+**Quote:** "[Authentic quote that captures their worldview]"
+
+**Background:**
+- Role: [Specific job and responsibilities]
+- Company: [Type, size]
+- Tech savviness: [1-10]
+- Budget authority: [Y/N]
+
+**Goals:**
+- Primary goal: [What they're trying to achieve]
+- Secondary goals: [2-3 more]
+
+**Frustrations:**
+- [3-4 specific pain points with vivid descriptions]
+
+**How They Find Solutions:**
+- [Discovery channels they use]
+- [Who influences their decisions]
+
+**A Day in Their Life:**
+[2-3 sentences describing a typical day and where your product fits]
+
+**What They Need From ${product.split('—')[0]}:**
+- Must-have features: [list]
+- Nice-to-have: [list]
+- Deal-breakers: [list]
+
+**How to Reach Them:**
+- Best channels: [list]
+- Key messages that resonate: [2-3]
+
+---
+[Repeat for all ${count} personas]
+
+**PERSONA PRIORITIZATION:**
+Primary persona (build for): Persona [N]
+Reason: [Why]`;
+    const personas = await callLLM(provider, key, prompt, 3000);
+    res.json({ personas });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 115 ROUTES ───────────────────────────────────────────────────────────
+
+app.post('/api/seo/content-optimizer', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { content, keyword, contentType } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are an SEO content strategist. Analyze and optimize this content for search rankings.
+
+CONTENT: ${content.slice(0, 3000)}
+TARGET KEYWORD: "${keyword}"
+CONTENT TYPE: ${contentType}
+
+Provide a complete SEO optimization report:
+
+1. SEO SCORE: X/100
+   Current state assessment
+
+2. TITLE TAG ANALYSIS
+   Current: [extracted from content]
+   Issues: [if any]
+   Optimized: [suggested title, 50-60 chars, keyword near start]
+
+3. KEYWORD USAGE ANALYSIS
+   - Keyword density: X% (target: 1-2%)
+   - Primary keyword in: H1 ✓/✗, First 100 words ✓/✗, Meta ✓/✗
+   - Related keywords missing: [LSI/semantic terms to add]
+
+4. HEADING STRUCTURE
+   Current structure: [H1→H2→H3 map]
+   Issues: [missing, duplicate, keyword absent]
+   Recommended structure: [improved H-tag outline]
+
+5. CONTENT QUALITY ISSUES
+   - Word count: X (recommended: Y for this content type)
+   - Readability score: [easy/medium/hard]
+   - Thin sections to expand: [list]
+
+6. TOP 10 SPECIFIC FIXES
+   Ranked by SEO impact:
+   [Fix] → [Specific change to make]
+
+7. OPTIMIZED INTRODUCTION (rewrite)
+   [First 100 words rewritten to be keyword-rich and compelling]
+
+8. SCHEMA MARKUP RECOMMENDATION
+   Best schema type for this content + JSON-LD snippet`;
+    const report = await callLLM(provider, key, prompt, 2500);
+    res.json({ report });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/headline-analyzer', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { headlines, audience, goal } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const headlineList = headlines.split('\n').filter((h: string) => h.trim()).slice(0, 5);
+    const prompt = `You are a conversion copywriter and content strategist. Analyze these headlines.
+
+HEADLINES:
+${headlineList.map((h: string, i: number) => `${i+1}. ${h}`).join('\n')}
+
+TARGET AUDIENCE: ${audience || 'General business audience'}
+GOAL: ${goal}
+
+For EACH headline, provide:
+
+## Headline [N]: "[headline text]"
+
+**Score: X/100**
+
+| Dimension | Score | Notes |
+|-----------|-------|-------|
+| Clarity | X/10 | [brief note] |
+| Emotional Power | X/10 | [brief note] |
+| Specificity | X/10 | [brief note] |
+| Urgency/FOMO | X/10 | [brief note] |
+| SEO Value | X/10 | [brief note] |
+| Curiosity Gap | X/10 | [brief note] |
+
+**What Works:** [1-2 sentences]
+**What to Fix:** [1-2 sentences]
+
+---
+
+## WINNER
+**Best headline:** #[N]
+**Why it wins:** [reasoning]
+
+## 10 ALTERNATIVE HEADLINES
+Based on what worked, write 10 alternatives that improve on the weaknesses:
+1. [headline] — [type: curiosity/urgency/number/how-to/etc]
+2-10. [continue]
+
+## HEADLINE FORMULA THAT WORKS BEST FOR "${goal}"
+[Template + example]`;
+    const analysis = await callLLM(provider, key, prompt, 2500);
+    res.json({ analysis });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/calendar', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { business, channels, frequency, theme } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a content marketing strategist. Build a 30-day content calendar.
+
+BUSINESS: ${business}
+CHANNELS: ${channels}
+FREQUENCY: ${frequency}
+MONTHLY THEME: ${theme || 'Not specified'}
+
+Create a complete content calendar:
+
+1. CONTENT STRATEGY OVERVIEW
+   - Content pillars (3-4 themes to own)
+   - Content mix (educational X%, promotional X%, entertaining X%)
+   - Voice and tone guidelines
+
+2. 30-DAY CALENDAR
+   Format each entry as:
+   📅 [Date / Week] | [Channel] | [Content Type] | [Title / Topic] | [Hook] | [CTA]
+   
+   Include enough entries for ${frequency} publishing across all channels.
+   
+3. TOP 5 EVERGREEN PIECES TO CREATE
+   High-ROI content that ranks for years:
+   | Format | Title | Keywords | Expected Traffic |
+
+4. CONTENT REPURPOSING MAP
+   How to turn 1 piece into 5+ formats:
+   Blog post → [Social snippets, Email, Video script, Infographic, etc.]
+
+5. ENGAGEMENT TACTICS
+   For each channel: specific tactics to maximize reach and engagement
+
+6. KPIs TO TRACK
+   What success looks like at 30/60/90 days`;
+    const calendar = await callLLM(provider, key, prompt, 3000);
+    res.json({ calendar });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/seo/backlink-strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { website, niche, currentDA } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are an SEO link-building expert. Build a complete backlink acquisition strategy.
+
+WEBSITE: ${website}
+NICHE: ${niche}
+CURRENT DOMAIN AUTHORITY: ${currentDA || 'Unknown / New site'}
+
+Deliver:
+
+1. LINK BUILDING AUDIT
+   Current state assessment and 6-month DA target
+
+2. PRIORITY TACTICS (by ROI)
+   
+   TIER 1 — Quick Wins (Week 1-2):
+   - [Tactic]: [Specific execution steps]
+   
+   TIER 2 — Core Strategy (Month 1-3):
+   - Guest posting: [target sites in niche + outreach angle]
+   - Resource page links: [how to find and pitch]
+   - Broken link building: [process]
+   
+   TIER 3 — Authority Plays (Month 3-6):
+   - [2-3 bigger bets like data studies, tools, partnerships]
+
+3. PROSPECT LIST STRATEGY
+   How to find 50 link prospects this week:
+   - Google search operators to use
+   - Tools recommended (free: Ahrefs lite, Google Search Console)
+   - Qualification criteria (min DA, relevance)
+
+4. OUTREACH EMAIL TEMPLATES
+   
+   Template A — Guest Post Pitch:
+   Subject: [subject line]
+   [Email body]
+   
+   Template B — Broken Link Fix:
+   Subject: [subject line]
+   [Email body]
+   
+   Template C — Resource Page:
+   Subject: [subject line]
+   [Email body]
+
+5. LINK BUILDING KPIs
+   Monthly targets and how to track progress`;
+    const strategy = await callLLM(provider, key, prompt, 2500);
+    res.json({ strategy });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/seo/meta-tags', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { pageTitle, pageContent, keyword, pageType } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are an SEO specialist. Generate complete, optimized meta tags for this page.
+
+PAGE: ${pageTitle}
+KEYWORD: ${keyword || 'Not specified'}
+CONTENT: ${pageContent}
+TYPE: ${pageType}
+
+Generate ALL of the following tags, ready to copy-paste into HTML:
+
+\`\`\`html
+<!-- Primary Meta Tags -->
+<title>[50-60 chars, keyword near start, compelling]</title>
+<meta name="description" content="[150-160 chars, include keyword, clear value prop, soft CTA]" />
+<meta name="keywords" content="[5-8 relevant keywords]" />
+<link rel="canonical" href="[URL placeholder]" />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="${pageType}" />
+<meta property="og:title" content="[OG title — can be slightly longer, more engaging]" />
+<meta property="og:description" content="[OG description — emotional, shareable]" />
+<meta property="og:image" content="[Recommended image dimensions: 1200x630px]" />
+<meta property="og:url" content="[URL placeholder]" />
+<meta property="og:site_name" content="[Site name placeholder]" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="[Twitter title — punchy, under 70 chars]" />
+<meta name="twitter:description" content="[Twitter description — under 200 chars]" />
+<meta name="twitter:image" content="[Image URL placeholder]" />
+
+<!-- Schema.org JSON-LD -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "[appropriate schema type]",
+  [relevant schema properties]
+}
+</script>
+\`\`\`
+
+## ANALYSIS
+- Title tag: [length check, keyword position, CTR prediction]
+- Meta description: [length check, keyword inclusion, CTA strength]
+- Top 3 things that will improve CTR: [specific suggestions]`;
+    const tags = await callLLM(provider, key, prompt, 2000);
+    res.json({ tags });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── WAVE 116 ROUTES ───────────────────────────────────────────────────────────
+
+app.post('/api/ops/sop-writer', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { process: proc, team, detail } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are an operations expert. Write a professional Standard Operating Procedure.
+
+PROCESS: ${proc}
+TEAM: ${team || 'General'}
+DETAIL LEVEL: ${detail}
+
+# Standard Operating Procedure
+
+**Process Name:** [Descriptive name]
+**SOP ID:** SOP-[team abbreviation]-[number]
+**Version:** 1.0
+**Last Updated:** ${new Date().toLocaleDateString()}
+**Owner:** [Role responsible]
+**Applies To:** [Who follows this SOP]
+
+---
+
+## 1. PURPOSE
+[1-2 sentences on why this process exists and what outcome it achieves]
+
+## 2. SCOPE
+- Applies to: [roles/situations]
+- Does not apply to: [exceptions]
+
+## 3. ROLES & RESPONSIBILITIES (RACI)
+| Role | Responsibility |
+|------|----------------|
+[List each role and what they're accountable for]
+
+## 4. REQUIRED INPUTS
+Before starting, ensure you have:
+- [ ] [Item 1]
+- [ ] [Item 2]
+
+## 5. PROCEDURE
+${detail === 'brief' ? `
+### Overview Steps
+1. [Step 1]
+2. [Step 2]
+3. [Step 3]
+(continue as needed)
+` : `
+### Step 1: [Step Name]
+**Owner:** [Role]
+**Time:** [estimate]
+**Action:** [Detailed description of what to do]
+**If [condition]:** [decision path]
+
+(repeat for all steps with substeps for 'detailed' level)
+`}
+
+## 6. DECISION TREE
+\`\`\`
+START
+  ↓
+[First decision] — YES → [Action A]
+                  NO  → [Action B]
+\`\`\`
+
+## 7. EXPECTED OUTPUTS
+- [Output 1]: [Description]
+- [Output 2]: [Description]
+
+## 8. QUALITY CHECKS
+Before marking complete, verify:
+- [ ] [Check 1]
+- [ ] [Check 2]
+
+## 9. COMMON MISTAKES & HOW TO AVOID THEM
+| Mistake | How to Avoid |
+|---------|-------------|
+
+## 10. ESCALATION PATH
+If [situation], contact [role] via [channel] within [timeframe]
+
+## 11. RELATED DOCUMENTS
+- [Link to related SOPs or templates]
+
+---
+*For questions about this SOP, contact [team/person]*`;
+    const sop = await callLLM(provider, key, prompt, 2500);
+    res.json({ sop });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/performance-review', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { employee, achievements, improvements, reviewType } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are an experienced people manager. Write a professional, balanced performance review.
+
+EMPLOYEE: ${employee}
+ACHIEVEMENTS: ${achievements}
+AREAS FOR GROWTH: ${improvements || 'None specified'}
+REVIEW TYPE: ${reviewType}
+
+Write a complete performance review with these sections:
+
+## PERFORMANCE REVIEW — [Current Period]
+
+### OVERALL RATING: [Exceptional / Exceeds Expectations / Meets Expectations / Below Expectations]
+**Rating Rationale:** [2-3 sentence summary]
+
+### ACCOMPLISHMENTS & IMPACT
+[3-5 specific achievements with business impact quantified where possible. Use the format: "Achieved [X] which resulted in [Y impact]"]
+
+### CORE COMPETENCIES
+Rate each (1-5) with specific examples:
+- **Technical/Functional Skills:** [rating] — [example]
+- **Communication:** [rating] — [example]
+- **Collaboration:** [rating] — [example]
+- **Initiative:** [rating] — [example]
+- **Leadership:** [rating] — [example]
+
+### STRENGTHS (Top 3)
+[Specific, behavioral descriptions with concrete examples]
+
+### DEVELOPMENT AREAS (Top 2)
+[Constructive, specific, actionable — framed as growth opportunities]
+
+### GOALS FOR NEXT PERIOD
+| Goal | Success Metric | Timeline |
+|------|---------------|----------|
+[3-4 SMART goals]
+
+### DEVELOPMENT PLAN
+Recommended actions to support growth:
+- Training: [specific recommendation]
+- Stretch assignment: [specific opportunity]
+- Mentorship: [specific suggestion]
+
+### MANAGER SUMMARY
+[3-4 sentences: overall view, trajectory, key message to employee]
+
+---
+*Note: This review should be discussed with the employee before being finalized.*`;
+    const review = await callLLM(provider, key, prompt, 2500);
+    res.json({ review });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/job-description', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { role, company, requirements, remote } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a talent acquisition expert. Write a compelling, inclusive job description.
+
+ROLE: ${role}
+COMPANY: ${company}
+REQUIREMENTS: ${requirements}
+WORK ARRANGEMENT: ${remote}
+
+Create a complete job description that attracts exceptional candidates:
+
+# [Role Title]
+**Location:** [City / Remote / Hybrid]
+**Type:** Full-time
+
+## About Us
+[2-3 compelling sentences about the company's mission and why it's exciting to join now]
+
+## The Opportunity
+[2-3 sentences about why this role is uniquely impactful and interesting]
+
+## What You'll Do
+- [Responsibility 1 — start with action verb, be specific]
+- [5-8 responsibilities total]
+
+## What You'll Bring
+**Required:**
+- [Requirement 1]
+- [3-5 must-haves — focused on outcomes, not years of experience]
+
+**Nice to Have:**
+- [2-3 bonus qualifications]
+
+## What We Offer
+- [Compensation range if known, or "competitive salary"]
+- [Benefits — be specific]
+- [Growth opportunities]
+- [Culture highlights]
+
+## Our Commitment to Diversity
+[2-3 sentence inclusive hiring statement]
+
+## How to Apply
+[Application process]
+
+---
+**Bias Audit:** After writing, check for:
+- Removed gendered language (chairman → chair, manpower → workforce)
+- No unnecessary degree requirements
+- Focus on outcomes over credentials
+- Inclusive language throughout`;
+    const jd = await callLLM(provider, key, prompt, 2500);
+    res.json({ jd });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/onboarding-checklist', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { role, company, tools, duration } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are an HR expert. Create a comprehensive onboarding plan.
+
+ROLE: ${role}
+COMPANY: ${company}
+TOOLS/SYSTEMS: ${tools || 'Standard office tools'}
+DURATION: ${duration}
+
+Create a detailed onboarding checklist:
+
+## ONBOARDING PLAN: ${role}
+
+### PRE-START (Before Day 1)
+**HR/Admin tasks:**
+- [ ] Send welcome email with start date, location, what to bring
+- [ ] Set up accounts: [list based on tools provided]
+- [Other pre-start items]
+
+**Manager tasks:**
+- [ ] Prepare workspace/equipment
+- [ ] Schedule Day 1 agenda
+- [Other manager items]
+
+### DAY 1: First Impressions
+**Morning:**
+- [ ] Welcome by manager — tour + introductions
+- [ ] [Time-blocked schedule for day]
+
+**Afternoon:**
+- [ ] [List tasks]
+
+**Day 1 Goal:** New hire feels welcomed and has context on company mission
+
+### WEEK 1 CHECKLIST
+**People:** [who to meet]
+**Systems:** [what to get access to]
+**Reading:** [documents/resources to review]
+**Milestone:** [what they should be able to do by end of week]
+
+${duration !== 'first-week' ? `
+### 30-DAY MILESTONES
+By day 30, new hire should:
+- [ ] [Milestone 1]
+- [ ] [Milestone 2]
+- [ ] [Milestone 3]
+**30-Day Check-in Agenda:** [what to discuss]
+` : ''}
+
+${duration === '30-60-90' || duration === '6-month' ? `
+### 60-DAY MILESTONES
+[Milestones + check-in agenda]
+
+### 90-DAY MILESTONES
+[Milestones + check-in agenda]
+By day 90, consider them fully onboarded when: [criteria]
+` : ''}
+
+### SUCCESS METRICS
+How to know onboarding worked:
+- [ ] New hire survey score > [X]
+- [ ] Productive contribution by day [Y]
+- [ ] Retention at 6 months`;
+    const checklist = await callLLM(provider, key, prompt, 2500);
+    res.json({ checklist });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/meeting-agenda', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { meetingType, attendees, duration, goals } = req.body;
+    const { provider, key } = await getUserKey(req.user!.id, 'anthropic');
+    const prompt = `You are a meeting facilitator expert. Create a structured meeting agenda.
+
+MEETING TYPE: ${meetingType}
+ATTENDEES: ${attendees}
+DURATION: ${duration} minutes
+GOALS: ${goals}
+
+Create a complete meeting package:
+
+## ${meetingType.toUpperCase()}
+**Date:** [To be filled]
+**Duration:** ${duration} minutes
+**Location/Link:** [To be filled]
+**Facilitator:** [To be filled]
+**Note-taker:** [To be filled]
+
+---
+
+### PRE-READ (send 24-48 hours before)
+Documents to review:
+- [Pre-read 1]
+- [Pre-read 2]
+
+Questions to come prepared to answer:
+1. [Question 1]
+2. [Question 2]
+
+---
+
+### AGENDA
+
+${duration === '30' ? `
+| Time | Duration | Topic | Owner | Type |
+|------|----------|-------|-------|------|
+| :00 | 5 min | Welcome & context setting | Facilitator | Inform |
+| :05 | 10 min | [Main topic 1] | [Owner] | Discuss/Decide |
+| :15 | 10 min | [Main topic 2] | [Owner] | Discuss/Decide |
+| :25 | 5 min | Action items & next steps | All | Commit |
+` : `
+| Time | Duration | Topic | Owner | Type |
+|------|----------|-------|-------|------|
+| :00 | 5 min | Welcome & objectives | Facilitator | Inform |
+| :05 | 10 min | [Topic 1] | [Owner] | Inform/Update |
+| :15 | 15 min | [Topic 2] | [Owner] | Discuss |
+| :30 | 15 min | [Topic 3 — main decision] | [Owner] | Decide |
+| :45 | 10 min | [Topic 4] | [Owner] | Discuss |
+| :55 | 5 min | Action items & owners | All | Commit |
+`}
+
+---
+
+### DECISIONS NEEDED
+1. [Decision 1] — Decision maker: [Name/Role]
+2. [Decision 2] — Decision maker: [Name/Role]
+
+---
+
+### ACTION ITEMS TEMPLATE
+| Action | Owner | Due Date | Priority |
+|--------|-------|----------|----------|
+[To be filled during meeting]
+
+---
+
+### FACILITATOR GUIDE
+Tips for running this specific meeting effectively:
+- [Tip 1]
+- [Tip 2]
+- Watch out for: [Common pitfall]
+- If you run out of time: [Priority order]
+
+### POST-MEETING
+Within 24 hours:
+- [ ] Send meeting notes to all attendees
+- [ ] Update action item tracker
+- [ ] Schedule follow-up if needed`;
+    const agenda = await callLLM(provider, key, prompt, 2500);
+    res.json({ agenda });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 117: Legal Tech Tools
+app.post('/api/legal/contract-risk', requireAuth, async (req, res) => {
+  const { contract } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Analyze this contract for risky clauses. Provide: 1) Risk Score (0-100), 2) Top 3-5 risky clauses with explanations, 3) Recommended actions.\n\nContract:\n' + contract.substring(0,3000) }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Analysis complete' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/gdpr-check', requireAuth, async (req, res) => {
+  const { description } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Review these data practices for GDPR compliance:\n' + description + '\n\nProvide: 1) Compliance status, 2) Gaps found, 3) Required actions, 4) Recommended policies.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Check complete' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/privacy-policy', requireAuth, async (req, res) => {
+  const { company, dataTypes } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1500, messages: [{ role: 'user', content: 'Generate a privacy policy for ' + company + '. Data collected: ' + dataTypes + '. Include sections: Introduction, Data Collection, Data Use, Data Sharing, User Rights, Contact Info.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Policy generated' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/tos-builder', requireAuth, async (req, res) => {
+  const { company, product } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1500, messages: [{ role: 'user', content: 'Generate Terms of Service for ' + company + ', product: ' + product + '. Include: Acceptance, Use License, Prohibited Uses, Disclaimers, Limitation of Liability, Termination, Governing Law.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'ToS generated' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/compliance-checklist', requireAuth, async (req, res) => {
+  const { industry, region } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Generate a compliance checklist for a ' + industry + ' company operating in ' + region + '. List all relevant regulations, required certifications, and compliance steps in a numbered checklist format.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Checklist generated' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 118: Finance & Accounting Tools
+app.post('/api/finance/cash-flow-forecast', requireAuth, async (req, res) => {
+  const { revenue, expenses, months } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Create a cash flow forecast for a business with monthly revenue of ' + revenue + ' and monthly expenses of ' + expenses + '. Forecast for ' + months + ' months. Include monthly projections, cumulative cash, and key insights.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Forecast complete' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/invoice-generator', requireAuth, async (req, res) => {
+  const { client, services, amount } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const anthropic = new Anthropic({ apiKey: key });
+    const msg = await anthropic.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Generate a professional invoice for client: ' + client + '. Services: ' + services + '. Total: ' + amount + '. Include invoice number, date, payment terms, line items, and professional footer.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Invoice generated' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/tax-estimator', requireAuth, async (req, res) => {
+  const { income, country, entityType } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Estimate taxes for a ' + entityType + ' in ' + country + ' with income of ' + income + '. Provide estimated federal/state tax rates, estimated tax owed, quarterly payment schedule, and key deductions to consider. Note: This is an estimate, not tax advice.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Estimate complete' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/budget-planner', requireAuth, async (req, res) => {
+  const { goal, runway, teamSize } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Create a budget plan for a startup aiming to ' + goal + ' with $' + runway + ' runway and a team of ' + teamSize + '. Break down budget by category (salaries, marketing, ops, tech), monthly burn rate, and milestones to hit before raising again.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Plan created' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/funding-calculator', requireAuth, async (req, res) => {
+  const { stage, mrr, growth } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Calculate funding range for a ' + stage + ' startup with $' + mrr + ' MRR and ' + growth + '% monthly growth. Provide: 1) Estimated valuation range, 2) Recommended raise amount, 3) Typical dilution, 4) Investor expectations at this stage, 5) Key metrics to improve.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Calculation complete' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ============================================================
+// WAVE 119 — Social Media & Community Tools
+// ============================================================
+app.post('/api/social/instagram-caption', requireAuth, async (req: AuthRequest, res) => {
+  const { image, brand, tone } = req.body;
+  const prompt = `Write 3 Instagram caption options for this image/product: "${image}"\nBrand: ${brand || 'unspecified'}\nTone: ${tone || 'engaging'}\nInclude relevant hashtags for each option.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/social/community-post', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, platform, goal } = req.body;
+  const prompt = `Write a community post about "${topic}" for ${platform || 'Reddit/Discord'}.\nGoal: ${goal || 'spark discussion'}\nMake it authentic, engaging, and invite participation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/social/tiktok-script', requireAuth, async (req: AuthRequest, res) => {
+  const { product, hook, duration } = req.body;
+  const prompt = `Write a TikTok video script for: "${product}"\nHook: ${hook || 'attention-grabbing opener'}\nDuration: ${duration || '60 seconds'}\nInclude: hook, main content, CTA, trending audio suggestions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/social/bio-optimizer', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, currentBio, goal } = req.body;
+  const prompt = `Optimize this ${platform || 'social media'} bio:\n"${currentBio}"\nGoal: ${goal || 'grow following and drive traffic'}\nProvide 3 optimized versions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/social/viral-hook', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, platform } = req.body;
+  const prompt = `Generate 10 viral hook variations for: "${topic}"\nPlatform: ${platform || 'social media'}\nUse psychological triggers: curiosity, FOMO, social proof, controversy, etc.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 120 routes
+app.post('/api/ecom/product-description', requireAuth, async (req: AuthRequest, res) => {
+  const { product_name, features, audience } = req.body;
+  const prompt = `Write a compelling product description for: "${product_name}"\nKey features: ${features}\nTarget audience: ${audience || 'general consumers'}\n\nInclude: headline, emotional hook, feature highlights (benefits-focused), social proof placeholder, call to action. Make it conversion-optimized.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ description: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/writing/essay-outline', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, essay_type, length } = req.body;
+  const prompt = `Create a detailed essay outline for: "${topic}"\nType: ${essay_type || 'argumentative'}\nLength: ${length || '5 paragraphs'}\n\nInclude: thesis statement, introduction hook, main arguments with evidence points, counterargument (if applicable), conclusion strategy, transition suggestions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ outline: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/research/summarizer', requireAuth, async (req: AuthRequest, res) => {
+  const { research_topic, raw_notes } = req.body;
+  const prompt = `Summarize this market research on "${research_topic}":\n\n${raw_notes}\n\nProvide: executive summary (3 sentences), key findings (top 5), market size & opportunity, competitor landscape, customer pain points, strategic recommendations, data gaps to fill.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ summary: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productivity/focus-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { goals, available_hours, distractions } = req.body;
+  const prompt = `Create a deep focus session plan.\nGoals: ${goals}\nAvailable time: ${available_hours || '4'} hours\nKnown distractions: ${distractions || 'phone, email'}\n\nProvide: time-blocked schedule, Pomodoro breakdown, environment setup checklist, pre-session ritual, distraction blockers, energy management tips, success metrics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ plan: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/expense-report', requireAuth, async (req: AuthRequest, res) => {
+  const { expenses, purpose, period } = req.body;
+  const prompt = `Generate a professional expense report.\nExpenses: ${expenses}\nBusiness purpose: ${purpose}\nPeriod: ${period || 'this month'}\n\nProvide: formatted expense table, category totals, business justification for each expense, reimbursement summary, notes for accountant, and any flagged items needing receipts.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ report: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 121 routes
+app.post('/api/writing/cover-letter', requireAuth, async (req: AuthRequest, res) => {
+  const { job_description, resume_summary } = req.body;
+  const prompt = `Write a compelling, personalized cover letter.\nJob Description:\n${job_description}\n\nCandidate Background:\n${resume_summary}\n\nRequirements: match keywords from JD, show genuine enthusiasm, quantify achievements, address the hiring manager's pain points, strong opening hook, clear value proposition, confident close with call to action. Keep under 400 words.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ cover_letter: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/yt-thumbnail', requireAuth, async (req: AuthRequest, res) => {
+  const { video_title, niche } = req.body;
+  const prompt = `Generate 5 high-CTR YouTube thumbnail concepts for: "${video_title}"\nChannel niche: ${niche || 'general'}\n\nFor each concept provide: visual layout description, main image/subject, text overlay (max 6 words), color scheme (hex codes), emotion/reaction to evoke, why it works (psychology), difficulty to create (easy/medium/hard).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ concepts: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/api-pricing', requireAuth, async (req: AuthRequest, res) => {
+  const { service_description, expected_usage } = req.body;
+  const prompt = `Design an optimal API pricing strategy.\nService: ${service_description}\nUsage patterns: ${expected_usage || 'unknown'}\n\nProvide: recommended pricing model (per-call, subscription, hybrid), 3-4 tier breakdown with limits and prices, freemium strategy, enterprise pricing approach, overage handling, competitor pricing benchmarks, psychological pricing tactics, revenue projection at different adoption rates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ pricing_strategy: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/onboard-email-seq', requireAuth, async (req: AuthRequest, res) => {
+  const { product, target_audience } = req.body;
+  const prompt = `Create a 7-email onboarding sequence for ${product} targeting ${target_audience || 'new users'}.\n\nFor each email provide: send timing (Day 0, Day 1, Day 3, etc.), subject line (3 options), preview text, email body (concise), primary CTA, goal of this email. Focus on: activation, habit formation, value realization, upsell opportunity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ sequence: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/risk-matrix', requireAuth, async (req: AuthRequest, res) => {
+  const { project_description, context } = req.body;
+  const prompt = `Create a comprehensive risk assessment matrix for: "${project_description}"\nContext: ${context || 'business project'}\n\nIdentify 10-15 risks across: technical, financial, operational, market, regulatory, and people categories. For each risk: description, likelihood (1-5), impact (1-5), risk score, category, early warning signs, mitigation strategy, contingency plan, owner role. Prioritize by risk score.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ risk_assessment: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 122 routes
+app.post('/api/startup/pitch-deck-outline', requireAuth, async (req: AuthRequest, res) => {
+  const { startup_description, funding_stage } = req.body;
+  const prompt = `Create a complete investor pitch deck outline for this startup:\n${startup_description}\nFunding stage: ${funding_stage || 'Seed'}\n\nProvide slide-by-slide breakdown (12-15 slides): slide title, key message, what to show (data/visual), speaker notes, common investor questions for each slide. Include: Problem, Solution, Market Size, Product Demo, Business Model, Traction, Go-to-Market, Competition, Team, Financials, Ask.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ outline: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/customer-persona', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customer_segment } = req.body;
+  const prompt = `Build a detailed customer persona for ${product} targeting: ${customer_segment}\n\nInclude: name & photo description, demographics, psychographics, daily routine, goals & aspirations, pain points (ranked), frustrations with current solutions, information sources, buying triggers, objections to purchase, preferred communication channels, willingness to pay, a day-in-the-life narrative, exact words they use to describe their problem.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ persona: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/tos-generator', requireAuth, async (req: AuthRequest, res) => {
+  const { business_type, key_features } = req.body;
+  const prompt = `Generate a Terms of Service draft for a ${business_type} with these features: ${key_features}\n\nInclude sections: Acceptance of Terms, Description of Service, User Accounts, Acceptable Use Policy, Intellectual Property, Payment Terms (if applicable), Privacy & Data, Disclaimers, Limitation of Liability, Termination, Governing Law, Changes to Terms, Contact Information. Write in plain English but legally structured. Add [COMPANY NAME] and [DATE] placeholders. Note: This is a starting template — consult a lawyer before publishing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ terms: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/ab-hypothesis', requireAuth, async (req: AuthRequest, res) => {
+  const { feature_or_change, success_metric } = req.body;
+  const prompt = `Build a rigorous A/B test hypothesis for this change:\n${feature_or_change}\nPrimary metric: ${success_metric}\n\nProvide: formal hypothesis statement (If X then Y because Z), control vs variant description, expected lift % and rationale, sample size estimate (assume 5% baseline, 80% power, 95% confidence), test duration recommendation, secondary metrics to monitor, guardrail metrics (what NOT to hurt), segmentation recommendations, potential confounding variables, decision criteria (when to ship/kill).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ hypothesis: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/freelance/rate-calculator', requireAuth, async (req: AuthRequest, res) => {
+  const { skills, location } = req.body;
+  const prompt = `Calculate optimal freelance rates for:\nSkills & experience: ${skills}\nMarket: ${location || 'US/Global'}\n\nProvide: hourly rate range (low/mid/high), day rate, project-based pricing examples, retainer rate, market benchmarks by platform (Upwork, Toptal, direct), rate by project type, how to justify your rate to clients, when to raise rates, negotiation scripts, red flags in client negotiations, how to package services to increase perceived value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ rate_analysis: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 123 routes
+app.post('/api/sales/cold-email-sequence', requireAuth, async (req: AuthRequest, res) => {
+  const { prospect_description, offer } = req.body;
+  const prompt = `Create a 5-touch cold email outreach sequence.\nProspect: ${prospect_description}\nOffer: ${offer}\n\nFor each email: Touch # and timing (Day 0, Day 3, Day 7, Day 14, Day 21), subject line (3 options), preview text, email body (under 150 words), primary CTA, what to do if no reply. Include a breakup email as Touch 5. Make each email reference the previous one if applicable.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ sequence: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/roadmap-prioritizer', requireAuth, async (req: AuthRequest, res) => {
+  const { features_list, business_goals } = req.body;
+  const prompt = `Prioritize this product backlog using RICE scoring (Reach, Impact, Confidence, Effort).\nFeatures:\n${features_list}\nBusiness goals: ${business_goals || 'growth and retention'}\n\nFor each feature: RICE score breakdown, priority tier (P0/P1/P2/P3), recommended quarter, dependencies, risks. Provide: prioritized list with rationale, what to cut entirely, quick wins (high impact, low effort), and a Now/Next/Later roadmap view.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ prioritized_roadmap: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/branding/name-generator', requireAuth, async (req: AuthRequest, res) => {
+  const { business_description, naming_style } = req.body;
+  const prompt = `Generate 20 brand name options for: ${business_description}\nStyle preference: ${naming_style || 'any'}\n\nFor each name: the name itself, pronunciation guide, meaning/origin, brand story potential (1 sentence), .com availability likelihood (high/medium/low), similar existing brands to check, trademark search keywords. Group into categories: Made-up words, Descriptive, Metaphorical, Abstract. Flag top 3 picks with reasoning.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ names: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productivity/meeting-agenda', requireAuth, async (req: AuthRequest, res) => {
+  const { meeting_purpose, attendees } = req.body;
+  const prompt = `Create a structured meeting agenda for: ${meeting_purpose}\nAttendees: ${attendees || 'team'}\n\nProvide: pre-meeting prep list (what to bring/review), time-boxed agenda items with owner and format (discussion/decision/update), facilitator notes for each item, parking lot section, decision log template, action item template, a strong opening hook to set the tone, and a closing ritual. Optimize for a 60-minute meeting unless specified otherwise.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ agenda: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/objection-handler', requireAuth, async (req: AuthRequest, res) => {
+  const { objection, sales_context } = req.body;
+  const prompt = `Handle this sales objection: "${objection}"\nContext: ${sales_context || 'B2B software sale'}\n\nProvide: root cause analysis (what's really being said), 3 response scripts (empathetic, logical, social proof), exact words to use and avoid, follow-up question to ask, how to prevent this objection earlier in the cycle, when to walk away, and the psychology of why this objection occurs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ response: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 124 routes
+app.post('/api/email/subject-optimizer', requireAuth, async (req: AuthRequest, res) => {
+  const { email_body, target_audience } = req.body;
+  const prompt = `Generate 15 high-performing email subject lines for this email:\n\n${email_body}\n\nAudience: ${target_audience || 'general'}\n\nProvide 3 subject lines for each category: Curiosity gap, Urgency/scarcity, Benefit-driven, Question-based, Number/list. Plus emoji variants of top 3. Include: predicted open rate impact, spam trigger words to avoid, A/B test recommendation (which 2 to test first).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ subject_lines: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/valuation-estimator', requireAuth, async (req: AuthRequest, res) => {
+  const { business_metrics, funding_stage } = req.body;
+  const prompt = `Estimate startup valuation using multiple methods.\nMetrics: ${business_metrics}\nStage: ${funding_stage || 'Seed'}\n\nProvide valuation using: (1) Revenue multiple method with comparable SaaS multiples, (2) VC method (target return, exit multiple), (3) Scorecard method (team, market, product, traction scoring), (4) Comparable transactions. Give: low/mid/high range for each method, blended estimate, key value drivers, what would increase valuation 2x, investor red flags to address, dilution scenario at this valuation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ valuation: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/calendar-planner', requireAuth, async (req: AuthRequest, res) => {
+  const { brand_description, channels } = req.body;
+  const prompt = `Create a 30-day content calendar for: ${brand_description}\nChannels: ${channels || 'LinkedIn, Twitter, newsletter'}\n\nFor each week: weekly theme, 3-5 content ideas per channel, content type (educational, entertaining, promotional, engagement), suggested posting times, repurposing strategy (how to turn 1 piece into 5). Include: content pillars (3-4 recurring themes), evergreen content ideas, trending topic hooks, CTA rotation strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ calendar: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/research/user-interview-script', requireAuth, async (req: AuthRequest, res) => {
+  const { product, research_hypothesis } = req.body;
+  const prompt = `Create a user interview guide for ${product}.\nResearch focus: ${research_hypothesis}\n\nProvide: pre-interview setup checklist, warm-up questions (2-3), core questions (8-10, open-ended, non-leading), probing follow-ups for each question, screening criteria for ideal participants, how to handle talkative vs quiet participants, how to test the hypothesis without leading, synthesis framework (how to extract insights), red flag answers that invalidate your hypothesis.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ script: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/grant-proposal', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, project_description } = req.body;
+  const prompt = `Write a compelling grant proposal.\nOrganization: ${organization}\nProject: ${project_description}\n\nInclude all standard sections: Executive Summary, Organization Background, Problem Statement / Needs Assessment, Project Goals & Objectives (SMART), Project Activities & Timeline, Evaluation Plan & Metrics, Organizational Capacity, Budget Narrative, Sustainability Plan, Conclusion. Write in a compelling, evidence-based style appropriate for foundation funders.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ proposal: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 125 routes
+app.post('/api/social/linkedin-post', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, angle } = req.body;
+  const prompt = `Write a high-engagement LinkedIn post about: ${topic}\nAngle: ${angle || 'thought leadership'}\n\nStructure: attention-grabbing hook (first line gets cut off — make it impossible to ignore), 3-5 short paragraphs with white space, personal insight or contrarian take, concrete takeaway, CTA (comment, follow, share). Keep under 1300 characters. Use short sentences. No corporate jargon. End with 3-5 relevant hashtags.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ post: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/churn-prevention', requireAuth, async (req: AuthRequest, res) => {
+  const { product, churn_signals } = req.body;
+  const prompt = `Build a churn prevention playbook for ${product}.\nKnown signals: ${churn_signals || 'login frequency drop, support ticket spike'}\n\nProvide: early warning system (leading indicators by 30/60/90 days before churn), health score formula, customer segmentation by risk level, intervention playbook for each segment (what to do when score drops), win-back sequence for already-churned customers, NPS follow-up workflow, success milestone celebrations to boost stickiness, and 5 quick wins to implement this week.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ playbook: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/okr-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { team_description, strategic_goals } = req.body;
+  const prompt = `Create quarterly OKRs for: ${team_description}\nStrategic goals: ${strategic_goals}\n\nProvide 3-4 Objectives, each with 3 Key Results. For each KR: metric name, current baseline, target, measurement method, confidence level (%). Include: cascading logic (how team OKRs connect to company OKRs), leading vs lagging indicators, how to avoid common OKR mistakes (sandbagging, output vs outcome), weekly check-in cadence template.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ okrs: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/battle-card', requireAuth, async (req: AuthRequest, res) => {
+  const { our_product, competitor_name } = req.body;
+  const prompt = `Build a sales battle card: ${our_product} vs ${competitor_name}\n\nProvide: competitor overview (positioning, pricing, target market), feature comparison matrix (win/lose/tie), our strengths vs their weaknesses, their strengths we need to acknowledge honestly, questions to ask to expose competitor weaknesses, landmines (things they'll say about us and how to respond), deal-winning talk tracks for top 3 competitive scenarios, when to walk away (deals we can't win), trap-setting questions to set us up to win.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ battle_card: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/ph-launch-kit', requireAuth, async (req: AuthRequest, res) => {
+  const { product, target_audience } = req.body;
+  const prompt = `Create a complete Product Hunt launch kit for: ${product}\nAudience: ${target_audience || 'makers and founders'}\n\nProvide: tagline (60 chars max, no buzzwords), product description (260 chars), extended description (full PH listing), first comment from maker (personal story + what problem this solves + launch offer), 5 thumbnail/gallery caption ideas, launch day schedule (when to post, when to engage, who to notify), community outreach list (subreddits, Slack groups, newsletters), first 24-hour engagement strategy, special launch offer idea.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ launch_kit: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 126 routes
+app.post('/api/pr/press-release', requireAuth, async (req: AuthRequest, res) => {
+  const { announcement, company_info } = req.body;
+  const prompt = `Write a professional press release in AP style.\nAnnouncement: ${announcement}\nCompany: ${company_info}\n\nStructure: FOR IMMEDIATE RELEASE header, headline (present tense, newsworthy), dateline, lead paragraph (who/what/when/where/why in first sentence), body paragraphs (quotes from exec + key details), boilerplate About section, ### ending, media contact block. Keep under 500 words. Write like a journalist, not a marketer.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ press_release: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/pricing-page-copy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, pricing_tiers } = req.body;
+  const prompt = `Write conversion-optimized pricing page copy for ${product}.\nTiers: ${pricing_tiers}\n\nProvide: page headline + subheadline, tier names (make them aspirational, not just Free/Pro/Enterprise), for each tier: value-focused headline, 5-7 feature bullets (benefits not features), recommended badge text, CTA button copy, FAQ section (5-7 most common pricing objections), annual vs monthly toggle persuasion copy, money-back guarantee language, social proof placeholder.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ copy: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/tech-doc', requireAuth, async (req: AuthRequest, res) => {
+  const { feature_description, target_audience } = req.body;
+  const prompt = `Write technical documentation for: ${feature_description}\nAudience: ${target_audience || 'developers'}\n\nInclude: Overview (what it is and why it matters), Prerequisites, Quick Start (get something working in 5 minutes), Core Concepts, Step-by-step guide with code examples, Configuration reference, Common use cases, Troubleshooting / FAQs, Related resources. Use clear headings, code blocks for all examples, and avoid jargon without explanation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ documentation: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cs/success-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customer_segment } = req.body;
+  const prompt = `Build a Customer Success playbook for ${product} serving ${customer_segment} customers.\n\nCover: Onboarding (Day 0 handoff, Day 1 setup call agenda, Day 30 success check), Health score framework (what metrics to track), QBR agenda template, Expansion playbook (when and how to upsell), At-risk intervention workflow, Renewal motion (90/60/30 day runway), Executive sponsor program, Escalation process, CSM-to-customer ratio recommendation, tools stack recommendation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ playbook: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/influencer-outreach', requireAuth, async (req: AuthRequest, res) => {
+  const { brand_description, influencer_niche } = req.body;
+  const prompt = `Write influencer outreach scripts for ${brand_description} targeting ${influencer_niche} creators.\n\nProvide: DM script (Instagram/TikTok, under 150 words, feels personal not templated), email pitch (subject line + body, under 300 words), follow-up message (if no reply after 5 days), what NOT to say (common mistakes brands make), how to research the influencer before reaching out, what compensation to offer (product, commission, flat fee — when to use each), red flags in influencer responses.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ outreach_scripts: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
