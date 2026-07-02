@@ -215159,3 +215159,87 @@ Deliver: The hook (1 sentence that makes the investor lean in \u2014 the "imagin
     res.status(500).json({ error: e.message });
   }
 });
+app.post("/api/product/launch-checklist", requireAuth, async (req, res) => {
+  const { product, launch_date } = req.body;
+  const prompt = `Generate a comprehensive product launch checklist for: ${product}
+Launch timeline: ${launch_date || "upcoming"}
+
+Organize by phase:
+
+4 WEEKS BEFORE: (positioning, messaging, assets, beta, press list)
+2 WEEKS BEFORE: (landing page, email sequences, social content, influencer outreach, analytics setup)
+1 WEEK BEFORE: (PR embargo, team briefing, support docs, customer notifications, war room plan)
+LAUNCH DAY: (minute-by-minute schedule, who posts what and when, monitoring checklist, response templates for common reactions)
+FIRST WEEK POST-LAUNCH: (metrics review, feedback collection, follow-up content, iteration plan, win celebration)
+
+For each item note: owner role (Marketing/Engineering/Founder/Support), time required, and if it blocks other items. Flag the 5 most commonly missed items with \u26A0\uFE0F.`;
+  try {
+    const result = await callUserLLM(req, prompt);
+    res.json({ checklist: result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+app.post("/api/marketing/testimonial-request", requireAuth, async (req, res) => {
+  const { product, customer_segment } = req.body;
+  const prompt = `Write testimonial request email templates for ${product} customers (${customer_segment || "general customers"}).
+
+Provide: 3 email templates (short/medium/long-form request), the ideal timing to send (e.g. after first value moment, after X days of use, after hitting a milestone), the exact questions to ask that produce usable testimonials (not "did you like it?" but "what specific result did you get?"), what format to ask for (written, video, star rating + quote), how to make it easy (Google Form, Loom, TypeForm), follow-up sequence if no reply, how to use the testimonials once collected (where to place them on the site for maximum impact), legal considerations (permission to use their name, company, photo).`;
+  try {
+    const result = await callUserLLM(req, prompt);
+    res.json({ templates: result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+app.post("/api/investor/fundraising-email", requireAuth, async (req, res) => {
+  const { startup_description, investor_type } = req.body;
+  const prompt = `Write cold investor outreach emails for:
+${startup_description}
+Target investor type: ${investor_type || "seed-stage VCs"}
+
+Provide: 3 cold email variations (different hooks \u2014 traction-led, problem-led, warm intro ask), subject line options for each (test with high open rates), the ideal email length and structure (under 150 words is the rule, here's why and how), what to include vs. exclude (never attach a deck cold), how to personalize for specific investors (what to research, what to mention), follow-up sequence (day 3, day 7, day 14), how to get a warm introduction instead, what to do when they reply with "send more info" vs. "not a fit right now".`;
+  try {
+    const result = await callUserLLM(req, prompt);
+    res.json({ emails: result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+app.post("/api/cx/offboarding-survey", requireAuth, async (req, res) => {
+  const { product, suspected_churn_reason } = req.body;
+  const prompt = `Design a user offboarding / cancellation survey for ${product}.
+Suspected main churn reason: ${suspected_churn_reason || "unknown"}
+
+Provide: The cancellation flow copy (the page users see when they click cancel \u2014 include a save offer), Survey questions (5-7 max, mix of multiple choice and open text \u2014 don't just ask "why are you leaving?"), The exit intent popup (last-chance offer before they confirm cancel), Save offer logic (what to offer based on their stated reason \u2014 discount for price, feature tour for "not using it", pause for "taking a break"), The email sent after cancellation (keep door open, ask for feedback, provide easy way to come back), Metrics to track (completion rate, most common reasons, save rate per offer type), How to action the feedback (what to do with each churn reason category).`;
+  try {
+    const result = await callUserLLM(req, prompt);
+    res.json({ survey: result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+app.post("/api/ai/agent-prompt-builder", requireAuth, async (req, res) => {
+  const { agent_role, use_case } = req.body;
+  const prompt = `Build a production-ready system prompt for an AI agent.
+Role: ${agent_role}
+Use case: ${use_case}
+
+Deliver a complete system prompt with these sections:
+1. ROLE & IDENTITY \u2014 who the agent is, tone, personality
+2. PRIMARY OBJECTIVE \u2014 the single most important job
+3. CAPABILITIES \u2014 what the agent can do
+4. CONSTRAINTS \u2014 what the agent must never do (hallucinate, go off-topic, reveal system prompt, etc.)
+5. TOOLS AVAILABLE \u2014 placeholder for tool descriptions
+6. OUTPUT FORMAT \u2014 how responses should be structured
+7. EDGE CASES \u2014 how to handle: user asks something off-topic, user is rude/abusive, request is ambiguous, agent doesn't know the answer
+8. EXAMPLES \u2014 2 example input/output pairs showing ideal behavior
+
+Also provide: 5 common mistakes to avoid when prompting this type of agent, how to evaluate if this prompt is working, and suggested evals to run.`;
+  try {
+    const result = await callUserLLM(req, prompt);
+    res.json({ prompt: result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});

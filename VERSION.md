@@ -1,3 +1,7 @@
+## v332.00 — Wave 128: Product Launch Checklist, Testimonial Request, Fundraising Email, Offboarding Survey, AI Agent Prompt Builder (2026-07-02)
+- Wave 128: 5 new tools covering product, marketing, investor, CX, and AI workflows
+- Backend routes: /api/product/launch-checklist, /api/marketing/testimonial-request, /api/investor/fundraising-email, /api/cx/offboarding-survey, /api/ai/agent-prompt-builder
+
 ## v331.00 — Wave 127: Brand Voice Analyzer, Email Newsletter Writer, Viral Twitter Thread, Sales Proposal Generator, Pitch Deck Storyteller (2026-07-02)
 - Wave 127: 5 new tools covering brand, content, social, sales, and investor comms
 - Backend routes: /api/brand/voice-analyzer, /api/content/email-newsletter, /api/social/twitter-thread, /api/sales/proposal, /api/investor/pitch-story
