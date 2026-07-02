@@ -1,3 +1,7 @@
+## v334.00 — Switch Railway build to tsc (fixes OOM), Wave 129 backend routes now deploy (2026-07-02)
+- nixpacks.toml: build phase now uses `npx tsc` instead of pre-built dist or esbuild
+- PUSH_NOW.ps1: removed local esbuild build step; Railway builds on push
+
 ## v333.00 — Wave 129: Startup Idea Validator, Cold LinkedIn DM, Pitch Video Script, SaaS Onboarding Sequence, Product Feedback Analyzer (2026-07-02)
 - Wave 129: 5 tools for startup validation, social selling, content, SaaS growth, and product
 - Backend routes: /api/startup/idea-validator, /api/social/linkedin-dm, /api/content/pitch-video-script, /api/saas/onboarding-sequence, /api/product/feedback-analyzer
