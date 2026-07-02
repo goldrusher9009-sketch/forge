@@ -183572,3 +183572,37 @@ app.post('/api/finance/funding-calculator', requireAuth, async (req, res) => {
     res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Calculation complete' });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
+
+// ============================================================
+// WAVE 119 — Social Media & Community Tools
+// ============================================================
+app.post('/api/social/instagram-caption', requireAuth, async (req: AuthRequest, res) => {
+  const { image, brand, tone } = req.body;
+  const prompt = `Write 3 Instagram caption options for this image/product: "${image}"\nBrand: ${brand || 'unspecified'}\nTone: ${tone || 'engaging'}\nInclude relevant hashtags for each option.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/social/community-post', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, platform, goal } = req.body;
+  const prompt = `Write a community post about "${topic}" for ${platform || 'Reddit/Discord'}.\nGoal: ${goal || 'spark discussion'}\nMake it authentic, engaging, and invite participation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/social/tiktok-script', requireAuth, async (req: AuthRequest, res) => {
+  const { product, hook, duration } = req.body;
+  const prompt = `Write a TikTok video script for: "${product}"\nHook: ${hook || 'attention-grabbing opener'}\nDuration: ${duration || '60 seconds'}\nInclude: hook, main content, CTA, trending audio suggestions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/social/bio-optimizer', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, currentBio, goal } = req.body;
+  const prompt = `Optimize this ${platform || 'social media'} bio:\n"${currentBio}"\nGoal: ${goal || 'grow following and drive traffic'}\nProvide 3 optimized versions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/social/viral-hook', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, platform } = req.body;
+  const prompt = `Generate 10 viral hook variations for: "${topic}"\nPlatform: ${platform || 'social media'}\nUse psychological triggers: curiosity, FOMO, social proof, controversy, etc.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
