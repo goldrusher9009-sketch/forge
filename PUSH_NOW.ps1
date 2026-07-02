@@ -7,14 +7,17 @@ if (Test-Path $lock) { Remove-Item $lock -Force; Write-Host "Removed stale index
 & $git -C $root add `
   forge-web-studio/app/components/ForgeApp.tsx `
   forge-web-studio/app/components/WaveComponents.tsx `
+  forge-web-studio/package.json `
   forge-platform/src/index.ts `
   VERSION.md `
   patch_all_waves.js `
   patch_wave119.js `
   PUSH_NOW.ps1
 
-& $git -C $root commit -m "v321.00 - Split WaveComponents.tsx to fix Vercel OOM build error (105 tools)"
+& $git -C $root add -f forge-platform/dist/index.js
+
+& $git -C $root commit -m "v322.00 - Fix Vercel build: use client + 4GB Node memory + wave 119 routes"
 
 & $git -C $root push origin main
 
-Write-Host "DONE - v321 deploying. Check: https://forge-sand-two.vercel.app"
+Write-Host "DONE - v322 deploying. Check: https://forge-sand-two.vercel.app"

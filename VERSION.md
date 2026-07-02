@@ -1,3 +1,11 @@
+## v322.00 — Fix Vercel build: 'use client' + wave 119 dist staged (2026-07-01)
+- Added 'use client' to WaveComponents.tsx (root cause of Vercel build failure)
+- Staged dist/index.js with -f flag (wave 119 Social Media routes now on Railway)
+- All 105 wave tools (waves 99-119) now fully deployed frontend + backend
+
+## v321.00 — Split WaveComponents.tsx (105 tools) (2026-07-01)
+- Extracted 105 ForgeTab_ components into WaveComponents.tsx to fix Vercel OOM
+
 ## v320.00 — Waves 99-118 Full Apply: 100 tools live (2026-07-01)
 - Fixed ForgeApp.tsx truncation bug; re-applied all waves 99-118 with line-index splice
 - Nav + render cases + components for all 100 tools now in ForgeApp.tsx (51071 lines)

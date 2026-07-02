@@ -1,0 +1,46 @@
+{
+  "name": "forge-web-studio",
+  "version": "6.1.0",
+  "description": "Forge AI - Web Studio for Agent Management & Task Execution",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "NODE_OPTIONS='--max-old-space-size=4096' next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\""
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.3.0",
+    "@monaco-editor/loader": "^1.7.0",
+    "@monaco-editor/react": "^4.6.0",
+    "axios": "^1.6.0",
+    "clsx": "^2.0.0",
+    "date-fns": "^2.30.0",
+    "diff": "^7.0.0",
+    "fabric": "^6.6.4",
+    "framer-motion": "^10.16.0",
+    "next": "^14.2.0",
+    "papaparse": "^5.4.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.46.0",
+    "socket.io-client": "^4.7.4",
+    "xlsx": "^0.18.5",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "@types/prop-types": "^15.7.15",
+    "@types/react": "^18.2.20",
+    "@types/react-dom": "^18.2.7",
+    "autoprefixer": "^10.4.15",
+    "postcss": "^8.4.28",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
