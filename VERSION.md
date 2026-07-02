@@ -1,3 +1,7 @@
+## v333.00 — Wave 129: Startup Idea Validator, Cold LinkedIn DM, Pitch Video Script, SaaS Onboarding Sequence, Product Feedback Analyzer (2026-07-02)
+- Wave 129: 5 tools for startup validation, social selling, content, SaaS growth, and product
+- Backend routes: /api/startup/idea-validator, /api/social/linkedin-dm, /api/content/pitch-video-script, /api/saas/onboarding-sequence, /api/product/feedback-analyzer
+
 ## v332.00 — Wave 128: Product Launch Checklist, Testimonial Request, Fundraising Email, Offboarding Survey, AI Agent Prompt Builder (2026-07-02)
 - Wave 128: 5 new tools covering product, marketing, investor, CX, and AI workflows
 - Backend routes: /api/product/launch-checklist, /api/marketing/testimonial-request, /api/investor/fundraising-email, /api/cx/offboarding-survey, /api/ai/agent-prompt-builder

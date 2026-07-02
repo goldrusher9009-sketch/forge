@@ -183884,3 +183884,34 @@ app.post('/api/ai/agent-prompt-builder', requireAuth, async (req: AuthRequest, r
   const prompt = `Build a production-ready system prompt for an AI agent.\nRole: ${agent_role}\nUse case: ${use_case}\n\nDeliver a complete system prompt with these sections:\n1. ROLE & IDENTITY — who the agent is, tone, personality\n2. PRIMARY OBJECTIVE — the single most important job\n3. CAPABILITIES — what the agent can do\n4. CONSTRAINTS — what the agent must never do (hallucinate, go off-topic, reveal system prompt, etc.)\n5. TOOLS AVAILABLE — placeholder for tool descriptions\n6. OUTPUT FORMAT — how responses should be structured\n7. EDGE CASES — how to handle: user asks something off-topic, user is rude/abusive, request is ambiguous, agent doesn't know the answer\n8. EXAMPLES — 2 example input/output pairs showing ideal behavior\n\nAlso provide: 5 common mistakes to avoid when prompting this type of agent, how to evaluate if this prompt is working, and suggested evals to run.`;
   try { const result = await callUserLLM(req, prompt); res.json({ prompt: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// Wave 129 routes
+app.post('/api/startup/idea-validator', requireAuth, async (req: AuthRequest, res) => {
+  const { idea, target_market } = req.body;
+  const prompt = `Stress-test this startup idea like an experienced VC:\n${idea}\nTarget market: ${target_market}\n\nProvide a brutally honest assessment covering: PROBLEM (is this a real pain or a vitamin?), MARKET SIZE (TAM/SAM/SOM — be specific, not "trillion dollar market"), COMPETITION (who else does this, what's your actual moat?), TIMING (why now? what changed?), BUSINESS MODEL (is the unit economics sane?), GO-TO-MARKET (how do you get your first 100 customers — specifically), FOUNDER-MARKET FIT (what do you need to know to win?), BIGGEST RISK (what's the single most likely way this fails?), VERDICT (invest, pass, or "interesting but..."), 3 EXPERIMENTS to validate before building anything. Be contrarian where warranted. Don't be nice for its own sake.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ validation: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/social/linkedin-dm', requireAuth, async (req: AuthRequest, res) => {
+  const { target_person, purpose } = req.body;
+  const prompt = `Write cold LinkedIn DM scripts for reaching out to: ${target_person}\nPurpose: ${purpose}\n\nProvide: 3 DM variations (short/medium/with-shared-connection), the connection request note (300 char limit — most people ignore DMs without accepting first), what NOT to do (the most common mistakes that get people ignored), how to research the person before reaching out (what to look for, what to mention), the follow-up DM if no reply after 5 days, how to handle common responses (interested, not interested, "tell me more"), the best time to send, how to scale this without getting flagged as spam. Rule: every message must feel like it was written specifically for this person, not copy-pasted.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ messages: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/pitch-video-script', requireAuth, async (req: AuthRequest, res) => {
+  const { product, duration } = req.body;
+  const prompt = `Write a product pitch video script for: ${product}\nTarget length: ${duration || '90 seconds'}\n\nProvide the full script with:\n- Opening hook (first 5 seconds — what makes someone stop scrolling)\n- Problem setup (make the viewer feel the pain before showing the solution)\n- Solution reveal (demo moment — show don't tell)\n- Social proof beat (customer result or testimonial)\n- Feature highlights (3 max — benefit-first language)\n- Call to action (what to do next, create urgency without being pushy)\n- Closing line (memorable, repeatable)\n\nAlso provide: shot list / visual direction notes for each section, b-roll suggestions, on-screen text overlays, thumbnail concept, 3 title/hook variations to A/B test on YouTube/social.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ script: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/saas/onboarding-sequence', requireAuth, async (req: AuthRequest, res) => {
+  const { product, key_activation_action } = req.body;
+  const prompt = `Design a SaaS onboarding email sequence for ${product}.\nKey activation action: ${key_activation_action}\n\nCreate a 7-email sequence:\nEmail 1 (Immediate — Welcome): set expectations, one clear next action, no feature dump\nEmail 2 (Day 1 — Getting Started): drive to the activation action, remove the most common friction point\nEmail 3 (Day 3 — Value Reminder): show what success looks like with a customer story\nEmail 4 (Day 5 — Feature Unlock): introduce one "aha moment" feature they probably haven't found\nEmail 5 (Day 7 — Check-in): personal-feeling email, ask if they have questions, surface help resources\nEmail 6 (Day 10 — Social Proof): case study or testimonial from a user like them\nEmail 7 (Day 14 — Conversion): trial ending (or upgrade nudge) with a clear offer\n\nFor each email: subject line (+ A/B variant), preview text, full body copy, CTA, send trigger (time-based or behavior-based).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ sequence: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/feedback-analyzer', requireAuth, async (req: AuthRequest, res) => {
+  const { feedback, product_context } = req.body;
+  const prompt = `Analyze this user feedback and extract actionable product insights:\n\nFEEDBACK:\n${feedback}\n\nPRODUCT CONTEXT: ${product_context || 'early-stage product'}\n\nDeliver: Theme clustering (group all feedback into 5-8 themes, with frequency count and representative quotes), Sentiment breakdown (positive/neutral/negative and what drives each), Feature requests ranked by: frequency mentioned, user frustration level, potential impact, Bugs and critical issues (things that are actively hurting retention), What users LOVE (don't touch this — protect it), What users are confused by (UX/messaging problems), Prioritized action list (top 5 things to act on this sprint), What to measure next (what data would help you make better decisions), Suggested questions for follow-up interviews.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ analysis: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
