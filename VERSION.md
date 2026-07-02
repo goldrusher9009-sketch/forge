@@ -1,3 +1,7 @@
+## v331.00 — Wave 127: Brand Voice Analyzer, Email Newsletter Writer, Viral Twitter Thread, Sales Proposal Generator, Pitch Deck Storyteller (2026-07-02)
+- Wave 127: 5 new tools covering brand, content, social, sales, and investor comms
+- Backend routes: /api/brand/voice-analyzer, /api/content/email-newsletter, /api/social/twitter-thread, /api/sales/proposal, /api/investor/pitch-story
+
 ## v328.00 — Waves 120-126: 35 tools + Railway dist fix (2026-07-02)
 - Wave 126: Press Release Writer, Pricing Page Copy, Technical Docs Writer, Customer Success Playbook, Influencer Outreach Script
 - Fixed Railway deploy: PUSH_NOW.ps1 now builds dist/index.js on Windows before committing

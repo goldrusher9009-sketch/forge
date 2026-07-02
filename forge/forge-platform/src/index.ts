@@ -183822,3 +183822,34 @@ app.post('/api/marketing/influencer-outreach', requireAuth, async (req: AuthRequ
   const prompt = `Write influencer outreach scripts for ${brand_description} targeting ${influencer_niche} creators.\n\nProvide: DM script (Instagram/TikTok, under 150 words, feels personal not templated), email pitch (subject line + body, under 300 words), follow-up message (if no reply after 5 days), what NOT to say (common mistakes brands make), how to research the influencer before reaching out, what compensation to offer (product, commission, flat fee — when to use each), red flags in influencer responses.`;
   try { const result = await callUserLLM(req, prompt); res.json({ outreach_scripts: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// Wave 127 routes
+app.post('/api/brand/voice-analyzer', requireAuth, async (req: AuthRequest, res) => {
+  const { text, brand_description } = req.body;
+  const prompt = `Analyze the brand voice in this text:\n\n"${text}"\n\n${brand_description ? `Brand context: ${brand_description}` : ''}\n\nProvide: Tone profile (formal/casual, serious/playful, etc. on a spectrum), Vocabulary analysis (complexity, jargon level, sentence length patterns), Personality traits (which of the 12 Jungian archetypes does this most resemble?), Emotional resonance (what feeling does this create?), 5 words that define this brand voice, What this voice does well, What this voice lacks or risks, 3 concrete examples of how to write in this exact voice, How to differentiate from this voice if it's a competitor.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ analysis: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/email-newsletter', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, audience } = req.body;
+  const prompt = `Write a complete email newsletter about: ${topic}\nAudience: ${audience}\n\nStructure: Subject line (4 options — curiosity, benefit, question, bold claim), Preview text (1-2 lines that complement the subject), Opening hook (first 2 sentences that make the reader want to keep going), Body (the actual value — actionable, specific, not fluff), Key insight or takeaway, Call to action (one clear CTA, not multiple), PS line (optional but often the most read part). Style: conversational, like writing to a friend who happens to be in your target audience. Avoid: buzzwords, passive voice, throat-clearing openers like "In today's issue..."`;
+  try { const result = await callUserLLM(req, prompt); res.json({ newsletter: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/social/twitter-thread', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, angle } = req.body;
+  const prompt = `Write a high-engagement Twitter/X thread about: ${topic}\n${angle ? `Angle: ${angle}` : ''}\n\nFormat: Tweet 1 (hook — controversial, surprising, or bold claim that makes people stop scrolling, under 280 chars, no hashtags), Tweets 2-9 (value delivery — each tweet standalone valuable, numbered "2/", use line breaks, short punchy sentences), Tweet 10 (the big insight or twist), Tweet 11 (CTA — follow for more, share if this helped, what's your take?). Rules: No "🧵 THREAD" openers, no obvious transitions like "First,", each tweet must be interesting alone, use specific numbers and examples over vague claims.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ thread: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/proposal', requireAuth, async (req: AuthRequest, res) => {
+  const { client_info, solution_description } = req.body;
+  const prompt = `Write a professional sales proposal.\nClient: ${client_info}\nSolution: ${solution_description}\n\nInclude: Executive Summary (their problem in their words, your solution, the outcome they'll get), Situation Analysis (show you understand their current state and the cost of inaction), Proposed Solution (specific scope, not vague promises), Investment (pricing presented as ROI, not cost), Timeline & Milestones, Why Us (specific differentiators, not generic claims), Social Proof (space for a relevant case study or testimonial), Next Steps (clear, low-friction CTA), Terms Summary. Tone: confident but not salesy, specific not generic, focused on their outcome not your features.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ proposal: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investor/pitch-story', requireAuth, async (req: AuthRequest, res) => {
+  const { startup_description, audience } = req.body;
+  const prompt = `Craft a compelling pitch deck narrative for:\n${startup_description}\nAudience: ${audience || 'early-stage investors'}\n\nDeliver: The hook (1 sentence that makes the investor lean in — the "imagine a world where" opener), The villain (the problem, told as a story not a bullet point — who suffers, how much, why now), The hero's journey (why you, why now — the founder-market fit story), The magic weapon (your unfair advantage — what you know or can do that others can't), The proof (traction framed as validation, not just numbers), The vision (paint the 10-year picture that justifies the fund's return), The ask (specific, justified, tied to milestones). Also provide: 3 memorable one-liners to weave throughout the pitch, The one thing you want investors to remember after they leave the room.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ story: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});

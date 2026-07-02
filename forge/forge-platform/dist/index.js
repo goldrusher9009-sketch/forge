@@ -215089,3 +215089,73 @@ Provide: DM script (Instagram/TikTok, under 150 words, feels personal not templa
     res.status(500).json({ error: e.message });
   }
 });
+app.post("/api/brand/voice-analyzer", requireAuth, async (req, res) => {
+  const { text, brand_description } = req.body;
+  const prompt = `Analyze the brand voice in this text:
+
+"${text}"
+
+${brand_description ? `Brand context: ${brand_description}` : ""}
+
+Provide: Tone profile (formal/casual, serious/playful, etc. on a spectrum), Vocabulary analysis (complexity, jargon level, sentence length patterns), Personality traits (which of the 12 Jungian archetypes does this most resemble?), Emotional resonance (what feeling does this create?), 5 words that define this brand voice, What this voice does well, What this voice lacks or risks, 3 concrete examples of how to write in this exact voice, How to differentiate from this voice if it's a competitor.`;
+  try {
+    const result = await callUserLLM(req, prompt);
+    res.json({ analysis: result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+app.post("/api/content/email-newsletter", requireAuth, async (req, res) => {
+  const { topic, audience } = req.body;
+  const prompt = `Write a complete email newsletter about: ${topic}
+Audience: ${audience}
+
+Structure: Subject line (4 options \u2014 curiosity, benefit, question, bold claim), Preview text (1-2 lines that complement the subject), Opening hook (first 2 sentences that make the reader want to keep going), Body (the actual value \u2014 actionable, specific, not fluff), Key insight or takeaway, Call to action (one clear CTA, not multiple), PS line (optional but often the most read part). Style: conversational, like writing to a friend who happens to be in your target audience. Avoid: buzzwords, passive voice, throat-clearing openers like "In today's issue..."`;
+  try {
+    const result = await callUserLLM(req, prompt);
+    res.json({ newsletter: result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+app.post("/api/social/twitter-thread", requireAuth, async (req, res) => {
+  const { topic, angle } = req.body;
+  const prompt = `Write a high-engagement Twitter/X thread about: ${topic}
+${angle ? `Angle: ${angle}` : ""}
+
+Format: Tweet 1 (hook \u2014 controversial, surprising, or bold claim that makes people stop scrolling, under 280 chars, no hashtags), Tweets 2-9 (value delivery \u2014 each tweet standalone valuable, numbered "2/", use line breaks, short punchy sentences), Tweet 10 (the big insight or twist), Tweet 11 (CTA \u2014 follow for more, share if this helped, what's your take?). Rules: No "\u{1F9F5} THREAD" openers, no obvious transitions like "First,", each tweet must be interesting alone, use specific numbers and examples over vague claims.`;
+  try {
+    const result = await callUserLLM(req, prompt);
+    res.json({ thread: result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+app.post("/api/sales/proposal", requireAuth, async (req, res) => {
+  const { client_info, solution_description } = req.body;
+  const prompt = `Write a professional sales proposal.
+Client: ${client_info}
+Solution: ${solution_description}
+
+Include: Executive Summary (their problem in their words, your solution, the outcome they'll get), Situation Analysis (show you understand their current state and the cost of inaction), Proposed Solution (specific scope, not vague promises), Investment (pricing presented as ROI, not cost), Timeline & Milestones, Why Us (specific differentiators, not generic claims), Social Proof (space for a relevant case study or testimonial), Next Steps (clear, low-friction CTA), Terms Summary. Tone: confident but not salesy, specific not generic, focused on their outcome not your features.`;
+  try {
+    const result = await callUserLLM(req, prompt);
+    res.json({ proposal: result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+app.post("/api/investor/pitch-story", requireAuth, async (req, res) => {
+  const { startup_description, audience } = req.body;
+  const prompt = `Craft a compelling pitch deck narrative for:
+${startup_description}
+Audience: ${audience || "early-stage investors"}
+
+Deliver: The hook (1 sentence that makes the investor lean in \u2014 the "imagine a world where" opener), The villain (the problem, told as a story not a bullet point \u2014 who suffers, how much, why now), The hero's journey (why you, why now \u2014 the founder-market fit story), The magic weapon (your unfair advantage \u2014 what you know or can do that others can't), The proof (traction framed as validation, not just numbers), The vision (paint the 10-year picture that justifies the fund's return), The ask (specific, justified, tied to milestones). Also provide: 3 memorable one-liners to weave throughout the pitch, The one thing you want investors to remember after they leave the room.`;
+  try {
+    const result = await callUserLLM(req, prompt);
+    res.json({ story: result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
