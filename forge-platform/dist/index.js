@@ -211613,3 +211613,127 @@ app.post('/api/ops/meeting-agenda', requireAuth, async (req, res) => {
     res.json({ agenda });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
+
+// Wave 117: Legal Tech Tools
+app.post('/api/legal/contract-risk', requireAuth, async (req, res) => {
+  const { contract } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Analyze this contract for risky clauses. Provide: 1) Risk Score (0-100), 2) Top 3-5 risky clauses with explanations, 3) Recommended actions.\n\nContract:\n' + contract.substring(0,3000) }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Analysis complete' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/gdpr-check', requireAuth, async (req, res) => {
+  const { description } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Review these data practices for GDPR compliance:\n' + description + '\n\nProvide: 1) Compliance status, 2) Gaps found, 3) Required actions, 4) Recommended policies.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Check complete' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/privacy-policy', requireAuth, async (req, res) => {
+  const { company, dataTypes } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1500, messages: [{ role: 'user', content: 'Generate a privacy policy for ' + company + '. Data collected: ' + dataTypes + '. Include sections: Introduction, Data Collection, Data Use, Data Sharing, User Rights, Contact Info.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Policy generated' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/tos-builder', requireAuth, async (req, res) => {
+  const { company, product } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1500, messages: [{ role: 'user', content: 'Generate Terms of Service for ' + company + ', product: ' + product + '. Include: Acceptance, Use License, Prohibited Uses, Disclaimers, Limitation of Liability, Termination, Governing Law.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'ToS generated' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/compliance-checklist', requireAuth, async (req, res) => {
+  const { industry, region } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Generate a compliance checklist for a ' + industry + ' company operating in ' + region + '. List all relevant regulations, required certifications, and compliance steps in a numbered checklist format.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Checklist generated' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 118: Finance & Accounting Tools
+app.post('/api/finance/cash-flow-forecast', requireAuth, async (req, res) => {
+  const { revenue, expenses, months } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Create a cash flow forecast for a business with monthly revenue of ' + revenue + ' and monthly expenses of ' + expenses + '. Forecast for ' + months + ' months. Include monthly projections, cumulative cash, and key insights.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Forecast complete' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/invoice-generator', requireAuth, async (req, res) => {
+  const { client, services, amount } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const anthropic = new Anthropic({ apiKey: key });
+    const msg = await anthropic.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Generate a professional invoice for client: ' + client + '. Services: ' + services + '. Total: ' + amount + '. Include invoice number, date, payment terms, line items, and professional footer.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Invoice generated' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/tax-estimator', requireAuth, async (req, res) => {
+  const { income, country, entityType } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Estimate taxes for a ' + entityType + ' in ' + country + ' with income of ' + income + '. Provide estimated federal/state tax rates, estimated tax owed, quarterly payment schedule, and key deductions to consider. Note: This is an estimate, not tax advice.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Estimate complete' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/budget-planner', requireAuth, async (req, res) => {
+  const { goal, runway, teamSize } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Create a budget plan for a startup aiming to ' + goal + ' with $' + runway + ' runway and a team of ' + teamSize + '. Break down budget by category (salaries, marketing, ops, tech), monthly burn rate, and milestones to hit before raising again.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Plan created' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/funding-calculator', requireAuth, async (req, res) => {
+  const { stage, mrr, growth } = req.body;
+  const user = req.user;
+  try {
+    const key = await getUserKey(user.id, 'anthropic');
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: key });
+    const msg = await client.messages.create({ model: 'claude-3-haiku-20240307', max_tokens: 1024, messages: [{ role: 'user', content: 'Calculate funding range for a ' + stage + ' startup with $' + mrr + ' MRR and ' + growth + '% monthly growth. Provide: 1) Estimated valuation range, 2) Recommended raise amount, 3) Typical dilution, 4) Investor expectations at this stage, 5) Key metrics to improve.' }] });
+    res.json({ result: msg.content[0].type === 'text' ? msg.content[0].text : 'Calculation complete' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});

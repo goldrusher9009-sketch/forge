@@ -1,3 +1,15 @@
+## v320.00 — Waves 99-118 Full Apply: 100 tools live (2026-07-01)
+- Fixed ForgeApp.tsx truncation bug; re-applied all waves 99-118 with line-index splice
+- Nav + render cases + components for all 100 tools now in ForgeApp.tsx (51071 lines)
+- TypeScript clean, zero errors
+
+## v319.00 — Wave 117: Legal Tech Tools (2026-07-02)
+- Contract Risk Scorer (/api/legal/contract-risk)
+- GDPR Compliance Checker (/api/legal/gdpr-check)
+- Privacy Policy Generator (/api/legal/privacy-policy)
+- Terms of Service Builder (/api/legal/tos-builder)
+- Compliance Checklist Generator (/api/legal/compliance-checklist)
+
 ## v318.00 — Wave 116: Operations & HR Tools (2026-07-01)
 - SOP Writer (/api/ops/sop-writer)
 - Performance Review Generator (/api/hr/performance-review)
