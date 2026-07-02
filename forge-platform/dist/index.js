@@ -149,7 +149,7 @@ app.use(cors({
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
-app.get("/health", (_req, res) => res.json({ status: "ok", environment: NODE_ENV, timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "v144.00" }));
+app.get("/health", (_req, res) => res.json({ status: "ok", environment: NODE_ENV, timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "v329.00" }));
 const httpServer = require("http").createServer(app);
 httpServer.listen(PORT, () => {
   console.log("Forge Platform v144.00 running on port " + PORT);
