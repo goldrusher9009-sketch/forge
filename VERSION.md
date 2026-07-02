@@ -1,3 +1,7 @@
+## v335.00 — Wave 130: Niche Finder, YouTube Description, FAQ Generator, Pricing Objection Handler, Executive Summary (2026-07-02)
+- Wave 130: 5 tools for business discovery, content, sales, and writing
+- Backend routes: /api/business/niche-finder, /api/content/youtube-description, /api/content/faq-generator, /api/sales/pricing-objection-handler, /api/writing/executive-summary
+
 ## v334.00 — Switch Railway build to tsc (fixes OOM), Wave 129 backend routes now deploy (2026-07-02)
 - nixpacks.toml: build phase now uses `npx tsc` instead of pre-built dist or esbuild
 - PUSH_NOW.ps1: removed local esbuild build step; Railway builds on push

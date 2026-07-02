@@ -183915,3 +183915,34 @@ app.post('/api/product/feedback-analyzer', requireAuth, async (req: AuthRequest,
   const prompt = `Analyze this user feedback and extract actionable product insights:\n\nFEEDBACK:\n${feedback}\n\nPRODUCT CONTEXT: ${product_context || 'early-stage product'}\n\nDeliver: Theme clustering (group all feedback into 5-8 themes, with frequency count and representative quotes), Sentiment breakdown (positive/neutral/negative and what drives each), Feature requests ranked by: frequency mentioned, user frustration level, potential impact, Bugs and critical issues (things that are actively hurting retention), What users LOVE (don't touch this — protect it), What users are confused by (UX/messaging problems), Prioritized action list (top 5 things to act on this sprint), What to measure next (what data would help you make better decisions), Suggested questions for follow-up interviews.`;
   try { const result = await callUserLLM(req, prompt); res.json({ analysis: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// Wave 130 routes
+app.post('/api/business/niche-finder', requireAuth, async (req: AuthRequest, res) => {
+  const { skills, interests } = req.body;
+  const prompt = `Find niche market opportunities for someone with these skills and interests:\nSkills: ${skills}\nInterests: ${interests}\n\nProvide 5 specific niche opportunities, for each: Niche name and description, Problem they solve (specific, not vague), Target customer (very specific — not "small businesses" but "solo bookkeepers who work with restaurants"), Market size estimate and growth trend, Competition level (1-10) and who the main competitors are, Monetization model (how you'd make money, realistic price points), Unique angle to win (what would make you different), First 3 steps to validate this niche in 30 days, Potential monthly revenue in year 1 (conservative), Why this matches YOUR specific skills/interests. Rank them by: (1) fit with your background, (2) market demand, (3) competition level.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ niches: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/youtube-description', requireAuth, async (req: AuthRequest, res) => {
+  const { video_title, video_content } = req.body;
+  const prompt = `Write an SEO-optimized YouTube description for:\nTitle: ${video_title}\nContent: ${video_content}\n\nProvide: Opening hook (first 2-3 lines before "show more" — must make people click to expand), Full description body (cover the main topics, include natural keywords, add timestamps if content structure is clear), Key links section (placeholder CTAs — subscribe, links mentioned, related videos), About channel section (2-3 sentences), Hashtags (15 relevant ones, mix of broad and specific), SEO keyword analysis (top 5 keywords to target, search volume estimate, why they work for this video), Thumbnail text suggestions (2-3 options), End screen copy (what to say in the last 20 seconds to drive subscriptions and next video views).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ description: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/faq-generator', requireAuth, async (req: AuthRequest, res) => {
+  const { product, context } = req.body;
+  const prompt = `Generate a comprehensive FAQ page for: ${product}\nContext: ${context || ''}\n\nCreate 20 FAQ entries organized into sections:\n1. GETTING STARTED (5 questions — basics, how it works, who it's for)\n2. PRICING & BILLING (4 questions — costs, trials, refunds, upgrades)\n3. FEATURES & HOW-TO (5 questions — specific capabilities, limitations, integrations)\n4. SUPPORT & TROUBLESHOOTING (3 questions — getting help, common issues, uptime)\n5. SECURITY & PRIVACY (3 questions — data handling, compliance, access)\n\nFor each FAQ: Write the question the way a user would actually type it (conversational, specific), write an answer that's direct (answer first, then explain), include a follow-up link placeholder where relevant. Also provide: The top 3 questions that reduce the most support tickets, Schema markup code (FAQ structured data for SEO rich results), Tips for keeping the FAQ updated.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ faqs: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/pricing-objection-handler', requireAuth, async (req: AuthRequest, res) => {
+  const { product, price_point } = req.body;
+  const prompt = `Write objection handling scripts for pricing objections for ${product} at ${price_point}.\n\nProvide scripts for these 8 common objections:\n1. "That's too expensive" / "We don't have budget"\n2. "Competitor X is cheaper"\n3. "Can you do a discount?"\n4. "We need to check with finance / get approval"\n5. "What if it doesn't work for us?"\n6. "We're not ready to commit yet"\n7. "We can build this ourselves"\n8. "The free version / freemium is enough for us"\n\nFor each: The empathetic opener (acknowledge, don't dismiss), The reframe (shift from cost to value/ROI), Specific response script (word for word), Follow-up question to keep the conversation going, When to offer a concession vs. hold firm. Also provide: How to proactively address pricing before the objection comes up, When to walk away from a deal, How to create urgency ethically.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ responses: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/writing/executive-summary', requireAuth, async (req: AuthRequest, res) => {
+  const { document_content, audience } = req.body;
+  const prompt = `Write an executive summary of the following for ${audience || 'senior leadership'}:\n\n${document_content}\n\nExecutive summary structure: Opening statement (1 sentence — the single most important thing to know), Situation / Background (2-3 sentences — why this matters now), Key findings or recommendations (3-5 bullet points — specific, not vague), Financial/impact implications (the numbers that matter), Risk or concern to flag (1-2 sentences), Recommended action (what you want the reader to do after reading this, with timeline). Rules: Under 400 words total. No jargon that isn't defined. Every claim backed by a specific fact from the document. Written for someone who has 90 seconds and needs to make a decision. No preamble like "This document covers..." — start with the most important information immediately. Include a version of the same summary in a 3-bullet "TL;DR" format for Slack/email.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ summary: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
