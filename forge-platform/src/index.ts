@@ -183791,3 +183791,34 @@ app.post('/api/marketing/ph-launch-kit', requireAuth, async (req: AuthRequest, r
   const prompt = `Create a complete Product Hunt launch kit for: ${product}\nAudience: ${target_audience || 'makers and founders'}\n\nProvide: tagline (60 chars max, no buzzwords), product description (260 chars), extended description (full PH listing), first comment from maker (personal story + what problem this solves + launch offer), 5 thumbnail/gallery caption ideas, launch day schedule (when to post, when to engage, who to notify), community outreach list (subreddits, Slack groups, newsletters), first 24-hour engagement strategy, special launch offer idea.`;
   try { const result = await callUserLLM(req, prompt); res.json({ launch_kit: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// Wave 126 routes
+app.post('/api/pr/press-release', requireAuth, async (req: AuthRequest, res) => {
+  const { announcement, company_info } = req.body;
+  const prompt = `Write a professional press release in AP style.\nAnnouncement: ${announcement}\nCompany: ${company_info}\n\nStructure: FOR IMMEDIATE RELEASE header, headline (present tense, newsworthy), dateline, lead paragraph (who/what/when/where/why in first sentence), body paragraphs (quotes from exec + key details), boilerplate About section, ### ending, media contact block. Keep under 500 words. Write like a journalist, not a marketer.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ press_release: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/pricing-page-copy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, pricing_tiers } = req.body;
+  const prompt = `Write conversion-optimized pricing page copy for ${product}.\nTiers: ${pricing_tiers}\n\nProvide: page headline + subheadline, tier names (make them aspirational, not just Free/Pro/Enterprise), for each tier: value-focused headline, 5-7 feature bullets (benefits not features), recommended badge text, CTA button copy, FAQ section (5-7 most common pricing objections), annual vs monthly toggle persuasion copy, money-back guarantee language, social proof placeholder.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ copy: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/tech-doc', requireAuth, async (req: AuthRequest, res) => {
+  const { feature_description, target_audience } = req.body;
+  const prompt = `Write technical documentation for: ${feature_description}\nAudience: ${target_audience || 'developers'}\n\nInclude: Overview (what it is and why it matters), Prerequisites, Quick Start (get something working in 5 minutes), Core Concepts, Step-by-step guide with code examples, Configuration reference, Common use cases, Troubleshooting / FAQs, Related resources. Use clear headings, code blocks for all examples, and avoid jargon without explanation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ documentation: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cs/success-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customer_segment } = req.body;
+  const prompt = `Build a Customer Success playbook for ${product} serving ${customer_segment} customers.\n\nCover: Onboarding (Day 0 handoff, Day 1 setup call agenda, Day 30 success check), Health score framework (what metrics to track), QBR agenda template, Expansion playbook (when and how to upsell), At-risk intervention workflow, Renewal motion (90/60/30 day runway), Executive sponsor program, Escalation process, CSM-to-customer ratio recommendation, tools stack recommendation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ playbook: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/influencer-outreach', requireAuth, async (req: AuthRequest, res) => {
+  const { brand_description, influencer_niche } = req.body;
+  const prompt = `Write influencer outreach scripts for ${brand_description} targeting ${influencer_niche} creators.\n\nProvide: DM script (Instagram/TikTok, under 150 words, feels personal not templated), email pitch (subject line + body, under 300 words), follow-up message (if no reply after 5 days), what NOT to say (common mistakes brands make), how to research the influencer before reaching out, what compensation to offer (product, commission, flat fee — when to use each), red flags in influencer responses.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ outreach_scripts: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
