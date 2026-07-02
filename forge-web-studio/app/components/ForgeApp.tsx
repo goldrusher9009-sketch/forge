@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { OnboardingFlow } from './OnboardingFlow';
 import { ForgeAutonomyHub, OnboardingWizard, CreditBadge, LIVING_STYLES } from './ForgeAutonomy';
-import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, ForgeTab_meetingactions99, ForgeTab_prddraft99, ForgeTab_ytscript100, ForgeTab_appstore100, ForgeTab_changelog100, ForgeTab_linkedinco100, ForgeTab_grantprop100, ForgeTab_threadwriter101, ForgeTab_uxaudit101, ForgeTab_pricingtier101, ForgeTab_onboardflow101, ForgeTab_pressrelease101, ForgeTab_apidoc102, ForgeTab_breakeven102, ForgeTab_jobdesc102, ForgeTab_feedbackanalyzer102, ForgeTab_competitorteardown102, ForgeTab_emailsubject103, ForgeTab_objectionhandler103, ForgeTab_pitchfeedback103, ForgeTab_nichefinder103, ForgeTab_contentrepurpose103, ForgeTab_salesscript104, ForgeTab_landingcopy104, ForgeTab_investorupdate104, ForgeTab_bugreport104, ForgeTab_datastory104, ForgeTab_personabuilder105, ForgeTab_sopwriter105, ForgeTab_okrgenerator105, ForgeTab_retrofacilitator105, ForgeTab_emailsequence105, ForgeTab_churnpredictor106, ForgeTab_phlauncher106, ForgeTab_affiliateprog106, ForgeTab_referralprog106, ForgeTab_partnershipgen106, ForgeTab_grantwriter107, ForgeTab_boarddeck107, ForgeTab_hiringfunnel107, ForgeTab_gtmplanner107, ForgeTab_moatanalyzer107, ForgeTab_pitchscorer108, ForgeTab_revenuemodel108, ForgeTab_journeymap108, ForgeTab_crisiscomms108, ForgeTab_duediligence108, ForgeTab_legalcontract109, ForgeTab_captable109, ForgeTab_investorupd109, ForgeTab_coldsequence109, ForgeTab_podcastscript109, ForgeTab_newsletter110, ForgeTab_adcopy110, ForgeTab_abvariants110, ForgeTab_webinarscript110, ForgeTab_casestudy110, ForgeTab_techdoc111, ForgeTab_apichangelog111, ForgeTab_featureflag111, ForgeTab_loadtest111, ForgeTab_threatmodel111, ForgeTab_prompteng112, ForgeTab_modelsel112, ForgeTab_datapipe112, ForgeTab_mlexp112, ForgeTab_vectordb112, ForgeTab_cohortanalyzer113, ForgeTab_funnelbuilder113, ForgeTab_retentiondash113, ForgeTab_abstats113, ForgeTab_ltvpredictor113, ForgeTab_jtbd114, ForgeTab_pricingstrat114, ForgeTab_northstar114, ForgeTab_okrgen114, ForgeTab_persona114, ForgeTab_seooptimizer115, ForgeTab_headlineanalyzer115, ForgeTab_contentcal115, ForgeTab_backlinkstrat115, ForgeTab_metatag115, ForgeTab_sopwriter116, ForgeTab_perfrev116, ForgeTab_jobdesc116, ForgeTab_onboarding116, ForgeTab_meetingai116, ForgeTab_contractrisk117, ForgeTab_gdprcheck117, ForgeTab_privacypol117, ForgeTab_tosbuilder117, ForgeTab_compliance117, ForgeTab_cashflowfx118, ForgeTab_invoicegen118, ForgeTab_taxestimator118, ForgeTab_budgetplanner118, ForgeTab_fundingcalc118, ForgeTab_instacap119, ForgeTab_communitypost119, ForgeTab_tiktokscript119, ForgeTab_biooptimizer119, ForgeTab_viralhook119 } from './WaveComponents';
+import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, ForgeTab_meetingactions99, ForgeTab_prddraft99, ForgeTab_ytscript100, ForgeTab_appstore100, ForgeTab_changelog100, ForgeTab_linkedinco100, ForgeTab_grantprop100, ForgeTab_threadwriter101, ForgeTab_uxaudit101, ForgeTab_pricingtier101, ForgeTab_onboardflow101, ForgeTab_pressrelease101, ForgeTab_apidoc102, ForgeTab_breakeven102, ForgeTab_jobdesc102, ForgeTab_feedbackanalyzer102, ForgeTab_competitorteardown102, ForgeTab_emailsubject103, ForgeTab_objectionhandler103, ForgeTab_pitchfeedback103, ForgeTab_nichefinder103, ForgeTab_contentrepurpose103, ForgeTab_salesscript104, ForgeTab_landingcopy104, ForgeTab_investorupdate104, ForgeTab_bugreport104, ForgeTab_datastory104, ForgeTab_personabuilder105, ForgeTab_sopwriter105, ForgeTab_okrgenerator105, ForgeTab_retrofacilitator105, ForgeTab_emailsequence105, ForgeTab_churnpredictor106, ForgeTab_phlauncher106, ForgeTab_affiliateprog106, ForgeTab_referralprog106, ForgeTab_partnershipgen106, ForgeTab_grantwriter107, ForgeTab_boarddeck107, ForgeTab_hiringfunnel107, ForgeTab_gtmplanner107, ForgeTab_moatanalyzer107, ForgeTab_pitchscorer108, ForgeTab_revenuemodel108, ForgeTab_journeymap108, ForgeTab_crisiscomms108, ForgeTab_duediligence108, ForgeTab_legalcontract109, ForgeTab_captable109, ForgeTab_investorupd109, ForgeTab_coldsequence109, ForgeTab_podcastscript109, ForgeTab_newsletter110, ForgeTab_adcopy110, ForgeTab_abvariants110, ForgeTab_webinarscript110, ForgeTab_casestudy110, ForgeTab_techdoc111, ForgeTab_apichangelog111, ForgeTab_featureflag111, ForgeTab_loadtest111, ForgeTab_threatmodel111, ForgeTab_prompteng112, ForgeTab_modelsel112, ForgeTab_datapipe112, ForgeTab_mlexp112, ForgeTab_vectordb112, ForgeTab_cohortanalyzer113, ForgeTab_funnelbuilder113, ForgeTab_retentiondash113, ForgeTab_abstats113, ForgeTab_ltvpredictor113, ForgeTab_jtbd114, ForgeTab_pricingstrat114, ForgeTab_northstar114, ForgeTab_okrgen114, ForgeTab_persona114, ForgeTab_seooptimizer115, ForgeTab_headlineanalyzer115, ForgeTab_contentcal115, ForgeTab_backlinkstrat115, ForgeTab_metatag115, ForgeTab_sopwriter116, ForgeTab_perfrev116, ForgeTab_jobdesc116, ForgeTab_onboarding116, ForgeTab_meetingai116, ForgeTab_contractrisk117, ForgeTab_gdprcheck117, ForgeTab_privacypol117, ForgeTab_tosbuilder117, ForgeTab_compliance117, ForgeTab_cashflowfx118, ForgeTab_invoicegen118, ForgeTab_taxestimator118, ForgeTab_budgetplanner118, ForgeTab_fundingcalc118, ForgeTab_instacap119, ForgeTab_communitypost119, ForgeTab_tiktokscript119, ForgeTab_biooptimizer119, ForgeTab_viralhook119, ForgeTab_proddesc120, ForgeTab_essayoutline120, ForgeTab_researchsum120, ForgeTab_focusplan120, ForgeTab_expensereport120, ForgeTab_coverletter121, ForgeTab_ytthumb121, ForgeTab_apiprice121, ForgeTab_onboardemail121, ForgeTab_riskmatrix121, ForgeTab_pitchdeck122, ForgeTab_persona122, ForgeTab_tosgen122, ForgeTab_abtest122, ForgeTab_ratecalc122, ForgeTab_coldemailseq123, ForgeTab_roadmapprior123, ForgeTab_brandname123, ForgeTab_meetingagenda123, ForgeTab_objhandler123, ForgeTab_subjectline124, ForgeTab_valuation124, ForgeTab_contentcal124, ForgeTab_userinterv124, ForgeTab_grantwriter124, ForgeTab_linkedinpost125, ForgeTab_churnprev125, ForgeTab_okrbuilder125, ForgeTab_battlecard125, ForgeTab_phlauncher125 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -26536,6 +26536,36 @@ export default function ForgeApp() {
             { id:'tiktokscript119', icon:'🎵', label:'TikTok Script Writer' },
             { id:'biooptimizer119', icon:'✍️', label:'Social Bio Optimizer' },
             { id:'viralhook119', icon:'🎣', label:'Viral Hook Generator' },
+            { id:'proddesc120', icon:'🛍️', label:'Product Description Writer' },
+            { id:'essayoutline120', icon:'📝', label:'Essay Outline Builder' },
+            { id:'researchsum120', icon:'🔬', label:'Market Research Summarizer' },
+            { id:'focusplan120', icon:'🎯', label:'Focus Session Planner' },
+            { id:'expensereport120', icon:'💸', label:'Expense Report Generator' },
+      { id:'coverletter121', icon:'📄', label:'Cover Letter Optimizer' },
+      { id:'ytthumb121', icon:'🎨', label:'YouTube Thumbnail Concepts' },
+      { id:'apiprice121', icon:'💰', label:'API Pricing Calculator' },
+      { id:'onboardemail121', icon:'📧', label:'Onboarding Email Sequence' },
+      { id:'riskmatrix121', icon:'⚠️', label:'Risk Assessment Matrix' },
+      { id:'pitchdeck122', icon:'🚀', label:'Investor Pitch Deck Outline' },
+      { id:'persona122', icon:'👤', label:'Customer Persona Deep-Dive' },
+      { id:'tosgen122', icon:'⚖️', label:'Terms of Service Generator' },
+      { id:'abtest122', icon:'🧪', label:'A/B Test Hypothesis Builder' },
+      { id:'ratecalc122', icon:'💵', label:'Freelancer Rate Calculator' },
+      { id:'coldemailseq123', icon:'📨', label:'Cold Email Sequence Builder' },
+      { id:'roadmapprior123', icon:'🗺️', label:'Product Roadmap Prioritizer' },
+      { id:'brandname123', icon:'✨', label:'Brand Name Generator' },
+      { id:'meetingagenda123', icon:'📋', label:'Meeting Agenda Builder' },
+      { id:'objhandler123', icon:'🛡️', label:'Sales Objection Handler' },
+      { id:'subjectline124', icon:'📬', label:'Email Subject Line Optimizer' },
+      { id:'valuation124', icon:'💎', label:'Startup Valuation Estimator' },
+      { id:'contentcal124', icon:'📅', label:'Content Calendar Planner' },
+      { id:'userinterv124', icon:'🎙️', label:'User Interview Script' },
+      { id:'grantwriter124', icon:'📜', label:'Grant Proposal Writer' },
+      { id:'linkedinpost125', icon:'💼', label:'LinkedIn Post Generator' },
+      { id:'churnprev125', icon:'🔒', label:'Churn Prevention Playbook' },
+      { id:'okrbuilder125', icon:'🎯', label:'OKR Builder' },
+      { id:'battlecard125', icon:'⚔️', label:'Competitor Battle Card' },
+      { id:'phlauncher125', icon:'🚀', label:'Product Hunt Launch Kit' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -48215,18 +48245,33 @@ export default function ForgeApp() {
         {(mainTab as string) === 'tiktokscript119' && <ForgeTab_tiktokscript119 />}
         {(mainTab as string) === 'biooptimizer119' && <ForgeTab_biooptimizer119 />}
         {(mainTab as string) === 'viralhook119' && <ForgeTab_viralhook119 />}
-
-{(mainTab as string) === 'twitterbio98' && <ForgeTab_twitterbio98 />}
-
-{(mainTab as string) === 'speakingprep98' && <ForgeTab_speakingprep98 />}
-
-{(mainTab as string) === 'debtplan98' && <ForgeTab_debtplan98 />}
-
-{(mainTab as string) === 'productupdate98' && <ForgeTab_productupdate98 />}
-
-{(mainTab as string) === 'therapyjournal98' && <ForgeTab_therapyjournal98 />}
-
-      </div>
-    </div>
-  );
-}
+        {(mainTab as string) === 'proddesc120' && <ForgeTab_proddesc120 />}
+        {(mainTab as string) === 'essayoutline120' && <ForgeTab_essayoutline120 />}
+        {(mainTab as string) === 'researchsum120' && <ForgeTab_researchsum120 />}
+        {(mainTab as string) === 'focusplan120' && <ForgeTab_focusplan120 />}
+        {(mainTab as string) === 'expensereport120' && <ForgeTab_expensereport120 />}
+        {(mainTab as string) === 'coverletter121' && <ForgeTab_coverletter121 />}
+        {(mainTab as string) === 'ytthumb121' && <ForgeTab_ytthumb121 />}
+        {(mainTab as string) === 'apiprice121' && <ForgeTab_apiprice121 />}
+        {(mainTab as string) === 'onboardemail121' && <ForgeTab_onboardemail121 />}
+        {(mainTab as string) === 'riskmatrix121' && <ForgeTab_riskmatrix121 />}
+        {(mainTab as string) === 'pitchdeck122' && <ForgeTab_pitchdeck122 />}
+        {(mainTab as string) === 'persona122' && <ForgeTab_persona122 />}
+        {(mainTab as string) === 'tosgen122' && <ForgeTab_tosgen122 />}
+        {(mainTab as string) === 'abtest122' && <ForgeTab_abtest122 />}
+        {(mainTab as string) === 'ratecalc122' && <ForgeTab_ratecalc122 />}
+        {(mainTab as string) === 'coldemailseq123' && <ForgeTab_coldemailseq123 />}
+        {(mainTab as string) === 'roadmapprior123' && <ForgeTab_roadmapprior123 />}
+        {(mainTab as string) === 'brandname123' && <ForgeTab_brandname123 />}
+        {(mainTab as string) === 'meetingagenda123' && <ForgeTab_meetingagenda123 />}
+        {(mainTab as string) === 'objhandler123' && <ForgeTab_objhandler123 />}
+        {(mainTab as string) === 'subjectline124' && <ForgeTab_subjectline124 />}
+        {(mainTab as string) === 'valuation124' && <ForgeTab_valuation124 />}
+        {(mainTab as string) === 'contentcal124' && <ForgeTab_contentcal124 />}
+        {(mainTab as string) === 'userinterv124' && <ForgeTab_userinterv124 />}
+        {(mainTab as string) === 'grantwriter124' && <ForgeTab_grantwriter124 />}
+        {(mainTab as string) === 'linkedinpost125' && <ForgeTab_linkedinpost125 />}
+        {(mainTab as string) === 'churnprev125' && <ForgeTab_churnprev125 />}
+        {(mainTab as string) === 'okrbuilder125' && <ForgeTab_okrbuilder125 />}
+        {(mainTab as string) === 'battlecard125' && <ForgeTab_battlecard125 />}
+        {(mainTab as string) === 'phlauncher125' && <ForgeTab_phlauncher125 />}

@@ -1,3 +1,30 @@
+## v327.00 — Waves 120-125: 30 new tools (2026-07-02)
+- Wave 124: Email Subject Line Optimizer, Startup Valuation Estimator, Content Calendar Planner, User Interview Script, Grant Proposal Writer
+- Wave 125: LinkedIn Post Generator, Churn Prevention Playbook, OKR Builder, Competitor Battle Card, Product Hunt Launch Kit
+- All backend routes built + dist/index.js rebuilt
+- Total tools now: 135 (waves 99-125)
+
+## v326.00 — Waves 122+123: 10 new tools (2026-07-02)
+- Wave 122: Investor Pitch Deck Outline, Customer Persona Deep-Dive, Terms of Service Generator, A/B Test Hypothesis Builder, Freelancer Rate Calculator
+- Wave 123: Cold Email Sequence Builder, Product Roadmap Prioritizer, Brand Name Generator, Meeting Agenda Builder, Sales Objection Handler
+- All 10 backend routes live
+
+## v325.00 — Wave 122 (5 tools) (2026-07-02)
+- Wave 122: Investor Pitch Deck Outline, Customer Persona Deep-Dive, Terms of Service Generator, A/B Test Hypothesis Builder, Freelancer Rate Calculator
+- Backend routes: /api/startup/pitch-deck-outline, /api/product/customer-persona, /api/legal/tos-generator, /api/growth/ab-hypothesis, /api/freelance/rate-calculator
+
+## v324.00 — Wave 121 (5 tools) + all wave 120 backend routes live (2026-07-02)
+- Wave 121: Cover Letter Optimizer, YouTube Thumbnail Concepts, API Pricing Calculator, Onboarding Email Sequence, Risk Assessment Matrix
+- Added all wave 120 backend routes (were missing: product-description, essay-outline, research/summarizer, focus-plan, expense-report)
+- Fixed index.ts truncation at line 180100 (team_motivation route)
+- dist/index.js rebuilt + staged — Railway will serve waves 119-121
+
+## v323.00 — Wave 120 (5 tools) + backend syntax fix (2026-07-02)
+- Wave 120: Product Description Writer, Essay Outline Builder, Market Research Summarizer, Focus Session Planner, Expense Report Generator
+- Fixed truncated destructure in index.ts line 180100 (team motivation route)
+- Fixed WaveComponents.tsx export syntax (spurious closing brace after viralhook119)
+- Built + staged dist/index.js — Railway now gets wave 119+120 backend routes
+
 ## v322.00 — Fix Vercel build: 'use client' + wave 119 dist staged (2026-07-01)
 - Added 'use client' to WaveComponents.tsx (root cause of Vercel build failure)
 - Staged dist/index.js with -f flag (wave 119 Social Media routes now on Railway)

@@ -180097,7 +180097,7 @@ app.post('/api/executivepresence/build', requireAuth, async (req: AuthRequest, r
 
 app.post('/api/teammotivation/design', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
-  const { team_t  const { team_type, motivation_challenges, team_size, culture } = req.body;
+  const { team_type, motivation_challenges, team_size, culture } = req.body;
   try {
     const key = await getUserLLMKey(userId, 'anthropic');
     const result = await callLLM('anthropic', key, 'claude-3-haiku-20240307', [
@@ -183606,3 +183606,188 @@ app.post('/api/social/viral-hook', requireAuth, async (req: AuthRequest, res) =>
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// Wave 120 routes
+app.post('/api/ecom/product-description', requireAuth, async (req: AuthRequest, res) => {
+  const { product_name, features, audience } = req.body;
+  const prompt = `Write a compelling product description for: "${product_name}"\nKey features: ${features}\nTarget audience: ${audience || 'general consumers'}\n\nInclude: headline, emotional hook, feature highlights (benefits-focused), social proof placeholder, call to action. Make it conversion-optimized.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ description: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/writing/essay-outline', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, essay_type, length } = req.body;
+  const prompt = `Create a detailed essay outline for: "${topic}"\nType: ${essay_type || 'argumentative'}\nLength: ${length || '5 paragraphs'}\n\nInclude: thesis statement, introduction hook, main arguments with evidence points, counterargument (if applicable), conclusion strategy, transition suggestions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ outline: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/research/summarizer', requireAuth, async (req: AuthRequest, res) => {
+  const { research_topic, raw_notes } = req.body;
+  const prompt = `Summarize this market research on "${research_topic}":\n\n${raw_notes}\n\nProvide: executive summary (3 sentences), key findings (top 5), market size & opportunity, competitor landscape, customer pain points, strategic recommendations, data gaps to fill.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ summary: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productivity/focus-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { goals, available_hours, distractions } = req.body;
+  const prompt = `Create a deep focus session plan.\nGoals: ${goals}\nAvailable time: ${available_hours || '4'} hours\nKnown distractions: ${distractions || 'phone, email'}\n\nProvide: time-blocked schedule, Pomodoro breakdown, environment setup checklist, pre-session ritual, distraction blockers, energy management tips, success metrics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ plan: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/expense-report', requireAuth, async (req: AuthRequest, res) => {
+  const { expenses, purpose, period } = req.body;
+  const prompt = `Generate a professional expense report.\nExpenses: ${expenses}\nBusiness purpose: ${purpose}\nPeriod: ${period || 'this month'}\n\nProvide: formatted expense table, category totals, business justification for each expense, reimbursement summary, notes for accountant, and any flagged items needing receipts.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ report: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 121 routes
+app.post('/api/writing/cover-letter', requireAuth, async (req: AuthRequest, res) => {
+  const { job_description, resume_summary } = req.body;
+  const prompt = `Write a compelling, personalized cover letter.\nJob Description:\n${job_description}\n\nCandidate Background:\n${resume_summary}\n\nRequirements: match keywords from JD, show genuine enthusiasm, quantify achievements, address the hiring manager's pain points, strong opening hook, clear value proposition, confident close with call to action. Keep under 400 words.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ cover_letter: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/yt-thumbnail', requireAuth, async (req: AuthRequest, res) => {
+  const { video_title, niche } = req.body;
+  const prompt = `Generate 5 high-CTR YouTube thumbnail concepts for: "${video_title}"\nChannel niche: ${niche || 'general'}\n\nFor each concept provide: visual layout description, main image/subject, text overlay (max 6 words), color scheme (hex codes), emotion/reaction to evoke, why it works (psychology), difficulty to create (easy/medium/hard).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ concepts: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/api-pricing', requireAuth, async (req: AuthRequest, res) => {
+  const { service_description, expected_usage } = req.body;
+  const prompt = `Design an optimal API pricing strategy.\nService: ${service_description}\nUsage patterns: ${expected_usage || 'unknown'}\n\nProvide: recommended pricing model (per-call, subscription, hybrid), 3-4 tier breakdown with limits and prices, freemium strategy, enterprise pricing approach, overage handling, competitor pricing benchmarks, psychological pricing tactics, revenue projection at different adoption rates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ pricing_strategy: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/onboard-email-seq', requireAuth, async (req: AuthRequest, res) => {
+  const { product, target_audience } = req.body;
+  const prompt = `Create a 7-email onboarding sequence for ${product} targeting ${target_audience || 'new users'}.\n\nFor each email provide: send timing (Day 0, Day 1, Day 3, etc.), subject line (3 options), preview text, email body (concise), primary CTA, goal of this email. Focus on: activation, habit formation, value realization, upsell opportunity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ sequence: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/risk-matrix', requireAuth, async (req: AuthRequest, res) => {
+  const { project_description, context } = req.body;
+  const prompt = `Create a comprehensive risk assessment matrix for: "${project_description}"\nContext: ${context || 'business project'}\n\nIdentify 10-15 risks across: technical, financial, operational, market, regulatory, and people categories. For each risk: description, likelihood (1-5), impact (1-5), risk score, category, early warning signs, mitigation strategy, contingency plan, owner role. Prioritize by risk score.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ risk_assessment: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 122 routes
+app.post('/api/startup/pitch-deck-outline', requireAuth, async (req: AuthRequest, res) => {
+  const { startup_description, funding_stage } = req.body;
+  const prompt = `Create a complete investor pitch deck outline for this startup:\n${startup_description}\nFunding stage: ${funding_stage || 'Seed'}\n\nProvide slide-by-slide breakdown (12-15 slides): slide title, key message, what to show (data/visual), speaker notes, common investor questions for each slide. Include: Problem, Solution, Market Size, Product Demo, Business Model, Traction, Go-to-Market, Competition, Team, Financials, Ask.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ outline: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/customer-persona', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customer_segment } = req.body;
+  const prompt = `Build a detailed customer persona for ${product} targeting: ${customer_segment}\n\nInclude: name & photo description, demographics, psychographics, daily routine, goals & aspirations, pain points (ranked), frustrations with current solutions, information sources, buying triggers, objections to purchase, preferred communication channels, willingness to pay, a day-in-the-life narrative, exact words they use to describe their problem.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ persona: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/tos-generator', requireAuth, async (req: AuthRequest, res) => {
+  const { business_type, key_features } = req.body;
+  const prompt = `Generate a Terms of Service draft for a ${business_type} with these features: ${key_features}\n\nInclude sections: Acceptance of Terms, Description of Service, User Accounts, Acceptable Use Policy, Intellectual Property, Payment Terms (if applicable), Privacy & Data, Disclaimers, Limitation of Liability, Termination, Governing Law, Changes to Terms, Contact Information. Write in plain English but legally structured. Add [COMPANY NAME] and [DATE] placeholders. Note: This is a starting template — consult a lawyer before publishing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ terms: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/ab-hypothesis', requireAuth, async (req: AuthRequest, res) => {
+  const { feature_or_change, success_metric } = req.body;
+  const prompt = `Build a rigorous A/B test hypothesis for this change:\n${feature_or_change}\nPrimary metric: ${success_metric}\n\nProvide: formal hypothesis statement (If X then Y because Z), control vs variant description, expected lift % and rationale, sample size estimate (assume 5% baseline, 80% power, 95% confidence), test duration recommendation, secondary metrics to monitor, guardrail metrics (what NOT to hurt), segmentation recommendations, potential confounding variables, decision criteria (when to ship/kill).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ hypothesis: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/freelance/rate-calculator', requireAuth, async (req: AuthRequest, res) => {
+  const { skills, location } = req.body;
+  const prompt = `Calculate optimal freelance rates for:\nSkills & experience: ${skills}\nMarket: ${location || 'US/Global'}\n\nProvide: hourly rate range (low/mid/high), day rate, project-based pricing examples, retainer rate, market benchmarks by platform (Upwork, Toptal, direct), rate by project type, how to justify your rate to clients, when to raise rates, negotiation scripts, red flags in client negotiations, how to package services to increase perceived value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ rate_analysis: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 123 routes
+app.post('/api/sales/cold-email-sequence', requireAuth, async (req: AuthRequest, res) => {
+  const { prospect_description, offer } = req.body;
+  const prompt = `Create a 5-touch cold email outreach sequence.\nProspect: ${prospect_description}\nOffer: ${offer}\n\nFor each email: Touch # and timing (Day 0, Day 3, Day 7, Day 14, Day 21), subject line (3 options), preview text, email body (under 150 words), primary CTA, what to do if no reply. Include a breakup email as Touch 5. Make each email reference the previous one if applicable.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ sequence: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/roadmap-prioritizer', requireAuth, async (req: AuthRequest, res) => {
+  const { features_list, business_goals } = req.body;
+  const prompt = `Prioritize this product backlog using RICE scoring (Reach, Impact, Confidence, Effort).\nFeatures:\n${features_list}\nBusiness goals: ${business_goals || 'growth and retention'}\n\nFor each feature: RICE score breakdown, priority tier (P0/P1/P2/P3), recommended quarter, dependencies, risks. Provide: prioritized list with rationale, what to cut entirely, quick wins (high impact, low effort), and a Now/Next/Later roadmap view.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ prioritized_roadmap: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/branding/name-generator', requireAuth, async (req: AuthRequest, res) => {
+  const { business_description, naming_style } = req.body;
+  const prompt = `Generate 20 brand name options for: ${business_description}\nStyle preference: ${naming_style || 'any'}\n\nFor each name: the name itself, pronunciation guide, meaning/origin, brand story potential (1 sentence), .com availability likelihood (high/medium/low), similar existing brands to check, trademark search keywords. Group into categories: Made-up words, Descriptive, Metaphorical, Abstract. Flag top 3 picks with reasoning.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ names: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productivity/meeting-agenda', requireAuth, async (req: AuthRequest, res) => {
+  const { meeting_purpose, attendees } = req.body;
+  const prompt = `Create a structured meeting agenda for: ${meeting_purpose}\nAttendees: ${attendees || 'team'}\n\nProvide: pre-meeting prep list (what to bring/review), time-boxed agenda items with owner and format (discussion/decision/update), facilitator notes for each item, parking lot section, decision log template, action item template, a strong opening hook to set the tone, and a closing ritual. Optimize for a 60-minute meeting unless specified otherwise.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ agenda: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/objection-handler', requireAuth, async (req: AuthRequest, res) => {
+  const { objection, sales_context } = req.body;
+  const prompt = `Handle this sales objection: "${objection}"\nContext: ${sales_context || 'B2B software sale'}\n\nProvide: root cause analysis (what's really being said), 3 response scripts (empathetic, logical, social proof), exact words to use and avoid, follow-up question to ask, how to prevent this objection earlier in the cycle, when to walk away, and the psychology of why this objection occurs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ response: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 124 routes
+app.post('/api/email/subject-optimizer', requireAuth, async (req: AuthRequest, res) => {
+  const { email_body, target_audience } = req.body;
+  const prompt = `Generate 15 high-performing email subject lines for this email:\n\n${email_body}\n\nAudience: ${target_audience || 'general'}\n\nProvide 3 subject lines for each category: Curiosity gap, Urgency/scarcity, Benefit-driven, Question-based, Number/list. Plus emoji variants of top 3. Include: predicted open rate impact, spam trigger words to avoid, A/B test recommendation (which 2 to test first).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ subject_lines: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/valuation-estimator', requireAuth, async (req: AuthRequest, res) => {
+  const { business_metrics, funding_stage } = req.body;
+  const prompt = `Estimate startup valuation using multiple methods.\nMetrics: ${business_metrics}\nStage: ${funding_stage || 'Seed'}\n\nProvide valuation using: (1) Revenue multiple method with comparable SaaS multiples, (2) VC method (target return, exit multiple), (3) Scorecard method (team, market, product, traction scoring), (4) Comparable transactions. Give: low/mid/high range for each method, blended estimate, key value drivers, what would increase valuation 2x, investor red flags to address, dilution scenario at this valuation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ valuation: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/calendar-planner', requireAuth, async (req: AuthRequest, res) => {
+  const { brand_description, channels } = req.body;
+  const prompt = `Create a 30-day content calendar for: ${brand_description}\nChannels: ${channels || 'LinkedIn, Twitter, newsletter'}\n\nFor each week: weekly theme, 3-5 content ideas per channel, content type (educational, entertaining, promotional, engagement), suggested posting times, repurposing strategy (how to turn 1 piece into 5). Include: content pillars (3-4 recurring themes), evergreen content ideas, trending topic hooks, CTA rotation strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ calendar: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/research/user-interview-script', requireAuth, async (req: AuthRequest, res) => {
+  const { product, research_hypothesis } = req.body;
+  const prompt = `Create a user interview guide for ${product}.\nResearch focus: ${research_hypothesis}\n\nProvide: pre-interview setup checklist, warm-up questions (2-3), core questions (8-10, open-ended, non-leading), probing follow-ups for each question, screening criteria for ideal participants, how to handle talkative vs quiet participants, how to test the hypothesis without leading, synthesis framework (how to extract insights), red flag answers that invalidate your hypothesis.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ script: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/grant-proposal', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, project_description } = req.body;
+  const prompt = `Write a compelling grant proposal.\nOrganization: ${organization}\nProject: ${project_description}\n\nInclude all standard sections: Executive Summary, Organization Background, Problem Statement / Needs Assessment, Project Goals & Objectives (SMART), Project Activities & Timeline, Evaluation Plan & Metrics, Organizational Capacity, Budget Narrative, Sustainability Plan, Conclusion. Write in a compelling, evidence-based style appropriate for foundation funders.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ proposal: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 125 routes
+app.post('/api/social/linkedin-post', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, angle } = req.body;
+  const prompt = `Write a high-engagement LinkedIn post about: ${topic}\nAngle: ${angle || 'thought leadership'}\n\nStructure: attention-grabbing hook (first line gets cut off — make it impossible to ignore), 3-5 short paragraphs with white space, personal insight or contrarian take, concrete takeaway, CTA (comment, follow, share). Keep under 1300 characters. Use short sentences. No corporate jargon. End with 3-5 relevant hashtags.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ post: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/churn-prevention', requireAuth, async (req: AuthRequest, res) => {
+  const { product, churn_signals } = req.body;
+  const prompt = `Build a churn prevention playbook for ${product}.\nKnown signals: ${churn_signals || 'login frequency drop, support ticket spike'}\n\nProvide: early warning system (leading indicators by 30/60/90 days before churn), health score formula, customer segmentation by risk level, intervention playbook for each segment (what to do when score drops), win-back sequence for already-churned customers, NPS follow-up workflow, success milestone celebrations to boost stickiness, and 5 quick wins to implement this week.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ playbook: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/okr-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { team_description, strategic_goals } = req.body;
+  const prompt = `Create quarterly OKRs for: ${team_description}\nStrategic goals: ${strategic_goals}\n\nProvide 3-4 Objectives, each with 3 Key Results. For each KR: metric name, current baseline, target, measurement method, confidence level (%). Include: cascading logic (how team OKRs connect to company OKRs), leading vs lagging indicators, how to avoid common OKR mistakes (sandbagging, output vs outcome), weekly check-in cadence template.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ okrs: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/battle-card', requireAuth, async (req: AuthRequest, res) => {
+  const { our_product, competitor_name } = req.body;
+  const prompt = `Build a sales battle card: ${our_product} vs ${competitor_name}\n\nProvide: competitor overview (positioning, pricing, target market), feature comparison matrix (win/lose/tie), our strengths vs their weaknesses, their strengths we need to acknowledge honestly, questions to ask to expose competitor weaknesses, landmines (things they'll say about us and how to respond), deal-winning talk tracks for top 3 competitive scenarios, when to walk away (deals we can't win), trap-setting questions to set us up to win.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ battle_card: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/ph-launch-kit', requireAuth, async (req: AuthRequest, res) => {
+  const { product, target_audience } = req.body;
+  const prompt = `Create a complete Product Hunt launch kit for: ${product}\nAudience: ${target_audience || 'makers and founders'}\n\nProvide: tagline (60 chars max, no buzzwords), product description (260 chars), extended description (full PH listing), first comment from maker (personal story + what problem this solves + launch offer), 5 thumbnail/gallery caption ideas, launch day schedule (when to post, when to engage, who to notify), community outreach list (subreddits, Slack groups, newsletters), first 24-hour engagement strategy, special launch offer idea.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ launch_kit: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});

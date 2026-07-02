@@ -16,8 +16,8 @@ if (Test-Path $lock) { Remove-Item $lock -Force; Write-Host "Removed stale index
 
 & $git -C $root add -f forge-platform/dist/index.js
 
-& $git -C $root commit -m "v322.00 - Fix Vercel build: use client + 4GB Node memory + wave 119 routes"
+& $git -C $root commit -m "v327.00 - Waves 120-125: 30 new tools wired front+back"
 
 & $git -C $root push origin main
 
-Write-Host "DONE - v322 deploying. Check: https://forge-sand-two.vercel.app"
+Write-Host "DONE - v327 deploying. Check: https://forge-sand-two.vercel.app"
