@@ -1,3 +1,8 @@
+## v328.00 — Waves 120-126: 35 tools + Railway dist fix (2026-07-02)
+- Wave 126: Press Release Writer, Pricing Page Copy, Technical Docs Writer, Customer Success Playbook, Influencer Outreach Script
+- Fixed Railway deploy: PUSH_NOW.ps1 now builds dist/index.js on Windows before committing
+- All 35 new backend routes (waves 120-126) now in dist
+
 ## v327.00 — Waves 120-125: 30 new tools (2026-07-02)
 - Wave 124: Email Subject Line Optimizer, Startup Valuation Estimator, Content Calendar Planner, User Interview Script, Grant Proposal Writer
 - Wave 125: LinkedIn Post Generator, Churn Prevention Playbook, OKR Builder, Competitor Battle Card, Product Hunt Launch Kit
