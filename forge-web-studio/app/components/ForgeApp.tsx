@@ -19701,6 +19701,2633 @@ function ForgeTab_brandstory98() {
 }
 
 
+function ForgeTab_coldemail99() {
+  const [prospect, setProspect] = React.useState('');
+  const [prospectRole, setProspectRole] = React.useState('');
+  const [yourProduct, setYourProduct] = React.useState('');
+  const [painPoint, setPainPoint] = React.useState('');
+  const [tone, setTone] = React.useState('professional');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Cold Email Personalizer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Hyper-personalized cold emails with subject lines, follow-up sequence, and anti-spam tips.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={prospect} onChange={(e:any)=>setProspect(e.target.value)} placeholder="Prospect name / company" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={prospectRole} onChange={(e:any)=>setProspectRole(e.target.value)} placeholder="Their role (e.g. VP Sales at Acme)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <input value={yourProduct} onChange={(e:any)=>setYourProduct(e.target.value)} placeholder="Your product / service (1 sentence)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={painPoint} onChange={(e:any)=>setPainPoint(e.target.value)} placeholder="Their likely pain point you solve" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={tone} onChange={(e:any)=>setTone(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="professional">Professional</option><option value="casual">Casual</option><option value="direct">Direct</option><option value="storytelling">Storytelling</option>
+      </select>
+      <button disabled={loading||!prospect.trim()||!yourProduct.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/email/cold-personalize',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({prospect,prospect_role:prospectRole,your_product:yourProduct,pain_point:painPoint,tone})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#2563eb',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!prospect.trim()||!yourProduct.trim()?0.5:1}}>{loading?'Writing...':'Personalize Cold Email'}</button>
+      {result?.email && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.email}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_seobrief99() {
+  const [keyword, setKeyword] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [contentType, setContentType] = React.useState('blog');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>SEO Content Brief</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Full SEO brief: title tags, H1-H3 structure, keyword clusters, word count, schema markup.</p>
+      <input value={keyword} onChange={(e:any)=>setKeyword(e.target.value)} placeholder="Target keyword" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={audience} onChange={(e:any)=>setAudience(e.target.value)} placeholder="Target audience" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={contentType} onChange={(e:any)=>setContentType(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="blog">Blog Post</option><option value="landing">Landing Page</option><option value="comparison">Comparison Page</option><option value="howto">How-to Guide</option><option value="listicle">Listicle</option>
+      </select>
+      <button disabled={loading||!keyword.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/seo/content-brief',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({keyword,audience,content_type:contentType})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#16a34a',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!keyword.trim()?0.5:1}}>{loading?'Building...':'Generate SEO Brief'}</button>
+      {result?.brief && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.brief}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_legaldraft99() {
+  const [docType, setDocType] = React.useState('nda');
+  const [party1, setParty1] = React.useState('');
+  const [party2, setParty2] = React.useState('');
+  const [keyTerms, setKeyTerms] = React.useState('');
+  const [jurisdiction, setJurisdiction] = React.useState('US');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Legal Doc Drafter</h2>
+      <div style={{background:'#78350f20',border:'1px solid #78350f',borderRadius:6,padding:'0.5rem 0.75rem',marginBottom:'1rem',fontSize:12,color:'#fbbf24'}}>AI drafts only — not legal advice. Review with a licensed attorney.</div>
+      <select value={docType} onChange={(e:any)=>setDocType(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="nda">NDA</option><option value="freelance">Freelance Contract</option><option value="saas">SaaS Agreement</option><option value="employment">Employment Offer Letter</option><option value="partnership">Partnership Agreement</option><option value="consulting">Consulting Agreement</option>
+      </select>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={party1} onChange={(e:any)=>setParty1(e.target.value)} placeholder="Party 1" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={party2} onChange={(e:any)=>setParty2(e.target.value)} placeholder="Party 2" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <textarea value={keyTerms} onChange={(e:any)=>setKeyTerms(e.target.value)} placeholder="Key terms (payment, duration, scope...)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <select value={jurisdiction} onChange={(e:any)=>setJurisdiction(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="US">United States</option><option value="UK">United Kingdom</option><option value="EU">European Union</option><option value="CA">Canada</option><option value="AU">Australia</option>
+      </select>
+      <button disabled={loading||!party1.trim()||!party2.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/legal/draft-document',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({doc_type:docType,party1,party2,key_terms:keyTerms,jurisdiction})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#4f46e5',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!party1.trim()||!party2.trim()?0.5:1}}>{loading?'Drafting...':'Draft Document'}</button>
+      {result?.document && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.document}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_meetingactions99() {
+  const [transcript, setTranscript] = React.useState('');
+  const [meetingType, setMeetingType] = React.useState('general');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Meeting Action Extractor</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Paste meeting notes or transcript - get action items, owners, deadlines, and follow-up email.</p>
+      <select value={meetingType} onChange={(e:any)=>setMeetingType(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="general">General</option><option value="standup">Standup</option><option value="planning">Sprint Planning</option><option value="sales">Sales Call</option><option value="board">Board Meeting</option><option value="1on1">1-on-1</option>
+      </select>
+      <textarea value={transcript} onChange={(e:any)=>setTranscript(e.target.value)} placeholder="Paste meeting transcript or notes..." rows={10} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!transcript.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/meeting/extract-actions',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({transcript,meeting_type:meetingType})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0f766e',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!transcript.trim()?0.5:1}}>{loading?'Extracting...':'Extract Actions'}</button>
+      {result?.actions && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.actions}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_prddraft99() {
+  const [featureName, setFeatureName] = React.useState('');
+  const [problem, setProblem] = React.useState('');
+  const [targetUser, setTargetUser] = React.useState('');
+  const [successMetrics, setSuccessMetrics] = React.useState('');
+  const [constraints, setConstraints] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>PRD Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate a complete Product Requirements Document with user stories, acceptance criteria, and metrics.</p>
+      <input value={featureName} onChange={(e:any)=>setFeatureName(e.target.value)} placeholder="Feature / product name" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={problem} onChange={(e:any)=>setProblem(e.target.value)} placeholder="Problem statement" rows={2} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={targetUser} onChange={(e:any)=>setTargetUser(e.target.value)} placeholder="Target user persona" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={successMetrics} onChange={(e:any)=>setSuccessMetrics(e.target.value)} placeholder="Success metrics" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={constraints} onChange={(e:any)=>setConstraints(e.target.value)} placeholder="Constraints / out of scope (optional)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem',boxSizing:'border-box' as any}} />
+      <button disabled={loading||!featureName.trim()||!problem.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/product/prd',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({feature_name:featureName,problem,target_user:targetUser,success_metrics:successMetrics,constraints})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!featureName.trim()||!problem.trim()?0.5:1}}>{loading?'Writing PRD...':'Generate PRD'}</button>
+      {result?.prd && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.prd}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+function ForgeTab_ytscript100() {
+  const [topic, setTopic] = React.useState('');
+  const [duration, setDuration] = React.useState('10');
+  const [style, setStyle] = React.useState('educational');
+  const [audience, setAudience] = React.useState('');
+  const [hook, setHook] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>YouTube Script Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Full video scripts with hook, retention loops, CTAs, and timestamps optimized for watch time.</p>
+      <input value={topic} onChange={(e:any)=>setTopic(e.target.value)} placeholder="Video topic (e.g. How to build a SaaS in 30 days)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={audience} onChange={(e:any)=>setAudience(e.target.value)} placeholder="Target audience (e.g. beginner entrepreneurs)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={hook} onChange={(e:any)=>setHook(e.target.value)} placeholder="Opening hook idea (optional)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={duration} onChange={(e:any)=>setDuration(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="20">20+ minutes</option>
+        </select>
+        <select value={style} onChange={(e:any)=>setStyle(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="educational">Educational</option><option value="storytelling">Storytelling</option><option value="listicle">Listicle (Top X)</option><option value="documentary">Mini-Documentary</option><option value="tutorial">Tutorial / How-to</option>
+        </select>
+      </div>
+      <button disabled={loading||!topic.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/video/youtube-script',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({topic,audience,hook,duration,style})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!topic.trim()?0.5:1}}>{loading?'Writing Script...':'Generate YouTube Script'}</button>
+      {result?.script && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.script}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_appstore100() {
+  const [appName, setAppName] = React.useState('');
+  const [appCategory, setAppCategory] = React.useState('productivity');
+  const [keyFeatures, setKeyFeatures] = React.useState('');
+  const [targetUser, setTargetUser] = React.useState('');
+  const [platform, setPlatform] = React.useState('both');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>App Store Description</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>ASO-optimized descriptions for App Store and Google Play with keywords, subtitle, and screenshot captions.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={appName} onChange={(e:any)=>setAppName(e.target.value)} placeholder="App name" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <select value={appCategory} onChange={(e:any)=>setAppCategory(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="productivity">Productivity</option><option value="health">Health & Fitness</option><option value="finance">Finance</option><option value="social">Social</option><option value="education">Education</option><option value="entertainment">Entertainment</option><option value="business">Business</option><option value="games">Games</option>
+        </select>
+      </div>
+      <textarea value={keyFeatures} onChange={(e:any)=>setKeyFeatures(e.target.value)} placeholder="Key features (bullet points or description)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <input value={targetUser} onChange={(e:any)=>setTargetUser(e.target.value)} placeholder="Target user (e.g. busy parents)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <select value={platform} onChange={(e:any)=>setPlatform(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="both">Both Stores</option><option value="ios">App Store (iOS)</option><option value="android">Google Play</option>
+        </select>
+      </div>
+      <button disabled={loading||!appName.trim()||!keyFeatures.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/app/store-description',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({app_name:appName,category:appCategory,features:keyFeatures,target_user:targetUser,platform})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0ea5e9',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!appName.trim()||!keyFeatures.trim()?0.5:1}}>{loading?'Writing...':'Generate App Store Copy'}</button>
+      {result?.description && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.description}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_changelogwriter100() {
+  const [changes, setChanges] = React.useState('');
+  const [version, setVersion] = React.useState('');
+  const [product, setProduct] = React.useState('');
+  const [audience, setAudience] = React.useState('users');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Changelog Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Transform raw git commits or feature notes into polished, human-friendly changelogs and release notes.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product / app name" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={version} onChange={(e:any)=>setVersion(e.target.value)} placeholder="Version (e.g. v2.4.0)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <textarea value={changes} onChange={(e:any)=>setChanges(e.target.value)} placeholder="Paste raw changes, git commits, or feature notes here..." rows={8} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <select value={audience} onChange={(e:any)=>setAudience(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="users">End Users (non-technical)</option><option value="developers">Developers / Technical</option><option value="both">Both audiences</option><option value="marketing">Marketing / PR</option>
+      </select>
+      <button disabled={loading||!changes.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/product/changelog',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({changes,version,product,audience})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#374151',color:'#fff',border:'1px solid #6b7280',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!changes.trim()?0.5:1}}>{loading?'Writing...':'Generate Changelog'}</button>
+      {result?.changelog && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.changelog}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_linkedinco100() {
+  const [companyName, setCompanyName] = React.useState('');
+  const [industry, setIndustry] = React.useState('');
+  const [mission, setMission] = React.useState('');
+  const [size, setSize] = React.useState('startup');
+  const [keyProducts, setKeyProducts] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>LinkedIn Company Page</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Compelling LinkedIn company page copy — about section, tagline, specialties, and content pillars.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={companyName} onChange={(e:any)=>setCompanyName(e.target.value)} placeholder="Company name" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={industry} onChange={(e:any)=>setIndustry(e.target.value)} placeholder="Industry / sector" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <textarea value={mission} onChange={(e:any)=>setMission(e.target.value)} placeholder="Mission / what you do / problem you solve" rows={2} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={size} onChange={(e:any)=>setSize(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="startup">Startup (1-50)</option><option value="smb">SMB (51-500)</option><option value="mid">Mid-market (500-5k)</option><option value="enterprise">Enterprise (5k+)</option>
+        </select>
+        <input value={keyProducts} onChange={(e:any)=>setKeyProducts(e.target.value)} placeholder="Key products / services" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <button disabled={loading||!companyName.trim()||!mission.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/linkedin/company-page',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({company_name:companyName,industry,mission,size,key_products:keyProducts})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0077b5',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!companyName.trim()||!mission.trim()?0.5:1}}>{loading?'Writing...':'Generate Company Page'}</button>
+      {result?.page && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb'}}>{result.page}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_granttool100() {
+  const [orgName, setOrgName] = React.useState('');
+  const [projectTitle, setProjectTitle] = React.useState('');
+  const [problem, setProblem] = React.useState('');
+  const [solution, setSolution] = React.useState('');
+  const [amount, setAmount] = React.useState('');
+  const [grantType, setGrantType] = React.useState('nonprofit');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Grant Proposal Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Full grant proposals with executive summary, needs statement, objectives, methodology, and budget narrative.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={orgName} onChange={(e:any)=>setOrgName(e.target.value)} placeholder="Organization name" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <select value={grantType} onChange={(e:any)=>setGrantType(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="nonprofit">Nonprofit / Community</option><option value="research">Academic Research</option><option value="arts">Arts & Culture</option><option value="tech">Tech / Innovation</option><option value="education">Education</option><option value="health">Public Health</option>
+        </select>
+      </div>
+      <input value={projectTitle} onChange={(e:any)=>setProjectTitle(e.target.value)} placeholder="Project title" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={problem} onChange={(e:any)=>setProblem(e.target.value)} placeholder="Problem / need being addressed" rows={2} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <textarea value={solution} onChange={(e:any)=>setSolution(e.target.value)} placeholder="Your solution / project approach" rows={2} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={amount} onChange={(e:any)=>setAmount(e.target.value)} placeholder="Funding amount requested (e.g. $50,000)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem',boxSizing:'border-box' as any}} />
+      <button disabled={loading||!orgName.trim()||!problem.trim()||!solution.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/grant/proposal',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({org_name:orgName,project_title:projectTitle,problem,solution,amount,grant_type:grantType})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#15803d',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!orgName.trim()||!problem.trim()||!solution.trim()?0.5:1}}>{loading?'Writing Proposal...':'Generate Grant Proposal'}</button>
+      {result?.proposal && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.proposal}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+function ForgeTab_threadwriter101() {
+  const [topic, setTopic] = React.useState('');
+  const [platform, setPlatform] = React.useState('twitter');
+  const [angle, setAngle] = React.useState('educational');
+  const [audience, setAudience] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Thread Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Viral Twitter/X and LinkedIn threads with hooks, numbered tweets, and engagement triggers.</p>
+      <input value={topic} onChange={(e:any)=>setTopic(e.target.value)} placeholder="Thread topic (e.g. 10 lessons from building a $1M SaaS)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={audience} onChange={(e:any)=>setAudience(e.target.value)} placeholder="Target audience" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={platform} onChange={(e:any)=>setPlatform(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="twitter">Twitter / X</option><option value="linkedin">LinkedIn</option><option value="both">Both</option>
+        </select>
+        <select value={angle} onChange={(e:any)=>setAngle(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="educational">Educational (lessons)</option><option value="storytelling">Storytelling (journey)</option><option value="listicle">Listicle (tips/tools)</option><option value="controversial">Controversial take</option><option value="case-study">Case study</option>
+        </select>
+      </div>
+      <button disabled={loading||!topic.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/social/thread',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({topic,platform,angle,audience})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#1d9bf0',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!topic.trim()?0.5:1}}>{loading?'Writing Thread...':'Generate Thread'}</button>
+      {result?.thread && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.thread}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_uxaudit101() {
+  const [productType, setProductType] = React.useState('web-app');
+  const [description, setDescription] = React.useState('');
+  const [userGoal, setUserGoal] = React.useState('');
+  const [knownIssues, setKnownIssues] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>UX Audit</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Heuristic UX audit checklist, conversion killers, and prioritized fixes for any digital product.</p>
+      <select value={productType} onChange={(e:any)=>setProductType(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="web-app">Web App / SaaS</option><option value="landing">Landing Page</option><option value="mobile">Mobile App</option><option value="ecommerce">E-commerce</option><option value="onboarding">Onboarding Flow</option>
+      </select>
+      <textarea value={description} onChange={(e:any)=>setDescription(e.target.value)} placeholder="Describe your product / screen / flow (what it does, what users see)" rows={4} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={userGoal} onChange={(e:any)=>setUserGoal(e.target.value)} placeholder="Primary user goal (e.g. sign up, complete checkout, activate feature)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={knownIssues} onChange={(e:any)=>setKnownIssues(e.target.value)} placeholder="Known issues / complaints (optional)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem',boxSizing:'border-box' as any}} />
+      <button disabled={loading||!description.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/ux/audit',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product_type:productType,description,user_goal:userGoal,known_issues:knownIssues})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!description.trim()?0.5:1}}>{loading?'Auditing...':'Run UX Audit'}</button>
+      {result?.audit && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.audit}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_pricingtier101() {
+  const [product, setProduct] = React.useState('');
+  const [targetMarket, setTargetMarket] = React.useState('');
+  const [competitors, setCompetitors] = React.useState('');
+  const [model, setModel] = React.useState('subscription');
+  const [currentPrice, setCurrentPrice] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Pricing Tier Designer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Design SaaS pricing tiers with tier names, feature differentiation, price anchoring, and upgrade triggers.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product description (what it does)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={targetMarket} onChange={(e:any)=>setTargetMarket(e.target.value)} placeholder="Target market (e.g. freelancers, SMBs, enterprise)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={competitors} onChange={(e:any)=>setCompetitors(e.target.value)} placeholder="Main competitors + their pricing (optional)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={model} onChange={(e:any)=>setModel(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="subscription">Monthly Subscription</option><option value="annual">Annual Plans</option><option value="usage">Usage-based</option><option value="freemium">Freemium</option><option value="lifetime">Lifetime Deal</option>
+        </select>
+        <input value={currentPrice} onChange={(e:any)=>setCurrentPrice(e.target.value)} placeholder="Current price (if any)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <button disabled={loading||!product.trim()||!targetMarket.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/pricing/tiers',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,target_market:targetMarket,competitors,model,current_price:currentPrice})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#059669',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()||!targetMarket.trim()?0.5:1}}>{loading?'Designing...':'Design Pricing Tiers'}</button>
+      {result?.pricing && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.pricing}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_onboardflow101() {
+  const [product, setProduct] = React.useState('');
+  const [userType, setUserType] = React.useState('');
+  const [aha, setAha] = React.useState('');
+  const [currentDropoff, setCurrentDropoff] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Onboarding Flow Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Design step-by-step onboarding flows that drive activation, reduce churn, and hit the aha moment fast.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product (what it does, core value)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={userType} onChange={(e:any)=>setUserType(e.target.value)} placeholder="Primary user type (e.g. non-technical marketers)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={aha} onChange={(e:any)=>setAha(e.target.value)} placeholder="Aha moment (when user first gets value, e.g. sends first campaign)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={currentDropoff} onChange={(e:any)=>setCurrentDropoff(e.target.value)} placeholder="Where users currently drop off (optional)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem',boxSizing:'border-box' as any}} />
+      <button disabled={loading||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/product/onboarding-flow',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,user_type:userType,aha_moment:aha,drop_off:currentDropoff})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#f59e0b',color:'#000',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()?0.5:1}}>{loading?'Building Flow...':'Build Onboarding Flow'}</button>
+      {result?.flow && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.flow}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_pressrelease101() {
+  const [headline, setHeadline] = React.useState('');
+  const [company, setCompany] = React.useState('');
+  const [announcement, setAnnouncement] = React.useState('');
+  const [quote, setQuote] = React.useState('');
+  const [releaseType, setReleaseType] = React.useState('product-launch');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Press Release Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>AP-style press releases journalists actually open — with headline options, dateline, and media contact block.</p>
+      <select value={releaseType} onChange={(e:any)=>setReleaseType(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="product-launch">Product Launch</option><option value="funding">Funding Announcement</option><option value="partnership">Partnership</option><option value="award">Award / Recognition</option><option value="hiring">Executive Hire</option><option value="milestone">Company Milestone</option>
+      </select>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={company} onChange={(e:any)=>setCompany(e.target.value)} placeholder="Company name" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={headline} onChange={(e:any)=>setHeadline(e.target.value)} placeholder="Headline idea (optional)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <textarea value={announcement} onChange={(e:any)=>setAnnouncement(e.target.value)} placeholder="What are you announcing? Key facts, numbers, context..." rows={4} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <textarea value={quote} onChange={(e:any)=>setQuote(e.target.value)} placeholder="Executive quote (name + title + quote, or leave blank to generate)" rows={2} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!company.trim()||!announcement.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/pr/press-release',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({headline,company,announcement,quote,release_type:releaseType})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#111827',color:'#fff',border:'1px solid #6b7280',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!company.trim()||!announcement.trim()?0.5:1}}>{loading?'Writing...':'Generate Press Release'}</button>
+      {result?.release && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.release}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+function ForgeTab_apidocs102() {
+  const [endpointType, setEndpointType] = React.useState('rest');
+  const [spec, setSpec] = React.useState('');
+  const [docStyle, setDocStyle] = React.useState('readme');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>API Doc Generator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Turn endpoint specs into beautiful, developer-friendly API documentation with examples.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <select value={endpointType} onChange={(e:any)=>setEndpointType(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="rest">REST API</option><option value="graphql">GraphQL</option><option value="websocket">WebSocket</option><option value="sdk">SDK / Library</option>
+        </select>
+        <select value={docStyle} onChange={(e:any)=>setDocStyle(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="readme">README style</option><option value="openapi">OpenAPI / Swagger</option><option value="postman">Postman collection</option><option value="gitbook">GitBook / Docusaurus</option>
+        </select>
+      </div>
+      <textarea value={spec} onChange={(e:any)=>setSpec(e.target.value)} placeholder="Paste your endpoint specs, route descriptions, parameters, or raw code — e.g.:
+POST /api/users
+Body: { email, password, name }
+Returns: { user_id, token }
+Auth: Bearer token required" rows={8} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!spec.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/dev/api-docs',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({endpoint_type:endpointType,spec,doc_style:docStyle})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0ea5e9',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!spec.trim()?0.5:1}}>{loading?'Generating Docs...':'Generate API Docs'}</button>
+      {result?.docs && <div style={{marginTop:'1.5rem',background:'#0f172a',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:12,fontFamily:'monospace',color:'#e2e8f0',maxHeight:600,overflowY:'auto' as any}}>{result.docs}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_breakeven102() {
+  const [fixedCosts, setFixedCosts] = React.useState('');
+  const [variableCost, setVariableCost] = React.useState('');
+  const [price, setPrice] = React.useState('');
+  const [businessType, setBusinessType] = React.useState('saas');
+  const [revenue, setRevenue] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Breakeven Calculator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Calculate breakeven point, runway, and profitability scenarios with AI-powered analysis and growth recommendations.</p>
+      <select value={businessType} onChange={(e:any)=>setBusinessType(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="saas">SaaS / Subscription</option><option value="ecommerce">E-commerce / Product</option><option value="service">Service / Agency</option><option value="marketplace">Marketplace</option><option value="physical">Physical / Retail</option>
+      </select>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={fixedCosts} onChange={(e:any)=>setFixedCosts(e.target.value)} placeholder="Monthly fixed costs ($) — rent, salaries, tools" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={variableCost} onChange={(e:any)=>setVariableCost(e.target.value)} placeholder="Variable cost per unit/customer ($)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <input value={price} onChange={(e:any)=>setPrice(e.target.value)} placeholder="Price per unit/customer ($)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={revenue} onChange={(e:any)=>setRevenue(e.target.value)} placeholder="Current monthly revenue ($) — optional" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <button disabled={loading||!fixedCosts.trim()||!price.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/finance/breakeven',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({fixed_costs:fixedCosts,variable_cost:variableCost,price,business_type:businessType,current_revenue:revenue})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#16a34a',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!fixedCosts.trim()||!price.trim()?0.5:1}}>{loading?'Calculating...':'Calculate Breakeven'}</button>
+      {result?.analysis && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.analysis}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_jobdesc102() {
+  const [role, setRole] = React.useState('');
+  const [company, setCompany] = React.useState('');
+  const [level, setLevel] = React.useState('mid');
+  const [remote, setRemote] = React.useState('remote');
+  const [skills, setSkills] = React.useState('');
+  const [culture, setCulture] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Job Description Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Inclusive, high-converting job descriptions that attract top talent and reduce bias.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={role} onChange={(e:any)=>setRole(e.target.value)} placeholder="Role title (e.g. Senior Backend Engineer)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={company} onChange={(e:any)=>setCompany(e.target.value)} placeholder="Company name + one-liner" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <select value={level} onChange={(e:any)=>setLevel(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="intern">Intern</option><option value="junior">Junior</option><option value="mid">Mid-level</option><option value="senior">Senior</option><option value="staff">Staff / Principal</option><option value="lead">Lead / Manager</option><option value="director">Director+</option>
+        </select>
+        <select value={remote} onChange={(e:any)=>setRemote(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="remote">Remote</option><option value="hybrid">Hybrid</option><option value="onsite">On-site</option>
+        </select>
+      </div>
+      <input value={skills} onChange={(e:any)=>setSkills(e.target.value)} placeholder="Key skills required (e.g. React, Node.js, PostgreSQL, 3+ yrs)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={culture} onChange={(e:any)=>setCulture(e.target.value)} placeholder="Culture notes (e.g. fast-paced startup, strong work-life balance)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem',boxSizing:'border-box' as any}} />
+      <button disabled={loading||!role.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/hr/job-description',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({role,company,level,remote,skills,culture})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#6366f1',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!role.trim()?0.5:1}}>{loading?'Writing JD...':'Generate Job Description'}</button>
+      {result?.jd && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.jd}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_feedback102() {
+  const [feedbackText, setFeedbackText] = React.useState('');
+  const [source, setSource] = React.useState('reviews');
+  const [product, setProduct] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Feedback Analyzer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Extract themes, sentiment, bugs, feature requests, and product insights from raw customer feedback.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <select value={source} onChange={(e:any)=>setSource(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="reviews">App store / G2 reviews</option><option value="support">Support tickets</option><option value="survey">Survey responses</option><option value="interviews">User interviews</option><option value="social">Social media / Twitter</option><option value="mixed">Mixed sources</option>
+        </select>
+        <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product / service name" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <textarea value={feedbackText} onChange={(e:any)=>setFeedbackText(e.target.value)} placeholder="Paste your customer feedback here (reviews, tickets, comments)..." rows={10} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!feedbackText.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/product/feedback-analyze',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({feedback:feedbackText,source,product})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#db2777',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!feedbackText.trim()?0.5:1}}>{loading?'Analyzing...':'Analyze Feedback'}</button>
+      {result?.analysis && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.analysis}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_competitortear102() {
+  const [competitor, setCompetitor] = React.useState('');
+  const [yourProduct, setYourProduct] = React.useState('');
+  const [angle, setAngle] = React.useState('full');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Competitor Teardown</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Deep competitive analysis — positioning gaps, messaging weaknesses, differentiation opportunities, and attack angles.</p>
+      <input value={competitor} onChange={(e:any)=>setCompetitor(e.target.value)} placeholder="Competitor name + URL or description" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={yourProduct} onChange={(e:any)=>setYourProduct(e.target.value)} placeholder="Your product (name + what it does, optional)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={angle} onChange={(e:any)=>setAngle(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="full">Full teardown</option><option value="pricing">Pricing analysis</option><option value="messaging">Messaging & positioning</option><option value="product">Product gaps</option><option value="battlecard">Sales battlecard</option>
+      </select>
+      <button disabled={loading||!competitor.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/competitive/teardown',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({competitor,your_product:yourProduct,angle})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!competitor.trim()?0.5:1}}>{loading?'Tearing Down...':'Run Competitor Teardown'}</button>
+      {result?.teardown && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.teardown}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+function ForgeTab_emailsubject103() {
+  const [topic, setTopic] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [emailType, setEmailType] = React.useState('marketing');
+  const [tone, setTone] = React.useState('professional');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Email Subject Line Tester</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate 20+ subject line variations, score them for open rate, and get A/B test recommendations.</p>
+      <input value={topic} onChange={(e:any)=>setTopic(e.target.value)} placeholder="Email topic / what the email is about" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={audience} onChange={(e:any)=>setAudience(e.target.value)} placeholder="Target audience (e.g. B2B SaaS founders, e-commerce shoppers)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={emailType} onChange={(e:any)=>setEmailType(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="marketing">Marketing / Promo</option><option value="newsletter">Newsletter</option><option value="cold">Cold outreach</option><option value="transactional">Transactional</option><option value="reengagement">Re-engagement</option><option value="sales">Sales follow-up</option>
+        </select>
+        <select value={tone} onChange={(e:any)=>setTone(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="professional">Professional</option><option value="casual">Casual / Friendly</option><option value="urgent">Urgent / FOMO</option><option value="curious">Curious / Mysterious</option><option value="funny">Funny / Witty</option><option value="bold">Bold / Provocative</option>
+        </select>
+      </div>
+      <button disabled={loading||!topic.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/email/subject-lines',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({topic,audience,email_type:emailType,tone})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!topic.trim()?0.5:1}}>{loading?'Generating...':'Generate Subject Lines'}</button>
+      {result?.subjects && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.subjects}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_objectionhandler103() {
+  const [objection, setObjection] = React.useState('');
+  const [product, setProduct] = React.useState('');
+  const [stage, setStage] = React.useState('discovery');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Sales Objection Handler</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Get battle-tested responses to any sales objection — with psychology, scripts, and flip techniques.</p>
+      <textarea value={objection} onChange={(e:any)=>setObjection(e.target.value)} placeholder="Enter the objection (e.g. too expensive, we already use competitor, need to think about it)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="What are you selling? (brief description)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={stage} onChange={(e:any)=>setStage(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="cold">Cold outreach</option><option value="discovery">Discovery call</option><option value="demo">Demo / presentation</option><option value="proposal">Proposal / pricing</option><option value="closing">Closing</option><option value="followup">Follow-up</option>
+      </select>
+      <button disabled={loading||!objection.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/sales/handle-objection',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({objection,product,stage})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!objection.trim()?0.5:1}}>{loading?'Loading...':'Handle Objection'}</button>
+      {result?.response && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.response}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_pitchfeedback103() {
+  const [pitchContent, setPitchContent] = React.useState('');
+  const [audience, setAudience] = React.useState('vc');
+  const [stage, setStage] = React.useState('seed');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Pitch Deck Feedback</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Brutal, honest pitch deck critique from a VC perspective — slide by slide, with a pass/fail verdict.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <select value={audience} onChange={(e:any)=>setAudience(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="vc">Venture Capital</option><option value="angel">Angel Investors</option><option value="accelerator">Accelerator / YC</option><option value="strategic">Strategic Partners</option><option value="bank">Bank / SBA loan</option>
+        </select>
+        <select value={stage} onChange={(e:any)=>setStage(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="pre-seed">Pre-seed (idea)</option><option value="seed">Seed ($0-2M)</option><option value="seriesA">Series A ($2M+)</option><option value="growth">Growth</option>
+        </select>
+      </div>
+      <textarea value={pitchContent} onChange={(e:any)=>setPitchContent(e.target.value)} placeholder="Paste your pitch deck content, slide titles, or describe each slide's content..." rows={10} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!pitchContent.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/pitch/feedback',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({pitch_content:pitchContent,audience,stage})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#1e40af',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!pitchContent.trim()?0.5:1}}>{loading?'Reviewing...':'Get Pitch Feedback'}</button>
+      {result?.feedback && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.feedback}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_nichefinder103() {
+  const [skills, setSkills] = React.useState('');
+  const [interests, setInterests] = React.useState('');
+  const [experience, setExperience] = React.useState('');
+  const [goal, setGoal] = React.useState('freelance');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Niche Finder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Find your profitable niche — intersection of skills, passion, and market demand with revenue potential.</p>
+      <input value={skills} onChange={(e:any)=>setSkills(e.target.value)} placeholder="Your skills (e.g. Python, marketing, accounting, design)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={interests} onChange={(e:any)=>setInterests(e.target.value)} placeholder="Your interests / passions" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={experience} onChange={(e:any)=>setExperience(e.target.value)} placeholder="Background / industry experience (optional)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={goal} onChange={(e:any)=>setGoal(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="freelance">Freelancing / Consulting</option><option value="saas">Build a SaaS</option><option value="content">Content / Creator</option><option value="agency">Agency</option><option value="product">Physical / Digital product</option><option value="coaching">Coaching / Course</option>
+      </select>
+      <button disabled={loading||!skills.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/business/niche-finder',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({skills,interests,experience,goal})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0891b2',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!skills.trim()?0.5:1}}>{loading?'Finding Niches...':'Find My Niche'}</button>
+      {result?.niches && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.niches}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_contentrepurpose103() {
+  const [originalContent, setOriginalContent] = React.useState('');
+  const [sourceFormat, setSourceFormat] = React.useState('blog');
+  const [targets, setTargets] = React.useState<string[]>(['twitter', 'linkedin', 'email']);
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  const targetOptions = ['twitter','linkedin','email','instagram','tiktok','youtube','podcast','newsletter','reddit'];
+  const toggleTarget = (t: string) => setTargets((prev: string[]) => prev.includes(t) ? prev.filter((x: string)=>x!==t) : [...prev, t]);
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Content Repurposer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Turn one piece of content into 5-9 platform-specific formats. One blog post → everywhere.</p>
+      <select value={sourceFormat} onChange={(e:any)=>setSourceFormat(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="blog">Blog post</option><option value="podcast">Podcast transcript</option><option value="video">Video / YouTube script</option><option value="tweet">Tweet / thread</option><option value="linkedin">LinkedIn post</option><option value="talk">Talk / presentation</option>
+      </select>
+      <textarea value={originalContent} onChange={(e:any)=>setOriginalContent(e.target.value)} placeholder="Paste your original content here..." rows={8} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{marginBottom:'1rem'}}>
+        <p style={{color:'#9ca3af',fontSize:13,marginBottom:'0.5rem'}}>Repurpose to:</p>
+        <div style={{display:'flex',flexWrap:'wrap' as any,gap:'0.5rem'}}>
+          {targetOptions.map((t: string)=>(
+            <button key={t} onClick={()=>toggleTarget(t)} style={{padding:'0.25rem 0.75rem',borderRadius:20,border:'1px solid',borderColor:targets.includes(t)?'#6366f1':'#374151',background:targets.includes(t)?'#312e81':'transparent',color:targets.includes(t)?'#a5b4fc':'#9ca3af',fontSize:12,cursor:'pointer'}}>{t}</button>
+          ))}
+        </div>
+      </div>
+      <button disabled={loading||!originalContent.trim()||targets.length===0} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/content/repurpose',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({original_content:originalContent,source_format:sourceFormat,targets})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!originalContent.trim()||targets.length===0?0.5:1}}>{loading?'Repurposing...':'Repurpose Content'}</button>
+      {result?.repurposed && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.repurposed}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+function ForgeTab_salesscript104() {
+  const [product, setProduct] = React.useState('');
+  const [targetRole, setTargetRole] = React.useState('');
+  const [callType, setCallType] = React.useState('cold');
+  const [painPoint, setPainPoint] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Sales Script Generator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Word-for-word sales scripts with talk tracks, transitions, objection handling, and closing lines.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="What you're selling (product/service + core value prop)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={targetRole} onChange={(e:any)=>setTargetRole(e.target.value)} placeholder="Target prospect role (e.g. VP of Marketing at Series B SaaS)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={painPoint} onChange={(e:any)=>setPainPoint(e.target.value)} placeholder="Main pain point you solve" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={callType} onChange={(e:any)=>setCallType(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="cold">Cold call (first contact)</option>
+        <option value="discovery">Discovery call (booked meeting)</option>
+        <option value="demo">Demo call (showing product)</option>
+        <option value="followup">Follow-up call (after demo)</option>
+        <option value="closing">Closing call (proposal stage)</option>
+        <option value="voicemail">Voicemail script</option>
+      </select>
+      <button disabled={loading||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/sales/script',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,target_role:targetRole,call_type:callType,pain_point:painPoint})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0ea5e9',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()?0.5:1}}>{loading?'Writing Script...':'Generate Sales Script'}</button>
+      {result?.script && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.script}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_landingcopy104() {
+  const [product, setProduct] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [mainBenefit, setMainBenefit] = React.useState('');
+  const [section, setSection] = React.useState('full');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Landing Page Copywriter</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>High-converting landing page copy — hero, features, social proof, FAQ, and CTA sections.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product / service name + what it does" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={audience} onChange={(e:any)=>setAudience(e.target.value)} placeholder="Target audience (be specific)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={mainBenefit} onChange={(e:any)=>setMainBenefit(e.target.value)} placeholder="Core benefit / transformation (e.g. 10x your outreach reply rate)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={section} onChange={(e:any)=>setSection(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="full">Full landing page</option>
+        <option value="hero">Hero section only</option>
+        <option value="features">Features / Benefits section</option>
+        <option value="faq">FAQ section</option>
+        <option value="cta">CTA section</option>
+        <option value="pricing">Pricing section copy</option>
+      </select>
+      <button disabled={loading||!product.trim()||!audience.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/copy/landing-page',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,audience,main_benefit:mainBenefit,section})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#f59e0b',color:'#000',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()||!audience.trim()?0.5:1}}>{loading?'Writing Copy...':'Generate Landing Page Copy'}</button>
+      {result?.copy && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.copy}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_investorupdate104() {
+  const [companyName, setCompanyName] = React.useState('');
+  const [period, setPeriod] = React.useState('');
+  const [metrics, setMetrics] = React.useState('');
+  const [highlights, setHighlights] = React.useState('');
+  const [asks, setAsks] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Investor Update Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Professional monthly/quarterly investor updates that build trust, tell a story, and get help from your investors.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={companyName} onChange={(e:any)=>setCompanyName(e.target.value)} placeholder="Company name" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={period} onChange={(e:any)=>setPeriod(e.target.value)} placeholder="Period (e.g. June 2026, Q2 2026)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <textarea value={metrics} onChange={(e:any)=>setMetrics(e.target.value)} placeholder="Key metrics this period (MRR, ARR, users, growth %, burn rate, runway, etc.)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <textarea value={highlights} onChange={(e:any)=>setHighlights(e.target.value)} placeholder="Key wins, milestones, challenges this period" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <textarea value={asks} onChange={(e:any)=>setAsks(e.target.value)} placeholder="What you need from investors (intros, advice, hiring help, etc.)" rows={2} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!companyName.trim()||!metrics.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/investor/update',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({company_name:companyName,period,metrics,highlights,asks})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#1d4ed8',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!companyName.trim()||!metrics.trim()?0.5:1}}>{loading?'Writing Update...':'Generate Investor Update'}</button>
+      {result?.update && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.update}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_bugreport104() {
+  const [bugDescription, setBugDescription] = React.useState('');
+  const [steps, setSteps] = React.useState('');
+  const [expected, setExpected] = React.useState('');
+  const [actual, setActual] = React.useState('');
+  const [stack, setStack] = React.useState('');
+  const [platform, setPlatform] = React.useState('web');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Bug Report Generator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Turn rough bug notes into professional, developer-ready bug reports with root cause analysis.</p>
+      <textarea value={bugDescription} onChange={(e:any)=>setBugDescription(e.target.value)} placeholder="Describe the bug in plain language..." rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <textarea value={steps} onChange={(e:any)=>setSteps(e.target.value)} placeholder="Steps to reproduce (optional)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={expected} onChange={(e:any)=>setExpected(e.target.value)} placeholder="Expected behavior" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={actual} onChange={(e:any)=>setActual(e.target.value)} placeholder="Actual behavior" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <textarea value={stack} onChange={(e:any)=>setStack(e.target.value)} placeholder="Error message / stack trace (optional)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:12,fontFamily:'monospace',resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <select value={platform} onChange={(e:any)=>setPlatform(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="web">Web app</option><option value="mobile-ios">iOS</option><option value="mobile-android">Android</option><option value="api">API / Backend</option><option value="desktop">Desktop app</option>
+      </select>
+      <button disabled={loading||!bugDescription.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/dev/bug-report',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({bug_description:bugDescription,steps,expected,actual,stack_trace:stack,platform})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!bugDescription.trim()?0.5:1}}>{loading?'Generating Report...':'Generate Bug Report'}</button>
+      {result?.report && <div style={{marginTop:'1.5rem',background:'#0f172a',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,fontFamily:'monospace',color:'#e2e8f0',maxHeight:600,overflowY:'auto' as any}}>{result.report}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_datastory104() {
+  const [data, setData] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [goal, setGoal] = React.useState('insight');
+  const [context, setContext] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Data Storyteller</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Turn raw numbers and metrics into compelling narratives that drive decisions and inspire action.</p>
+      <textarea value={data} onChange={(e:any)=>setData(e.target.value)} placeholder="Paste your data, metrics, or numbers here (tables, CSV snippets, KPIs, anything)" rows={6} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={audience} onChange={(e:any)=>setAudience(e.target.value)} placeholder="Audience (e.g. board, investors, marketing team)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={context} onChange={(e:any)=>setContext(e.target.value)} placeholder="Business context / what happened" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <select value={goal} onChange={(e:any)=>setGoal(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="insight">Surface key insights</option>
+        <option value="decision">Drive a specific decision</option>
+        <option value="report">Executive report narrative</option>
+        <option value="board">Board presentation</option>
+        <option value="blog">Public blog post / case study</option>
+      </select>
+      <button disabled={loading||!data.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/data/storytell',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({data,audience,goal,context})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!data.trim()?0.5:1}}>{loading?'Crafting Story...':'Tell the Story'}</button>
+      {result?.story && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.story}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+function ForgeTab_persona105() {
+  const [product, setProduct] = React.useState('');
+  const [market, setMarket] = React.useState('');
+  const [data, setData] = React.useState('');
+  const [count, setCount] = React.useState('3');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Customer Persona Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Build research-backed customer personas with demographics, psychographics, pain points, buying triggers, and marketing angles.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product / service (what it does, core value)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={market} onChange={(e:any)=>setMarket(e.target.value)} placeholder="Target market / industry (e.g. B2B SaaS, DTC e-commerce, local services)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={data} onChange={(e:any)=>setData(e.target.value)} placeholder="Any existing customer data, feedback, or observations (optional — helps make personas more accurate)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <select value={count} onChange={(e:any)=>setCount(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="1">1 primary persona</option><option value="2">2 personas</option><option value="3">3 personas</option><option value="4">4 personas</option>
+      </select>
+      <button disabled={loading||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/marketing/personas',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,market,existing_data:data,count:parseInt(count)})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()?0.5:1}}>{loading?'Building Personas...':'Build Personas'}</button>
+      {result?.personas && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.personas}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_sopwriter105() {
+  const [process, setProcess] = React.useState('');
+  const [role, setRole] = React.useState('');
+  const [tools, setTools] = React.useState('');
+  const [format, setFormat] = React.useState('numbered');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>SOP Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Turn tribal knowledge into clear, repeatable Standard Operating Procedures anyone can follow.</p>
+      <textarea value={process} onChange={(e:any)=>setProcess(e.target.value)} placeholder="Describe the process you want to document (as detailed or rough as you have)..." rows={5} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={role} onChange={(e:any)=>setRole(e.target.value)} placeholder="Who performs this? (role/title)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={tools} onChange={(e:any)=>setTools(e.target.value)} placeholder="Tools / systems used (e.g. Salesforce, Slack)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <select value={format} onChange={(e:any)=>setFormat(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="numbered">Numbered steps</option><option value="checklist">Checklist</option><option value="flowchart">Decision flowchart (text)</option><option value="swimlane">Swimlane (multi-role)</option><option value="wiki">Wiki-style doc</option>
+      </select>
+      <button disabled={loading||!process.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/ops/sop',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({process,role,tools,format})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0369a1',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!process.trim()?0.5:1}}>{loading?'Writing SOP...':'Generate SOP'}</button>
+      {result?.sop && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.sop}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_okrgen105() {
+  const [company, setCompany] = React.useState('');
+  const [mission, setMission] = React.useState('');
+  const [quarter, setQuarter] = React.useState('Q3 2026');
+  const [focus, setFocus] = React.useState('');
+  const [level, setLevel] = React.useState('company');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>OKR Generator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate ambitious, measurable OKRs with scoring guides and alignment checks.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={company} onChange={(e:any)=>setCompany(e.target.value)} placeholder="Company / team name" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={quarter} onChange={(e:any)=>setQuarter(e.target.value)} placeholder="Quarter (e.g. Q3 2026)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <input value={mission} onChange={(e:any)=>setMission(e.target.value)} placeholder="Company mission or annual goal" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={focus} onChange={(e:any)=>setFocus(e.target.value)} placeholder="This quarter's strategic focus (e.g. grow revenue, reduce churn, launch new product)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={level} onChange={(e:any)=>setLevel(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="company">Company-level</option><option value="product">Product team</option><option value="engineering">Engineering team</option><option value="marketing">Marketing team</option><option value="sales">Sales team</option><option value="individual">Individual contributor</option>
+      </select>
+      <button disabled={loading||!focus.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/ops/okrs',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({company,mission,quarter,focus,level})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!focus.trim()?0.5:1}}>{loading?'Generating OKRs...':'Generate OKRs'}</button>
+      {result?.okrs && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.okrs}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_retro105() {
+  const [sprintGoal, setSprintGoal] = React.useState('');
+  const [teamSize, setTeamSize] = React.useState('5');
+  const [wentWell, setWentWell] = React.useState('');
+  const [issues, setIssues] = React.useState('');
+  const [format, setFormat] = React.useState('4ls');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Retro Facilitator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Facilitate sprint retrospectives — generate agenda, discussion prompts, action items, and team health assessment.</p>
+      <input value={sprintGoal} onChange={(e:any)=>setSprintGoal(e.target.value)} placeholder="Sprint goal / what was this sprint about?" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={wentWell} onChange={(e:any)=>setWentWell(e.target.value)} placeholder="What went well? (paste notes or describe)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <textarea value={issues} onChange={(e:any)=>setIssues(e.target.value)} placeholder="Issues / blockers / what could improve?" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={format} onChange={(e:any)=>setFormat(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="4ls">4Ls (Liked/Learned/Lacked/Longed For)</option>
+          <option value="start-stop-continue">Start / Stop / Continue</option>
+          <option value="mad-sad-glad">Mad / Sad / Glad</option>
+          <option value="sailboat">Sailboat (anchors vs wind)</option>
+          <option value="5whys">5 Whys root cause</option>
+        </select>
+        <input value={teamSize} onChange={(e:any)=>setTeamSize(e.target.value)} placeholder="Team size" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <button disabled={loading||!sprintGoal.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/ops/retro',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({sprint_goal:sprintGoal,team_size:teamSize,went_well:wentWell,issues,format})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0891b2',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!sprintGoal.trim()?0.5:1}}>{loading?'Facilitating...':'Run Retrospective'}</button>
+      {result?.retro && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.retro}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_emailseq105() {
+  const [product, setProduct] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [seqType, setSeqType] = React.useState('onboarding');
+  const [emailCount, setEmailCount] = React.useState('5');
+  const [goal, setGoal] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Email Sequence Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Complete email sequences with subject lines, body copy, timing, and CTAs — for onboarding, sales, and nurture.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product / service + core value prop" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={audience} onChange={(e:any)=>setAudience(e.target.value)} placeholder="Target audience (who receives this)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={goal} onChange={(e:any)=>setGoal(e.target.value)} placeholder="Conversion goal (e.g. upgrade to paid, book a call, make first purchase)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={seqType} onChange={(e:any)=>setSeqType(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="onboarding">Onboarding (new users)</option>
+          <option value="nurture">Lead nurture</option>
+          <option value="sales">Sales outreach</option>
+          <option value="reengagement">Re-engagement / win-back</option>
+          <option value="trial">Trial-to-paid conversion</option>
+          <option value="launch">Product launch</option>
+          <option value="abandoned">Abandoned cart / checkout</option>
+        </select>
+        <select value={emailCount} onChange={(e:any)=>setEmailCount(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="3">3 emails</option><option value="5">5 emails</option><option value="7">7 emails</option><option value="10">10 emails</option>
+        </select>
+      </div>
+      <button disabled={loading||!product.trim()||!audience.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/email/sequence',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,audience,seq_type:seqType,email_count:parseInt(emailCount),goal})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#16a34a',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()||!audience.trim()?0.5:1}}>{loading?'Building Sequence...':'Build Email Sequence'}</button>
+      {result?.sequence && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.sequence}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+function ForgeTab_churnpredict106() {
+  const [signals, setSignals] = React.useState('');
+  const [product, setProduct] = React.useState('');
+  const [segment, setSegment] = React.useState('all');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Churn Predictor & Retention Playbook</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Analyze churn signals and get a prioritized retention playbook to save at-risk customers.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product type (e.g. B2B SaaS, subscription box, mobile app)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={segment} onChange={(e:any)=>setSegment(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="all">All customers</option><option value="new">New users (0-30 days)</option><option value="mid">Mid-lifecycle (30-180 days)</option><option value="long">Long-term (180+ days)</option><option value="enterprise">Enterprise accounts</option><option value="freemium">Freemium users</option>
+      </select>
+      <textarea value={signals} onChange={(e:any)=>setSignals(e.target.value)} placeholder="Describe churn signals you're seeing (e.g. login frequency dropped, support tickets up, NPS declined, feature usage falling, payment failures, complaints about pricing...)" rows={6} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!signals.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/retention/churn-analysis',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({signals,product,segment})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!signals.trim()?0.5:1}}>{loading?'Analyzing...':'Analyze & Build Retention Plan'}</button>
+      {result?.analysis && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.analysis}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_phlaunch106() {
+  const [product, setProduct] = React.useState('');
+  const [tagline, setTagline] = React.useState('');
+  const [targetHunters, setTargetHunters] = React.useState('');
+  const [launchDate, setLaunchDate] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Product Hunt Launch Kit</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Complete Product Hunt launch package — taglines, description, gallery copy, maker comment, and 30-day pre-launch plan.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product name + what it does" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={tagline} onChange={(e:any)=>setTagline(e.target.value)} placeholder="Current tagline idea (or leave blank to generate)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={targetHunters} onChange={(e:any)=>setTargetHunters(e.target.value)} placeholder="Target hunters / communities (e.g. indie hackers, no-code, AI tools)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={launchDate} onChange={(e:any)=>setLaunchDate(e.target.value)} placeholder="Planned launch date (e.g. July 15, 2026)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem',boxSizing:'border-box' as any}} />
+      <button disabled={loading||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/marketing/ph-launch',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,tagline,target_hunters:targetHunters,launch_date:launchDate})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#da552f',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()?0.5:1}}>{loading?'Building Kit...':'Build Launch Kit'}</button>
+      {result?.kit && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.kit}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_affiliateprog106() {
+  const [product, setProduct] = React.useState('');
+  const [price, setPrice] = React.useState('');
+  const [margin, setMargin] = React.useState('');
+  const [targetAffiliates, setTargetAffiliates] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Affiliate Program Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Design a profitable affiliate program — commission structure, tiers, recruitment pitch, legal terms, and launch plan.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product / service description" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={price} onChange={(e:any)=>setPrice(e.target.value)} placeholder="Product price (e.g. $99/mo, $499 one-time)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={margin} onChange={(e:any)=>setMargin(e.target.value)} placeholder="Gross margin % (e.g. 70%)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <input value={targetAffiliates} onChange={(e:any)=>setTargetAffiliates(e.target.value)} placeholder="Ideal affiliates (e.g. YouTubers, bloggers, agencies, influencers in X niche)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem',boxSizing:'border-box' as any}} />
+      <button disabled={loading||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/growth/affiliate-program',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,price,margin,target_affiliates:targetAffiliates})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#059669',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()?0.5:1}}>{loading?'Building Program...':'Design Affiliate Program'}</button>
+      {result?.program && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.program}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_referralprog106() {
+  const [product, setProduct] = React.useState('');
+  const [ltv, setLtv] = React.useState('');
+  const [rewardType, setRewardType] = React.useState('two-sided');
+  const [mechanic, setMechanic] = React.useState('discount');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Referral Program Designer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Design a viral referral loop — reward structure, messaging, invite flows, and anti-fraud guardrails.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product + who your users are" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={ltv} onChange={(e:any)=>setLtv(e.target.value)} placeholder="Customer LTV (e.g. $500/year, $200 one-time)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={rewardType} onChange={(e:any)=>setRewardType(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="two-sided">Two-sided (both get reward)</option><option value="referrer-only">Referrer only</option><option value="referee-only">New user only</option><option value="milestone">Milestone-based</option>
+        </select>
+        <select value={mechanic} onChange={(e:any)=>setMechanic(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="discount">Discount / credit</option><option value="cash">Cash reward</option><option value="free-month">Free month</option><option value="feature-unlock">Feature unlock</option><option value="swag">Swag / gift</option>
+        </select>
+      </div>
+      <button disabled={loading||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/growth/referral-program',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,ltv,reward_type:rewardType,mechanic})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()?0.5:1}}>{loading?'Designing...':'Design Referral Program'}</button>
+      {result?.program && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.program}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_partnershipitch106() {
+  const [yourCompany, setYourCompany] = React.useState('');
+  const [partnerCompany, setPartnerCompany] = React.useState('');
+  const [partnerType, setPartnerType] = React.useState('integration');
+  const [value, setValue] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Partnership Pitch</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Craft a compelling partnership proposal that leads with their benefit and closes with a clear ask.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={yourCompany} onChange={(e:any)=>setYourCompany(e.target.value)} placeholder="Your company + what you do" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={partnerCompany} onChange={(e:any)=>setPartnerCompany(e.target.value)} placeholder="Target partner + what they do" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <select value={partnerType} onChange={(e:any)=>setPartnerType(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="integration">Technical integration</option><option value="reseller">Reseller / channel</option><option value="co-marketing">Co-marketing / co-sell</option><option value="distribution">Distribution deal</option><option value="white-label">White label</option><option value="strategic">Strategic alliance</option>
+      </select>
+      <textarea value={value} onChange={(e:any)=>setValue(e.target.value)} placeholder="What value does this create for THEM (their customers, revenue, product)?" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!yourCompany.trim()||!partnerCompany.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/business/partnership-pitch',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({your_company:yourCompany,partner_company:partnerCompany,partner_type:partnerType,value_for_them:value})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#1e40af',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!yourCompany.trim()||!partnerCompany.trim()?0.5:1}}>{loading?'Writing Pitch...':'Generate Partnership Pitch'}</button>
+      {result?.pitch && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.pitch}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+function ForgeTab_grantwriter107() {
+  const [org, setOrg] = React.useState('');
+  const [grantType, setGrantType] = React.useState('government');
+  const [amount, setAmount] = React.useState('');
+  const [mission, setMission] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Grant Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate compelling grant proposals with executive summary, needs statement, project narrative, budget justification, and evaluation plan.</p>
+      <input value={org} onChange={(e:any)=>setOrg(e.target.value)} placeholder="Organization name + description" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <select value={grantType} onChange={(e:any)=>setGrantType(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="government">Government / Federal</option><option value="foundation">Foundation grant</option><option value="corporate">Corporate CSR</option><option value="research">Research / SBIR</option><option value="arts">Arts / culture</option><option value="education">Education</option>
+        </select>
+        <input value={amount} onChange={(e:any)=>setAmount(e.target.value)} placeholder="Grant amount requested (e.g. $50,000)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <textarea value={mission} onChange={(e:any)=>setMission(e.target.value)} placeholder="Project description: what you'll do, who it serves, the problem it solves, measurable outcomes you expect..." rows={6} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!org.trim()||!mission.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/writing/grant',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({org,grant_type:grantType,amount,mission})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#15803d',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!org.trim()||!mission.trim()?0.5:1}}>{loading?'Writing Grant...':'Generate Grant Proposal'}</button>
+      {result?.proposal && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.proposal}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_boarddeck107() {
+  const [company, setCompany] = React.useState('');
+  const [period, setPeriod] = React.useState('');
+  const [metrics, setMetrics] = React.useState('');
+  const [deckType, setDeckType] = React.useState('quarterly');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Board Deck Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate a complete board presentation — slide-by-slide structure, narrative, talking points, and appendix.</p>
+      <input value={company} onChange={(e:any)=>setCompany(e.target.value)} placeholder="Company name + stage (e.g. Series A SaaS, 3 years old)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <select value={deckType} onChange={(e:any)=>setDeckType(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="quarterly">Quarterly board update</option><option value="annual">Annual strategic review</option><option value="fundraise">Fundraise / approval</option><option value="crisis">Crisis / pivot discussion</option><option value="annual-plan">Annual plan presentation</option>
+        </select>
+        <input value={period} onChange={(e:any)=>setPeriod(e.target.value)} placeholder="Period (e.g. Q2 2026, FY2025)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <textarea value={metrics} onChange={(e:any)=>setMetrics(e.target.value)} placeholder="Key metrics and highlights to include (ARR, growth rate, burn, headcount, product wins, risks, asks...)" rows={6} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!company.trim()||!metrics.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/exec/board-deck',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({company,period,metrics,deck_type:deckType})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#1e3a8a',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!company.trim()||!metrics.trim()?0.5:1}}>{loading?'Building Deck...':'Build Board Deck'}</button>
+      {result?.deck && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.deck}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_hiringfunnel107() {
+  const [role, setRole] = React.useState('');
+  const [stage, setStage] = React.useState('');
+  const [painPoints, setPainPoints] = React.useState('');
+  const [volume, setVolume] = React.useState('high');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Hiring Funnel Optimizer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Diagnose your recruiting funnel and get a prioritized fix plan to reduce time-to-hire and improve offer acceptance rates.</p>
+      <input value={role} onChange={(e:any)=>setRole(e.target.value)} placeholder="Role(s) you're hiring for (e.g. Senior SWE, Account Executive, Data Scientist)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={stage} onChange={(e:any)=>setStage(e.target.value)} placeholder="Company stage + size (e.g. Series A, 30 employees)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={volume} onChange={(e:any)=>setVolume(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="low">Low volume ({"<"}5 hires/quarter)</option><option value="medium">Medium volume (5-20 hires/quarter)</option><option value="high">High volume (20+ hires/quarter)</option>
+      </select>
+      <textarea value={painPoints} onChange={(e:any)=>setPainPoints(e.target.value)} placeholder="Describe your hiring pain points (e.g. too few qualified applicants, candidates dropping off after technical screen, slow response times, low offer acceptance, poor sourcing...)" rows={5} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!role.trim()||!painPoints.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/hr/hiring-funnel',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({role,stage,volume,pain_points:painPoints})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!role.trim()||!painPoints.trim()?0.5:1}}>{loading?'Analyzing...':'Optimize Hiring Funnel'}</button>
+      {result?.analysis && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.analysis}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_gtmplanner107() {
+  const [product, setProduct] = React.useState('');
+  const [icp, setIcp] = React.useState('');
+  const [stage, setStage] = React.useState('pre-launch');
+  const [budget, setBudget] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Go-to-Market Planner</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Build a complete GTM strategy — channels, positioning, sales motion, 90-day launch plan, and success metrics.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product + key differentiator" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={icp} onChange={(e:any)=>setIcp(e.target.value)} placeholder="Ideal Customer Profile (job title, company type, pain, budget)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={stage} onChange={(e:any)=>setStage(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="pre-launch">Pre-launch</option><option value="early-traction">Early traction (1-50 customers)</option><option value="growth">Growth (scaling)</option><option value="new-market">Entering new market</option><option value="new-segment">Expanding to new segment</option>
+        </select>
+        <input value={budget} onChange={(e:any)=>setBudget(e.target.value)} placeholder="GTM budget (e.g. $50k/month, $500k/year)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <button disabled={loading||!product.trim()||!icp.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/strategy/gtm-plan',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,icp,stage,budget})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0891b2',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()||!icp.trim()?0.5:1}}>{loading?'Planning GTM...':'Build GTM Plan'}</button>
+      {result?.plan && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.plan}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_moatanalyzer107() {
+  const [company, setCompany] = React.useState('');
+  const [competitors, setCompetitors] = React.useState('');
+  const [strengths, setStrengths] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Competitive Moat Analyzer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Identify, score, and strengthen your competitive moat across switching costs, network effects, data, brand, and scale advantages.</p>
+      <input value={company} onChange={(e:any)=>setCompany(e.target.value)} placeholder="Your company + product description" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={competitors} onChange={(e:any)=>setCompetitors(e.target.value)} placeholder="Main competitors (e.g. Salesforce, HubSpot, Pipedrive)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={strengths} onChange={(e:any)=>setStrengths(e.target.value)} placeholder="Describe what you believe your current advantages are (technology, data, integrations, customers, team, IP, partnerships, distribution...)" rows={5} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!company.trim()||!competitors.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/strategy/moat-analysis',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({company,competitors,strengths})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#92400e',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!company.trim()||!competitors.trim()?0.5:1}}>{loading?'Analyzing Moat...':'Analyze Competitive Moat'}</button>
+      {result?.analysis && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.analysis}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+function ForgeTab_pitchscorer108() {
+  const [pitch, setPitch] = React.useState('');
+  const [stage, setStage] = React.useState('seed');
+  const [investorType, setInvestorType] = React.useState('vc');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Pitch Deck Scorer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Get VC-level feedback on your pitch — scored slide-by-slide with specific rewrites and a fundability verdict.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <select value={stage} onChange={(e:any)=>setStage(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="pre-seed">Pre-seed</option><option value="seed">Seed</option><option value="series-a">Series A</option><option value="series-b">Series B+</option><option value="growth">Growth</option>
+        </select>
+        <select value={investorType} onChange={(e:any)=>setInvestorType(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="vc">VC fund</option><option value="angel">Angel investor</option><option value="corporate">Corporate VC</option><option value="accelerator">Accelerator (YC/a16z)</option><option value="pe">Private equity</option>
+        </select>
+      </div>
+      <textarea value={pitch} onChange={(e:any)=>setPitch(e.target.value)} placeholder="Paste your pitch deck content — slide by slide (Problem, Solution, Market, Product, Traction, Team, Business Model, Competition, Ask...)" rows={10} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!pitch.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/investor/score-pitch',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({pitch,stage,investor_type:investorType})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!pitch.trim()?0.5:1}}>{loading?'Scoring Pitch...':'Score My Pitch Deck'}</button>
+      {result?.feedback && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.feedback}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_revenuemodel108() {
+  const [product, setProduct] = React.useState('');
+  const [modelType, setModelType] = React.useState('saas');
+  const [inputs, setInputs] = React.useState('');
+  const [horizon, setHorizon] = React.useState('3year');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Revenue Model Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Build a structured revenue model with assumptions, projections, unit economics, and scenario analysis.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product / service description" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <select value={modelType} onChange={(e:any)=>setModelType(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="saas">SaaS / Subscription</option><option value="marketplace">Marketplace</option><option value="transactional">Transactional / usage</option><option value="freemium">Freemium</option><option value="services">Professional services</option><option value="ecommerce">E-commerce</option><option value="hybrid">Hybrid model</option>
+        </select>
+        <select value={horizon} onChange={(e:any)=>setHorizon(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="1year">1-year model</option><option value="3year">3-year model</option><option value="5year">5-year model</option>
+        </select>
+      </div>
+      <textarea value={inputs} onChange={(e:any)=>setInputs(e.target.value)} placeholder="Key inputs / assumptions (e.g. current MRR $10k, growth rate 15%/mo, ACV $5k, churn 3%/mo, CAC $800, sales cycle 30 days, team of 5...)" rows={5} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/finance/revenue-model',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,model_type:modelType,inputs,horizon})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#059669',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()?0.5:1}}>{loading?'Building Model...':'Build Revenue Model'}</button>
+      {result?.model && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.model}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_journeymapper108() {
+  const [product, setProduct] = React.useState('');
+  const [persona, setPersona] = React.useState('');
+  const [stage, setStage] = React.useState('full');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Customer Journey Mapper</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Map the complete customer journey — touchpoints, emotions, pain points, and improvement opportunities at each stage.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product / service description" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={persona} onChange={(e:any)=>setPersona(e.target.value)} placeholder="Customer persona (e.g. VP of Sales at a 50-person SaaS company)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={stage} onChange={(e:any)=>setStage(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="full">Full lifecycle (Awareness → Advocacy)</option><option value="acquisition">Acquisition only</option><option value="onboarding">Onboarding / activation</option><option value="retention">Retention / expansion</option><option value="churned">Post-churn win-back</option>
+      </select>
+      <button disabled={loading||!product.trim()||!persona.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/cx/journey-map',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,persona,stage})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0891b2',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()||!persona.trim()?0.5:1}}>{loading?'Mapping Journey...':'Map Customer Journey'}</button>
+      {result?.map && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.map}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_crisiscomms108() {
+  const [company, setCompany] = React.useState('');
+  const [crisis, setCrisis] = React.useState('');
+  const [crisisType, setCrisisType] = React.useState('product');
+  const [audiences, setAudiences] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Crisis Comms Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Write crisis communications for every audience — customers, press, employees, investors — with holding statements, FAQs, and a response timeline.</p>
+      <input value={company} onChange={(e:any)=>setCompany(e.target.value)} placeholder="Company name + brief description" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={crisisType} onChange={(e:any)=>setCrisisType(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="product">Product outage / bug</option><option value="data">Data breach / security incident</option><option value="pr">PR / reputational crisis</option><option value="financial">Financial difficulty</option><option value="personnel">Executive departure / misconduct</option><option value="legal">Legal / regulatory action</option><option value="layoff">Layoffs / restructuring</option>
+      </select>
+      <textarea value={crisis} onChange={(e:any)=>setCrisis(e.target.value)} placeholder="Describe the crisis — what happened, when, scope of impact, what you know vs. don't know yet, actions already taken..." rows={5} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={audiences} onChange={(e:any)=>setAudiences(e.target.value)} placeholder="Key audiences (leave blank for all: customers, press, employees, investors, social)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem',boxSizing:'border-box' as any}} />
+      <button disabled={loading||!company.trim()||!crisis.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/comms/crisis',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({company,crisis,crisis_type:crisisType,audiences})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!company.trim()||!crisis.trim()?0.5:1}}>{loading?'Writing Comms...':'Generate Crisis Comms'}</button>
+      {result?.comms && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.comms}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_duediligence108() {
+  const [dealType, setDealType] = React.useState('startup-investment');
+  const [company, setCompany] = React.useState('');
+  const [context, setContext] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Due Diligence Checklist</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate a comprehensive due diligence checklist with red flags, document requests, and key questions for any deal type.</p>
+      <select value={dealType} onChange={(e:any)=>setDealType(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="startup-investment">Startup investment (VC / angel)</option><option value="acquisition">Company acquisition (M&A)</option><option value="partnership">Strategic partnership</option><option value="vendor">Vendor / supplier evaluation</option><option value="hiring">Executive hire</option><option value="real-estate">Real estate / commercial property</option>
+      </select>
+      <input value={company} onChange={(e:any)=>setCompany(e.target.value)} placeholder="Company / deal name + brief description" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={context} onChange={(e:any)=>setContext(e.target.value)} placeholder="Deal context — size, stage, sector, known concerns, timeline, your role (investor, acquirer, partner...)..." rows={4} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!company.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/finance/due-diligence',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({deal_type:dealType,company,context})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#1e40af',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!company.trim()?0.5:1}}>{loading?'Building Checklist...':'Generate DD Checklist'}</button>
+      {result?.checklist && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.checklist}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+function ForgeTab_contractgen109() {
+  const [contractType, setContractType] = React.useState('nda');
+  const [party1, setParty1] = React.useState('');
+  const [party2, setParty2] = React.useState('');
+  const [terms, setTerms] = React.useState('');
+  const [jurisdiction, setJurisdiction] = React.useState('US-Delaware');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Legal Contract Generator</h2>
+      <p style={{color:'#888',marginBottom:'0.5rem'}}>Generate professional legal contract templates. <strong style={{color:'#fbbf24'}}>⚠️ Always have a licensed attorney review before signing.</strong></p>
+      <select value={contractType} onChange={(e:any)=>setContractType(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="nda">NDA (Non-Disclosure Agreement)</option>
+        <option value="consulting">Consulting / Freelance Agreement</option>
+        <option value="saas">SaaS Subscription Agreement</option>
+        <option value="employment">Employment Offer Letter</option>
+        <option value="advisor">Advisor Agreement</option>
+        <option value="partnership">Partnership Agreement</option>
+        <option value="tos">Terms of Service</option>
+        <option value="privacy">Privacy Policy</option>
+        <option value="vendor">Vendor / Supplier Agreement</option>
+      </select>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={party1} onChange={(e:any)=>setParty1(e.target.value)} placeholder="Party 1 (e.g. Acme Corp, a Delaware corporation)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={party2} onChange={(e:any)=>setParty2(e.target.value)} placeholder="Party 2 (e.g. John Smith, an individual)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <select value={jurisdiction} onChange={(e:any)=>setJurisdiction(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="US-Delaware">US — Delaware</option><option value="US-California">US — California</option><option value="US-New-York">US — New York</option><option value="UK">United Kingdom</option><option value="EU">European Union</option><option value="Canada">Canada</option>
+      </select>
+      <textarea value={terms} onChange={(e:any)=>setTerms(e.target.value)} placeholder="Key terms to include (e.g. for NDA: 2-year term, mutual, excluding publicly known info; for consulting: $150/hr, net-30 payment, IP assignment...)" rows={4} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!party1.trim()||!party2.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/legal/contract',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({contract_type:contractType,party1,party2,terms,jurisdiction})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#374151',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!party1.trim()||!party2.trim()?0.5:1}}>{loading?'Generating...':'Generate Contract Template'}</button>
+      {result?.contract && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:12,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any,fontFamily:'monospace'}}>{result.contract}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_captable109() {
+  const [founders, setFounders] = React.useState('');
+  const [round, setRound] = React.useState('seed');
+  const [preMoneyVal, setPreMoneyVal] = React.useState('');
+  const [raiseAmount, setRaiseAmount] = React.useState('');
+  const [optionPool, setOptionPool] = React.useState('10');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Cap Table Modeler</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Model your cap table through a funding round — ownership percentages, dilution, and post-money structure.</p>
+      <textarea value={founders} onChange={(e:any)=>setFounders(e.target.value)} placeholder="Current shareholders (one per line): Name, Shares/%, Role&#10;e.g.&#10;Alice Chen, 60%, CEO&#10;Bob Kim, 40%, CTO&#10;ESOP Pool, 10% of post-round" rows={5} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <select value={round} onChange={(e:any)=>setRound(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="pre-seed">Pre-seed</option><option value="seed">Seed</option><option value="series-a">Series A</option><option value="series-b">Series B</option>
+        </select>
+        <input value={optionPool} onChange={(e:any)=>setOptionPool(e.target.value)} placeholder="Option pool % of post-money (e.g. 10)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <input value={preMoneyVal} onChange={(e:any)=>setPreMoneyVal(e.target.value)} placeholder="Pre-money valuation (e.g. $5M)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={raiseAmount} onChange={(e:any)=>setRaiseAmount(e.target.value)} placeholder="Amount raising (e.g. $1M)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <button disabled={loading||!founders.trim()||!preMoneyVal.trim()||!raiseAmount.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/finance/cap-table',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({founders,round,pre_money:preMoneyVal,raise_amount:raiseAmount,option_pool:optionPool})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#059669',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!founders.trim()||!preMoneyVal.trim()||!raiseAmount.trim()?0.5:1}}>{loading?'Modeling...':'Model Cap Table'}</button>
+      {result?.model && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any,fontFamily:'monospace'}}>{result.model}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_investorupdate109() {
+  const [company, setCompany] = React.useState('');
+  const [period, setPeriod] = React.useState('');
+  const [highlights, setHighlights] = React.useState('');
+  const [format, setFormat] = React.useState('monthly');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Investor Update Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Write a compelling investor update that keeps your investors engaged, informed, and motivated to help.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={company} onChange={(e:any)=>setCompany(e.target.value)} placeholder="Company name" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={period} onChange={(e:any)=>setPeriod(e.target.value)} placeholder="Period (e.g. June 2026, Q2 2026)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <select value={format} onChange={(e:any)=>setFormat(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="monthly">Monthly update</option><option value="quarterly">Quarterly update</option><option value="annual">Annual letter</option><option value="milestone">Milestone / fundraise update</option><option value="bad-news">Difficult news update</option>
+      </select>
+      <textarea value={highlights} onChange={(e:any)=>setHighlights(e.target.value)} placeholder="Key metrics and highlights (ARR, MRR, growth %, customers won/lost, product shipped, team changes, burn, runway, challenges, asks...)" rows={7} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!company.trim()||!highlights.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/investor/update',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({company,period,highlights,format})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#1e40af',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!company.trim()||!highlights.trim()?0.5:1}}>{loading?'Writing Update...':'Write Investor Update'}</button>
+      {result?.update && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.update}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_coldemail109() {
+  const [product, setProduct] = React.useState('');
+  const [prospect, setProspect] = React.useState('');
+  const [goal, setGoal] = React.useState('book-call');
+  const [seqLength, setSeqLength] = React.useState('5');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Cold Email Sequence Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Build a multi-touch cold email sequence with personalization hooks, follow-up cadence, and A/B subject line variants.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Your product + unique value prop" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={prospect} onChange={(e:any)=>setProspect(e.target.value)} placeholder="Prospect profile (e.g. VP of Sales at 50-200 person B2B SaaS, pain: long sales cycles)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={goal} onChange={(e:any)=>setGoal(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="book-call">Book a discovery call</option><option value="demo">Get a demo</option><option value="trial">Start a free trial</option><option value="referral">Get a referral</option><option value="content">Share content / resource</option>
+        </select>
+        <select value={seqLength} onChange={(e:any)=>setSeqLength(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="3">3 emails</option><option value="5">5 emails</option><option value="7">7 emails</option><option value="10">10 emails</option>
+        </select>
+      </div>
+      <button disabled={loading||!product.trim()||!prospect.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/sales/cold-sequence',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,prospect,goal,seq_length:seqLength})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0891b2',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()||!prospect.trim()?0.5:1}}>{loading?'Building Sequence...':'Build Email Sequence'}</button>
+      {result?.sequence && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.sequence}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_podcastscript109() {
+  const [show, setShow] = React.useState('');
+  const [topic, setTopic] = React.useState('');
+  const [format, setFormat] = React.useState('interview');
+  const [duration, setDuration] = React.useState('30');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Podcast Scriptwriter</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Write a complete podcast script — intro hook, segment outline, interview questions, transitions, and outro CTA.</p>
+      <input value={show} onChange={(e:any)=>setShow(e.target.value)} placeholder="Show name + audience (e.g. 'Founders First' — for early-stage startup founders)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={topic} onChange={(e:any)=>setTopic(e.target.value)} placeholder="Episode topic / guest (e.g. How to close your first enterprise deal, with Sarah Chen, VP Sales at Notion)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={format} onChange={(e:any)=>setFormat(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="interview">Guest interview</option><option value="solo">Solo / monologue</option><option value="co-host">Co-host conversation</option><option value="panel">Panel discussion</option><option value="storytelling">Narrative / storytelling</option>
+        </select>
+        <select value={duration} onChange={(e:any)=>setDuration(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="15">15 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option><option value="90">90+ minutes</option>
+        </select>
+      </div>
+      <button disabled={loading||!show.trim()||!topic.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/content/podcast-script',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({show,topic,format,duration})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#9333ea',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!show.trim()||!topic.trim()?0.5:1}}>{loading?'Writing Script...':'Write Podcast Script'}</button>
+      {result?.script && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.script}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+function ForgeTab_newsletter110() {
+  const [brand, setBrand] = React.useState('');
+  const [topic, setTopic] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [format, setFormat] = React.useState('educational');
+  const [length, setLength] = React.useState('medium');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Newsletter Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Write a complete newsletter issue — subject lines, hook, body, CTA, and social teasers.</p>
+      <input value={brand} onChange={(e:any)=>setBrand(e.target.value)} placeholder="Newsletter name + brand (e.g. 'The Bootstrapper' — weekly tips for indie founders)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={audience} onChange={(e:any)=>setAudience(e.target.value)} placeholder="Audience description (e.g. SaaS founders, 5k subscribers, mostly in growth stage)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={topic} onChange={(e:any)=>setTopic(e.target.value)} placeholder="This issue's topic / main idea / angle (e.g. Why your pricing page is killing conversions — 3 fixes that work)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={format} onChange={(e:any)=>setFormat(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="educational">Educational / how-to</option><option value="curated">Curated links + commentary</option><option value="story">Personal story / narrative</option><option value="opinion">Opinion / hot take</option><option value="listicle">Numbered list / tips</option><option value="interview">Q&A / interview format</option>
+        </select>
+        <select value={length} onChange={(e:any)=>setLength(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="short">Short (300-500 words)</option><option value="medium">Medium (600-900 words)</option><option value="long">Long (1000-1500 words)</option>
+        </select>
+      </div>
+      <button disabled={loading||!brand.trim()||!topic.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/content/newsletter',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({brand,topic,audience,format,length})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#f59e0b',color:'#111',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!brand.trim()||!topic.trim()?0.5:1}}>{loading?'Writing Newsletter...':'Write Newsletter Issue'}</button>
+      {result?.newsletter && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.newsletter}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_adcopy110() {
+  const [product, setProduct] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [platform, setPlatform] = React.useState('meta');
+  const [goal, setGoal] = React.useState('conversion');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Ad Copy Generator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate platform-optimized ad copy variants — headlines, body, CTAs, and hooks for A/B testing.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product + key benefit + price/offer (e.g. Forge AI — 100+ AI tools for founders, $29/mo)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={audience} onChange={(e:any)=>setAudience(e.target.value)} placeholder="Target audience (e.g. startup founders aged 25-45, interested in productivity and SaaS)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={platform} onChange={(e:any)=>setPlatform(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="meta">Meta (Facebook/Instagram)</option><option value="google">Google Search Ads</option><option value="linkedin">LinkedIn Ads</option><option value="twitter">Twitter/X Ads</option><option value="tiktok">TikTok Ads</option><option value="youtube">YouTube Ads</option><option value="reddit">Reddit Ads</option>
+        </select>
+        <select value={goal} onChange={(e:any)=>setGoal(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="conversion">Conversion / purchase</option><option value="lead-gen">Lead generation</option><option value="trial">Free trial signup</option><option value="awareness">Brand awareness</option><option value="retargeting">Retargeting</option><option value="app-install">App install</option>
+        </select>
+      </div>
+      <button disabled={loading||!product.trim()||!audience.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/marketing/ad-copy',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,audience,platform,goal})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#2563eb',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()||!audience.trim()?0.5:1}}>{loading?'Generating Ads...':'Generate Ad Copy'}</button>
+      {result?.copy && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.copy}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_abtest110() {
+  const [currentCopy, setCurrentCopy] = React.useState('');
+  const [product, setProduct] = React.useState('');
+  const [goal, setGoal] = React.useState('signup');
+  const [element, setElement] = React.useState('full');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Landing Page A/B Tester</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate A/B test variants for your landing page — headline, hero copy, CTA, and value props with testing hypotheses.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product + core value proposition" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <select value={goal} onChange={(e:any)=>setGoal(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="signup">Free signup</option><option value="trial">Trial start</option><option value="purchase">Direct purchase</option><option value="demo">Book a demo</option><option value="lead">Lead capture</option>
+        </select>
+        <select value={element} onChange={(e:any)=>setElement(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="full">Full page variants</option><option value="headline">Headlines only</option><option value="hero">Hero section</option><option value="cta">CTA copy & button</option><option value="pricing">Pricing section</option><option value="social-proof">Social proof section</option>
+        </select>
+      </div>
+      <textarea value={currentCopy} onChange={(e:any)=>setCurrentCopy(e.target.value)} placeholder="Paste your current landing page copy (or the section you want to test)..." rows={6} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/marketing/ab-variants',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,current_copy:currentCopy,goal,element})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()?0.5:1}}>{loading?'Creating Variants...':'Generate A/B Variants'}</button>
+      {result?.variants && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.variants}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_webinarscript110() {
+  const [topic, setTopic] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [duration, setDuration] = React.useState('60');
+  const [webinarType, setWebinarType] = React.useState('educational');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Webinar Script</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Write a complete webinar script with slide notes, engagement prompts, Q&A prep, and a closing pitch.</p>
+      <input value={topic} onChange={(e:any)=>setTopic(e.target.value)} placeholder="Webinar title + topic (e.g. '5 Ways AI Will Change Your Sales Process in 2026')" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={audience} onChange={(e:any)=>setAudience(e.target.value)} placeholder="Target audience (e.g. VP Sales and RevOps leaders at 50-500 person companies)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={webinarType} onChange={(e:any)=>setWebinarType(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="educational">Educational / thought leadership</option><option value="product-demo">Product demo</option><option value="sales">Sales / promotional</option><option value="training">Training / onboarding</option><option value="panel">Panel discussion</option>
+        </select>
+        <select value={duration} onChange={(e:any)=>setDuration(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option><option value="90">90 minutes</option>
+        </select>
+      </div>
+      <button disabled={loading||!topic.trim()||!audience.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/content/webinar-script',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({topic,audience,duration,webinar_type:webinarType})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0891b2',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!topic.trim()||!audience.trim()?0.5:1}}>{loading?'Writing Script...':'Write Webinar Script'}</button>
+      {result?.script && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.script}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_casestudy110() {
+  const [customer, setCustomer] = React.useState('');
+  const [product, setProduct] = React.useState('');
+  const [results, setResults] = React.useState('');
+  const [format, setFormat] = React.useState('long');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Case Study Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Write a compelling customer case study — problem, solution, results, and quotes — ready for your website and sales team.</p>
+      <input value={customer} onChange={(e:any)=>setCustomer(e.target.value)} placeholder="Customer name + description (e.g. Acme Corp — 200-person logistics company)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Your product + what they used it for" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={format} onChange={(e:any)=>setFormat(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="long">Long-form (800-1200 words, website/blog)</option><option value="short">Short-form (300 words, one-pager)</option><option value="pdf">PDF-ready (structured sections)</option><option value="slide">Slide deck summary</option><option value="social">Social proof snippets</option>
+      </select>
+      <textarea value={results} onChange={(e:any)=>setResults(e.target.value)} placeholder="The story: what problem they had, what they tried, why they chose you, what they implemented, and the results (numbers, quotes, before/after...)" rows={6} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!customer.trim()||!results.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/marketing/case-study',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({customer,product,results,format})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#059669',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!customer.trim()||!results.trim()?0.5:1}}>{loading?'Writing Case Study...':'Write Case Study'}</button>
+      {result?.case_study && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.case_study}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+function ForgeTab_techdoc111() {
+  const [feature, setFeature] = React.useState('');
+  const [docType, setDocType] = React.useState('api-reference');
+  const [audience, setAudience] = React.useState('developers');
+  const [techStack, setTechStack] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Technical Doc Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate professional technical documentation — API references, READMEs, runbooks, and architecture guides.</p>
+      <textarea value={feature} onChange={(e:any)=>setFeature(e.target.value)} placeholder="Describe what you're documenting (e.g. REST API endpoint for user authentication, or a Node.js SDK for payments, or a deployment runbook for Railway...)" rows={5} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <select value={docType} onChange={(e:any)=>setDocType(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="api-reference">API Reference</option><option value="readme">README</option><option value="runbook">Operational Runbook</option><option value="architecture">Architecture Decision Record</option><option value="quickstart">Quick Start Guide</option><option value="integration">Integration Guide</option><option value="sdk">SDK Documentation</option><option value="troubleshoot">Troubleshooting Guide</option>
+        </select>
+        <select value={audience} onChange={(e:any)=>setAudience(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="developers">Developers (external)</option><option value="internal">Internal engineering team</option><option value="ops">Ops / DevOps / SRE</option><option value="non-technical">Non-technical stakeholders</option><option value="enterprise">Enterprise architects</option>
+        </select>
+      </div>
+      <input value={techStack} onChange={(e:any)=>setTechStack(e.target.value)} placeholder="Tech stack (e.g. Node.js, TypeScript, PostgreSQL, Docker, AWS)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem',boxSizing:'border-box' as any}} />
+      <button disabled={loading||!feature.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/dev/tech-doc',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({feature,doc_type:docType,audience,tech_stack:techStack})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#374151',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!feature.trim()?0.5:1}}>{loading?'Writing Docs...':'Generate Documentation'}</button>
+      {result?.doc && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:12,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any,fontFamily:'monospace'}}>{result.doc}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_changelog111() {
+  const [commits, setCommits] = React.useState('');
+  const [product, setProduct] = React.useState('');
+  const [version, setVersion] = React.useState('');
+  const [audience, setAudience] = React.useState('developers');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>API Changelog Generator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Transform raw git commits or PR notes into a clean, human-readable changelog for developers or end users.</p>
+      <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product / API name (e.g. Forge API v3)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <input value={version} onChange={(e:any)=>setVersion(e.target.value)} placeholder="Version (e.g. v2.5.0)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <select value={audience} onChange={(e:any)=>setAudience(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="developers">Developers / API consumers</option><option value="end-users">End users (non-technical)</option><option value="internal">Internal team</option><option value="investors">Investors / board</option>
+      </select>
+      <textarea value={commits} onChange={(e:any)=>setCommits(e.target.value)} placeholder="Paste your git commits, PR titles, or rough notes about what changed in this release..." rows={8} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!commits.trim()||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/dev/changelog',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({commits,product,version,audience})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#0891b2',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!commits.trim()||!product.trim()?0.5:1}}>{loading?'Generating...':'Generate Changelog'}</button>
+      {result?.changelog && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:500,overflowY:'auto' as any,fontFamily:'monospace'}}>{result.changelog}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_featureflag111() {
+  const [feature, setFeature] = React.useState('');
+  const [rolloutType, setRolloutType] = React.useState('percentage');
+  const [platform, setPlatform] = React.useState('');
+  const [risks, setRisks] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Feature Flag Planner</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Design a safe feature rollout plan with flag configuration, kill switch, monitoring, and rollback criteria.</p>
+      <input value={feature} onChange={(e:any)=>setFeature(e.target.value)} placeholder="Feature being released (e.g. New checkout flow with Stripe, AI-powered search rewrite)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <select value={rolloutType} onChange={(e:any)=>setRolloutType(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="percentage">Percentage rollout</option><option value="cohort">User cohort / segment</option><option value="beta">Beta users only</option><option value="canary">Canary (1% then scale)</option><option value="kill-switch">Kill switch only</option><option value="a/b-test">A/B test</option>
+        </select>
+        <input value={platform} onChange={(e:any)=>setPlatform(e.target.value)} placeholder="Platform (e.g. LaunchDarkly, Unleash, Statsig, custom)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <textarea value={risks} onChange={(e:any)=>setRisks(e.target.value)} placeholder="Known risks or concerns with this feature (e.g. touches payment flow, high DB load, replaces legacy system used by enterprise clients...)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!feature.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/dev/feature-flag',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({feature,rollout_type:rolloutType,platform,risks})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#059669',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!feature.trim()?0.5:1}}>{loading?'Planning Rollout...':'Plan Feature Flag Rollout'}</button>
+      {result?.plan && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.plan}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_loadtest111() {
+  const [system, setSystem] = React.useState('');
+  const [endpoints, setEndpoints] = React.useState('');
+  const [expectedLoad, setExpectedLoad] = React.useState('');
+  const [tool, setTool] = React.useState('k6');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Load Test Designer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Design a comprehensive load testing strategy with test scenarios, scripts, thresholds, and analysis framework.</p>
+      <input value={system} onChange={(e:any)=>setSystem(e.target.value)} placeholder="System / service description (e.g. Node.js REST API on Railway, 2 instances, PostgreSQL, 5k daily users)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={endpoints} onChange={(e:any)=>setEndpoints(e.target.value)} placeholder="Critical endpoints to test (e.g. POST /api/auth/login, GET /api/projects, POST /api/llm/chat)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <input value={expectedLoad} onChange={(e:any)=>setExpectedLoad(e.target.value)} placeholder="Expected peak load (e.g. 500 concurrent users, 10k req/min)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <select value={tool} onChange={(e:any)=>setTool(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="k6">k6</option><option value="locust">Locust (Python)</option><option value="jmeter">JMeter</option><option value="artillery">Artillery</option><option value="gatling">Gatling</option><option value="vegeta">Vegeta</option>
+        </select>
+      </div>
+      <button disabled={loading||!system.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/dev/load-test',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({system,endpoints,expected_load:expectedLoad,tool})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!system.trim()?0.5:1}}>{loading?'Designing Test...':'Design Load Tests'}</button>
+      {result?.plan && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:12,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any,fontFamily:'monospace'}}>{result.plan}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_threatmodel111() {
+  const [system, setSystem] = React.useState('');
+  const [architecture, setArchitecture] = React.useState('');
+  const [dataTypes, setDataTypes] = React.useState('');
+  const [framework, setFramework] = React.useState('STRIDE');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>Security Threat Modeler</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Identify security threats, attack vectors, and prioritized mitigations for your system using STRIDE or PASTA framework.</p>
+      <input value={system} onChange={(e:any)=>setSystem(e.target.value)} placeholder="System name + description (e.g. SaaS web app with user auth, file uploads, and payment processing)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={architecture} onChange={(e:any)=>setArchitecture(e.target.value)} placeholder="Architecture description (e.g. Next.js frontend on Vercel, Node.js API on Railway, SQLite DB, Stripe webhooks, S3 file storage, JWT auth...)" rows={4} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <input value={dataTypes} onChange={(e:any)=>setDataTypes(e.target.value)} placeholder="Sensitive data types (e.g. PII, credit cards, API keys, health data)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <select value={framework} onChange={(e:any)=>setFramework(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="STRIDE">STRIDE</option><option value="PASTA">PASTA</option><option value="LINDDUN">LINDDUN (privacy)</option><option value="DREAD">DREAD scoring</option><option value="OWASP">OWASP Top 10</option>
+        </select>
+      </div>
+      <button disabled={loading||!system.trim()||!architecture.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/dev/threat-model',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({system,architecture,data_types:dataTypes,framework})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!system.trim()||!architecture.trim()?0.5:1}}>{loading?'Modeling Threats...':'Generate Threat Model'}</button>
+      {result?.model && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.model}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+
+// ── WAVE 112 ─────────────────────────────────────────────────────────────────
+
+function ForgeTab_prompteng112() {
+  const [task, setTask] = React.useState('');
+  const [style, setStyle] = React.useState('chain-of-thought');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🧠 Prompt Engineer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate optimized prompts for any LLM task using proven techniques like chain-of-thought, few-shot, and ReAct.</p>
+      <textarea value={task} onChange={(e:any)=>setTask(e.target.value)} placeholder="Describe your task (e.g. Classify customer support tickets by urgency and category)" rows={4} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <select value={style} onChange={(e:any)=>setStyle(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="chain-of-thought">Chain-of-Thought</option>
+        <option value="few-shot">Few-Shot Examples</option>
+        <option value="zero-shot">Zero-Shot Direct</option>
+        <option value="role-based">Role-Based</option>
+        <option value="structured-output">Structured Output (JSON)</option>
+        <option value="react">ReAct (Reasoning + Acting)</option>
+        <option value="tree-of-thought">Tree-of-Thought</option>
+      </select>
+      <button disabled={loading||!task.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/ai/prompt-engineer',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({task,style})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!task.trim()?0.5:1}}>{loading?'Engineering prompt...':'⚡ Generate Prompt'}</button>
+      {result?.prompt && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any,fontFamily:'monospace'}}>{result.prompt}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_modelsel112() {
+  const [useCase, setUseCase] = React.useState('');
+  const [priority, setPriority] = React.useState('balanced');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🤖 AI Model Selector</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Find the best LLM for your use case — comparing cost, speed, context window, and quality across all major providers.</p>
+      <textarea value={useCase} onChange={(e:any)=>setUseCase(e.target.value)} placeholder="Describe your use case (e.g. Process 10,000 customer emails per day, extract key info, route to correct department)" rows={4} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <select value={priority} onChange={(e:any)=>setPriority(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="cheapest">Lowest Cost</option>
+        <option value="balanced">Balanced Cost / Quality</option>
+        <option value="fastest">Fastest Response</option>
+        <option value="highest-quality">Highest Quality</option>
+        <option value="longest-context">Longest Context Window</option>
+        <option value="coding">Best for Coding</option>
+      </select>
+      <button disabled={loading||!useCase.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/ai/model-selector',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({useCase,priority})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#2563eb',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!useCase.trim()?0.5:1}}>{loading?'Comparing models...':'🔍 Find Best Model'}</button>
+      {result?.recommendation && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.recommendation}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_datapipe112() {
+  const [sources, setSources] = React.useState('');
+  const [destination, setDestination] = React.useState('');
+  const [transformations, setTransformations] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🔧 Data Pipeline Designer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Design end-to-end data pipelines with architecture diagrams, tooling recommendations, and code scaffolding.</p>
+      <input value={sources} onChange={(e:any)=>setSources(e.target.value)} placeholder="Data sources (e.g. PostgreSQL, Stripe webhooks, S3 event logs, Google Analytics)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={destination} onChange={(e:any)=>setDestination(e.target.value)} placeholder="Destination (e.g. Snowflake data warehouse, BigQuery, ClickHouse)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={transformations} onChange={(e:any)=>setTransformations(e.target.value)} placeholder="Transformations needed (e.g. Join user events with subscription data, calculate LTV, anonymize PII, aggregate daily)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <button disabled={loading||!sources.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/data/pipeline-designer',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({sources,destination,transformations})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#059669',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!sources.trim()?0.5:1}}>{loading?'Designing pipeline...':'⚙️ Design Pipeline'}</button>
+      {result?.design && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.design}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_mlexp112() {
+  const [hypothesis, setHypothesis] = React.useState('');
+  const [modelType, setModelType] = React.useState('classification');
+  const [dataset, setDataset] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🔬 ML Experiment Tracker</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Plan and document ML experiments with baseline metrics, evaluation frameworks, and tracking code.</p>
+      <textarea value={hypothesis} onChange={(e:any)=>setHypothesis(e.target.value)} placeholder="Hypothesis / Goal (e.g. Adding user behavioral features will improve churn prediction AUC from 0.82 to 0.88)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <select value={modelType} onChange={(e:any)=>setModelType(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="classification">Classification</option>
+          <option value="regression">Regression</option>
+          <option value="clustering">Clustering</option>
+          <option value="nlp">NLP / Text</option>
+          <option value="recommendation">Recommendation</option>
+          <option value="time-series">Time Series</option>
+          <option value="llm-fine-tuning">LLM Fine-Tuning</option>
+          <option value="computer-vision">Computer Vision</option>
+        </select>
+        <input value={dataset} onChange={(e:any)=>setDataset(e.target.value)} placeholder="Dataset info (e.g. 500K users, 15% churn rate)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+      </div>
+      <button disabled={loading||!hypothesis.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/ml/experiment-tracker',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({hypothesis,modelType,dataset})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!hypothesis.trim()?0.5:1}}>{loading?'Planning experiment...':'🧪 Plan Experiment'}</button>
+      {result?.plan && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.plan}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_vectordb112() {
+  const [content, setContent] = React.useState('');
+  const [scale, setScale] = React.useState('startup');
+  const [useCase, setUseCase] = React.useState('rag');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🗂️ Vector DB Designer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Design vector database architecture, embedding model selection, chunking strategy, and retrieval pipeline for RAG systems.</p>
+      <textarea value={content} onChange={(e:any)=>setContent(e.target.value)} placeholder="Content to index (e.g. 50,000 product docs, customer support tickets, internal wiki articles)" rows={4} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={scale} onChange={(e:any)=>setScale(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="startup">Startup (&lt;1M vectors)</option>
+          <option value="growth">Growth (1M–100M vectors)</option>
+          <option value="enterprise">Enterprise (&gt;100M vectors)</option>
+        </select>
+        <select value={useCase} onChange={(e:any)=>setUseCase(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="rag">RAG / Q&A</option>
+          <option value="semantic-search">Semantic Search</option>
+          <option value="recommendation">Recommendation</option>
+          <option value="deduplication">Deduplication</option>
+          <option value="multimodal">Multi-modal</option>
+          <option value="long-term-memory">LLM Long-Term Memory</option>
+        </select>
+      </div>
+      <button disabled={loading||!content.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/ai/vector-db-designer',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({content,scale,useCase})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!content.trim()?0.5:1}}>{loading?'Designing architecture...':'🗂️ Design Vector DB'}</button>
+      {result?.design && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.design}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+// ── WAVE 113 ─────────────────────────────────────────────────────────────────
+
+function ForgeTab_cohortanalyzer113() {
+  const [product, setProduct] = React.useState('');
+  const [cohortType, setCohortType] = React.useState('acquisition');
+  const [metric, setMetric] = React.useState('retention');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>📊 Cohort Analyzer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Design cohort analysis frameworks, SQL queries, and interpretation guides for your product metrics.</p>
+      <textarea value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Describe your product and data (e.g. SaaS app, PostgreSQL DB with users/events tables, ~50K monthly active users)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={cohortType} onChange={(e:any)=>setCohortType(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="acquisition">Acquisition Cohort</option>
+          <option value="behavioral">Behavioral Cohort</option>
+          <option value="revenue">Revenue Cohort</option>
+          <option value="feature-adoption">Feature Adoption</option>
+          <option value="churn">Churn Cohort</option>
+        </select>
+        <select value={metric} onChange={(e:any)=>setMetric(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="retention">Retention Rate</option>
+          <option value="revenue">Revenue / LTV</option>
+          <option value="engagement">Engagement Score</option>
+          <option value="conversion">Conversion Rate</option>
+          <option value="churn">Churn Rate</option>
+        </select>
+      </div>
+      <button disabled={loading||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/analytics/cohort-analyzer',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,cohortType,metric})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#2563eb',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()?0.5:1}}>{loading?'Analyzing...':'📊 Build Cohort Analysis'}</button>
+      {result?.analysis && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.analysis}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_funnelbuilder113() {
+  const [product, setProduct] = React.useState('');
+  const [steps, setSteps] = React.useState('');
+  const [goal, setGoal] = React.useState('increase-conversion');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🔽 Funnel Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Design conversion funnels, identify drop-off points, and get actionable optimization tactics.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product / business (e.g. B2B SaaS with freemium trial)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={steps} onChange={(e:any)=>setSteps(e.target.value)} placeholder="Funnel steps (e.g. Landing page → Sign up → Onboarding → First value moment → Paid conversion)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <select value={goal} onChange={(e:any)=>setGoal(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="increase-conversion">Increase Overall Conversion</option>
+        <option value="reduce-drop-off">Reduce Drop-off</option>
+        <option value="speed-to-value">Speed to First Value</option>
+        <option value="revenue-per-user">Revenue Per User</option>
+        <option value="reduce-cac">Reduce CAC</option>
+      </select>
+      <button disabled={loading||!steps.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/analytics/funnel-builder',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,steps,goal})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!steps.trim()?0.5:1}}>{loading?'Building funnel...':'🔽 Analyze Funnel'}</button>
+      {result?.funnel && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.funnel}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_retentiondash113() {
+  const [product, setProduct] = React.useState('');
+  const [currentRetention, setCurrentRetention] = React.useState('');
+  const [churnReasons, setChurnReasons] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🔄 Retention Dashboard</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Build a retention measurement framework with key metrics, benchmarks, and improvement playbook.</p>
+      <textarea value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product description (e.g. Mobile fitness app, 100K users, subscription $9.99/month)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={currentRetention} onChange={(e:any)=>setCurrentRetention(e.target.value)} placeholder="Current retention metrics if known (e.g. D1: 60%, D7: 35%, D30: 18%)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={churnReasons} onChange={(e:any)=>setChurnReasons(e.target.value)} placeholder="Known churn reasons (e.g. too expensive, not enough content, forgot about app)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem',boxSizing:'border-box' as any}} />
+      <button disabled={loading||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/analytics/retention-dashboard',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,currentRetention,churnReasons})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#059669',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()?0.5:1}}>{loading?'Building dashboard...':'🔄 Build Retention Framework'}</button>
+      {result?.dashboard && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.dashboard}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_abstats113() {
+  const [control, setControl] = React.useState('');
+  const [treatment, setTreatment] = React.useState('');
+  const [metric, setMetric] = React.useState('conversion-rate');
+  const [significance, setSignificance] = React.useState('95');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🧮 A/B Stats Calculator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Calculate statistical significance, sample size, and interpret A/B test results with actionable recommendations.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
+        <div>
+          <label style={{display:'block',color:'#9ca3af',fontSize:12,marginBottom:4}}>Control (A) Results</label>
+          <input value={control} onChange={(e:any)=>setControl(e.target.value)} placeholder="e.g. 1000 visitors, 50 conversions (5%)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',boxSizing:'border-box' as any}} />
+        </div>
+        <div>
+          <label style={{display:'block',color:'#9ca3af',fontSize:12,marginBottom:4}}>Treatment (B) Results</label>
+          <input value={treatment} onChange={(e:any)=>setTreatment(e.target.value)} placeholder="e.g. 1000 visitors, 65 conversions (6.5%)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',boxSizing:'border-box' as any}} />
+        </div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <select value={metric} onChange={(e:any)=>setMetric(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="conversion-rate">Conversion Rate</option>
+          <option value="revenue-per-user">Revenue Per User</option>
+          <option value="click-through-rate">Click-Through Rate</option>
+          <option value="retention">Retention Rate</option>
+          <option value="engagement">Engagement Score</option>
+        </select>
+        <select value={significance} onChange={(e:any)=>setSignificance(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="90">90% Confidence</option>
+          <option value="95">95% Confidence</option>
+          <option value="99">99% Confidence</option>
+        </select>
+      </div>
+      <button disabled={loading||!control.trim()||!treatment.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/analytics/ab-stats',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({control,treatment,metric,significance})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!control.trim()||!treatment.trim()?0.5:1}}>{loading?'Calculating...':'🧮 Calculate Significance'}</button>
+      {result?.analysis && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.analysis}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_ltvpredictor113() {
+  const [business, setBusiness] = React.useState('');
+  const [metrics, setMetrics] = React.useState('');
+  const [model, setModel] = React.useState('subscription');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>💎 LTV Predictor</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Calculate customer lifetime value, predict future LTV, and find levers to maximize it.</p>
+      <textarea value={business} onChange={(e:any)=>setBusiness(e.target.value)} placeholder="Business description (e.g. B2B SaaS, average contract $500/month, 3-year avg customer life)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={metrics} onChange={(e:any)=>setMetrics(e.target.value)} placeholder="Key metrics (e.g. ARPU: $500/mo, churn: 2%/mo, CAC: $2000, gross margin: 75%)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={model} onChange={(e:any)=>setModel(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="subscription">Subscription (SaaS)</option>
+        <option value="ecommerce">E-commerce (repeat purchase)</option>
+        <option value="marketplace">Marketplace</option>
+        <option value="usage-based">Usage-Based</option>
+        <option value="freemium">Freemium</option>
+      </select>
+      <button disabled={loading||!business.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/analytics/ltv-predictor',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({business,metrics,model})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#d97706',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!business.trim()?0.5:1}}>{loading?'Predicting LTV...':'💎 Predict LTV'}</button>
+      {result?.prediction && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.prediction}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+// ── WAVE 114 ─────────────────────────────────────────────────────────────────
+
+function ForgeTab_jtbd114() {
+  const [product, setProduct] = React.useState('');
+  const [customer, setCustomer] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🎯 Jobs-to-be-Done Mapper</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Uncover the real "jobs" customers hire your product to do — and find unmet needs worth building for.</p>
+      <input value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product name & description (e.g. Forge — AI tools platform for entrepreneurs)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={customer} onChange={(e:any)=>setCustomer(e.target.value)} placeholder="Target customer description (e.g. Early-stage founders, solo entrepreneurs, small business owners)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/product/jtbd',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,customer})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()?0.5:1}}>{loading?'Mapping jobs...':'🎯 Map Jobs-to-be-Done'}</button>
+      {result?.map && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.map}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_pricingstrat114() {
+  const [product, setProduct] = React.useState('');
+  const [currentPricing, setCurrentPricing] = React.useState('');
+  const [competitors, setCompetitors] = React.useState('');
+  const [goal, setGoal] = React.useState('maximize-revenue');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>💲 Pricing Strategy Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Design optimal pricing strategy with tiers, psychology, and revenue model analysis.</p>
+      <textarea value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product description, target market, value delivered (e.g. SaaS analytics tool for e-commerce stores)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={currentPricing} onChange={(e:any)=>setCurrentPricing(e.target.value)} placeholder="Current pricing if any (e.g. $49/month flat or free)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={competitors} onChange={(e:any)=>setCompetitors(e.target.value)} placeholder="Main competitors and their pricing (e.g. Shopify Analytics $79/mo, Glew $99/mo)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={goal} onChange={(e:any)=>setGoal(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="maximize-revenue">Maximize Revenue</option>
+        <option value="maximize-growth">Maximize Growth / Market Share</option>
+        <option value="enterprise-upsell">Move Upmarket to Enterprise</option>
+        <option value="reduce-churn">Reduce Price-Related Churn</option>
+        <option value="freemium-conversion">Improve Freemium Conversion</option>
+      </select>
+      <button disabled={loading||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/product/pricing-strategy',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,currentPricing,competitors,goal})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#059669',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()?0.5:1}}>{loading?'Building strategy...':'💲 Build Pricing Strategy'}</button>
+      {result?.strategy && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.strategy}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_northstar114() {
+  const [product, setProduct] = React.useState('');
+  const [currentMetrics, setCurrentMetrics] = React.useState('');
+  const [stage, setStage] = React.useState('growth');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>⭐ North Star Metric Finder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Identify the single metric that best captures your product's value delivery and aligns your team.</p>
+      <textarea value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Describe your product and how it creates value (e.g. Project management tool — teams save 5hrs/week on meetings)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={currentMetrics} onChange={(e:any)=>setCurrentMetrics(e.target.value)} placeholder="Metrics you currently track (e.g. DAU, revenue, tickets closed, projects created)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={stage} onChange={(e:any)=>setStage(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="pre-pmf">Pre-PMF (finding product-market fit)</option>
+        <option value="growth">Growth (scaling what works)</option>
+        <option value="scale">Scale (optimizing efficiency)</option>
+        <option value="mature">Mature (defending market position)</option>
+      </select>
+      <button disabled={loading||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/product/north-star',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,currentMetrics,stage})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#d97706',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()?0.5:1}}>{loading?'Finding north star...':'⭐ Find North Star Metric'}</button>
+      {result?.framework && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.framework}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_okrgen114() {
+  const [company, setCompany] = React.useState('');
+  const [goals, setGoals] = React.useState('');
+  const [quarter, setQuarter] = React.useState('Q3 2026');
+  const [level, setLevel] = React.useState('company');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🏆 OKR Generator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate ambitious, measurable OKRs with proper key results that drive real outcomes.</p>
+      <input value={company} onChange={(e:any)=>setCompany(e.target.value)} placeholder="Company / team description (e.g. B2B SaaS startup, 15 people, $500K ARR)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={goals} onChange={(e:any)=>setGoals(e.target.value)} placeholder="Strategic goals for the quarter (e.g. Grow revenue, improve retention, launch enterprise tier, expand to Europe)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'1rem'}}>
+        <input value={quarter} onChange={(e:any)=>setQuarter(e.target.value)} placeholder="Quarter (e.g. Q3 2026)" style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}} />
+        <select value={level} onChange={(e:any)=>setLevel(e.target.value)} style={{padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff'}}>
+          <option value="company">Company-Level OKRs</option>
+          <option value="product">Product Team OKRs</option>
+          <option value="engineering">Engineering Team OKRs</option>
+          <option value="marketing">Marketing Team OKRs</option>
+          <option value="sales">Sales Team OKRs</option>
+        </select>
+      </div>
+      <button disabled={loading||!goals.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/product/okr-generator',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({company,goals,quarter,level})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#2563eb',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!goals.trim()?0.5:1}}>{loading?'Generating OKRs...':'🏆 Generate OKRs'}</button>
+      {result?.okrs && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.okrs}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_persona114() {
+  const [product, setProduct] = React.useState('');
+  const [research, setResearch] = React.useState('');
+  const [count, setCount] = React.useState('3');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>👤 User Persona Creator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Create rich, research-backed user personas that guide product decisions and marketing copy.</p>
+      <textarea value={product} onChange={(e:any)=>setProduct(e.target.value)} placeholder="Product description and target market (e.g. Project management tool for design agencies)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <textarea value={research} onChange={(e:any)=>setResearch(e.target.value)} placeholder="Any existing research, customer data, or observations (optional — e.g. 60% are designers, 40% are project managers, top complaint is too many tools)" rows={2} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <select value={count} onChange={(e:any)=>setCount(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="2">2 Personas</option>
+        <option value="3">3 Personas</option>
+        <option value="4">4 Personas</option>
+        <option value="5">5 Personas</option>
+      </select>
+      <button disabled={loading||!product.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/product/user-personas',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({product,research,count})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!product.trim()?0.5:1}}>{loading?'Creating personas...':'👤 Create Personas'}</button>
+      {result?.personas && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.personas}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+// ── WAVE 115 ─────────────────────────────────────────────────────────────────
+
+function ForgeTab_seooptimizer115() {
+  const [content, setContent] = React.useState('');
+  const [keyword, setKeyword] = React.useState('');
+  const [contentType, setContentType] = React.useState('blog-post');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🔍 SEO Content Optimizer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Optimize your content for search — get keyword density, structure fixes, and ranking improvements.</p>
+      <input value={keyword} onChange={(e:any)=>setKeyword(e.target.value)} placeholder="Target keyword (e.g. project management software for startups)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={contentType} onChange={(e:any)=>setContentType(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem'}}>
+        <option value="blog-post">Blog Post / Article</option>
+        <option value="landing-page">Landing Page</option>
+        <option value="product-page">Product Page</option>
+        <option value="category-page">Category Page</option>
+        <option value="pillar-page">Pillar / Hub Page</option>
+      </select>
+      <textarea value={content} onChange={(e:any)=>setContent(e.target.value)} placeholder="Paste your content here (title, headings, body text)..." rows={8} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'1rem'}} />
+      <button disabled={loading||!content.trim()||!keyword.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/seo/content-optimizer',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({content,keyword,contentType})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#059669',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!content.trim()||!keyword.trim()?0.5:1}}>{loading?'Optimizing...':'🔍 Optimize for SEO'}</button>
+      {result?.report && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.report}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_headlineanalyzer115() {
+  const [headlines, setHeadlines] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [goal, setGoal] = React.useState('click-through');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>📰 Headline Analyzer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Score headlines for CTR, emotional impact, and SEO — plus generate 10 alternatives.</p>
+      <textarea value={headlines} onChange={(e:any)=>setHeadlines(e.target.value)} placeholder="Enter 1-5 headlines to analyze (one per line)&#10;e.g. How to Double Your SaaS Revenue in 90 Days" rows={5} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={audience} onChange={(e:any)=>setAudience(e.target.value)} placeholder="Target audience (e.g. SaaS founders, B2B marketers)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={goal} onChange={(e:any)=>setGoal(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="click-through">Blog / SEO Click-Through</option>
+        <option value="email-open">Email Open Rate</option>
+        <option value="social-share">Social Media Shares</option>
+        <option value="ad-ctr">Ad CTR</option>
+        <option value="conversion">Landing Page Conversion</option>
+      </select>
+      <button disabled={loading||!headlines.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/content/headline-analyzer',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({headlines,audience,goal})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#2563eb',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!headlines.trim()?0.5:1}}>{loading?'Analyzing...':'📰 Analyze Headlines'}</button>
+      {result?.analysis && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.analysis}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_contentcal115() {
+  const [business, setBusiness] = React.useState('');
+  const [channels, setChannels] = React.useState('');
+  const [frequency, setFrequency] = React.useState('weekly');
+  const [theme, setTheme] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>📅 Content Calendar Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate a 30-day content calendar with topics, formats, and publishing schedule.</p>
+      <textarea value={business} onChange={(e:any)=>setBusiness(e.target.value)} placeholder="Business description and content goals (e.g. B2B SaaS for HR teams, goal: drive demo requests)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={channels} onChange={(e:any)=>setChannels(e.target.value)} placeholder="Publishing channels (e.g. LinkedIn, blog, email newsletter, Twitter)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={theme} onChange={(e:any)=>setTheme(e.target.value)} placeholder="Monthly theme or campaign (optional, e.g. Back-to-school, Q3 growth push)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={frequency} onChange={(e:any)=>setFrequency(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="daily">Daily publishing</option>
+        <option value="3x-week">3x per week</option>
+        <option value="weekly">Weekly</option>
+        <option value="2x-month">2x per month</option>
+      </select>
+      <button disabled={loading||!business.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/content/calendar',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({business,channels,frequency,theme})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!business.trim()?0.5:1}}>{loading?'Building calendar...':'📅 Build Content Calendar'}</button>
+      {result?.calendar && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.calendar}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_backlinkstrat115() {
+  const [website, setWebsite] = React.useState('');
+  const [niche, setNiche] = React.useState('');
+  const [currentDA, setCurrentDA] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🔗 Backlink Strategy Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Get a customized link-building strategy with outreach templates and prospect sources.</p>
+      <input value={website} onChange={(e:any)=>setWebsite(e.target.value)} placeholder="Website URL or description (e.g. forge-platform.com — AI tools for entrepreneurs)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={niche} onChange={(e:any)=>setNiche(e.target.value)} placeholder="Niche / industry (e.g. SaaS, e-commerce, B2B software, health & wellness)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={currentDA} onChange={(e:any)=>setCurrentDA(e.target.value)} placeholder="Current Domain Authority if known (e.g. DA 25, or 'new site')" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem',boxSizing:'border-box' as any}} />
+      <button disabled={loading||!website.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/seo/backlink-strategy',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({website,niche,currentDA})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!website.trim()?0.5:1}}>{loading?'Building strategy...':'🔗 Build Link Strategy'}</button>
+      {result?.strategy && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.strategy}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_metatag115() {
+  const [pageTitle, setPageTitle] = React.useState('');
+  const [pageContent, setPageContent] = React.useState('');
+  const [keyword, setKeyword] = React.useState('');
+  const [pageType, setPageType] = React.useState('website');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🏷️ Meta Tag Generator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate optimized title tags, meta descriptions, and Open Graph tags for any page.</p>
+      <input value={pageTitle} onChange={(e:any)=>setPageTitle(e.target.value)} placeholder="Page title or topic (e.g. Project Management Software for Remote Teams)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={keyword} onChange={(e:any)=>setKeyword(e.target.value)} placeholder="Target keyword (e.g. remote team project management)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={pageContent} onChange={(e:any)=>setPageContent(e.target.value)} placeholder="Brief page description (what is this page about, key benefits, target audience)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <select value={pageType} onChange={(e:any)=>setPageType(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="website">Website / Homepage</option>
+        <option value="article">Blog Article</option>
+        <option value="product">Product Page</option>
+        <option value="service">Service Page</option>
+        <option value="landing-page">Landing Page</option>
+      </select>
+      <button disabled={loading||!pageTitle.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/seo/meta-tags',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({pageTitle,pageContent,keyword,pageType})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#d97706',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!pageTitle.trim()?0.5:1}}>{loading?'Generating tags...':'🏷️ Generate Meta Tags'}</button>
+      {result?.tags && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any,fontFamily:'monospace'}}>{result.tags}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+
+// ── WAVE 116 ─────────────────────────────────────────────────────────────────
+
+function ForgeTab_sopwriter116() {
+  const [process, setProcess] = React.useState('');
+  const [team, setTeam] = React.useState('');
+  const [detail, setDetail] = React.useState('standard');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>📋 SOP Writer</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate professional Standard Operating Procedures with step-by-step instructions, roles, and decision trees.</p>
+      <textarea value={process} onChange={(e:any)=>setProcess(e.target.value)} placeholder="Describe the process to document (e.g. Customer onboarding from contract signed to first success call)" rows={4} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <input value={team} onChange={(e:any)=>setTeam(e.target.value)} placeholder="Team / department (e.g. Customer Success, Sales, Engineering, Finance)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={detail} onChange={(e:any)=>setDetail(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="brief">Brief (high-level steps only)</option>
+        <option value="standard">Standard (steps + details + owner)</option>
+        <option value="detailed">Detailed (steps + substeps + decision tree + RACI)</option>
+      </select>
+      <button disabled={loading||!process.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/ops/sop-writer',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({process,team,detail})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#2563eb',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!process.trim()?0.5:1}}>{loading?'Writing SOP...':'📋 Generate SOP'}</button>
+      {result?.sop && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.sop}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_perfrev116() {
+  const [employee, setEmployee] = React.useState('');
+  const [achievements, setAchievements] = React.useState('');
+  const [improvements, setImprovements] = React.useState('');
+  const [reviewType, setReviewType] = React.useState('annual');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>⭐ Performance Review Generator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Write professional, balanced performance reviews with specific feedback and development goals.</p>
+      <input value={employee} onChange={(e:any)=>setEmployee(e.target.value)} placeholder="Employee role and context (e.g. Senior Software Engineer, 2 years on team, worked on payments feature)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={achievements} onChange={(e:any)=>setAchievements(e.target.value)} placeholder="Key achievements and strengths (e.g. Led payments migration, reduced latency 40%, mentored 2 junior devs, always meets deadlines)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <textarea value={improvements} onChange={(e:any)=>setImprovements(e.target.value)} placeholder="Areas for growth (e.g. Communication in cross-team meetings, documentation habits, proactive escalation)" rows={2} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <select value={reviewType} onChange={(e:any)=>setReviewType(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="annual">Annual Review</option>
+        <option value="mid-year">Mid-Year Check-in</option>
+        <option value="90-day">90-Day Review (new hire)</option>
+        <option value="pip">Performance Improvement Plan</option>
+        <option value="promotion">Promotion Recommendation</option>
+      </select>
+      <button disabled={loading||!employee.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/hr/performance-review',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({employee,achievements,improvements,reviewType})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!employee.trim()?0.5:1}}>{loading?'Writing review...':'⭐ Generate Review'}</button>
+      {result?.review && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.review}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_jobdesc116() {
+  const [role, setRole] = React.useState('');
+  const [company, setCompany] = React.useState('');
+  const [requirements, setRequirements] = React.useState('');
+  const [remote, setRemote] = React.useState('hybrid');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>💼 Job Description Builder</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Create compelling, inclusive job descriptions that attract top candidates and reduce bias.</p>
+      <input value={role} onChange={(e:any)=>setRole(e.target.value)} placeholder="Role title (e.g. Senior Full-Stack Engineer, Head of Growth, Customer Success Manager)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={company} onChange={(e:any)=>setCompany(e.target.value)} placeholder="Company description (e.g. Early-stage B2B SaaS, 25 people, Series A, building AI tools)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={requirements} onChange={(e:any)=>setRequirements(e.target.value)} placeholder="Key requirements and responsibilities (e.g. 5+ years React/Node, own frontend architecture, lead a team of 3, launch new products)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <select value={remote} onChange={(e:any)=>setRemote(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="remote">Fully Remote</option>
+        <option value="hybrid">Hybrid</option>
+        <option value="onsite">On-site</option>
+      </select>
+      <button disabled={loading||!role.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/hr/job-description',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({role,company,requirements,remote})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#059669',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!role.trim()?0.5:1}}>{loading?'Building JD...':'💼 Build Job Description'}</button>
+      {result?.jd && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.jd}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_onboarding116() {
+  const [role, setRole] = React.useState('');
+  const [company, setCompany] = React.useState('');
+  const [tools, setTools] = React.useState('');
+  const [duration, setDuration] = React.useState('30-60-90');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🚀 Onboarding Checklist Generator</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Create comprehensive onboarding plans that get new hires productive fast and feeling welcomed.</p>
+      <input value={role} onChange={(e:any)=>setRole(e.target.value)} placeholder="New hire role (e.g. Senior Backend Engineer, Account Executive, Marketing Manager)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={company} onChange={(e:any)=>setCompany(e.target.value)} placeholder="Company context (e.g. 30-person startup, fully remote, B2B SaaS)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={tools} onChange={(e:any)=>setTools(e.target.value)} placeholder="Tools and systems (e.g. Slack, GitHub, Notion, Salesforce, Linear)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <select value={duration} onChange={(e:any)=>setDuration(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="first-week">First Week Only</option>
+        <option value="30-day">30-Day Plan</option>
+        <option value="30-60-90">30-60-90 Day Plan</option>
+        <option value="6-month">6-Month Plan</option>
+      </select>
+      <button disabled={loading||!role.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/hr/onboarding-checklist',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({role,company,tools,duration})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#dc2626',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!role.trim()?0.5:1}}>{loading?'Building checklist...':'🚀 Generate Onboarding Plan'}</button>
+      {result?.checklist && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.checklist}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
+function ForgeTab_meetingai116() {
+  const [meetingType, setMeetingType] = React.useState('');
+  const [attendees, setAttendees] = React.useState('');
+  const [duration, setDuration] = React.useState('60');
+  const [goals, setGoals] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const API = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') : '';
+  const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  return (
+    <div style={{padding:'1.5rem',maxWidth:800,margin:'0 auto'}}>
+      <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>📝 Meeting Agenda AI</h2>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Create structured meeting agendas with time blocks, pre-reads, and action item templates.</p>
+      <input value={meetingType} onChange={(e:any)=>setMeetingType(e.target.value)} placeholder="Meeting type (e.g. Quarterly business review, Product roadmap planning, 1:1, Investor update)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <input value={attendees} onChange={(e:any)=>setAttendees(e.target.value)} placeholder="Attendees and roles (e.g. CEO, CPO, 3 engineers, 2 investors)" style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'0.75rem',boxSizing:'border-box' as any}} />
+      <textarea value={goals} onChange={(e:any)=>setGoals(e.target.value)} placeholder="Meeting goals and topics to cover (e.g. Review Q2 metrics, decide on Q3 priorities, address investor concerns about burn rate)" rows={3} style={{width:'100%',background:'#1f2937',border:'1px solid #374151',borderRadius:8,color:'#f9fafb',padding:'0.75rem',fontSize:13,resize:'vertical' as any,boxSizing:'border-box' as any,marginBottom:'0.75rem'}} />
+      <select value={duration} onChange={(e:any)=>setDuration(e.target.value)} style={{width:'100%',padding:'0.5rem',background:'#1f2937',border:'1px solid #374151',borderRadius:6,color:'#fff',marginBottom:'1rem'}}>
+        <option value="30">30 minutes</option>
+        <option value="45">45 minutes</option>
+        <option value="60">60 minutes</option>
+        <option value="90">90 minutes</option>
+        <option value="120">2 hours</option>
+        <option value="half-day">Half day (4 hours)</option>
+      </select>
+      <button disabled={loading||!meetingType.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(API+'/api/ops/meeting-agenda',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({meetingType,attendees,duration,goals})});const d=await r.json();setResult(d);}catch(e:any){setResult({error:e.message});}setLoading(false);}} style={{padding:'0.75rem 2rem',background:'#d97706',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',opacity:loading||!meetingType.trim()?0.5:1}}>{loading?'Building agenda...':'📝 Generate Agenda'}</button>
+      {result?.agenda && <div style={{marginTop:'1.5rem',background:'#1f2937',borderRadius:8,padding:'1rem',whiteSpace:'pre-wrap' as any,fontSize:13,color:'#e5e7eb',maxHeight:600,overflowY:'auto' as any}}>{result.agenda}</div>}
+      {result?.error && <div style={{color:'#f87171',marginTop:'1rem'}}>{result.error}</div>}
+    </div>
+  );
+}
+
 export default function ForgeApp() {
   const [user, setUser] = useState<User | null>(null);
 
@@ -26429,6 +29056,96 @@ export default function ForgeApp() {
             { id:'habitstack98', icon:'🔗', label:'Habit Stack Builder' },
             { id:'debateprep98', icon:'⚔️', label:'Debate Prep AI' },
             { id:'brandstory98', icon:'📖', label:'Brand Story Crafter' },
+            { id:'coldemail99', icon:'📧', label:'Cold Email Personalizer' },
+            { id:'seobrief99', icon:'🔍', label:'SEO Content Brief' },
+            { id:'legaldraft99', icon:'⚖️', label:'Legal Doc Drafter' },
+            { id:'meetingactions99', icon:'✅', label:'Meeting Action Extractor' },
+            { id:'prddraft99', icon:'📋', label:'PRD Writer' },
+            { id:'ytscript100', icon:'🎥', label:'YouTube Script Writer' },
+            { id:'appstore100', icon:'📱', label:'App Store Description' },
+            { id:'changelogwriter100', icon:'📝', label:'Changelog Writer' },
+            { id:'linkedinco100', icon:'🏢', label:'LinkedIn Company Page' },
+            { id:'granttool100', icon:'🏆', label:'Grant Proposal Writer' },
+            { id:'threadwriter101', icon:'🧵', label:'Thread Writer' },
+            { id:'uxaudit101', icon:'💡', label:'UX Audit' },
+            { id:'pricingtier101', icon:'💲', label:'Pricing Tier Designer' },
+            { id:'onboardflow101', icon:'🚪', label:'Onboarding Flow Builder' },
+            { id:'pressrelease101', icon:'📰', label:'Press Release Writer' },
+            { id:'apidocs102', icon:'📚', label:'API Doc Generator' },
+            { id:'breakeven102', icon:'📊', label:'Breakeven Calculator' },
+            { id:'jobdesc102', icon:'📋', label:'Job Description Writer' },
+            { id:'feedback102', icon:'💬', label:'Feedback Analyzer' },
+            { id:'competitortear102', icon:'🔭', label:'Competitor Teardown' },
+            { id:'emailsubject103', icon:'📧', label:'Email Subject Tester' },
+            { id:'objectionhandler103', icon:'🛡', label:'Objection Handler' },
+            { id:'pitchfeedback103', icon:'🎤', label:'Pitch Deck Feedback' },
+            { id:'nichefinder103', icon:'🎯', label:'Niche Finder' },
+            { id:'contentrepurpose103', icon:'♻', label:'Content Repurposer' },
+            { id:'salesscript104', icon:'📞', label:'Sales Script Generator' },
+            { id:'landingcopy104', icon:'🚀', label:'Landing Page Copywriter' },
+            { id:'investorupdate104', icon:'📈', label:'Investor Update Writer' },
+            { id:'bugreport104', icon:'🐞', label:'Bug Report Generator' },
+            { id:'datastory104', icon:'📊', label:'Data Storyteller' },
+            { id:'persona105', icon:'🧑', label:'Customer Persona Builder' },
+            { id:'sopwriter105', icon:'📋', label:'SOP Writer' },
+            { id:'okrgen105', icon:'🎯', label:'OKR Generator' },
+            { id:'retro105', icon:'🔄', label:'Retro Facilitator' },
+            { id:'emailseq105', icon:'📨', label:'Email Sequence Builder' },
+            { id:'churnpredict106', icon:'⚠️', label:'Churn Predictor' },
+            { id:'phlaunch106', icon:'🚀', label:'Product Hunt Launch Kit' },
+            { id:'affiliateprog106', icon:'🤝', label:'Affiliate Program Builder' },
+            { id:'referralprog106', icon:'🎁', label:'Referral Program Designer' },
+            { id:'partnershippitch106', icon:'🏢', label:'Partnership Pitch' },
+            { id:'grantwriter107', icon:'📝', label:'Grant Writer' },
+            { id:'boarddeck107', icon:'📊', label:'Board Deck Builder' },
+            { id:'hiringfunnel107', icon:'🧲', label:'Hiring Funnel Optimizer' },
+            { id:'gtmplanner107', icon:'🗺️', label:'Go-to-Market Planner' },
+            { id:'moatanalyzer107', icon:'🏰', label:'Competitive Moat Analyzer' },
+            { id:'pitchscorer108', icon:'🎯', label:'Pitch Deck Scorer' },
+            { id:'revenuemodel108', icon:'💰', label:'Revenue Model Builder' },
+            { id:'journeymapper108', icon:'🗺️', label:'Customer Journey Mapper' },
+            { id:'crisiscomms108', icon:'🚨', label:'Crisis Comms Writer' },
+            { id:'duediligence108', icon:'🔍', label:'Due Diligence Checklist' },
+            { id:'contractgen109', icon:'📜', label:'Contract Generator' },
+            { id:'captable109', icon:'📐', label:'Cap Table Modeler' },
+            { id:'investorupdate109', icon:'📬', label:'Investor Update' },
+            { id:'coldemail109', icon:'📧', label:'Cold Email Sequence' },
+            { id:'podcastscript109', icon:'🎙️', label:'Podcast Scriptwriter' },
+            { id:'newsletter110', icon:'📰', label:'Newsletter Builder' },
+            { id:'adcopy110', icon:'📣', label:'Ad Copy Generator' },
+            { id:'abtest110', icon:'🧪', label:'Landing Page A/B Tester' },
+            { id:'webinarscript110', icon:'🖥️', label:'Webinar Script' },
+            { id:'casestudy110', icon:'📖', label:'Case Study Writer' },
+            { id:'techdoc111', icon:'📘', label:'Technical Doc Writer' },
+            { id:'changelog111', icon:'📋', label:'API Changelog' },
+            { id:'featureflag111', icon:'🚩', label:'Feature Flag Planner' },
+            { id:'loadtest111', icon:'⚡', label:'Load Test Designer' },
+            { id:'threatmodel111', icon:'🛡️', label:'Threat Modeler' },
+        { id:'prompteng112', icon:'🧠', label:'Prompt Engineer' },
+        { id:'modelsel112', icon:'🤖', label:'AI Model Selector' },
+        { id:'datapipe112', icon:'🔧', label:'Data Pipeline Designer' },
+        { id:'mlexp112', icon:'🔬', label:'ML Experiment Tracker' },
+        { id:'vectordb112', icon:'🗂️', label:'Vector DB Designer' },
+        { id:'cohortanalyzer113', icon:'📊', label:'Cohort Analyzer' },
+        { id:'funnelbuilder113', icon:'🔽', label:'Funnel Builder' },
+        { id:'retentiondash113', icon:'🔄', label:'Retention Dashboard' },
+        { id:'abstats113', icon:'🧮', label:'A/B Stats Calculator' },
+        { id:'ltvpredictor113', icon:'💎', label:'LTV Predictor' },
+        { id:'jtbd114', icon:'🎯', label:'Jobs-to-be-Done' },
+        { id:'pricingstrat114', icon:'💲', label:'Pricing Strategy' },
+        { id:'northstar114', icon:'⭐', label:'North Star Metric' },
+        { id:'okrgen114', icon:'🏆', label:'OKR Generator' },
+        { id:'persona114', icon:'👤', label:'User Persona Creator' },
+        { id:'seooptimizer115', icon:'🔍', label:'SEO Content Optimizer' },
+        { id:'headlineanalyzer115', icon:'📰', label:'Headline Analyzer' },
+        { id:'contentcal115', icon:'📅', label:'Content Calendar' },
+        { id:'backlinkstrat115', icon:'🔗', label:'Backlink Strategy' },
+        { id:'metatag115', icon:'🏷️', label:'Meta Tag Generator' },
+        { id:'sopwriter116', icon:'📋', label:'SOP Writer' },
+        { id:'perfrev116', icon:'⭐', label:'Performance Review' },
+        { id:'jobdesc116', icon:'💼', label:'Job Description Builder' },
+        { id:'onboarding116', icon:'🚀', label:'Onboarding Checklist' },
+        { id:'meetingai116', icon:'📝', label:'Meeting Agenda AI' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -31170,6 +33887,153 @@ export default function ForgeApp() {
         {(mainTab as string) === 'legacyletter' && <ForgeTab_legacyletter />}
 
         {(mainTab as string) === 'lovelanguage' && <ForgeTab_lovelanguage />}
+
+        {/* ── WAVE 96 ─────────────────────────────────────────────── */}
+        {(mainTab as string) === 'jobscout96' && <ForgeTab_jobscout96 />}
+        {(mainTab as string) === 'newsletterarch96' && <ForgeTab_newsletterarch96 />}
+        {(mainTab as string) === 'habitdna96' && <ForgeTab_habitdna96 />}
+        {(mainTab as string) === 'salespage96' && <ForgeTab_salespage96 />}
+        {(mainTab as string) === 'teamretro96' && <ForgeTab_teamretro96 />}
+
+        {/* ── WAVE 97 ─────────────────────────────────────────────── */}
+        {(mainTab as string) === 'codetutor97' && <ForgeTab_codetutor97 />}
+        {(mainTab as string) === 'emotionmap97' && <ForgeTab_emotionmap97 />}
+        {(mainTab as string) === 'podcastguest97' && <ForgeTab_podcastguest97 />}
+        {(mainTab as string) === 'mvpscoper97' && <ForgeTab_mvpscoper97 />}
+        {(mainTab as string) === 'reviewrespond97' && <ForgeTab_reviewrespond97 />}
+        {(mainTab as string) === 'contractanalyzer97' && <ForgeTab_contractanalyzer97 />}
+        {(mainTab as string) === 'financeoptimizer97' && <ForgeTab_financeoptimizer97 />}
+        {(mainTab as string) === 'viralformula97' && <ForgeTab_viralformula97 />}
+        {(mainTab as string) === 'decisionmatrix97' && <ForgeTab_decisionmatrix97 />}
+        {(mainTab as string) === 'skillgap97' && <ForgeTab_skillgap97 />}
+
+        {/* ── WAVE 98 ─────────────────────────────────────────────── */}
+        {(mainTab as string) === 'twitterbio98' && <ForgeTab_twitterbio98 />}
+        {(mainTab as string) === 'speakingprep98' && <ForgeTab_speakingprep98 />}
+        {(mainTab as string) === 'debtplan98' && <ForgeTab_debtplan98 />}
+        {(mainTab as string) === 'productupdate98' && <ForgeTab_productupdate98 />}
+        {(mainTab as string) === 'therapyjournal98' && <ForgeTab_therapyjournal98 />}
+        {(mainTab as string) === 'pitchdeckbuilder98' && <ForgeTab_pitchdeckbuilder98 />}
+        {(mainTab as string) === 'mindmapgen98' && <ForgeTab_mindmapgen98 />}
+        {(mainTab as string) === 'habitstack98' && <ForgeTab_habitstack98 />}
+        {(mainTab as string) === 'debateprep98' && <ForgeTab_debateprep98 />}
+        {(mainTab as string) === 'brandstory98' && <ForgeTab_brandstory98 />}
+
+        {/* ── WAVE 99 ─────────────────────────────────────────────── */}
+        {(mainTab as string) === 'coldemail99' && <ForgeTab_coldemail99 />}
+        {(mainTab as string) === 'seobrief99' && <ForgeTab_seobrief99 />}
+        {(mainTab as string) === 'legaldraft99' && <ForgeTab_legaldraft99 />}
+        {(mainTab as string) === 'meetingactions99' && <ForgeTab_meetingactions99 />}
+        {(mainTab as string) === 'prddraft99' && <ForgeTab_prddraft99 />}
+
+        {/* ── WAVE 100 ────────────────────────────────────────────── */}
+        {(mainTab as string) === 'ytscript100' && <ForgeTab_ytscript100 />}
+        {(mainTab as string) === 'appstore100' && <ForgeTab_appstore100 />}
+        {(mainTab as string) === 'changelogwriter100' && <ForgeTab_changelogwriter100 />}
+        {(mainTab as string) === 'linkedinco100' && <ForgeTab_linkedinco100 />}
+        {(mainTab as string) === 'granttool100' && <ForgeTab_granttool100 />}
+
+        {/* ── WAVE 101 ────────────────────────────────────────────── */}
+        {(mainTab as string) === 'threadwriter101' && <ForgeTab_threadwriter101 />}
+        {(mainTab as string) === 'uxaudit101' && <ForgeTab_uxaudit101 />}
+        {(mainTab as string) === 'pricingtier101' && <ForgeTab_pricingtier101 />}
+        {(mainTab as string) === 'onboardflow101' && <ForgeTab_onboardflow101 />}
+        {(mainTab as string) === 'pressrelease101' && <ForgeTab_pressrelease101 />}
+
+        {/* ── WAVE 102 ────────────────────────────────────────────── */}
+        {(mainTab as string) === 'apidocs102' && <ForgeTab_apidocs102 />}
+        {(mainTab as string) === 'breakeven102' && <ForgeTab_breakeven102 />}
+        {(mainTab as string) === 'jobdesc102' && <ForgeTab_jobdesc102 />}
+        {(mainTab as string) === 'feedback102' && <ForgeTab_feedback102 />}
+        {(mainTab as string) === 'competitortear102' && <ForgeTab_competitortear102 />}
+
+        {/* ── WAVE 103 ────────────────────────────────────────────── */}
+        {(mainTab as string) === 'emailsubject103' && <ForgeTab_emailsubject103 />}
+        {(mainTab as string) === 'objectionhandler103' && <ForgeTab_objectionhandler103 />}
+        {(mainTab as string) === 'pitchfeedback103' && <ForgeTab_pitchfeedback103 />}
+        {(mainTab as string) === 'nichefinder103' && <ForgeTab_nichefinder103 />}
+        {(mainTab as string) === 'contentrepurpose103' && <ForgeTab_contentrepurpose103 />}
+
+        {/* ── WAVE 104 ────────────────────────────────────────────── */}
+        {(mainTab as string) === 'salesscript104' && <ForgeTab_salesscript104 />}
+        {(mainTab as string) === 'landingcopy104' && <ForgeTab_landingcopy104 />}
+        {(mainTab as string) === 'investorupdate104' && <ForgeTab_investorupdate104 />}
+        {(mainTab as string) === 'bugreport104' && <ForgeTab_bugreport104 />}
+        {(mainTab as string) === 'datastory104' && <ForgeTab_datastory104 />}
+
+        {/* ── WAVE 105 ────────────────────────────────────────────── */}
+        {(mainTab as string) === 'persona105' && <ForgeTab_persona105 />}
+        {(mainTab as string) === 'sopwriter105' && <ForgeTab_sopwriter105 />}
+        {(mainTab as string) === 'okrgen105' && <ForgeTab_okrgen105 />}
+        {(mainTab as string) === 'retro105' && <ForgeTab_retro105 />}
+        {(mainTab as string) === 'emailseq105' && <ForgeTab_emailseq105 />}
+
+        {/* ── WAVE 106 ────────────────────────────────────────────── */}
+        {(mainTab as string) === 'churnpredict106' && <ForgeTab_churnpredict106 />}
+        {(mainTab as string) === 'phlaunch106' && <ForgeTab_phlaunch106 />}
+        {(mainTab as string) === 'affiliateprog106' && <ForgeTab_affiliateprog106 />}
+        {(mainTab as string) === 'referralprog106' && <ForgeTab_referralprog106 />}
+        {(mainTab as string) === 'partnershipitch106' && <ForgeTab_partnershipitch106 />}
+
+        {/* ── WAVE 107 ────────────────────────────────────────────── */}
+        {(mainTab as string) === 'grantwriter107' && <ForgeTab_grantwriter107 />}
+        {(mainTab as string) === 'boarddeck107' && <ForgeTab_boarddeck107 />}
+        {(mainTab as string) === 'hiringfunnel107' && <ForgeTab_hiringfunnel107 />}
+        {(mainTab as string) === 'gtmplanner107' && <ForgeTab_gtmplanner107 />}
+        {(mainTab as string) === 'moatanalyzer107' && <ForgeTab_moatanalyzer107 />}
+
+        {/* ── WAVE 108 ────────────────────────────────────────────── */}
+        {(mainTab as string) === 'pitchscorer108' && <ForgeTab_pitchscorer108 />}
+        {(mainTab as string) === 'revenuemodel108' && <ForgeTab_revenuemodel108 />}
+        {(mainTab as string) === 'journeymapper108' && <ForgeTab_journeymapper108 />}
+        {(mainTab as string) === 'crisiscomms108' && <ForgeTab_crisiscomms108 />}
+        {(mainTab as string) === 'duediligence108' && <ForgeTab_duediligence108 />}
+
+        {/* ── WAVE 109 ────────────────────────────────────────────── */}
+        {(mainTab as string) === 'contractgen109' && <ForgeTab_contractgen109 />}
+        {(mainTab as string) === 'captable109' && <ForgeTab_captable109 />}
+        {(mainTab as string) === 'investorupdate109' && <ForgeTab_investorupdate109 />}
+        {(mainTab as string) === 'coldemail109' && <ForgeTab_coldemail109 />}
+        {(mainTab as string) === 'podcastscript109' && <ForgeTab_podcastscript109 />}
+
+        {/* ── WAVE 110 ────────────────────────────────────────────── */}
+        {(mainTab as string) === 'newsletter110' && <ForgeTab_newsletter110 />}
+        {(mainTab as string) === 'adcopy110' && <ForgeTab_adcopy110 />}
+        {(mainTab as string) === 'abtest110' && <ForgeTab_abtest110 />}
+        {(mainTab as string) === 'webinarscript110' && <ForgeTab_webinarscript110 />}
+        {(mainTab as string) === 'casestudy110' && <ForgeTab_casestudy110 />}
+
+        {/* ── WAVE 111 ────────────────────────────────────────────── */}
+        {(mainTab as string) === 'techdoc111' && <ForgeTab_techdoc111 />}
+        {(mainTab as string) === 'changelog111' && <ForgeTab_changelog111 />}
+        {(mainTab as string) === 'featureflag111' && <ForgeTab_featureflag111 />}
+        {(mainTab as string) === 'loadtest111' && <ForgeTab_loadtest111 />}
+        {(mainTab as string) === 'threatmodel111' && <ForgeTab_threatmodel111 />}
+        {(mainTab as string) === 'prompteng112' && <ForgeTab_prompteng112 />}
+        {(mainTab as string) === 'modelsel112' && <ForgeTab_modelsel112 />}
+        {(mainTab as string) === 'datapipe112' && <ForgeTab_datapipe112 />}
+        {(mainTab as string) === 'mlexp112' && <ForgeTab_mlexp112 />}
+        {(mainTab as string) === 'vectordb112' && <ForgeTab_vectordb112 />}
+        {(mainTab as string) === 'cohortanalyzer113' && <ForgeTab_cohortanalyzer113 />}
+        {(mainTab as string) === 'funnelbuilder113' && <ForgeTab_funnelbuilder113 />}
+        {(mainTab as string) === 'retentiondash113' && <ForgeTab_retentiondash113 />}
+        {(mainTab as string) === 'abstats113' && <ForgeTab_abstats113 />}
+        {(mainTab as string) === 'ltvpredictor113' && <ForgeTab_ltvpredictor113 />}
+        {(mainTab as string) === 'jtbd114' && <ForgeTab_jtbd114 />}
+        {(mainTab as string) === 'pricingstrat114' && <ForgeTab_pricingstrat114 />}
+        {(mainTab as string) === 'northstar114' && <ForgeTab_northstar114 />}
+        {(mainTab as string) === 'okrgen114' && <ForgeTab_okrgen114 />}
+        {(mainTab as string) === 'persona114' && <ForgeTab_persona114 />}
+        {(mainTab as string) === 'seooptimizer115' && <ForgeTab_seooptimizer115 />}
+        {(mainTab as string) === 'headlineanalyzer115' && <ForgeTab_headlineanalyzer115 />}
+        {(mainTab as string) === 'contentcal115' && <ForgeTab_contentcal115 />}
+        {(mainTab as string) === 'backlinkstrat115' && <ForgeTab_backlinkstrat115 />}
+        {(mainTab as string) === 'metatag115' && <ForgeTab_metatag115 />}
+        {(mainTab as string) === 'sopwriter116' && <ForgeTab_sopwriter116 />}
+        {(mainTab as string) === 'perfrev116' && <ForgeTab_perfrev116 />}
+        {(mainTab as string) === 'jobdesc116' && <ForgeTab_jobdesc116 />}
+        {(mainTab as string) === 'onboarding116' && <ForgeTab_onboarding116 />}
+        {(mainTab as string) === 'meetingai116' && <ForgeTab_meetingai116 />}
 
         {/* ── WAVE 16: Roast My Resume ─────────────────────────────── */}
         {(mainTab as string) === 'resumeroast' && <ForgeTab_iife_resumeroast />}
@@ -47384,637 +50248,4 @@ export default function ForgeApp() {
           </div>
         )}
 
-        {/* Workspace Announcements tab */}
-        {mainTab==='wsannounce' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📢 Announcements</div>
-            <div style={{ display:'flex', gap:8, marginBottom:8, flexWrap:'wrap' }}>
-              <input value={newAnnTitle} onChange={e=>setNewAnnTitle(e.target.value)} placeholder="Announcement title..." style={{ flex:1, minWidth:150, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <select value={newAnnPriority} onChange={e=>setNewAnnPriority(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
-                <option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option>
-              </select>
-            </div>
-            <textarea value={newAnnBody} onChange={e=>setNewAnnBody(e.target.value)} placeholder="Announcement body..." rows={3} style={{ width:'100%', padding:'10px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box', fontFamily:'inherit' }} />
-            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
-              <button onClick={async()=>{ if(!newAnnTitle.trim()||!newAnnBody.trim()) return; await fetch(API+'/workspace-announcements',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('token')},body:JSON.stringify({title:newAnnTitle,body:newAnnBody,priority:newAnnPriority})}); setNewAnnTitle(''); setNewAnnBody(''); const r=await fetch(API+'/workspace-announcements',{headers:{Authorization:'Bearer '+localStorage.getItem('token')}}); setWsAnnouncementsB47(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Post</button>
-              <button onClick={async()=>{ const r=await fetch(API+'/workspace-announcements',{headers:{Authorization:'Bearer '+localStorage.getItem('token')}}); setWsAnnouncementsB47(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
-            </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {wsAnnouncementsB47.map((a:any)=>{
-                const prioColor:any={'low':'#6b7280','normal':'var(--accent)','high':'#f59e0b','urgent':'#ef4444'};
-                return (
-                  <div key={a.id} style={{ background:'var(--bg-card)', border:`2px solid ${prioColor[a.priority]||'var(--border)'}`, borderRadius:10, padding:14 }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
-                      <div>
-                        <span style={{ color:'var(--fg-text)', fontWeight:600 }}>{a.title}</span>
-                        <span style={{ marginLeft:8, padding:'1px 7px', background:prioColor[a.priority]+'33', color:prioColor[a.priority], borderRadius:10, fontSize:10, fontWeight:600 }}>{a.priority.toUpperCase()}</span>
-                      </div>
-                      <div style={{ display:'flex', gap:4 }}>
-                        <button onClick={async()=>{ await fetch(API+'/workspace-announcements/'+a.id+'/dismiss',{method:'PUT',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:5, color:'var(--fg-text)', cursor:'pointer', fontSize:11 }}>Dismiss</button>
-                        <button onClick={async()=>{ await fetch(API+'/workspace-announcements/'+a.id,{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 8px', background:'#7f1d1d', border:'none', borderRadius:5, color:'#fca5a5', cursor:'pointer', fontSize:11 }}>Delete</button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── WAVE 19: Health & Wellness AI ─────────────────────── */}
-        {(mainTab as string) === 'symptomcheck' && <ForgeTab_symptomcheck />}
-
-        {(mainTab as string) === 'sleepopt' && <ForgeTab_sleepopt />}
-
-        {(mainTab as string) === 'stressdecode' && <ForgeTab_stressdecode />}
-
-        {(mainTab as string) === 'workoutgen' && <ForgeTab_workoutgen />}
-
-        {(mainTab as string) === 'nutricoach' && <ForgeTab_nutricoach />}
-
-
-        {/* ── WAVE 20: Legal & Life Admin AI ─────────────────────── */}
-        {(mainTab as string) === 'willgen' && <ForgeTab_willgen />}
-
-        {(mainTab as string) === 'leaseanalyze' && <ForgeTab_leaseanalyze />}
-
-        {(mainTab as string) === 'disputeletter' && <ForgeTab_disputeletter />}
-
-        {(mainTab as string) === 'tosdecode' && <ForgeTab_tosdecode />}
-
-        {(mainTab as string) === 'foiarequest' && <ForgeTab_foiarequest />}
-
-
-        {/* ── WAVE 21: Creative Writing AI ─────────────────────── */}
-        {(mainTab as string) === 'plottwist' && <ForgeTab_plottwist />}
-
-        {(mainTab as string) === 'charcreate' && <ForgeTab_charcreate />}
-
-        {(mainTab as string) === 'worldbuild' && <ForgeTab_worldbuild />}
-
-        {(mainTab as string) === 'dialoguecoach' && <ForgeTab_dialoguecoach />}
-
-        {(mainTab as string) === 'bookblurb' && <ForgeTab_bookblurb />}
-
-
-        {/* ── WAVE 22: Career & Productivity AI ─────────────────── */}
-        {(mainTab as string) === 'perfreview' && <ForgeTab_perfreview />}
-
-        {(mainTab as string) === 'salaryresearch' && <ForgeTab_salaryresearch />}
-
-        {(mainTab as string) === 'offercompare' && <ForgeTab_offercompare />}
-
-        {(mainTab as string) === 'careerpivot' && <ForgeTab_careerpivot />}
-
-        {(mainTab as string) === 'linkedinmsg' && <ForgeTab_linkedinmsg />}
-
-        {(mainTab as string) === 'competitordive' && <ForgeTab_competitordive />}
-        {(mainTab as string) === 'pricingstrat' && <ForgeTab_pricingstrat />}
-        {(mainTab as string) === 'custpersona2' && <ForgeTab_custpersona2 />}
-        {(mainTab as string) === 'gtmplan' && <ForgeTab_gtmplan />}
-        {(mainTab as string) === 'okrbuilder' && <ForgeTab_okrbuilder />}
-        {(mainTab as string) === 'viralthread' && <ForgeTab_viralthread />}
-        {(mainTab as string) === 'captiongen' && <ForgeTab_captiongen />}
-        {(mainTab as string) === 'contentcal24' && <ForgeTab_contentcal24 />}
-        {(mainTab as string) === 'hashtagstrat' && <ForgeTab_hashtagstrat />}
-        {(mainTab as string) === 'biooptimizer' && <ForgeTab_biooptimizer />}
-        {(mainTab as string) === 'emailseqbuilder' && <ForgeTab_emailseqbuilder />}
-        {(mainTab as string) === 'subjectlines' && <ForgeTab_subjectlines />}
-        {(mainTab as string) === 'newsletterdraft' && <ForgeTab_newsletterdraft />}
-        {(mainTab as string) === 'reengage' && <ForgeTab_reengage />}
-        {(mainTab as string) === 'welcomeseq' && <ForgeTab_welcomeseq />}
-        {(mainTab as string) === 'debtpayoff' && <ForgeTab_debtpayoff />}
-        {(mainTab as string) === 'budgetbuilder' && <ForgeTab_budgetbuilder />}
-        {(mainTab as string) === 'investexplain' && <ForgeTab_investexplain />}
-        {(mainTab as string) === 'firecalc' && <ForgeTab_firecalc />}
-        {(mainTab as string) === 'sidehustle' && <ForgeTab_sidehustle />}
-        {(mainTab as string) === 'anxietytoolkit' && <ForgeTab_anxietytoolkit />}
-        {(mainTab as string) === 'cbtexercise' && <ForgeTab_cbtexercise />}
-        {(mainTab as string) === 'selfcareplan' && <ForgeTab_selfcareplan />}
-        {(mainTab as string) === 'boundaryscripts' && <ForgeTab_boundaryscripts />}
-        {(mainTab as string) === 'burnoutcheck' && <ForgeTab_burnoutcheck />}
-        {(mainTab as string) === 'studyplan' && <ForgeTab_studyplan />}
-        {(mainTab as string) === 'conceptmap' && <ForgeTab_conceptmap />}
-        {(mainTab as string) === 'examprep' && <ForgeTab_examprep />}
-        {(mainTab as string) === 'skillroadmap' && <ForgeTab_skillroadmap />}
-        {(mainTab as string) === 'socraticlearn' && <ForgeTab_socraticlearn />}
-        {(mainTab as string) === 'codereviewer' && <ForgeTab_codereviewer />}
-        {(mainTab as string) === 'regexbuilder' && <ForgeTab_regexbuilder />}
-        {(mainTab as string) === 'apidocgen' && <ForgeTab_apidocgen />}
-        {(mainTab as string) === 'sqloptimizer' && <ForgeTab_sqloptimizer />}
-        {(mainTab as string) === 'gitcommitgen' && <ForgeTab_gitcommitgen />}
-        {(mainTab as string) === 'timeauditor' && <ForgeTab_timeauditor />}
-        {(mainTab as string) === 'secondbrainai' && <ForgeTab_secondbrainai />}
-        {(mainTab as string) === 'weeklyplanner' && <ForgeTab_weeklyplanner />}
-        {(mainTab as string) === 'habitdesigner' && <ForgeTab_habitdesigner />}
-        {(mainTab as string) === 'energymapper' && <ForgeTab_energymapper />}
-        {(mainTab as string) === 'shortstoryai' && <ForgeTab_shortstoryai />}
-        {(mainTab as string) === 'poemcrafter' && <ForgeTab_poemcrafter />}
-        {(mainTab as string) === 'screenplayscene' && <ForgeTab_screenplayscene />}
-        {(mainTab as string) === 'memoirdraft' && <ForgeTab_memoirdraft />}
-        {(mainTab as string) === 'satiregen' && <ForgeTab_satiregen />}
-        {(mainTab as string) === 'marketanalyze' && <ForgeTab_marketanalyze />}
-        {(mainTab as string) === 'bizmodelai' && <ForgeTab_bizmodelai />}
-        {(mainTab as string) === 'pricingmodel' && <ForgeTab_pricingmodel />}
-        {(mainTab as string) === 'partnerpropose' && <ForgeTab_partnerpropose />}
-        {(mainTab as string) === 'exitplanner' && <ForgeTab_exitplanner />}
-
-        {(mainTab as string) === 'labinterpreter' && <ForgeTab_labinterpreter />}
-
-        {(mainTab as string) === 'supplementstack' && <ForgeTab_supplementstack />}
-
-        {(mainTab as string) === 'recoveryplan' && <ForgeTab_recoveryplan />}
-
-        {(mainTab as string) === 'longevityprotocol' && <ForgeTab_longevityprotocol />}
-
-        {(mainTab as string) === 'mentalperf' && <ForgeTab_mentalperf />}
-
-        {(mainTab as string) === 'contractanalyze' && <ForgeTab_contractanalyze />}
-
-        {(mainTab as string) === 'taxstrat62' && <ForgeTab_taxstrat62 />}
-
-        {(mainTab as string) === 'estateplan' && <ForgeTab_estateplan />}
-
-        {(mainTab as string) === 'investanalyze' && <ForgeTab_investanalyze />}
-
-        {(mainTab as string) === 'insuranceaudit' && <ForgeTab_insuranceaudit />}
-
-        {(mainTab as string) === 'deepworkplan' && <ForgeTab_deepworkplan />}
-
-        {(mainTab as string) === 'meetingopt' && <ForgeTab_meetingopt />}
-
-        {(mainTab as string) === 'careermap' && <ForgeTab_careermap />}
-
-        {(mainTab as string) === 'promotioncase' && <ForgeTab_promotioncase />}
-
-        {(mainTab as string) === 'linkedinrewrite' && <ForgeTab_linkedinrewrite />}
-        {(mainTab as string) === 'difficultconvo' && <ForgeTab_difficultconvo />}
-        {(mainTab as string) === 'feedbackcraft' && <ForgeTab_feedbackcraft />}
-        {(mainTab as string) === 'persuasionscript' && <ForgeTab_persuasionscript />}
-        {(mainTab as string) === 'relaudit' && <ForgeTab_relaudit />}
-        {(mainTab as string) === 'personalceo' && <ForgeTab_personalceo />}
-        {(mainTab as string) === 'paperdecode' && <ForgeTab_paperdecode />}
-        {(mainTab as string) === 'hypothesisbuild' && <ForgeTab_hypothesisbuild />}
-        {(mainTab as string) === 'experimentdesign' && <ForgeTab_experimentdesign />}
-        {(mainTab as string) === 'litmap' && <ForgeTab_litmap />}
-        {(mainTab as string) === 'grantwrite' && <ForgeTab_grantwrite />}
-        {(mainTab as string) === 'rightsexplain' && <ForgeTab_rightsexplain />}
-        {(mainTab as string) === 'contractdraft' && <ForgeTab_contractdraft />}
-        {(mainTab as string) === 'complaintwrite' && <ForgeTab_complaintwrite />}
-        {(mainTab as string) === 'policydecode' && <ForgeTab_policydecode />}
-        {(mainTab as string) === 'smallclaimscoach' && <ForgeTab_smallclaimscoach />}
-        {(mainTab as string) === 'parentingcoach' && <ForgeTab_parentingcoach />}
-        {(mainTab as string) === 'lessonplan' && <ForgeTab_lessonplan />}
-        {(mainTab as string) === 'collegeadvise' && <ForgeTab_collegeadvise />}
-        {(mainTab as string) === 'behaviordecode' && <ForgeTab_behaviordecode />}
-        {(mainTab as string) === 'learningstyle' && <ForgeTab_learningstyle />}
-        {(mainTab as string) === 'carbonaudit' && <ForgeTab_carbonaudit />}
-        {(mainTab as string) === 'ecohabits' && <ForgeTab_ecohabits />}
-        {(mainTab as string) === 'sustainplan' && <ForgeTab_sustainplan />}
-        {(mainTab as string) === 'climateexplain' && <ForgeTab_climateexplain />}
-        {(mainTab as string) === 'greenhome' && <ForgeTab_greenhome />}
-        {(mainTab as string) === 'flavorprofile' && <ForgeTab_flavorprofile />}
-        {(mainTab as string) === 'mealplanv2' && <ForgeTab_mealplanv2 />}
-        {(mainTab as string) === 'recipeinvent' && <ForgeTab_recipeinvent />}
-        {(mainTab as string) === 'winepair' && <ForgeTab_winepair />}
-        {(mainTab as string) === 'cookingcoach' && <ForgeTab_cookingcoach />}
-        {(mainTab as string) === 'trainingplan' && <ForgeTab_trainingplan />}
-        {(mainTab as string) === 'sportanalyze' && <ForgeTab_sportanalyze />}
-        {(mainTab as string) === 'injuryadv' && <ForgeTab_injuryadv />}
-        {(mainTab as string) === 'mentalgame' && <ForgeTab_mentalgame />}
-        {(mainTab as string) === 'fantasyadv' && <ForgeTab_fantasyadv />}
-        {(mainTab as string) === 'lyricwrite' && <ForgeTab_lyricwrite />}
-        {(mainTab as string) === 'musictheory' && <ForgeTab_musictheory />}
-        {(mainTab as string) === 'playlistcurate' && <ForgeTab_playlistcurate />}
-        {(mainTab as string) === 'practicesched' && <ForgeTab_practicesched />}
-        {(mainTab as string) === 'musicpitch' && <ForgeTab_musicpitch />}
-        {(mainTab as string) === 'homebuy' && <ForgeTab_homebuy />}
-        {(mainTab as string) === 'rentanalyze' && <ForgeTab_rentanalyze />}
-        {(mainTab as string) === 'mortgageexp' && <ForgeTab_mortgageexp />}
-        {(mainTab as string) === 'neighborscout' && <ForgeTab_neighborscout />}
-        {(mainTab as string) === 'homerenovate' && <ForgeTab_homerenovate />}
-        {(mainTab as string) === 'triparchitect' && <ForgeTab_triparchitect />}
-        {(mainTab as string) === 'packingopt' && <ForgeTab_packingopt />}
-        {(mainTab as string) === 'localintel' && <ForgeTab_localintel />}
-        {(mainTab as string) === 'travelbudget' && <ForgeTab_travelbudget />}
-        {(mainTab as string) === 'solotravel' && <ForgeTab_solotravel />}
-        {(mainTab as string) === 'griefcoach' && <ForgeTab_griefcoach />}
-        {(mainTab as string) === 'angermanage' && <ForgeTab_angermanage />}
-        {(mainTab as string) === 'traumaedu' && <ForgeTab_traumaedu />}
-        {(mainTab as string) === 'mindsetcoach' && <ForgeTab_mindsetcoach />}
-        {(mainTab as string) === 'innerchild' && <ForgeTab_innerchild />}
-        {(mainTab as string) === 'startupvalidate' && <ForgeTab_startupvalidate />}
-        {(mainTab as string) === 'pitchdeckbuild' && <ForgeTab_pitchdeckbuild />}
-        {(mainTab as string) === 'investoremail' && <ForgeTab_investoremail />}
-        {(mainTab as string) === 'mvpdesign' && <ForgeTab_mvpdesign />}
-        {(mainTab as string) === 'cofoundermatch' && <ForgeTab_cofoundermatch />}
-        {(mainTab as string) === 'parentadvise' && <ForgeTab_parentadvise />}
-        {(mainTab as string) === 'familymeeting' && <ForgeTab_familymeeting />}
-        {(mainTab as string) === 'chorechart' && <ForgeTab_chorechart />}
-        {(mainTab as string) === 'bedtimestory' && <ForgeTab_bedtimestory />}
-        {(mainTab as string) === 'collegeprep' && <ForgeTab_collegeprep />}
-        {(mainTab as string) === 'debtstrat' && <ForgeTab_debtstrat />}
-        {(mainTab as string) === 'investdecode' && <ForgeTab_investdecode />}
-        {(mainTab as string) === 'creditcoach' && <ForgeTab_creditcoach />}
-        {(mainTab as string) === 'taxoptimize' && <ForgeTab_taxoptimize />}
-        {(mainTab as string) === 'wealthmap' && <ForgeTab_wealthmap />}
-        {(mainTab as string) === 'difficultconv2' && <ForgeTab_difficultconv2 />}
-        {(mainTab as string) === 'apologycraft' && <ForgeTab_apologycraft />}
-        {(mainTab as string) === 'complimenteng' && <ForgeTab_complimenteng />}
-        {(mainTab as string) === 'boundaryset' && <ForgeTab_boundaryset />}
-        {(mainTab as string) === 'lovelang' && <ForgeTab_lovelang />}
-        {(mainTab as string) === 'procbust' && <ForgeTab_procbust />}
-        {(mainTab as string) === 'emailzero' && <ForgeTab_emailzero />}
-        {(mainTab as string) === 'meetingaudit' && <ForgeTab_meetingaudit />}
-        {(mainTab as string) === 'pkmdesign' && <ForgeTab_pkmdesign />}
-        {(mainTab as string) === 'deepworkplan2' && <ForgeTab_deepworkplan2 />}
-        {(mainTab as string) === 'charbuild' && <ForgeTab_charbuild />}
-        {(mainTab as string) === 'plotweave' && <ForgeTab_plotweave />}
-        {(mainTab as string) === 'dialogsharp' && <ForgeTab_dialogsharp />}
-        {(mainTab as string) === 'worldbuild2' && <ForgeTab_worldbuild2 />}
-        {(mainTab as string) === 'scenewrite' && <ForgeTab_scenewrite />}
-        {(mainTab as string) === 'biohackopt' && <ForgeTab_biohackopt />}
-        {(mainTab as string) === 'vo2train' && <ForgeTab_vo2train />}
-        {(mainTab as string) === 'coldtherapy' && <ForgeTab_coldtherapy />}
-        {(mainTab as string) === 'suppstack' && <ForgeTab_suppstack />}
-        {(mainTab as string) === 'sleeparch' && <ForgeTab_sleeparch />}
-        {(mainTab as string) === 'pricingstrategy' && <ForgeTab_pricingstrategy />}
-        {(mainTab as string) === 'churnanalyze' && <ForgeTab_churnanalyze />}
-        {(mainTab as string) === 'growthhack' && <ForgeTab_growthhack />}
-        {(mainTab as string) === 'investpitch' && <ForgeTab_investpitch />}
-        {(mainTab as string) === 'moatbuild' && <ForgeTab_moatbuild />}
-        {(mainTab as string) === 'contractdraft2' && <ForgeTab_contractdraft2 />}
-        {(mainTab as string) === 'ndareview2' && <ForgeTab_ndareview2 />}
-        {(mainTab as string) === 'termsdecode2' && <ForgeTab_termsdecode2 />}
-        {(mainTab as string) === 'compliancecheck2' && <ForgeTab_compliancecheck2 />}
-        {(mainTab as string) === 'disputeletter2' && <ForgeTab_disputeletter2 />}
-        {(mainTab as string) === 'homevaluate' && <ForgeTab_homevaluate />}
-        {(mainTab as string) === 'mortgagecalc' && <ForgeTab_mortgagecalc />}
-        {(mainTab as string) === 'neighborscout2' && <ForgeTab_neighborscout2 />}
-        {(mainTab as string) === 'renovationplan' && <ForgeTab_renovationplan />}
-        {(mainTab as string) === 'landlordadvise' && <ForgeTab_landlordadvise />}
-        {(mainTab as string) === 'emotiondecode' && <ForgeTab_emotiondecode />}
-        {(mainTab as string) === 'copingtoolkit' && <ForgeTab_copingtoolkit />}
-        {(mainTab as string) === 'innercritic' && <ForgeTab_innercritic />}
-        {(mainTab as string) === 'attachcoach' && <ForgeTab_attachcoach />}
-        {(mainTab as string) === 'resiliencebuild' && <ForgeTab_resiliencebuild />}
-        {(mainTab as string) === 'storyworld' && <ForgeTab_storyworld />}
-        {(mainTab as string) === 'lyriccraft' && <ForgeTab_lyriccraft />}
-        {(mainTab as string) === 'charforge' && <ForgeTab_charforge />}
-        {(mainTab as string) === 'plottwistai' && <ForgeTab_plottwistai />}
-        {(mainTab as string) === 'worldbuildai' && <ForgeTab_worldbuildai />}
-        {(mainTab as string) === 'promotionmap' && <ForgeTab_promotionmap />}
-        {(mainTab as string) === 'salarybench' && <ForgeTab_salarybench />}
-        {(mainTab as string) === 'execpresence' && <ForgeTab_execpresence />}
-        {(mainTab as string) === 'offerneg' && <ForgeTab_offerneg />}
-        {(mainTab as string) === 'careerbrand' && <ForgeTab_careerbrand />}
-        {(mainTab as string) === 'conceptdecode' && <ForgeTab_conceptdecode />}
-        {(mainTab as string) === 'researchsynth' && <ForgeTab_researchsynth />}
-        {(mainTab as string) === 'debateprep60' && <ForgeTab_debateprep60 />}
-        {(mainTab as string) === 'criticalthink' && <ForgeTab_criticalthink />}
-        {(mainTab as string) === 'teachassist' && <ForgeTab_teachassist />}
-        {(mainTab as string) === 'convhack' && <ForgeTab_convhack />}
-        {(mainTab as string) === 'charismav2' && <ForgeTab_charismav2 />}
-        {(mainTab as string) === 'netwrkstrat' && <ForgeTab_netwrkstrat />}
-        {(mainTab as string) === 'conflictmed' && <ForgeTab_conflictmed />}
-        {(mainTab as string) === 'influencebuild' && <ForgeTab_influencebuild />}
-        {(mainTab as string) === 'passiveincome' && <ForgeTab_passiveincome />}
-        {(mainTab as string) === 'taxstrategy' && <ForgeTab_taxstrategy />}
-        {(mainTab as string) === 'investthesis' && <ForgeTab_investthesis />}
-        {(mainTab as string) === 'wealthgap' && <ForgeTab_wealthgap />}
-        {(mainTab as string) === 'moneymind' && <ForgeTab_moneymind />}
-        {(mainTab as string) === 'flowoptimize' && <ForgeTab_flowoptimize />}
-        {(mainTab as string) === 'cogenhance' && <ForgeTab_cogenhance />}
-        {(mainTab as string) === 'mentalmodels' && <ForgeTab_mentalmodels />}
-        {(mainTab as string) === 'decisionspeed' && <ForgeTab_decisionspeed />}
-        {(mainTab as string) === 'perfreview63' && <ForgeTab_perfreview63 />}
-        {(mainTab as string) === 'attractbuild' && <ForgeTab_attractbuild />}
-        {(mainTab as string) === 'relaudit64' && <ForgeTab_relaudit64 />}
-        {(mainTab as string) === 'firstdate' && <ForgeTab_firstdate />}
-        {(mainTab as string) === 'textcoach' && <ForgeTab_textcoach />}
-        {(mainTab as string) === 'breakupanalyze' && <ForgeTab_breakupanalyze />}
-{(mainTab as string) === 'prodnamer' && <ForgeTab_prodnamer />}
-{(mainTab as string) === 'brandvoice65' && <ForgeTab_brandvoice65 />}
-{(mainTab as string) === 'launchstrat' && <ForgeTab_launchstrat />}
-{(mainTab as string) === 'custavatr' && <ForgeTab_custavatr />}
-{(mainTab as string) === 'revmodel' && <ForgeTab_revmodel />}
-{(mainTab as string) === 'mealplan' && <ForgeTab_mealplan />}
-{(mainTab as string) === 'workoutdesign' && <ForgeTab_workoutdesign />}
-{(mainTab as string) === 'sleepopt66' && <ForgeTab_sleepopt66 />}
-{(mainTab as string) === 'stressmgr' && <ForgeTab_stressmgr />}
-{(mainTab as string) === 'habitstack' && <ForgeTab_habitstack />}
-{(mainTab as string) === 'parentadvice' && <ForgeTab_parentadvice />}
-{(mainTab as string) === 'bedtimestory67' && <ForgeTab_bedtimestory67 />}
-{(mainTab as string) === 'familymtg' && <ForgeTab_familymtg />}
-{(mainTab as string) === 'chorechart67' && <ForgeTab_chorechart67 />}
-{(mainTab as string) === 'collegeprep67' && <ForgeTab_collegeprep67 />}
-{(mainTab as string) === 'debtstrat68' && <ForgeTab_debtstrat68 />}
-{(mainTab as string) === 'investdecode68' && <ForgeTab_investdecode68 />}
-{(mainTab as string) === 'creditcoach68' && <ForgeTab_creditcoach68 />}
-{(mainTab as string) === 'taxopt68' && <ForgeTab_taxopt68 />}
-{(mainTab as string) === 'wealthmap68' && <ForgeTab_wealthmap68 />}
-{(mainTab as string) === 'smalltalk69' && <ForgeTab_smalltalk69 />}
-{(mainTab as string) === 'pubspeak69' && <ForgeTab_pubspeak69 />}
-{(mainTab as string) === 'activelisten' && <ForgeTab_activelisten />}
-{(mainTab as string) === 'assertive69' && <ForgeTab_assertive69 />}
-{(mainTab as string) === 'netmsg69' && <ForgeTab_netmsg69 />}
-{(mainTab as string) === 'charnames70' && <ForgeTab_charnames70 />}
-{(mainTab as string) === 'writeprompt70' && <ForgeTab_writeprompt70 />}
-{(mainTab as string) === 'plothole70' && <ForgeTab_plothole70 />}
-{(mainTab as string) === 'dialogpol' && <ForgeTab_dialogpol />}
-{(mainTab as string) === 'booktitle70' && <ForgeTab_booktitle70 />}
-
-{(mainTab as string) === 'procbust71' && <ForgeTab_procbust71 />}
-
-{(mainTab as string) === 'timeblock71' && <ForgeTab_timeblock71 />}
-
-{(mainTab as string) === 'meetcost71' && <ForgeTab_meetcost71 />}
-
-{(mainTab as string) === 'inboxzero71' && <ForgeTab_inboxzero71 />}
-
-{(mainTab as string) === 'deepwork71' && <ForgeTab_deepwork71 />}
-
-{(mainTab as string) === 'conflmed72' && <ForgeTab_conflmed72 />}
-
-{(mainTab as string) === 'appreci72' && <ForgeTab_appreci72 />}
-
-{(mainTab as string) === 'socianx72' && <ForgeTab_socianx72 />}
-
-{(mainTab as string) === 'reconnect72' && <ForgeTab_reconnect72 />}
-
-{(mainTab as string) === 'famlegacy72' && <ForgeTab_famlegacy72 />}
-
-{(mainTab as string) === 'analogymkr73' && <ForgeTab_analogymkr73 />}
-
-{(mainTab as string) === 'mentmodel73' && <ForgeTab_mentmodel73 />}
-
-{(mainTab as string) === 'speedread73' && <ForgeTab_speedread73 />}
-
-{(mainTab as string) === 'feynman73' && <ForgeTab_feynman73 />}
-
-{(mainTab as string) === 'knowconn73' && <ForgeTab_knowconn73 />}
-
-{(mainTab as string) === 'pivotadv74' && <ForgeTab_pivotadv74 />}
-
-{(mainTab as string) === 'fundraise74' && <ForgeTab_fundraise74 />}
-
-{(mainTab as string) === 'uniteco74' && <ForgeTab_uniteco74 />}
-
-{(mainTab as string) === 'pmfcheck74' && <ForgeTab_pmfcheck74 />}
-
-{(mainTab as string) === 'startuplegal74' && <ForgeTab_startuplegal74 />}
-
-{(mainTab as string) === 'hormoneopt75' && <ForgeTab_hormoneopt75 />}
-
-{(mainTab as string) === 'guthealth75' && <ForgeTab_guthealth75 />}
-
-{(mainTab as string) === 'inflame75' && <ForgeTab_inflame75 />}
-
-{(mainTab as string) === 'energyopt75' && <ForgeTab_energyopt75 />}
-
-{(mainTab as string) === 'prevhealth75' && <ForgeTab_prevhealth75 />}
-
-{(mainTab as string) === 'ytscript76' && <ForgeTab_ytscript76 />}
-
-{(mainTab as string) === 'tiktokhook76' && <ForgeTab_tiktokhook76 />}
-
-{(mainTab as string) === 'podplan76' && <ForgeTab_podplan76 />}
-
-{(mainTab as string) === 'thumbconcept76' && <ForgeTab_thumbconcept76 />}
-
-{(mainTab as string) === 'repurpose76' && <ForgeTab_repurpose76 />}
-
-{(mainTab as string) === 'perfreview77' && <ForgeTab_perfreview77 />}
-
-{(mainTab as string) === 'linkedincont77' && <ForgeTab_linkedincont77 />}
-
-{(mainTab as string) === 'careergap77' && <ForgeTab_careergap77 />}
-
-{(mainTab as string) === 'execpres77' && <ForgeTab_execpres77 />}
-
-{(mainTab as string) === 'workbound77' && <ForgeTab_workbound77 />}
-
-{(mainTab as string) === 'emergfund78' && <ForgeTab_emergfund78 />}
-
-{(mainTab as string) === 'insaudit78' && <ForgeTab_insaudit78 />}
-
-{(mainTab as string) === 'moneymind78' && <ForgeTab_moneymind78 />}
-
-{(mainTab as string) === 'fireplan78' && <ForgeTab_fireplan78 />}
-
-{(mainTab as string) === 'taxloss78' && <ForgeTab_taxloss78 />}
-
-{(mainTab as string) === 'storyout79' && <ForgeTab_storyout79 />}
-
-{(mainTab as string) === 'charcreate79' && <ForgeTab_charcreate79 />}
-
-{(mainTab as string) === 'dialogue79' && <ForgeTab_dialogue79 />}
-
-{(mainTab as string) === 'plottwist79' && <ForgeTab_plottwist79 />}
-
-{(mainTab as string) === 'worldbuild79' && <ForgeTab_worldbuild79 />}
-
-{(mainTab as string) === 'focuscoach80' && <ForgeTab_focuscoach80 />}
-
-{(mainTab as string) === 'memtrain80' && <ForgeTab_memtrain80 />}
-
-{(mainTab as string) === 'cogbias80' && <ForgeTab_cogbias80 />}
-
-{(mainTab as string) === 'mentalclr80' && <ForgeTab_mentalclr80 />}
-
-{(mainTab as string) === 'peakstate80' && <ForgeTab_peakstate80 />}
-
-{(mainTab as string) === 'empathy81' && <ForgeTab_empathy81 />}
-
-{(mainTab as string) === 'smalltalk81' && <ForgeTab_smalltalk81 />}
-
-{(mainTab as string) === 'lovelang81' && <ForgeTab_lovelang81 />}
-
-{(mainTab as string) === 'relaudit81' && <ForgeTab_relaudit81 />}
-
-{(mainTab as string) === 'diffconv81' && <ForgeTab_diffconv81 />}
-
-{(mainTab as string) === 'sopgen82' && <ForgeTab_sopgen82 />}
-
-{(mainTab as string) === 'kpidesign82' && <ForgeTab_kpidesign82 />}
-
-{(mainTab as string) === 'meetdesign82' && <ForgeTab_meetdesign82 />}
-
-{(mainTab as string) === 'delegcoach82' && <ForgeTab_delegcoach82 />}
-
-{(mainTab as string) === 'wfoptim82' && <ForgeTab_wfoptim82 />}
-
-{(mainTab as string) === 'longev83' && <ForgeTab_longev83 />}
-
-{(mainTab as string) === 'vo2max83' && <ForgeTab_vo2max83 />}
-
-{(mainTab as string) === 'stressdec83' && <ForgeTab_stressdec83 />}
-
-{(mainTab as string) === 'recovopt83' && <ForgeTab_recovopt83 />}
-
-{(mainTab as string) === 'suppstack83' && <ForgeTab_suppstack83 />}
-
-{(mainTab as string) === 'parentcoach84' && <ForgeTab_parentcoach84 />}
-
-{(mainTab as string) === 'fammeet84' && <ForgeTab_fammeet84 />}
-
-{(mainTab as string) === 'teencomm84' && <ForgeTab_teencomm84 />}
-
-{(mainTab as string) === 'screentime84' && <ForgeTab_screentime84 />}
-
-{(mainTab as string) === 'famval84' && <ForgeTab_famval84 />}
-
-{(mainTab as string) === 'rightsexp85' && <ForgeTab_rightsexp85 />}
-
-{(mainTab as string) === 'demandltr85' && <ForgeTab_demandltr85 />}
-
-{(mainTab as string) === 'contrdec85' && <ForgeTab_contrdec85 />}
-
-{(mainTab as string) === 'tenright85' && <ForgeTab_tenright85 />}
-
-{(mainTab as string) === 'smclaim85' && <ForgeTab_smclaim85 />}
-
-{(mainTab as string) === 'carbonfp86' && <ForgeTab_carbonfp86 />}
-
-{(mainTab as string) === 'sustliv86' && <ForgeTab_sustliv86 />}
-
-{(mainTab as string) === 'ecodiet86' && <ForgeTab_ecodiet86 />}
-
-{(mainTab as string) === 'greenhome86' && <ForgeTab_greenhome86 />}
-
-{(mainTab as string) === 'climact86' && <ForgeTab_climact86 />}
-
-{(mainTab as string) === 'pbrand87' && <ForgeTab_pbrand87 />}
-
-{(mainTab as string) === 'contcal87' && <ForgeTab_contcal87 />}
-
-{(mainTab as string) === 'biowrite87' && <ForgeTab_biowrite87 />}
-
-{(mainTab as string) === 'audgrow87' && <ForgeTab_audgrow87 />}
-
-{(mainTab as string) === 'monetize87' && <ForgeTab_monetize87 />}
-
-{(mainTab as string) === 'flowstate88' && <ForgeTab_flowstate88 />}
-
-{(mainTab as string) === 'procbust88' && <ForgeTab_procbust88 />}
-
-{(mainTab as string) === 'decfat88' && <ForgeTab_decfat88 />}
-
-{(mainTab as string) === 'atttrain88' && <ForgeTab_atttrain88 />}
-
-{(mainTab as string) === 'mentenrg88' && <ForgeTab_mentenrg88 />}
-
-{(mainTab as string) === 'socstyle89' && <ForgeTab_socstyle89 />}
-
-{(mainTab as string) === 'netcoach89' && <ForgeTab_netcoach89 />}
-
-{(mainTab as string) === 'conflmed89' && <ForgeTab_conflmed89 />}
-
-{(mainTab as string) === 'trustbld89' && <ForgeTab_trustbld89 />}
-
-{(mainTab as string) === 'socianx89' && <ForgeTab_socianx89 />}
-
-{(mainTab as string) === 'firecalc90' && <ForgeTab_firecalc90 />}
-
-{(mainTab as string) === 'debtdest90' && <ForgeTab_debtdest90 />}
-
-{(mainTab as string) === 'investedu90' && <ForgeTab_investedu90 />}
-
-{(mainTab as string) === 'sidehust90' && <ForgeTab_sidehust90 />}
-
-{(mainTab as string) === 'netwrth90' && <ForgeTab_netwrth90 />}
-
-{(mainTab as string) === 'paperdec91' && <ForgeTab_paperdec91 />}
-
-{(mainTab as string) === 'hypogen91' && <ForgeTab_hypogen91 />}
-
-{(mainTab as string) === 'expdes91' && <ForgeTab_expdes91 />}
-
-{(mainTab as string) === 'sciexp91' && <ForgeTab_sciexp91 />}
-
-{(mainTab as string) === 'litrev91' && <ForgeTab_litrev91 />}
-
-{(mainTab as string) === 'leadcoach92' && <ForgeTab_leadcoach92 />}
-
-{(mainTab as string) === 'execpres92' && <ForgeTab_execpres92 />}
-
-{(mainTab as string) === 'teammot92' && <ForgeTab_teammot92 />}
-
-{(mainTab as string) === 'stratthk92' && <ForgeTab_stratthk92 />}
-
-{(mainTab as string) === 'fbkcultr92' && <ForgeTab_fbkcultr92 />}
-
-{(mainTab as string) === 'pitchcoach93' && <ForgeTab_pitchcoach93 />}
-
-{(mainTab as string) === 'viralideagen93' && <ForgeTab_viralideagen93 />}
-
-{(mainTab as string) === 'meetkill93' && <ForgeTab_meetkill93 />}
-
-{(mainTab as string) === 'procautopsy93' && <ForgeTab_procautopsy93 />}
-
-{(mainTab as string) === 'secondbrain93' && <ForgeTab_secondbrain93 />}
-
-{(mainTab as string) === 'scriptwriter94' && <ForgeTab_scriptwriter94 />}
-
-{(mainTab as string) === 'threadgen94' && <ForgeTab_threadgen94 />}
-
-{(mainTab as string) === 'coldloom94' && <ForgeTab_coldloom94 />}
-
-{(mainTab as string) === 'seowriter94' && <ForgeTab_seowriter94 />}
-
-{(mainTab as string) === 'adcopy94' && <ForgeTab_adcopy94 />}
-
-{(mainTab as string) === 'pricingpage95' && <ForgeTab_pricingpage95 />}
-
-{(mainTab as string) === 'legalease95' && <ForgeTab_legalease95 />}
-
-{(mainTab as string) === 'productlaunch95' && <ForgeTab_productlaunch95 />}
-
-{(mainTab as string) === 'energyaudit95' && <ForgeTab_energyaudit95 />}
-
-{(mainTab as string) === 'storyteller95' && <ForgeTab_storyteller95 />}
-
-{(mainTab as string) === 'jobscout96' && <ForgeTab_jobscout96 />}
-
-{(mainTab as string) === 'newsletterarch96' && <ForgeTab_newsletterarch96 />}
-
-{(mainTab as string) === 'habitdna96' && <ForgeTab_habitdna96 />}
-
-{(mainTab as string) === 'salespage96' && <ForgeTab_salespage96 />}
-
-{(mainTab as string) === 'teamretro96' && <ForgeTab_teamretro96 />}
-
-{(mainTab as string) === 'codetutor97' && <ForgeTab_codetutor97 />}
-
-{(mainTab as string) === 'emotionmap97' && <ForgeTab_emotionmap97 />}
-
-{(mainTab as string) === 'podcastguest97' && <ForgeTab_podcastguest97 />}
-
-{(mainTab as string) === 'mvpscoper97' && <ForgeTab_mvpscoper97 />}
-
-{(mainTab as string) === 'reviewrespond97' && <ForgeTab_reviewrespond97 />}
-        {(mainTab as string) === 'contractanalyzer97' && <ForgeTab_contractanalyzer97 />}
-        {(mainTab as string) === 'financeoptimizer97' && <ForgeTab_financeoptimizer97 />}
-        {(mainTab as string) === 'viralformula97' && <ForgeTab_viralformula97 />}
-        {(mainTab as string) === 'decisionmatrix97' && <ForgeTab_decisionmatrix97 />}
-        {(mainTab as string) === 'skillgap97' && <ForgeTab_skillgap97 />}
-        {(mainTab as string) === 'pitchdeckbuilder98' && <ForgeTab_pitchdeckbuilder98 />}
-        {(mainTab as string) === 'mindmapgen98' && <ForgeTab_mindmapgen98 />}
-        {(mainTab as string) === 'habitstack98' && <ForgeTab_habitstack98 />}
-        {(mainTab as string) === 'debateprep98' && <ForgeTab_debateprep98 />}
-        {(mainTab as string) === 'brandstory98' && <ForgeTab_brandstory98 />}
-
-{(mainTab as string) === 'twitterbio98' && <ForgeTab_twitterbio98 />}
-
-{(mainTab as string) === 'speakingprep98' && <ForgeTab_speakingprep98 />}
-
-{(mainTab as string) === 'debtplan98' && <ForgeTab_debtplan98 />}
-
-{(mainTab as string) === 'productupdate98' && <ForgeTab_productupdate98 />}
-
-{(mainTab as string) === 'therapyjournal98' && <ForgeTab_therapyjournal98 />}
-
-      </div>
-    </div>
-  );
-}
+        {/* Workspace Ann
