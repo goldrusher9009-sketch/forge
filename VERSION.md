@@ -1,3 +1,7 @@
+## v340.00 — Wave 134: Press Kit Generator, Value Proposition Builder, API Spec Writer, Exit Strategy Planner, Thread Hook Generator (2026-07-02)
+- 5 new tools for PR, marketing, dev, strategy, and social
+- Backend routes: /api/pr/press-kit, /api/marketing/value-proposition, /api/dev/api-spec, /api/strategy/exit-plan, /api/social/thread-hook
+
 ## v339.00 — Wave 133: Project Scope Document, Social Media Bio Generator, Discount & Promo Copy, Meeting Report Generator, Growth Hack Ideator (2026-07-02)
 - 5 new tools for project management, personal branding, marketing, productivity, and growth
 - Backend routes: /api/product/scope-document, /api/social/bio-generator, /api/marketing/discount-copy, /api/productivity/meeting-report, /api/growth/hack-ideas
