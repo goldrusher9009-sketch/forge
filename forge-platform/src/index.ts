@@ -173,7 +173,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v329.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v344.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -184037,4 +184037,220 @@ app.post('/api/writing/executive-summary', requireAuth, async (req: AuthRequest,
   const { document_content, audience } = req.body;
   const prompt = `Write an executive summary of the following for ${audience || 'senior leadership'}:\n\n${document_content}\n\nExecutive summary structure: Opening statement (1 sentence — the single most important thing to know), Situation / Background (2-3 sentences — why this matters now), Key findings or recommendations (3-5 bullet points — specific, not vague), Financial/impact implications (the numbers that matter), Risk or concern to flag (1-2 sentences), Recommended action (what you want the reader to do after reading this, with timeline). Rules: Under 400 words total. No jargon that isn't defined. Every claim backed by a specific fact from the document. Written for someone who has 90 seconds and needs to make a decision. No preamble like "This document covers..." — start with the most important information immediately. Include a version of the same summary in a 3-bullet "TL;DR" format for Slack/email.`;
   try { const result = await callUserLLM(req, prompt); res.json({ summary: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Wave 131: Job Description, Product Review, A/B Copy, Customer Journey, Re-engage ──
+app.post('/api/hr/job-description', requireAuth, async (req: AuthRequest, res) => {
+  const { role_title, company, requirements, culture } = req.body;
+  const prompt = `Write a compelling job description for a ${role_title} at ${company}. Requirements: ${requirements}. Culture: ${culture || 'not specified'}. Include: role overview, key responsibilities (6-8 bullets), required qualifications, nice-to-haves, what we offer. Tone: engaging, clear, bias-free.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ description: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/content/product-review', requireAuth, async (req: AuthRequest, res) => {
+  const { product_name, features, audience, tone } = req.body;
+  const prompt = `Write a detailed, honest product review for ${product_name}. Features to cover: ${features}. Target audience: ${audience || 'general consumers'}. Tone: ${tone || 'balanced'}. Include: intro, pros, cons, standout features, who it's best for, verdict with rating rationale. Min 400 words.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ review: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/ab-test-copy', requireAuth, async (req: AuthRequest, res) => {
+  const { element, context, goal } = req.body;
+  const prompt = `Generate 3 A/B test variations for: "${element}". Context: ${context}. Goal: ${goal || 'maximize conversions'}. For each variation provide: the copy, the psychological principle it uses (scarcity, social proof, clarity, etc.), why it might outperform the others, and a hypothesis statement. Format clearly as Variant A, B, C.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ variants: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/customer-journey', requireAuth, async (req: AuthRequest, res) => {
+  const { product, persona, goal } = req.body;
+  const prompt = `Map the complete customer journey for ${persona || 'a typical user'} using ${product} to achieve: ${goal}. Cover all stages: Awareness, Consideration, Decision, Onboarding, Usage, Retention/Advocacy. For each stage: touchpoints, user thoughts/feelings, pain points, opportunities to improve. Present as a clear journey map with actionable insights at each stage.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ journey: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/email/re-engage', requireAuth, async (req: AuthRequest, res) => {
+  const { product, inactive_period, incentive } = req.body;
+  const prompt = `Write a re-engagement email sequence (3 emails) for users who haven't used ${product} in ${inactive_period || '30 days'}. Incentive to offer: ${incentive || 'none specified'}. Email 1: warm check-in, remind value. Email 2: showcase what's new/improved. Email 3: final nudge with clear CTA or unsubscribe option. Each email: subject line, preview text, body (under 150 words), CTA. Tone: human, not salesy.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ sequence: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Wave 132: Podcast Outline, Webinar Script, Launch Strategy, Mentor Outreach, Feature Announcement ──
+app.post('/api/content/podcast-outline', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, guest, duration, audience } = req.body;
+  const prompt = `Create a detailed podcast episode outline for a ${duration || '45-minute'} episode on: ${topic}. Guest/context: ${guest || 'solo host'}. Audience: ${audience || 'general'}. Include: hook/cold open, intro script, 4-6 main segments with talking points and transition phrases, 3 guest questions per segment (if applicable), lightning round questions, outro with CTA. Format for easy on-air use.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ outline: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/content/webinar-script', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, duration, audience, cta } = req.body;
+  const prompt = `Write a complete webinar script for a ${duration || '60-minute'} presentation on: ${topic}. Audience: ${audience || 'professionals'}. End CTA: ${cta || 'schedule a demo'}. Include: opening hook (2 min), agenda overview, content segments with speaker notes, engagement prompts (polls/questions), Q&A bridge, closing pitch and CTA. Mark timing throughout. Conversational, not lecture-style.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ script: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/launch-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, timeline, budget_tier } = req.body;
+  const prompt = `Create a product launch strategy for ${product} targeting ${market || 'target market'}. Timeline: ${timeline || '30 days'}. Budget tier: ${budget_tier || 'bootstrapped'}. Include: pre-launch (build anticipation, waitlist, teaser), launch day (announcement sequence, channels, timing), post-launch (follow-up, press, community). Channel tactics for each phase, success metrics, and potential risks with mitigations.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ strategy: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/email/mentor-outreach', requireAuth, async (req: AuthRequest, res) => {
+  const { mentor_name, mentor_role, your_background, specific_ask } = req.body;
+  const prompt = `Write a cold outreach email to ${mentor_name || 'a potential mentor'} (${mentor_role || 'industry expert'}). My background: ${your_background}. Specific ask: ${specific_ask || '30-minute coffee chat'}. Rules: under 200 words, lead with genuine admiration backed by specifics, be direct about what you want, make it easy to say yes, no flattery fluff. Include subject line and PS line.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ email: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/feature-announcement', requireAuth, async (req: AuthRequest, res) => {
+  const { feature_name, benefit, audience, channel } = req.body;
+  const prompt = `Write a feature announcement for: ${feature_name}. Core benefit: ${benefit}. Audience: ${audience || 'existing users'}. Channel: ${channel || 'email'}. Include: attention-grabbing headline, what the feature does (plain English, no jargon), why it matters to the user (lead with the benefit), how to get started (1-3 steps), closing CTA. Excited but not hypey. Under 250 words for email, shorter for in-app.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ announcement: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Wave 133: Scope Document, Bio Generator, Discount Copy, Meeting Report, Growth Hacks ──
+app.post('/api/product/scope-document', requireAuth, async (req: AuthRequest, res) => {
+  const { project_name, objectives, stakeholders, timeline } = req.body;
+  const prompt = `Write a project scope document for: ${project_name}. Objectives: ${objectives}. Stakeholders: ${stakeholders || 'not specified'}. Timeline: ${timeline || 'TBD'}. Sections: Executive Summary, Project Objectives, In-Scope (what we're building), Out-of-Scope (explicitly excluded), Deliverables, Assumptions and Constraints, Success Metrics, Timeline/Milestones, Approval section. Professional, unambiguous language.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ document: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/social/bio-generator', requireAuth, async (req: AuthRequest, res) => {
+  const { name, role, achievements, personality, platform } = req.body;
+  const prompt = `Write 3 social media bios for ${name}, ${role}. Key achievements: ${achievements}. Personality: ${personality || 'professional'}. Platform: ${platform || 'LinkedIn/Twitter/Instagram'}. Version 1: authoritative and credibility-focused. Version 2: conversational and relatable. Version 3: bold and attention-grabbing. Each under 160 characters for Twitter, 300 for LinkedIn. Include relevant emojis where appropriate. End each with a hook or CTA.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ bios: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/discount-copy', requireAuth, async (req: AuthRequest, res) => {
+  const { offer, product, urgency, audience } = req.body;
+  const prompt = `Write promotional copy for this offer: ${offer} on ${product}. Urgency factor: ${urgency || 'limited time'}. Audience: ${audience || 'existing customers'}. Deliver: email subject line, email body (under 200 words), landing page headline + subhead, SMS message (under 160 chars), social post caption. Each piece should feel distinct, not just copy-paste. Lead with value, not discount %.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ copy: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/meeting-report', requireAuth, async (req: AuthRequest, res) => {
+  const { meeting_topic, attendees, notes, decisions } = req.body;
+  const prompt = `Convert these meeting notes into a professional meeting report. Topic: ${meeting_topic}. Attendees: ${attendees || 'not specified'}. Raw notes: ${notes}. Decisions made: ${decisions || 'extract from notes'}. Format: Meeting Summary (2-3 sentences), Decisions Made (bulleted), Action Items (who, what, by when), Open Questions / Parking Lot, Next Steps. Clear and scannable — someone who missed the meeting should be fully caught up.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ report: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/growth/hack-ideas', requireAuth, async (req: AuthRequest, res) => {
+  const { product, stage, constraint } = req.body;
+  const prompt = `Generate 10 creative growth hacks for ${product} at ${stage || 'early'} stage. Constraint: ${constraint || 'low budget'}. For each idea: the tactic (specific, not vague), why it works (psychological or market mechanism), effort level (low/medium/high), expected impact (low/medium/high), first step to implement today. Focus on unconventional, underused tactics — not "post on social media" type advice. Mix organic, viral, partnership, and product-led ideas.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ ideas: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Wave 134: Press Kit, Value Proposition, API Spec, Exit Plan, Thread Hook ──
+app.post('/api/pr/press-kit', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, founding_story, metrics } = req.body;
+  const prompt = `Write a complete press kit for ${company} and ${product || 'their product'}. Founding story: ${founding_story || 'not provided'}. Key metrics: ${metrics || 'not provided'}. Include: Company Overview (200 words), Product Description (100 words), Founding Story, Key Statistics and Traction, Founder Bios, Notable Quotes, Boilerplate (50 words for press use), Media Contact placeholder, FAQ (5 common press questions with answers). Professional, factual, journalist-ready.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ press_kit: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/value-proposition', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customer, problem, differentiator } = req.body;
+  const prompt = `Build a complete value proposition framework for ${product}. Customer: ${customer}. Problem solved: ${problem}. Key differentiator: ${differentiator || 'not specified'}. Deliver: 1-sentence value prop (the classic formula: We help [X] do [Y] by [Z]), expanded elevator pitch (30 seconds), tagline options (5 variations), homepage hero headline + subhead, and a positioning statement using the Geoffrey Moore template. Also identify the single most compelling reason to buy.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ value_prop: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/api-spec', requireAuth, async (req: AuthRequest, res) => {
+  const { api_name, endpoints, auth_method, use_case } = req.body;
+  const prompt = `Write a technical API specification for ${api_name}. Endpoints to document: ${endpoints}. Authentication: ${auth_method || 'Bearer token'}. Use case: ${use_case || 'not specified'}. For each endpoint include: method, path, description, request headers, path/query/body parameters (with types and required flags), example request, example response (success and error), error codes. Also include: authentication section, rate limiting, versioning policy, and base URL conventions. OpenAPI-style format.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ spec: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/strategy/exit-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { company, revenue, stage, preferences } = req.body;
+  const prompt = `Create an exit strategy analysis for a company with: revenue ${revenue || 'not disclosed'}, stage ${stage || 'growth'}, preferences: ${preferences || 'open to options'}. Cover: M&A (strategic acquirers, financial acquirers, likely multiples), IPO path (requirements, timeline, pros/cons), Secondary sale options, MBO possibility, Acqui-hire scenarios. For each path: likelihood given current state, preparation needed, typical timeline, valuation implications, and key risks. Also: what to do in the next 12 months to maximize exit optionality.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ exit_plan: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/social/thread-hook', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, audience, angle } = req.body;
+  const prompt = `Write 5 high-engagement Twitter/X thread openers for the topic: ${topic}. Audience: ${audience || 'general professional'}. Angle: ${angle || 'educational/insight'}. Each hook must: create an open loop (curiosity gap), be under 280 characters, avoid clichés like "🧵 Thread:", make a bold or surprising claim OR ask a question that demands an answer. Rate each hook's viral potential and explain why it works. Also provide the logical "tweet 2" that should follow hook #1.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ hooks: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Wave 135: Cold LinkedIn, Feedback Survey, Bug Bounty Brief, PR FAQ, Twitter DM ──
+app.post('/api/social/cold-linkedin', requireAuth, async (req: AuthRequest, res) => {
+  const { target_name, target_role, company, reason, your_offer } = req.body;
+  const prompt = `Write a cold LinkedIn connection message to ${target_name || 'a prospect'}, ${target_role} at ${company}. Reason for reaching out: ${reason}. What you're offering: ${your_offer}. Rules: under 300 characters for connection request (or 1000 for InMail), reference something specific about them (their content, company, role), no generic "I'd love to connect", clear but soft CTA. Write both: connection note version and InMail version. Conversational, peer-to-peer tone.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ messages: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/feedback-survey', requireAuth, async (req: AuthRequest, res) => {
+  const { product, goal, audience, length } = req.body;
+  const prompt = `Design a product feedback survey for ${product}. Goal: ${goal || 'understand user satisfaction and pain points'}. Audience: ${audience || 'active users'}. Length: ${length || '5-8 questions'}. Include: mix of rating scales (NPS, CSAT), multiple choice, and open-ended questions. Each question: the question text, why you're asking it (internal note), what you'll do with the answer. Avoid leading questions. End with one open "anything else?" question. Provide intro text and thank-you message.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ survey: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/security/bug-bounty-brief', requireAuth, async (req: AuthRequest, res) => {
+  const { company, scope, payout_range, excluded } = req.body;
+  const prompt = `Write a professional bug bounty program brief for ${company}. In scope: ${scope || 'web app, API, mobile app'}. Payout range: ${payout_range || '$100-$10,000 based on severity'}. Out of scope: ${excluded || 'DDoS, social engineering'}. Include: program overview, scope definition (in/out), severity classifications (Critical/High/Medium/Low) with payout ranges, what to include in reports, disclosure policy, safe harbor statement, how to submit, response time SLA. Professional and security researcher-friendly.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ brief: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/pr-faq', requireAuth, async (req: AuthRequest, res) => {
+  const { product, problem, customer, key_features } = req.body;
+  const prompt = `Write a PR/FAQ document (Amazon-style Working Backwards) for: ${product}. Problem it solves: ${problem}. Target customer: ${customer}. Key features: ${key_features}. Structure: Press Release (headline, dateline, opening paragraph, customer quote, company quote, boilerplate), then FAQs — External FAQs (5 questions a customer/press would ask) and Internal FAQs (5 tough questions the team needs to answer). Be concrete, not aspirational. Write the press release as if the product is already shipping.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ pr_faq: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/social/twitter-dm', requireAuth, async (req: AuthRequest, res) => {
+  const { recipient, context, ask } = req.body;
+  const prompt = `Write a Twitter/X DM to ${recipient || 'a creator/influencer'}. Context: ${context}. The ask: ${ask}. Rules: under 280 characters if possible, open with genuine observation about their work (not flattery), be direct about what you want, make the ask feel natural and low-pressure. Provide 3 variations: one very concise, one with context, one question-based. Also suggest the best time to send (based on their activity patterns) and what to do if no reply in 5 days.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ messages: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Wave 136: NPS Analysis, Launch Announcement, Retrospective, Sales Deck, Content Ideas ──
+app.post('/api/product/nps-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { responses, score, product } = req.body;
+  const prompt = `Analyze these NPS responses for ${product || 'our product'}. Overall NPS score: ${score || 'calculate from responses'}. Responses: ${responses}. Deliver: NPS score breakdown (promoters/passives/detractors %), top 3 themes from promoters (what they love), top 3 themes from detractors (what's broken), verbatim quotes for each theme, priority actions ranked by impact and feasibility, and a 2-sentence executive summary. Be specific — identify patterns, not generalities.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ analysis: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/launch-announcement', requireAuth, async (req: AuthRequest, res) => {
+  const { product, headline_feature, audience, channels } = req.body;
+  const prompt = `Write a complete product launch announcement package for ${product}. Headline feature: ${headline_feature}. Target audience: ${audience || 'customers and prospects'}. Channels: ${channels || 'email, social, blog'}. Create: Blog post announcement (500 words), Email announcement (200 words), LinkedIn post, Twitter/X post (thread of 3), Product Hunt tagline + first comment, Internal all-hands announcement (3 bullet points). Each piece should feel native to its channel. Lead with the user benefit, not the feature itself.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ announcements: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/team/retrospective', requireAuth, async (req: AuthRequest, res) => {
+  const { sprint_or_period, team_size, highlights, challenges } = req.body;
+  const prompt = `Facilitate a sprint retrospective for ${sprint_or_period || 'the last sprint'}. Team size: ${team_size || 'not specified'}. Highlights shared: ${highlights || 'not provided'}. Challenges shared: ${challenges || 'not provided'}. Generate: structured retro agenda, analysis of what went well (themes + specific examples), what didn't go well (root cause analysis, not blame), 3-5 concrete action items with owners and due dates, team health pulse check questions, and a closing morale boost. Format for easy facilitation.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ retrospective: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/deck-outline', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, prospect, pain_point } = req.body;
+  const prompt = `Create a sales deck outline for ${company} presenting ${product} to ${prospect || 'a prospect'}. Known pain point: ${pain_point || 'not specified'}. Structure: Slide 1 - Hook (open with their problem, not your company), Slide 2 - The Problem (make it feel real), Slide 3 - Why Now (market timing/urgency), Slide 4 - Our Solution, Slide 5 - How It Works (3 steps max), Slide 6 - Social Proof, Slide 7 - ROI/Business Case, Slide 8 - Pricing/Next Steps. For each slide: title, 3 bullet points of content, speaker notes, visual suggestion.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ outline: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/content/idea-generator', requireAuth, async (req: AuthRequest, res) => {
+  const { niche, audience, format, goal } = req.body;
+  const prompt = `Generate 20 content ideas for ${niche} targeting ${audience || 'your ideal audience'}. Format preference: ${format || 'mix of blog, video, social'}. Goal: ${goal || 'build authority and drive engagement'}. For each idea: title/headline, content angle (what makes it unique), why it will resonate with this audience, estimated search volume potential (high/medium/niche), content format recommendation, and a hook line to open with. Mix evergreen and timely ideas. Group by theme.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ ideas: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Wave 137: Email Audit, LinkedIn Banner, Demo Script, Product Update Post, Agent Brief ──
+app.post('/api/email/audit', requireAuth, async (req: AuthRequest, res) => {
+  const { email_content, goal, audience } = req.body;
+  const prompt = `Audit this email for maximum performance. Email: ${email_content}. Goal: ${goal || 'engagement/conversion'}. Audience: ${audience || 'not specified'}. Score (1-10) and analyze: Subject line (open rate potential, curiosity gap, clarity), Preview text, Opening line (hook strength), Body (clarity, flow, length appropriateness), CTA (clarity, placement, friction), Overall tone/voice, Mobile readability. Provide: rewritten subject line (3 options), rewritten opening line, improved CTA, and a priority list of 3 changes that will move the needle most.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ audit: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/social/linkedin-banner', requireAuth, async (req: AuthRequest, res) => {
+  const { name, role, value_prop, cta } = req.body;
+  const prompt = `Write LinkedIn banner copy for ${name || 'a professional'}, ${role}. Value proposition: ${value_prop}. Call to action: ${cta || 'let's connect'}. Create: Primary headline (under 10 words, bold statement about what they help people do), Secondary line (who they help + specific outcome), Social proof element (clients served, results achieved, credentials — keep it humble), CTA line. Also provide: 3 alternative headline options from different angles (authority, outcome, curiosity), and design notes for the visual layout (what to emphasize, color psychology suggestion).`;
+  try { const r = await callUserLLM(req, prompt); res.json({ banner_copy: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/demo-script', requireAuth, async (req: AuthRequest, res) => {
+  const { product, prospect_role, pain_point, demo_length } = req.body;
+  const prompt = `Write a sales demo script for ${product} with ${prospect_role || 'a decision maker'}. Known pain point: ${pain_point}. Demo length: ${demo_length || '30 minutes'}. Structure: Opening (establish agenda and permission), Discovery questions (3-4 to confirm pain before diving in), Demo narrative (tell a story through the product, don't feature-dump), Handle the inevitable "how much?" question, Next steps close. Include: exact words to say, what to click/show at each moment, pause points for questions, and how to handle "we use [competitor]" objection. Conversational, consultative.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ script: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/changelog-post', requireAuth, async (req: AuthRequest, res) => {
+  const { version, changes, audience, tone } = req.body;
+  const prompt = `Write a product changelog / update post for version ${version || 'this release'}. Changes: ${changes}. Audience: ${audience || 'users'}. Tone: ${tone || 'friendly and clear'}. Format: Headline (what's new, exciting but accurate), Grouped changes: New Features (lead with user benefit), Improvements (what got better and why it matters), Bug Fixes (briefly, only noteworthy ones), Breaking Changes (if any, be very clear). Keep technical jargon minimal. Users should feel excited, not overwhelmed. Under 400 words unless the release warrants more.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ changelog: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/ai/agent-brief', requireAuth, async (req: AuthRequest, res) => {
+  const { agent_name, task, tools, constraints } = req.body;
+  const prompt = `Write a complete AI agent briefing document for: ${agent_name}. Primary task: ${task}. Available tools: ${tools || 'web search, code execution, file read/write'}. Constraints: ${constraints || 'none specified'}. Include: Agent Role Definition (who the agent is), Primary Objective, Success Criteria (how we know it succeeded), Step-by-Step Workflow, Tool Usage Guidelines (when to use each tool), Error Handling Protocol, Output Format specification, and Example runs (1 success case, 1 edge case). Make it production-ready for an AI engineer to implement.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ brief: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Wave 138: Offer Builder, Recruiter Outreach, Thought Leadership, API README, Win/Loss ──
+app.post('/api/sales/offer-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { product, price, audience, transformation } = req.body;
+  const prompt = `Build an irresistible offer for ${product} priced at ${price || 'not yet set'}. Target buyer: ${audience}. Core transformation: ${transformation}. Using Alex Hormozi's offer framework, create: The Dream Outcome statement, Value Stack (list every deliverable with perceived value), Bonuses (2-3 complementary add-ons that increase value without cost), Risk Reversal (guarantee structure), Scarcity/Urgency element, and the Offer Name (what to call this bundle). Then write the offer paragraph for a sales page — vivid, specific, makes the price feel like a no-brainer.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ offer: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/recruiter-outreach', requireAuth, async (req: AuthRequest, res) => {
+  const { candidate_name, role, company, candidate_background } = req.body;
+  const prompt = `Write a recruiter outreach message to ${candidate_name || 'a candidate'} for a ${role} role at ${company}. Candidate background: ${candidate_background || 'senior professional in the field'}. Write 3 versions: LinkedIn InMail (300 words max), LinkedIn connection message (200 chars), Email cold outreach. Each must: mention something specific about their background, explain WHY this role suits them specifically, describe one compelling aspect of the company/role, have a low-friction CTA. Avoid: "great opportunity", "exciting role", "reach out if interested". Be specific and human.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ outreach: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/content/thought-leadership', requireAuth, async (req: AuthRequest, res) => {
+  const { author, topic, perspective, audience } = req.body;
+  const prompt = `Write a thought leadership LinkedIn post for ${author || 'a founder/executive'} on: ${topic}. Unique perspective/contrarian take: ${perspective || 'develop one based on the topic'}. Audience: ${audience || 'industry professionals'}. Structure: Hook (bold opening statement — not "I'm excited to share"), Story or observation (specific, not generic), The insight or counterintuitive lesson, Practical implication for the reader, Closing question to drive comments. 800-1200 words. First-person, opinionated, specific. No corporate speak. Should feel like genuine expertise, not a marketing piece.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ post: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/api-readme', requireAuth, async (req: AuthRequest, res) => {
+  const { api_name, description, endpoints, auth_type } = req.body;
+  const prompt = `Write a comprehensive API README for ${api_name}. Description: ${description}. Key endpoints: ${endpoints}. Auth type: ${auth_type || 'API key'}. Include sections: Overview, Quick Start (get your first response in under 5 minutes), Authentication, Base URL, Endpoints (method, path, description, params, example request/response for each), Error Codes, Rate Limiting, SDKs/Libraries (if any), Changelog, Support. Use code blocks for all examples. Curl examples for every endpoint. Developer-friendly, assumes technical audience.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ readme: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/win-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { deal_context, outcome, customer_feedback, lost_to } = req.body;
+  const prompt = `Conduct a win/loss analysis for this deal. Deal context: ${deal_context}. Outcome: ${outcome || 'not specified'}. Customer feedback: ${customer_feedback || 'not available'}. Lost to (if loss): ${lost_to || 'N/A'}. Analyze: Primary win/loss reason (the real one, not the surface reason), Secondary factors, What we did right in the sales process, What we should have done differently, Competitor intelligence (if loss), Pattern recognition (what does this tell us about our ICP, positioning, or product?), 3 concrete changes to win more deals like this. Be brutally honest.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ analysis: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
