@@ -1,3 +1,7 @@
+## v342.00 — Wave 136: NPS Analyzer, Launch Announcement Kit, Sprint Retrospective, Sales Deck Builder, Content Idea Generator (2026-07-02)
+- 5 new tools for product analytics, marketing, team ops, sales, and content
+- Backend routes: /api/product/nps-analysis, /api/marketing/launch-announcement, /api/team/retrospective, /api/sales/deck-outline, /api/content/idea-generator
+
 ## v341.00 — Wave 135: Cold LinkedIn Outreach, Product Feedback Survey, Security Threat Brief, PR/FAQ Document, Twitter/X Cold DM (2026-07-02)
 - 5 new tools for social selling, product research, security, product, and outreach
 - Backend routes: /api/social/cold-linkedin, /api/product/feedback-survey, /api/security/bug-bounty-brief, /api/product/pr-faq, /api/social/twitter-dm
