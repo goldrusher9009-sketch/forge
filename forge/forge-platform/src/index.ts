@@ -183823,6 +183823,37 @@ app.post('/api/marketing/influencer-outreach', requireAuth, async (req: AuthRequ
   try { const result = await callUserLLM(req, prompt); res.json({ outreach_scripts: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// Wave 133
+app.post('/api/product/scope-document', requireAuth, async (req: AuthRequest, res) => {
+  const { project, constraints } = req.body;
+  const prompt = `You are a senior project manager. Generate a comprehensive Project Scope Document for:\n\nPROJECT: ${project}\nCONSTRAINTS: ${constraints || 'None specified'}\n\nInclude:\n1. PROJECT OVERVIEW — purpose, goals, and business value\n2. IN SCOPE — explicit list of what will be built/delivered\n3. OUT OF SCOPE — explicit exclusions to prevent scope creep\n4. DELIVERABLES — tangible outputs with acceptance criteria\n5. TIMELINE — phases and milestones\n6. ASSUMPTIONS — what we're assuming to be true\n7. DEPENDENCIES — external factors and blockers\n8. RISKS — top 5 risks with likelihood/impact ratings\n9. SUCCESS CRITERIA — how we know the project succeeded\n10. SIGN-OFF REQUIRED FROM — stakeholder approval list\n\nBe specific and concrete. Use tables where appropriate.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ scope: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/social/bio-generator', requireAuth, async (req: AuthRequest, res) => {
+  const { name, role } = req.body;
+  const prompt = `You are a personal branding expert. Generate compelling social media bios for ${name}.\n\nPROFILE: ${role}\n\nCreate platform-specific bios:\n\n**TWITTER/X BIO** (160 chars max)\n[2-3 versions: punchy, credibility-first, personality-forward]\n\n**LINKEDIN HEADLINE** (220 chars max)\n[3 versions: keyword-rich, value-focused, story-driven]\n\n**LINKEDIN ABOUT SECTION** (first 300 chars — what shows before "see more")\n[Hook that makes people click "see more"]\n\n**INSTAGRAM BIO** (150 chars, line breaks allowed)\n[3 versions]\n\n**GITHUB/PORTFOLIO BIO** (technical audience)\n[1-2 sentences]\n\n**SPEAKER/PODCAST BIO** (third person, 100 words)\n[Professional and engaging]\n\nFor each: explain why it works.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ bios: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/discount-copy', requireAuth, async (req: AuthRequest, res) => {
+  const { offer, product } = req.body;
+  const prompt = `You are a direct-response copywriter specializing in promotions. Write urgency-driven copy for:\n\nOFFER: ${offer}\nPRODUCT: ${product}\n\nDeliver:\n1. EMAIL SUBJECT LINES (5 options: curiosity, urgency, benefit, FOMO, personalized)\n2. EMAIL BODY (complete promotional email, 200-300 words, strong CTA)\n3. SMS/PUSH NOTIFICATION (under 160 chars, 3 versions)\n4. SOCIAL MEDIA POST — Instagram caption with hashtags\n5. SOCIAL MEDIA POST — Twitter/X thread (3 tweets)\n6. BANNER HEADLINE + SUBHEADLINE (for website/landing page)\n7. POPUP COPY (headline + body + CTA button text)\n8. COUNTDOWN TIMER COPY (what text shows next to the timer)\n\nPsychological triggers used: [explain which urgency tactics you deployed and why]`;
+  try { const result = await callUserLLM(req, prompt); res.json({ copy: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productivity/meeting-report', requireAuth, async (req: AuthRequest, res) => {
+  const { notes } = req.body;
+  const prompt = `You are an executive assistant. Transform these raw meeting notes into a professional Meeting Report:\n\nRAW NOTES:\n${notes}\n\nStructure the report as:\n\n# MEETING REPORT\n**Date:** [extract or note as provided]\n**Duration:** [if mentioned]\n**Attendees:** [list all mentioned]\n\n## EXECUTIVE SUMMARY\n[2-3 sentence overview of what was discussed and decided]\n\n## KEY DECISIONS\n[Numbered list of all decisions made, with rationale]\n\n## ACTION ITEMS\n| Action | Owner | Due Date | Priority |\n|--------|-------|----------|----------|\n[Table of all commitments made]\n\n## DISCUSSION HIGHLIGHTS\n[Key points raised, debates, important context]\n\n## RISKS & BLOCKERS RAISED\n[Any concerns, dependencies, or blockers mentioned]\n\n## NEXT MEETING\n[Suggested agenda items for follow-up]\n\nBe concise but comprehensive. Flag any ambiguous action items.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ report: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/hack-ideas', requireAuth, async (req: AuthRequest, res) => {
+  const { product, stage } = req.body;
+  const prompt = `You are a growth hacker who has scaled multiple startups. Generate creative, actionable growth ideas for:\n\nPRODUCT: ${product}\nSTAGE: ${stage || 'early stage'}\n\nProvide 15 growth ideas across these categories:\n\n**ACQUISITION (5 ideas)**\n- Unconventional channels and tactics to get first/more users\n- Each idea: name, description, how to execute, expected outcome, effort level (Low/Med/High)\n\n**ACTIVATION (3 ideas)**\n- Get users to their "aha moment" faster\n\n**RETENTION (3 ideas)**\n- Keep users coming back\n\n**REFERRAL (2 ideas)**\n- Turn users into evangelists\n\n**REVENUE (2 ideas)**\n- Monetization experiments\n\nFor the top 3 ideas overall, provide a 30-day execution plan.\n\nAlso: 3 growth hacks that worked for similar products (with lessons).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ ideas: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // Wave 127 routes
 app.post('/api/brand/voice-analyzer', requireAuth, async (req: AuthRequest, res) => {
   const { text, brand_description } = req.body;

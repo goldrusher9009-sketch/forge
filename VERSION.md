@@ -1,3 +1,7 @@
+## v339.00 — Wave 133: Project Scope Document, Social Media Bio Generator, Discount & Promo Copy, Meeting Report Generator, Growth Hack Ideator (2026-07-02)
+- 5 new tools for project management, personal branding, marketing, productivity, and growth
+- Backend routes: /api/product/scope-document, /api/social/bio-generator, /api/marketing/discount-copy, /api/productivity/meeting-report, /api/growth/hack-ideas
+
 ## v338.00 — Wave 132: Podcast Outline, Webinar Script, Product Launch Strategy, Mentor Outreach Email, Feature Announcement (2026-07-02)
 - 5 new tools for content, product, and outreach
 - Backend routes: /api/content/podcast-outline, /api/content/webinar-script, /api/product/launch-strategy, /api/email/mentor-outreach, /api/product/feature-announcement
