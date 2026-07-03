@@ -1,3 +1,7 @@
+## v344.00 — Wave 138: Irresistible Offer Builder, Recruiter Outreach, Thought Leadership Post, API README Generator, Win/Loss Deal Analyzer (2026-07-02)
+- 5 new tools for sales, HR, content, dev, and revenue intelligence
+- Backend routes: /api/sales/offer-builder, /api/hr/recruiter-outreach, /api/content/thought-leadership, /api/dev/api-readme, /api/sales/win-analysis
+
 ## v343.00 — Wave 137: Email Audit, LinkedIn Banner Copy, Demo Script Writer, Product Update Post, AI Agent Briefing (2026-07-02)
 - 5 new tools for email marketing, personal branding, sales, product, and AI engineering
 - Backend routes: /api/email/audit, /api/social/linkedin-banner, /api/sales/demo-script, /api/product/changelog-post, /api/ai/agent-brief
