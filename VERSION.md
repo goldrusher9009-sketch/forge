@@ -1,3 +1,7 @@
+## v337.00 — Wave 131: Job Description Writer, Product Review Generator, A/B Test Copy, Customer Journey Mapper, Re-engagement Email (2026-07-02)
+- 5 new tools for HR, content, marketing, product, and email
+- Backend routes: /api/hr/job-description, /api/content/product-review, /api/marketing/ab-test-copy, /api/product/customer-journey, /api/email/re-engage
+
 ## v336.00 — Fix WaveComponents.tsx: complete waves 127-130, remove orphan JSX, fix TS1128 errors (2026-07-02)
 - Fixed 5 corrupted run() functions (lines 2974-3018) with stray comma-separated exports
 - Completed ForgeTab_newsletter127 truncated return JSX
