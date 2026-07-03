@@ -1,3 +1,7 @@
+## v338.00 — Wave 132: Podcast Outline, Webinar Script, Product Launch Strategy, Mentor Outreach Email, Feature Announcement (2026-07-02)
+- 5 new tools for content, product, and outreach
+- Backend routes: /api/content/podcast-outline, /api/content/webinar-script, /api/product/launch-strategy, /api/email/mentor-outreach, /api/product/feature-announcement
+
 ## v337.00 — Wave 131: Job Description Writer, Product Review Generator, A/B Test Copy, Customer Journey Mapper, Re-engagement Email (2026-07-02)
 - 5 new tools for HR, content, marketing, product, and email
 - Backend routes: /api/hr/job-description, /api/content/product-review, /api/marketing/ab-test-copy, /api/product/customer-journey, /api/email/re-engage
