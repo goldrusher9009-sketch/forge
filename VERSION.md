@@ -1,3 +1,7 @@
+## v343.00 — Wave 137: Email Audit, LinkedIn Banner Copy, Demo Script Writer, Product Update Post, AI Agent Briefing (2026-07-02)
+- 5 new tools for email marketing, personal branding, sales, product, and AI engineering
+- Backend routes: /api/email/audit, /api/social/linkedin-banner, /api/sales/demo-script, /api/product/changelog-post, /api/ai/agent-brief
+
 ## v342.00 — Wave 136: NPS Analyzer, Launch Announcement Kit, Sprint Retrospective, Sales Deck Builder, Content Idea Generator (2026-07-02)
 - 5 new tools for product analytics, marketing, team ops, sales, and content
 - Backend routes: /api/product/nps-analysis, /api/marketing/launch-announcement, /api/team/retrospective, /api/sales/deck-outline, /api/content/idea-generator
