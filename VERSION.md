@@ -1,3 +1,10 @@
+## v336.00 — Fix WaveComponents.tsx: complete waves 127-130, remove orphan JSX, fix TS1128 errors (2026-07-02)
+- Fixed 5 corrupted run() functions (lines 2974-3018) with stray comma-separated exports
+- Completed ForgeTab_newsletter127 truncated return JSX
+- Added all wave 127-130 components: twitterthread, salesproposal, pitchstory, launchcheck, testimonialreq, fundraisingemail, offboardingsurvey, agentprompt, ideavalidator, linkedindm, pitchvideo, saasonboarding, feedbackanalyzer, nichefinder, ytdescription, faqgenerator, pricingobjection, execsummary
+- Removed orphaned partial JSX fragment at EOF
+- ForgeApp.tsx: 47 wave render cases + closing JSX restored
+
 ## v335.00 — Wave 130: Niche Finder, YouTube Description, FAQ Generator, Pricing Objection Handler, Executive Summary (2026-07-02)
 - Wave 130: 5 tools for business discovery, content, sales, and writing
 - Backend routes: /api/business/niche-finder, /api/content/youtube-description, /api/content/faq-generator, /api/sales/pricing-objection-handler, /api/writing/executive-summary

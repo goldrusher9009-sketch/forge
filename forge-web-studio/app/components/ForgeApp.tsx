@@ -48278,7 +48278,7 @@ export default function ForgeApp() {
         {(mainTab as string) === 'coverletter121' && <ForgeTab_coverletter121 />}
         {(mainTab as string) === 'ytthumb121' && <ForgeTab_ytthumb121 />}
         {(mainTab as string) === 'apiprice121' && <ForgeTab_apiprice121 />}
-        {(mainTab as string) === 'onboardemail121' && <ForgeTab_onboardemail121 />}
+        {(mainTab as string) === 'onboardmail121' && <ForgeTab_onboardemail121 />}
         {(mainTab as string) === 'riskmatrix121' && <ForgeTab_riskmatrix121 />}
         {(mainTab as string) === 'pitchdeck122' && <ForgeTab_pitchdeck122 />}
         {(mainTab as string) === 'persona122' && <ForgeTab_persona122 />}
@@ -48325,3 +48325,7 @@ export default function ForgeApp() {
         {(mainTab as string) === 'faqgenerator130' && <ForgeTab_faqgenerator130 />}
         {(mainTab as string) === 'pricingobjection130' && <ForgeTab_pricingobjection130 />}
         {(mainTab as string) === 'execsummary130' && <ForgeTab_execsummary130 />}
+      </div>
+    </div>
+  );
+}
