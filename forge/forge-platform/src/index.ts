@@ -183823,59 +183823,87 @@ app.post('/api/marketing/influencer-outreach', requireAuth, async (req: AuthRequ
   try { const result = await callUserLLM(req, prompt); res.json({ outreach_scripts: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-// Wave 134
+// Wave 133 routes
+app.post('/api/product/scope-document', requireAuth, async (req: AuthRequest, res) => {
+  const { project, constraints } = req.body;
+  const prompt = `You are a senior project manager. Generate a comprehensive Project Scope Document for:\n\nPROJECT: ${project}\nCONSTRAINTS: ${constraints || 'None specified'}\n\nInclude: 1. PROJECT OVERVIEW 2. IN SCOPE 3. OUT OF SCOPE 4. DELIVERABLES with acceptance criteria 5. TIMELINE phases and milestones 6. ASSUMPTIONS 7. DEPENDENCIES 8. RISKS top 5 with likelihood/impact 9. SUCCESS CRITERIA 10. SIGN-OFF REQUIRED FROM`;
+  try { const result = await callUserLLM(req, prompt); res.json({ scope: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/social/bio-generator', requireAuth, async (req: AuthRequest, res) => {
+  const { name, role } = req.body;
+  const prompt = `You are a personal branding expert. Generate platform-specific social bios for ${name}. Profile: ${role}. Create: Twitter/X bio (160 chars, 3 versions), LinkedIn headline (220 chars, 3 versions), LinkedIn About first 300 chars, Instagram bio (150 chars, 3 versions), GitHub/Portfolio bio, Speaker bio (third person, 100 words). For each explain why it works.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ bios: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/discount-copy', requireAuth, async (req: AuthRequest, res) => {
+  const { offer, product } = req.body;
+  const prompt = `You are a direct-response copywriter. Write urgency-driven promo copy for: OFFER: ${offer} PRODUCT: ${product}. Deliver: 5 email subject lines, complete promo email, SMS (3 versions under 160 chars), Instagram caption with hashtags, Twitter thread (3 tweets), banner headline + subheadline, popup copy, countdown timer text. Explain psychological triggers used.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ copy: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/meeting-report', requireAuth, async (req: AuthRequest, res) => {
+  const { notes } = req.body;
+  const prompt = `Transform these raw meeting notes into a professional Meeting Report:\n\n${notes}\n\nStructure: EXECUTIVE SUMMARY (2-3 sentences), KEY DECISIONS (numbered list), ACTION ITEMS (table: Action | Owner | Due Date | Priority), DISCUSSION HIGHLIGHTS, RISKS & BLOCKERS RAISED, NEXT MEETING agenda items. Be concise. Flag ambiguous action items.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ report: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/growth/hack-ideas', requireAuth, async (req: AuthRequest, res) => {
+  const { product, stage } = req.body;
+  const prompt = `You are a growth hacker. Generate 15 actionable growth ideas for: PRODUCT: ${product} STAGE: ${stage || 'early stage'}. Categories: ACQUISITION (5 ideas), ACTIVATION (3), RETENTION (3), REFERRAL (2), REVENUE (2). For each: name, description, execution steps, expected outcome, effort level. For top 3: 30-day execution plan. Bonus: 3 growth hacks that worked for similar products.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ ideas: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 134 routes
 app.post('/api/pr/press-kit', requireAuth, async (req: AuthRequest, res) => {
   const { company, highlights } = req.body;
-  const prompt = `You are a PR professional. Generate a complete Media Press Kit for:\n\nCOMPANY: ${company}\nKEY HIGHLIGHTS: ${highlights}\n\nInclude:\n1. COMPANY BOILERPLATE (3 versions: 25 words, 75 words, 150 words)\n2. FOUNDER/CEO BIO (2 versions: short 50 words, full 200 words, third-person)\n3. COMPANY FACT SHEET (founding year, HQ, team size, key metrics, funding, mission)\n4. PRODUCT DESCRIPTION (what it does, for whom, why it matters — journalist-friendly)\n5. KEY MESSAGES (3-5 core talking points for interviews)\n6. SUGGESTED STORY ANGLES (5 angles journalists could pitch to their editors)\n7. QUOTE BANK (5-7 ready-to-use executive quotes on different topics)\n8. MEDIA CONTACT TEMPLATE (what to include in press contact section)\n9. RECENT MILESTONES (timeline of key achievements)\n10. AWARDS & RECOGNITION (placeholder section with formatting)\n\nWrite in a professional, factual, and compelling style.`;
+  const prompt = `You are a PR professional. Generate a complete press kit for: COMPANY: ${company} HIGHLIGHTS: ${highlights || 'Not provided'}. Include: company boilerplate (50 and 150 word versions), founder bio, fact sheet, key milestones timeline, product overview, 5 media pitch angles, 10 interview topics, media contact template, social proof guidance, visual assets checklist. Write in AP style.`;
   try { const result = await callUserLLM(req, prompt); res.json({ kit: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
-
 app.post('/api/marketing/value-proposition', requireAuth, async (req: AuthRequest, res) => {
   const { product, audience } = req.body;
-  const prompt = `You are a positioning expert. Create a comprehensive Value Proposition for:\n\nPRODUCT: ${product}\nTARGET AUDIENCE: ${audience}\n\nDeliver:\n1. ONE-LINER VALUE PROP (10 words max — the elevator pitch)\n2. FULL VALUE PROPOSITION STATEMENT (using the formula: For [target customer] who [has a problem], [product] is a [category] that [key benefit]. Unlike [alternative], our product [key differentiator].)\n3. POSITIONING STATEMENT (internal use: includes target segment, frame of reference, POD, RTB)\n4. HEADLINE OPTIONS (5 landing page headlines)\n5. TAGLINE OPTIONS (5 punchy, memorable taglines)\n6. BENEFIT HIERARCHY (functional → emotional → social benefits)\n7. REASONS TO BELIEVE (evidence that supports your claims)\n8. CUSTOMER JOBS-TO-BE-DONE (what are they really hiring you for)\n9. BEFORE/AFTER/BRIDGE (storytelling framework)\n10. ANTI-POSITIONING (who you're explicitly NOT for)\n\nBe specific, avoid buzzwords, focus on real customer value.`;
+  const prompt = `You are a positioning strategist. Build a value proposition for: PRODUCT: ${product} AUDIENCE: ${audience}. Deliver: one-liner (under 15 words), 5 tagline options, 30-second elevator pitch, hero section copy (headline + subheadline + 3 bullets), Value Proposition Canvas summary (jobs/pains/gains/relievers/creators), differentiation vs alternatives, proof points needed, messaging dos and donts.`;
   try { const result = await callUserLLM(req, prompt); res.json({ proposition: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
-
 app.post('/api/dev/api-spec', requireAuth, async (req: AuthRequest, res) => {
   const { endpoint, purpose } = req.body;
-  const prompt = `You are a senior API designer. Write a detailed OpenAPI-style specification for:\n\nENDPOINT: ${endpoint}\nPURPOSE: ${purpose}\n\nProvide:\n1. ENDPOINT SUMMARY & DESCRIPTION\n2. HTTP METHOD & PATH\n3. AUTHENTICATION (type required)\n4. REQUEST HEADERS (required and optional)\n5. PATH PARAMETERS (if any, with types and validation)\n6. QUERY PARAMETERS (if any, with types, defaults, validation)\n7. REQUEST BODY SCHEMA (JSON, with field names, types, required/optional, validation rules, example values)\n8. RESPONSE SCHEMAS:\n   - 200 Success (full schema with example)\n   - 400 Bad Request (with common error messages)\n   - 401 Unauthorized\n   - 403 Forbidden\n   - 404 Not Found\n   - 429 Rate Limited\n   - 500 Server Error\n9. CURL EXAMPLE (complete, runnable)\n10. SDK USAGE EXAMPLES (JavaScript/TypeScript and Python)\n11. RATE LIMITING NOTES\n12. GOTCHAS & EDGE CASES\n\nFormat clearly with code blocks for schemas and examples.`;
+  const prompt = `You are a senior API architect. Write a detailed OpenAPI-style spec for: ENDPOINT: ${endpoint} PURPOSE: ${purpose}. Generate YAML spec including: summary/description, HTTP method/path, parameters (path/query/header with types/required/examples), request body schema with validation, response schemas for 200/400/401/403/404/422/500, authentication, rate limiting notes, curl example, success/error JSON examples, implementation notes, changelog placeholder. Also write TypeScript client usage example.`;
   try { const result = await callUserLLM(req, prompt); res.json({ spec: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
-
 app.post('/api/strategy/exit-plan', requireAuth, async (req: AuthRequest, res) => {
   const { business, goals } = req.body;
-  const prompt = `You are an M&A advisor and exit strategy expert. Create an Exit Strategy Plan for:\n\nBUSINESS: ${business}\nEXIT GOALS: ${goals}\n\nProvide:\n1. EXIT OPTIONS ANALYSIS\n   - Strategic Acquisition (pros, cons, typical buyers, valuation multiples)\n   - Private Equity (pros, cons, what PE looks for)\n   - IPO (pros, cons, readiness requirements)\n   - Management Buyout (pros, cons, financing)\n   - Merger (pros, cons)\n   Recommend best path based on the business profile\n\n2. VALUATION DRIVERS (what increases your exit multiple)\n\n3. RED FLAGS TO FIX (what kills deals or lowers valuation)\n\n4. 24-MONTH PREPARATION ROADMAP\n   - Financial: what to clean up, metrics to optimize\n   - Legal: IP, contracts, compliance\n   - Operations: documentation, key person risk\n   - Team: retention, org chart\n   - Growth: what acquirers want to see\n\n5. KEY METRICS TO HIT (by exit type)\n\n6. DEAL TEAM YOU'LL NEED (advisors, bankers, lawyers)\n\n7. TIMELINE TO EXIT (realistic assessment)\n\nBe direct and practical.`;
+  const prompt = `You are an M&A advisor. Build an exit strategy for: BUSINESS: ${business} EXIT GOALS: ${goals || 'Not specified'}. Provide: exit options analysis (acquisition/PE/IPO/MBO/merger with pros/cons/multiples), recommended path with rationale, valuation range with key drivers, 24-month preparation roadmap (months 1-6/7-12/13-18/19-24), deal structure considerations (earnout/retention/tax), top 5 red flags that kill deals.`;
   try { const result = await callUserLLM(req, prompt); res.json({ plan: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
-
 app.post('/api/social/thread-hook', requireAuth, async (req: AuthRequest, res) => {
   const { topic, angle } = req.body;
-  const prompt = `You are a viral content creator who has grown large followings on Twitter/X and LinkedIn. Generate scroll-stopping hooks for:\n\nTOPIC: ${topic}\nANGLE: ${angle || 'your best judgment'}\n\nCreate 15 hook options across these proven formats:\n\n**CURIOSITY HOOKS (3)**\n[Make them wonder what comes next]\n\n**CONTRARIAN HOOKS (3)**\n[Challenge conventional wisdom]\n\n**NUMBER/LIST HOOKS (3)**\n["X things I learned..." "After Y years..." "The 5 mistakes..."]\n\n**STORY HOOKS (3)**\n["I was wrong about..." "Last year I..." "The day I..."]\n\n**VALUE HOOKS (3)**\n[Lead with the transformation/benefit]\n\nFor each hook:\n- The hook itself (Twitter-length, under 280 chars)\n- Why it works (psychological trigger)\n- Best platform (Twitter/LinkedIn/both)\n- Risk level (Safe/Medium/Bold)\n\nThen write a COMPLETE THREAD using your best hook, with 8-12 tweets including a strong CTA at the end.`;
+  const prompt = `You are a viral content strategist. Generate 15 scroll-stopping hooks for: TOPIC: ${topic} ANGLE: ${angle || 'Open'}. Categories: Pattern Interrupt (3), Bold Claim (3), Story Opener (3), Data/Number (3), Question (3). For each: rate 1-10 and explain why it works. Then write the full first 3 tweets of the thread using the best hook to build momentum.`;
   try { const result = await callUserLLM(req, prompt); res.json({ hooks: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-// Wave 134
-app.post('/api/pr/press-kit', requireAuth, async (req: AuthRequest, res) => {
-  const { company, highlights } = req.body;
-  const prompt = `You are a PR professional. Generate a complete press kit for:\n\nCOMPANY: ${company}\nHIGHLIGHTS: ${highlights || 'Not provided'}\n\nInclude:\n1. COMPANY BOILERPLATE (2 versions: 50 words and 150 words, third person)\n2. FOUNDER/CEO BIO (150 words, third person, compelling narrative)\n3. COMPANY FACT SHEET (founding year, HQ, team size, key metrics, product overview)\n4. KEY MILESTONES (timeline of 5-10 most impressive moments)\n5. PRODUCT OVERVIEW (what it does, who it's for, why it's different)\n6. MEDIA PITCH ANGLES (5 story angles journalists would actually cover)\n7. SUGGESTED INTERVIEW TOPICS (10 questions the founder can answer brilliantly)\n8. MEDIA CONTACT TEMPLATE (how press should reach out)\n9. SOCIAL PROOF (how to present customer testimonials, usage stats)\n10. VISUAL ASSETS CHECKLIST (what photos/screenshots to prepare)\n\nWrite in crisp, AP style. No fluff.`;
-  try { const result = await callUserLLM(req, prompt); res.json({ kit: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+// Wave 135 routes
+app.post('/api/social/cold-linkedin', requireAuth, async (req: AuthRequest, res) => {
+  const { prospect, offer } = req.body;
+  const prompt = `You are a B2B social selling expert. Write a cold LinkedIn outreach sequence for: PROSPECT: ${prospect} OFFER: ${offer}. Create 4 messages: 1) Connection request (under 300 chars, no pitch) 2) Opener (send day after connecting, under 150 words, soft bridge) 3) Follow-up 1 (4 days later, new angle, add value) 4) Follow-up 2 (7 days later, breakup message, permission-based). For each: personalization tokens, what NOT to do, why it works psychologically. Plus 3 opening lines that always get replies.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ messages: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
-
-app.post('/api/marketing/value-proposition', requireAuth, async (req: AuthRequest, res) => {
-  const { product, audience } = req.body;
-  const prompt = `You are a positioning strategist. Build a razor-sharp value proposition for:\n\nPRODUCT: ${product}\nAUDIENCE: ${audience}\n\nDeliver:\n1. ONE-LINER (under 15 words — what it is + who it's for + why it's different)\n2. TAGLINE OPTIONS (5 options: aspirational, functional, bold, curious, results-focused)\n3. ELEVATOR PITCH (30 seconds, spoken naturally)\n4. HERO SECTION COPY (headline + subheadline + 3 bullet proof points)\n5. VALUE PROPOSITION CANVAS SUMMARY:\n   - Customer jobs (what they're trying to do)\n   - Customer pains (what frustrates them)\n   - Customer gains (what success looks like)\n   - Pain relievers (how your product helps)\n   - Gain creators (how you deliver the gains)\n6. DIFFERENTIATION vs. ALTERNATIVES (how you're different from status quo)\n7. PROOF POINTS NEEDED (what evidence would make this credible)\n8. MESSAGING DO's and DON'Ts`;
-  try { const result = await callUserLLM(req, prompt); res.json({ proposition: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+app.post('/api/product/feedback-survey', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, users } = req.body;
+  const prompt = `You are a UX researcher. Design a targeted feedback survey for: FEATURE: ${feature} USER SEGMENT: ${users || 'General users'}. Create: survey title, intro message, 8-12 questions (mix of rating scales/multiple choice/open text/NPS) each with question text, type, why you're asking, what answer signals action. Include analysis guide (what to do if X% rate poorly, red flags) and distribution strategy (timing, incentives, expected completion rate).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ survey: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
-
-app.post('/api/dev/api-spec', requireAuth, async (req: AuthRequest, res) => {
-  const { endpoint, purpose } = req.body;
-  const prompt = `You are a senior API architect. Write a detailed OpenAPI-style spec for:\n\nENDPOINT: ${endpoint}\nPURPOSE: ${purpose}\n\nGenerate:\n\`\`\`yaml\nopenapi: 3.0.0\n# Full endpoint specification\n\`\`\`\n\nInclude:\n- Summary and description\n- HTTP method and path\n- Path/query/header parameters (with types, required flag, description, example)\n- Request body schema (with all fields, types, validation rules, examples)\n- Response schemas for: 200 success, 400 bad request, 401 unauthorized, 403 forbidden, 404 not found, 422 validation error, 500 server error\n- Authentication requirements\n- Rate limiting notes\n- Example curl request\n- Example success response JSON\n- Example error response JSON\n- Implementation notes (edge cases, gotchas, caching)\n- Changelog placeholder\n\nAlso write: JavaScript/TypeScript client usage example.`;
-  try { const result = await callUserLLM(req, prompt); res.json({ spec: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+app.post('/api/security/bug-bounty-brief', requireAuth, async (req: AuthRequest, res) => {
+  const { scope, stack } = req.body;
+  const prompt = `You are a senior application security engineer. Generate a security threat assessment for: SCOPE: ${scope} STACK: ${stack || 'Not specified'}. Provide: threat model (top 10 attack vectors table with likelihood/impact/priority), OWASP Top 10 assessment for this system, hardening checklist (auth/input validation/data protection/API security/infrastructure/monitoring), quick wins (top 5 highest-impact lowest-effort fixes), code review checklist (10 items for this stack).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ brief: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
-
-app.post('/api/strategy/exit-plan', requireAuth, async (req: AuthRequest, res) => {
-  const { business, goals } = req.body;
-  const prompt = `You are an M&A advisor and exit strategist. Build an exit strategy for:\n\nBUSINESS: ${business}\nEXIT GOALS: ${goals || 'Not specified'}\n\nProvide:\n1. EXIT OPTIONS ANALYSIS\n   - Strategic acquisition (pros/cons, likely acquirers, typical multiples)\n   - Private equity buyout (pros/cons, fit criteria, process)\n   - IPO (pros/cons, readiness requirements)\n   - Management buyout (pros/cons, financing structure)\n   - Merger (pros/cons)\n   → RECOMMENDED PATH with rationale\n\n2. VALUATION RANGE\n   - Revenue/EBITDA multiples for this industry\n   - Key value drivers to maximize\n   - Red flags that reduce valuation\n\n3. 24-MONTH PREPARATION ROADMAP\n   - Month 1-6: Foundation (financials, legal, operations)\n   - Month 7-12: Growth sprint (metrics that matter to buyers)\n   - Month 13-18: Process prep (data room, advisors)\n   - Month 19-24: Go to market\n\n4. DEAL STRUCTURE CONSIDERATIONS\n   - Earnout risks\n   - Employee retention\n   - Tax optimization\n\n5. RED FLAGS TO FIX NOW (top 5 things that kill deals)`;
+app.post('/api/product/pr-faq', requireAuth, async (req: AuthRequest, res) => {
+  const { idea } = req.body;
+  const prompt = `You are a product leader trained in Amazon's Working Backwards method. Write a PR/FAQ for: ${idea}. Format: PRESS RELEASE (problem 2-3 sentences, solution 2-3 sentences, customer quote, product detail, leadership quote, CTA) then FREQUENTLY ASKED QUESTIONS — 8 external FAQs customers will ask + 6 internal hard questions the team must answer (why will this win, business model, what we won't do, top risk). End with: 3 brutal pressure-test questions this raises.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ prfaq: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/social/twitter-dm', requireAuth, async (req: AuthRequest, res) => {
+  const { target, context } = req.body;
+  const prompt = `You are a relationship-first growth expert. Write a cold Twitter/X DM sequence for: TARGET: ${target} GOAL: ${context}. Create 3 messages: 1) Opener (under 280 chars, reference their timeline, no ask) 2) Value add (share something useful, soft bridge, 2-3 days later) 3) The ask (clear specific low-friction, 5-7 days later). For each: personalization notes, what a good reply looks like, how to continue. Also: 5 tweet reply templates to engage before DMing, the #1 cold DM mistake, how to find the right people to DM.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ messages: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+ployee retention\n   - Tax optimization\n\n5. RED FLAGS TO FIX NOW (top 5 things that kill deals)`;
   try { const result = await callUserLLM(req, prompt); res.json({ plan: result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 

@@ -1,3 +1,7 @@
+## v341.00 — Wave 135: Cold LinkedIn Outreach, Product Feedback Survey, Security Threat Brief, PR/FAQ Document, Twitter/X Cold DM (2026-07-02)
+- 5 new tools for social selling, product research, security, product, and outreach
+- Backend routes: /api/social/cold-linkedin, /api/product/feedback-survey, /api/security/bug-bounty-brief, /api/product/pr-faq, /api/social/twitter-dm
+
 ## v340.00 — Wave 134: Press Kit Generator, Value Proposition Builder, API Spec Writer, Exit Strategy Planner, Thread Hook Generator (2026-07-02)
 - 5 new tools for PR, marketing, dev, strategy, and social
 - Backend routes: /api/pr/press-kit, /api/marketing/value-proposition, /api/dev/api-spec, /api/strategy/exit-plan, /api/social/thread-hook
