@@ -149,7 +149,7 @@ app.use(cors({
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
-app.get("/health", (_req, res) => res.json({ status: "ok", environment: NODE_ENV, timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "v329.00" }));
+app.get("/health", (_req, res) => res.json({ status: "ok", environment: NODE_ENV, timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "v344.00" }));
 const httpServer = require("http").createServer(app);
 httpServer.listen(PORT, () => {
   console.log("Forge Platform v144.00 running on port " + PORT);
@@ -215066,4 +215066,316 @@ Provide: DM script (Instagram/TikTok, under 150 words, feels personal not templa
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+});
+// Wave 127-130
+app.post("/api/brand/voice-analyzer", requireAuth, async (req, res) => {
+  const { content_samples, brand_name } = req.body;
+  const prompt = `Analyze the brand voice from these content samples for ${brand_name || "this brand"}: ${content_samples}. Provide: Voice attributes (5-7 adjectives with examples), Tone spectrum (formal vs casual, serious vs playful etc), Language patterns (words/phrases they use often), What to avoid, Sample sentences in this voice, Brand voice guide summary.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ voice_analysis: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/email-newsletter", requireAuth, async (req, res) => {
+  const { topic, audience, sections, tone } = req.body;
+  const prompt = `Write a complete email newsletter on: ${topic}. Audience: ${audience || "subscribers"}. Sections: ${sections || "intro, main content, tips, CTA"}. Tone: ${tone || "conversational"}. Include: compelling subject line, preview text, each section fully written, and a clear CTA. Under 600 words. Scannable with headers.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ newsletter: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/social/twitter-thread", requireAuth, async (req, res) => {
+  const { topic, angle, length } = req.body;
+  const prompt = `Write a viral Twitter/X thread on: ${topic}. Angle: ${angle || "educational insight"}. Length: ${length || "10 tweets"}. Tweet 1 must hook immediately. Each tweet under 280 chars. End with CTA. Number each tweet. Include engagement hooks mid-thread.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ thread: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/sales/proposal", requireAuth, async (req, res) => {
+  const { client_name, problem, solution, price } = req.body;
+  const prompt = `Write a sales proposal for ${client_name}. Problem: ${problem}. Solution: ${solution}. Investment: ${price || "TBD"}. Structure: Executive Summary, Understanding the Problem, Proposed Solution, Deliverables, Timeline, Investment, Why Us, Next Steps. Professional but not stuffy.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ proposal: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/investor/pitch-story", requireAuth, async (req, res) => {
+  const { company, problem, solution, traction } = req.body;
+  const prompt = `Write a compelling pitch deck narrative for ${company}. Problem: ${problem}. Solution: ${solution}. Traction: ${traction || "early stage"}. Create a story arc: the villain (the problem), the hero (your solution), proof it works, the big vision. Include slide-by-slide talking points.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ pitch_story: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 128
+app.post("/api/product/launch-checklist", requireAuth, async (req, res) => {
+  const { product, launch_date, team_size } = req.body;
+  const prompt = `Create a launch checklist for ${product}, launching ${launch_date || "soon"}. Team: ${team_size || "small"}. Cover: Pre-launch (30/14/7/1 day out), Launch day (hour by hour), Post-launch (week 1). Include owners, dependencies, go/no-go criteria.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ checklist: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/marketing/testimonial-request", requireAuth, async (req, res) => {
+  const { customer_name, product, outcome } = req.body;
+  const prompt = `Write a testimonial request email to ${customer_name || "a happy customer"} about ${product}. Known outcome: ${outcome || "positive experience"}. Make it easy: specific questions to answer (what problem did you have, what happened after using us, who would you recommend this to), offer to write a draft they can edit, keep it under 150 words.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ email: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/investor/fundraising-email", requireAuth, async (req, res) => {
+  const { company, round, traction, ask } = req.body;
+  const prompt = `Write a fundraising outreach email for ${company} raising ${round || "seed round"}. Traction: ${traction}. Ask: ${ask || "30-min intro call"}. Under 200 words. Lead with the most impressive traction metric. End with a specific, easy ask.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ email: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/cx/offboarding-survey", requireAuth, async (req, res) => {
+  const { product, churn_reason } = req.body;
+  const prompt = `Design an offboarding survey for ${product}. Known churn reason: ${churn_reason || "unknown"}. 5-7 questions max. Mix of multiple choice and open-ended. Focus on: why they're leaving, what would bring them back, what competitor they're switching to, what we could have done differently. Include exit message copy.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ survey: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/ai/agent-prompt-builder", requireAuth, async (req, res) => {
+  const { agent_goal, context, constraints } = req.body;
+  const prompt = `Build a production-ready system prompt for an AI agent with goal: ${agent_goal}. Context: ${context || "general purpose"}. Constraints: ${constraints || "none"}. Include: role definition, task instructions, output format, error handling, examples of good/bad outputs, and edge case handling.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ agent_prompt: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 129
+app.post("/api/startup/idea-validator", requireAuth, async (req, res) => {
+  const { idea, market, founder_background } = req.body;
+  const prompt = `Validate this startup idea: ${idea}. Market: ${market || "not specified"}. Founder background: ${founder_background || "not specified"}. Score 1-10 on: problem severity, market size, solution uniqueness, founder fit, monetization clarity. Give honest verdict: kill it, pivot it, or build it. What to validate before writing a line of code.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ validation: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/social/linkedin-dm", requireAuth, async (req, res) => {
+  const { recipient, context, ask } = req.body;
+  const prompt = `Write a LinkedIn DM to ${recipient || "a connection"}. Context: ${context}. Ask: ${ask}. Under 200 words. Open with something specific about them (not generic). Be direct. Make the ask feel natural. Include a follow-up message if no reply in 7 days.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ message: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/pitch-video-script", requireAuth, async (req, res) => {
+  const { product, audience, length } = req.body;
+  const prompt = `Write a pitch video script for ${product}. Audience: ${audience || "potential customers"}. Length: ${length || "60 seconds"}. Structure: hook (5 sec), problem (10 sec), solution (20 sec), proof (15 sec), CTA (10 sec). Every second counts. Conversational, not scripted-sounding.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ script: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/saas/onboarding-sequence", requireAuth, async (req, res) => {
+  const { product, key_actions, trial_length } = req.body;
+  const prompt = `Design a SaaS onboarding email sequence for ${product}. Key activation actions: ${key_actions || "complete setup, invite team, run first task"}. Trial: ${trial_length || "14 days"}. Write emails for: Day 0 (welcome), Day 1 (quick win), Day 3 (feature education), Day 7 (check-in), Day 12 (urgency before trial ends). Each email: subject, body, CTA.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ sequence: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/product/feedback-analyzer", requireAuth, async (req, res) => {
+  const { feedback_data, product } = req.body;
+  const prompt = `Analyze this product feedback for ${product || "our product"}: ${feedback_data}. Extract: top 3 pain points (with frequency), top 3 things users love, feature requests ranked by mention count, sentiment trend, user segments with different needs, and 5 actionable improvements prioritized by impact. Be specific, cite examples from the data.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ analysis: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 130
+app.post("/api/business/niche-finder", requireAuth, async (req, res) => {
+  const { skills, interests, market } = req.body;
+  const prompt = `Find profitable niches for someone with skills: ${skills}, interests: ${interests}, targeting: ${market || "online market"}. Give 5 specific niche ideas with: demand indicators, competition level, monetization path, first product to build, and why this person has an unfair advantage in it.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ niches: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/youtube-description", requireAuth, async (req, res) => {
+  const { video_title, topic, keywords, channel } = req.body;
+  const prompt = `Write a YouTube description for: "${video_title}" about ${topic}. Channel: ${channel || "not specified"}. Keywords: ${keywords || "derive from topic"}. Include: hook paragraph (first 2 lines must work as preview), full description (200-300 words), timestamps placeholder, links section, hashtags (10-15), and subscribe CTA. SEO-optimized.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ description: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/faq-generator", requireAuth, async (req, res) => {
+  const { product_or_topic, audience, context } = req.body;
+  const prompt = `Generate a comprehensive FAQ for ${product_or_topic}. Audience: ${audience || "general users"}. Context: ${context || ""}. Write 15-20 questions covering: getting started, common problems, pricing/value, technical questions, comparison to alternatives, and edge cases. Each answer: clear, concise, under 100 words. Organize by category.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ faq: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/sales/pricing-objection-handler", requireAuth, async (req, res) => {
+  const { product, price, objection, context } = req.body;
+  const prompt = `Handle this pricing objection for ${product} at ${price}: "${objection}". Context: ${context || "B2B sales conversation"}. Provide: the root concern behind the objection (never just the surface), 3 response scripts (direct, value-reframe, proof-based), questions to ask to understand if price is real or a smokescreen, when to hold firm vs negotiate, and what NOT to say.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ responses: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/writing/executive-summary", requireAuth, async (req, res) => {
+  const { document_content, audience } = req.body;
+  const prompt = `Write an executive summary of the following for ${audience || "senior leadership"}: ${document_content}. Structure: Opening statement (1 sentence), Situation/Background (2-3 sentences), Key findings (3-5 bullets), Financial/impact implications, Risk to flag (1-2 sentences), Recommended action with timeline. Under 400 words. No preamble.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ summary: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 131
+app.post("/api/hr/job-description", requireAuth, async (req, res) => {
+  const { role_title, company, requirements, culture } = req.body;
+  const prompt = `Write a compelling job description for ${role_title} at ${company}. Requirements: ${requirements}. Culture: ${culture || "not specified"}. Include: role overview, key responsibilities (6-8 bullets), required qualifications, nice-to-haves, what we offer. Engaging, clear, bias-free.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ description: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/product-review", requireAuth, async (req, res) => {
+  const { product_name, features, audience, tone } = req.body;
+  const prompt = `Write a detailed, honest product review for ${product_name}. Features: ${features}. Audience: ${audience || "general consumers"}. Tone: ${tone || "balanced"}. Include: intro, pros, cons, standout features, who it's best for, verdict with rating rationale. Min 400 words.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ review: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/marketing/ab-test-copy", requireAuth, async (req, res) => {
+  const { element, context, goal } = req.body;
+  const prompt = `Generate 3 A/B test variations for: "${element}". Context: ${context}. Goal: ${goal || "maximize conversions"}. For each: the copy, psychological principle used, why it might win, hypothesis statement. Format as Variant A, B, C.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ variants: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/product/customer-journey", requireAuth, async (req, res) => {
+  const { product, persona, goal } = req.body;
+  const prompt = `Map the customer journey for ${persona || "a typical user"} using ${product} to achieve: ${goal}. Stages: Awareness, Consideration, Decision, Onboarding, Usage, Retention. For each: touchpoints, user thoughts/feelings, pain points, opportunities. Actionable insights at each stage.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ journey: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/email/re-engage", requireAuth, async (req, res) => {
+  const { product, inactive_period, incentive } = req.body;
+  const prompt = `Write a 3-email re-engagement sequence for users who haven't used ${product} in ${inactive_period || "30 days"}. Incentive: ${incentive || "none"}. Email 1: warm check-in. Email 2: what's new. Email 3: final nudge. Each: subject, preview text, body, CTA. Under 150 words each. Human, not salesy.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ sequence: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 132
+app.post("/api/content/podcast-outline", requireAuth, async (req, res) => {
+  const { topic, guest, duration, audience } = req.body;
+  const prompt = `Create a podcast outline for a ${duration || "45-minute"} episode on: ${topic}. Guest: ${guest || "solo host"}. Audience: ${audience || "general"}. Include: hook/cold open, intro, 4-6 segments with talking points, guest questions, lightning round, outro with CTA.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ outline: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/webinar-script", requireAuth, async (req, res) => {
+  const { topic, duration, audience, cta } = req.body;
+  const prompt = `Write a ${duration || "60-minute"} webinar script on: ${topic}. Audience: ${audience || "professionals"}. End CTA: ${cta || "schedule a demo"}. Include: opening hook, agenda, content segments with speaker notes, engagement prompts, Q&A bridge, closing pitch. Mark timing throughout.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ script: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/product/launch-strategy", requireAuth, async (req, res) => {
+  const { product, market, timeline, budget_tier } = req.body;
+  const prompt = `Create a product launch strategy for ${product} targeting ${market || "target market"}. Timeline: ${timeline || "30 days"}. Budget: ${budget_tier || "bootstrapped"}. Include pre-launch, launch day, post-launch tactics. Channel strategy, success metrics, risk mitigations.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ strategy: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/email/mentor-outreach", requireAuth, async (req, res) => {
+  const { mentor_name, mentor_role, your_background, specific_ask } = req.body;
+  const prompt = `Write a cold outreach email to ${mentor_name || "a potential mentor"}, ${mentor_role || "industry expert"}. My background: ${your_background}. Ask: ${specific_ask || "30-minute coffee chat"}. Under 200 words. Specific, not generic. Easy to say yes. Include subject line and PS.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ email: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/product/feature-announcement", requireAuth, async (req, res) => {
+  const { feature_name, benefit, audience, channel } = req.body;
+  const prompt = `Write a feature announcement for: ${feature_name}. Benefit: ${benefit}. Audience: ${audience || "existing users"}. Channel: ${channel || "email"}. Include: headline, what it does, why it matters, how to get started (1-3 steps), CTA. Under 250 words.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ announcement: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 133
+app.post("/api/product/scope-document", requireAuth, async (req, res) => {
+  const { project_name, objectives, stakeholders, timeline } = req.body;
+  const prompt = `Write a project scope document for: ${project_name}. Objectives: ${objectives}. Stakeholders: ${stakeholders || "TBD"}. Timeline: ${timeline || "TBD"}. Sections: Executive Summary, Objectives, In-Scope, Out-of-Scope, Deliverables, Assumptions, Success Metrics, Milestones, Approval.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ document: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/social/bio-generator", requireAuth, async (req, res) => {
+  const { name, role, achievements, personality, platform } = req.body;
+  const prompt = `Write 3 social media bios for ${name}, ${role}. Achievements: ${achievements}. Personality: ${personality || "professional"}. Platform: ${platform || "LinkedIn/Twitter"}. Version 1: authority-focused. Version 2: conversational. Version 3: bold. Each under 160 chars for Twitter, 300 for LinkedIn.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ bios: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/marketing/discount-copy", requireAuth, async (req, res) => {
+  const { offer, product, urgency, audience } = req.body;
+  const prompt = `Write promo copy for: ${offer} on ${product}. Urgency: ${urgency || "limited time"}. Audience: ${audience || "existing customers"}. Deliver: email subject, email body, landing page headline+subhead, SMS (under 160 chars), social caption. Lead with value, not discount %.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ copy: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/productivity/meeting-report", requireAuth, async (req, res) => {
+  const { meeting_topic, attendees, notes, decisions } = req.body;
+  const prompt = `Convert meeting notes into a report. Topic: ${meeting_topic}. Attendees: ${attendees || "TBD"}. Notes: ${notes}. Decisions: ${decisions || "extract from notes"}. Format: Summary, Decisions Made, Action Items (who/what/when), Open Questions, Next Steps.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ report: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/growth/hack-ideas", requireAuth, async (req, res) => {
+  const { product, stage, constraint } = req.body;
+  const prompt = `Generate 10 creative growth hacks for ${product} at ${stage || "early"} stage. Constraint: ${constraint || "low budget"}. For each: tactic (specific), why it works, effort level, expected impact, first step today. Unconventional, not "post on social media" advice.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ ideas: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 134
+app.post("/api/pr/press-kit", requireAuth, async (req, res) => {
+  const { company, product, founding_story, metrics } = req.body;
+  const prompt = `Write a press kit for ${company}/${product || "their product"}. Story: ${founding_story || "not provided"}. Metrics: ${metrics || "not provided"}. Include: Company Overview (200w), Product Description (100w), Founding Story, Key Stats, Founder Bios, Notable Quotes, Boilerplate (50w), FAQ (5 Q&As).`;
+  try { const r = await callUserLLM(req, prompt); res.json({ press_kit: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/marketing/value-proposition", requireAuth, async (req, res) => {
+  const { product, customer, problem, differentiator } = req.body;
+  const prompt = `Build a value proposition framework for ${product}. Customer: ${customer}. Problem: ${problem}. Differentiator: ${differentiator || "TBD"}. Deliver: 1-sentence value prop, elevator pitch (30 sec), 5 tagline options, homepage headline+subhead, Geoffrey Moore positioning statement, single most compelling reason to buy.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ value_prop: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/dev/api-spec", requireAuth, async (req, res) => {
+  const { api_name, endpoints, auth_method, use_case } = req.body;
+  const prompt = `Write a technical API spec for ${api_name}. Endpoints: ${endpoints}. Auth: ${auth_method || "Bearer token"}. Use case: ${use_case || "TBD"}. For each endpoint: method, path, description, params (type/required), example request/response, error codes. Plus: auth section, rate limits, versioning, base URL.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ spec: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/strategy/exit-plan", requireAuth, async (req, res) => {
+  const { company, revenue, stage, preferences } = req.body;
+  const prompt = `Create an exit strategy analysis. Revenue: ${revenue || "undisclosed"}. Stage: ${stage || "growth"}. Preferences: ${preferences || "open"}. Cover M&A, IPO, secondary sale, MBO, acqui-hire. For each: likelihood, prep needed, timeline, valuation impact, key risks. Plus: what to do in next 12 months to maximize exit optionality.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ exit_plan: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/social/thread-hook", requireAuth, async (req, res) => {
+  const { topic, audience, angle } = req.body;
+  const prompt = `Write 5 high-engagement Twitter/X thread openers for: ${topic}. Audience: ${audience || "professionals"}. Angle: ${angle || "educational"}. Each hook: under 280 chars, creates curiosity gap, avoids clichés, makes bold claim or unanswerable question. Rate viral potential + explain. Provide tweet 2 for hook #1.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ hooks: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 135
+app.post("/api/social/cold-linkedin", requireAuth, async (req, res) => {
+  const { target_name, target_role, company, reason, your_offer } = req.body;
+  const prompt = `Write a cold LinkedIn message to ${target_name || "a prospect"}, ${target_role} at ${company}. Reason: ${reason}. Offer: ${your_offer}. Write both: connection note (under 300 chars) and InMail (under 1000 chars). Specific, peer-to-peer tone, no "I'd love to connect".`;
+  try { const r = await callUserLLM(req, prompt); res.json({ messages: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/product/feedback-survey", requireAuth, async (req, res) => {
+  const { product, goal, audience, length } = req.body;
+  const prompt = `Design a feedback survey for ${product}. Goal: ${goal || "understand satisfaction and pain points"}. Audience: ${audience || "active users"}. Length: ${length || "5-8 questions"}. Mix rating scales, multiple choice, open-ended. Each question: text + why asking + what to do with answer. Intro and thank-you message.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ survey: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/security/bug-bounty-brief", requireAuth, async (req, res) => {
+  const { company, scope, payout_range, excluded } = req.body;
+  const prompt = `Write a bug bounty brief for ${company}. In scope: ${scope || "web app, API, mobile"}. Payouts: ${payout_range || "$100-$10,000"}. Out of scope: ${excluded || "DDoS, social engineering"}. Include: overview, scope, severity levels with payouts, report requirements, disclosure policy, safe harbor, submission process, response SLA.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ brief: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/product/pr-faq", requireAuth, async (req, res) => {
+  const { product, problem, customer, key_features } = req.body;
+  const prompt = `Write an Amazon-style PR/FAQ for: ${product}. Problem: ${problem}. Customer: ${customer}. Features: ${key_features}. Structure: Press Release (headline, opening para, customer quote, company quote, boilerplate), External FAQs (5), Internal FAQs (5 hard questions). Write press release as if product is already shipping.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ pr_faq: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/social/twitter-dm", requireAuth, async (req, res) => {
+  const { recipient, context, ask } = req.body;
+  const prompt = `Write a Twitter/X DM to ${recipient || "a creator"}. Context: ${context}. Ask: ${ask}. 3 variations: concise, with context, question-based. Under 280 chars if possible. Specific observation about them, direct ask, low-pressure. Plus: follow-up if no reply in 5 days.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ messages: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 136
+app.post("/api/product/nps-analysis", requireAuth, async (req, res) => {
+  const { responses, score, product } = req.body;
+  const prompt = `Analyze NPS responses for ${product || "our product"}. Score: ${score || "calculate from responses"}. Responses: ${responses}. Deliver: score breakdown (promoters/passives/detractors %), top 3 themes from promoters, top 3 from detractors, verbatim quotes, priority actions ranked by impact, 2-sentence exec summary.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ analysis: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/marketing/launch-announcement", requireAuth, async (req, res) => {
+  const { product, headline_feature, audience, channels } = req.body;
+  const prompt = `Write a complete launch announcement for ${product}. Headline feature: ${headline_feature}. Audience: ${audience || "customers and prospects"}. Channels: ${channels || "email, social, blog"}. Create: blog post (500w), email (200w), LinkedIn post, Twitter thread (3 tweets), Product Hunt tagline+first comment, internal all-hands (3 bullets).`;
+  try { const r = await callUserLLM(req, prompt); res.json({ announcements: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/team/retrospective", requireAuth, async (req, res) => {
+  const { sprint_or_period, team_size, highlights, challenges } = req.body;
+  const prompt = `Facilitate a retrospective for ${sprint_or_period || "last sprint"}. Team: ${team_size || "TBD"}. Highlights: ${highlights || "not provided"}. Challenges: ${challenges || "not provided"}. Generate: structured agenda, what went well (themes+examples), what didn't (root cause analysis), 3-5 action items with owners+dates, team health check questions, closing morale boost.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ retrospective: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/sales/deck-outline", requireAuth, async (req, res) => {
+  const { company, product, prospect, pain_point } = req.body;
+  const prompt = `Create a sales deck outline for ${company} presenting ${product} to ${prospect || "a prospect"}. Pain point: ${pain_point || "TBD"}. 8 slides: Hook (their problem), Problem, Why Now, Solution, How It Works, Social Proof, ROI/Business Case, Next Steps. Each slide: title, 3 bullets, speaker notes, visual suggestion.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ outline: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/idea-generator", requireAuth, async (req, res) => {
+  const { niche, audience, format, goal } = req.body;
+  const prompt = `Generate 20 content ideas for ${niche} targeting ${audience || "ideal audience"}. Format: ${format || "mix of blog, video, social"}. Goal: ${goal || "build authority"}. For each: title, angle, why it resonates, search volume potential, format recommendation, opening hook. Mix evergreen and timely. Group by theme.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ ideas: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 137
+app.post("/api/email/audit", requireAuth, async (req, res) => {
+  const { email_content, goal, audience } = req.body;
+  const prompt = `Audit this email for performance. Email: ${email_content}. Goal: ${goal || "engagement/conversion"}. Audience: ${audience || "TBD"}. Score (1-10): subject line, preview text, opening line, body, CTA, tone, mobile readability. Provide: 3 rewritten subject lines, improved opening, better CTA, top 3 changes that move the needle most.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ audit: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/social/linkedin-banner", requireAuth, async (req, res) => {
+  const { name, role, value_prop, cta } = req.body;
+  const prompt = `Write LinkedIn banner copy for ${name || "a professional"}, ${role}. Value prop: ${value_prop}. CTA: ${cta || "let's connect"}. Create: primary headline (under 10 words), secondary line (who+outcome), social proof element, CTA line. Plus 3 alternative headlines from different angles and design notes.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ banner_copy: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/sales/demo-script", requireAuth, async (req, res) => {
+  const { product, prospect_role, pain_point, demo_length } = req.body;
+  const prompt = `Write a sales demo script for ${product} with ${prospect_role || "a decision maker"}. Pain point: ${pain_point}. Length: ${demo_length || "30 min"}. Include: opening, discovery questions (3-4), demo narrative (story not feature-dump), price question handling, next steps close. Exact words + what to click + pause points + competitor objection handling.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ script: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/product/changelog-post", requireAuth, async (req, res) => {
+  const { version, changes, audience, tone } = req.body;
+  const prompt = `Write a changelog for version ${version || "this release"}. Changes: ${changes}. Audience: ${audience || "users"}. Tone: ${tone || "friendly"}. Format: headline, New Features (benefit-led), Improvements, Bug Fixes (noteworthy only), Breaking Changes (if any). Under 400 words. Users should feel excited, not overwhelmed.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ changelog: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/ai/agent-brief", requireAuth, async (req, res) => {
+  const { agent_name, task, tools, constraints } = req.body;
+  const prompt = `Write an AI agent briefing for: ${agent_name}. Task: ${task}. Tools: ${tools || "web search, code execution, file I/O"}. Constraints: ${constraints || "none"}. Include: Role Definition, Primary Objective, Success Criteria, Step-by-Step Workflow, Tool Usage Guidelines, Error Handling, Output Format, Example runs (success + edge case).`;
+  try { const r = await callUserLLM(req, prompt); res.json({ brief: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 138
+app.post("/api/sales/offer-builder", requireAuth, async (req, res) => {
+  const { product, price, audience, transformation } = req.body;
+  const prompt = `Build an irresistible offer for ${product} at ${price || "TBD"}. Buyer: ${audience}. Transformation: ${transformation}. Using Hormozi's framework: Dream Outcome, Value Stack, Bonuses (2-3), Risk Reversal/Guarantee, Scarcity/Urgency, Offer Name. Then write the offer paragraph for a sales page — specific, makes price feel like a no-brainer.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ offer: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/hr/recruiter-outreach", requireAuth, async (req, res) => {
+  const { candidate_name, role, company, candidate_background } = req.body;
+  const prompt = `Write recruiter outreach to ${candidate_name || "a candidate"} for ${role} at ${company}. Background: ${candidate_background || "senior professional"}. 3 versions: LinkedIn InMail (300w), connection message (200 chars), cold email. Each: specific about their background, why this role suits them, one compelling company detail, low-friction CTA. No generic opener.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ outreach: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/thought-leadership", requireAuth, async (req, res) => {
+  const { author, topic, perspective, audience } = req.body;
+  const prompt = `Write a thought leadership LinkedIn post for ${author || "a founder/executive"} on: ${topic}. Perspective: ${perspective || "contrarian take"}. Audience: ${audience || "industry professionals"}. Structure: bold hook, specific story/observation, insight/lesson, practical implication, closing question. 800-1200 words. First-person, opinionated, no corporate speak.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ post: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/dev/api-readme", requireAuth, async (req, res) => {
+  const { api_name, description, endpoints, auth_type } = req.body;
+  const prompt = `Write a comprehensive API README for ${api_name}. Description: ${description}. Endpoints: ${endpoints}. Auth: ${auth_type || "API key"}. Sections: Overview, Quick Start (under 5 min), Authentication, Base URL, Endpoints (with curl examples), Error Codes, Rate Limiting, Changelog, Support. Developer-friendly, technical audience.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ readme: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/sales/win-analysis", requireAuth, async (req, res) => {
+  const { deal_context, outcome, customer_feedback, lost_to } = req.body;
+  const prompt = `Conduct a win/loss analysis. Deal: ${deal_context}. Outcome: ${outcome || "TBD"}. Customer feedback: ${customer_feedback || "unavailable"}. Lost to: ${lost_to || "N/A"}. Analyze: primary win/loss reason (real not surface), secondary factors, what we did right, what to do differently, competitor intel (if loss), pattern recognition, 3 concrete changes to win more deals like this. Brutally honest.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ analysis: r }); } catch(e) { res.status(500).json({ error: e.message }); }
 });
