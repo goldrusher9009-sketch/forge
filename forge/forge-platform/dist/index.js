@@ -1,44 +1,22 @@
 "use strict";
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var import_config = require("dotenv/config");
-var import_express = __toESM(require("express"));
-var import_cors = __toESM(require("cors"));
-var import_helmet = __toESM(require("helmet"));
-var import_morgan = __toESM(require("morgan"));
-var import_cookie_parser = __toESM(require("cookie-parser"));
-var import_bcryptjs = __toESM(require("bcryptjs"));
-var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
-var import_uuid = require("uuid");
-var import_path = __toESM(require("path"));
-var import_crypto = __toESM(require("crypto"));
-var import_child_process = require("child_process");
-var import_util = require("util");
-var import_better_sqlite3 = __toESM(require("better-sqlite3"));
-var import_hermes = require("./hermes");
-var import_operator = require("./operator");
-var import_node_cron = __toESM(require("node-cron"));
-const execAsync = (0, import_util.promisify)(import_child_process.exec);
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+import cookieParser from "cookie-parser";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { v4 as uuidv4 } from "uuid";
+import path from "path";
+import crypto from "crypto";
+import { exec } from "child_process";
+import { promisify } from "util";
+import Database from "better-sqlite3";
+import { setupHermes } from "./hermes";
+import { setupOperator } from "./operator";
+import cron from "node-cron";
+const execAsync = promisify(exec);
 process.on("uncaughtException", (e) => {
   console.error("\u{1F534} UNCAUGHT EXCEPTION:", e?.stack || e?.message || e);
 });
@@ -51,17 +29,17 @@ const JWT_SECRET = process.env.JWT_SECRET || "forge-dev-secret-change-in-product
 const JWT_EXPIRES_IN = "7d";
 const REFRESH_EXPIRES_IN = "30d";
 const FRONTEND_URL = process.env.FRONTEND_URL || "https://forge-sand-two.vercel.app";
-const DB_PATH_PRIMARY = process.env.DB_PATH || (process.env.RAILWAY_ENVIRONMENT ? "/data/forge.db" : import_path.default.join(process.cwd(), "forge.db"));
-const DB_PATH_FALLBACK = import_path.default.join(process.cwd(), "forge.db");
+const DB_PATH_PRIMARY = process.env.DB_PATH || (process.env.RAILWAY_ENVIRONMENT ? "/data/forge.db" : path.join(process.cwd(), "forge.db"));
+const DB_PATH_FALLBACK = path.join(process.cwd(), "forge.db");
 let db;
 let DB_PATH = DB_PATH_PRIMARY;
 try {
-  db = new import_better_sqlite3.default(DB_PATH_PRIMARY);
+  db = new Database(DB_PATH_PRIMARY);
   console.log(`\u2705 Database opened at ${DB_PATH_PRIMARY}`);
 } catch (e) {
   console.warn(`\u26A0\uFE0F  Could not open DB at ${DB_PATH_PRIMARY}: ${e.message}. Falling back to ${DB_PATH_FALLBACK}`);
   DB_PATH = DB_PATH_FALLBACK;
-  db = new import_better_sqlite3.default(DB_PATH_FALLBACK);
+  db = new Database(DB_PATH_FALLBACK);
   console.log(`\u2705 Database opened at ${DB_PATH_FALLBACK}`);
 }
 db.pragma("journal_mode = WAL");
@@ -109,12 +87,12 @@ db.exec(`
   );
 `);
 if (!db.prepare("SELECT id FROM users WHERE email = ?").get("admin@forge.local")) {
-  db.prepare("INSERT INTO users (id,email,password,first_name,last_name,role,verified) VALUES (?,?,?,?,?,?,?)").run((0, import_uuid.v4)(), "admin@forge.local", import_bcryptjs.default.hashSync("Admin1234!", 10), "Admin", "User", "admin", 1);
+  db.prepare("INSERT INTO users (id,email,password,first_name,last_name,role,verified) VALUES (?,?,?,?,?,?,?)").run(uuidv4(), "admin@forge.local", bcrypt.hashSync("Admin1234!", 10), "Admin", "User", "admin", 1);
   console.log("Seeded default admin: admin@forge.local / Admin1234!");
 }
-const signAccess = (p) => import_jsonwebtoken.default.sign(p, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-const signRefresh = (p) => import_jsonwebtoken.default.sign(p, JWT_SECRET, { expiresIn: REFRESH_EXPIRES_IN });
-const verifyToken = (t) => import_jsonwebtoken.default.verify(t, JWT_SECRET);
+const signAccess = (p) => jwt.sign(p, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+const signRefresh = (p) => jwt.sign(p, JWT_SECRET, { expiresIn: REFRESH_EXPIRES_IN });
+const verifyToken = (t) => jwt.verify(t, JWT_SECRET);
 const skillPromptCache = /* @__PURE__ */ new Map();
 function requireAuth(req, res, next) {
   const h = req.headers.authorization;
@@ -147,11 +125,11 @@ function requireAdmin(req, res, next) {
   }
   next();
 }
-const app = (0, import_express.default)();
+const app = express();
 let ioRef = null;
-app.use((0, import_morgan.default)(NODE_ENV === "production" ? "combined" : "dev"));
-app.use((0, import_helmet.default)({ contentSecurityPolicy: false }));
-app.use((0, import_cors.default)({
+app.use(morgan(NODE_ENV === "production" ? "combined" : "dev"));
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors({
   origin: (origin, callback) => {
     const allowed = [
       FRONTEND_URL,
@@ -168,9 +146,9 @@ app.use((0, import_cors.default)({
   },
   credentials: true
 }));
-app.use(import_express.default.json({ limit: "10mb" }));
-app.use(import_express.default.urlencoded({ extended: true, limit: "10mb" }));
-app.use((0, import_cookie_parser.default)());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(cookieParser());
 app.get("/health", (_req, res) => res.json({ status: "ok", environment: NODE_ENV, timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "v329.00" }));
 const httpServer = require("http").createServer(app);
 httpServer.listen(PORT, () => {
@@ -229,8 +207,8 @@ app.post("/api/auth/register", (req, res) => {
     res.status(409).json({ success: false, error: "DUPLICATE_EMAIL", message: "Email already registered" });
     return;
   }
-  const id = (0, import_uuid.v4)();
-  db.prepare("INSERT INTO users (id,email,password,first_name,last_name,role,verified) VALUES (?,?,?,?,?,?,?)").run(id, email.toLowerCase(), import_bcryptjs.default.hashSync(password, 10), firstName, lastName, "user", 1);
+  const id = uuidv4();
+  db.prepare("INSERT INTO users (id,email,password,first_name,last_name,role,verified) VALUES (?,?,?,?,?,?,?)").run(id, email.toLowerCase(), bcrypt.hashSync(password, 10), firstName, lastName, "user", 1);
   res.status(201).json({ success: true, message: "Account created", data: { id, email: email.toLowerCase(), firstName, lastName, role: "user" } });
 });
 app.post("/api/auth/login", (req, res) => {
@@ -240,14 +218,14 @@ app.post("/api/auth/login", (req, res) => {
     return;
   }
   const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email.toLowerCase());
-  if (!user || !import_bcryptjs.default.compareSync(password, user.password)) {
+  if (!user || !bcrypt.compareSync(password, user.password)) {
     res.status(401).json({ success: false, error: "INVALID_CREDENTIALS", message: "Invalid email or password" });
     return;
   }
   const payload = { sub: user.id, id: user.id, userId: user.id, email: user.email, role: user.role };
   const accessToken = signAccess(payload);
   const refreshToken = signRefresh(payload);
-  db.prepare("INSERT INTO refresh_tokens (id,user_id,token,expires_at) VALUES (?,?,?,?)").run((0, import_uuid.v4)(), user.id, refreshToken, new Date(Date.now() + 7 * 864e5).toISOString());
+  db.prepare("INSERT INTO refresh_tokens (id,user_id,token,expires_at) VALUES (?,?,?,?)").run(uuidv4(), user.id, refreshToken, new Date(Date.now() + 7 * 864e5).toISOString());
   try {
     touchStreak(user.id);
   } catch {
@@ -270,7 +248,7 @@ app.post("/api/auth/reset-password", (req, res) => {
     res.status(404).json({ success: false, error: "USER_NOT_FOUND" });
     return;
   }
-  db.prepare("UPDATE users SET password=?,updated_at=datetime('now') WHERE id=?").run(import_bcryptjs.default.hashSync(newPassword, 10), user.id);
+  db.prepare("UPDATE users SET password=?,updated_at=datetime('now') WHERE id=?").run(bcrypt.hashSync(newPassword, 10), user.id);
   res.json({ success: true, message: "Password updated" });
 });
 app.post("/api/auth/refresh", (req, res) => {
@@ -294,7 +272,7 @@ app.post("/api/auth/refresh", (req, res) => {
   db.prepare("DELETE FROM refresh_tokens WHERE token = ?").run(token);
   const newAccess = signAccess(payload);
   const newRefresh = signRefresh(payload);
-  db.prepare("INSERT INTO refresh_tokens (id,user_id,token,expires_at) VALUES (?,?,?,?)").run((0, import_uuid.v4)(), stored.user_id, newRefresh, new Date(Date.now() + 7 * 864e5).toISOString());
+  db.prepare("INSERT INTO refresh_tokens (id,user_id,token,expires_at) VALUES (?,?,?,?)").run(uuidv4(), stored.user_id, newRefresh, new Date(Date.now() + 7 * 864e5).toISOString());
   res.cookie("refreshToken", newRefresh, { httpOnly: true, secure: NODE_ENV === "production", sameSite: NODE_ENV === "production" ? "none" : "lax", maxAge: 7 * 864e5 });
   res.json({ success: true, data: { accessToken: newAccess } });
 });
@@ -321,7 +299,7 @@ app.put("/api/profile", requireAuth, (req, res) => {
 app.post("/api/password/change", requireAuth, (req, res) => {
   const { currentPassword, newPassword } = req.body;
   const user = db.prepare("SELECT * FROM users WHERE id = ?").get(req.user.sub);
-  if (!import_bcryptjs.default.compareSync(currentPassword, user.password)) {
+  if (!bcrypt.compareSync(currentPassword, user.password)) {
     res.status(400).json({ success: false, error: "INVALID_CREDENTIALS" });
     return;
   }
@@ -329,7 +307,7 @@ app.post("/api/password/change", requireAuth, (req, res) => {
     res.status(400).json({ success: false, error: "INVALID_PASSWORD" });
     return;
   }
-  db.prepare("UPDATE users SET password=?,updated_at=datetime('now') WHERE id=?").run(import_bcryptjs.default.hashSync(newPassword, 10), req.user.sub);
+  db.prepare("UPDATE users SET password=?,updated_at=datetime('now') WHERE id=?").run(bcrypt.hashSync(newPassword, 10), req.user.sub);
   db.prepare("DELETE FROM refresh_tokens WHERE user_id=?").run(req.user.sub);
   res.clearCookie("refreshToken");
   res.json({ success: true, message: "Password changed. Please log in again." });
@@ -343,7 +321,7 @@ app.post("/api/agents", requireAuth, (req, res) => {
     res.status(400).json({ success: false, error: "INVALID_INPUT", message: "name required" });
     return;
   }
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare("INSERT INTO agents (id,user_id,name,description,model,temperature,max_tokens) VALUES (?,?,?,?,?,?,?)").run(id, req.user.sub, name, description, model, temperature, maxTokens);
   res.status(201).json({ success: true, data: db.prepare("SELECT * FROM agents WHERE id=?").get(id) });
 });
@@ -381,7 +359,7 @@ app.post("/api/workflows", requireAuth, (req, res) => {
     res.status(400).json({ success: false, error: "INVALID_INPUT", message: "name required" });
     return;
   }
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare("INSERT INTO workflows (id,user_id,name,description,definition) VALUES (?,?,?,?,?)").run(id, req.user.sub, name, description, JSON.stringify(definition));
   res.status(201).json({ success: true, data: db.prepare("SELECT * FROM workflows WHERE id=?").get(id) });
 });
@@ -421,7 +399,7 @@ app.post("/api/tasks", requireAuth, (req, res) => {
     const { name, workflow_id, agent_id, status: status2 = "queued" } = req.body;
     if (!name)
       return res.status(400).json({ success: false, error: "name required" });
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO tasks (id,user_id,name,status,workflow_id,agent_id) VALUES (?,?,?,?,?,?)").run(id, req.user.sub, name, status2, workflow_id || null, agent_id || null);
     res.json({ success: true, id });
   } catch (e) {
@@ -645,7 +623,7 @@ function ensureSubscription(userId) {
     const now = /* @__PURE__ */ new Date();
     const periodEnd = new Date(now);
     periodEnd.setDate(periodEnd.getDate() + 30);
-    db.prepare("INSERT INTO subscriptions (id,user_id,plan,tokens_limit,tokens_used,period_start,period_end) VALUES (?,?,?,?,?,?,?)").run((0, import_uuid.v4)(), userId, "free", 1e6, 0, now.toISOString(), periodEnd.toISOString());
+    db.prepare("INSERT INTO subscriptions (id,user_id,plan,tokens_limit,tokens_used,period_start,period_end) VALUES (?,?,?,?,?,?,?)").run(uuidv4(), userId, "free", 1e6, 0, now.toISOString(), periodEnd.toISOString());
   } else {
     const periodEnd = new Date(existing.period_end);
     if (/* @__PURE__ */ new Date() > periodEnd) {
@@ -1042,7 +1020,7 @@ async function callLLMWithFallback(provider, apiKey, model, messages, language, 
 }
 async function toolShellExec(command, cwd, timeoutMs = 15e3) {
   return new Promise((resolve) => {
-    (0, import_child_process.exec)(command, { cwd: cwd || "/tmp", timeout: timeoutMs, maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
+    exec(command, { cwd: cwd || "/tmp", timeout: timeoutMs, maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
       resolve(stdout || stderr || (err ? err.message : ""));
     });
   });
@@ -1395,7 +1373,7 @@ app.post(["/api/chat", "/api/chat/completions"], requireAuth, async (req, res) =
     const costs = MODEL_COSTS[forgeModelId] || MODEL_COSTS[actualModel] || { input: 1e-3, output: 1e-3, markup: 1.3 };
     const providerCost = result.promptTokens / 1e3 * costs.input + result.completionTokens / 1e3 * costs.output;
     const forgeRevenue = providerCost * costs.markup;
-    db.prepare("INSERT INTO usage_logs (id,user_id,model,provider,prompt_tokens,completion_tokens,total_tokens,provider_cost,forge_revenue,markup_multiplier) VALUES (?,?,?,?,?,?,?,?,?,?)").run((0, import_uuid.v4)(), userId, forgeModelId, provider, result.promptTokens, result.completionTokens, totalTokens, providerCost, forgeRevenue, costs.markup);
+    db.prepare("INSERT INTO usage_logs (id,user_id,model,provider,prompt_tokens,completion_tokens,total_tokens,provider_cost,forge_revenue,markup_multiplier) VALUES (?,?,?,?,?,?,?,?,?,?)").run(uuidv4(), userId, forgeModelId, provider, result.promptTokens, result.completionTokens, totalTokens, providerCost, forgeRevenue, costs.markup);
     try {
       db.prepare("INSERT INTO token_usage (user_id,model,input_tokens,output_tokens,total_tokens,cost_usd,endpoint) VALUES (?,?,?,?,?,?,?)").run(userId, forgeModelId, result.promptTokens, result.completionTokens, totalTokens, providerCost, "/api/chat");
     } catch {
@@ -1456,7 +1434,7 @@ app.post("/api/keys", requireAuth, (req, res) => {
     if (existing) {
       db.prepare("UPDATE api_keys SET key_encrypted=?,key_preview=? WHERE user_id=? AND provider=?").run(enc, preview, userId, provider);
     } else {
-      db.prepare("INSERT INTO api_keys (id,user_id,provider,key_encrypted,key_preview) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, provider, enc, preview);
+      db.prepare("INSERT INTO api_keys (id,user_id,provider,key_encrypted,key_preview) VALUES (?,?,?,?,?)").run(uuidv4(), userId, provider, enc, preview);
     }
     saved.push(provider);
   };
@@ -1671,7 +1649,7 @@ app.post("/api/providers", requireAuth, (req, res) => {
     res.status(400).json({ success: false, error: "INVALID_INPUT", message: "name and base_url required" });
     return;
   }
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   const enc = api_key ? encryptKey(api_key) : "";
   db.prepare("INSERT INTO custom_providers (id,user_id,name,base_url,api_key_encrypted,markup_multiplier,model_prefix,notes) VALUES (?,?,?,?,?,?,?,?)").run(id, req.user.sub, name, base_url, enc, markup_multiplier, model_prefix, notes);
   const row = db.prepare("SELECT id,name,base_url,markup_multiplier,model_prefix,notes,active,created_at FROM custom_providers WHERE id=?").get(id);
@@ -1810,7 +1788,7 @@ function verifyStripeSignature(payload, sigHeader, secret) {
     throw new Error("Webhook timestamp too old");
   return JSON.parse(payload.toString("utf8"));
 }
-app.post("/api/billing/webhook", import_express.default.raw({ type: "application/json" }), async (req, res) => {
+app.post("/api/billing/webhook", express.raw({ type: "application/json" }), async (req, res) => {
   const sig = req.headers["stripe-signature"];
   if (!STRIPE_SECRET) {
     res.json({ received: true });
@@ -2132,7 +2110,7 @@ app.post("/api/onboarding", requireAuth, async (req, res) => {
   const { businessName, businessType, cities, services, pain, logoUrl, colors, connectedTools } = req.body;
   const subdomain = (businessName || "forge").toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 30) + "-" + userId.slice(0, 6);
   db.prepare(`UPDATE users SET business_name=?,business_type=?,business_cities=?,business_services=?,business_pain=?,brand_logo_url=?,brand_colors=?,connected_tools=?,onboarding_complete=1,subdomain=? WHERE id=?`).run(businessName || "My Business", businessType || "other", JSON.stringify(cities || []), JSON.stringify(services || []), pain || "", logoUrl || "", JSON.stringify(colors || {}), JSON.stringify(connectedTools || []), subdomain, userId);
-  db.prepare(`INSERT OR IGNORE INTO subscriptions (id,user_id,plan,tokens_limit,tokens_used) VALUES (?,?,'starter',5000000,0)`).run(`sub_${(0, import_uuid.v4)()}`, userId);
+  db.prepare(`INSERT OR IGNORE INTO subscriptions (id,user_id,plan,tokens_limit,tokens_used) VALUES (?,?,'starter',5000000,0)`).run(`sub_${uuidv4()}`, userId);
   if ((services || []).length && (cities || []).length) {
     const intents = ["informational", "commercial", "transactional", "local", "comparison"];
     const insertKw = db.prepare("INSERT OR IGNORE INTO keyword_matrix (id,user_id,service,city,intent,keyword) VALUES (?,?,?,?,?,?)");
@@ -2140,14 +2118,14 @@ app.post("/api/onboarding", requireAuth, async (req, res) => {
       for (const city of cities.slice(0, 20)) {
         for (const intent of intents) {
           const kw = intent === "informational" ? `how to ${svc}` : intent === "commercial" ? `best ${svc} in ${city}` : intent === "transactional" ? `${svc} cost ${city}` : intent === "local" ? `${svc} near me ${city}` : `${svc} vs alternative ${city}`;
-          insertKw.run(`km_${(0, import_uuid.v4)()}`, userId, svc, city, intent, kw);
+          insertKw.run(`km_${uuidv4()}`, userId, svc, city, intent, kw);
         }
       }
     }
   }
   const agents = BIZ_AGENT_TEMPLATES[businessType] || BIZ_AGENT_TEMPLATES.other || [];
   for (const a of agents) {
-    const pid = `persona_${(0, import_uuid.v4)()}`;
+    const pid = `persona_${uuidv4()}`;
     try {
       db.prepare("INSERT OR IGNORE INTO personas (id,user_id,name,icon,system_prompt,model,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(pid, userId, a.role, a.icon, a.prompt, "auto");
     } catch {
@@ -2204,10 +2182,10 @@ app.post("/api/onboarding/from-sentence", requireAuth, async (req, res) => {
   }
   const subdomain = businessName.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 30) + "-" + userId.slice(0, 6);
   db.prepare(`UPDATE users SET business_name=?,business_type=?,business_cities=?,business_services=?,business_pain=?,onboarding_complete=1,subdomain=? WHERE id=?`).run(businessName, businessType, JSON.stringify(cities), JSON.stringify(services), pain, subdomain, userId);
-  db.prepare(`INSERT OR IGNORE INTO subscriptions (id,user_id,plan,tokens_limit,tokens_used) VALUES (?,?,'starter',5000000,0)`).run(`sub_${(0, import_uuid.v4)()}`, userId);
+  db.prepare(`INSERT OR IGNORE INTO subscriptions (id,user_id,plan,tokens_limit,tokens_used) VALUES (?,?,'starter',5000000,0)`).run(`sub_${uuidv4()}`, userId);
   const agents = BIZ_AGENT_TEMPLATES[businessType] || BIZ_AGENT_TEMPLATES.other || [];
   for (const a of agents) {
-    const pid = `persona_${(0, import_uuid.v4)()}`;
+    const pid = `persona_${uuidv4()}`;
     try {
       db.prepare("INSERT OR IGNORE INTO personas (id,user_id,name,icon,system_prompt,model,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(pid, userId, a.role, a.icon, a.prompt, "auto");
     } catch {
@@ -2326,7 +2304,7 @@ app.get("/api/approvals", requireAuth, (req, res) => {
 });
 app.post("/api/approvals", requireAuth, (req, res) => {
   const { type, title, preview_data, content, platform, scheduled_for } = req.body;
-  const id = `appr_${(0, import_uuid.v4)()}`;
+  const id = `appr_${uuidv4()}`;
   db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview_data,content,platform,scheduled_for) VALUES (?,?,?,?,?,?,?,?)").run(id, req.user.sub, type, title, JSON.stringify(preview_data || {}), content || "", platform || "", scheduled_for || "");
   res.json({ success: true, data: { id } });
 });
@@ -2359,8 +2337,8 @@ app.post("/api/nightly/run", requireAuth, async (req, res) => {
   const created = [];
   const pendingKws = db.prepare("SELECT * FROM keyword_matrix WHERE user_id=? AND status=? LIMIT 7").all(userId, "pending");
   for (const kw of pendingKws.slice(0, 5)) {
-    const pageId = `seo_${(0, import_uuid.v4)()}`;
-    const approvalId = `appr_${(0, import_uuid.v4)()}`;
+    const pageId = `seo_${uuidv4()}`;
+    const approvalId = `appr_${uuidv4()}`;
     const wordCount = 850 + Math.floor(Math.random() * 300);
     const title = `${kw.keyword} \u2014 ${biz}`;
     const metaTitle = `${kw.keyword} | ${biz}`;
@@ -2388,7 +2366,7 @@ Contact us today for a free estimate on ${kw.keyword}.
   if (services.length) {
     const svc = services[Math.floor(Math.random() * services.length)];
     const city = cities[0] || "your area";
-    const socialId = `appr_${(0, import_uuid.v4)()}`;
+    const socialId = `appr_${uuidv4()}`;
     const caption = `\u{1F525} Need ${svc} in ${city}? ${biz} has you covered.
 
 Fast, reliable, and guaranteed satisfaction. DM us or call today for a free quote.
@@ -2397,13 +2375,13 @@ Fast, reliable, and guaranteed satisfaction. DM us or call today for a free quot
     db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview_data,content,platform,scheduled_for) VALUES (?,?,?,?,?,?,?,?)").run(socialId, userId, "social_post", `Instagram/Facebook Post \u2014 ${svc}`, JSON.stringify({ service: svc, city }), caption, "instagram,facebook", new Date(Date.now() + 864e5).toISOString());
     created.push(`Social: ${svc} post`);
   }
-  const reviewId = `appr_${(0, import_uuid.v4)()}`;
+  const reviewId = `appr_${uuidv4()}`;
   const reviewMsg = `Hi [Customer Name], thanks for choosing ${biz}! We hope everything went smoothly. If you had a great experience, we'd really appreciate a quick Google review \u2014 it helps us a lot: [REVIEW_LINK]
 
 If anything could have been better, please let us know directly at [EMAIL]. We want to make it right!`;
   db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview_data,content,platform) VALUES (?,?,?,?,?,?,?)").run(reviewId, userId, "review_request", "Review Request Template", JSON.stringify({ autoSendOnPayment: true }), reviewMsg, "sms,email");
   created.push("Review request template");
-  const runId = `run_${(0, import_uuid.v4)()}`;
+  const runId = `run_${uuidv4()}`;
   try {
     db.prepare("INSERT INTO nightly_runs (id,user_id,status,summary) VALUES (?,?,?,?)").run(runId, userId, "complete", JSON.stringify({ seo_pages: pendingKws.slice(0, 5).length, social_posts: services.length ? 1 : 0, review_requests: 1, created }));
   } catch {
@@ -2553,10 +2531,10 @@ app.post("/api/marketplace/:appId/install", requireAuth, (req, res) => {
     return;
   }
   try {
-    db.prepare("INSERT OR IGNORE INTO marketplace_installs (id,user_id,app_id,installed_at) VALUES (?,?,?,datetime('now'))").run((0, import_uuid.v4)(), userId, appId);
+    db.prepare("INSERT OR IGNORE INTO marketplace_installs (id,user_id,app_id,installed_at) VALUES (?,?,?,datetime('now'))").run(uuidv4(), userId, appId);
     const persona = db.prepare("SELECT business_type FROM users WHERE id=?").get(userId);
     db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview,status,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(
-      (0, import_uuid.v4)(),
+      uuidv4(),
       userId,
       "marketplace_install",
       `${app_def.icon} ${app_def.name} installed`,
@@ -2598,7 +2576,7 @@ app.post("/api/marketplace/publish", requireAuth, (req, res) => {
     res.status(400).json({ error: "name, description, prompt required" });
     return;
   }
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   const now = (/* @__PURE__ */ new Date()).toISOString();
   db.prepare(`INSERT INTO marketplace_listings (id,author_id,name,description,icon,category,prompt,tags,price,installs,rating,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,0,0,'published',?,?)`).run(id, userId, name, description, icon, category, prompt, JSON.stringify(tags), price, now, now);
   res.json({ success: true, data: { id, name, message: "Published to community marketplace!" } });
@@ -2610,7 +2588,7 @@ app.post("/api/marketplace/community/:id/install", requireAuth, (req, res) => {
     res.status(404).json({ error: "Listing not found" });
     return;
   }
-  db.prepare("INSERT OR IGNORE INTO marketplace_installs (id,user_id,app_id,installed_at) VALUES (?,?,?,datetime('now'))").run((0, import_uuid.v4)(), userId, listing.id);
+  db.prepare("INSERT OR IGNORE INTO marketplace_installs (id,user_id,app_id,installed_at) VALUES (?,?,?,datetime('now'))").run(uuidv4(), userId, listing.id);
   db.prepare("UPDATE marketplace_listings SET installs=installs+1, updated_at=? WHERE id=?").run((/* @__PURE__ */ new Date()).toISOString(), listing.id);
   res.json({ success: true, data: { id: listing.id, name: listing.name, prompt: listing.prompt } });
 });
@@ -2636,7 +2614,7 @@ app.post("/api/agents/debt-chaser/run", requireAuth, async (req, res) => {
   const results = [];
   for (const inv of invoices || []) {
     const tone = inv.days_overdue > 14 ? "firm and urgent" : inv.days_overdue > 7 ? "politely persistent" : "friendly reminder";
-    const aId = (0, import_uuid.v4)();
+    const aId = uuidv4();
     const preview = `Hi ${inv.client}, this is a ${tone} reminder about your $${inv.amount} invoice (${inv.days_overdue} days overdue).`;
     db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview,status,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(
       aId,
@@ -2657,7 +2635,7 @@ app.post("/api/agents/reputation-guard/run", requireAuth, async (req, res) => {
   const results = [];
   for (const rev of reviews || []) {
     const tone = rev.rating <= 2 ? "empathetic and solution-focused" : rev.rating === 3 ? "appreciative and improvement-focused" : "warm and grateful";
-    const aId = (0, import_uuid.v4)();
+    const aId = uuidv4();
     db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview,status,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(
       aId,
       userId,
@@ -2679,7 +2657,7 @@ app.post("/api/agents/competitor-watch/run", requireAuth, async (req, res) => {
     threat_level: "medium",
     recommendation: `Counter with your unique value prop around personalization`
   }));
-  const aId = (0, import_uuid.v4)();
+  const aId = uuidv4();
   db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview,status,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(
     aId,
     userId,
@@ -2706,7 +2684,7 @@ app.post("/api/agents/content-engine/run", requireAuth, async (req, res) => {
   ];
   for (const p of pieces) {
     db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview,status,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(
-      (0, import_uuid.v4)(),
+      uuidv4(),
       userId,
       "content_engine",
       p.title,
@@ -2722,7 +2700,7 @@ app.post("/api/agents/lead-nurturer/run", requireAuth, async (req, res) => {
   const results = [];
   for (const lead of leads || []) {
     const urgency = lead.last_contact_days > 30 ? "high" : lead.last_contact_days > 14 ? "medium" : "low";
-    const aId = (0, import_uuid.v4)();
+    const aId = uuidv4();
     db.prepare("INSERT INTO pending_approvals (id,user_id,type,title,preview,status,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(
       aId,
       userId,
@@ -3144,7 +3122,7 @@ function ensureDefaultAgents(userId) {
     { name: "Designer", color: "#BA7517", icon: "palette", system_prompt: "You are a UI/UX expert. Create beautiful, accessible HTML/CSS/React components and mockups. Output complete, renderable code.", tools: '["create_artifact"]' }
   ];
   defaults.forEach((d) => {
-    db.prepare("INSERT INTO workspace_agents (id,user_id,name,color,icon,system_prompt,tools,model,is_builtin) VALUES (?,?,?,?,?,?,?,?,?)").run((0, import_uuid.v4)(), userId, d.name, d.color, d.icon, d.system_prompt, d.tools, "forge-fast", 1);
+    db.prepare("INSERT INTO workspace_agents (id,user_id,name,color,icon,system_prompt,tools,model,is_builtin) VALUES (?,?,?,?,?,?,?,?,?)").run(uuidv4(), userId, d.name, d.color, d.icon, d.system_prompt, d.tools, "forge-fast", 1);
   });
 }
 app.get("/api/projects", requireAuth, (req, res) => {
@@ -3158,7 +3136,7 @@ app.post("/api/projects", requireAuth, (req, res) => {
     res.status(400).json({ success: false, error: "INVALID_INPUT", message: "name required" });
     return;
   }
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare("INSERT INTO projects (id,user_id,name,color,system_prompt) VALUES (?,?,?,?,?)").run(id, req.user.sub, name, color, system_prompt);
   res.status(201).json({ success: true, data: db.prepare("SELECT * FROM projects WHERE id=?").get(id) });
 });
@@ -3265,7 +3243,7 @@ app.get("/api/threads", requireAuth, (req, res) => {
 });
 app.post("/api/threads", requireAuth, (req, res) => {
   const { project_id, title = "New conversation", model = "forge-fast" } = req.body;
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare("INSERT INTO threads (id,user_id,project_id,title,model) VALUES (?,?,?,?,?)").run(id, req.user.sub, project_id || null, title, model);
   res.status(201).json({ success: true, data: db.prepare("SELECT * FROM threads WHERE id=?").get(id) });
 });
@@ -3384,7 +3362,7 @@ app.post("/api/threads/:id/messages", requireAuth, async (req, res) => {
   }
   const userId = req.user.sub;
   ensureSubscription(userId);
-  const userMsgId = (0, import_uuid.v4)();
+  const userMsgId = uuidv4();
   db.prepare("INSERT INTO messages (id,thread_id,role,content) VALUES (?,?,?,?)").run(userMsgId, thread.id, "user", content.trim());
   const msgCount = db.prepare("SELECT COUNT(*) as c FROM messages WHERE thread_id=?").get(thread.id).c;
   if (msgCount === 1) {
@@ -3589,7 +3567,7 @@ Only do this when the task is genuinely ambiguous in a way that changes the enti
   const apiKey = getUserKey(userId, provider);
   if (!apiKey) {
     const providerLabel = provider.charAt(0).toUpperCase() + provider.slice(1);
-    const asstMsgId = (0, import_uuid.v4)();
+    const asstMsgId = uuidv4();
     const errMsg = `\u26A0\uFE0F No ${providerLabel} API key found. Go to Settings \u2192 LLM Providers and add your ${providerLabel} key.`;
     db.prepare("INSERT INTO messages (id,thread_id,role,content) VALUES (?,?,?,?)").run(asstMsgId, thread.id, "assistant", errMsg);
     endSSE({ success: false, error: "NO_API_KEY", provider, data: { id: asstMsgId, role: "assistant", content: errMsg } });
@@ -3679,9 +3657,9 @@ Only do this when the task is genuinely ambiguous in a way that changes the enti
     const providerCost = result.promptTokens / 1e3 * costs.input + result.completionTokens / 1e3 * costs.output;
     const forgeRevenue = providerCost * (costs.markup || 1.3);
     const usedProvider = attempts.find((a) => a.model === usedModel)?.provider || provider;
-    db.prepare("INSERT INTO usage_logs (id,user_id,model,provider,prompt_tokens,completion_tokens,total_tokens,provider_cost,forge_revenue,markup_multiplier) VALUES (?,?,?,?,?,?,?,?,?,?)").run((0, import_uuid.v4)(), userId, usedModel, usedProvider, result.promptTokens, result.completionTokens, totalTokens, providerCost, forgeRevenue, costs.markup || 1.3);
+    db.prepare("INSERT INTO usage_logs (id,user_id,model,provider,prompt_tokens,completion_tokens,total_tokens,provider_cost,forge_revenue,markup_multiplier) VALUES (?,?,?,?,?,?,?,?,?,?)").run(uuidv4(), userId, usedModel, usedProvider, result.promptTokens, result.completionTokens, totalTokens, providerCost, forgeRevenue, costs.markup || 1.3);
     db.prepare("UPDATE subscriptions SET tokens_used=tokens_used+?,updated_at=datetime('now') WHERE user_id=?").run(totalTokens, userId);
-    const asstMsgId = (0, import_uuid.v4)();
+    const asstMsgId = uuidv4();
     db.prepare("INSERT INTO messages (id,thread_id,role,content,tokens,model) VALUES (?,?,?,?,?,?)").run(asstMsgId, thread.id, "assistant", result.content, totalTokens, usedModel);
     db.prepare("UPDATE threads SET updated_at=datetime('now'),total_tokens=total_tokens+? WHERE id=?").run(totalTokens, thread.id);
     const toolSummary = result.toolCalls?.length ? ` \u2014 ${result.toolCalls.length} tool${result.toolCalls.length > 1 ? "s" : ""} used` : "";
@@ -3724,7 +3702,7 @@ ${summaryPrompt.slice(0, 8e3)}` }
     summaryText = `[Compacted: ${toSummarize.length} earlier messages summarized to save context space.]`;
   }
   const compactedCount = toSummarize.length;
-  const summaryMsgId = (0, import_uuid.v4)();
+  const summaryMsgId = uuidv4();
   db.prepare("DELETE FROM messages WHERE id IN (" + toSummarize.map(() => "?").join(",") + ")").run(...toSummarize.map((m) => m.id));
   db.prepare("INSERT INTO messages (id,thread_id,role,content,tokens,model) VALUES (?,?,?,?,?,?)").run(
     summaryMsgId,
@@ -3796,12 +3774,12 @@ app.post("/api/threads/:id/fork", requireAuth, (req, res) => {
   const allMsgs = db.prepare("SELECT * FROM messages WHERE thread_id=? ORDER BY created_at ASC").all(srcId);
   const cutIdx = from_message_id ? allMsgs.findIndex((m) => m.id === from_message_id) : allMsgs.length;
   const msgsToCopy = cutIdx >= 0 ? allMsgs.slice(0, cutIdx + 1) : allMsgs;
-  const newId = (0, import_uuid.v4)();
+  const newId = uuidv4();
   const newTitle = title || `Fork of ${src.title || "conversation"}`;
   db.prepare("INSERT INTO threads (id,user_id,project_id,title,model) VALUES (?,?,?,?,?)").run(newId, uid, src.project_id || null, newTitle, src.model || "forge-fast");
   const insertMsg = db.prepare("INSERT INTO messages (id,thread_id,role,content,model,created_at,pinned) VALUES (?,?,?,?,?,?,?)");
   for (const m of msgsToCopy) {
-    insertMsg.run((0, import_uuid.v4)(), newId, m.role, m.content, m.model, m.created_at, m.pinned || 0);
+    insertMsg.run(uuidv4(), newId, m.role, m.content, m.model, m.created_at, m.pinned || 0);
   }
   const newThread = db.prepare("SELECT * FROM threads WHERE id=?").get(newId);
   res.status(201).json({ success: true, data: newThread, message_count: msgsToCopy.length });
@@ -3986,7 +3964,7 @@ app.get("/api/artifacts", requireAuth, (req, res) => {
 });
 app.post("/api/artifacts", requireAuth, (req, res) => {
   const { title = "Untitled", type = "code", content = "", language = "", project_id, thread_id, message_id } = req.body;
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare("INSERT INTO artifacts (id,user_id,project_id,thread_id,message_id,type,title,content,language) VALUES (?,?,?,?,?,?,?,?,?)").run(id, req.user.sub, project_id || null, thread_id || null, message_id || null, type, title, content, language);
   res.status(201).json({ success: true, data: db.prepare("SELECT * FROM artifacts WHERE id=?").get(id) });
 });
@@ -4025,7 +4003,7 @@ app.post("/api/workspace-agents", requireAuth, (req, res) => {
     res.status(400).json({ success: false, error: "INVALID_INPUT", message: "name required" });
     return;
   }
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare("INSERT INTO workspace_agents (id,user_id,name,color,icon,system_prompt,tools,model) VALUES (?,?,?,?,?,?,?,?)").run(id, req.user.sub, name, color, icon, system_prompt, JSON.stringify(tools), model);
   res.status(201).json({ success: true, data: db.prepare("SELECT * FROM workspace_agents WHERE id=?").get(id) });
 });
@@ -4099,7 +4077,7 @@ app.post("/api/workspace-tasks", requireAuth, (req, res) => {
     res.status(400).json({ success: false, error: "INVALID_INPUT", message: "title required" });
     return;
   }
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare("INSERT INTO workspace_tasks (id,user_id,project_id,thread_id,title,description,agent_id,status) VALUES (?,?,?,?,?,?,?,?)").run(id, req.user.sub, project_id || null, thread_id || null, title, description, agent_id || null, status2);
   res.status(201).json({ success: true, data: db.prepare("SELECT * FROM workspace_tasks WHERE id=?").get(id) });
 });
@@ -4121,7 +4099,7 @@ app.post("/api/workspace-tasks/bulk", requireAuth, (req, res) => {
   const created = [];
   const insert = db.prepare("INSERT INTO workspace_tasks (id,user_id,project_id,thread_id,title,description,status) VALUES (?,?,?,?,?,?,?)");
   const insertMany = db.transaction((ts) => ts.forEach((t) => {
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     insert.run(id, req.user.sub, project_id || null, thread_id || null, t.title, t.description || "", t.status || "todo");
     created.push(db.prepare("SELECT * FROM workspace_tasks WHERE id=?").get(id));
   }));
@@ -4240,7 +4218,7 @@ app.post("/api/dispatch/run", requireAuth, async (req, res) => {
     return;
   }
   const ids = agent_id ? [agent_id] : agent_ids;
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare("INSERT INTO dispatch_runs (id,user_id,project_id,prompt,agent_ids) VALUES (?,?,?,?,?)").run(id, req.user.sub, project_id || null, prompt.trim(), JSON.stringify(ids));
   res.json({ success: true, run_id: id });
   executeDispatchRun(id, req.user.sub).catch((err) => console.error("Dispatch run error:", err));
@@ -4317,7 +4295,7 @@ app.post("/api/dispatch", requireAuth, async (req, res) => {
     res.status(400).json({ success: false, error: "INVALID_INPUT", message: "prompt required" });
     return;
   }
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare("INSERT INTO dispatch_runs (id,user_id,project_id,prompt,agent_ids) VALUES (?,?,?,?,?)").run(id, req.user.sub, project_id || null, prompt.trim(), JSON.stringify(agent_ids));
   res.json({ success: true, run_id: id });
   executeDispatchRun(id, req.user.sub).catch((err) => console.error("Dispatch run error:", err));
@@ -4587,7 +4565,7 @@ app.post("/api/threads/:id/memory", requireAuth, (req, res) => {
     res.status(400).json({ success: false, error: "topic and insight required" });
     return;
   }
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare("INSERT INTO thread_memories (id,user_id,thread_id,topic,insight) VALUES (?,?,?,?,?)").run(id, req.user.sub, req.params.id, topic.trim(), insight.trim());
   res.json({ success: true, data: { id } });
 });
@@ -4624,7 +4602,7 @@ app.post("/api/superagent/harvest", requireAuth, async (req, res) => {
     if (existing) {
       db.prepare("UPDATE forge_memory SET frequency=frequency+1,strength=MIN(strength+0.15,10.0),insight=?,updated_at=datetime('now') WHERE id=?").run(ins, existing.id);
     } else {
-      db.prepare("INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength) VALUES (?,?,?,?,?,1,1.0)").run((0, import_uuid.v4)(), userId, t, ins, sourceThreadId || null);
+      db.prepare("INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength) VALUES (?,?,?,?,?,1,1.0)").run(uuidv4(), userId, t, ins, sourceThreadId || null);
       harvested++;
     }
   }
@@ -4722,7 +4700,7 @@ data: ${JSON.stringify(data)}
     const memContext = [...memories, ...threadMems].map((m) => `\u2022 ${m.topic}: ${m.insight}`).join("\n");
     const history = db.prepare("SELECT role,content FROM superagent_messages WHERE user_id=? ORDER BY created_at DESC LIMIT 20").all(userId);
     history.reverse();
-    db.prepare("INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, "user", message.trim());
+    db.prepare("INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)").run(uuidv4(), userId, "user", message.trim());
     const systemPrompt = `You are Forge SuperAgent \u2014 the most powerful agent in Forge, with FULL control and real tools.
 ${memContext ? `
 ## Your Memory Bank (everything you've learned about this user):
@@ -4794,7 +4772,7 @@ Rules: never refuse, never say "I can't access X" \u2014 call the tool. Chain to
         result = await callLLM(provider, apiKey, actualModel, llmMessages);
       }
     }
-    db.prepare("INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, "assistant", result.content);
+    db.prepare("INSERT INTO superagent_messages (id,user_id,role,content) VALUES (?,?,?,?)").run(uuidv4(), userId, "assistant", result.content);
     emitAgentActivity(userId, { type: "done", message: `\u2705 SuperAgent response ready` });
     send("result", { success: true, data: { role: "assistant", content: result.content, model: rawModel, tokensUsed: result.promptTokens + result.completionTokens, tools, toolCalls: result.toolCalls || [] } });
   } catch (err) {
@@ -4835,7 +4813,7 @@ app.post("/api/brain", requireAuth, (req, res) => {
     db.prepare("UPDATE forge_memory SET frequency=frequency+1,strength=MIN(strength+0.2,10.0),insight=?,updated_at=datetime('now') WHERE id=?").run(insight, existing.id);
     res.json({ success: true, id: existing.id, reinforced: true });
   } else {
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     const category = categorizeMemory(topic, insight);
     db.prepare("INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength,category,last_reinforced_at) VALUES (?,?,?,?,?,1,1.0,?,datetime('now'))").run(id, userId, topic, insight, source_thread_id || null, category);
     res.json({ success: true, id, reinforced: false, category });
@@ -4894,7 +4872,7 @@ ${transcript.slice(0, 4e3)}` }
       if (existing) {
         db.prepare("UPDATE forge_memory SET frequency=frequency+1,strength=MIN(strength+0.15,10.0),insight=?,updated_at=datetime('now') WHERE id=?").run(item.insight, existing.id);
       } else {
-        db.prepare("INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength) VALUES (?,?,?,?,?,1,1.0)").run((0, import_uuid.v4)(), userId, item.topic, item.insight, thread_id || null);
+        db.prepare("INSERT INTO forge_memory (id,user_id,topic,insight,source_thread_id,frequency,strength) VALUES (?,?,?,?,?,1,1.0)").run(uuidv4(), userId, item.topic, item.insight, thread_id || null);
       }
       count++;
     }
@@ -4983,7 +4961,7 @@ app.post("/api/goals", requireAuth, async (req, res) => {
     res.status(400).json({ success: false, error: "title required" });
     return;
   }
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare("INSERT INTO goals (id,user_id,thread_id,title,description) VALUES (?,?,?,?,?)").run(id, userId, thread_id || null, title.trim(), description);
   try {
     const { provider, apiKey, model } = getUserLLMKey(userId);
@@ -4998,7 +4976,7 @@ ${description}` }
         const parsed = m ? JSON.parse(m[0]) : {};
         (parsed.tasks || []).slice(0, 6).forEach((t) => {
           if (t)
-            db.prepare("INSERT INTO goal_tasks (id,goal_id,user_id,title) VALUES (?,?,?,?)").run((0, import_uuid.v4)(), id, userId, t);
+            db.prepare("INSERT INTO goal_tasks (id,goal_id,user_id,title) VALUES (?,?,?,?)").run(uuidv4(), id, userId, t);
         });
       } catch {
       }
@@ -5057,7 +5035,7 @@ app.post("/api/userfiles", requireAuth, async (req, res) => {
     res.status(400).json({ success: false, error: "filename and content required" });
     return;
   }
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   const contentStr = String(content);
   const isTextMime = /^text\//.test(mime_type) || /\.(txt|md|csv|json|js|ts|tsx|jsx|html|css|py|yml|yaml|xml|sql|sh|log)$/i.test(filename);
   const size = isTextMime ? Buffer.byteLength(contentStr, "utf8") : Buffer.from(contentStr, "base64").length;
@@ -5165,8 +5143,8 @@ app.post("/api/webhooks", requireAuth, (req, res) => {
     res.status(400).json({ success: false, error: "name and prompt required" });
     return;
   }
-  const id = (0, import_uuid.v4)();
-  const secret = import_crypto.default.randomBytes(16).toString("hex");
+  const id = uuidv4();
+  const secret = crypto.randomBytes(16).toString("hex");
   db.prepare("INSERT INTO webhook_triggers (id,user_id,name,event_type,prompt,secret) VALUES (?,?,?,?,?,?)").run(id, userId, name, event_type, prompt, secret);
   res.status(201).json({ success: true, data: { id, name, event_type, secret, webhook_url: `/api/webhooks/trigger/${id}/${secret}` } });
 });
@@ -5241,7 +5219,7 @@ app.post("/api/forge-optimizer/:threadId/apply", requireAuth, (req, res) => {
       const summary = `[Optimized: ${toSummarize.length} earlier messages summarized. Topics: ${toSummarize.filter((m) => m.role === "user").slice(0, 3).map((m) => m.content?.slice(0, 60)).join("; ")}]`;
       const ids = toSummarize.map((m) => m.id);
       db.prepare(`DELETE FROM messages WHERE id IN (${ids.map(() => "?").join(",")})`).run(...ids);
-      db.prepare('INSERT INTO messages (id,thread_id,role,content,tokens_in,tokens_out,created_at) VALUES (?,?,?,?,?,?,datetime("now","-1 second"))').run((0, import_uuid.v4)(), threadId, "system", summary, 0, 0);
+      db.prepare('INSERT INTO messages (id,thread_id,role,content,tokens_in,tokens_out,created_at) VALUES (?,?,?,?,?,?,datetime("now","-1 second"))').run(uuidv4(), threadId, "system", summary, 0, 0);
     }
     res.json({ success: true, message: "Optimization applied", savedMessages: Math.max(0, messages.length - 12) });
   } catch (e) {
@@ -5296,7 +5274,7 @@ app.post("/api/webhooks", requireAuth, (req, res) => {
     const { url, events = [], secret } = req.body;
     if (!url)
       return res.status(400).json({ success: false, error: "url required" });
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     const sec = secret || require("crypto").randomBytes(16).toString("hex");
     db.prepare("INSERT INTO webhooks (id,user_id,url,events,secret) VALUES (?,?,?,?,?)").run(id, req.user.sub, url, JSON.stringify(events), sec);
     res.status(201).json({ success: true, id, secret: sec });
@@ -5338,7 +5316,7 @@ app.post("/api/personas", requireAuth, (req, res) => {
     res.status(400).json({ error: "name and system_prompt required" });
     return;
   }
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare("INSERT INTO personas (id,user_id,name,system_prompt,model,temperature,icon) VALUES (?,?,?,?,?,?,?)").run(id, req.user.sub, name, system_prompt, model || null, temperature, icon);
   res.json({ success: true, data: { id, name, system_prompt, model, temperature, icon } });
 });
@@ -5400,7 +5378,7 @@ app.get("/api/passport", requireAuth, (req, res) => {
   const uid = req.user.sub;
   let p = db.prepare("SELECT * FROM agent_passports WHERE user_id=? ORDER BY created_at DESC LIMIT 1").get(uid);
   if (!p) {
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     const slug = "twin-" + Math.random().toString(36).slice(2, 10);
     db.prepare("INSERT INTO agent_passports (id,user_id,public_slug) VALUES (?,?,?)").run(id, uid, slug);
     p = db.prepare("SELECT * FROM agent_passports WHERE id=?").get(id);
@@ -5498,7 +5476,7 @@ app.post("/api/prompts", requireAuth, (req, res) => {
     res.status(400).json({ error: "title and content required" });
     return;
   }
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare("INSERT INTO prompt_cache (id,user_id,title,content,category) VALUES (?,?,?,?,?)").run(id, req.user.sub, title, content, category);
   res.json({ success: true, data: { id, title, content, category } });
 });
@@ -5769,7 +5747,7 @@ app.post("/api/agents/connector/draft", requireAuth, async (req, res) => {
   ).run(uid, targetName || "contact", targetBusiness || "company", JSON.stringify({ draft, targetName, targetBusiness, partnershipType }));
   res.json({ success: true, data: { draft, approvalRequired: true } });
 });
-import_node_cron.default.schedule("0 2 * * *", async () => {
+cron.schedule("0 2 * * *", async () => {
   const users = db.prepare("SELECT id FROM users").all();
   for (const u of users) {
     const bizRow = db.prepare(`SELECT meta_value FROM user_meta WHERE user_id=? AND meta_key='onboarding'`).get(u.id);
@@ -5941,7 +5919,7 @@ try {
     if (!token)
       return next(new Error("No token"));
     try {
-      socket.user = import_jsonwebtoken.default.verify(token, JWT_SECRET);
+      socket.user = jwt.verify(token, JWT_SECRET);
       next();
     } catch {
       next(new Error("Invalid token"));
@@ -198444,7 +198422,7 @@ app.post("/api/deep-research/run", requireAuth, async (req, res) => {
   const { topic, depth = "standard" } = req.body;
   if (!topic)
     return res.status(400).json({ error: "topic required" });
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare(`INSERT INTO deep_research_sessions (id,user_id,topic,depth) VALUES (?,?,?,?)`).run(id, req.user.id, topic, depth);
   res.json({ sessionId: id });
   (async () => {
@@ -198544,7 +198522,7 @@ app.post("/api/study/generate", requireAuth, async (req, res) => {
   try {
     const { content } = await callLLM(key.provider, key.apiKey, key.model, [{ role: "user", content: prompts[mode] || prompts.flashcards }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO study_sessions (id,user_id,topic,mode,content) VALUES (?,?,?,?,?)`).run(id, req.user.id, topic, mode, JSON.stringify(data));
     res.json({ id, data, mode, topic });
   } catch (e) {
@@ -198569,7 +198547,7 @@ app.post("/api/canvas/create", requireAuth, async (req, res) => {
     const { content } = await callLLM(key.provider, key.apiKey, key.model, [{ role: "user", content: `Create ${typeInstr[type] || typeInstr.document} for: "${prompt}". Output only the content itself.` }]);
     const titleMatch = content.match(/^#\s+(.+)/m) || content.match(/^(.{0,60})/);
     const title = titleMatch ? titleMatch[1].trim().replace(/^#+\s*/, "").slice(0, 60) : prompt.slice(0, 60);
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO canvases (id,user_id,title,type,content) VALUES (?,?,?,?,?)`).run(id, req.user.id, title, type, content);
     res.json({ id, title, type, content, version: 1 });
   } catch (e) {
@@ -198612,7 +198590,7 @@ app.post("/api/memory", requireAuth, (req, res) => {
   const { key, value, category = "facts" } = req.body;
   if (!key || !value)
     return res.status(400).json({ error: "key and value required" });
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare(`INSERT INTO user_memory (id,user_id,key,value,category) VALUES (?,?,?,?,?)`).run(id, req.user.id, key, value, category);
   res.json({ id, key, value, category });
 });
@@ -198667,7 +198645,7 @@ app.post("/api/autonomy/run", requireAuth, async (req, res) => {
   const { goal } = req.body;
   if (!goal)
     return res.status(400).json({ error: "goal required" });
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare(`INSERT INTO autonomy_sessions (id,user_id,goal) VALUES (?,?,?)`).run(id, req.user.id, goal);
   res.json({ sessionId: id });
   (async () => {
@@ -198796,7 +198774,7 @@ Return JSON: {"features":[{"title":"...","description":"...","type":"agent|ui|in
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
     const inserted = [];
     for (const f of data.features || []) {
-      const id = (0, import_uuid.v4)();
+      const id = uuidv4();
       db.prepare(`INSERT INTO dream_log (id,title,description,type,iq_delta) VALUES (?,?,?,?,?)`).run(id, f.title, f.description + "\n\n" + f.wow_factor, f.type || "feature", f.iq_delta || 3);
       inserted.push({ id, ...f });
     }
@@ -198845,7 +198823,7 @@ ${prompt}
 
 Return JSON: {"optimized":"the improved prompt","improvement_pct":35,"improvements":["what was improved"],"techniques":["prompt techniques used"],"explanation":"why these changes help"}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO prompt_optimizations (id,user_id,original,optimized,improvement_pct) VALUES (?,?,?,?,?)`).run(id, req.user.id, prompt, data.optimized || prompt, data.improvement_pct || 0);
     res.json({ id, ...data });
   } catch (e) {
@@ -198867,7 +198845,7 @@ app.post("/api/shadow/run", requireAuth, async (req, res) => {
     const [ra, rb] = await Promise.allSettled([callLLM(key.provider, key.apiKey, ma, msgs), callLLM(key.provider, key.apiKey, mb, msgs)]);
     const respA = ra.status === "fulfilled" ? ra.value.content : `Error: ${ra.reason?.message}`;
     const respB = rb.status === "fulfilled" ? rb.value.content : `Error: ${rb.reason?.message}`;
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO shadow_runs (id,user_id,prompt,model_a,model_b,response_a,response_b) VALUES (?,?,?,?,?,?,?)`).run(id, req.user.id, prompt, ma, mb, respA, respB);
     res.json({ id, prompt, model_a: ma, model_b: mb, response_a: respA, response_b: respB });
   } catch (e) {
@@ -198904,7 +198882,7 @@ app.post("/api/debate/run", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "topic required" });
   const key = getUserLLMKey(req.user.id);
   try {
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     const [sideA, sideB] = await Promise.all([
       callLLM(key.provider, key.apiKey, key.model, [{ role: "user", content: `You are Debater A \u2014 argue STRONGLY IN FAVOR of: "${topic}". Make ${rounds} compelling arguments. Be persuasive, use evidence, be bold. Format as a debate speech.` }]),
       callLLM(key.provider, key.apiKey, key.model, [{ role: "user", content: `You are Debater B \u2014 argue STRONGLY AGAINST: "${topic}". Make ${rounds} compelling counter-arguments. Be persuasive, use evidence, be bold. Format as a debate speech.` }])
@@ -198934,7 +198912,7 @@ app.post("/api/time-capsule", requireAuth, (req, res) => {
   const { message, deliver_at } = req.body;
   if (!message || !deliver_at)
     return res.status(400).json({ error: "message and deliver_at required" });
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare(`INSERT INTO time_capsules (id,user_id,message,deliver_at) VALUES (?,?,?,?)`).run(id, req.user.id, message, deliver_at);
   res.json({ id, message, deliver_at });
 });
@@ -198965,7 +198943,7 @@ ${code}
 
 Return JSON: {"language":"detected language","summary":"one-line what this does","lines":[{"line_range":"1-3","code":"the code snippet","explanation":"what it does","concept":"key programming concept used"}],"concepts":["list of key concepts"],"complexity":"simple|moderate|complex","suggested_improvements":["..."]}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO code_explanations (id,user_id,code,language,explanation) VALUES (?,?,?,?,?)`).run(id, req.user.id, code, data.language || language, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -198985,7 +198963,7 @@ app.post("/api/idea/validate", requireAuth, async (req, res) => {
 
 Return JSON: {"score":72,"verdict":"pass|fail|promising","one_liner":"blunt one-liner","strengths":["..."],"weaknesses":["..."],"risks":["..."],"market_size":"$X billion","competition":["competitors"],"advice":"key advice","pivot":"suggested pivot","similar_successes":["companies"],"timeline_to_revenue":"months"}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO idea_validations (id,user_id,idea,report,score) VALUES (?,?,?,?,?)`).run(id, req.user.id, idea, JSON.stringify(data), data.score || 50);
     res.json({ id, ...data });
   } catch (e) {
@@ -199008,7 +198986,7 @@ app.post("/api/tone/rewrite", requireAuth, async (req, res) => {
 
 Return JSON: {"rewritten":"...","changes":"what changed and why","word_count_original":${text.split(" ").length},"word_count_new":0}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO tone_rewrites (id,user_id,original,tone,rewritten) VALUES (?,?,?,?,?)`).run(id, req.user.id, text, tone, data.rewritten || text);
     res.json({ id, ...data, tone });
   } catch (e) {
@@ -199039,7 +199017,7 @@ ${job_desc}
 
 Return JSON: {"resume":"full resume text","score":85,"match_reasons":["why this candidate fits"],"gaps":["missing skills"],"keywords_used":["ATS keywords"],"sections":{"summary":"...","experience":"...","skills":"...","education":"..."}}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO resumes (id,user_id,experience,job_desc,resume,score) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, experience, job_desc, data.resume || "", data.score || 0);
     res.json({ id, ...data });
   } catch (e) {
@@ -199064,7 +199042,7 @@ CONTEXT: ${context}
 
 Return JSON: {"counter_email":"full drafted response","tactics":["negotiation tactics used"],"leverage_points":["your leverage"],"what_to_ask_for":["priority asks"],"tone":"assertive/collaborative/firm","risk":"low/medium/high","alternatives":["walk-away options"]}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO email_negotiations (id,user_id,original,context,counter,tactics) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, original, context, data.counter_email || "", JSON.stringify(data.tactics || []));
     res.json({ id, ...data });
   } catch (e) {
@@ -199088,7 +199066,7 @@ Write the opening scene (150-200 words), then give exactly 3 choices for what ha
 
 Return JSON: {"opening":"the story opening","choices":["Choice A: ...","Choice B: ...","Choice C: ..."]}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO stories (id,user_id,premise,genre,current_story,choices) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, premise, genre, data.opening || "", JSON.stringify(data.choices || []));
     res.json({ id, opening: data.opening, choices: data.choices, genre, turns: 0 });
   } catch (e) {
@@ -199137,7 +199115,7 @@ ${transcript}
 
 Return JSON: {"summary":"2-3 sentence summary","action_items":[{"task":"...","owner":"...","deadline":"..."}],"decisions":["key decisions"],"topics_covered":["main topics"],"blockers":["blockers"],"next_meeting":"suggested focus","sentiment":"positive/neutral/negative","duration_estimate":"minutes"}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO meeting_summaries (id,user_id,transcript,summary,action_items,decisions) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, transcript, data.summary || "", JSON.stringify(data.action_items || []), JSON.stringify(data.decisions || []));
     res.json({ id, ...data });
   } catch (e) {
@@ -199157,7 +199135,7 @@ app.post("/api/competitor/analyze", requireAuth, async (req, res) => {
 
 Return JSON: {"company":"${company}","overview":"what they do","business_model":"how they make money","products":["main products"],"strengths":["key strengths"],"weaknesses":["known weaknesses"],"pricing":"pricing model","target_market":"who they sell to","tech_stack":["technologies"],"recent_moves":["recent news"],"opportunities_against_them":["how to compete"],"threat_level":"low/medium/high","verdict":"overall assessment"}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO competitor_reports (id,user_id,company,report) VALUES (?,?,?,?)`).run(id, req.user.id, company, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -199167,8 +199145,8 @@ Return JSON: {"company":"${company}","overview":"what they do","business_model":
 app.get("/api/competitor/history", requireAuth, (req, res) => {
   res.json({ history: db.prepare(`SELECT id,company,created_at FROM competitor_reports WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id) });
 });
-(0, import_hermes.setupHermes)(app, db, { requireAuth, getUserLLMKey, callLLM, uuidv4: import_uuid.v4 });
-(0, import_operator.setupOperator)(app, { db, requireAuth, getUserLLMKey, callLLM, uuidv4: import_uuid.v4 });
+setupHermes(app, db, { requireAuth, getUserLLMKey, callLLM, uuidv4 });
+setupOperator(app, { db, requireAuth, getUserLLMKey, callLLM, uuidv4 });
 db.exec(`CREATE TABLE IF NOT EXISTS legal_reviews (id TEXT PRIMARY KEY, user_id TEXT, document TEXT, doc_type TEXT DEFAULT 'contract', review TEXT DEFAULT '', risk_level TEXT DEFAULT 'medium', created_at TEXT DEFAULT (datetime('now')))`);
 db.exec(`CREATE TABLE IF NOT EXISTS finance_advice (id TEXT PRIMARY KEY, user_id TEXT, situation TEXT, advice TEXT DEFAULT '', action_plan TEXT DEFAULT '[]', created_at TEXT DEFAULT (datetime('now')))`);
 db.exec(`CREATE TABLE IF NOT EXISTS language_sessions (id TEXT PRIMARY KEY, user_id TEXT, language TEXT, level TEXT DEFAULT 'beginner', topic TEXT DEFAULT '', lesson TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`);
@@ -199187,7 +199165,7 @@ ${document}
 
 Return JSON: {"summary":"what this document does in 2 sentences","risk_level":"low|medium|high","red_flags":[{"clause":"quoted text","issue":"what's wrong","severity":"low|medium|high","plain_english":"what it means"}],"good_clauses":["protective clauses"],"missing_protections":["what should be there but isn't"],"questions_to_ask":["questions to ask the other party"],"verdict":"sign/negotiate/walk-away","key_dates":["important dates or deadlines"],"plain_english_summary":"full plain-English breakdown"}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO legal_reviews (id,user_id,document,doc_type,review,risk_level) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, document, doc_type, JSON.stringify(data), data.risk_level || "medium");
     res.json({ id, ...data });
   } catch (e) {
@@ -199210,7 +199188,7 @@ ${situation}
 
 Return JSON: {"assessment":"overall financial health assessment","action_plan":[{"priority":1,"action":"...","why":"...","timeline":"...","estimated_impact":"..."}],"quick_wins":["things to do this week"],"mistakes_to_avoid":["common mistakes"],"resources":["books/tools/concepts to learn"],"savings_rate_recommendation":"X%","emergency_fund_target":"$X or X months","investment_priority":["order of investment accounts to fill"],"disclaimer":"always consult a licensed financial advisor"}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO finance_advice (id,user_id,situation,advice,action_plan) VALUES (?,?,?,?,?)`).run(id, req.user.id, situation, data.assessment || "", JSON.stringify(data.action_plan || []));
     res.json({ id, ...data });
   } catch (e) {
@@ -199230,7 +199208,7 @@ app.post("/api/language/lesson", requireAuth, async (req, res) => {
 
 Return JSON: {"language":"${language}","level":"${level}","topic":"${topic}","intro":"welcoming intro","vocabulary":[{"word":"...","pronunciation":"...","meaning":"...","example":"...","example_translation":"..."}],"grammar_point":{"rule":"...","explanation":"...","examples":["..."]},"practice_sentences":[{"native":"...","translation":"...","notes":"..."}],"cultural_note":"interesting cultural context","homework":"practice exercise for the student","next_lesson":"suggested next topic"}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO language_sessions (id,user_id,language,level,topic,lesson) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, language, level, topic, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -199264,7 +199242,7 @@ app.post("/api/flashcards/generate", requireAuth, async (req, res) => {
 
 Return JSON: {"topic":"${topic}","cards":[{"id":1,"front":"question or term","back":"answer or definition","hint":"optional hint","tags":["tag1"]}],"study_tips":["tips for studying this topic"]}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO flashcard_sets (id,user_id,topic,cards) VALUES (?,?,?,?)`).run(id, req.user.id, topic, JSON.stringify(data.cards || []));
     res.json({ id, ...data });
   } catch (e) {
@@ -199299,7 +199277,7 @@ ABOUT THE AUTHOR: ${about || "a professional"}
 Return JSON: {"post":"the full LinkedIn post (use line breaks, emojis sparingly)","hooks":["3 alternative opening lines to test"],"hashtags":["5-8 relevant hashtags"],"cta":"call to action","predicted_engagement":"low/medium/high/viral","why_it_works":"explanation of what makes this post effective","best_time_to_post":"day and time recommendation","character_count":0}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
     data.character_count = (data.post || "").length;
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO linkedin_posts (id,user_id,topic,angle,post,hooks) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, topic, angle, data.post || "", JSON.stringify(data.hooks || []));
     res.json({ id, ...data });
   } catch (e) {
@@ -199319,7 +199297,7 @@ app.post("/api/habits", requireAuth, (req, res) => {
   const { name, emoji = "\u2B50", target_days = 7 } = req.body;
   if (!name)
     return res.status(400).json({ error: "name required" });
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   db.prepare(`INSERT INTO habits (id,user_id,name,emoji,target_days) VALUES (?,?,?,?,?)`).run(id, req.user.id, name, emoji, target_days);
   res.json({ id, name, emoji, target_days });
 });
@@ -199345,7 +199323,7 @@ app.get("/api/habits", requireAuth, (req, res) => {
 app.post("/api/habits/:id/checkin", requireAuth, async (req, res) => {
   const { note = "", date } = req.body;
   const d = date || (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-  const id = (0, import_uuid.v4)();
+  const id = uuidv4();
   try {
     db.prepare(`INSERT INTO habit_checkins (id,habit_id,user_id,checked_in_on,note) VALUES (?,?,?,?,?)`).run(id, req.params.id, req.user.id, d, note);
   } catch (e) {
@@ -199388,7 +199366,7 @@ Target length: ~${words} words (${duration_mins} min at 130 wpm)
 Return JSON: {"speech":"full speech text","word_count":0,"tips":["delivery tip 1","tip 2","tip 3"],"opening_hook":"the first sentence","key_moments":["emotional peaks in the speech"],"suggested_pauses":["where to pause for effect"]}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
     data.word_count = (data.speech || "").split(" ").length;
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO speeches (id,user_id,occasion,tone,duration_mins,about,speech,tips) VALUES (?,?,?,?,?,?,?,?)`).run(id, req.user.id, occasion, tone, duration_mins, about, data.speech || "", JSON.stringify(data.tips || []));
     res.json({ id, ...data });
   } catch (e) {
@@ -199410,7 +199388,7 @@ Context: ${context || "general purchase"}
 
 Return JSON: {"script":"full word-for-word negotiation script","opening_line":"exact first thing to say","tactics":["specific tactics to use"],"leverage_points":["why they might say yes"],"fallbacks":["if they say no, say this"],"expected_savings":"realistic estimate","success_probability":"low/medium/high","body_language_tips":["in-person tips"],"timing_tip":"best time to negotiate"}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO price_negotiations (id,user_id,item,current_price,target_price,script,tactics) VALUES (?,?,?,?,?,?,?)`).run(id, req.user.id, item, current_price, target_price, data.script || "", JSON.stringify(data.tactics || []));
     res.json({ id, ...data });
   } catch (e) {
@@ -199430,7 +199408,7 @@ ${email}
 
 Return JSON: {"roast":"funny but constructive roast of the email (2-3 sentences)","issues":["specific problem 1","problem 2","problem 3"],"rewrite":"perfect rewritten version of the email","improvements":["what was improved"],"grade":"F/D/C/B/A","score":45}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO email_roasts (id,user_id,original,roast,rewrite,issues) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, email, data.roast || "", data.rewrite || "", JSON.stringify(data.issues || []));
     res.json({ id, ...data });
   } catch (e) {
@@ -199452,7 +199430,7 @@ Style preference: ${style}
 
 Return JSON: {"names":[{"name":"...","domain":"name.com (likely available/taken)","meaning":"...","why_it_works":"...","vibe":"modern/classic/techy/playful/premium","score":85,"tagline":"suggested tagline"}],"naming_rationale":"overall approach used","avoid":["names/words to avoid in this space"]}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO startup_names (id,user_id,description,names) VALUES (?,?,?,?)`).run(id, req.user.id, description, JSON.stringify(data.names || []));
     res.json({ id, ...data });
   } catch (e) {
@@ -199482,7 +199460,7 @@ Tone: ${tone}
 Return JSON: {"letter":"full cover letter text","subject_line":"email subject line","opening_hook":"first sentence","key_highlights":["what makes this candidate stand out 1","2","3"],"closing_cta":"the call to action line","word_count":0}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
     data.word_count = (data.letter || "").split(" ").length;
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO cover_letters (id,user_id,job_title,company,resume_summary,letter,highlights) VALUES (?,?,?,?,?,?,?)`).run(id, req.user.id, job_title, company, resume_summary, data.letter || "", JSON.stringify(data.key_highlights || []));
     res.json({ id, ...data });
   } catch (e) {
@@ -199502,7 +199480,7 @@ app.post("/api/interview/generate", requireAuth, async (req, res) => {
 
 Return JSON: {"questions":[{"question":"...","type":"behavioral/technical/situational","difficulty":"easy/medium/hard","what_they_want":"what the interviewer is looking for","star_framework":true,"sample_answer":"strong example answer","follow_ups":["likely follow-up 1","follow-up 2"]}],"prep_tips":["tip 1","tip 2","tip 3"],"red_flags":["common mistakes to avoid"],"questions_to_ask":["good questions to ask the interviewer"]}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO interview_sessions (id,user_id,role,company,level,questions) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, role, company, level, JSON.stringify(data.questions || []));
     res.json({ id, ...data });
   } catch (e) {
@@ -199542,7 +199520,7 @@ Platform: ${platform} (${platform === "email" ? "longer, can have subject line" 
 Return JSON: {"dm":"the message text","subject":"email subject line (empty if not email)","why_it_works":"brief explanation of the approach","variations":["shorter version","more casual version"],"follow_up":"what to send if no reply in 1 week","open_rate_tips":["tips to get a reply"],"character_count":0}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
     data.character_count = (data.dm || "").length;
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO cold_dms (id,user_id,platform,target_name,target_role,your_goal,dm,subject) VALUES (?,?,?,?,?,?,?,?)`).run(id, req.user.id, platform, target_name, target_role, your_goal, data.dm || "", data.subject || "");
     res.json({ id, ...data });
   } catch (e) {
@@ -199567,7 +199545,7 @@ Notes: ${notes || "none"}
 
 Return JSON: {"plan":{"overview":"plan summary","weekly_schedule":[{"day":"Monday","focus":"Chest & Triceps","workout":[{"exercise":"Push-ups","sets":3,"reps":"12-15","rest":"60s","notes":""}]}],"rest_days":["Wednesday","Saturday","Sunday"],"progression":"how to progress week by week","nutrition_tips":["tip 1","tip 2"],"warm_up":"5 min warm up routine","cool_down":"5 min cool down routine"},"estimated_time_per_session":"45 min","expected_results":{"week4":"what to expect","week8":"what to expect","week12":"what to expect"}}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO fitness_plans (id,user_id,goal,level,days_per_week,equipment,plan) VALUES (?,?,?,?,?,?,?)`).run(id, req.user.id, goal, level, days_per_week, equipment, JSON.stringify(data.plan || {}));
     res.json({ id, ...data });
   } catch (e) {
@@ -199592,7 +199570,7 @@ Time available: ${time_available} minutes
 
 Return JSON: {"recipe":{"name":"dish name","prep_time":"10 min","cook_time":"20 min","servings":4,"difficulty":"easy/medium/hard","ingredients":["1 cup flour","2 eggs"],"instructions":["Step 1: ...","Step 2: ..."],"tips":["pro tip 1","tip 2"],"variations":["variation 1 idea"],"nutrition_estimate":{"calories":"per serving","protein":"Xg","carbs":"Xg","fat":"Xg"}},"why_this_recipe":"brief note on why these ingredients work","substitutions":{"ingredient":"substitute if needed"}}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO recipes (id,user_id,ingredients,dietary,cuisine,recipe) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, ingredients, dietary, cuisine, JSON.stringify(data.recipe || {}));
     res.json({ id, ...data });
   } catch (e) {
@@ -199621,7 +199599,7 @@ Interests: ${interests || "general tourism"}
 
 Return JSON: {"plan":{"overview":"brief destination intro","best_time_to_visit":"","days":[{"day":1,"theme":"Arrival & Old Town","morning":"...","afternoon":"...","evening":"...","meals":{"breakfast":"","lunch":"","dinner":""},"estimated_cost":"$X-Y","tips":"local tip"}],"practical_info":{"currency":"","language":"","transportation":"","visa":"","safety":""},"packing_list":["item 1"],"budget_breakdown":{"accommodation":"per night","food":"per day","activities":"per day","transport":"total"},"hidden_gems":["lesser known spot 1"],"avoid":["tourist trap to skip"]}}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO travel_plans (id,user_id,destination,days,budget,style,plan) VALUES (?,?,?,?,?,?,?)`).run(id, req.user.id, destination, days, budget, style, JSON.stringify(data.plan || {}));
     res.json({ id, ...data });
   } catch (e) {
@@ -199646,7 +199624,7 @@ Commitment going forward: ${what_you_will_do || "not specified"}
 
 Return JSON: {"letter":"full apology letter","key_elements_included":["acknowledgment","taking responsibility","empathy","commitment"],"what_not_to_say":["phrases to avoid"],"follow_up_action":"what to do after sending this","delivery_tip":"how to deliver this (text/call/in person/handwritten)"}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO apology_letters (id,user_id,situation,relationship,tone,letter) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, situation, relationship, tone, data.letter || "");
     res.json({ id, ...data });
   } catch (e) {
@@ -199665,7 +199643,7 @@ ${lease_text.slice(0, 8e3)}
 
 Return JSON: {"summary":"2-3 sentence plain English summary","red_flags":[{"issue":"...","severity":"high/medium/low","clause":"relevant text","what_it_means":"plain English","negotiable":true}],"key_terms":{"rent":"","duration":"","deposit":"","notice_period":"","early_termination":"","pets":"","subletting":""},"tenant_rights":["right 1"],"questions_to_ask":["question to ask landlord/seller"],"overall_verdict":"sign/negotiate/avoid","verdict_reason":"why"}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO lease_reviews (id,user_id,lease_text,summary,red_flags,key_terms) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, lease_text.slice(0, 5e3), data.summary || "", JSON.stringify(data.red_flags || []), JSON.stringify(data.key_terms || {}));
     res.json({ id, ...data });
   } catch (e) {
@@ -199682,7 +199660,7 @@ app.post("/api/book/summarize", requireAuth, async (req, res) => {
 
 Return JSON: {"summary":{"one_sentence":"the book in one sentence","overview":"2-3 paragraph overview","key_ideas":[{"idea":"main concept","explanation":"deeper dive","quote":"memorable quote if known"}],"who_should_read":"who would benefit most","who_should_skip":"who might not enjoy it","actionable_takeaways":["thing you can do today","another action"],"similar_books":["book 1 - why similar"],"rating_if_known":"X/5 or unknown","best_quote":"most famous quote from the book"}}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO book_summaries (id,user_id,title,author,summary) VALUES (?,?,?,?,?)`).run(id, req.user.id, title, author, JSON.stringify(data.summary || {}));
     res.json({ id, ...data });
   } catch (e) {
@@ -199705,7 +199683,7 @@ Style: ${style}
 
 Return JSON: {"questions":[{"id":1,"question":"...","options":["A) option 1","B) option 2","C) option 3","D) option 4"],"correct":"A","explanation":"why A is correct","fun_fact":"interesting related fact"}],"topic_overview":"brief intro to the topic","difficulty_note":"what makes these questions ${difficulty}"}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO quizzes (id,user_id,topic,difficulty,num_questions,questions) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, topic, difficulty, num_questions, JSON.stringify(data.questions || []));
     res.json({ id, ...data });
   } catch (e) {
@@ -199732,7 +199710,7 @@ Context: ${context || "standard job offer"}
 
 Return JSON: {"counter_offer":"specific number to ask for","negotiation_script":"word-for-word email/script to send","opening_line":"exact first thing to say","key_arguments":["why you deserve more 1","argument 2","argument 3"],"benefits_to_negotiate":["equity","signing bonus","remote work","PTO","title"],"email_template":"full professional email if negotiating via email","expected_outcome":"realistic assessment","timing_tip":"when and how to send","what_if_they_say_no":"fallback strategy","total_comp_increase":"estimated $ increase if successful"}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO salary_negotiations (id,user_id,role,current_offer,market_rate,script,counter_offer) VALUES (?,?,?,?,?,?,?)`).run(id, req.user.id, role, current_offer, market_rate, data.negotiation_script || "", data.counter_offer || "");
     res.json({ id, ...data });
   } catch (e) {
@@ -199755,7 +199733,7 @@ Medium: ${medium}
 
 Return JSON: {"letter":"the breakup message","length_appropriate_for":medium,"dos":["things to say"],"donts":["things to avoid saying"],"timing_advice":"when/how to deliver this","self_care_reminder":"a kind note for the person sending this","closure_line":"the final line of the message"}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO breakup_letters (id,user_id,relationship_duration,reason,tone,letter) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, relationship_duration, reason, tone, data.letter || "");
     res.json({ id, ...data });
   } catch (e) {
@@ -199776,7 +199754,7 @@ Timeline: ${timeline}
 
 Return JSON: {"plan":{"tagline":"one-line description","problem":"pain point being solved","solution":"how the product solves it","target_customer":"specific persona","revenue_model":"how it makes money","pricing":{"tier1":"","price1":"","tier2":"","price2":""},"go_to_market":["channel 1","channel 2","channel 3"],"competitive_advantage":"unfair edge","milestones":[{"month":1,"goal":""},{"month":3,"goal":""},{"month":6,"goal":""},{"month":12,"goal":""}],"key_metrics":["metric to track 1","metric 2","metric 3"],"risks":["risk 1 and mitigation"],"first_30_days":["action 1","action 2","action 3","action 4","action 5"]},"viability_score":75,"viability_reason":"why this score","biggest_challenge":"the #1 thing that could kill this"}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO business_plans (id,user_id,idea,target_market,plan) VALUES (?,?,?,?,?)`).run(id, req.user.id, idea, target_market, JSON.stringify(data.plan || {}));
     res.json({ id, ...data });
   } catch (e) {
@@ -199798,7 +199776,7 @@ Primary style: ${style}
 
 Return JSON: {"hooks":[{"hook":"the hook text","style":"curiosity/story/stat/contrarian/list/how-to","why_it_works":"psychological principle","predicted_engagement":"low/medium/high/viral","emoji_suggestion":"relevant emoji","platform_tip":"platform-specific advice"}],"content_angles":["different angle on this topic 1","angle 2","angle 3"],"cta_ideas":["call to action 1","cta 2"],"hashtag_suggestions":["#tag1","#tag2","#tag3"]}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO viral_hooks (id,user_id,topic,platform,hooks) VALUES (?,?,?,?,?)`).run(id, req.user.id, topic, platform, JSON.stringify(data.hooks || []));
     res.json({ id, ...data });
   } catch (e) {
@@ -199822,7 +199800,7 @@ Recurring: ${recurring}
 
 Return JSON: {"interpretation":{"summary":"brief plain-English summary of what happened","symbols":[{"symbol":"element from dream","meaning":"psychological interpretation","context":"how it applies here"}],"jungian_analysis":"Carl Jung perspective","freudian_analysis":"Freudian lens (brief, tasteful)","emotional_themes":["theme 1","theme 2"],"what_your_mind_is_processing":"plain English \u2014 what your subconscious might be working through","message_to_self":"a kind, insightful message from the dream","action_items":["concrete thing to reflect on 1","action 2"],"positive_spin":"reframe this dream in a positive light","questions_to_journal":["journal prompt 1","prompt 2","prompt 3"]},"mood_connection":"how pre-sleep mood might relate","is_likely_stress_dream":false,"stress_indicators":[]}` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO dream_interpretations (id,user_id,dream,interpretation) VALUES (?,?,?,?)`).run(id, req.user.id, dream.slice(0, 2e3), JSON.stringify(data.interpretation || {}));
     res.json({ id, ...data });
   } catch (e) {
@@ -199855,7 +199833,7 @@ app.post("/api/roast/generate", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Generate a ${style} roast about: "${subject}". Context: ${context || "none"}. Reply JSON: { "roast": "string", "best_line": "string", "burns": ["string","string","string"], "comeback_they_might_use": "string", "rating": number }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO roasts VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, subject, style, data.roast);
+    db.prepare("INSERT INTO roasts VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, subject, style, data.roast);
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -199873,7 +199851,7 @@ app.post("/api/future-self/write", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Write a heartfelt letter from someone to their future self ${years_ahead} years from now. Current situation: ${current_situation}. Goals: ${goals || "not specified"}. Fears: ${fears || "not specified"}. Personal message: ${message_to_future || "none"}. Reply JSON: { "letter": "string", "key_reminder": "string", "predictions": ["string","string","string"], "time_capsule_items": ["string","string"], "advice": "string" }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO future_letters VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, years_ahead, data.letter);
+    db.prepare("INSERT INTO future_letters VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, years_ahead, data.letter);
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -199889,7 +199867,7 @@ app.post("/api/resume/rewrite-bullets", requireAuth, async (req, res) => {
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Rewrite these resume bullets to be impactful, quantified, and ATS-optimized for a ${role || "professional"} in ${industry || "tech"}. Bullets: ${JSON.stringify(bulletList)}. Reply JSON: { "rewritten": [{ "original": "string", "improved": "string", "impact_score": number, "why_better": "string", "action_verb": "string" }], "overall_tips": ["string","string"], "missing_keywords": ["string","string","string"] }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
     if (data.rewritten) {
-      data.rewritten.forEach((b) => db.prepare("INSERT INTO resume_bullets VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, b.original, b.improved, b.impact_score || 0));
+      data.rewritten.forEach((b) => db.prepare("INSERT INTO resume_bullets VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, b.original, b.improved, b.impact_score || 0));
     }
     res.json(data);
   } catch (e) {
@@ -199904,7 +199882,7 @@ app.post("/api/meeting/agenda", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Create a structured meeting agenda for: ${meeting_type}. Goal: ${goal}. Attendees: ${attendees || "team"}. Duration: ${duration_mins} minutes. Context: ${context || "none"}. Reply JSON: { "title": "string", "objective": "string", "agenda_items": [{ "time_mins": number, "topic": "string", "owner": "string", "type": "discussion|decision|info|brainstorm", "notes": "string" }], "pre_read": ["string"], "desired_outcomes": ["string","string"], "follow_up_template": "string", "icebreaker": "string" }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO meeting_agendas VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, meeting_type, data.title);
+    db.prepare("INSERT INTO meeting_agendas VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, meeting_type, data.title);
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -199919,7 +199897,7 @@ app.post("/api/gratitude/reflect", requireAuth, async (req, res) => {
     const entryList = Array.isArray(entries) ? entries : [entries];
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Analyze these gratitude journal entries and provide warm, insightful reflection. Entries: ${JSON.stringify(entryList)}. Mood: ${mood || "unspecified"}. Context: ${context || "none"}. Reply JSON: { "reflection": "string", "themes": ["string","string","string"], "reframe": "string", "appreciation_depth": "surface|moderate|deep", "insight": "string", "challenge_for_tomorrow": "string", "affirmation": "string", "what_you_have": ["string","string","string"] }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO gratitude_entries VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, JSON.stringify(entryList), JSON.stringify(data.themes || []));
+    db.prepare("INSERT INTO gratitude_entries VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, JSON.stringify(entryList), JSON.stringify(data.themes || []));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -199952,7 +199930,7 @@ app.post("/api/cold-pitch/generate", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Write 3 cold pitch variations for: Product/Service: ${product}. Target: ${target_audience}. Pain point: ${pain_point || "not specified"}. Unique value: ${unique_value || "not specified"}. Tone: ${tone}. Reply JSON: { "pitches": [{ "channel": "email|linkedin|twitter|phone", "subject": "string", "pitch": "string", "hook": "string", "cta": "string", "length_words": number }], "key_message": "string", "objections_to_expect": ["string","string"], "follow_up_template": "string" }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO cold_pitches VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, product, target_audience, data.key_message || "");
+    db.prepare("INSERT INTO cold_pitches VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, product, target_audience, data.key_message || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -199967,7 +199945,7 @@ app.post("/api/mood/log", requireAuth, async (req, res) => {
     const history = db.prepare("SELECT * FROM mood_logs WHERE user_id=? ORDER BY created_at DESC LIMIT 7").all(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Analyze this mood log and recent history to provide insights. Today: mood ${mood}/10, energy ${energy || 5}/10. Notes: ${notes || "none"}. Context: ${context || "none"}. Recent history (last 7): ${JSON.stringify(history.map((h) => ({ mood: h.mood, energy: h.energy, date: h.created_at })))}. Reply JSON: { "insight": "string", "pattern": "string", "suggestion": "string", "affirmation": "string", "trend": "improving|stable|declining|new", "trigger_detected": "string|null", "activity_suggestion": "string" }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO mood_logs VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, mood, energy || 5, notes || "", data.insight || "");
+    db.prepare("INSERT INTO mood_logs VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, mood, energy || 5, notes || "", data.insight || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -199985,7 +199963,7 @@ app.post("/api/habit-journal/log", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Provide habit coaching for: Habit: "${habit}". Completed today: ${completed}. Current streak: ${streak} days. Notes: ${notes || "none"}. Difficulty: ${difficulty || "normal"}. Reply JSON: { "coaching": "string", "streak_message": "string", "tip_for_tomorrow": "string", "why_this_matters": "string", "if_they_broke_streak": "string|null", "micro_win": "string" }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO habit_journals VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, habit, streak, data.coaching || "");
+    db.prepare("INSERT INTO habit_journals VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, habit, streak, data.coaching || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -199999,7 +199977,7 @@ app.post("/api/life-goals/plan", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Create a comprehensive life goal plan for: Goal: "${goal}". Category: ${category}. Timeframe: ${timeframe || "not specified"}. Current situation: ${current_situation || "not specified"}. Obstacles: ${obstacles || "not specified"}. Reply JSON: { "reframed_goal": "string", "why_this_goal_matters": "string", "milestones": [{"phase": "string", "milestone": "string", "by_when": "string"}], "weekly_actions": ["string","string","string"], "identity_shift": "string", "success_metrics": ["string","string"], "accountability_ideas": ["string","string"], "first_step_right_now": "string", "obstacle_solutions": [{"obstacle": "string", "solution": "string"}] }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO life_goals VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, goal, category, data.reframed_goal || "");
+    db.prepare("INSERT INTO life_goals VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, goal, category, data.reframed_goal || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -200013,7 +199991,7 @@ app.post("/api/standup/write", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Write a crisp daily standup update. Yesterday: ${yesterday}. Today: ${today}. Blockers: ${blockers || "none"}. Team context: ${team_context || "engineering team"}. Format: ${format}. Reply JSON: { "standup": "string", "summary_tweet": "string", "blocker_escalation": "string|null", "progress_emoji": "string", "energy_level_tip": "string", "formatted_versions": { "slack": "string", "jira": "string", "email": "string" } }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO standups VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, yesterday, today, blockers || "", data.standup || "");
+    db.prepare("INSERT INTO standups VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, yesterday, today, blockers || "", data.standup || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -200046,7 +200024,7 @@ app.post("/api/conflict/resolve", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Help resolve this conflict: "${situation}". Your perspective: ${your_perspective || "not given"}. Their perspective: ${their_perspective || "not given"}. Relationship: ${relationship_type || "unspecified"}. Desired outcome: ${desired_outcome || "resolve peacefully"}. Reply JSON: { "summary": "string", "what_they_likely_feel": "string", "your_blind_spot": "string", "their_valid_point": "string", "conversation_script": "string", "opening_line": "string", "things_to_avoid_saying": ["string","string"], "resolution_paths": [{"path": "string", "pros": "string", "cons": "string"}], "relationship_repair_tip": "string" }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO conflict_resolutions VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, situation, data.summary || "");
+    db.prepare("INSERT INTO conflict_resolutions VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, situation, data.summary || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -200060,7 +200038,7 @@ app.post("/api/price-anchor/strategy", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Create a pricing strategy with anchoring psychology for: Product: "${product}". Current price: ${current_price}. Target price: ${target_price || "optimize"}. Competitors: ${competitors || "not listed"}. Customer type: ${customer_type || "general"}. Reply JSON: { "recommended_price": "string", "anchor_price": "string", "pricing_tiers": [{"name": "string", "price": "string", "value_prop": "string", "target": "string"}], "psychological_tactics": ["string","string","string"], "framing_language": ["string","string"], "price_justification": "string", "competitor_positioning": "string", "upsell_opportunity": "string" }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO price_anchors VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, product, data.recommended_price || "");
+    db.prepare("INSERT INTO price_anchors VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, product, data.recommended_price || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -200074,7 +200052,7 @@ app.post("/api/linkedin-bio/generate", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Write a ${style} LinkedIn bio. Name: ${name || "the user"}. Role: ${role}. Achievements: ${achievements || "not listed"}. Personality: ${personality || "not specified"}. Fun facts: ${fun_facts || "none"}. Style notes: ${style === "satirical" ? "Write a hilariously satirical corporate-speak bio that parodies LinkedIn culture" : style === "storytelling" ? "Tell their career as a compelling personal story" : "Professional yet human"}. Reply JSON: { "bio": "string", "headline": "string", "summary_tweet": "string", "bio_short": "string", "opening_hook": "string", "keywords_to_include": ["string","string","string"], "cta": "string" }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO linkedin_bios VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, name || "", style, data.bio || "");
+    db.prepare("INSERT INTO linkedin_bios VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, name || "", style, data.bio || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -200089,7 +200067,7 @@ app.post("/api/failure-resume/generate", requireAuth, async (req, res) => {
     const failList = Array.isArray(failures) ? failures : [failures];
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Create a "CV of Failures" \u2014 a resume-style document celebrating failures and what they taught. Name: ${name || "the user"}. Role: ${current_role || "professional"}. Failures: ${JSON.stringify(failList)}. Tone: ${tone}. Reply JSON: { "resume": "string", "entries": [{"failure": "string", "year": "string", "what_i_tried": "string", "what_happened": "string", "what_i_learned": "string", "how_it_helped": "string"}], "overall_lesson": "string", "growth_summary": "string", "closing_line": "string" }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO failure_resumes VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, JSON.stringify(failList), data.overall_lesson || "");
+    db.prepare("INSERT INTO failure_resumes VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, JSON.stringify(failList), data.overall_lesson || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -200103,7 +200081,7 @@ app.post("/api/morning-ritual/build", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Design the perfect morning ritual. Goals: ${goals}. Available time: ${duration_mins} minutes. Wake time: ${wake_time || "not specified"}. Constraints: ${constraints || "none"}. Current routine: ${current_routine || "none"}. Reply JSON: { "ritual_name": "string", "philosophy": "string", "schedule": [{"time_offset_mins": number, "activity": "string", "duration_mins": number, "why": "string", "optional": boolean}], "science_backing": "string", "first_week_challenge": "string", "what_to_avoid": ["string","string"], "habit_stack_tip": "string", "minimum_viable_ritual": "string" }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO morning_rituals VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, goals, duration_mins, data.ritual_name || "");
+    db.prepare("INSERT INTO morning_rituals VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, goals, duration_mins, data.ritual_name || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -200132,7 +200110,7 @@ app.post("/api/apology-text/write", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Write a ${tone} apology for: Situation: "${situation}". What you did: ${what_you_did || "not specified"}. Relationship: ${relationship || "unspecified"}. Medium: ${medium}. Reply JSON: { "apology": "string", "key_acknowledgment": "string", "what_not_to_say": ["string","string"], "follow_up_action": "string", "timing_advice": "string", "alternative_shorter": "string", "red_flags_to_avoid": ["string","string"] }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO apology_texts VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, situation, data.apology || "");
+    db.prepare("INSERT INTO apology_texts VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, situation, data.apology || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -200146,7 +200124,7 @@ app.post("/api/excuse/generate", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Generate ${style === "funny" ? "hilariously creative" : "believable professional"} excuses for: "${situation}". Audience: ${audience || "boss/colleague"}. Reply JSON: { "excuses": [{ "excuse": "string", "believability": number, "delivery_tip": "string", "risk_level": "low|medium|high" }], "best_excuse": "string", "what_to_say_if_caught": "string", "better_alternative": "string" }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO excuses VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, situation, data.best_excuse || "");
+    db.prepare("INSERT INTO excuses VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, situation, data.best_excuse || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -200160,7 +200138,7 @@ app.post("/api/vent/express", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Someone needs to vent. Just listen and validate first, then ${want_reframe ? "offer a gentle reframe" : "just support them"}. ${want_advice ? "They want advice." : "They do NOT want advice \u2014 just to be heard."}. What they said: "${vent}". Reply JSON: { "validation": "string", "you_are_heard": "string", "their_feelings_named": ["string","string"], "reframe": "string|null", "gentle_question": "string", "advice": "string|null", "affirmation": "string", "release_ritual": "string" }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO vent_sessions VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, vent, data.validation || "");
+    db.prepare("INSERT INTO vent_sessions VALUES (?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, vent, data.validation || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -200174,7 +200152,7 @@ app.post("/api/personal-brand/build", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Build a complete personal brand strategy for: Name: ${name || "the user"}. Expertise: ${expertise}. Target audience: ${audience}. Values: ${values || "not specified"}. Origin story: ${origin_story || "not provided"}. Content goal: ${content_goal || "grow online presence"}. Reply JSON: { "brand_statement": "string", "niche": "string", "positioning": "string", "tagline": "string", "content_pillars": [{"pillar": "string", "topics": ["string","string","string"]}], "brand_voice": {"adjectives": ["string","string","string"], "not_this": ["string","string"]}, "platforms_to_focus": [{"platform": "string", "why": "string", "content_type": "string"}], "unique_angle": "string", "origin_story_polished": "string", "30_day_plan": ["string","string","string","string"] }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO personal_brands VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, name || "", expertise, data.brand_statement || "");
+    db.prepare("INSERT INTO personal_brands VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, name || "", expertise, data.brand_statement || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -200188,7 +200166,7 @@ app.post("/api/weekly-review/generate", requireAuth, async (req, res) => {
     const { provider, apiKey, model } = await getUserLLMKey(req.userId);
     const content = await callLLM(provider, apiKey, model, [{ role: "user", content: `Generate a thoughtful weekly review. Wins: ${wins || "none listed"}. Struggles: ${struggles || "none listed"}. Lessons: ${lessons || "none listed"}. Energy level: ${energy_level || "5"}/10. Next week priorities: ${next_week_priorities || "not set"}. Reply JSON: { "week_summary": "string", "win_analysis": "string", "struggle_reframe": "string", "biggest_lesson": "string", "pattern_noticed": "string", "energy_insight": "string", "next_week_theme": "string", "monday_intention": "string", "things_to_drop": ["string","string"], "things_to_keep": ["string","string"], "gratitude_moment": "string" }` }]);
     const data = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO weekly_reviews VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run((0, import_uuid.v4)(), req.userId, wins || "", struggles || "", data.week_summary || "");
+    db.prepare("INSERT INTO weekly_reviews VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)").run(uuidv4(), req.userId, wins || "", struggles || "", data.week_summary || "");
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -200233,7 +200211,7 @@ Create a realistic negotiation transcript with 6 exchanges, then provide:
 Format as JSON: { transcript: [{speaker, line}], tactics: [], missed: [], score: number, tips: [] }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO negotiation_sims (id,user_id,scenario,role,transcript,outcome) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, scenario, role, JSON.stringify(data.transcript), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -200261,7 +200239,7 @@ Provide:
 Format as JSON: { schedule: [{block, hours, tasks}], metrics: [], rules: [], eliminate: [], motivation: string }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO challenges (id,user_id,goal,hours,plan) VALUES (?,?,?,?,?)`).run(id, req.user.id, goal, hours || 24, JSON.stringify(data));
     res.json({ id, goal, hours: hours || 24, ...data });
   } catch (e) {
@@ -200292,7 +200270,7 @@ Also provide: 3 reflection prompts after writing.
 Format as JSON: { letter: string, prompts: [], note: string }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO therapy_letters (id,user_id,recipient,situation,letter) VALUES (?,?,?,?,?)`).run(id, req.user.id, recipient, situation, data.letter);
     res.json({ id, ...data });
   } catch (e) {
@@ -200326,7 +200304,7 @@ Create:
 Format as JSON: { subject: string, hook: string, fit: string, episodes: [{title, description}], proof: string, cta: string, full_pitch: string }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO podcast_pitches (id,user_id,show_name,topic,pitch) VALUES (?,?,?,?,?)`).run(id, req.user.id, showName, topic, data.full_pitch);
     res.json({ id, showName, ...data });
   } catch (e) {
@@ -200362,7 +200340,7 @@ Write a full grant proposal with:
 Format as JSON: { executive_summary: string, need: string, description: string, goals: [], evaluation: string, budget: string, capacity: string, full_proposal: string }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO grant_proposals (id,user_id,org_name,grant_name,amount,proposal) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, orgName, grantName, amount || "", data.full_proposal);
     res.json({ id, orgName, grantName, ...data });
   } catch (e) {
@@ -200411,7 +200389,7 @@ Also provide: a brief note on what emotions this letter helped surface.
 Format as JSON: { letter: string, emotions_surfaced: string, ritual: string }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO burn_letters (id,user_id,target,grievance,letter) VALUES (?,?,?,?,?)`).run(id, req.user.id, target, grievance, data.letter);
     res.json({ id, ...data });
   } catch (e) {
@@ -200441,7 +200419,7 @@ Give a verdict with confidence %, reasoning, and one non-obvious risk to conside
 Format as JSON: { frameworks: [{name, analysis}], verdict: string, confidence: number, risk: string, gut_check: string }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO oracle_decisions (id,user_id,question,options,analysis,verdict) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, question, options, JSON.stringify(data.frameworks), data.verdict);
     res.json({ id, ...data });
   } catch (e) {
@@ -200473,7 +200451,7 @@ Generate 5 compliments that:
 Format as JSON: { compliments: [{text, category, impact_level}], delivery_tip: string }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO compliments (id,user_id,recipient,context,compliments) VALUES (?,?,?,?,?)`).run(id, req.user.id, recipient, context, JSON.stringify(data.compliments));
     res.json({ id, recipient, ...data });
   } catch (e) {
@@ -200502,7 +200480,7 @@ Write a manifesto that:
 Format as JSON: { title: string, declaration: string, problem: string, vision: string, principles: [{number, statement, explanation}], call_to_action: string, full_manifesto: string }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO manifestos (id,user_id,topic,values,manifesto) VALUES (?,?,?,?,?)`).run(id, req.user.id, topic, values, data.full_manifesto);
     res.json({ id, ...data });
   } catch (e) {
@@ -200536,7 +200514,7 @@ Provide:
 Format as JSON: { arguments: [{point, evidence}], counters: [{attack, rebuttal}], techniques: [], opening: string, closing: string, stats: [], fallacies: [] }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO debate_preps (id,user_id,topic,position,prep) VALUES (?,?,?,?,?)`).run(id, req.user.id, topic, position, JSON.stringify(data));
     res.json({ id, topic, position, ...data });
   } catch (e) {
@@ -200585,7 +200563,7 @@ Write a eulogy that:
 Format as JSON: { eulogy: string, opening_line: string, closing_line: string, reading_time_mins: number }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO eulogies (id,user_id,person,relationship,eulogy) VALUES (?,?,?,?,?)`).run(id, req.user.id, person, relationship, data.eulogy);
     res.json({ id, person, ...data });
   } catch (e) {
@@ -200614,7 +200592,7 @@ Write an origin story that:
 Format as JSON: { title: string, origin: string, turning_point: string, manifesto_line: string, backstory_twist: string }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO villain_origins (id,user_id,person,story) VALUES (?,?,?,?)`).run(id, req.user.id, name, data.origin);
     res.json({ id, name, ...data });
   } catch (e) {
@@ -200643,7 +200621,7 @@ Write a letter that:
 Format as JSON: { letter: string, ps_line: string, mystery_clue: string }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO admirer_letters (id,user_id,recipient,feelings,letter) VALUES (?,?,?,?,?)`).run(id, req.user.id, recipient, feelings, data.letter);
     res.json({ id, ...data });
   } catch (e) {
@@ -200672,7 +200650,7 @@ Write a letter that:
 Format as JSON: { letter: string, headline_wisdom: string, if_you_forget_everything_else: string }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO legacy_letters (id,user_id,recipient,lessons,letter) VALUES (?,?,?,?,?)`).run(id, req.user.id, recipient, lessons, data.letter);
     res.json({ id, ...data });
   } catch (e) {
@@ -200706,7 +200684,7 @@ Analyze and provide:
 Format as JSON: { primary: {language, confidence, evidence}, secondary: {language}, speak_their_language: [], they_feel_unloved_when: [], green_flags: [], red_flags: [], insight: string }` }
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO love_language_decodes (id,user_id,behaviors,analysis) VALUES (?,?,?,?)`).run(id, req.user.id, behaviors, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -200730,7 +200708,7 @@ ${resume_text}
 Respond in JSON: { "score": number, "roast": "brutal summary paragraph", "top_issues": ["issue1","issue2","issue3"], "bright_spots": ["what actually works"], "one_liner": "savage one-liner summary" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO resume_roasts (id,user_id,resume_text,roast,score,top_issues) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, resume_text, data.roast, data.score, JSON.stringify(data.top_issues));
     res.json({ id, ...data });
   } catch (e) {
@@ -200759,7 +200737,7 @@ Goal: ${goal || "get a reply"}
 Respond in JSON: { "score": number_0_to_100, "subject_line_score": number, "opening_score": number, "value_prop_score": number, "cta_score": number, "analysis": "paragraph breakdown", "key_issues": ["issue1","issue2"], "rewrite": "improved full email", "subject_line_options": ["option1","option2","option3"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO cold_email_analyses (id,user_id,email_text,score,analysis,rewrite) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, email_text, data.score, data.analysis, data.rewrite);
     res.json({ id, ...data });
   } catch (e) {
@@ -200788,7 +200766,7 @@ Audience: ${audience || "VCs"}
 Respond in JSON: { "overall_score": number_0_to_100, "slide_scores": { "problem": number, "solution": number, "market": number, "business_model": number, "traction": number, "team": number, "ask": number }, "critique": "comprehensive paragraph critique", "fatal_flaws": ["flaw1","flaw2"], "strengths": ["strength1","strength2"], "vc_reaction": "how a VC would react in the room", "must_fix_before_next_meeting": "top priority fix" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO pitch_critiques (id,user_id,deck_description,critique,slide_scores,overall_score) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, deck_description, data.critique, JSON.stringify(data.slide_scores), data.overall_score);
     res.json({ id, ...data });
   } catch (e) {
@@ -200818,7 +200796,7 @@ Your name/title: ${your_name || "[Your Name]"} / ${your_title || "[Your Title]"}
 Respond in JSON: { "letter": "full formatted reference letter", "opening_hook": "compelling opening sentence", "key_themes": ["theme1","theme2","theme3"], "closing_strength": "strong closing statement" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO reference_letters (id,user_id,candidate_name,relationship,role_applying,highlights,letter) VALUES (?,?,?,?,?,?,?)`).run(id, req.user.id, candidate_name, relationship, role_applying, highlights, data.letter);
     res.json({ id, ...data });
   } catch (e) {
@@ -200846,7 +200824,7 @@ Current situation: ${current_situation || "employed, looking to switch"}
 Respond in JSON: { "winner": "company name of recommended offer", "winner_reason": "why this one wins", "scores": [{"company":"name","total_score":number,"comp_score":number,"growth_score":number,"culture_score":number,"risk_score":number}], "comparison_table": "markdown table comparing all offers", "hidden_considerations": ["thing1","thing2"], "negotiation_tips": "what to negotiate for in the winning offer", "red_flags": ["flag per offer if any"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO offer_evaluations (id,user_id,offers,evaluation,winner) VALUES (?,?,?,?,?)`).run(id, req.user.id, JSON.stringify(offers), JSON.stringify(data), data.winner);
     res.json({ id, ...data });
   } catch (e) {
@@ -200882,7 +200860,7 @@ Make them witty, specific, and authentic. Each should have a different vibe (pla
 Respond in JSON: { "bios": [{"vibe":"playful","bio":"...","hook_line":"opening line if they match"},{"vibe":"genuine","bio":"...","hook_line":"..."},{"vibe":"intriguing","bio":"...","hook_line":"..."}], "pro_tips": ["tip1","tip2"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO tinder_bios (id,user_id,bio,hooks) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(data.bios), JSON.stringify(data.pro_tips));
     res.json({ id, ...data });
   } catch (e) {
@@ -200904,7 +200882,7 @@ Time: ${time_of_day || "evening"}
 Respond in JSON: { "date_plan": "full narrative description of the date", "activities": [{"name":"...","why":"...","duration":"..."}], "conversation_starters": ["q1","q2","q3","q4","q5"], "avoid_topics": ["topic1","topic2"], "backup_plan": "if something goes wrong...", "vibe_score": "how this date will feel" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO date_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -200926,7 +200904,7 @@ Last quality time: ${last_quality_time || "recently"}
 Respond in JSON: { "health_score": number_0_to_100, "assessment": "paragraph assessment", "strengths": ["s1","s2"], "growth_areas": ["g1","g2"], "reflection_prompts": ["prompt1","prompt2","prompt3","prompt4"], "date_idea": "specific date idea for your stage", "this_week_action": "one thing to do this week" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO relationship_checkins (id,user_id,context,health_score,analysis,prompts) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), data.health_score, data.assessment, JSON.stringify(data.reflection_prompts));
     res.json({ id, ...data });
   } catch (e) {
@@ -200948,7 +200926,7 @@ Support system: ${support_system || "some friends"}
 Respond in JSON: { "week_1": {"theme":"...","daily_actions":["a1","a2","a3"]}, "week_2": {"theme":"...","daily_actions":["a1","a2","a3"]}, "month_1": {"theme":"...","milestones":["m1","m2","m3"]}, "affirmations": ["aff1","aff2","aff3"], "avoid_list": ["what not to do"], "green_flags_youre_healing": ["sign1","sign2","sign3"], "honest_truth": "something kind but true they need to hear" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO breakup_recovery (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -200969,7 +200947,7 @@ Your vibe: ${your_vibe || "playful"}
 Respond in JSON: { "messages": [{"tone":"playful","text":"...","why_it_works":"..."},{"tone":"confident","text":"...","why_it_works":"..."},{"tone":"charming","text":"...","why_it_works":"..."}], "conversation_tip": "one tip for this specific stage", "red_flags_to_avoid": "what not to say here" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO flirty_texts (id,user_id,context,messages) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data.messages));
     res.json({ id, ...data });
   } catch (e) {
@@ -201000,7 +200978,7 @@ Goals: ${goals || "build wealth"}
 Respond in JSON: { "assessment": "paragraph assessment", "percentile": "estimated net worth percentile for their age", "strengths": ["strength1","strength2"], "concerns": ["concern1","concern2"], "next_moves": ["move1","move2","move3"], "milestone_next": "next financial milestone to hit", "benchmark": "how they compare to peers" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO net_worth_snapshots (id,user_id,assets,liabilities,net_worth,analysis) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, JSON.stringify(assets), JSON.stringify(liabilities), netWorth, JSON.stringify(data));
     res.json({ id, net_worth: netWorth, total_assets: totalAssets, total_liabilities: totalLiabilities, ...data });
   } catch (e) {
@@ -201028,7 +201006,7 @@ Goals: ${financial_goals || "save more money"}
 Respond in JSON: { "score": number_0_to_100, "roast": "brutal but funny budget critique paragraph", "savings_rate": "calculated savings rate as percentage", "red_line_items": ["expense that needs cutting"], "quick_wins": ["save $X by doing Y"], "savings_plan": "concrete monthly savings action plan", "months_to_goal": "if they follow plan, how long to hit goals" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO budget_roasts (id,user_id,budget,roast,score,savings_plan) VALUES (?,?,?,?,?,?)`).run(id, req.user.id, JSON.stringify({ monthly_income, expenses }), data.roast, data.score, data.savings_plan);
     res.json({ id, ...data });
   } catch (e) {
@@ -201051,7 +201029,7 @@ Competitor context: ${competitors || "unknown"}
 Respond in JSON: { "hourly_rate": { "minimum": number, "target": number, "premium": number }, "project_rates": { "small": {"range":"$X-Y","description":"what this covers"}, "medium": {"range":"$X-Y","description":"..."}, "large": {"range":"$X-Y","description":"..."} }, "positioning": "how to position at premium rates", "value_arguments": ["argument1","argument2"], "rate_increase_trigger": "when to raise rates", "red_flags": "client types to avoid at this rate" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO rate_calculations (id,user_id,context,recommended_rate,analysis) VALUES (?,?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), data.hourly_rate?.target || 0, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201071,7 +201049,7 @@ Known risks: ${known_risks || "general market risk"}
 Respond in JSON: { "bull_case": "why this wins", "bear_case": "why this loses", "base_case": "most likely scenario", "key_metrics_to_watch": ["metric1","metric2","metric3"], "entry_strategy": "how and when to enter", "exit_strategy": "when to sell / take profits", "position_size_rec": "how much of portfolio", "verdict": "buy/hold/avoid with one sentence reason", "risk_rating": "1-5 risk score" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO investment_theses (id,user_id,asset,thesis) VALUES (?,?,?,?)`).run(id, req.user.id, asset, JSON.stringify(data));
     res.json({ id, asset, ...data });
   } catch (e) {
@@ -201098,7 +201076,7 @@ Budget tolerance: $${monthly_budget_tolerance || 100}/month
 Respond in JSON: { "total_monthly": number, "kill_immediately": [{"name":"...","monthly":number,"reason":"..."}], "worth_keeping": [{"name":"...","why":"..."}], "negotiate_or_downgrade": [{"name":"...","action":"...","potential_savings":"..."}], "monthly_savings_if_followed": number, "annual_savings": number, "score": number_budget_efficiency_0_to_100, "one_liner": "savage summary of their subscriptions" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO subscription_audits (id,user_id,subscriptions,audit,monthly_savings) VALUES (?,?,?,?,?)`).run(id, req.user.id, JSON.stringify(subscriptions), JSON.stringify(data), data.monthly_savings_if_followed || 0);
     res.json({ id, ...data });
   } catch (e) {
@@ -201124,7 +201102,7 @@ Medical history: ${medical_history || "none provided"}
 Respond in JSON: { "urgency": "emergency/urgent/soon/routine/self-care", "urgency_reason": "why this urgency level", "possible_explanations": ["explanation1","explanation2","explanation3"], "immediate_actions": ["action1","action2"], "see_doctor_if": ["warning sign 1","warning sign 2"], "home_care_tips": ["tip1","tip2","tip3"], "disclaimer": "always include medical disclaimer" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO symptom_checks (id,user_id,symptoms,result,urgency) VALUES (?,?,?,?,?)`).run(id, req.user.id, symptoms, JSON.stringify(data), data.urgency);
     res.json({ id, ...data });
   } catch (e) {
@@ -201145,7 +201123,7 @@ Goals: ${goals || "fall asleep faster, sleep deeper"}
 Respond in JSON: { "ideal_bedtime": "recommended bedtime", "ideal_wake_time": "recommended wake time", "wind_down_routine": [{"time":"30 min before","action":"..."},{"time":"1 hour before","action":"..."}], "morning_routine": ["action1","action2"], "environment_tips": ["tip1","tip2","tip3"], "avoid": ["thing1","thing2"], "quick_wins": ["win1","win2"], "timeline": "how long to see results" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO sleep_protocols (id,user_id,context,protocol) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201166,7 +201144,7 @@ Coping attempts: ${coping_tried || "nothing consistent"}
 Respond in JSON: { "stress_type": "type classification (acute/chronic/situational/etc)", "root_drivers": ["driver1","driver2"], "stress_score": number_1_to_10, "body_impact": "how this manifests physically", "coping_toolkit": [{"technique":"name","how_to":"instructions","time_needed":"X minutes"}], "boundary_to_set": "one key boundary to establish", "reframe": "perspective shift to try", "this_week_action": "one concrete action for this week", "when_to_seek_help": "signs professional help is needed" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO stress_analyses (id,user_id,context,analysis) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201188,7 +201166,7 @@ Focus area: ${focus_area || "full body"}
 Respond in JSON: { "workout_name": "creative name", "duration": "total time", "calories_estimate": "approximate calories", "warmup": [{"exercise":"name","duration":"time","notes":"form cue"}], "main_workout": [{"exercise":"name","sets":number,"reps":"X or time","rest":"seconds","notes":"form cue"}], "cooldown": [{"exercise":"name","duration":"time"}], "pro_tip": "one key tip to maximize this workout", "progression": "how to make harder next session" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO custom_workouts (id,user_id,context,workout) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201218,7 +201196,7 @@ Cooking skill: ${cooking_skill || "intermediate"}
 Respond in JSON: { "daily_calories": number, "macros": {"protein":"Xg","carbs":"Xg","fat":"Xg"}, "meal_plan": { "breakfast": {"name":"...","calories":number,"protein":"Xg","prep_time":"X min","recipe":"brief instructions"}, "lunch": {"name":"...","calories":number,"protein":"Xg","prep_time":"X min","recipe":"..."}, "dinner": {"name":"...","calories":number,"protein":"Xg","prep_time":"X min","recipe":"..."}, "snack": {"name":"...","calories":number} }, "grocery_list": ["item1","item2"], "meal_prep_tip": "one efficiency tip", "cheat_meal_guidance": "how to handle it" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO nutrition_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201246,7 +201224,7 @@ Special wishes: ${special_wishes || "none"}
 Respond in JSON: { "will_outline": { "declaration": "opening declaration text", "asset_distribution": [{"asset":"name","beneficiary":"who","percentage_or_amount":"X%"}], "executor_clause": "executor text", "guardianship": "if applicable", "special_provisions": ["provision1","provision2"], "residuary_clause": "remainder estate clause" }, "next_steps": ["step1","step2","step3"], "missing_info": ["what else needed"], "disclaimer": "must see a lawyer disclaimer" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO will_drafts (id,user_id,context,draft) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201266,7 +201244,7 @@ State: ${state || "not specified"}
 Respond in JSON: { "overall_risk": "low/medium/high", "risk_score": number_1_to_10, "red_flags": [{"clause":"clause text","issue":"why problematic","severity":"high/medium/low"}], "missing_protections": ["protection1","protection2"], "unusual_clauses": ["clause1","clause2"], "negotiate_these": [{"item":"what to negotiate","suggested_change":"..."}], "tenant_rights_note": "key tenant rights for this state", "verdict": "sign/negotiate/avoid" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO lease_analyses (id,user_id,lease_text,analysis) VALUES (?,?,?,?)`).run(id, req.user.id, lease_text, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201288,7 +201266,7 @@ Desired outcome: ${desired_outcome || "full refund"}
 Respond in JSON: { "subject_line": "...", "letter": "full professional letter text ready to send", "cc_suggestions": ["who to CC"], "follow_up_timeline": "when to follow up", "escalation_path": "if no response, next steps", "key_laws_cited": ["relevant consumer protection laws"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO dispute_letters (id,user_id,context,letter) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201307,7 +201285,7 @@ TOS: ${tos_text.substring(0, 4e3)}
 Respond in JSON: { "tldr": "2-sentence plain English summary", "data_collection": "what data they collect", "data_sharing": "who they share data with", "your_rights": "what rights you retain", "their_rights": "what rights they claim over your content", "cancellation": "how to cancel and what happens", "red_flags": [{"section":"section name","issue":"plain English explanation","severity":"high/medium/low"}], "verdict": "safe/caution/concerning", "verdict_reason": "why" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO tos_decodings (id,user_id,tos_text,summary) VALUES (?,?,?,?)`).run(id, req.user.id, tos_text.substring(0, 2e3), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201329,7 +201307,7 @@ Requester name: ${your_name || "[YOUR NAME]"}
 Respond in JSON: { "letter": "complete formal FOIA request letter", "fee_waiver_argument": "argument for fee waiver if applicable", "expedited_processing_argument": "if applicable", "tips": ["tip1","tip2"], "expected_timeline": "typical response time", "appeal_rights": "if denied, how to appeal" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO foia_requests (id,user_id,context,request) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201355,7 +201333,7 @@ Tone: ${tone || "dramatic"}
 Respond in JSON: { "twists": [{ "title": "twist name", "description": "what happens", "setup_needed": "foreshadowing to plant earlier", "impact": "how this changes everything", "shock_level": number_1_to_10 }] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO plot_twists (id,user_id,context,twists) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201376,7 +201354,7 @@ Story context: ${story_context || "contemporary setting"}
 Respond in JSON: { "name": "full name", "age": number, "appearance": "vivid physical description", "personality": "core traits and how they manifest", "backstory": "formative history in 3-4 sentences", "core_wound": "deepest psychological wound", "want": "what they consciously want", "need": "what they actually need", "flaw": "their fatal flaw", "strength": "their greatest strength", "voice": "how they speak and phrase things", "arc": "how they change by story's end", "quirks": ["quirk1","quirk2","quirk3"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO characters (id,user_id,context,profile) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201397,7 +201375,7 @@ Magic/tech level: ${magic_tech_level || "low magic"}
 Respond in JSON: { "world_name": "name", "tagline": "one-sentence pitch", "geography": "key locations and landscape", "history": "3 pivotal historical events that shaped this world", "society": { "structure": "social hierarchy", "culture": "customs and values", "conflicts": "tensions between groups" }, "magic_or_tech": "rules and limitations", "unique_elements": ["element1","element2","element3"], "story_hooks": ["hook1","hook2","hook3"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO worlds (id,user_id,context,world) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201420,7 +201398,7 @@ Scene goal: ${goal || "create tension"}
 Respond in JSON: { "rewritten_dialogue": "the improved dialogue with stage directions", "what_changed": ["change1","change2","change3"], "subtext": "what is NOT being said but felt", "pacing_notes": "how to perform/read this", "alternatives": ["alternative line for key moment","another option"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO dialogue_rewrites (id,user_id,original,rewrite) VALUES (?,?,?,?)`).run(id, req.user.id, dialogue, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201443,7 +201421,7 @@ Tone: ${tone || "gripping"}
 Respond in JSON: { "blurbs": [{ "style": "short and punchy", "blurb": "150 word max back cover text" }, { "style": "character-led", "blurb": "opens with protagonist hook" }, { "style": "question hook", "blurb": "starts with provocative question" }], "taglines": ["tagline1","tagline2","tagline3"], "comp_titles": "comparable books for marketing" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO book_blurbs (id,user_id,context,blurb) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201470,7 +201448,7 @@ Tone: ${tone || "confident and professional"}
 Respond in JSON: { "executive_summary": "2-3 sentence opening statement", "achievements": [{"achievement":"what you did","impact":"quantified business impact","skill_demonstrated":"leadership/technical/etc"}], "growth_areas": [{"area":"area name","action_taken":"what you did about it","progress":"measurable progress"}], "goals_next_period": [{"goal":"goal","why_it_matters":"strategic importance","how_to_achieve":"specific plan"}], "closing_statement": "strong closing that asks for next step (promotion/raise/responsibility)" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO perf_reviews (id,user_id,context,review) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201493,7 +201471,7 @@ Current salary: ${current_salary || "not specified"}
 Respond in JSON: { "market_data": { "p25": "$X", "p50_median": "$X", "p75": "$X", "p90": "$X" }, "total_comp_note": "equity/bonus typical ranges", "your_target_range": { "floor": "$X", "target": "$X", "stretch": "$X" }, "negotiation_leverage": ["leverage point 1","leverage point 2"], "talking_points": ["point1","point2","point3"], "red_flags": ["if company offers below X"], "data_sources_to_cite": ["Levels.fyi","Glassdoor","Blind","LinkedIn Salary"], "disclaimer": "data from training set, verify with current sources" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO salary_research (id,user_id,context,research) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201512,7 +201490,7 @@ Personal priorities: ${priorities || "compensation, growth, work-life balance"}
 Respond in JSON: { "comparison_matrix": [{"factor":"Base Salary","weights":"high/medium/low",...offerScores}], "total_comp_estimates": [{"offer_name":"...","year1_total":"$X","year2_total":"$X"}], "winner": "offer name", "why_winner": "3 clear reasons", "watch_outs": {"offer_name":["risk1","risk2"]}, "negotiation_opportunities": [{"offer":"...","ask_for":"...","how_much":"..."}] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO offer_comparisons (id,user_id,context,comparison) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201534,7 +201512,7 @@ Constraints: ${constraints || "full-time job, limited study time"}
 Respond in JSON: { "feasibility": "high/medium/low", "feasibility_reason": "why", "skill_gap_analysis": [{"skill":"needed skill","current_level":"none/basic/intermediate","how_to_learn":"specific resource","time_needed":"X weeks"}], "30_day_plan": ["action1","action2","action3","action4","action5"], "60_day_plan": ["action1","action2","action3"], "90_day_plan": ["action1","action2","action3"], "networking_strategy": "specific approach for this pivot", "portfolio_project": "one project to build that proves capability", "first_job_title": "realistic first role to target", "salary_expectation": "likely initial salary range for this pivot" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO career_pivots (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201556,7 +201534,7 @@ Original message (if any): ${original_message || "none \u2014 write from scratch
 Respond in JSON: { "messages": [{"style":"ultra-short","message":"under 75 words","why_it_works":"..."},{"style":"value-first","message":"lead with what you can offer","why_it_works":"..."},{"style":"mutual connection","message":"find a hook or commonality","why_it_works":"..."}], "subject_line_options": ["option1","option2"], "timing_tip": "when to send for best open rate", "follow_up_template": "if no reply in 5 days..." }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO linkedin_msgs (id,user_id,context,messages) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201582,7 +201560,7 @@ Known info: ${known_info || "none"}
 Respond in JSON: { "overview": "what they do and positioning", "strengths": ["strength1","strength2","strength3"], "weaknesses": ["weakness1","weakness2","weakness3"], "opportunities_for_you": ["opportunity1","opportunity2"], "threats_to_you": ["threat1","threat2"], "blind_spots": ["what they're missing","gap in their offering"], "their_messaging": "how they position themselves", "your_counter_positioning": "how to differentiate against them", "battle_card": {"when_you_win":"situations","when_they_win":"situations","key_objections":[{"objection":"they say X","response":"counter with Y"}]} }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO competitor_dives (id,user_id,context,analysis) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201604,7 +201582,7 @@ Value metric: ${value_metric || "per user/month"}
 Respond in JSON: { "recommended_model": "freemium/subscription/usage/one-time/hybrid", "tiers": [{"name":"tier name","price":"$X/mo","for":"who it's for","features":["f1","f2","f3"],"psychology":"why this works"}], "anchor_price": "most expensive tier for anchoring", "decoy_tier": "tier designed to make middle tier attractive", "psychological_tactics": ["tactic1","tactic2","tactic3"], "discount_strategy": "annual vs monthly, when to discount", "price_increase_path": "how to raise prices later" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO pricing_strategies (id,user_id,context,strategy) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201625,7 +201603,7 @@ Problem solved: ${problem_solved}
 Respond in JSON: { "personas": [{ "name": "persona name + emoji", "job_title": "...", "company_size": "...", "demographics": "age, background", "a_day_in_their_life": "narrative of their typical day", "goals": ["goal1","goal2"], "frustrations": ["pain1","pain2","pain3"], "triggers": ["what makes them buy now","urgency drivers"], "objections": ["objection1","objection2"], "preferred_channels": ["channel1","channel2"], "messaging_that_resonates": "specific language and framing that works", "budget_authority": "how they buy and who approves" }] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO customer_personas (id,user_id,context,persona) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201647,7 +201625,7 @@ Team size: ${team_size || "2-5 people"}
 Respond in JSON: { "gtm_motion": "recommended channel strategy (PLG/SLG/Community/etc)", "pre_launch": {"timeline":"week -4 to 0","actions":["action1","action2","action3"]}, "launch_week": {"timeline":"week 1","actions":["action1","action2"]}, "post_launch": {"timeline":"weeks 2-12","actions":["action1","action2","action3"]}, "channels": [{"channel":"name","priority":"high/med/low","tactic":"specific approach","expected_output":"leads/awareness/etc"}], "first_100_customers_path": "specific step-by-step approach", "metrics_to_track": ["metric1","metric2","metric3"], "common_gtm_mistakes": ["mistake1","mistake2"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO gtm_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201668,7 +201646,7 @@ Timeframe: ${timeframe || "Q3 2025"}
 Respond in JSON: { "objectives": [{ "objective": "inspiring objective statement", "why_it_matters": "strategic rationale", "key_results": [{"kr":"measurable key result","baseline":"current state","target":"goal","measurement":"how to measure","scoring_guide":"0.7=good,1.0=exceptional"}] }], "common_pitfalls": ["pitfall1","pitfall2"], "check_in_cadence": "recommended review frequency", "grading_philosophy": "how to grade OKRs without gaming" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO okr_sets (id,user_id,context,okrs) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201693,7 +201671,7 @@ Audience: ${audience || "general"}
 Respond in JSON: { "hook": "attention-grabbing first tweet", "thread": ["tweet1","tweet2","tweet3","tweet4","tweet5","tweet6","tweet7","tweet8","tweet9","tweet10"], "cta_tweet": "final call-to-action tweet", "why_it_works": "psychology behind this thread structure", "best_time_to_post": "platform-specific timing advice" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO viral_threads (id,user_id,topic,thread) VALUES (?,?,?,?)`).run(id, req.user.id, topic, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201714,7 +201692,7 @@ Goal: ${goal || "engagement"}
 Respond in JSON: { "captions": [{"caption":"full caption text","hook":"opening line","why":"why this works"},{"caption":"full caption text","hook":"opening line","why":"why this works"},{"caption":"full caption text","hook":"opening line","why":"why this works"}], "platform_tips": "specific tips for ${platform || "Instagram"}", "emoji_suggestions": ["emoji1","emoji2","emoji3"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO caption_gen (id,user_id,context,captions) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201735,7 +201713,7 @@ Goals: ${goals || "grow audience and drive engagement"}
 Respond in JSON: { "strategy": "overall content strategy in 2 sentences", "content_pillars": ["pillar1","pillar2","pillar3","pillar4"], "weekly_themes": [{"week":1,"theme":"theme name","rationale":"why this week"},{"week":2,"theme":"theme name","rationale":"why"},{"week":3,"theme":"theme name","rationale":"why"},{"week":4,"theme":"theme name","rationale":"why"}], "daily_schedule": [{"day":1,"content_type":"type","topic":"specific topic idea","platform":"platform","format":"reel/post/story/thread"}], "repurposing_system": "how to turn one piece into 5+ pieces of content" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO content_calendar (id,user_id,context,calendar) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201755,7 +201733,7 @@ Account size: ${account_size || "under 10k followers"}
 Respond in JSON: { "strategy": "hashtag strategy explanation", "mega_hashtags": ["#tag (size)"], "mid_hashtags": ["#tag (size)"], "niche_hashtags": ["#tag (size)"], "branded_hashtag_ideas": ["#YourBrandTag"], "optimal_count": "recommended number for platform", "placement_tip": "where to put hashtags", "rotation_sets": [["set1tag1","set1tag2","set1tag3"],["set2tag1","set2tag2","set2tag3"]] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO hashtag_sets (id,user_id,topic,hashtags) VALUES (?,?,?,?)`).run(id, req.user.id, topic, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201776,7 +201754,7 @@ Goal: ${goal || "attract followers and clients"}
 Respond in JSON: { "optimized_bios": [{"bio":"full bio text","why":"what makes this work"},{"bio":"alternative version","why":"different angle"}], "key_elements_added": ["element1","element2","element3"], "cta_options": ["cta1","cta2","cta3"], "keyword_suggestions": ["keyword1","keyword2","keyword3"], "platform_character_count": "current limit for platform" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO bio_optimizer (id,user_id,input,output) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201801,7 +201779,7 @@ Audience: ${audience || "email subscribers"}
 Respond in JSON: { "sequence_overview": "what this sequence accomplishes", "emails": [{"email_number":1,"send_day":"Day 0","subject":"subject line","preview_text":"preview","body":"full email body","cta":"call to action","goal":"email goal"}] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO email_sequences (id,user_id,context,sequence) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201821,7 +201799,7 @@ Tone: ${tone || "conversational"}
 Respond in JSON: { "subject_lines": [{"line":"subject line text","type":"curiosity/urgency/benefit/question/number","open_rate_psychology":"why this works"}], "preview_text_suggestions": ["preview1","preview2","preview3"], "best_send_times": "platform recommendation", "ab_test_recommendation": "which two to A/B test and why" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO subject_lines (id,user_id,context,lines) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201842,7 +201820,7 @@ Length: ${length || "medium (400-600 words)"}
 Respond in JSON: { "subject_line": "newsletter subject", "preview_text": "preview snippet", "opening": "hook paragraph", "body": "main content", "key_takeaway": "one-sentence summary", "cta": "call to action", "p_s": "PS line (optional)" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO newsletter_drafts (id,user_id,context,draft) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201863,7 +201841,7 @@ Tone: ${tone || "warm and personal"}
 Respond in JSON: { "emails": [{"number":1,"subject":"subject","body":"email body","send_timing":"immediately"},{"number":2,"subject":"subject","body":"email body","send_timing":"3 days later"},{"number":3,"subject":"subject - final","body":"sunset email body","send_timing":"7 days later"}], "strategy": "overall re-engagement strategy", "sunset_advice": "what to do with non-responders" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO reengagement_emails (id,user_id,context,email) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201884,7 +201862,7 @@ Goal for subscriber: ${subscriber_goal || "know, like, trust the brand"}
 Respond in JSON: { "sequence_goal": "what this sequence achieves", "emails": [{"number":1,"send_timing":"immediately","subject":"subject","body":"full email","purpose":"delivery + first impression"},{"number":2,"send_timing":"day 2","subject":"subject","body":"full email","purpose":"your story / credibility"},{"number":3,"send_timing":"day 4","subject":"subject","body":"full email","purpose":"deliver value / quick win"},{"number":4,"send_timing":"day 7","subject":"subject","body":"full email","purpose":"social proof + offer intro"},{"number":5,"send_timing":"day 10","subject":"subject","body":"full email","purpose":"soft pitch / clear CTA"}] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO welcome_sequences (id,user_id,context,sequence) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201909,7 +201887,7 @@ Strategy preference: ${strategy || "avalanche (highest interest first)"}
 Respond in JSON: { "strategy_chosen": "name", "why": "why this strategy fits", "payoff_order": [{"debt_name":"name","balance":0,"rate":0,"min_payment":0,"extra_allocation":0,"payoff_months":0,"total_interest":0}], "total_debt": 0, "total_interest_paid": 0, "payoff_date": "estimated month/year", "interest_saved_vs_minimum": 0, "quick_wins": ["actionable tip1","tip2"], "motivation": "encouraging message" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO debt_payoff_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201930,7 +201908,7 @@ Financial goals: ${goals || "build emergency fund, invest"}
 Respond in JSON: { "budget_framework": "50/30/20 or custom", "categories": [{"category":"name","budgeted":0,"percentage":0,"type":"need/want/savings","notes":"advice"}], "total_income": 0, "total_expenses": 0, "surplus_or_deficit": 0, "emergency_fund_timeline": "months to 3-6 month fund", "savings_rate": "percentage", "areas_to_cut": ["suggestion1","suggestion2"], "30_day_challenge": "one specific action this month" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO budget_builders (id,user_id,context,budget) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201949,7 +201927,7 @@ Experience level: ${experience_level || "beginner"}
 Respond in JSON: { "concept": "topic name", "eli5": "explain like I'm 5", "how_it_works": "clear explanation", "pros": ["pro1","pro2","pro3"], "cons": ["con1","con2","con3"], "real_example": "concrete real-world example", "who_its_for": "ideal investor profile", "common_mistakes": ["mistake1","mistake2"], "next_steps": "what to do if interested", "disclaimer": "this is educational, not financial advice" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO investment_explainers (id,user_id,topic,explanation) VALUES (?,?,?,?)`).run(id, req.user.id, topic, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201972,7 +201950,7 @@ FIRE type: ${fire_type || "regular FIRE"}
 Respond in JSON: { "fire_type": "type chosen", "annual_expenses": 0, "fire_number": 0, "fire_number_explanation": "how calculated (25x rule)", "current_net_worth": 0, "gap_to_fire": 0, "years_to_fire": 0, "fire_age": 0, "savings_rate": "percentage", "monthly_savings_needed": 0, "milestones": [{"milestone":"25% FI","amount":0,"estimated_year":""},{"milestone":"50% FI","amount":0,"estimated_year":""},{"milestone":"FI","amount":0,"estimated_year":""}], "ways_to_accelerate": ["tip1","tip2","tip3"], "safe_withdrawal_rate": "4% rule explanation" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO fire_calculators (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -201993,7 +201971,7 @@ Startup capital: $${capital || 0}
 Respond in JSON: { "recommended_hustles": [{"name":"hustle name","match_score":"high/medium","why_good_fit":"reason","earning_potential":"$X-$Y/month","startup_cost":"$X","time_to_first_dollar":"X weeks/months","how_to_start":"step by step"}], "30_day_action_plan": ["week1","week2","week3","week4"], "tools_needed": ["tool1","tool2"], "avoid_these": ["common mistake1","mistake2"], "scaling_path": "how to grow from side hustle to full business" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO side_hustle_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202018,7 +201996,7 @@ Context: ${ctx || "general anxiety"}
 Respond in JSON: { "disclaimer": "reminder this is educational not therapy", "immediate_relief": [{"technique":"name","steps":["step1","step2"],"time_needed":"2-5 min","how_it_helps":"explanation"}], "grounding_exercises": [{"name":"technique","description":"how to do it"}], "thought_patterns_to_watch": ["pattern1","pattern2"], "reframe_examples": [{"anxious_thought":"thought","balanced_thought":"reframe"}], "longer_term_tools": ["tool1","tool2"], "when_to_seek_help": "signs professional support is needed" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO anxiety_toolkits (id,user_id,context,toolkit) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202039,7 +202017,7 @@ Intensity (1-10): ${intensity || 7}
 Respond in JSON: { "thought_record": { "situation": "${situation}", "automatic_thought": "${automatic_thought}", "emotion": "${emotion}", "intensity_before": ${intensity || 7}, "evidence_for": ["evidence that supports the thought"], "evidence_against": ["evidence against the thought"], "cognitive_distortions": ["identified distortions like catastrophizing, all-or-nothing thinking"], "balanced_thought": "more balanced alternative thought", "new_emotion": "likely emotion after reframe", "new_intensity": 4 }, "follow_up_questions": ["question1","question2"], "behavioral_experiment": "a small action to test the belief", "affirmation": "compassionate closing statement", "disclaimer": "this is educational, not a substitute for therapy" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO cbt_exercises (id,user_id,context,exercise) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202060,7 +202038,7 @@ Preferences: ${preferences || "no preferences specified"}
 Respond in JSON: { "morning_routine": [{"activity":"name","duration":"X min","benefit":"why helpful"}], "afternoon_resets": [{"activity":"name","duration":"X min"}], "evening_wind_down": [{"activity":"name","duration":"X min","benefit":"why helpful"}], "weekly_practices": [{"activity":"name","frequency":"X times/week","benefit":"why helpful"}], "emergency_self_care": "what to do when overwhelmed in 5 minutes", "things_to_reduce": ["habit1","habit2"], "self_compassion_reminder": "kind message to yourself" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO self_care_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202081,7 +202059,7 @@ Concern about setting it: ${concern || "fear of conflict"}
 Respond in JSON: { "scripts": [{"tone":"direct","script":"word-for-word script"},{"tone":"gentle","script":"softer version"},{"tone":"firm","script":"for pushback"}], "what_to_expect": "how they might react", "responses_to_pushback": [{"pushback":"what they might say","your_response":"how to respond"}], "affirmations": ["I have the right to...","My needs matter because..."], "when_professional_help_helps": "if the relationship pattern needs more support" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO boundary_scripts (id,user_id,context,scripts) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202102,7 +202080,7 @@ Domain: ${domain || "work"}
 Respond in JSON: { "burnout_stage": "early warning / moderate burnout / severe burnout", "key_symptoms_identified": ["symptom1","symptom2"], "root_causes_likely": ["cause1","cause2"], "recovery_plan": {"immediate":["action1","action2"],"this_week":["action1","action2"],"this_month":["action1","action2"]}, "energy_restoration": ["restoration activity1","activity2"], "what_to_say_to_your_manager": "script for requesting support/boundaries", "red_flags_for_professional_help": ["sign1","sign2"], "disclaimer": "this is educational, not medical advice" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO burnout_assessments (id,user_id,context,assessment) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202129,7 +202107,7 @@ Current level: ${current_level || "beginner"}
 Respond in JSON: { "overview": "what this plan achieves", "weekly_plan": [{"week":1,"focus":"topic","daily_sessions":[{"day":"Mon","topic":"subtopic","activity":"read/practice/review","duration":"30 min"}],"milestone":"what to know by end of week"}], "resources_needed": ["resource1","resource2"], "practice_strategy": "how to apply knowledge", "retention_techniques": ["spaced repetition tip","active recall tip"], "accountability_system": "how to stay on track" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO study_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202148,7 +202126,7 @@ Depth: ${depth || "intermediate"}
 Respond in JSON: { "core_concept": "topic name", "definition": "one-sentence definition", "prerequisites": ["concept1","concept2"], "key_components": [{"name":"component","description":"what it is","importance":"why it matters","sub_concepts":["sub1","sub2"]}], "connections": [{"from":"concept A","to":"concept B","relationship":"how they connect"}], "common_misconceptions": [{"misconception":"wrong belief","reality":"correct understanding"}], "real_world_applications": ["application1","application2"], "mastery_indicators": ["sign you understand it","another sign"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO concept_maps (id,user_id,topic,map) VALUES (?,?,?,?)`).run(id, req.user.id, topic, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202169,7 +202147,7 @@ Weak areas: ${weak_areas || "none specified"}
 Respond in JSON: { "strategy": "overall exam strategy", "daily_schedule": [{"day":1,"focus":"topic","tasks":["task1","task2"],"review":"what to review"}], "practice_questions": [{"question":"question text","answer":"correct answer","explanation":"why this is correct"}], "high_yield_topics": ["most important topic1","topic2"], "memory_tricks": [{"concept":"name","trick":"mnemonic or trick"}], "day_before_tips": ["tip1","tip2"], "exam_day_strategy": "time management and approach" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO exam_preps (id,user_id,context,prep) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202190,7 +202168,7 @@ Time per week: ${time_commitment || "10 hours"}
 Respond in JSON: { "total_timeline": "estimated time to reach goal", "phases": [{"phase":1,"name":"phase name","duration":"X weeks","skills_to_learn":["skill1","skill2"],"projects":["project1"],"milestone":"what you can do at end","resources":[{"type":"course/book/tutorial","name":"resource name","why":"why this one"}]}], "practice_projects": [{"difficulty":"beginner/intermediate","project":"project idea","skills_practiced":["skill1"]}], "portfolio_advice": "what to build to show employers/clients", "common_mistakes": ["mistake1","mistake2"], "community_resources": ["community1","community2"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO skill_roadmaps (id,user_id,context,roadmap) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202210,7 +202188,7 @@ Learning goal: ${learning_goal || "deep conceptual understanding"}
 Respond in JSON: { "session_overview": "what this session will accomplish", "opening_question": "provocative question to start thinking", "discovery_sequence": [{"question":"question to ask","why":"what insight this unlocks","expected_revelation":"what learner should discover"}], "common_wrong_answers": [{"wrong_answer":"what they might say","gentle_redirect":"how to guide them further"}], "key_insights": ["insight1","insight2","insight3"], "synthesis_prompt": "final question that pulls it all together", "further_exploration": ["rabbit hole1","rabbit hole2"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO socratic_sessions (id,user_id,topic,session) VALUES (?,?,?,?)`).run(id, req.user.id, topic, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202238,7 +202216,7 @@ Focus areas: ${focus || "bugs, security, performance, readability"}
 Respond in JSON: { "summary": "overall assessment", "score": 85, "issues": [{"severity":"critical|high|medium|low","type":"bug|security|performance|style","line":"line number or range","description":"what the issue is","suggestion":"how to fix it","fixed_code":"corrected code snippet"}], "strengths": ["what this code does well"], "refactoring_suggestions": [{"description":"what to refactor","before":"original code","after":"improved code","benefit":"why this is better"}], "security_concerns": ["concern1"], "test_cases_needed": ["test case description1"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO code_reviewers (id,user_id,context,review) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202258,7 +202236,7 @@ Language/flavor: ${language || "JavaScript"}
 Respond in JSON: { "pattern": "the regex pattern", "flags": "gi etc", "explanation": "what the pattern does in plain English", "breakdown": [{"part":"(\\\\w+)","meaning":"captures one or more word characters"}], "test_cases": [{"input":"test string","matches":["match1"],"groups":{"group1":"value"},"should_match":true}], "variations": [{"use_case":"more specific","pattern":"alt regex","when_to_use":"when you need X"}], "common_pitfalls": ["pitfall1","pitfall2"], "usage_example": "const re = /pattern/flags; re.test(str);" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO regex_builders (id,user_id,description,result) VALUES (?,?,?,?)`).run(id, req.user.id, description, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202279,7 +202257,7 @@ Style: ${style || "REST, developer-friendly"}
 Respond in JSON: { "overview": "what this API does", "base_url": "https://api.example.com/v1", "authentication": {"type":"Bearer Token","description":"how to auth","example":"Authorization: Bearer YOUR_TOKEN"}, "endpoints": [{"method":"POST","path":"/api/users","summary":"short description","description":"full explanation","request":{"headers":{"Content-Type":"application/json"},"body":{"field":"type \u2014 description"},"example":"JSON body example"},"response":{"status":200,"description":"success","body":{"field":"type \u2014 description"},"example":"JSON response"},"errors":[{"status":400,"message":"error message","cause":"why this happens"}]}], "rate_limits": "rate limit policy", "versioning": "how versioning works", "sdks": ["language the API supports"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO api_doc_gens (id,user_id,context,docs) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202302,7 +202280,7 @@ ${query}
 Respond in JSON: { "analysis": "what the query does", "issues": [{"type":"missing index|n+1|full table scan|etc","description":"what's wrong","impact":"performance impact"}], "optimized_query": "improved SQL", "changes_made": ["change1 and why","change2 and why"], "indexes_to_add": [{"table":"table_name","columns":["col1","col2"],"type":"btree","reason":"why this helps"}], "estimated_improvement": "rough performance gain", "execution_plan_notes": "what to check in EXPLAIN ANALYZE", "alternative_approaches": [{"approach":"approach name","query":"alt SQL","tradeoffs":"when to use this instead"}] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO sql_optimizers (id,user_id,query,result) VALUES (?,?,?,?)`).run(id, req.user.id, query, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202323,7 +202301,7 @@ Style: ${style || "conventional commits"}
 Respond in JSON: { "primary_commit": {"subject":"feat(auth): add OAuth2 login flow","body":"Implement Google and GitHub OAuth2 providers using passport.js\\n\\nUsers can now sign in with their Google or GitHub accounts\\nSession tokens are stored securely in httpOnly cookies","footer":"Closes #123\\nBreaking-change: removes legacy /login endpoint"}, "alternatives": [{"style":"short","message":"add OAuth2 login"},{"style":"descriptive","message":"longer descriptive version"},{"style":"emoji","message":"\u2728 feat: add OAuth2 login"}], "changelog_entry": "what to put in CHANGELOG.md", "pr_title": "suggested pull request title", "pr_description": "suggested PR description with context" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO git_commit_gens (id,user_id,context,commits) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202349,7 +202327,7 @@ My goals: ${goals || "be more productive and fulfilled"}
 Respond in JSON: { "overall_score": 72, "assessment": "honest assessment of time allocation", "time_categories": [{"category":"Deep Work","current_hours":5,"recommended_hours":20,"gap":15,"impact":"high"}], "time_thieves": [{"activity":"checking email","hours_per_week":10,"opportunity_cost":"what you could do instead","fix":"how to reduce this"}], "quick_wins": ["immediate change1","immediate change2"], "reallocation_plan": [{"from":"low-value activity","to":"high-value activity","hours_to_shift":5,"expected_outcome":"result"}], "ideal_week_design": {"deep_work_blocks":"9-12pm Mon/Wed/Fri","shallow_work":"2-4pm daily","admin":"30min morning","learning":"7-8am daily"}, "30_day_challenge": "one specific change to make for 30 days" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO time_audits (id,user_id,context,audit) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202369,7 +202347,7 @@ Context: ${context || "general knowledge capture"}
 Respond in JSON: { "title": "concise title", "summary": "2-3 sentence summary of the key idea", "main_insights": ["insight1","insight2","insight3"], "action_items": ["specific action to take"], "questions_raised": ["question this sparked"], "connections": ["how this connects to other ideas/topics"], "tags": ["tag1","tag2"], "evergreen_note": "rewritten as a timeless principle or insight", "fleeting_to_permanent": "the core idea distilled to one sentence", "related_concepts": ["concept1","concept2"], "projects_this_applies_to": ["project or goal this is relevant to"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO second_brain_notes (id,user_id,input,structured) VALUES (?,?,?,?)`).run(id, req.user.id, raw_notes, JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202390,7 +202368,7 @@ Top priorities: ${priorities || "get important things done"}
 Respond in JSON: { "weekly_theme": "one word or phrase for this week", "top_3_outcomes": ["must-achieve outcome 1","outcome 2","outcome 3"], "daily_plan": [{"day":"Monday","theme":"theme for the day","mit":"most important task","morning":"9am-12pm plan","afternoon":"1pm-5pm plan","evening":"optional evening work","review":"end-of-day check"}], "time_blocks": [{"block":"Deep Work 1","days":"Mon/Wed/Fri","time":"9-11am","task_type":"creative/strategic work"}], "buffer_time": "when to put buffer and why", "weekly_review_prompt": "question to ask at end of week", "anti_goals": ["what NOT to do this week"], "energy_protection": ["how to protect your energy"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO weekly_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202411,7 +202389,7 @@ My motivation: ${motivation || "general self-improvement"}
 Respond in JSON: { "habit_statement": "I will [cue] \u2192 [routine] \u2192 [reward]", "cue": {"type":"time/location/preceding-event/emotional-state","specific_cue":"exactly what triggers the habit"}, "minimum_viable_habit": "the 2-minute version to start with", "implementation_intention": "When X happens, I will do Y in location Z", "habit_stack": {"anchor_habit":"existing habit to attach to","sequence":"anchor \u2192 new habit"}, "friction_reducers": ["make it easier by doing X","remove obstacle Y"], "reward": {"immediate":"what you get immediately","eventual":"long-term payoff"}, "tracking_method": "how to track without it feeling like a chore", "obstacle_responses": [{"obstacle":"obstacle1","if_then_plan":"if X happens, then I will Y"}], "30_60_90_milestones": {"day_30":"what success looks like","day_60":"expansion","day_90":"habit fully formed"} }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO habit_designs (id,user_id,context,design) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202432,7 +202410,7 @@ When I feel most alert: ${peak_times || "unsure"}
 Respond in JSON: { "chronotype": "your chronotype (lion/bear/wolf/dolphin)", "energy_curve": [{"time":"6-8am","level":"low/medium/high","best_for":"activity type"},{"time":"8-10am","level":"high","best_for":"deep work"}], "peak_performance_windows": ["9-11am: creative work","2-3pm: meetings OK"], "cognitive_tasks_by_energy": {"high_energy":["complex decisions","writing","coding"],"medium_energy":["emails","meetings","calls"],"low_energy":["admin","filing","easy tasks"]}, "energy_drains": [{"drain":"back-to-back meetings","fix":"schedule buffer blocks"}], "energy_boosters": ["5min walk","cold water","breathing exercise"], "optimal_schedule_template": {"6am":"wake routine","9am":"peak deep work","12pm":"lunch/recovery","2pm":"meetings","4pm":"shallow work","6pm":"shutdown ritual"}, "nap_window": "best time for a 20-min nap if needed", "weekly_energy_rhythm": "how to structure Mon-Sun for sustained output" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO energy_maps (id,user_id,context,map) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202459,7 +202437,7 @@ Point of view: ${pov || "third person"}
 Respond in JSON: { "title": "story title", "hook": "opening line", "story": "the full story text", "themes": ["theme1","theme2"], "craft_notes": {"technique_used":"what literary technique this employs","why_it_works":"brief analysis"} }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO short_stories (id,user_id,context,story) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202480,7 +202458,7 @@ Imagery to include: ${imagery || "natural world"}
 Respond in JSON: { "title": "poem title", "poem": "the full poem with line breaks as \\n", "form_notes": "what form this uses and why", "imagery_analysis": "key images and what they evoke", "interpretation": "what this poem is really about", "alternative_title": "another title option" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO poem_crafters (id,user_id,context,poem) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202502,7 +202480,7 @@ Genre: ${genre || "drama"}
 Respond in JSON: { "scene_heading": "INT. LOCATION - TIME", "scene": "full screenplay formatted scene with action lines and dialogue", "subtext": "what the scene is really about beneath the dialogue", "character_notes": [{"character":"name","objective":"what they want in this scene","obstacle":"what's in their way"}], "director_note": "visual suggestion for this scene", "setup_payoff": "what this scene sets up for later" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO screenplay_scenes (id,user_id,context,scene) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202523,7 +202501,7 @@ Time period: ${era || "unspecified"}
 Respond in JSON: { "opening": "scene-setting opening paragraph", "draft": "full memoir passage (600-800 words) in first person, present tense for immediacy", "reflection": "the reflective closing that zooms out to meaning", "sensory_details": ["detail1","detail2","detail3"], "revision_notes": ["what to strengthen in revision","another suggestion"], "alternate_opening": "different way to start this piece" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO memoir_drafts (id,user_id,context,draft) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202544,7 +202522,7 @@ Tone: ${tone || "dry wit"}
 Respond in JSON: { "headline": "satirical headline", "subheadline": "supporting deck", "piece": "the full satirical piece", "technique": "what satirical technique this uses (Swiftian irony, absurdism, parody, etc.)", "the_real_critique": "what this is actually criticizing beneath the humor", "best_line": "the sharpest line in the piece" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO satire_pieces (id,user_id,context,piece) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202570,7 +202548,7 @@ Business stage: ${stage || "early stage"}
 Respond in JSON: { "market_size": {"tam":"Total Addressable Market estimate","sam":"Serviceable Addressable Market","som":"Serviceable Obtainable Market (realistic 3yr target)"}, "growth_rate": "CAGR estimate and trend direction", "key_drivers": ["driver1","driver2","driver3"], "market_segments": [{"segment":"name","size":"relative size","growth":"fast/medium/slow","attractiveness":"why to target or avoid"}], "customer_profile": {"demographics":"who they are","psychographics":"what they care about","buying_triggers":["trigger1"],"pain_points":["pain1"]}, "competitive_landscape": {"intensity":"low/medium/high","key_players":["player1","player2"],"market_concentration":"fragmented/consolidated"}, "barriers_to_entry": ["barrier1","barrier2"], "opportunities": ["opportunity1","opportunity2"], "threats": ["threat1","threat2"], "recommended_entry_strategy": "how to enter this market" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO market_analyses (id,user_id,context,analysis) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202591,7 +202569,7 @@ Key resources available: ${resources || "none specified"}
 Respond in JSON: { "value_proposition": "what unique value you deliver and to whom", "customer_segments": [{"segment":"name","size":"small/medium/large","willingness_to_pay":"low/medium/high","how_to_reach":"channel"}], "revenue_streams": [{"type":"subscription/transactional/freemium/licensing","description":"how it works","pricing_hint":"rough price point"}], "key_activities": ["core activity1","core activity2"], "key_resources": ["resource1","resource2"], "key_partnerships": ["partner type1","why you need them"], "cost_structure": {"fixed_costs":["cost1"],"variable_costs":["cost1"],"biggest_cost":"what this is"}, "channels": ["channel1","channel2"], "unit_economics_estimate": {"cac":"rough customer acquisition cost","ltv":"rough lifetime value","payback_period":"months to recoup CAC"}, "moat": "what makes this defensible" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO biz_model_designs (id,user_id,context,model) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202613,7 +202591,7 @@ Business goals: ${goals || "growth"}
 Respond in JSON: { "recommended_model": "which pricing model to use and why", "price_points": [{"tier":"Free/Starter/Pro/Enterprise","price":"$/mo","what_included":["feature1"],"target_user":"who this is for"}], "psychological_pricing": "tricks to use (anchoring, charm pricing, etc.)", "freemium_strategy": "whether to use freemium and how", "discount_policy": "when/how to discount without devaluing", "price_increase_roadmap": "how to increase prices over time", "competitor_positioning": "how to price vs competition", "packaging_advice": "what to bundle/unbundle", "revenue_optimization": ["lever1 to optimize","lever2"], "pricing_test": "what to A/B test first" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO pricing_models (id,user_id,context,model) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202634,7 +202612,7 @@ Mutual benefits: ${mutual_benefits || "to be identified"}
 Respond in JSON: { "executive_summary": "2-3 sentence hook explaining why this partnership makes sense", "their_problem": "what challenge or gap the partner has that you solve", "your_value": "what unique value you bring to them", "their_value": "what they bring to you (be honest \u2014 they need to hear it)", "partnership_structure": {"type":"rev share/co-marketing/technology integration/etc","terms_proposed":"rough terms","timeline":"proposed timeline"}, "joint_value_creation": "what neither party could do alone", "success_metrics": ["metric1 \u2014 how you'll know it's working","metric2"], "risk_mitigation": "how you protect both parties", "next_steps": ["step1: schedule intro call","step2: pilot proposal","step3:"], "email_opener": "opening email to send to initiate this partnership" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO partnership_proposals (id,user_id,context,proposal) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202655,7 +202633,7 @@ Preferred exit type: ${preferred_exit || "open to options"}
 Respond in JSON: { "recommended_exit": "best exit path given context", "exit_options": [{"type":"acquisition/IPO/merger/MBO/acquihire","feasibility":"low/medium/high","valuation_multiple":"typical multiple","timeline":"how long to prepare","pros":["pro1"],"cons":["con1"]}], "valuation_drivers": ["what most increases your value","another driver"], "preparation_roadmap": [{"phase":"phase name","timeline":"months 1-6","actions":["action1","action2"],"milestone":"what to achieve"}], "metrics_to_maximize": [{"metric":"ARR/EBITDA/DAU/etc","why":"why acquirers care about this","target":"benchmark to hit"}], "red_flags_to_fix": ["thing that will kill your deal1","fix for it"], "legal_prep": ["key legal thing to do1","key legal thing2"], "advisor_team": ["who you need: M&A lawyer","investment banker","CFO"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO exit_strategies (id,user_id,context,strategy) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202681,7 +202659,7 @@ Symptoms/concerns: ${symptoms || "none"}
 Respond in JSON: { "disclaimer": "always consult a doctor", "summary": "plain English overview of results", "markers": [{"name":"marker name","value":"reported value","normal_range":"reference range","status":"optimal/normal/borderline/abnormal","plain_english":"what this means in plain language","significance":"why it matters"}], "patterns": ["pattern you notice across multiple markers"], "questions_for_doctor": ["question to ask your doctor1","question2"], "lifestyle_factors": ["lifestyle thing that commonly affects these markers"], "follow_up_recommended": "what tests to consider next" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO lab_interpreters (id,user_id,context,interpretation) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202702,7 +202680,7 @@ Monthly budget: ${budget || "$100"}
 Respond in JSON: { "disclaimer": "consult doctor before starting supplements", "tier1_essentials": [{"supplement":"name","dose":"amount and timing","why":"evidence-based reason","priority":9,"monthly_cost":"$X"}], "tier2_beneficial": [{"supplement":"name","dose":"amount","why":"why it helps","priority":7,"monthly_cost":"$X"}], "tier3_optional": [{"supplement":"name","dose":"amount","why":"benefit","priority":5,"monthly_cost":"$X"}], "avoid_with_medications": ["supplement to avoid if taking certain drugs"], "synergies": ["supplement A + B works better together because"], "total_stack_cost": "estimated monthly total", "morning_protocol": "morning supplement timing", "evening_protocol": "evening supplement timing", "quality_brands": ["brand1 known for quality","brand2"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO supplement_stacks (id,user_id,context,stack) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202723,7 +202701,7 @@ Recovery goals: ${recovery_goals || "faster recovery, less soreness"}
 Respond in JSON: { "recovery_assessment": "current recovery situation", "immediate_24h": [{"intervention":"ice bath/sleep/nutrition","timing":"when to do it","how":"how to implement","benefit":"expected outcome"}], "weekly_recovery_schedule": [{"day":"Mon","focus":"what to recover","protocol":"specific actions"}], "sleep_optimization": {"target_hours":"8-9","pre_sleep":"protocol 60min before bed","sleep_environment":"ideal setup","nap_protocol":"if needed"}, "nutrition_recovery": {"post_workout":"what and when to eat","hydration":"daily targets","anti_inflammatory_foods":["food1","food2"]}, "active_recovery": ["low-intensity activity that aids recovery"], "monitoring_signs": {"good_recovery":["sign you're recovering well"],"overtraining_signs":["warning sign1"]}, "advanced_protocols": ["HRV monitoring","sauna","cold therapy \u2014 if appropriate"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO recovery_plans (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202744,7 +202722,7 @@ Current lifestyle: ${lifestyle || "sedentary knowledge worker"}
 Respond in JSON: { "biological_age_factors": ["factor that most impacts your aging"], "pillars": [{"pillar":"Exercise/Sleep/Nutrition/Stress/Social","current_grade":"B","target":"what to aim for","interventions":["specific action1"]}], "exercise_protocol": {"zone2_cardio":"150-180min/week at conversational pace","strength":"2-3x/week compound movements","vo2max":"one HIIT session/week","flexibility":"daily mobility"}, "nutrition_protocol": {"pattern":"time-restricted eating/Mediterranean/etc","key_foods":["food1","food2"],"avoid":["inflammatory food1"],"fasting":"if appropriate"}, "biomarkers_to_track": [{"marker":"name","test_frequency":"annual/quarterly","why":"what it tells you"}], "quick_wins": ["high-impact change you can make today"], "5_year_protocol": "overarching strategy for the next 5 years" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO longevity_protocols (id,user_id,context,protocol) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202765,7 +202743,7 @@ Typical schedule: ${schedule || "9-5"}
 Respond in JSON: { "cognitive_baseline": "honest assessment of current state", "focus_protocol": {"pre_work_ritual":"5-10min routine before deep work","environment":"ideal setup","session_length":"optimal focus blocks","transition":"how to end sessions cleanly"}, "nootropic_toolkit": [{"tool":"caffeine/exercise/breathwork/etc","dose_timing":"how to use it","cognitive_benefit":"what it improves","caution":"any downside"}], "learning_acceleration": ["spaced repetition","interleaved practice","elaborative interrogation"], "decision_fatigue_prevention": ["morning routine to preserve willpower","batching decisions"], "flow_state_triggers": ["how to reliably enter flow"], "mental_recovery": ["daily practices to restore cognitive capacity"], "weekly_mental_maintenance": "weekly review and reset practice", "metrics_to_track": ["cognitive metric1 to monitor"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO mental_performance (id,user_id,context,protocol) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202790,7 +202768,7 @@ Contract text: ${contract_text}
 Respond in JSON: { "disclaimer": "not legal advice, consult an attorney", "summary": "plain English summary of what this contract does", "key_terms": [{"clause":"clause name","plain_english":"what it means","risk_level":"low/medium/high","concern":"specific concern if any"}], "red_flags": [{"flag":"description","severity":"high/medium","location":"section or quote"}], "missing_protections": ["protection you should ask to add"], "negotiation_points": [{"point":"what to negotiate","suggested_language":"how to phrase it","priority":"must-have/nice-to-have"}], "overall_risk": "low/medium/high", "recommendation": "sign as-is/negotiate first/avoid/consult attorney" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO contract_analyzers (id,user_id,context,analysis) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202811,7 +202789,7 @@ Situation: ${situation || "standard"}
 Respond in JSON: { "disclaimer": "consult a CPA or tax professional", "effective_rate_estimate": "estimated effective tax rate", "immediate_actions": [{"action":"thing to do now","potential_savings":"estimated savings","effort":"low/medium/high","deadline":"when to do it by"}], "retirement_strategy": {"vehicles":["401k","IRA","HSA \u2014 which to prioritize"],"contribution_order":"which to fund first","match_optimization":"how to get max employer match"}, "deductions_checklist": [{"deduction":"name","qualifies":"yes/no/maybe","estimated_value":"$X","what_you_need":"documentation needed"}], "tax_loss_harvesting": "if applicable", "entity_structure": "sole prop vs LLC vs S-corp analysis if relevant", "year_end_moves": ["action before Dec 31"], "quarterly_estimates": "if applicable for self-employed" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO tax_strategists (id,user_id,context,strategy) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202832,7 +202810,7 @@ Wishes: ${wishes || "pass assets to family, minimize taxes"}
 Respond in JSON: { "disclaimer": "consult an estate planning attorney", "urgency": "immediate/soon/eventual", "documents_needed": [{"document":"Will/Trust/POA/etc","priority":"must-have/important/optional","what_it_does":"plain English","without_it":"what happens without it","estimated_cost":"$X to prepare"}], "asset_titling": [{"asset_type":"real estate/retirement/bank accounts","recommended_titling":"how to title it","why":"reason"}], "beneficiary_audit": "check these beneficiary designations now", "tax_efficiency": ["strategy to minimize estate tax"], "digital_assets": ["how to handle online accounts, crypto, etc"], "conversation_to_have": "what to tell your family", "first_3_steps": ["concrete action 1","concrete action 2","concrete action 3"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO estate_planners (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202853,7 +202831,7 @@ Risk tolerance: ${risk_tolerance || "moderate"}
 Respond in JSON: { "disclaimer": "not financial advice, consult a fiduciary advisor", "portfolio_grade": "A/B/C/D with explanation", "allocation_analysis": {"current":"what you have","assessment":"how balanced it is","concerns":["concern1"]}, "diversification_score": "1-10 with explanation", "fee_analysis": "estimated drag from fees if calculable", "risk_assessment": {"volatility":"expected volatility level","max_drawdown":"realistic worst case","recovery_time":"typical recovery period"}, "recommendations": [{"action":"rebalance/add/remove/hold","specific":"what to do","reasoning":"why","priority":"high/medium/low"}], "missing_asset_classes": ["asset class not represented that could help"], "rebalancing_trigger": "when and how to rebalance", "tax_efficiency_notes": ["tax optimization note"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO investment_analyzers (id,user_id,context,analysis) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202874,7 +202852,7 @@ Dependents: ${dependents || "none"}
 Respond in JSON: { "disclaimer": "consult a licensed insurance broker", "coverage_scorecard": [{"type":"Health/Life/Disability/Auto/Home/Umbrella/etc","status":"have/missing/inadequate","current_coverage":"what they have or none","recommendation":"what level they need","annual_cost_estimate":"$X/year","priority":"critical/important/nice-to-have"}], "biggest_gaps": [{"gap":"uncovered risk","worst_case_scenario":"what happens","fix":"what coverage to get"}], "overinsured_areas": ["area where they may be paying too much"], "life_events_triggers": ["trigger event that requires coverage review"], "quick_wins": ["easy improvement to make this week"], "total_coverage_grade": "A/B/C/D" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO insurance_auditors (id,user_id,context,audit) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202900,7 +202878,7 @@ Output goals: ${output_goals || "ship more, think clearly"}
 Respond in JSON: { "diagnosis": "what's killing their deep work", "ideal_schedule": [{"block":"time slot","type":"deep/shallow/admin/recovery","activity":"what to do","why":"reason for this placement"}], "environment_design": {"physical":"workspace setup","digital":"app/notification setup","social":"how to communicate availability"}, "session_structure": {"warmup":"5-10min ritual","main_session":"how to structure focused work","wind_down":"how to end a session"}, "shallow_work_batching": "when and how to handle email/slack/meetings", "protection_scripts": ["phrase to say when someone wants to interrupt you","how to decline unnecessary meetings"], "weekly_review": "Sunday/Friday review process to maintain the system", "metrics": ["how to measure if deep work is improving"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO deep_work_planners (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202920,7 +202898,7 @@ Goals: ${goals || "fewer meetings, better outcomes"}
 Respond in JSON: { "meeting_audit": "assessment of current meeting situation", "meetings_to_eliminate": [{"meeting_type":"type","why":"why it should die","replacement":"what replaces it"}], "meetings_to_fix": [{"meeting_type":"type","current_problem":"what's wrong","fix":"how to fix it","new_format":"improved format"}], "meeting_templates": [{"purpose":"1:1/standup/brainstorm/decision","agenda":"template agenda","duration":"ideal length","prep":"what to send beforehand","output":"what should be decided/documented"}], "no_meeting_blocks": "when to block calendar for deep work", "async_alternatives": ["zoom call \u2192 Loom video","status meeting \u2192 Notion doc"], "scripts": {"decline_meeting":"polite way to decline unnecessary meetings","shorten_meeting":"how to end meetings early"} }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO meeting_optimizers (id,user_id,context,optimization) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202942,7 +202920,7 @@ Timeline: ${timeline || "5 years"}
 Respond in JSON: { "current_assessment": "honest assessment of where they are", "trajectory_paths": [{"path":"IC track/management track/entrepreneurship/pivot","probability":"high/medium/low given background","milestones":[{"timeframe":"6 months","milestone":"what to achieve","how":"key actions"}],"trade_offs":"what you give up vs gain"}], "skill_gaps": [{"skill":"gap","importance":"critical/important","how_to_close":"specific way to develop it","timeline":"how long"}], "network_strategy": "who to meet, what communities to join", "visibility_plan": ["how to become known in your field"], "compensation_trajectory": "realistic comp at each milestone", "risk_factors": ["thing that could derail this trajectory"], "quick_wins_next_90_days": ["actionable step you can take now"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO career_trajectory (id,user_id,context,trajectory) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202963,7 +202941,7 @@ Company context: ${company_context || "standard tech company"}
 Respond in JSON: { "executive_summary": "one paragraph making the case", "impact_stories": [{"situation":"context","action":"what you did","result":"measurable outcome","competency":"what skill this demonstrates"}], "scope_expansion": "how your responsibilities have grown beyond your current level", "future_impact": "what you will do at the next level that you are not doing now", "market_comparison": "how your skills compare externally", "peer_evidence": "suggested framing for peer feedback", "manager_ask": "exact language for the conversation with your manager", "timing_recommendation": "when to have this conversation", "objection_responses": {"objection":"common pushback","response":"how to answer it"}, "follow_up_plan": "what to do if you get a yes, a no, or a maybe" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO promotion_cases (id,user_id,context,case_doc) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -202984,7 +202962,7 @@ Key achievements: ${achievements || "not provided"}
 Respond in JSON: { "headline": "optimized headline under 220 chars that positions them for target role", "headline_alternatives": ["alternative 1","alternative 2"], "about_section": "rewritten about section 2000 chars max, first person, value-first, keyword rich", "open_to_work_message": "optional note for open to work banner", "featured_section_suggestions": ["what to pin in featured: post, project, case study"], "experience_bullets": [{"role":"job title","rewritten_bullets":["achievement-focused bullet 1","bullet 2"]}], "skills_to_add": ["skill keyword 1","skill keyword 2"], "connection_request_template": "short note for reaching out to recruiters", "creator_mode_topics": ["topic to post about to attract target audience"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO linkedin_rewriters (id,user_id,context,rewrite) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203010,7 +202988,7 @@ Your concerns: ${your_concerns || "avoid conflict"}
 Respond in JSON: { "pre_conversation": {"timing":"when to have it","setting":"where","your_mindset":"how to prepare yourself"}, "opening": "exact words to start the conversation (first 2-3 sentences)", "structure": [{"phase":"phase name","purpose":"what you're doing","example_language":"what to say"}], "likely_reactions": [{"reaction":"how they might respond","your_response":"what to say","what_not_to_say":"avoid this"}], "closing": "how to end the conversation constructively", "if_it_goes_badly": "what to do if it escalates or breaks down", "follow_up": "what to do after the conversation", "key_phrases": ["useful phrase to use"],"phrases_to_avoid": ["phrase that will inflame things"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO difficult_convo_planners (id,user_id,context,plan) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203032,7 +203010,7 @@ Desired change: ${desired_change}
 Respond in JSON: { "sbi_feedback": {"situation":"specific situation","behavior":"observable behavior only \u2014 no interpretation","impact":"impact on team/project/relationship"}, "written_version": "ready-to-say feedback in 3-4 sentences using SBI", "delivery_tips": ["how to set the tone","what body language helps","timing advice"], "positive_framing": "version that leads with strengths before the growth area", "follow_up_question": "open question to invite their perspective", "if_they_get_defensive": "how to respond", "appreciation_to_pair": "genuine appreciation to express alongside the feedback" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO feedback_givers (id,user_id,context,feedback) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203053,7 +203031,7 @@ Context: ${context || "professional"}
 Respond in JSON: { "audience_analysis": "what they care about, their fears, their decision criteria", "core_message": "single sentence that captures your ask", "emotional_hook": "how to connect to what they care about", "logical_case": "3 strongest rational arguments", "social_proof": "what evidence or examples would move them", "objection_pre_emption": [{"objection":"likely pushback","response":"how to address it proactively"}], "call_to_action": "clear, low-friction ask", "script": "full persuasion script from opener to close", "follow_up": "if they don't decide now, what to do" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO persuasion_coaches (id,user_id,context,script) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203074,7 +203052,7 @@ Goals: ${goals || "improve the relationship"}
 Respond in JSON: { "health_score": "1-10 with rationale", "strengths": ["what is working well"], "patterns_to_address": [{"pattern":"recurring dynamic","impact":"how it affects the relationship","shift":"what to change"}], "energy_audit": "is this relationship giving or draining energy \u2014 honest assessment", "root_issues": ["underlying issue beneath surface symptoms"], "actionable_steps": [{"action":"specific thing to do","when":"timing","expected_outcome":"what it will accomplish"}], "conversation_to_have": "the conversation you're avoiding that needs to happen", "6_month_vision": "what this relationship could look like with intention", "boundary_suggestion": "if needed \u2014 a boundary that would help" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO relationship_auditors (id,user_id,context,audit) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203096,7 +203074,7 @@ Life areas to review: ${life_areas || "career, health, relationships, finances, 
 Respond in JSON: { "executive_summary": "1-paragraph honest assessment", "metrics_dashboard": [{"life_area":"area","score":"1-10","trend":"up/down/flat","highlight":"best thing","concern":"biggest issue"}], "kpis_achieved": ["win with context"], "kpis_missed": ["miss with root cause analysis"], "strategic_risks": ["risk you're not paying enough attention to"], "resource_allocation": "where your time and energy is going vs where it should go", "strategic_opportunities": ["opportunity you're underinvesting in"], "next_quarter_priorities": ["priority 1","priority 2","priority 3"], "one_decision_to_make": "the single most important decision to make this quarter", "personal_board_advice": "what a wise mentor or personal board member would tell you" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO personal_ceos (id,user_id,context,review) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203122,7 +203100,7 @@ Specific questions: ${questions || "what does this mean and why does it matter?"
 Respond in JSON: { "eli5": "explain like I'm 5 \u2014 one paragraph", "key_finding": "the single most important thing this paper found", "methodology_plain": "what they did \u2014 no jargon", "why_it_matters": "real-world implications in 2-3 sentences", "limitations": ["what this study can't tell us","who this doesn't apply to"], "follow_up_studies": "what research should happen next", "counterarguments": "what critics might say about this", "confidence_level": "how solid is this evidence \u2014 preliminary/promising/well-established", "applications": ["practical use case"], "glossary": [{"term":"jargon term","meaning":"plain English definition"}] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO paper_decoders (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203143,7 +203121,7 @@ Constraints: ${constraints || "none"}
 Respond in JSON: { "primary_hypothesis": {"statement":"if X then Y because Z","null_hypothesis":"the version to disprove","type":"causal/correlational/descriptive"}, "alternative_hypotheses": [{"statement":"alt hypothesis","why_plausible":"reasoning"}], "variables": {"independent":"what you change","dependent":"what you measure","control":"what you hold constant","confounds":"what could mess up results"}, "predictions": ["specific, measurable prediction if hypothesis is true"], "falsification": "what result would prove this hypothesis WRONG", "theoretical_basis": "what existing science supports this", "novelty_assessment": "how original is this hypothesis \u2014 incremental/novel/paradigm-shifting" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO hypothesis_builders (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203164,7 +203142,7 @@ Constraints: ${constraints || "none"}
 Respond in JSON: { "design_type": "RCT/observational/quasi-experimental/A-B test/case study", "sample": {"size":"recommended n with reasoning","selection":"how to pick participants/subjects","inclusion_criteria":["who qualifies"],"exclusion_criteria":["who to exclude"]}, "procedure": [{"step":"step name","action":"what to do","duration":"how long","notes":"important details"}], "measurements": [{"variable":"what to measure","method":"how","frequency":"when","instrument":"tool to use"}], "controls": ["control condition","blinding approach","randomization method"], "statistical_plan": "what analysis to run and why", "power_analysis": "sample size justification", "potential_confounds": ["confound and how to control it"], "ethical_considerations": ["ethical issue and mitigation"], "expected_timeline": "phase-by-phase schedule", "budget_estimate": "rough cost breakdown if applicable" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO experiment_designers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203185,7 +203163,7 @@ Angle: ${angle || "general overview"}
 Respond in JSON: { "field_overview": "state of knowledge in 2-3 paragraphs", "key_findings": [{"finding":"established finding","evidence":"how well supported","year_range":"roughly when established"}], "major_debates": [{"debate":"the disagreement","side_a":"position A","side_b":"position B","current_lean":"which way evidence tilts"}], "landmark_papers": [{"title":"paper title","why_important":"why it matters","year":"approximate year"}], "research_gaps": ["underexplored area that needs more study"], "emerging_directions": ["frontier area or new approach"], "methodological_trends": "how research in this area is typically done", "interdisciplinary_links": ["related field with relevant insights"], "practical_applications": ["how this research translates to real world"], "recommended_starting_points": ["where to begin reading if new to this topic"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO literature_mappers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203208,7 +203186,7 @@ Budget range: ${budget_range || "$100k-500k"}
 Respond in JSON: { "specific_aims": "300-word specific aims section \u2014 the most important part of any grant", "significance": "why this research matters \u2014 impact on field and society", "innovation": "what is novel about this approach", "approach": "methodology section \u2014 rigorous, detailed, anticipates reviewers' concerns", "significance_score_factors": ["what makes this fundable","what reviewers will love"], "weaknesses_to_preempt": [{"weakness":"likely reviewer concern","response":"how to address it in the proposal"}], "budget_justification": "narrative justifying the budget range", "broader_impacts": "societal benefits beyond the immediate research", "hook_sentence": "the single sentence that makes reviewers want to fund this", "success_metrics": ["how you'll know the research succeeded"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO grant_writers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203233,7 +203211,7 @@ Question: ${question}
 Respond in JSON: { "disclaimer": "standard not-legal-advice disclaimer", "short_answer": "plain English answer to their question in 2-3 sentences", "relevant_rights": [{"right":"name of right or protection","explanation":"what it means in plain English","when_it_applies":"context","common_misconceptions":"what people get wrong about this"}], "what_you_can_do": ["actionable step"], "what_they_cannot_do": ["what the other party legally cannot do to you"], "documentation_advice": "what to document and how", "when_to_get_a_lawyer": "specific signals that this needs professional legal help", "free_resources": ["type of free resource available \u2014 legal aid, ombudsman, consumer protection agency"], "related_laws": ["law or regulation name with brief description"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO rights_explainers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203255,7 +203233,7 @@ Jurisdiction: ${jurisdiction || "United States"}
 Respond in JSON: { "contract_text": "full contract text with [BRACKETS] for fields to fill in", "key_clauses_explained": [{"clause":"clause name","explanation":"what it does and why it matters"}], "missing_terms": ["important thing not specified that you should clarify"], "red_flags": ["clause that often causes disputes \u2014 and why"], "negotiation_points": ["typical negotiation point in this type of contract"], "execution_checklist": ["step to properly execute this contract"], "jurisdiction_note": "how jurisdiction affects this contract type" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO contract_drafters (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203277,7 +203255,7 @@ Attempts so far: ${attempts_so_far || "none"}
 Respond in JSON: { "formal_letter": "complete formal complaint letter ready to send", "escalation_path": [{"step":"escalation level","who":"who to contact","how":"method","when":"when to escalate"}], "regulatory_bodies": ["regulator or agency that oversees this type of complaint with brief description"], "legal_options": "brief overview of legal remedies available", "evidence_checklist": ["document or evidence to gather"], "tone_notes": "why this tone was chosen and what approach will be most effective", "follow_up_template": "shorter follow-up message if no response in 2 weeks" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO complaint_writers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203297,7 +203275,7 @@ Policy text: ${policy_text}
 Respond in JSON: { "tldr": "what this policy actually means in 3 sentences", "red_flags": [{"clause":"problematic language","risk":"what risk it creates for you","severity":"low/medium/high"}], "data_collection": "what data they collect and how they use it", "your_rights": ["right you retain under this policy"], "auto_renewals": "any auto-renewal or cancellation traps", "arbitration_clauses": "any mandatory arbitration or class-action waivers", "opt_outs": ["thing you can opt out of and how"], "changes_policy": "how they can change this agreement and whether they notify you", "summary_table": [{"topic":"area","their_position":"what the policy says","impact":"impact on you"}] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO policy_decoders (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203319,7 +203297,7 @@ Evidence available: ${evidence || "unknown"}
 Respond in JSON: { "case_strength": "honest assessment \u2014 strong/moderate/weak \u2014 with reasoning", "legal_theory": "the legal basis for the claim", "filing_steps": [{"step":"step name","action":"what to do","cost":"typical filing fee if applicable","tip":"insider tip"}], "evidence_to_gather": [{"item":"evidence item","why":"why it helps your case","how":"how to obtain or preserve it"}], "what_to_say": "script for presenting your case to the judge", "defendant_defenses": ["defense they might raise and how to counter it"], "settlement_advice": "should you settle and if so at what amount", "day_of_court_tips": ["tip for court day"], "if_you_win": "how to collect if you win judgment", "if_you_lose": "options if you lose" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO small_claims_coaches (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203345,7 +203323,7 @@ What you've tried: ${what_tried || "nothing yet"}
 Respond in JSON: { "what_is_happening": "developmental context \u2014 why this behavior makes sense at this age", "immediate_strategy": "what to do right now in this situation", "long_term_approach": "how to address the root cause over weeks/months", "scripts": [{"scenario":"situation","say_this":"exact words","avoid_saying":"what not to say","why":"why this framing works"}], "developmental_insight": "what this behavior tells you about your child's development", "when_to_worry": "signs this might need professional support", "self_care_reminder": "brief reminder for the parent", "research_basis": "what the parenting research says about this situation" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO parenting_coaches (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203367,7 +203345,7 @@ Student needs: ${student_needs || "mixed ability class"}
 Respond in JSON: { "overview": "one-sentence lesson overview", "standards_alignment": "common core or content standards this addresses", "materials": ["material needed"], "warm_up": {"duration":"5 min","activity":"what to do","purpose":"why"}, "instruction": [{"phase":"phase name","duration":"time","teacher_actions":"what teacher does","student_actions":"what students do","key_questions":["question to ask"]}], "practice": {"type":"guided or independent","activity":"description","differentiation":{"struggling":"modification for struggling students","advanced":"extension for advanced students"}}, "closure": {"duration":"5 min","activity":"how to wrap up and check understanding"}, "assessment": "how to measure learning during and after this lesson", "homework": "optional homework assignment", "extension_ideas": ["enrichment activity if time allows"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO lesson_planners (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203390,7 +203368,7 @@ Dream schools: ${dream_schools || "undecided"}
 Respond in JSON: { "profile_assessment": "honest assessment of the student's college profile", "school_categories": {"reach":["reach school type with reasoning"],"match":["match school type"],"safety":["safety school type"]}, "application_strategy": "overall approach \u2014 what to emphasize, what narrative to build", "essay_angles": [{"prompt":"common essay topic","angle":"unique angle for this student","why_it_works":"reasoning"}], "activities_to_add": ["high-impact activity to pursue if time allows"], "timeline": [{"grade":"grade level or semester","action":"what to do"}], "financial_aid_tips": ["scholarship or aid strategy"], "major_exploration": "suggested majors based on interests", "interview_prep": "top 3 things to practice for interviews", "red_flags_to_fix": ["something in the profile to address"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO college_advisors (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203411,7 +203389,7 @@ Frequency: ${frequency || "often"}
 Respond in JSON: { "developmental_explanation": "why this behavior is developmentally normal or significant", "underlying_need": "what need the child is trying to meet with this behavior", "triggers": ["likely trigger for this behavior"], "functions": ["what function this behavior serves for the child"], "response_strategies": [{"strategy":"approach name","how":"step-by-step instructions","why":"why it works"}], "what_not_to_do": [{"mistake":"common parental response","why_it_backfires":"why it makes things worse"}], "environmental_changes": ["change to the environment that could reduce the behavior"], "connection_time": "how to use connection to address this behavior", "professional_referral": "when to see a pediatrician, therapist, or specialist" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO behavior_decoders (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203433,7 +203411,7 @@ School performance: ${school_performance || "average"}
 Respond in JSON: { "learning_profile": "narrative of how this person learns best", "dominant_styles": [{"style":"learning style name","evidence":"how you can tell","percentage":"rough contribution"}], "study_strategies": [{"strategy":"technique name","how_to":"step by step","why_it_works":"reason based on their style","when_to_use":"best context"}], "environment_setup": "ideal study environment description", "memory_techniques": ["memorization technique suited to this learner"], "technology_tools": ["app or tool that matches their learning style"], "what_teachers_should_know": ["insight for educators"], "red_flags_for_ld": "signs that might indicate a learning difference worth assessing", "parent_tips": ["how to support this learner at home"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO learning_style_maps (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203460,7 +203438,7 @@ Travel: ${travel || "occasional flights"}
 Respond in JSON: { "estimated_footprint": "approximate annual CO2 in tons with context (average American is ~16 tons)", "breakdown": [{"category":"area of life","tons_co2":"estimate","percentage":"% of total","context":"how this compares to average"}], "biggest_wins": [{"action":"change to make","co2_saved":"tons saved per year","difficulty":"easy/medium/hard","cost_impact":"saves money/costs more/neutral","co2_per_dollar":"efficiency metric"}], "quick_wins": ["easy change with meaningful impact"], "lifestyle_shifts": ["bigger change worth considering"], "offset_options": "how to offset remaining emissions", "30_day_challenge": "specific challenge to reduce footprint this month", "progress_metrics": "how to measure your improvement" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO carbon_auditors (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203481,7 +203459,7 @@ Barriers: ${barriers || "time and cost"}
 Respond in JSON: { "habit_stack": [{"eco_habit":"new habit","attach_to":"existing habit to pair it with","time_required":"minutes per day/week","impact":"environmental benefit","savings":"money saved if any","starter_version":"tiny version to start with"}], "weekly_schedule": "day-by-day eco habit schedule", "shopping_swaps": [{"replace":"thing to stop buying","with":"sustainable alternative","savings":"cost comparison"}], "home_audit": "what to audit at home this weekend", "community_actions": ["collective action beyond individual habits"], "motivation_anchor": "personalized reminder of why this matters", "30_60_90_plan": "habit progression plan" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO eco_habit_builders (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203502,7 +203480,7 @@ Budget: ${budget || "limited"}
 Respond in JSON: { "baseline_assessment": "starting point analysis", "priority_actions": [{"action":"specific initiative","timeline":"when to implement","cost":"investment required","roi":"return on investment","impact":"environmental benefit","difficulty":"easy/medium/hard"}], "quick_wins": ["action implementable in under 30 days at low cost"], "policy_changes": ["internal policy to adopt"], "supplier_criteria": "sustainability criteria for vendors and suppliers", "metrics_to_track": [{"metric":"what to measure","baseline":"how to establish","target":"ambitious but achievable goal","reporting_frequency":"how often to review"}], "certification_path": "relevant certifications to pursue (B Corp, LEED, etc.)", "stakeholder_communication": "how to communicate this to employees, customers, investors", "year_one_roadmap": "month-by-month plan for the first year" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO sustainability_planners (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203523,7 +203501,7 @@ Angle: ${angle || "balanced and science-based"}
 Respond in JSON: { "core_explanation": "what is actually happening \u2014 clear and accurate", "the_science": "the mechanism behind it \u2014 no jargon", "scale_context": "put numbers in perspective (how big is big?)", "timeline": "when effects happen \u2014 near/medium/long term", "regional_variation": "how different places are affected differently", "common_misconceptions": [{"myth":"what people get wrong","reality":"what's actually true","why_it_matters":"why the misconception is harmful"}], "what_is_being_done": "policy, technology, and behavioral responses", "what_individuals_can_do": ["concrete action"], "what_optimists_say": "reasons for realistic hope", "further_reading": ["type of source for deeper learning"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO climate_explainers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203545,7 +203523,7 @@ Priorities: ${priorities || "lower bills and environmental impact"}
 Respond in JSON: { "energy_audit_checklist": ["thing to check in a home energy audit"], "upgrades_by_roi": [{"upgrade":"specific upgrade","cost":"typical cost","annual_savings":"dollars saved","payback_period":"years to break even","co2_impact":"tons CO2 saved","incentives":"tax credits or rebates available"}], "free_actions": ["zero-cost change to make this week"], "appliance_guide": "what appliances to prioritize replacing and with what", "solar_assessment": "is solar worth it \u2014 factors to consider", "water_conservation": ["water-saving action or upgrade"], "insulation_tips": "where heat loss typically happens and how to fix it", "smart_home": "tech that actually saves energy vs marketing gimmick", "local_programs": "types of utility rebate and local incentive programs to look for", "renter_options": "sustainable changes even renters can make" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO green_home_advisors (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203571,7 +203549,7 @@ Cuisine preferences: ${cuisine_preferences || "open to anything"}
 Respond in JSON: { "flavor_profile": {"dominant_preferences":["flavor characteristic"],"texture_preferences":["texture they likely enjoy"],"aversion_patterns":["what the dislikes suggest"],"adventurousness":"conservative/moderate/adventurous"}, "taste_science": "why they like what they like \u2014 sensory science explanation", "cuisines_to_explore": [{"cuisine":"cuisine name","why":"why they'd love it","gateway_dish":"best first dish to try"}], "ingredient_loves": ["ingredient they'd probably love even if unfamiliar"], "flavor_combinations": ["pairing they'd enjoy"], "restaurant_ordering": "how to order at restaurants based on this profile", "hidden_gems": ["unusual food that matches their profile"], "cooking_style": "what cooking techniques would suit their palate" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO flavor_profilers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203594,7 +203572,7 @@ Skill level: ${skill_level || "intermediate"}
 Respond in JSON: { "weekly_plan": {"monday":{"breakfast":"dish","lunch":"dish","dinner":"dish"},"tuesday":{"breakfast":"dish","lunch":"dish","dinner":"dish"},"wednesday":{"breakfast":"dish","lunch":"dish","dinner":"dish"},"thursday":{"breakfast":"dish","lunch":"dish","dinner":"dish"},"friday":{"breakfast":"dish","lunch":"dish","dinner":"dish"},"saturday":{"breakfast":"dish","lunch":"dish","dinner":"dish"},"sunday":{"breakfast":"dish","lunch":"dish","dinner":"dish"}}, "shopping_list": [{"category":"produce/protein/pantry/dairy","items":["item with quantity"]}], "prep_strategy": "Sunday prep tips to make the week easier", "batch_cooking": ["component to make in bulk"], "estimated_cost": "total weekly cost estimate", "nutrition_highlights": "key nutritional benefits of this plan", "swap_options": "easy swaps if missing an ingredient" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO meal_planners_v2 (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203616,7 +203594,7 @@ Skill level: ${skill_level || "intermediate"}
 Respond in JSON: { "recipe_name": "creative, appealing name", "description": "2-sentence description that makes you want to eat it", "serves": "serving size", "time": {"prep":"minutes","cook":"minutes","total":"minutes"}, "difficulty": "easy/medium/hard", "ingredients": [{"amount":"quantity","unit":"unit","ingredient":"name","notes":"prep note if needed"}], "instructions": [{"step":1,"action":"what to do","technique_tip":"pro tip for this step"}], "flavor_profile": "description of how it tastes", "plating": "how to plate and garnish", "variations": ["easy variation to try"], "wine_pairing": "beverage suggestion", "storage": "how to store leftovers" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO recipe_inventors (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203637,7 +203615,7 @@ Preferences: ${preferences || "open to anything"}
 Respond in JSON: { "primary_pairing": {"wine":"specific wine type/region","why":"why it works with the dish","flavor_bridge":"specific flavors that connect wine and food","serving_temp":"ideal serving temperature","glass_type":"glass to use"}, "alternatives": [{"wine":"alternative option","why":"reasoning","budget_note":"value note"}], "if_no_wine": [{"beverage":"non-wine option","why":"pairing logic"}], "ordering_tips": "how to ask a sommelier or wine shop staff", "what_to_avoid": "wines or styles that clash with this dish", "tasting_notes": "what to notice in the wine with this food", "budget_picks": ["specific value bottles to look for"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO wine_pairers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203658,7 +203636,7 @@ Equipment available: ${equipment || "standard home kitchen"}
 Respond in JSON: { "technique_explained": "what this technique is and why chefs use it", "the_science": "why it works \u2014 what's happening chemically/physically", "step_by_step": [{"step":"action","visual_cue":"what to look for","common_mistake":"what beginners get wrong","fix":"how to correct it"}], "practice_exercise": "simple dish to practice just this technique", "temperature_guide": "heat levels and when to use them (if applicable)", "timing_guide": "how to know when it's done \u2014 not just time but senses", "equipment_tips": "best tool for the job and substitutes", "skill_progression": "once you master this, what to learn next", "chef_secrets": ["professional trick that elevates this technique"], "troubleshooting": [{"problem":"common failure","cause":"why it happened","solution":"how to fix it"}] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO cooking_coaches (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203685,7 +203663,7 @@ Equipment: ${equipment || "standard gym"}
 Respond in JSON: { "program_overview": "periodization approach and philosophy", "phases": [{"phase":"phase name","duration":"weeks","focus":"training emphasis","intensity":"low/medium/high"}], "weekly_schedule": [{"day":"day name","session_type":"type","duration":"minutes","exercises":[{"exercise":"name","sets":"sets","reps":"reps or duration","rest":"rest period","coaching_cue":"technical tip"}],"session_notes":"key focus"}], "sport_specific_drills": [{"drill":"name","purpose":"what it develops","how_to":"instructions","progressions":"how to make it harder"}], "recovery_protocol": "recovery strategy between sessions", "nutrition_timing": "when and what to eat around training", "benchmark_tests": ["test to measure progress"], "deload_week": "what a recovery week looks like", "warning_signs": "signs of overtraining to watch for" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO training_planners (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203707,7 +203685,7 @@ Game situation to analyze: ${game_situation || "overall performance"}
 Respond in JSON: { "performance_assessment": "overall assessment of the player", "technical_skills": [{"skill":"specific skill","current":"assessment","drill_to_improve":"specific drill","focus_cue":"what to think about during practice"}], "tactical_improvements": [{"situation":"game situation","current_tendency":"what they do now","better_approach":"what to do instead","why":"reasoning"}], "physical_priorities": [{"attribute":"physical quality","importance_to_sport":"why it matters","training_method":"how to develop it"}], "film_study": ["what to look for when watching game tape"], "pre_game_routine": "mental and physical preparation", "in_game_adjustments": "how to adapt when something isn't working", "coachability_tips": "how to get the most from coaching" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO sport_analyzers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203728,7 +203706,7 @@ When it hurts: ${when_it_hurts || "during and after activity"}
 Respond in JSON: { "disclaimer": "important: see a medical professional for proper diagnosis and treatment", "likely_causes": ["common cause of this type of injury in this sport"], "acute_response": "RICE or appropriate immediate care protocol", "when_to_see_doctor": "specific signs that require medical attention NOW", "return_to_play": "general stages of return \u2014 not a timeline, those vary by individual", "prevention_exercises": [{"exercise":"name","purpose":"what it prevents","sets":"sets","reps":"reps"}], "movement_modifications": "how to stay active while protecting the injury", "common_mistakes": ["mistake athletes make with this injury type"], "questions_for_physio": ["question to ask your physiotherapist or doctor"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO injury_advisors (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203749,7 +203727,7 @@ Competition level: ${level || "recreational"}
 Respond in JSON: { "psychological_analysis": "what is happening mentally and why", "elite_athlete_perspective": "how top athletes handle this", "pre_competition_routine": [{"timing":"when","activity":"mental technique","purpose":"what it does"}], "in_competition_tools": [{"technique":"name","how":"step-by-step","when_to_use":"situation"}], "visualization_script": "guided visualization script for this sport and challenge", "self_talk_scripts": [{"situation":"when","negative_thought":"what to replace","positive_replacement":"what to say instead"}], "pressure_reframe": "how to think about pressure differently", "flow_state_triggers": ["thing that reliably gets you in the zone"], "post_performance": "how to process both wins and losses", "long_term_mental_training": "ongoing mental skills practice" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO mental_game_coaches (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203770,7 +203748,7 @@ Situation/question: ${situation}
 Respond in JSON: { "recommendation": "direct answer to their question", "reasoning": "analytical reasoning behind the recommendation", "risk_level": "low/medium/high risk of this move", "upside": "best case scenario", "downside": "worst case scenario", "waiver_targets": ["player to target on waivers and why"], "streaming_options": ["stream this week option"], "trade_opportunities": "trade to consider based on roster", "start_sit_logic": "framework for making start/sit decisions", "weekly_tips": ["general tip for this week"], "avoid_this_week": ["player to avoid and why"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO fantasy_advisors (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203797,7 +203775,7 @@ Style reference: ${style_reference || "contemporary"}
 Respond in JSON: { "song_title": "evocative title", "structure": "verse-chorus-bridge structure used", "lyrics": {"intro":"intro lines if any","verse1":"full first verse","pre_chorus":"pre-chorus if applicable","chorus":"full chorus \u2014 this is the hook","verse2":"full second verse","bridge":"bridge section","outro":"outro or final chorus variation"}, "hook_analysis": "what makes the chorus memorable", "rhyme_scheme": "rhyme scheme used (ABAB etc)", "themes_explored": ["deeper meaning or theme"], "production_notes": "genre-appropriate production suggestions", "alternative_chorus": "alternate version of the chorus to compare" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO lyric_writers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203818,7 +203796,7 @@ Application: ${application || "songwriting and performance"}
 Respond in JSON: { "concept_explained": "clear explanation without jargon", "why_it_matters": "how this makes you a better musician", "the_fundamentals": "core rules and exceptions", "examples_in_songs": [{"song":"well known song","how_it_uses_concept":"specific application"}], "exercises": [{"exercise":"practice activity","purpose":"what it trains","duration":"how long to practice"}], "on_your_instrument": "how to apply this specifically to the stated instrument", "common_confusions": [{"confusion":"what people misunderstand","clarification":"what's actually true"}], "next_concepts": ["related theory to learn after mastering this"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO music_theorists (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203840,7 +203818,7 @@ Duration: ${duration || "1 hour"}
 Respond in JSON: { "playlist_name": "creative playlist name", "vibe_description": "2-sentence description of the sonic journey", "tracks": [{"artist":"artist name","song":"song title","why":"why it fits here","energy":"low/medium/high","transition_note":"how it flows from previous track"}], "arc": "how energy and mood shift throughout the playlist", "discovery_picks": ["lesser known song that fits perfectly"], "skip_if": "listener profile who won't enjoy this", "similar_playlists": ["type of playlist to also explore"], "best_listening_context": "ideal setting \u2014 headphones, speakers, background" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO playlist_curators (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203862,7 +203840,7 @@ Known weaknesses: ${weaknesses || "technique and timing"}
 Respond in JSON: { "practice_philosophy": "approach to make practice maximally effective", "daily_schedule": [{"block":"time block name","duration":"minutes","focus":"what to practice","specific_exercises":["exercise with description"],"tempo_guidance":"BPM or speed progression"}], "weekly_structure": "how to vary practice across the week", "deliberate_practice_tips": ["how to practice with full focus"], "warm_up_routine": "5-10 minute warm-up sequence", "goal_milestones": [{"goal":"milestone","how_to_know":"measurement criterion","timeline":"realistic estimate"}], "plateau_busters": ["technique for when progress stalls"], "recording_yourself": "how to use recordings to accelerate improvement" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO practice_schedulers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203884,7 +203862,7 @@ Ask: ${ask || "record deal"}
 Respond in JSON: { "one_liner": "single sentence that captures the artist", "bio": "compelling 3-paragraph artist bio", "pitch_email": "complete pitch email subject + body", "elevator_pitch": "30-second verbal pitch", "comparable_artists": "sounds like X meets Y \u2014 chosen strategically", "what_makes_them_different": "unique angle that stands out in pitches", "social_proof_suggestions": "what metrics or achievements to highlight", "call_to_action": "specific, confident ask", "common_mistakes_to_avoid": ["pitch mistake that gets emails deleted"], "follow_up_template": "follow-up message if no response in 2 weeks" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO music_pitch_writers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203911,7 +203889,7 @@ Timeline: ${timeline || "6 months"}
 Respond in JSON: { "readiness_assessment": "honest assessment of buyer readiness", "budget_breakdown": {"max_home_price":"how much home they can afford based on budget","down_payment":"recommended down payment","closing_costs":"estimated closing costs","monthly_payment_estimate":"estimated monthly all-in cost","emergency_fund_needed":"reserves to keep"}, "step_by_step_process": [{"step":"action","timing":"when to do it","why_it_matters":"importance"}], "must_ask_questions": ["question to ask seller/agent"], "red_flags_to_watch": ["warning sign in listing or inspection"], "negotiation_tips": ["tactic for this market"], "hidden_costs": ["unexpected expense new buyers miss"], "first_year_budget": "anticipated costs in first year beyond mortgage", "biggest_mistakes": ["error first-time buyers make"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO home_buyers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203932,7 +203910,7 @@ Alternatives considered: ${alternatives || "none specified"}
 Respond in JSON: { "verdict": "good deal / fair / overpriced with brief reason", "market_context": "how this compares to typical rents in this area", "value_factors": [{"factor":"feature","assessment":"adds or detracts value","impact":"High/Medium/Low"}], "negotiation_potential": "likelihood of negotiating and by how much", "negotiation_script": "what to say to the landlord to negotiate rent", "what_to_ask_for": ["concession to request if price is firm"], "lease_clauses_to_watch": ["clause to read carefully or push back on"], "total_monthly_cost": "all-in monthly estimate including utilities, parking, etc.", "buy_vs_rent_note": "brief note on whether buying makes sense at this price point", "walkaway_threshold": "price/condition at which you should walk away" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO rent_analyzers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203954,7 +203932,7 @@ Specific questions: ${questions || "what are my options?"}
 Respond in JSON: { "loan_options": [{"type":"loan name","rate_estimate":"typical rate","pros":["advantage"],"cons":["disadvantage"],"best_for":"ideal buyer profile"}], "monthly_payment_breakdown": {"principal_interest":"estimated P&I","property_tax_estimate":"monthly tax estimate","insurance_estimate":"monthly insurance","pmi_if_applicable":"PMI if down payment under 20%","total":"all-in monthly estimate"}, "key_terms_explained": [{"term":"mortgage jargon","plain_english":"what it actually means"}], "questions_answered": "direct answer to their specific questions", "rate_shopping_tips": ["how to get the best rate"], "pre_approval_checklist": ["document/step needed for pre-approval"], "closing_cost_breakdown": "typical closing costs explained", "first_time_buyer_programs": "relevant assistance programs to research" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO mortgage_explainers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203975,7 +203953,7 @@ Budget range: ${budget_range || "not specified"}
 Respond in JSON: { "neighborhood_profile": "character and vibe in 3 sentences", "scores": {"walkability":"score and explanation","safety":"general notes (not specific crime stats)","schools":"reputation and options","transit":"public transport access","nightlife":"dining and entertainment","green_space":"parks and outdoor access"}, "who_lives_here": "demographic and lifestyle profile of typical resident", "pros": ["genuine advantage of this neighborhood"], "cons": ["honest drawback to consider"], "things_to_do_nearby": ["specific type of attraction or venue"], "what_to_research": ["specific thing to verify before committing"], "comparable_neighborhoods": ["similar area to also consider"], "trajectory": "is the neighborhood improving, stable, or declining?", "best_streets_or_pockets": "which sub-areas within the neighborhood are best" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO neighborhood_scouts (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -203997,7 +203975,7 @@ Goals: ${goals || "improve function and value"}
 Respond in JSON: { "project_overview": "scope and realistic expectations", "budget_breakdown": [{"category":"cost category","estimated_cost":"amount","notes":"what's included"}], "roi_estimate": "expected return on investment if selling", "diy_vs_hire": [{"task":"specific task","recommendation":"DIY or hire","reason":"why","diy_difficulty":"if DIY, skill level required"}], "phase_plan": [{"phase":"project phase","timeline":"duration","tasks":["specific tasks"],"dependencies":"what must happen first"}], "permit_requirements": "likely permits needed for this type of project", "materials_list": [{"item":"material","quantity_note":"how much roughly","where_to_buy":"type of supplier"}], "common_mistakes": ["costly error to avoid on this type of project"], "contractor_vetting": "how to find and vet contractors for this work", "contingency_advice": "how much to hold back for surprises" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO home_renovators (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204024,7 +204002,7 @@ Interests: ${interests || "food, culture, history, nature"}
 Respond in JSON: { "trip_overview": "what makes this trip special", "best_time_to_visit": "seasonal advice and why", "itinerary": [{"day":"Day N","theme":"day theme","morning":"morning activity with tip","afternoon":"afternoon activity with tip","evening":"evening activity or dining","accommodation_area":"where to stay this night","estimated_cost":"daily budget"}], "must_do": [{"experience":"essential experience","why":"why it's unmissable","booking_tip":"advance booking or logistics"}], "hidden_gems": [{"place":"off-the-beaten-path spot","what_makes_it_special":"why locals love it"}], "food_guide": [{"meal_type":"breakfast/lunch/dinner/snack","recommendation":"what to eat and where","price_range":"$/$$/$$$/$$$$"}], "practical_tips": ["tip specific to this destination and travel style"], "transportation": "how to get around efficiently", "cultural_etiquette": ["local custom to respect"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO trip_architects (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204046,7 +204024,7 @@ Season/weather: ${season || "varies"}
 Respond in JSON: { "packing_philosophy": "strategy for this trip", "clothing": [{"item":"specific item","quantity":"how many","notes":"why or tips"}], "toiletries": [{"item":"item","note":"travel-size or skip if destination has it"}], "tech_and_documents": [{"item":"essential item","tip":"packing or usage tip"}], "activity_specific": [{"activity":"activity","gear":["items needed"]}], "leave_behind": ["common item that's unnecessary or buyable at destination"], "security_and_safety": ["important document or safety item"], "space_savers": ["packing technique or dual-purpose item suggestion"], "one_bag_challenge": "can this trip be done in one carry-on? assessment and tips", "weight_estimate": "rough weight estimate and airline check-in note" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO packing_optimizers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204067,7 +204045,7 @@ Duration: ${duration || "5 days"}
 Respond in JSON: { "tourist_traps_to_skip": [{"trap":"overrated thing","skip_for":"better alternative"}], "local_secrets": [{"secret":"insider knowledge","where":"location or context","why_tourists_miss_it":"reason"}], "best_neighborhoods": [{"name":"neighborhood","vibe":"character","best_for":"type of traveler or activity"}], "food_like_a_local": [{"type":"meal type or food category","where_locals_go":"type of place","what_to_order":"specific dish or style","price":"cost range"}], "free_or_cheap_gems": ["activity that's free or very low cost"], "transportation_hacks": ["local transport tip that saves money or time"], "timing_secrets": ["best time of day or week for popular sites"], "phrases_to_know": [{"phrase":"local language phrase","pronunciation":"phonetic","when_to_use":"context"}], "cultural_context": "essential background to appreciate this place", "safety_intel": "honest safety notes for this destination" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO local_intel (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204089,7 +204067,7 @@ Group size: ${group_size || "solo"}
 Respond in JSON: { "budget_summary": "honest assessment of budget feasibility", "daily_budget_estimate": "recommended daily spend", "cost_breakdown": [{"category":"expense type","daily_estimate":"per day cost","total_estimate":"full trip cost","tips":"how to reduce this cost"}], "splurge_vs_save": [{"item":"experience or category","verdict":"worth splurging or save money","reasoning":"why"}], "money_saving_hacks": ["specific tactic for this destination"], "currency_tips": "exchange rate, local payment norms, avoid these fees", "hidden_costs": ["expense travelers forget to budget for"], "free_experiences": ["great thing to do that costs nothing"], "total_estimated_range": {"budget":"budget traveler total","midrange":"mid-range total","comfort":"comfort traveler total"}, "booking_timing": "when to book flights, hotels for best prices" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO travel_budgeters (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204110,7 +204088,7 @@ Traveler type: ${traveler_type || "introvert"}
 Respond in JSON: { "solo_advantage": "why solo travel is uniquely valuable", "safety_playbook": [{"situation":"scenario","action":"what to do","mindset":"how to think about it"}], "meeting_people": [{"method":"way to connect with others","best_for":"type of traveler or situation","how_to":"practical steps"}], "handling_loneliness": ["strategy for when solo gets hard"], "confidence_builders": ["first solo traveler skill to master early"], "first_day_blueprint": "what to do in the first 24 hours to get grounded", "booking_strategy": "accommodation types and why for solo travelers", "communication_plan": "how to stay in touch with home without being tethered", "solo_dining_mastery": ["tip for eating alone without discomfort"], "trusting_your_gut": "intuition advice for solo travel safety", "emergency_protocol": "what to do if something goes wrong" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO solo_travel_coaches (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204136,7 +204114,7 @@ Support needed: ${support_needed || "understanding and coping tools"}
 Respond in JSON: { "validation": "empathetic acknowledgment of their specific loss and experience", "what_youre_experiencing": "normalize their experience with grief education", "grief_stages_context": "compassionate, non-linear view of grief stages and what that means for them", "coping_tools": [{"tool":"specific coping technique","how_to":"step by step","when_to_use":"situations it helps most","why_it_helps":"the psychology behind it"}], "things_that_help": ["evidence-supported practices for grief"], "things_to_avoid": ["common mistakes that prolong difficult grief"], "for_others_supporting_you": ["what to tell people who want to help"], "when_to_seek_professional_help": "clear guidance on when grief support or therapy is important", "self_compassion_reminder": "gentle reminder about being kind to themselves", "one_small_step": "one tiny thing they could do today" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO grief_coaches (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204157,7 +204135,7 @@ Goals: ${goals || "respond instead of react"}
 Respond in JSON: { "anger_reframe": "healthy perspective on anger as information not enemy", "your_anger_profile": "understanding of their specific anger pattern based on what they shared", "the_neuroscience": "brief, accessible explanation of what happens in the brain/body during anger", "in_the_moment_toolkit": [{"technique":"name","steps":["step by step instructions"],"works_because":"brief explanation","time_needed":"seconds/minutes"}], "pattern_interrupt": "how to recognize the escalation ladder before it's too late", "root_exploration": "questions to understand what the anger is protecting or communicating", "communication_scripts": [{"situation":"trigger type","reactive_response":"what they might say now","constructive_response":"better alternative"}], "long_term_practices": ["habit that reduces baseline anger over time"], "relationship_repair": "how to address damage done during anger episodes", "professional_note": "when anger management therapy would be genuinely helpful" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO anger_managers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204178,7 +204156,7 @@ Learning goals: ${learning_goals || "understand what happened and why I feel thi
 Respond in JSON: { "you_are_not_broken": "validating, trauma-informed message", "what_trauma_does_to_the_brain": "accessible psychoeducation on trauma neuroscience \u2014 window of tolerance, nervous system responses", "why_symptoms_make_sense": "normalize their specific symptoms as survival responses", "the_window_of_tolerance": "explain this concept and how to recognize where they are", "grounding_techniques": [{"technique":"name","steps":["steps"],"when_to_use":"situation","what_it_does":"nervous system effect"}], "triggers_explained": "what triggers are and why the brain creates them", "trauma_responses": "fight/flight/freeze/fawn explained in accessible terms", "healing_is_nonlinear": "what the healing process actually looks like", "trauma_informed_therapies": [{"therapy":"name","how_it_works":"brief description","good_for":"type of trauma or symptom"}], "self_care_in_healing": ["practice that supports trauma healing \u2014 not replaces therapy"], "finding_help": "how to find a trauma-informed therapist" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO trauma_educators (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204199,7 +204177,7 @@ Desired shift: ${desired_shift || "more confident and expansive thinking"}
 Respond in JSON: { "belief_anatomy": "break down where this belief likely came from and what it's been protecting", "evidence_audit": {"supporting_evidence":"evidence that seems to support this belief","counter_evidence":"evidence that challenges or contradicts it","conclusion":"reframe based on fuller evidence"}, "cognitive_distortions": [{"distortion":"type of thinking error at play","example":"how it shows up in their specific belief","correction":"how to reframe it"}], "new_belief_options": [{"belief":"alternative belief statement","why_it_works":"why it's more accurate and useful","affirmation":"daily reminder version"}], "belief_shift_practices": [{"practice":"technique","instructions":"how to do it","timeline":"how long to practice"}], "identity_shift": "how to start thinking of yourself as someone who holds the new belief", "anticipate_resistance": "why the old belief will fight back and what to do", "environment_design": "how to change your environment to support the new mindset", "30_day_experiment": "a concrete 30-day experiment to test the new belief in real life" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO mindset_coaches (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204220,7 +204198,7 @@ Healing intention: ${healing_intention || "better understand myself and respond 
 Respond in JSON: { "inner_child_concept": "what the inner child actually is (psychologically) in accessible terms", "connection_to_present": "how their childhood pattern connects to their current triggers and responses", "what_your_inner_child_needs": "the core emotional needs that went unmet based on their pattern", "reparenting_explained": "what reparenting means and why it's powerful", "exercises": [{"exercise":"name","intention":"what it addresses","instructions":["step by step"],"what_might_come_up":"emotions or memories to be prepared for","integration":"what to do after"}], "self_talk_shift": [{"old_self_talk":"critical inner voice example","reparenting_response":"what a loving parent would say instead"}], "triggers_as_teachers": "how to use current triggers as windows into childhood wounds", "healing_milestones": "what healing inner child work actually looks like over time", "when_to_work_with_therapist": "why this work is often best done with professional support for deeper wounds", "daily_practice": "a simple daily inner child check-in practice" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO inner_child_workers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204247,7 +204225,7 @@ Current stage: ${stage || "idea"}
 Respond in JSON: { "verdict": "Pass/Proceed with Caution/Pivot Needed with brief reason", "market_size": {"tam":"Total addressable market estimate","sam":"Serviceable addressable market","som":"Realistically capturable share"}, "problem_strength": "how painful and frequent is this problem? honest assessment", "solution_assessment": "strengths and weaknesses of the proposed solution", "competitive_landscape": "honest view of competition and differentiation", "business_model_options": [{"model":"revenue model","pros":"advantages","cons":"challenges"}], "critical_assumptions": [{"assumption":"key thing that must be true","how_to_test":"fastest way to validate"}], "biggest_risks": [{"risk":"specific risk","severity":"High/Medium/Low","mitigation":"how to reduce this risk"}], "green_lights": ["genuine strengths of this idea"], "red_flags": ["serious concerns investors would raise"], "next_3_actions": ["most important thing to do in the next 30 days to validate or kill this idea"] }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO startup_validators (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204270,7 +204248,7 @@ Ask: ${ask || "seed round"}
 Respond in JSON: { "deck_structure": [{"slide":"slide name","headline":"powerful one-line headline","content":"what goes on this slide","storytelling_tip":"how to present this effectively"}], "opening_hook": "the first 30 seconds that grabs investor attention", "problem_slide_content": "how to make the problem feel urgent and real", "solution_slide_content": "how to position the solution as inevitable", "market_slide_approach": "how to present market size compellingly without looking unrealistic", "traction_narrative": "how to present early stage traction as signal not noise", "team_slide_tips": "what investors look for in team slides", "ask_structure": "how to frame the ask with use of funds", "investor_psychology": "what investors are actually thinking as they review your deck", "common_mistakes": ["pitch deck error that kills otherwise good deals"], "one_pager_version": "condensed version for initial outreach" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO pitch_deck_builders (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204292,7 +204270,7 @@ Mutual connection or hook: ${mutual_connection || "cold outreach"}
 Respond in JSON: { "subject_lines": ["3 subject line options ranked by effectiveness"], "email_versions": [{"version":"short (5 lines)","content":"full email"},{"version":"medium (10 lines)","content":"full email"}], "what_makes_it_work": "why this approach works psychologically with investors", "personalization_slots": ["where to add investor-specific personalization"], "follow_up_sequence": [{"day":"follow-up timing","message":"follow-up content"}], "common_mistakes": ["cold email mistake that gets investors to delete immediately"], "warm_intro_script": "how to ask a mutual contact for an intro email" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO investor_emailers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204314,7 +204292,7 @@ Timeline: ${timeline || "8 weeks"}
 Respond in JSON: { "mvp_philosophy": "the single hypothesis this MVP must test", "what_to_build": "the absolute minimum product that tests the core hypothesis", "what_not_to_build": ["feature that feels essential but actually isn't for validation"], "user_story": "the single most important user journey the MVP must deliver", "feature_list": [{"feature":"name","why_its_core":"why it stays in MVP","effort":"Low/Medium/High","validates":"what it tests"}], "no_code_first": "can this be validated without building anything? approach if yes", "week_by_week_plan": [{"week":"week number","goals":"what to accomplish","milestone":"what done looks like"}], "success_metrics": [{"metric":"measurement","target":"success threshold","timeline":"when to measure"}], "kill_criteria": "what results would tell you to kill or pivot this idea", "launch_strategy": "how to get first 10 users without advertising budget" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO mvp_designers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204336,7 +204314,7 @@ Stage: ${stage || "idea/pre-product"}
 Respond in JSON: { "cofounder_fit_analysis": "what skill and personality gaps need to be filled based on their profile", "ideal_cofounder_profile": {"must_have_skills":["non-negotiable competency"],"personality_traits":["trait that complements the founder"],"background":"ideal experience","red_flags":["warning sign in a potential co-founder"]}, "where_to_find": [{"source":"where to look","approach":"how to engage","quality":"type of candidates"}], "vetting_process": [{"stage":"evaluation step","what_to_assess":"what you're learning","how":"specific method"}], "trial_project_ideas": ["project to do together before committing"], "cofounder_agreement_checklist": ["key thing to align on before formalizing partnership"], "equity_conversation": "how to approach the equity split conversation", "green_flags": ["sign this person could be a great co-founder"], "breakup_prevention": "how to structure the relationship to survive hard times", "solo_vs_cofounder": "honest tradeoff analysis for this specific situation" }` }];
     const raw = await callLLM(provider, apiKey, model, messages);
     const data = JSON.parse(raw.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO cofounder_matchers (id,user_id,context,result) VALUES (?,?,?,?)`).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data));
     res.json({ id, ...data });
   } catch (e) {
@@ -204373,7 +204351,7 @@ Provide warm, evidence-based advice. Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO parenting_advisors (id,user_id,child_age,challenge,advice) VALUES (?,?,?,?,?)`).run(id, userId, child_age, challenge, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204403,7 +204381,7 @@ Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO family_meeting_planners (id,user_id,family_size,agenda,plan) VALUES (?,?,?,?,?)`).run(id, userId, family_size, topics, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204432,7 +204410,7 @@ Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO chore_chart_builders (id,user_id,kids,ages,chart) VALUES (?,?,?,?,?)`).run(id, userId, kids, ages, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204462,7 +204440,7 @@ Create an original, calming story featuring the child as the hero. Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO bedtime_story_gens (id,user_id,child_name,theme,story) VALUES (?,?,?,?,?)`).run(id, userId, child_name, theme, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204495,7 +204473,7 @@ Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO college_prep_coaches (id,user_id,student_grade,interests,plan) VALUES (?,?,?,?,?)`).run(id, userId, student_grade, interests, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204535,7 +204513,7 @@ Create a personalized debt payoff strategy. Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO debt_strategists (id,user_id,debts,strategy) VALUES (?,?,?,?)`).run(id, userId, debts, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204569,7 +204547,7 @@ Explain this investment topic thoroughly. Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO investment_decoders (id,user_id,topic,explanation) VALUES (?,?,?,?)`).run(id, userId, topic, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204601,7 +204579,7 @@ Create a personalized credit improvement plan. Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO credit_score_coaches (id,user_id,current_score,issues,plan) VALUES (?,?,?,?,?)`).run(id, userId, current_score, known_issues, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204633,7 +204611,7 @@ Identify tax optimization opportunities. Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO tax_optimizers (id,user_id,situation,advice) VALUES (?,?,?,?)`).run(id, userId, situation, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204667,7 +204645,7 @@ Create a comprehensive wealth building roadmap. Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO wealth_roadmappers (id,user_id,age,income,goals,roadmap) VALUES (?,?,?,?,?,?)`).run(id, userId, age, income, goals, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204707,7 +204685,7 @@ Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO difficult_convos (id,user_id,situation,script) VALUES (?,?,?,?)`).run(id, userId, situation, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204738,7 +204716,7 @@ Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO apology_crafters (id,user_id,situation,relationship,apology) VALUES (?,?,?,?,?)`).run(id, userId, what_happened, relationship, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204769,7 +204747,7 @@ Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO compliment_engineers (id,user_id,person,context,compliments) VALUES (?,?,?,?,?)`).run(id, userId, person_description, context, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204801,7 +204779,7 @@ Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO boundary_setters (id,user_id,situation,scripts) VALUES (?,?,?,?)`).run(id, userId, situation, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204833,7 +204811,7 @@ Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO love_language_guides (id,user_id,partner_type,guide) VALUES (?,?,?,?)`).run(id, userId, relationship_type, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204874,7 +204852,7 @@ Design a personalized deep work system. Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO deep_work_planners (id,user_id,schedule,plan) VALUES (?,?,?,?)`).run(id, userId, schedule, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204907,7 +204885,7 @@ Diagnose and solve this procrastination. Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO procrastination_busters (id,user_id,task,blockers,plan) VALUES (?,?,?,?,?)`).run(id, userId, task, root_cause, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204940,7 +204918,7 @@ Design a complete inbox zero system. Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO email_zero_coaches (id,user_id,inbox_state,system) VALUES (?,?,?,?)`).run(id, userId, inbox_count, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -204973,7 +204951,7 @@ Audit and redesign their meeting life. Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO meeting_eliminators (id,user_id,meeting_schedule,audit) VALUES (?,?,?,?)`).run(id, userId, weekly_meetings, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -205006,7 +204984,7 @@ Design a personalized PKM system. Return JSON:
 }` }];
     const content = await callLLM(provider, apiKey, model, messages);
     const result = JSON.parse(content.replace(/```json\n?|```\n?/g, "").trim());
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO pkm_architects (id,user_id,current_system,design) VALUES (?,?,?,?)`).run(id, userId, current_tools, JSON.stringify(result));
     res.json({ id, ...result });
   } catch (e) {
@@ -205042,7 +205020,7 @@ Return JSON:
   "writer_notes": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO character_builders (id,user_id,character_name,genre,traits,backstory,arc,result) VALUES (?,?,?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, character_name, genre, traits, backstory_hint, story_role, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO character_builders (id,user_id,character_name,genre,traits,backstory,arc,result) VALUES (?,?,?,?,?,?,?,?)`).run(uuidv4(), userId, character_name, genre, traits, backstory_hint, story_role, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205075,7 +205053,7 @@ Return JSON:
   "opening_line_suggestion": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO plot_weavers (id,user_id,genre,premise,protagonist,conflict,result) VALUES (?,?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, genre, premise, protagonist, conflict, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO plot_weavers (id,user_id,genre,premise,protagonist,conflict,result) VALUES (?,?,?,?,?,?,?)`).run(uuidv4(), userId, genre, premise, protagonist, conflict, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205104,7 +205082,7 @@ Return JSON:
   "craft_notes": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO dialogue_sharpeners (id,user_id,scene,characters,tone,result) VALUES (?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, existing_dialogue, characters, tone, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO dialogue_sharpeners (id,user_id,scene,characters,tone,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(), userId, existing_dialogue, characters, tone, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205134,7 +205112,7 @@ Return JSON:
   "story_hooks": [string]
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO world_builders (id,user_id,genre,world_type,rules,culture,result) VALUES (?,?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, genre, world_type, magic_or_tech_rules, society_type, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO world_builders (id,user_id,genre,world_type,rules,culture,result) VALUES (?,?,?,?,?,?,?)`).run(uuidv4(), userId, genre, world_type, magic_or_tech_rules, society_type, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205163,7 +205141,7 @@ Return JSON:
   "revision_notes": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO scene_writers (id,user_id,scene_type,setting,characters,goal,result) VALUES (?,?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, scene_type, setting, characters_present, scene_goal, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO scene_writers (id,user_id,scene_type,setting,characters,goal,result) VALUES (?,?,?,?,?,?,?)`).run(uuidv4(), userId, scene_type, setting, characters_present, scene_goal, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205198,7 +205176,7 @@ Return JSON:
   "expected_results": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO biohack_optimizers (id,user_id,goal,current_routine,bio_markers,result) VALUES (?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, goal, current_routine, bio_markers, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO biohack_optimizers (id,user_id,goal,current_routine,bio_markers,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(), userId, goal, current_routine, bio_markers, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205229,7 +205207,7 @@ Return JSON:
   "expected_gains": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO vo2max_trainers (id,user_id,current_fitness,goal,schedule,result) VALUES (?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, current_fitness, goal, weekly_hours, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO vo2max_trainers (id,user_id,current_fitness,goal,schedule,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(), userId, current_fitness, goal, weekly_hours, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205259,7 +205237,7 @@ Return JSON:
   "common_mistakes": [string]
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO cold_therapy_coaches (id,user_id,experience,goals,schedule,result) VALUES (?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, experience_level, goals, schedule, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO cold_therapy_coaches (id,user_id,experience,goals,schedule,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(), userId, experience_level, goals, schedule, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205291,7 +205269,7 @@ Return JSON:
   "medical_disclaimer": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO supplement_stacks (id,user_id,goals,current_supps,budget,result) VALUES (?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, goals, current_supplements, budget, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO supplement_stacks (id,user_id,goals,current_supps,budget,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(), userId, goals, current_supplements, budget, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205323,7 +205301,7 @@ Return JSON:
   "expected_improvement": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO sleep_architects (id,user_id,current_sleep,issues,schedule,result) VALUES (?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, current_sleep_hours, sleep_issues, wake_time, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO sleep_architects (id,user_id,current_sleep,issues,schedule,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(), userId, current_sleep_hours, sleep_issues, wake_time, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205359,7 +205337,7 @@ Return JSON:
   "experiment_to_run": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO pricing_strategists (id,user_id,product,market,competitors,costs,result) VALUES (?,?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, product, market, competitors, unit_costs, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO pricing_strategists (id,user_id,product,market,competitors,costs,result) VALUES (?,?,?,?,?,?,?)`).run(uuidv4(), userId, product, market, competitors, unit_costs, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205389,7 +205367,7 @@ Return JSON:
   "if_you_fix_one_thing": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO churn_analysts (id,user_id,product,churn_rate,user_segments,signals,result) VALUES (?,?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, product, churn_rate, user_segments, exit_reasons, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO churn_analysts (id,user_id,product,churn_rate,user_segments,signals,result) VALUES (?,?,?,?,?,?,?)`).run(uuidv4(), userId, product, churn_rate, user_segments, exit_reasons, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205420,7 +205398,7 @@ Return JSON:
   "unfair_advantage_to_exploit": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO growth_hackers (id,user_id,product,stage,current_growth,budget,result) VALUES (?,?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, product, stage, current_growth_rate, budget, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO growth_hackers (id,user_id,product,stage,current_growth,budget,result) VALUES (?,?,?,?,?,?,?)`).run(uuidv4(), userId, product, stage, current_growth_rate, budget, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205455,7 +205433,7 @@ Return JSON:
   "red_flags_to_avoid": [string]
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO investor_pitchers (id,user_id,startup,stage,ask,traction,result) VALUES (?,?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, startup, stage, funding_ask, traction, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO investor_pitchers (id,user_id,startup,stage,ask,traction,result) VALUES (?,?,?,?,?,?,?)`).run(uuidv4(), userId, startup, stage, funding_ask, traction, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205486,7 +205464,7 @@ Return JSON:
   "one_year_moat_sprint": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO moat_builders (id,user_id,business,industry,competitors,result) VALUES (?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, business, industry, competitors, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO moat_builders (id,user_id,business,industry,competitors,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(), userId, business, industry, competitors, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205527,7 +205505,7 @@ Return JSON:
   "next_steps": [string]
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO contract_drafters (id,user_id,contract_type,parties,result) VALUES (?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, contract_type, `${party_a} / ${party_b}`, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO contract_drafters (id,user_id,contract_type,parties,result) VALUES (?,?,?,?,?)`).run(uuidv4(), userId, contract_type, `${party_a} / ${party_b}`, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205561,7 +205539,7 @@ Return JSON:
   "lawyer_needed": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO nda_reviewers (id,user_id,nda_text,party_role,result) VALUES (?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, nda_text?.substring(0, 500), party_role, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO nda_reviewers (id,user_id,nda_text,party_role,result) VALUES (?,?,?,?,?)`).run(uuidv4(), userId, nda_text?.substring(0, 500), party_role, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205595,7 +205573,7 @@ Return JSON:
   "trust_score": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO terms_decoders (id,user_id,tos_text,service_name,result) VALUES (?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, tos_text?.substring(0, 500), service_name, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO terms_decoders (id,user_id,tos_text,service_name,result) VALUES (?,?,?,?,?)`).run(uuidv4(), userId, tos_text?.substring(0, 500), service_name, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205629,7 +205607,7 @@ Return JSON:
   "lawyer_recommended": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO compliance_checkers (id,user_id,business_type,jurisdiction,activity,result) VALUES (?,?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, business_type, jurisdiction, activity, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO compliance_checkers (id,user_id,business_type,jurisdiction,activity,result) VALUES (?,?,?,?,?,?)`).run(uuidv4(), userId, business_type, jurisdiction, activity, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205664,7 +205642,7 @@ Return JSON:
   "next_steps_if_ignored": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO dispute_letter_pros (id,user_id,dispute_type,situation,result) VALUES (?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, dispute_type, situation, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO dispute_letter_pros (id,user_id,dispute_type,situation,result) VALUES (?,?,?,?,?)`).run(uuidv4(), userId, dispute_type, situation, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205705,7 +205683,7 @@ Return JSON:
   "appraisal_tips": [string]
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO home_valuators (id,user_id,address,details,result) VALUES (?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, address, `${bedrooms}br/${bathrooms}ba ${sqft}sqft`, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO home_valuators (id,user_id,address,details,result) VALUES (?,?,?,?,?)`).run(uuidv4(), userId, address, `${bedrooms}br/${bathrooms}ba ${sqft}sqft`, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205743,7 +205721,7 @@ Return JSON:
   "first_time_buyer_programs": [string]
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO mortgage_calculators (id,user_id,loan_amount,inputs,result) VALUES (?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, home_price, `${down_payment} down, ${interest_rate}% rate`, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO mortgage_calculators (id,user_id,loan_amount,inputs,result) VALUES (?,?,?,?,?)`).run(uuidv4(), userId, home_price, `${down_payment} down, ${interest_rate}% rate`, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205782,7 +205760,7 @@ Return JSON:
   "verdict": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO neighborhood_scouts (id,user_id,location,priorities,result) VALUES (?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, location, priorities, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO neighborhood_scouts (id,user_id,location,priorities,result) VALUES (?,?,?,?,?)`).run(uuidv4(), userId, location, priorities, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205817,7 +205795,7 @@ Return JSON:
   "red_flags_to_watch": [string]
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO renovation_planners (id,user_id,property_type,project,result) VALUES (?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, property_type, project, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO renovation_planners (id,user_id,property_type,project,result) VALUES (?,?,?,?,?)`).run(uuidv4(), userId, property_type, project, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205853,7 +205831,7 @@ Return JSON:
   "lawyer_needed": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO landlord_advisors (id,user_id,situation,role,result) VALUES (?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, situation, role, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO landlord_advisors (id,user_id,situation,role,result) VALUES (?,?,?,?,?)`).run(uuidv4(), userId, situation, role, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205892,7 +205870,7 @@ Return JSON:
   "when_to_seek_help": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO emotion_decoders (id,user_id,situation,result) VALUES (?,?,?,?)`).run((0, import_uuid.v4)(), userId, situation, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO emotion_decoders (id,user_id,situation,result) VALUES (?,?,?,?)`).run(uuidv4(), userId, situation, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205924,7 +205902,7 @@ Return JSON:
   "progress_markers": [string]
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO coping_toolkits (id,user_id,challenge,severity,result) VALUES (?,?,?,?,?)`).run((0, import_uuid.v4)(), userId, challenge, severity, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO coping_toolkits (id,user_id,challenge,severity,result) VALUES (?,?,?,?,?)`).run(uuidv4(), userId, challenge, severity, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205957,7 +205935,7 @@ Return JSON:
   "mantra": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO inner_critics (id,user_id,thought,result) VALUES (?,?,?,?)`).run((0, import_uuid.v4)(), userId, thought, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO inner_critics (id,user_id,thought,result) VALUES (?,?,?,?)`).run(uuidv4(), userId, thought, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -205992,7 +205970,7 @@ Return JSON:
   "affirmations": [string]
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO attachment_coaches (id,user_id,pattern,result) VALUES (?,?,?,?)`).run((0, import_uuid.v4)(), userId, pattern, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO attachment_coaches (id,user_id,pattern,result) VALUES (?,?,?,?)`).run(uuidv4(), userId, pattern, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206027,7 +206005,7 @@ Return JSON:
   "letter_from_future_self": string
 }` }]);
     const parsed = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare(`INSERT INTO resilience_builders (id,user_id,setback,result) VALUES (?,?,?,?)`).run((0, import_uuid.v4)(), userId, setback, JSON.stringify(parsed));
+    db.prepare(`INSERT INTO resilience_builders (id,user_id,setback,result) VALUES (?,?,?,?)`).run(uuidv4(), userId, setback, JSON.stringify(parsed));
     res.json(parsed);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206057,7 +206035,7 @@ app.post("/api/story/world", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a master storyteller. Create a complete story world for this premise. Genre: ${genre}. Premise: ${premise}. Style: ${style || "cinematic"}. Return JSON: { title, tagline, opening_hook, world_description, protagonist: { name, age, background, motivation, flaw, superpower }, antagonist: { name, role, motivation, methods }, supporting_cast: [{ name, role, relationship }], act_1_setup, act_2_conflict, act_3_resolution, theme, emotional_core, first_chapter_opening (500 words) }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO story_worlds VALUES (?,?,?,?,?,?,?,?)").run((0, import_uuid.v4)(), userId, genre, premise, JSON.stringify(data), JSON.stringify(data.supporting_cast), JSON.stringify({ act1: data.act_1_setup, act2: data.act_2_conflict, act3: data.act_3_resolution }), (/* @__PURE__ */ new Date()).toISOString());
+    db.prepare("INSERT INTO story_worlds VALUES (?,?,?,?,?,?,?,?)").run(uuidv4(), userId, genre, premise, JSON.stringify(data), JSON.stringify(data.supporting_cast), JSON.stringify({ act1: data.act_1_setup, act2: data.act_2_conflict, act3: data.act_3_resolution }), (/* @__PURE__ */ new Date()).toISOString());
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206072,7 +206050,7 @@ app.post("/api/lyric/craft", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a Grammy-winning lyricist. Write complete song lyrics. Theme: ${theme}. Mood: ${mood}. Style/genre: ${style}. Personal story to draw from: ${personal_story || "universal human experience"}. Return JSON: { song_title, genre_style, tempo_feel, verse_1, pre_chorus, chorus, verse_2, bridge, outro, hook_analysis, rhyme_scheme, production_notes, alternative_chorus, behind_the_lyrics }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO lyric_crafters VALUES (?,?,?,?,?,?,?)").run((0, import_uuid.v4)(), userId, theme, mood, style, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
+    db.prepare("INSERT INTO lyric_crafters VALUES (?,?,?,?,?,?,?)").run(uuidv4(), userId, theme, mood, style, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206087,7 +206065,7 @@ app.post("/api/character/forge", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a character development expert. Forge a deeply compelling character. Archetype: ${archetype}. Story context: ${story_context}. Return JSON: { name, age, appearance, voice_description, backstory, core_wound, greatest_fear, deepest_desire, fatal_flaw, hidden_strength, personality_traits, speech_patterns, quirks, moral_code, relationships, character_arc, pivotal_scene, dialogue_sample (200 words showing their voice), psychological_profile, what_makes_them_unforgettable }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO character_forges VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, archetype, story_context, JSON.stringify(data));
+    db.prepare("INSERT INTO character_forges VALUES (?,?,?,?,?)").run(uuidv4(), userId, archetype, story_context, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206102,7 +206080,7 @@ app.post("/api/plot/twist", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a master plot architect. Generate shocking, earned plot twists. Story so far: ${story_so_far}. Genre: ${genre}. Tone: ${tone || "dramatic"}. Return JSON: { twists: [{ twist_name, the_reveal, setup_clues_already_present, emotional_impact, how_to_execute, dialogue_scene_example, aftermath }] (5 twists of escalating boldness), best_twist_recommendation, how_to_foreshadow, reader_reaction_prediction }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO plot_twist_engines VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, story_so_far, genre, JSON.stringify(data));
+    db.prepare("INSERT INTO plot_twist_engines VALUES (?,?,?,?,?)").run(uuidv4(), userId, story_so_far, genre, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206117,7 +206095,7 @@ app.post("/api/world/build", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a worldbuilding expert (Tolkien-level). Build a complete fictional world. Setting: ${setting}. Era: ${era}. World type: ${world_type} (fantasy/sci-fi/dystopian/etc). Tone: ${tone || "epic"}. Return JSON: { world_name, tagline, geography: { continents, climates, notable_locations }, history: { founding_myth, key_epochs, recent_events }, societies: [{ name, culture, values, conflicts }], magic_or_technology_system: { name, rules, limitations, source }, economy, politics, religion_or_philosophy, languages, flora_and_fauna, hidden_secrets, story_hooks: [5 compelling story starters], visual_mood_board_description, author_notes }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO world_builders VALUES (?,?,?,?,?,?)").run((0, import_uuid.v4)(), userId, setting, era, world_type, JSON.stringify(data));
+    db.prepare("INSERT INTO world_builders VALUES (?,?,?,?,?,?)").run(uuidv4(), userId, setting, era, world_type, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206147,7 +206125,7 @@ app.post("/api/promotion/roadmap", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a career coach for Fortune 500 executives. Create a detailed promotion roadmap. Current role: ${current_role}. Target: ${target_role}. Timeline: ${timeline}. Industry: ${industry}. Return JSON: { gap_analysis: { skills_gap, experience_gap, visibility_gap, relationship_gap }, 90_day_plan: [{ week_range, focus, actions, metrics }], skills_to_develop: [{ skill, why_critical, how_to_build, timeline }], visibility_moves: [{ move, why, how, expected_impact }], key_relationships: [{ person_type, why_needed, how_to_build }], quick_wins: [5 wins to demonstrate readiness now], potential_blockers: [{ blocker, mitigation }], success_metrics, promotion_conversation_script }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO promotion_roadmaps VALUES (?,?,?,?,?,?,?)").run((0, import_uuid.v4)(), userId, current_role, target_role, timeline, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
+    db.prepare("INSERT INTO promotion_roadmaps VALUES (?,?,?,?,?,?,?)").run(uuidv4(), userId, current_role, target_role, timeline, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206162,7 +206140,7 @@ app.post("/api/salary/benchmark", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a compensation expert. Provide detailed salary benchmarking. Role: ${role}. Location: ${location}. Experience: ${experience_years} years. Skills: ${skills}. Company size: ${company_size}. Return JSON: { role_title, location, market_analysis: { p25_salary, p50_salary, p75_salary, p90_salary, total_comp_p50, total_comp_p75 }, factors_affecting_pay: [{ factor, impact, your_position }], negotiation_power_score (1-10), negotiation_strategy: { opening_ask, target, walk_away_number, rationale }, talking_points: [5 data-backed points], competing_offers_leverage, benefits_to_negotiate: [{ benefit, typical_value, negotiation_tip }], market_timing, script_for_asking }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO salary_benchmarkers VALUES (?,?,?,?,?,?,?)").run((0, import_uuid.v4)(), userId, role, location, experience_years, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
+    db.prepare("INSERT INTO salary_benchmarkers VALUES (?,?,?,?,?,?,?)").run(uuidv4(), userId, role, location, experience_years, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206177,7 +206155,7 @@ app.post("/api/executive/presence", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are an executive presence coach for C-suite leaders. Situation: ${situation}. Current approach: ${current_approach}. Goal: ${goal}. Level: ${level}. Return JSON: { presence_assessment: { gravity_score, clarity_score, authority_score, authenticity_score, overall }, what_youre_projecting_now, what_you_want_to_project, reframe_your_mindset, body_language_adjustments: [5 specific tips], voice_and_delivery: [5 specific tips], key_phrases_to_use: [5 powerful phrases], phrases_to_avoid: [5 weak phrases], room_entry_strategy, how_to_command_attention_without_demanding_it, pre_situation_ritual, follow_up_email_template }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO executive_presence VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, situation, current_approach, JSON.stringify(data));
+    db.prepare("INSERT INTO executive_presence VALUES (?,?,?,?,?)").run(uuidv4(), userId, situation, current_approach, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206192,7 +206170,7 @@ app.post("/api/offer/negotiate", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a job offer negotiation expert. Analyze this offer and create a negotiation strategy. Offer: ${offer_details}. Competing offers: ${competing_offers || "none"}. Priorities: ${priorities}. Risk tolerance: ${risk_tolerance || "medium"}. Return JSON: { offer_grade (A-F), offer_analysis: { strengths, weaknesses, market_position }, negotiation_potential: { salary_upside, equity_upside, bonus_upside, total_upside }, negotiation_sequence: [{ item, current, target, tactic, script }], email_scripts: { initial_response, counter_offer, final_ask, acceptance }, negotiation_tactics: [5 proven tactics with examples], red_flags_in_offer, what_not_to_negotiate_first, leverage_points, walk_away_triggers, acceptance_checklist }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO job_offer_negotiators VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, offer_details, JSON.stringify(data), JSON.stringify(data.email_scripts));
+    db.prepare("INSERT INTO job_offer_negotiators VALUES (?,?,?,?,?)").run(uuidv4(), userId, offer_details, JSON.stringify(data), JSON.stringify(data.email_scripts));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206207,7 +206185,7 @@ app.post("/api/career/brand", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a personal branding strategist. Build a powerful career brand. Background: ${background}. Goals: ${goals}. Target audience: ${target_audience}. Differentiators: ${differentiators}. Return JSON: { brand_statement (2 sentences), elevator_pitch (30 sec), linkedin_headline, linkedin_about_section (300 words), unique_value_proposition, brand_pillars: [3 pillars with description], content_themes: [5 topics to post about], visibility_strategy: [10 specific actions], networking_message_template, speaking_topics: [3 talk ideas], brand_voice: { tone, style, avoid }, 90_day_brand_launch_plan: [{ week, focus, actions }] }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO career_brand_builders VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, background, goals, JSON.stringify(data));
+    db.prepare("INSERT INTO career_brand_builders VALUES (?,?,?,?,?)").run(uuidv4(), userId, background, goals, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206237,7 +206215,7 @@ app.post("/api/concept/decode", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a brilliant teacher. Explain this concept perfectly for the target level. Concept: ${concept}. Level: ${level} (eli5/beginner/intermediate/expert). Context: ${context || "general"}. Return JSON: { concept_name, one_sentence_summary, core_insight, analogy, explanation_by_level: { simple, detailed, technical }, how_it_works_step_by_step: [steps], common_misconceptions: [{ myth, truth }], why_it_matters, real_world_examples: [3 examples], related_concepts: [5 concepts], deeper_questions_to_explore: [3 questions], test_your_understanding: [3 questions with answers] }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO concept_decoders VALUES (?,?,?,?,?,?)").run((0, import_uuid.v4)(), userId, concept, level, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
+    db.prepare("INSERT INTO concept_decoders VALUES (?,?,?,?,?,?)").run(uuidv4(), userId, concept, level, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206252,7 +206230,7 @@ app.post("/api/research/synthesize", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a research synthesis expert. Create a comprehensive synthesis on this topic. Topic: ${topic}. Purpose: ${purpose}. Depth: ${depth || "thorough"}. Return JSON: { topic, executive_summary (200 words), key_findings: [{ finding, evidence, significance }], consensus_view, areas_of_debate, strongest_counterarguments: [3], emerging_research_directions, practical_implications: [5], key_thinkers_and_sources: [5], timeline_of_key_developments: [{ year, development }], what_we_still_dont_know, recommended_reading: [5 book/paper suggestions], bottom_line }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO research_synthesizers VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, topic, JSON.stringify(data));
+    db.prepare("INSERT INTO research_synthesizers VALUES (?,?,?,?)").run(uuidv4(), userId, topic, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206267,7 +206245,7 @@ app.post("/api/debate/prep", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a championship debate coach. Prepare for this debate. Topic: ${topic}. Position: ${your_position}. Format: ${debate_format || "open discussion"}. Opponent args: ${opponent_likely_args || "unknown"}. Return JSON: { your_position_statement, core_arguments: [{ argument, evidence, emotional_appeal, logical_structure }], killer_statistics: [5 stats], opening_statement (150 words), closing_statement (100 words), rebuttals: [{ opponent_argument, your_rebuttal, evidence }], rhetorical_techniques: [5 techniques with examples], trap_questions_to_set: [3], questions_to_avoid: [3], winning_mindset, practice_questions: [5] }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO debate_preparers VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, your_position, topic, JSON.stringify(data));
+    db.prepare("INSERT INTO debate_preparers VALUES (?,?,?,?,?)").run(uuidv4(), userId, your_position, topic, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206282,7 +206260,7 @@ app.post("/api/critical/think", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a critical thinking expert and logician. Analyze this claim rigorously. Claim: "${claim}". Source: ${source || "unknown"}. Context: ${context || "none"}. Return JSON: { claim_restated, credibility_score (1-10), logical_fallacies_detected: [{ fallacy, where_it_appears, explanation }], evidence_quality: { strength, gaps, what_would_strengthen_it }, steelman (strongest version of this argument), counter_arguments: [3 strong ones], hidden_assumptions: [3-5], what_questions_to_ask: [5], alternative_explanations: [3], bias_check: { potential_biases_in_claim, potential_biases_in_sources }, verdict, how_to_investigate_further }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO critical_thinkers VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, claim, JSON.stringify(data));
+    db.prepare("INSERT INTO critical_thinkers VALUES (?,?,?,?)").run(uuidv4(), userId, claim, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206297,7 +206275,7 @@ app.post("/api/teaching/assist", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a master educator. Create a complete lesson plan. Subject: ${subject}. Student level: ${student_level}. Goal: ${learning_goal}. Style: ${teaching_style || "interactive"}. Return JSON: { lesson_title, objectives: [3-5], prerequisite_knowledge, hook_activity (5 min), direct_instruction: { content_outline, key_vocabulary, visual_aids_needed }, guided_practice: { activity, steps, common_mistakes_to_watch }, independent_practice: { assignment, rubric }, differentiation: { for_struggling, for_advanced }, assessment_questions: [5 with answers], extension_activities: [3], real_world_connection, memorable_summary, homework_suggestion, teacher_tips: [5] }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO teaching_assistants VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, subject, student_level, JSON.stringify(data));
+    db.prepare("INSERT INTO teaching_assistants VALUES (?,?,?,?,?)").run(uuidv4(), userId, subject, student_level, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206327,7 +206305,7 @@ app.post("/api/conversation/hack", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a social intelligence expert. Create a conversation strategy. Goal: ${goal}. Context: ${context}. Relationship: ${relationship}. Challenge: ${challenge}. Return JSON: { conversation_strategy, opening_lines: [3 options], rapport_builders: [5 techniques], key_questions_to_ask: [5 with follow-ups], active_listening_cues: [5], how_to_steer_conversation, handling_awkward_silences: [3 strategies], closing_the_conversation: { graceful_exits: [3], how_to_leave_lasting_impression }, word_choices_that_build_rapport, word_choices_to_avoid, body_language_tips: [5], conversation_flow_map }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO conversation_hackers VALUES (?,?,?,?,?,?)").run((0, import_uuid.v4)(), userId, goal, context, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
+    db.prepare("INSERT INTO conversation_hackers VALUES (?,?,?,?,?,?)").run(uuidv4(), userId, goal, context, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206342,7 +206320,7 @@ app.post("/api/charisma/coach", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a world-class charisma and social skills coach. Coach this person. Scenario: ${scenario}. Current approach: ${current_approach}. Desired outcome: ${desired_outcome}. Return JSON: { charisma_assessment: { presence_score, warmth_score, energy_score, authenticity_score }, what_charismatic_people_do_differently, your_specific_coaching: [7 tailored tips], vocal_techniques: [3 specific upgrades], eye_contact_strategy, humor_integration: [3 natural humor tips], storytelling_framework, making_people_feel_seen: [5 techniques], magnetic_energy_tips: [3], practice_exercises: [5 daily exercises], charisma_mantra }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO charisma_coaches VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, scenario, JSON.stringify(data));
+    db.prepare("INSERT INTO charisma_coaches VALUES (?,?,?,?)").run(uuidv4(), userId, scenario, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206357,7 +206335,7 @@ app.post("/api/networking/strategy", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a networking strategist. Create a comprehensive networking plan. Goal: ${goal}. Industry: ${industry}. Current network: ${current_network || "limited"}. Time available: ${time_available || "3 hours/week"}. Return JSON: { networking_goal_refined, target_people: [{ type, why, how_many, where_to_find }], outreach_templates: { cold_connection, warm_intro, follow_up, value_add_touch }, conversation_starters_by_context: { conferences, linkedin, coffee_chat, events }, giving_before_getting: [5 ways to add value], relationship_deepening_cadence, tracking_system, online_strategy: { linkedin_moves, community_platforms, content_strategy }, offline_strategy: { events, associations, coffee_chats }, 30_day_action_plan: [{ week, actions }], common_networking_mistakes_to_avoid: [5] }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO networking_strategists VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, goal, industry, JSON.stringify(data));
+    db.prepare("INSERT INTO networking_strategists VALUES (?,?,?,?,?)").run(uuidv4(), userId, goal, industry, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206372,7 +206350,7 @@ app.post("/api/conflict/mediate", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a professional mediator and conflict resolution expert. Help resolve this conflict. Conflict: ${conflict_description}. Your role: ${your_role}. Relationship importance: ${relationship_importance}. Desired resolution: ${desired_resolution}. Return JSON: { conflict_analysis: { core_issue, underlying_needs_your_side, underlying_needs_other_side, power_dynamics }, emotional_readiness_check: [3 questions to ask yourself first], mediation_approach, opening_the_conversation: { setting, time, opening_statement }, listening_phase: { key_questions, validation_phrases, what_to_listen_for }, negotiation_phase: { finding_common_ground, proposing_solutions: [3 options with tradeoffs] }, agreement_phase: { what_to_put_in_writing, follow_up_plan }, scripts: { start_conversation, handle_defensiveness, propose_solution, close }, what_if_they_wont_engage, rebuilding_trust_after, when_to_walk_away }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO conflict_mediators VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, conflict_description, your_role, JSON.stringify(data));
+    db.prepare("INSERT INTO conflict_mediators VALUES (?,?,?,?,?)").run(uuidv4(), userId, conflict_description, your_role, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206387,7 +206365,7 @@ app.post("/api/influence/build", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are an ethical influence expert. Create a principled influence strategy. Objective: ${objective}. Audience: ${audience}. Current influence level: ${current_influence}. Ethical constraints: ${ethical_constraints || "none specified"}. Return JSON: { influence_principles: [3 ethical foundations], audience_psychology: { motivations, fears, values, communication_style }, credibility_builders: [5 ways to establish authority], reciprocity_tactics: [3 ethical ways], social_proof_strategy, commitment_and_consistency: [3 techniques], framing_your_message: { before, after, key_reframes }, persuasion_scripts: [3 scenarios with word-for-word scripts], objection_handling: [5 common objections with responses], long_game: [5 relationship-based influence moves], ethics_check: [3 questions to verify ethical alignment] }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO influence_builders VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, objective, audience, JSON.stringify(data));
+    db.prepare("INSERT INTO influence_builders VALUES (?,?,?,?,?)").run(uuidv4(), userId, objective, audience, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206417,7 +206395,7 @@ app.post("/api/passive/income", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a passive income strategist. Create a personalized plan. Capital: ${available_capital}. Skills: ${skills}. Time: ${time_per_week} hours/week. Risk tolerance: ${risk_tolerance}. Return JSON: { income_streams: [{ name, type, startup_cost, monthly_income_potential, time_to_first_dollar, effort_level, how_to_start, skills_needed, best_for }] (5 streams), recommended_stack (which 2-3 to combine), 90_day_roadmap: [{ week, focus, actions, expected_outcome }], total_income_potential_12_months, biggest_mistakes_to_avoid: [5], resources_to_start: [5 books/tools/platforms] }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO passive_income_planners VALUES (?,?,?,?,?,?,?)").run((0, import_uuid.v4)(), userId, available_capital, skills, time_per_week, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
+    db.prepare("INSERT INTO passive_income_planners VALUES (?,?,?,?,?,?,?)").run(uuidv4(), userId, available_capital, skills, time_per_week, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206432,7 +206410,7 @@ app.post("/api/tax/strategy", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a tax strategy educator (not a licensed advisor \u2014 for educational purposes only). Income type: ${income_type}. Annual income: ${annual_income}. Situation: ${situation}. Country: ${country || "US"}. Return JSON: { disclaimer, tax_education_overview, commonly_missed_deductions: [{ deduction, who_qualifies, estimated_savings }], tax_advantaged_accounts: [{ account, 2024_limit, tax_benefit, best_for }], strategies_by_income_type: [{ strategy, how_it_works, potential_savings, action_to_take }], year_end_moves: [5 actions before Dec 31], questions_to_ask_your_accountant: [7], estimated_tax_savings_range, next_steps }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO tax_strategists VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, income_type, annual_income, JSON.stringify(data));
+    db.prepare("INSERT INTO tax_strategists VALUES (?,?,?,?,?)").run(uuidv4(), userId, income_type, annual_income, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206447,7 +206425,7 @@ app.post("/api/investment/thesis", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are an investment analyst educator. Build an investment thesis framework. Asset/Company: ${asset_or_company}. Horizon: ${investment_horizon}. Bull case belief: ${bull_case_belief}. (Educational only \u2014 not financial advice). Return JSON: { disclaimer, asset_overview, bull_case: { core_thesis, catalysts: [5], target_price_rationale, timeline }, bear_case: { key_risks: [5], what_would_invalidate_thesis }, key_questions_to_research: [7], metrics_to_track: [5], comparable_cases: [3], position_sizing_framework, entry_criteria, exit_criteria, monitoring_checklist, conviction_score (1-10 with rationale) }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO investment_thesis_builders VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, asset_or_company, JSON.stringify(data));
+    db.prepare("INSERT INTO investment_thesis_builders VALUES (?,?,?,?)").run(uuidv4(), userId, asset_or_company, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206462,7 +206440,7 @@ app.post("/api/wealth/gap", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a wealth planning educator. Analyze the wealth gap. Current net worth: ${current_net_worth}. Income: ${income}. Age: ${age}. Goal: ${wealth_goal}. Timeline: ${timeline}. Return JSON: { current_trajectory_at_retirement, gap_amount, gap_assessment, wealth_building_levers: [{ lever, current_state, optimized_state, monthly_impact }], savings_rate_analysis, investment_allocation_suggestion, income_growth_needed, milestones: [{ year, target_net_worth, key_action }], acceleration_moves: [5 non-obvious wealth builders], wealth_killers_to_eliminate: [5], compound_growth_scenarios: [{ scenario, annual_return, net_worth_at_goal }], mindset_shifts_needed: [3] }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO wealth_gap_analyzers VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, current_net_worth, wealth_goal, JSON.stringify(data));
+    db.prepare("INSERT INTO wealth_gap_analyzers VALUES (?,?,?,?,?)").run(uuidv4(), userId, current_net_worth, wealth_goal, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206477,7 +206455,7 @@ app.post("/api/money/mindset", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a money mindset coach. Transform limiting money beliefs. Limiting belief: "${limiting_belief}". Money story: ${money_story}. Current patterns: ${current_patterns}. Return JSON: { belief_origin_insight, how_this_belief_is_costing_you, the_truth: { reframe, evidence, new_belief }, wealthy_mindset_shift: { old_belief, new_belief, why_it_works }, affirmations: [5 personalized powerful affirmations], behavioral_experiments: [3 small actions to reprogram this belief], journaling_prompts: [5], books_that_rewire_money_mindset: [3], your_new_money_story (write a 100-word empowering narrative), 30_day_money_mindset_plan }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO money_mindset_coaches VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, limiting_belief, JSON.stringify(data));
+    db.prepare("INSERT INTO money_mindset_coaches VALUES (?,?,?,?)").run(uuidv4(), userId, limiting_belief, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206507,7 +206485,7 @@ app.post("/api/flow/optimize", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a flow state expert. Design a personalized flow state protocol. Activity: ${activity}. Blockers: ${current_blockers}. Available time: ${available_time}. Environment: ${environment}. Return JSON: { flow_state_diagnosis, your_flow_profile: { dominant_triggers, typical_blockers, ideal_conditions }, pre_flow_ritual: [{ step, duration, purpose }] (10 steps), environment_setup: { lighting, sound, temperature, tools, notifications }, flow_triggers_ranked: [{ trigger, how_to_use, time_to_flow }], anti_flow_list: [5 things to eliminate], flow_session_structure: { warm_up_minutes, peak_work_minutes, cool_down_minutes, optimal_session_count_per_day }, recovery_protocol, weekly_flow_schedule, flow_metrics_to_track: [5] }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO flow_state_optimizers VALUES (?,?,?,?,?,?)").run((0, import_uuid.v4)(), userId, activity, current_blockers, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
+    db.prepare("INSERT INTO flow_state_optimizers VALUES (?,?,?,?,?,?)").run(uuidv4(), userId, activity, current_blockers, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206522,7 +206500,7 @@ app.post("/api/cognitive/enhance", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a cognitive performance expert. Design an evidence-based cognitive enhancement protocol. Goal: ${performance_goal}. Limitations: ${current_limitations}. Lifestyle: ${lifestyle}. Return JSON: { cognitive_assessment, evidence_based_interventions: [{ intervention, mechanism, evidence_level, how_to_implement, expected_benefit, timeframe }], sleep_optimization: { target_hours, sleep_hygiene_protocol: [5 steps], sleep_quality_hacks: [5] }, nutrition_for_brain: { key_foods: [7], foods_to_avoid: [5], meal_timing }, exercise_protocol: { type, frequency, duration, cognitive_benefits }, mental_training: [{ practice, duration, frequency, benefit }], morning_protocol: [{ time, action, why }], 30_day_roadmap, expected_improvements_timeline }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO cognitive_enhancers VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, performance_goal, current_limitations, JSON.stringify(data));
+    db.prepare("INSERT INTO cognitive_enhancers VALUES (?,?,?,?,?)").run(uuidv4(), userId, performance_goal, current_limitations, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206537,7 +206515,7 @@ app.post("/api/mental/models", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a mental models expert (Charlie Munger-style). Apply the most powerful mental models to this situation. Problem: ${problem_or_situation}. Domain: ${domain}. Goal: ${goal}. Return JSON: { situation_analysis, mental_models_applied: [{ model_name, origin_discipline, core_principle, how_it_applies_here, insight_generated, action_implication }] (7-9 models), synthesis: { key_insights: [5], recommended_action, what_most_people_miss, second_order_effects: [3] }, models_in_conflict: [{ model1, model2, how_to_resolve }], mental_model_learning_path: [{ model, why_learn_next, resource }] (5 models), decision_framework_from_models }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO mental_models_builders VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, problem_or_situation, JSON.stringify(data));
+    db.prepare("INSERT INTO mental_models_builders VALUES (?,?,?,?)").run(uuidv4(), userId, problem_or_situation, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206552,7 +206530,7 @@ app.post("/api/decision/speed", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a rapid decision-making expert. Help make this decision fast and confidently. Decision: ${decision}. Stakes: ${stakes}. Time pressure: ${time_pressure}. Available info: ${available_info}. Return JSON: { decision_classification: { reversibility, stakes_level, urgency }, recommended_framework, 10_10_10_analysis: { in_10_minutes, in_10_months, in_10_years }, options: [{ option, pros: [3], cons: [3], probability_of_success, gut_check_score }], regret_minimization: { option_least_regret, why }, recommended_decision, confidence_level, key_assumptions, what_to_do_next_5_minutes: [3 immediate actions], decision_making_bias_check: [{ bias, am_i_affected, correction }], learn_from_this: { what_to_track, when_to_revisit } }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO decision_speed_trainers VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, decision, JSON.stringify(data));
+    db.prepare("INSERT INTO decision_speed_trainers VALUES (?,?,?,?)").run(uuidv4(), userId, decision, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206567,7 +206545,7 @@ app.post("/api/performance/review", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a peak performance coach. Conduct a deep performance review. Period: ${period}. Wins: ${wins}. Losses/challenges: ${losses}. Goals: ${goals_set}. Key learnings: ${key_learnings}. Return JSON: { performance_score (1-10), performance_summary, wins_analysis: [{ win, root_cause, how_to_repeat }], losses_analysis: [{ loss, root_cause, lesson, how_to_prevent }], patterns_identified: [{ pattern, positive_or_negative, action }], blind_spots: [3 things you might be missing], energy_audit: { high_energy_activities, low_energy_drains, optimization }, goals_for_next_period: [{ goal, why_this_goal, how_to_achieve, metric_to_track }] (5 goals), performance_upgrade_plan: [{ area, current, target, action }], one_thing_that_will_change_everything, personal_operating_system_updates: [3 rule changes] }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO performance_reviewers VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, period, wins, JSON.stringify(data));
+    db.prepare("INSERT INTO performance_reviewers VALUES (?,?,?,?,?)").run(uuidv4(), userId, period, wins, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206597,7 +206575,7 @@ app.post("/api/attraction/build", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a dating and attraction coach. Provide practical, ethical advice for building genuine attraction. Situation: ${situation}. About the person: ${target_person}. Current approach: ${your_current_approach}. What you want: ${what_you_want}. Return JSON: { situation_read, what_theyre_likely_feeling, what_you_might_be_doing_wrong: [3], attraction_builders: [{ action, why_it_works, how_to_execute, timing }] (7), conversation_starters_for_this_person: [5], next_move: { what, when, how, expected_response }, what_not_to_do: [5], confidence_builders: [3 mindset shifts], long_game_strategy, green_flags_to_look_for: [5], red_flags_to_watch: [5] }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO attraction_builders VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, situation, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
+    db.prepare("INSERT INTO attraction_builders VALUES (?,?,?,?,?)").run(uuidv4(), userId, situation, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206612,7 +206590,7 @@ app.post("/api/relationship/audit", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a relationship coach. Conduct a brutally honest but compassionate relationship audit. Type: ${relationship_type}. Duration: ${duration}. Issues: ${current_issues}. Question: ${what_you_want_to_know}. Return JSON: { relationship_health_score (1-10), overall_assessment, strengths: [{ strength, evidence, how_to_leverage }], weaknesses: [{ weakness, root_cause, how_to_fix }], patterns_detected: [{ pattern, who_drives_it, impact, change_needed }], communication_audit: { current_style, issues, recommended_style }, attachment_style_guess: { yours, theirs, compatibility }, deal_breakers_present: boolean, honest_verdict, action_plan: [{ priority, action, timeline, expected_outcome }] (5), should_you_stay_or_go: { recommendation, reasoning, caveats }, conversation_to_have: { topic, how_to_open, what_to_say, what_to_listen_for } }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO relationship_auditors VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, current_issues, JSON.stringify(data));
+    db.prepare("INSERT INTO relationship_auditors VALUES (?,?,?,?)").run(uuidv4(), userId, current_issues, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206627,7 +206605,7 @@ app.post("/api/first/date", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a date planning expert. Create the perfect first date experience. About them: ${about_them}. City: ${your_city}. Budget: ${budget}. Vibe: ${vibe}. Shared interests: ${shared_interests}. Return JSON: { date_concept, why_this_works_for_them, date_plans: [{ plan_name, description, schedule: [{ time, activity, location_type, why_this_moment_matters }], estimated_cost, vibe, conversation_flow, backup_plan }] (3 options), conversation_topics_to_prepare: [{ topic, why_they_might_love_it, how_to_bring_it_up }] (7), questions_to_ask: [{ question, what_you_learn_from_answer }] (10), what_to_wear_advice, how_to_end_the_date: { what_to_say, physical_escalation_guide, next_steps }, green_flags_during_date: [5], signs_to_cut_short: [3], follow_up_text_template }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO first_date_planners VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, about_them, JSON.stringify(data));
+    db.prepare("INSERT INTO first_date_planners VALUES (?,?,?,?)").run(uuidv4(), userId, about_them, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206642,7 +206620,7 @@ app.post("/api/texting/coach", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a texting and messaging coach. Analyze this conversation and provide coaching. Conversation: ${conversation_history}. Context: ${context}. Goal: ${goal}. Their vibe: ${their_vibe}. Return JSON: { conversation_analysis: { their_interest_level (1-10), their_communication_style, what_theyre_signaling, energy_balance }, what_you_did_well: [3], what_to_change: [3], next_message_options: [{ message, tone, why_it_works, expected_response }] (4), texting_rules_for_this_person: [5], topics_to_introduce: [3], topics_to_avoid: [3], when_to_text: { best_times, frequency, when_to_pull_back }, escalation_path: { current_stage, next_stage, how_to_get_there }, red_flags_in_their_messages: [potential_issues] }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO texting_coaches VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, conversation_history, JSON.stringify(data));
+    db.prepare("INSERT INTO texting_coaches VALUES (?,?,?,?)").run(uuidv4(), userId, conversation_history, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206657,7 +206635,7 @@ app.post("/api/breakup/analyze", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a compassionate breakup coach and therapist. Help process this breakup with honesty and care. Relationship: ${relationship_summary}. How it ended: ${how_it_ended}. Feelings: ${how_you_feel}. What you want: ${what_you_want}. Return JSON: { validation, what_actually_happened (honest read), your_role_in_the_dynamic, their_role_in_the_dynamic, what_this_relationship_taught_you: [5 lessons], grief_stages_youre_in: { stage, how_long_typically, what_helps }, no_contact_recommendation: { should_you, why, for_how_long }, healing_timeline: [{ week, what_to_expect, what_to_do }] (8 weeks), patterns_to_break_before_next_relationship: [3], what_youre_actually_missing (often not the person), rebuilding_yourself: { identity_rebuild: [5 actions], confidence_rebuild: [5 actions], social_life_rebuild: [5 actions] }, signs_youre_ready_to_date_again: [5], letter_to_your_past_self (100 words) }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO breakup_analyzers VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, relationship_summary, JSON.stringify(data));
+    db.prepare("INSERT INTO breakup_analyzers VALUES (?,?,?,?)").run(uuidv4(), userId, relationship_summary, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206687,7 +206665,7 @@ app.post("/api/product/name", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a brand naming expert. Generate powerful product/company names. Product: ${product_description}. Audience: ${target_audience}. Vibe: ${vibe}. Competitors: ${competitors}. Return JSON: { naming_brief, name_categories: [{ category, names: [{ name, why_it_works, domain_likely_available, pronunciation_score (1-10), memorability_score (1-10), meaning_or_story }] (4 per category) }] (5 categories: evocative, descriptive, abstract, portmanteau, founder-style), top_3_picks: [{ name, full_rationale, tagline_suggestion, logo_concept }], names_to_avoid: [3 with reasons], domain_search_strategy, trademark_considerations }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO product_namers VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, product_description, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
+    db.prepare("INSERT INTO product_namers VALUES (?,?,?,?,?)").run(uuidv4(), userId, product_description, JSON.stringify(data), (/* @__PURE__ */ new Date()).toISOString());
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206702,7 +206680,7 @@ app.post("/api/brand/voice", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a brand strategy expert. Create a complete brand voice guide. Business: ${business_description}. Customer: ${target_customer}. Personality: ${personality_adjectives}. Competitors: ${competitors}. Return JSON: { brand_personality: { archetype, core_traits: [5], what_you_are, what_you_are_not }, voice_dimensions: [{ dimension, description, do_examples: [3], dont_examples: [3] }] (4 dimensions), tone_by_context: [{ context, tone, example }] (6 contexts), vocabulary: { power_words: [10], words_to_avoid: [7], signature_phrases: [5] }, writing_style: { sentence_length, punctuation_style, emoji_policy, humor_level }, example_copy: { homepage_headline, about_us_opening, error_message, social_post, email_subject }, brand_voice_in_one_sentence }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO brand_voice_creators VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, business_description, JSON.stringify(data));
+    db.prepare("INSERT INTO brand_voice_creators VALUES (?,?,?,?)").run(uuidv4(), userId, business_description, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206717,7 +206695,7 @@ app.post("/api/launch/strategy", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a product launch strategist. Design a complete go-to-market launch plan. Product: ${product}. Market: ${target_market}. Resources: ${current_resources}. Goal: ${launch_goal}. Timeline: ${timeline}. Return JSON: { launch_thesis, positioning_statement, target_segment: { primary, secondary, early_adopter_profile }, launch_phases: [{ phase, duration, focus, tactics: [5], success_metrics, budget_allocation }] (3 phases), channels: [{ channel, why_it_fits, tactics: [3], expected_roi }] (5 channels), launch_week_playbook: [{ day, actions: [3], goal }], pr_strategy: { angles: [3], target_outlets: [5], pitch_hook }, community_building: [3 tactics], viral_loop_design, risk_mitigation: [3 risks with solutions], kpis_to_track: [7], 90_day_revenue_projection }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO launch_strategists VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, product, JSON.stringify(data));
+    db.prepare("INSERT INTO launch_strategists VALUES (?,?,?,?)").run(uuidv4(), userId, product, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206732,7 +206710,7 @@ app.post("/api/customer/avatar", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a customer research expert. Build detailed customer avatars. Business: ${business_type}. Product: ${product_or_service}. Known customers: ${known_customers}. Price point: ${price_point}. Return JSON: { avatars: [{ name, tagline, demographics: { age_range, income, location, education, job }, psychographics: { values: [4], personality, lifestyle, interests: [5] }, buying_behavior: { triggers: [3], objections: [3], research_process, decision_factors: [4] }, pain_points: [5], desired_outcomes: [5], where_they_hang_out: { online: [5], offline: [3] }, how_they_talk: { vocabulary: [5], phrases: [3] }, marketing_message_for_them, product_features_they_care_most_about: [3] }] (3 avatars), primary_avatar, messaging_matrix: [{ avatar, headline, hook, cta }], channel_recommendations_by_avatar }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO customer_avatar_builders VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, business_type, JSON.stringify(data));
+    db.prepare("INSERT INTO customer_avatar_builders VALUES (?,?,?,?)").run(uuidv4(), userId, business_type, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206747,7 +206725,7 @@ app.post("/api/revenue/model", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "No API key" });
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", [{ role: "user", content: `You are a business model expert. Design optimal revenue models. Business: ${business_idea}. Market: ${target_market}. Current model: ${current_model}. Goal: ${revenue_goal}. Return JSON: { revenue_model_analysis, recommended_models: [{ model_name, description, how_it_works_for_you, pricing_structure, pros: [3], cons: [3], companies_using_this, revenue_potential, time_to_first_dollar, implementation_steps: [5] }] (4 models), hybrid_model_recommendation, pricing_psychology: [{ tactic, why_it_works, how_to_implement }] (5), pricing_tiers: [{ tier_name, price, what_included, target_customer, conversion_rate_estimate }] (3 tiers), revenue_diversification: [3 additional streams], unit_economics: { cac_target, ltv_target, ltv_cac_ratio, payback_period }, path_to_goal: { monthly_targets: [{ month, revenue, key_action }] (6 months) } }` }]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
-    db.prepare("INSERT INTO revenue_model_designers VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, business_idea, JSON.stringify(data));
+    db.prepare("INSERT INTO revenue_model_designers VALUES (?,?,?,?)").run(uuidv4(), userId, business_idea, JSON.stringify(data));
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -206782,7 +206760,7 @@ Dietary restrictions: ${restrictions || "none"}
 Provide structured daily meal plans with breakfast, lunch, dinner, and snacks. Include macros and prep tips.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO meal_planners (id,user_id,goals,restrictions,plan) VALUES (?,?,?,?,?)`).run(id, userId, goals, restrictions || "", plan);
     res.json({ plan });
   } catch (e) {
@@ -206805,7 +206783,7 @@ Days per week: ${days_per_week || 3}
 Provide a complete weekly workout schedule with exercises, sets, reps, and progressions.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const workout = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO workout_designers (id,user_id,fitness_level,equipment,goal,workout) VALUES (?,?,?,?,?,?)`).run(id, userId, fitness_level, equipment || "", goal, workout);
     res.json({ workout });
   } catch (e) {
@@ -206827,7 +206805,7 @@ Lifestyle: ${lifestyle || "sedentary"}
 Provide a comprehensive sleep optimization plan including routines, environment tips, and habit changes.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const advice = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO sleep_optimizers (id,user_id,issues,schedule,advice) VALUES (?,?,?,?,?)`).run(id, userId, issues, schedule || "", advice);
     res.json({ advice });
   } catch (e) {
@@ -206849,7 +206827,7 @@ Severity (1-10): ${severity || 5}
 Provide evidence-based techniques, daily practices, and long-term strategies for managing stress.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO stress_managers (id,user_id,stressors,lifestyle,plan) VALUES (?,?,?,?,?)`).run(id, userId, stressors, lifestyle || "", plan);
     res.json({ plan });
   } catch (e) {
@@ -206871,7 +206849,7 @@ Timeframe: ${timeframe || "30 days"}
 Use habit stacking science to create a realistic implementation plan with cues, routines, and rewards.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO habit_stackers (id,user_id,existing_habits,new_habit,plan) VALUES (?,?,?,?,?)`).run(id, userId, existing_habits, new_habit, plan);
     res.json({ plan });
   } catch (e) {
@@ -206908,7 +206886,7 @@ Concern: ${concern || "general guidance"}
 Provide thoughtful, age-appropriate parenting advice with practical strategies and communication tips.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const advice = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO parenting_advisors (id,user_id,child_age,situation,advice) VALUES (?,?,?,?,?)`).run(id, userId, child_age, situation, advice);
     res.json({ advice });
   } catch (e) {
@@ -206931,7 +206909,7 @@ Length: ${length || "short (5 minutes)"}
 Create an engaging, age-appropriate bedtime story with a gentle, sleep-inducing ending.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const story = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO bedtime_story_creators (id,user_id,child_name,theme,story) VALUES (?,?,?,?,?)`).run(id, userId, child_name, theme || "adventure", story);
     res.json({ story });
   } catch (e) {
@@ -206953,7 +206931,7 @@ Frequency: ${frequency || "weekly"}
 Create a structured family meeting agenda that encourages participation from all family members.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const agenda = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO family_meeting_planners (id,user_id,family_size,topics,agenda) VALUES (?,?,?,?,?)`).run(id, userId, family_size, topics, agenda);
     res.json({ agenda });
   } catch (e) {
@@ -206975,7 +206953,7 @@ Chore types preferred: ${chore_types || "all types"}
 Create a fair, age-appropriate weekly chore chart with clear responsibilities and a reward system.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const chart = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO chore_chart_builders (id,user_id,children,chores,chart) VALUES (?,?,?,?,?)`).run(id, userId, children, chore_types || "", chart);
     res.json({ chart });
   } catch (e) {
@@ -206998,7 +206976,7 @@ College goals: ${goals}
 Provide a comprehensive college prep roadmap including coursework, extracurriculars, test prep, and application strategy.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO college_prep_advisors (id,user_id,student_grade,goals,plan) VALUES (?,?,?,?,?)`).run(id, userId, student_grade, goals, plan);
     res.json({ plan });
   } catch (e) {
@@ -207035,7 +207013,7 @@ Monthly expenses: ${monthly_expenses || "not specified"}
 Compare debt avalanche vs snowball methods, provide a payoff timeline, and prioritize which debts to attack first.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const strategy = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO debt_strategists (id,user_id,debts,income,strategy) VALUES (?,?,?,?,?)`).run(id, userId, debts, monthly_income || "", strategy);
     res.json({ strategy });
   } catch (e) {
@@ -207057,7 +207035,7 @@ Experience level: ${experience_level || "beginner"}
 Provide a clear explanation, real-world analogy, pros/cons, and when this concept applies.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const explanation = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO investment_decoders (id,user_id,term,context,explanation) VALUES (?,?,?,?,?)`).run(id, userId, term, context || "", explanation);
     res.json({ explanation });
   } catch (e) {
@@ -207079,7 +207057,7 @@ Goals: ${goals || "improve overall score"}
 Provide specific, actionable steps to improve the credit score, timeline estimates, and what to avoid.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO credit_coaches (id,user_id,score,issues,plan) VALUES (?,?,?,?,?)`).run(id, userId, credit_score, issues || "", plan);
     res.json({ plan });
   } catch (e) {
@@ -207101,7 +207079,7 @@ Filing status: ${filing_status || "single"}
 Explain common tax reduction strategies, deductions, and legal ways to minimize tax burden. Note: consult a CPA for personalized advice.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const advice = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO tax_optimizers (id,user_id,situation,income_type,advice) VALUES (?,?,?,?,?)`).run(id, userId, situation, income_type || "", advice);
     res.json({ advice });
   } catch (e) {
@@ -207125,7 +207103,7 @@ Timeline: ${timeline || "long-term"}
 Provide a phased wealth-building plan with milestones, investment allocation ideas, and key actions at each life stage.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const roadmap = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO wealth_mappers (id,user_id,age,goals,timeline,roadmap) VALUES (?,?,?,?,?,?)`).run(id, userId, age, goals, timeline || "long-term", roadmap);
     res.json({ roadmap });
   } catch (e) {
@@ -207162,7 +207140,7 @@ Main struggle: ${struggle || "keeping conversation going"}
 Provide specific conversation starters, follow-up techniques, and strategies for making small talk feel natural and authentic.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const tips = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO small_talk_coaches (id,user_id,situation,tips) VALUES (?,?,?,?)`).run(id, userId, situation, tips);
     res.json({ tips });
   } catch (e) {
@@ -207185,7 +207163,7 @@ Main concerns: ${concerns || "nerves, forgetting content"}
 Provide preparation techniques, delivery tips, how to handle nerves, and structure advice for this specific speech type.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const coaching = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO public_speaking_coaches (id,user_id,speech_type,topic,coaching) VALUES (?,?,?,?,?)`).run(id, userId, speech_type, topic, coaching);
     res.json({ coaching });
   } catch (e) {
@@ -207207,7 +207185,7 @@ Goals: ${goals || "be more present and empathetic"}
 Provide active listening techniques, specific phrases to use, what to avoid, and practice exercises.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const feedback = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO active_listening_trainers (id,user_id,scenario,feedback) VALUES (?,?,?,?)`).run(id, userId, scenario, feedback);
     res.json({ feedback });
   } catch (e) {
@@ -207229,7 +207207,7 @@ Desired outcome: ${desired_outcome || "stand my ground respectfully"}
 Provide assertive scripts, I-statements, and boundary-setting language for this specific situation.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const script = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO assertiveness_coaches (id,user_id,situation,script) VALUES (?,?,?,?)`).run(id, userId, situation, script);
     res.json({ script });
   } catch (e) {
@@ -207252,7 +207230,7 @@ Tone: ${tone || "warm and professional"}
 Craft a genuine, personalized networking message that doesn't feel transactional. Include a clear but soft ask.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const message = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO networking_message_writers (id,user_id,context,goal,message) VALUES (?,?,?,?,?)`).run(id, userId, context, goal, message);
     res.json({ message });
   } catch (e) {
@@ -207290,7 +207268,7 @@ Number of names: ${count || 10}
 Provide ${count || 10} unique, memorable character names with brief etymology or meaning notes. Include first and last names.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const names = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO character_name_generators (id,user_id,genre,traits,names) VALUES (?,?,?,?,?)`).run(id, userId, genre, traits, names);
     res.json({ names });
   } catch (e) {
@@ -207313,7 +207291,7 @@ Include a twist: ${include_twist || "yes"}
 Create 5 unique, specific writing prompts that spark imagination. Include setting, conflict seed, and a character detail for each.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const prompt = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO writing_prompt_engines (id,user_id,genre,mood,prompt) VALUES (?,?,?,?,?)`).run(id, userId, genre || "any", mood || "any", prompt);
     res.json({ prompt });
   } catch (e) {
@@ -207335,7 +207313,7 @@ Chapters/scenes: ${chapters || "not specified"}
 Identify plot holes, timeline inconsistencies, character motivation gaps, and logic problems. For each issue, suggest how to fix it.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const issues = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO plot_hole_detectors (id,user_id,story_summary,issues) VALUES (?,?,?,?)`).run(id, userId, story_summary, issues);
     res.json({ issues });
   } catch (e) {
@@ -207360,7 +207338,7 @@ Style: ${style || "natural, authentic"}
 Rewrite the dialogue to feel more natural, reveal character, and advance the scene. Explain what you changed and why.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const polished = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO dialogue_polishers (id,user_id,original,context,polished) VALUES (?,?,?,?,?)`).run(id, userId, original, context || "", polished);
     res.json({ polished });
   } catch (e) {
@@ -207383,7 +207361,7 @@ Keywords to consider: ${keywords || "none"}
 Generate 15 compelling book title options with subtitle suggestions. Group them by approach (mysterious, straightforward, metaphorical, etc.) and note the appeal of each.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const titles = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO book_title_generators (id,user_id,synopsis,genre,titles) VALUES (?,?,?,?,?)`).run(id, userId, synopsis, genre || "fiction", titles);
     res.json({ titles });
   } catch (e) {
@@ -207420,7 +207398,7 @@ Deadline: ${deadline || "soon"}
 Diagnose the procrastination type (fear, overwhelm, perfectionism, boredom, etc.) and provide a specific action plan to start NOW. Include a 2-minute starter action.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO procrastination_busters (id,user_id,task,reason,plan) VALUES (?,?,?,?,?)`).run(id, userId, task, reason || "", plan);
     res.json({ plan });
   } catch (e) {
@@ -207443,7 +207421,7 @@ Fixed commitments: ${commitments || "none"}
 Design an optimized weekly time-block schedule with themed days, buffer blocks, and specific time windows for deep work, meetings, and admin.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const blocks = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO time_block_planners (id,user_id,goals,schedule,blocks) VALUES (?,?,?,?,?)`).run(id, userId, goals, work_hours || "", blocks);
     res.json({ blocks });
   } catch (e) {
@@ -207466,7 +207444,7 @@ Meeting purpose: ${purpose || "status update"}
 Calculate total cost, opportunity cost, and assess if this meeting provides ROI. Suggest whether it could be an email, async update, or shorter meeting.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const cost = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO meeting_cost_calculators (id,user_id,attendees,duration,cost) VALUES (?,?,?,?,?)`).run(id, userId, String(attendees), String(duration_minutes), cost);
     res.json({ cost });
   } catch (e) {
@@ -207489,7 +207467,7 @@ Current habits: ${email_habits || "check constantly"}
 Provide a step-by-step inbox zero system including sorting rules, response templates, unsubscribe strategy, and a sustainable daily email routine.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const strategy = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO inbox_zero_coaches (id,user_id,email_situation,strategy) VALUES (?,?,?,?)`).run(id, userId, email_count || "500+", strategy);
     res.json({ strategy });
   } catch (e) {
@@ -207512,7 +207490,7 @@ Deep work goals: ${goals}
 Create a deep work protocol including scheduling strategy, distraction elimination plan, rituals to enter flow state, and progress tracking.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO deep_work_schedulers (id,user_id,work_type,schedule,plan) VALUES (?,?,?,?,?)`).run(id, userId, work_type, available_hours || "", plan);
     res.json({ plan });
   } catch (e) {
@@ -207550,7 +207528,7 @@ Relationship type: ${relationship_type || "personal"}
 Provide neutral conflict mediation including: root cause analysis, both parties' valid points, common ground identification, and a step-by-step resolution path with specific conversation scripts.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const mediation = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO conflict_mediators (id,user_id,situation,mediation) VALUES (?,?,?,?)`).run(id, userId, situation, mediation);
     res.json({ mediation });
   } catch (e) {
@@ -207573,7 +207551,7 @@ Tone: ${tone || "warm and sincere"}
 Write a genuine, specific appreciation message that will deeply move the recipient. Include specific references, emotional depth, and a meaningful closing.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const message = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO appreciation_writers (id,user_id,recipient,relationship,message) VALUES (?,?,?,?,?)`).run(id, userId, recipient, relationship || "friend", message);
     res.json({ message });
   } catch (e) {
@@ -207596,7 +207574,7 @@ Goal: ${goal || "feel more comfortable"}
 Provide CBT-based coaching including: cognitive reframing of fears, physical anxiety management techniques, a preparation script for this situation, and a confidence-building mindset shift.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const coaching = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO social_anxiety_coaches (id,user_id,situation,coaching) VALUES (?,?,?,?)`).run(id, userId, situation, coaching);
     res.json({ coaching });
   } catch (e) {
@@ -207619,7 +207597,7 @@ Why we drifted: ${reason_drifted || "just life getting busy"}
 Write a natural, warm reconnection message that doesn't feel awkward or forced. Include a specific memory, acknowledge the time apart without over-explaining, and suggest a low-pressure way to catch up.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const message = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO friend_reconnectors (id,user_id,friend_name,last_contact,message) VALUES (?,?,?,?,?)`).run(id, userId, friend_name, last_contact || "", message);
     res.json({ message });
   } catch (e) {
@@ -207642,7 +207620,7 @@ Audience: ${audience || "future family members"}
 Write a moving, narrative-style family legacy piece that captures this person's essence, their impact on the family, and the values they passed down. Make it something that can be treasured for generations.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const legacy = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO family_legacy_writers (id,user_id,family_story,legacy) VALUES (?,?,?,?)`).run(id, userId, stories, legacy);
     res.json({ legacy });
   } catch (e) {
@@ -207679,7 +207657,7 @@ Preferred domain for analogies: ${domain_preference || "everyday life"}
 Generate 3 different powerful analogies that make this concept instantly click. For each: explain the analogy, why it works, and where it breaks down. End with the single best analogy.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const analogy = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO analogy_makers (id,user_id,concept,analogy) VALUES (?,?,?,?)`).run(id, userId, concept, analogy);
     res.json({ analogy });
   } catch (e) {
@@ -207701,7 +207679,7 @@ Desired outcome: ${desired_outcome || "best decision"}
 Identify the 3-5 most relevant mental models (first principles, inversion, second-order thinking, Occam's razor, etc.) and apply each one to reveal new insights about this problem. Conclude with an integrated recommendation.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const models = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO mental_model_appliers (id,user_id,problem,models) VALUES (?,?,?,?)`).run(id, userId, problem, models);
     res.json({ models });
   } catch (e) {
@@ -207723,7 +207701,7 @@ Focus areas: ${focus_areas || "key insights, actionable takeaways"}
 Provide: 1) A 1-sentence core thesis, 2) 5 key insights with brief explanations, 3) 3 actionable takeaways, 4) 2 questions to test understanding.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const summary = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO speed_readers (id,user_id,content,summary) VALUES (?,?,?,?)`).run(id, userId, content.substring(0, 500), summary);
     res.json({ summary });
   } catch (e) {
@@ -207745,7 +207723,7 @@ Target understanding level: ${target_level || "solid conceptual grasp"}
 Explain this as if teaching a curious 12-year-old. Use simple language, concrete examples, and analogies. Identify where the explanation might break down and address it. End with a simple way I can test my understanding.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const explanation = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO feynman_teachers (id,user_id,topic,explanation) VALUES (?,?,?,?)`).run(id, userId, topic, explanation);
     res.json({ explanation });
   } catch (e) {
@@ -207767,7 +207745,7 @@ Domain context: ${domain || "cross-disciplinary"}
 Discover and explain 3-5 non-obvious connections between these concepts. For each connection: name the bridge, explain the underlying pattern, and give a concrete example. This is for building a connected knowledge network.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const connections = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO knowledge_connectors (id,user_id,concepts,connections) VALUES (?,?,?,?)`).run(id, userId, `${concept_a} <-> ${concept_b}`, connections);
     res.json({ connections });
   } catch (e) {
@@ -207805,7 +207783,7 @@ Target market: ${target_market || "unknown"}
 Analyze the pivot decision: Should I pivot or persist? If pivot, provide 3 specific pivot options with rationale, risk assessment, and a 90-day pivot execution plan.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const advice = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO pivot_advisors (id,user_id,current_model,advice) VALUES (?,?,?,?)`).run(id, userId, current_model, advice);
     res.json({ advice });
   } catch (e) {
@@ -207829,7 +207807,7 @@ Industry: ${industry || "SaaS"}
 Provide a fundraising strategy including: right investor type to target, pitch narrative framework, key metrics to highlight, common objections and responses, and a 60-day outreach plan.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const strategy = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO fundraising_coaches (id,user_id,startup,strategy) VALUES (?,?,?,?)`).run(id, userId, industry || "startup", strategy);
     res.json({ strategy });
   } catch (e) {
@@ -207854,7 +207832,7 @@ Payback period: ${payback_period || "unknown"}
 Provide a detailed unit economics analysis: health assessment, LTV:CAC ratio, benchmark comparison for B2B SaaS, top 3 levers to improve economics, and what these numbers suggest about scalability.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const analysis = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO unit_economics_analyzers (id,user_id,metrics,analysis) VALUES (?,?,?,?)`).run(id, userId, JSON.stringify({ cac, ltv, churn_rate }), analysis);
     res.json({ analysis });
   } catch (e) {
@@ -207878,7 +207856,7 @@ Usage patterns: ${usage_patterns || "unknown"}
 Provide a PMF assessment using the Sean Ellis test framework and other indicators. Score PMF 1-10, identify the strongest and weakest PMF signals, and give a specific roadmap to improve PMF.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const assessment = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO product_market_fit_checkers (id,user_id,product,assessment) VALUES (?,?,?,?)`).run(id, userId, product, assessment);
     res.json({ assessment });
   } catch (e) {
@@ -207901,7 +207879,7 @@ Specific question: ${specific_question || "general guidance"}
 Explain the key legal considerations, common mistakes founders make in this situation, what documents are typically needed, and when to involve a lawyer vs. use standard templates. Note: This is educational only, not legal advice.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const guidance = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO startup_legal_guides (id,user_id,situation,guidance) VALUES (?,?,?,?)`).run(id, userId, situation, guidance);
     res.json({ guidance });
   } catch (e) {
@@ -207940,7 +207918,7 @@ Goals: ${goals || "more energy and better mood"}
 Explain which hormones may be involved, lifestyle factors that influence them (sleep, stress, exercise, nutrition), evidence-based natural optimization strategies, and what tests to discuss with a doctor.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO hormone_optimizers (id,user_id,symptoms,plan) VALUES (?,?,?,?)`).run(id, userId, symptoms, plan);
     res.json({ plan });
   } catch (e) {
@@ -207963,7 +207941,7 @@ Stress level: ${stress_level || "moderate"}
 Explain the gut-brain connection relevant to these issues, dietary changes that typically help, probiotic and prebiotic guidance, lifestyle factors affecting gut health, and warning signs to discuss with a gastroenterologist.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const protocol = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO gut_health_coaches (id,user_id,issues,protocol) VALUES (?,?,?,?)`).run(id, userId, issues, protocol);
     res.json({ protocol });
   } catch (e) {
@@ -207986,7 +207964,7 @@ Known triggers: ${known_triggers || "unknown"}
 Provide a 30-day anti-inflammation protocol including: top pro-inflammatory foods to eliminate, top anti-inflammatory foods to add, lifestyle interventions (sleep, exercise, stress), key supplements with evidence, and biomarkers to track with a doctor.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const protocol = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO inflammation_reducers (id,user_id,triggers,protocol) VALUES (?,?,?,?)`).run(id, userId, known_triggers || symptoms, protocol);
     res.json({ protocol });
   } catch (e) {
@@ -208010,7 +207988,7 @@ Stress: ${stress || "high"}
 Create a personalized energy optimization plan covering: circadian rhythm alignment, nutrition timing, strategic caffeine use, movement snacks, stress management, sleep architecture improvements, and a sample optimized daily schedule.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const strategy = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO energy_optimizers (id,user_id,patterns,strategy) VALUES (?,?,?,?)`).run(id, userId, energy_patterns || "", strategy);
     res.json({ strategy });
   } catch (e) {
@@ -208034,7 +208012,7 @@ Lifestyle: ${lifestyle || "standard"}
 Design a preventive health roadmap including: recommended screenings by age, key biomarkers to track, lifestyle interventions with biggest longevity ROI, vaccines and supplements to discuss with a doctor, and a 12-month wellness calendar.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO preventive_health_planners (id,user_id,profile,plan) VALUES (?,?,?,?)`).run(id, userId, `${age}/${gender}`, plan);
     res.json({ plan });
   } catch (e) {
@@ -208072,7 +208050,7 @@ Style: ${style || "educational and engaging"}
 Write a full script including: attention-grabbing hook (first 30 seconds), intro with value promise, main content in 3-5 sections with transitions, engagement prompts (like/subscribe), and strong outro with CTA. Include [B-ROLL] and [GRAPHIC] cues.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const script = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO youtube_script_writers (id,user_id,topic,script) VALUES (?,?,?,?)`).run(id, userId, topic, script);
     res.json({ script });
   } catch (e) {
@@ -208094,7 +208072,7 @@ Target emotion: ${target_emotion || "curiosity and surprise"}
 Create 10 scroll-stopping opening lines for TikTok videos. Each hook should be under 10 words, trigger immediate curiosity or emotion, and make viewers unable to scroll past. Include variety: question hooks, story hooks, controversy hooks, revelation hooks, and relatability hooks.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const hooks = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO tiktok_hook_generators (id,user_id,content,hooks) VALUES (?,?,?,?)`).run(id, userId, content_idea, hooks);
     res.json({ hooks });
   } catch (e) {
@@ -208117,7 +208095,7 @@ Target length: ${target_length || "45-60 minutes"}
 Create a complete episode plan including: episode title and description for show notes, segment breakdown with timing, 10-15 interview questions that go deep (not surface-level), icebreaker questions, key talking points, listener takeaways, and promotional angles for social media.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO podcast_episode_planners (id,user_id,topic,plan) VALUES (?,?,?,?)`).run(id, userId, topic, plan);
     res.json({ plan });
   } catch (e) {
@@ -208140,7 +208118,7 @@ Competitor thumbnails: ${competitor_thumbnails || "standard talking head"}
 Create 5 thumbnail concepts. For each: describe the visual composition, text overlay (max 4 words), color scheme, facial expression or visual element, and why this would outperform typical thumbnails for this topic.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const concepts = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO thumbnail_concept_makers (id,user_id,video_topic,concepts) VALUES (?,?,?,?)`).run(id, userId, video_topic, concepts);
     res.json({ concepts });
   } catch (e) {
@@ -208162,7 +208140,7 @@ Target platforms: ${target_platforms || "Twitter/X, LinkedIn, Instagram, TikTok"
 Repurpose the content for each platform with platform-native formatting: Twitter thread with hooks, LinkedIn thought leadership post, Instagram caption with hashtags, TikTok script hook. Each should feel native to the platform, not copy-pasted.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const repurposed = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO content_repurposers_v2 (id,user_id,original,repurposed) VALUES (?,?,?,?)`).run(id, userId, original_content.substring(0, 500), repurposed);
     res.json({ repurposed });
   } catch (e) {
@@ -208200,7 +208178,7 @@ Tone: ${tone || "confident but not arrogant"}
 Write a polished self-review that quantifies impact wherever possible, uses strong action verbs, highlights both results and growth, and positions the person for promotion/raise consideration. Include strengths, key accomplishments, and areas of growth.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const review = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO performance_review_writers (id,user_id,achievements,review) VALUES (?,?,?,?)`).run(id, userId, achievements, review);
     res.json({ review });
   } catch (e) {
@@ -208223,7 +208201,7 @@ Call to action: ${call_to_action || "invite discussion"}
 Write a LinkedIn post that starts with a scroll-stopping first line, builds to an insight or story, delivers real value, and ends with engagement. Use LinkedIn-native formatting (short paragraphs, strategic line breaks). Aim for 150-300 words.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const post = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO linkedin_content_creators (id,user_id,topic,post) VALUES (?,?,?,?)`).run(id, userId, topic, post);
     res.json({ post });
   } catch (e) {
@@ -208246,7 +208224,7 @@ Target role: ${target_role || "professional role"}
 Provide: 1) A concise, confident interview answer (under 60 seconds), 2) A resume-friendly way to address it, 3) How to reframe it as a strength, 4) 3 follow-up questions the interviewer might ask and how to answer them.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const explanation = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO career_gap_explainers (id,user_id,gap,explanation) VALUES (?,?,?,?)`).run(id, userId, gap_reason, explanation);
     res.json({ explanation });
   } catch (e) {
@@ -208269,7 +208247,7 @@ Industry: ${industry || "corporate"}
 Provide executive presence coaching including: specific behaviors to adopt, language patterns leaders use, how to command a room, gravitas-building techniques, common mistakes that undermine credibility, and a 30-day executive presence practice plan.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const coaching = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO executive_presence_coaches (id,user_id,situation,coaching) VALUES (?,?,?,?)`).run(id, userId, situation, coaching);
     res.json({ coaching });
   } catch (e) {
@@ -208292,7 +208270,7 @@ Preferred communication style: ${communication_style || "direct but diplomatic"}
 Provide: 1) Scripts for setting this boundary in person, 2) Scripts for email/message, 3) How to handle pushback, 4) How to maintain the boundary over time, 5) What to do if the boundary is repeatedly violated.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const scripts = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO workplace_boundary_setters (id,user_id,situation,scripts) VALUES (?,?,?,?)`).run(id, userId, situation, scripts);
     res.json({ scripts });
   } catch (e) {
@@ -208330,7 +208308,7 @@ Job stability: ${job_stability || "moderate"}
 Calculate target emergency fund size (3-6 months expenses), create a savings acceleration plan, identify expenses to cut to fund it faster, suggest high-yield savings account strategies, and provide a month-by-month milestone plan.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO emergency_fund_builders (id,user_id,situation,plan) VALUES (?,?,?,?)`).run(id, userId, monthly_expenses, plan);
     res.json({ plan });
   } catch (e) {
@@ -208353,7 +208331,7 @@ Dependents: ${dependents || "none"}
 Provide an insurance audit covering: coverage gaps and over-coverage, what types of insurance are recommended for this life stage, how much coverage is typically needed, estimated cost ranges, and priority order to acquire coverage.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const audit = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO insurance_audit_tools (id,user_id,coverage,audit) VALUES (?,?,?,?)`).run(id, userId, current_coverage || "", audit);
     res.json({ audit });
   } catch (e) {
@@ -208376,7 +208354,7 @@ Financial goals: ${goals || "financial freedom"}
 Identify limiting money beliefs and their origins, reframe each belief with evidence-based counter-narratives, provide exercises to shift money mindset, and create a money affirmation practice tailored to the specific blocks identified.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const coaching = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO money_mindset_coaches (id,user_id,beliefs,coaching) VALUES (?,?,?,?)`).run(id, userId, money_beliefs, coaching);
     res.json({ coaching });
   } catch (e) {
@@ -208400,7 +208378,7 @@ Current net worth: ${net_worth || "$0"}
 Calculate FI number (25x annual expenses), years to FI at current savings rate, how to accelerate by increasing savings rate, the impact of income increases vs expense cuts, withdrawal strategy options (4% rule, etc.), and a milestone roadmap.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO financial_independence_planners (id,user_id,profile,plan) VALUES (?,?,?,?)`).run(id, userId, `${age}/${income}`, plan);
     res.json({ plan });
   } catch (e) {
@@ -208423,7 +208401,7 @@ Time horizon: ${time_horizon || "long-term"}
 Explain tax-loss harvesting: how it works, when to do it, wash sale rule to avoid, which assets to swap for similar exposure, how to track for taxes, estimated tax savings at different loss levels, and timing strategies (end of year vs throughout year).` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const strategy = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare(`INSERT INTO tax_loss_harvesters (id,user_id,portfolio,strategy) VALUES (?,?,?,?)`).run(id, userId, portfolio_description || "", strategy);
     res.json({ strategy });
   } catch (e) {
@@ -208461,7 +208439,7 @@ Length: ${length || "short story"}
 Provide: Title, Logline, 3-act structure with 5-7 key scenes per act, character arcs, themes, and ending options.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const outline = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO story_outliners (id,user_id,genre,premise,outline) VALUES (?,?,?,?,?)").run(id, userId, genre, premise, outline);
     res.json({ outline });
   } catch (e) {
@@ -208485,7 +208463,7 @@ Backstory hints: ${backstory_hints || "none"}
 Provide: Name, physical description, personality profile, motivation, fatal flaw, backstory, voice/speech patterns, relationships, and character arc potential.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const profile = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO character_creators (id,user_id,role,traits,backstory,profile) VALUES (?,?,?,?,?,?)").run(id, userId, role, traits, backstory_hints, profile);
     res.json({ profile });
   } catch (e) {
@@ -208509,7 +208487,7 @@ Subtext/goal: ${subtext || "characters want something from each other"}
 Write 1-2 pages of tight, purposeful dialogue that reveals character and advances plot.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const dialogue = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO dialogue_writers (id,user_id,characters,scene,tone,dialogue) VALUES (?,?,?,?,?,?)").run(id, userId, characters, scene, tone, dialogue);
     res.json({ dialogue });
   } catch (e) {
@@ -208532,7 +208510,7 @@ Mood: ${mood || "dark"}
 For each twist: describe the reveal, how it recontextualizes prior events, what seeds to plant earlier, and the emotional impact.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const twist = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO plot_twist_generators (id,user_id,story_so_far,twist) VALUES (?,?,?,?)").run(id, userId, story_so_far, twist);
     res.json({ twist });
   } catch (e) {
@@ -208555,7 +208533,7 @@ Tone: ${tone || "epic"}
 Deliver: Geography & climate, political systems, magic/technology rules, cultures & religions, history, economy, flora/fauna, 3 unique locations, hooks for conflict, and a world name.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const world = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO world_builders (id,user_id,genre,setting,world) VALUES (?,?,?,?,?)").run(id, userId, genre, setting_seed, world);
     res.json({ world });
   } catch (e) {
@@ -208593,7 +208571,7 @@ Work style: ${work_style || "not specified"}
 Provide: root cause analysis, environment design tips, focus protocols (time blocks, rituals), distraction elimination strategies, and a 30-day focus challenge.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO focus_coaches (id,user_id,goal,blockers,plan) VALUES (?,?,?,?,?)").run(id, userId, goal, blockers, plan);
     res.json({ plan });
   } catch (e) {
@@ -208616,7 +208594,7 @@ Goal: ${memory_goal || "long-term retention"}
 Provide: memory palace technique, spaced repetition schedule, mnemonics, visualization tricks, practice exercises, and a retention test.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const technique = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO memory_trainers (id,user_id,topic,technique,result) VALUES (?,?,?,?,?)").run(id, userId, topic, technique, "");
     res.json({ technique });
   } catch (e) {
@@ -208639,7 +208617,7 @@ Thinking process: ${thinking_process || "not shared"}
 Identify: all cognitive biases present, how each distorts thinking, debiasing strategies for each, and a clearer way to think about this situation.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const analysis = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO cognitive_bias_detectors (id,user_id,situation,analysis) VALUES (?,?,?,?)").run(id, userId, situation, analysis);
     res.json({ analysis });
   } catch (e) {
@@ -208661,7 +208639,7 @@ Sleep: ${sleep || "unknown"}, Diet: ${diet || "unknown"}, Stress: ${stress || "u
 Provide: likely causes, immediate clarity boosters (today), lifestyle changes, nutrition and supplement suggestions (educational), and a 2-week clarity protocol.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const recommendations = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO mental_clarity_coaches (id,user_id,fog_description,lifestyle,recommendations) VALUES (?,?,?,?,?)").run(id, userId, fog_description, JSON.stringify({ sleep, diet, stress, exercise }), recommendations);
     res.json({ recommendations });
   } catch (e) {
@@ -208685,7 +208663,7 @@ Challenges: ${challenges || "none specified"}
 Deliver: morning activation sequence, ultradian rhythm work blocks, recovery rituals, evening wind-down protocol, weekly peak state review, and performance triggers to anchor into flow states.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const protocol = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO peak_state_designers (id,user_id,goals,current_state,protocol) VALUES (?,?,?,?,?)").run(id, userId, goals, current_state, protocol);
     res.json({ protocol });
   } catch (e) {
@@ -208723,7 +208701,7 @@ Other person: ${other_person || "not described"}
 Provide: 3 possible perspectives they might hold, emotional experience they're likely having, what they might need from this interaction, empathic response scripts, and how to bridge the gap.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const response = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO empathy_builders (id,user_id,situation,other_perspective,response) VALUES (?,?,?,?,?)").run(id, userId, situation, other_person, response);
     res.json({ response });
   } catch (e) {
@@ -208746,7 +208724,7 @@ Anxiety level: ${anxiety_level || "moderate"}
 Provide: 10 conversation openers, 5 topic bridges, active listening phrases, graceful exit lines, how to remember names, and 3 conversation practice scenarios with example exchanges.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const scripts = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO small_talk_coaches (id,user_id,context,goal,scripts) VALUES (?,?,?,?,?)").run(id, userId, context, goal, scripts);
     res.json({ scripts });
   } catch (e) {
@@ -208769,7 +208747,7 @@ Complaints or friction: ${complaints || "none specified"}
 Provide: inferred love language(s), how mismatches cause conflict, specific expressions for each love language in this context, a 30-day connection plan, and scripts for asking about love languages.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const analysis = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO love_language_analyzers (id,user_id,behaviors,analysis) VALUES (?,?,?,?)").run(id, userId, behaviors, analysis);
     res.json({ analysis });
   } catch (e) {
@@ -208793,7 +208771,7 @@ What doesn't: ${what_doesnt || "unclear"}
 Provide: health score (1-10) with reasoning, patterns to address, strengths to amplify, 30/60/90 day action plan, conversation starters for improvement, and when to seek professional help.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const audit = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO relationship_auditors (id,user_id,relationship_type,dynamics,audit) VALUES (?,?,?,?,?)").run(id, userId, relationship_type, dynamics, audit);
     res.json({ audit });
   } catch (e) {
@@ -208817,7 +208795,7 @@ Fears: ${fears || "conflict, rejection"}
 Deliver: opening line options, complete conversation script with branches, how to handle pushback, de-escalation phrases, how to end productively, and what to do if it goes badly.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const script = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO difficult_conversation_guides (id,user_id,topic,relationship,approach,script) VALUES (?,?,?,?,?,?)").run(id, userId, topic, relationship, desired_outcome, script);
     res.json({ script });
   } catch (e) {
@@ -208855,7 +208833,7 @@ Frequency: ${frequency || "recurring"}
 Provide: Purpose & scope, prerequisites, step-by-step procedure with decision points, roles and responsibilities (RACI), quality checks, common errors to avoid, revision history section, and emergency escalation path.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const sop = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO sop_generators (id,user_id,process,department,sop) VALUES (?,?,?,?,?)").run(id, userId, process2, department, sop);
     res.json({ sop });
   } catch (e) {
@@ -208878,7 +208856,7 @@ Team size: ${team_size || "individual"}
 Deliver: 5-7 primary KPIs (with measurement method, target, frequency), 3-5 leading indicators, 3-5 lagging indicators, a simple dashboard design, monthly review cadence, and how to cascade KPIs to team members.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const kpis = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO kpi_designers (id,user_id,role,goals,kpis) VALUES (?,?,?,?,?)").run(id, userId, role, goals, kpis);
     res.json({ kpis });
   } catch (e) {
@@ -208902,7 +208880,7 @@ Recurring: ${recurring || "one-time"}
 Deliver: Pre-meeting prep (what to send, what to decide beforehand), timed agenda with facilitation notes, decision-making framework for this meeting, participation techniques, action item capture template, and a shorter alternative if people resist.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const design = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO meeting_designers (id,user_id,purpose,attendees,design) VALUES (?,?,?,?,?)").run(id, userId, purpose, attendees, design);
     res.json({ design });
   } catch (e) {
@@ -208925,7 +208903,7 @@ Current struggles: ${current_struggles || "doing too much myself"}
 Provide: delegation decision matrix (what to delegate vs keep), for each task: who, how to hand off, success criteria, check-in schedule; how to build trust with delegation; scripts for giving delegated tasks; and a 30-day delegation plan.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO delegation_coaches (id,user_id,tasks,team,plan) VALUES (?,?,?,?,?)").run(id, userId, tasks, team_description, plan);
     res.json({ plan });
   } catch (e) {
@@ -208948,7 +208926,7 @@ Optimization goal: ${goal || "reduce time and errors"}
 Deliver: bottleneck analysis, waste identification (lean/6-sigma lens), redesigned workflow step-by-step, automation opportunities, tool recommendations, estimated time/cost savings, and implementation timeline.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const optimization = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO workflow_optimizers (id,user_id,current_workflow,pain_points,optimization) VALUES (?,?,?,?,?)").run(id, userId, current_workflow, pain_points, optimization);
     res.json({ optimization });
   } catch (e) {
@@ -208987,7 +208965,7 @@ Family history: ${family_history || "unknown"}
 Provide: hallmarks of aging to address, exercise protocol (zone 2, strength, VO2max), nutrition principles, sleep optimization, stress management, key biomarkers to track, and a 5-pillar longevity roadmap.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO longevity_planners (id,user_id,age,biomarkers,plan) VALUES (?,?,?,?,?)").run(id, userId, age, family_history, plan);
     res.json({ plan });
   } catch (e) {
@@ -209010,7 +208988,7 @@ Time available: ${time_available || "5 hours/week"}
 Deliver: VO2max explanation, 12-week periodized training plan, zone 2 vs. HIIT balance, weekly structure, key workouts (with intensities and durations), progress markers, and how to test VO2max at home.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO vo2max_trainers (id,user_id,current_fitness,goal,plan) VALUES (?,?,?,?,?)").run(id, userId, current_fitness, sport, plan);
     res.json({ plan });
   } catch (e) {
@@ -209033,7 +209011,7 @@ Duration: ${duration || "months"}
 Provide: stress type analysis (acute/chronic/toxic), physiological impact explanation, HRV and cortisol insights, immediate stress-reset techniques, 30-day resilience protocol, lifestyle changes, and when to seek professional support.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const analysis = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO stress_decoders (id,user_id,symptoms,triggers,analysis) VALUES (?,?,?,?,?)").run(id, userId, symptoms, triggers, analysis);
     res.json({ analysis });
   } catch (e) {
@@ -209056,7 +209034,7 @@ Current recovery methods: ${current_recovery || "none"}
 Deliver: evidence-based recovery hierarchy, active vs passive recovery guidance, sleep optimization for recovery, nutrition timing (protein, carbs, hydration), modalities (ice, heat, compression, massage), HRV monitoring, and a weekly recovery schedule.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const protocol = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO recovery_optimizers (id,user_id,activity,recovery_methods,protocol) VALUES (?,?,?,?,?)").run(id, userId, activity, current_recovery, protocol);
     res.json({ protocol });
   } catch (e) {
@@ -209079,7 +209057,7 @@ Current supplements: ${current_supplements || "none"}
 Provide: tier-1 evidence supplements for these goals, dosing guidelines from research, timing protocols, potential interactions to discuss with a doctor, what to avoid, and a morning/evening stack schedule. Always recommend consulting a healthcare provider.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const stack = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO supplement_stacks (id,user_id,goals,conditions,stack) VALUES (?,?,?,?,?)").run(id, userId, goals, conditions, stack);
     res.json({ stack });
   } catch (e) {
@@ -209117,7 +209095,7 @@ Parenting style: ${parenting_style || "not specified"}
 Provide: developmental context for this age, why this challenge occurs, authoritative parenting strategies, exact scripts for common situations, what NOT to do, how to repair after mistakes, and a 2-week consistency plan.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const advice = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO parenting_style_coaches (id,user_id,child_age,challenge,advice) VALUES (?,?,?,?,?)").run(id, userId, child_age, challenge, advice);
     res.json({ advice });
   } catch (e) {
@@ -209140,7 +209118,7 @@ Conflicts to address: ${family_conflict || "none specified"}
 Deliver: meeting agenda with time blocks, age-appropriate participation roles, ground rules, how to handle emotional moments, decision-making process for this family, action items template, and how to make it a positive ritual.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const outcome = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO family_meeting_facilitators (id,user_id,family_size,agenda,outcome) VALUES (?,?,?,?,?)").run(id, userId, family_size, topic, outcome);
     res.json({ outcome });
   } catch (e) {
@@ -209163,7 +209141,7 @@ Parent concern: ${your_concern}
 Provide: adolescent brain development context, why teens think/act this way, what they need to hear (vs what parents say), exact conversation scripts, how to open dialogue without walls going up, how to set limits without lecturing, and repair strategies after conflict.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const script = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO teen_communicators (id,user_id,situation,teen_age,script) VALUES (?,?,?,?,?)").run(id, userId, situation, teen_age, script);
     res.json({ script });
   } catch (e) {
@@ -209186,7 +209164,7 @@ Concerns: ${concerns || "general overuse"}
 Provide: age-appropriate screen time guidelines (WHO/AAP recommendations), content quality framework, device-free zones and times, transition rituals, how to reduce without tantrums, alternative activities by interest, family media agreement template, and how to model healthy tech use.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO screen_time_managers (id,user_id,child_age,current_usage,plan) VALUES (?,?,?,?,?)").run(id, userId, child_age, current_usage, plan);
     res.json({ plan });
   } catch (e) {
@@ -209209,7 +209187,7 @@ Children ages: ${children_ages || "various"}
 Deliver: a 5-value family charter with: value name, what it means to this family, how to live it daily, family traditions that reinforce it, how to talk about it with kids, and a visual charter format they can display. Also include a quarterly family check-in ritual.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const charter = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO family_value_setters (id,user_id,family_description,goals,charter) VALUES (?,?,?,?,?)").run(id, userId, family_description, values_goal, charter);
     res.json({ charter });
   } catch (e) {
@@ -209246,7 +209224,7 @@ Jurisdiction: ${jurisdiction || "USA (general)"}
 Explain: what rights typically apply here, key laws and protections, what most people don't know about their rights, what to document, when to get an attorney, and practical first steps. Always note this is educational, not legal advice.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const explanation = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO rights_explainers (id,user_id,situation,jurisdiction,explanation) VALUES (?,?,?,?,?)").run(id, userId, situation, jurisdiction, explanation);
     res.json({ explanation });
   } catch (e) {
@@ -209270,7 +209248,7 @@ Deadline: ${deadline || "30 days"}
 Write a formal demand letter with: clear statement of facts, legal basis for claim, specific demand, deadline, consequences of non-compliance, and professional closing. Include a note to have an attorney review.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const letter = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO demand_letter_writers (id,user_id,dispute,amount,letter) VALUES (?,?,?,?,?)").run(id, userId, dispute, amount, letter);
     res.json({ letter });
   } catch (e) {
@@ -209292,7 +209270,7 @@ Contract type: ${contract_type || "general"}
 Explain: what this clause means in simple terms, what it obligates you to, what rights it waives, red flags to watch for, what's standard vs unusual, and what questions to ask an attorney about this clause.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const explanation = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO contract_clause_decoders (id,user_id,clause,context,explanation) VALUES (?,?,?,?,?)").run(id, userId, clause, contract_type, explanation);
     res.json({ explanation });
   } catch (e) {
@@ -209314,7 +209292,7 @@ State/Country: ${state || "USA (general)"}
 Provide: general tenant rights in this scenario, landlord obligations typically, what to document immediately, notice requirements, available remedies, local resources to contact, and when to get legal help. Note: laws vary significantly by location.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const guidance = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO tenant_rights_coaches (id,user_id,issue,state,guidance) VALUES (?,?,?,?,?)").run(id, userId, issue, state, guidance);
     res.json({ guidance });
   } catch (e) {
@@ -209337,7 +209315,7 @@ State: ${state || "USA (general)"}
 Provide: whether small claims is appropriate, typical filing limits, how to file step-by-step, what evidence to bring, how to present your case clearly, what happens if you win/lose, how to collect a judgment, and common mistakes to avoid.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const guide = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO small_claims_helpers (id,user_id,dispute,amount,guide) VALUES (?,?,?,?,?)").run(id, userId, dispute, amount, guide);
     res.json({ guide });
   } catch (e) {
@@ -209376,7 +209354,7 @@ Shopping habits: ${shopping || "average consumer"}
 Provide: estimated annual CO2 footprint vs national average, breakdown by category (%, tons), top 3 reduction opportunities with impact, low/medium/high effort changes, and a 30/90/365-day reduction roadmap.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const footprint = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO carbon_footprint_calculators (id,user_id,lifestyle,footprint) VALUES (?,?,?,?)").run(id, userId, JSON.stringify({ transportation, diet, energy, shopping }), footprint);
     res.json({ footprint });
   } catch (e) {
@@ -209399,7 +209377,7 @@ Living situation: ${living_situation || "apartment"}
 Deliver: quick wins (this week), medium-term swaps, high-impact changes, money-saving sustainability tips, sustainable swaps that cost nothing, recommended certifications/labels to look for, and community actions with multiplied impact.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO sustainable_living_coaches (id,user_id,current_habits,goals,plan) VALUES (?,?,?,?,?)").run(id, userId, current_habits, living_situation, plan);
     res.json({ plan });
   } catch (e) {
@@ -209422,7 +209400,7 @@ Budget: ${budget || "moderate"}
 Provide: environmental impact of current diet, most impactful food swaps, planetary health plate breakdown, seasonal eating guide, low-carbon protein sources, sustainable grocery shopping tips, sample weekly meal plan, and how to reduce food waste.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO eco_diet_planners (id,user_id,diet_style,constraints,plan) VALUES (?,?,?,?,?)").run(id, userId, diet_style, restrictions, plan);
     res.json({ plan });
   } catch (e) {
@@ -209445,7 +209423,7 @@ Budget: ${budget || "moderate"}
 Deliver: energy audit checklist, free/low-cost improvements, medium investments with ROI, major upgrades (solar, heat pump) with payback periods, utility rebates to investigate, smart home tech recommendations, and estimated annual savings.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const optimization = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO green_home_optimizers (id,user_id,home_type,issues,optimization) VALUES (?,?,?,?,?)").run(id, userId, home_type, biggest_energy_uses, optimization);
     res.json({ optimization });
   } catch (e) {
@@ -209468,7 +209446,7 @@ Time available: ${time_available || "a few hours/week"}
 Provide: highest-leverage individual actions, community organizing opportunities, career-aligned climate roles, political actions (voting, advocacy), investment alignment, organizations to join, skills to develop, and a realistic 1-year action roadmap.` }];
     const result = await callLLM("anthropic", key, "claude-3-haiku-20240307", messages);
     const action_plan = result.replace(/```json\n?|```\n?/g, "").trim();
-    const id = (0, import_uuid.v4)();
+    const id = uuidv4();
     db.prepare("INSERT INTO climate_action_planners (id,user_id,context,action_plan) VALUES (?,?,?,?)").run(id, userId, context, action_plan);
     res.json({ action_plan });
   } catch (e) {
@@ -209504,7 +209482,7 @@ Current presence: ${current_presence || "just starting"}
 Provide: brand positioning, unique value proposition, content pillars, platform strategy, voice/tone guide, 90-day action plan.` }
     ]);
     const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO personal_brand_coaches (id,user_id,niche,audience,plan) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, niche, audience, plan);
+    db.prepare("INSERT INTO personal_brand_coaches (id,user_id,niche,audience,plan) VALUES (?,?,?,?,?)").run(uuidv4(), userId, niche, audience, plan);
     res.json({ plan });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209524,7 +209502,7 @@ Posting frequency: ${frequency || "daily"}
 For each week provide: content themes, specific post ideas, best times to post, content formats (video/image/text), engagement tactics, repurposing strategy.` }
     ]);
     const calendar = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO content_calendar_builders (id,user_id,goals,platforms,calendar) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, goals, platforms, calendar);
+    db.prepare("INSERT INTO content_calendar_builders (id,user_id,goals,platforms,calendar) VALUES (?,?,?,?,?)").run(uuidv4(), userId, goals, platforms, calendar);
     res.json({ calendar });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209544,7 +209522,7 @@ Primary platform: ${platform || "LinkedIn"}
 Write: Twitter/X bio (160 chars), LinkedIn headline, LinkedIn about section, Instagram bio, speaker bio, website about page intro. Make each feel natural for that platform.` }
     ]);
     const bio = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO bio_writers (id,user_id,background,tone,bio) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, background, tone, bio);
+    db.prepare("INSERT INTO bio_writers (id,user_id,background,tone,bio) VALUES (?,?,?,?,?)").run(uuidv4(), userId, background, tone, bio);
     res.json({ bio });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209564,7 +209542,7 @@ Niche: ${niche}
 Provide: algorithm optimization tips, content types that perform best, engagement tactics, collaboration strategies, hashtag/SEO strategy, posting cadence, specific 30-day growth challenge with daily actions.` }
     ]);
     const strategy = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO audience_growth_coaches (id,user_id,platform,current_size,strategy) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, platform, current_size, strategy);
+    db.prepare("INSERT INTO audience_growth_coaches (id,user_id,platform,current_size,strategy) VALUES (?,?,?,?,?)").run(uuidv4(), userId, platform, current_size, strategy);
     res.json({ strategy });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209584,7 +209562,7 @@ Skills/assets: ${skills}
 Provide: monetization tiers by audience size, revenue streams ranked by effort/reward, pricing strategy, product ladder (free\u2192paid\u2192premium), launch sequence, income projection timeline, first $1000 fastest path.` }
     ]);
     const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO monetization_strategists (id,user_id,niche,audience_size,plan) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, niche, audience_size, plan);
+    db.prepare("INSERT INTO monetization_strategists (id,user_id,niche,audience_size,plan) VALUES (?,?,?,?,?)").run(uuidv4(), userId, niche, audience_size, plan);
     res.json({ plan });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209619,7 +209597,7 @@ Environment: ${environment || "home office"}
 Provide: pre-flow ritual (15-min protocol), optimal session length, environment setup checklist, trigger stacking method, re-entry techniques when interrupted, tracking metrics for flow quality.` }
     ]);
     const protocol = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO flow_state_designers (id,user_id,work_type,blockers,protocol) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, work_type, blockers, protocol);
+    db.prepare("INSERT INTO flow_state_designers (id,user_id,work_type,blockers,protocol) VALUES (?,?,?,?,?)").run(uuidv4(), userId, work_type, blockers, protocol);
     res.json({ protocol });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209639,7 +209617,7 @@ Deadline: ${deadline || "soon"}
 Provide: root cause diagnosis, the 2-minute start technique customized for this task, task breakdown into micro-steps, accountability system, reward structure, what happens if not done (realistic consequences), a starting script for right now.` }
     ]);
     const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO procrastination_busters (id,user_id,task,reason,plan) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, task, reason, plan);
+    db.prepare("INSERT INTO procrastination_busters (id,user_id,task,reason,plan) VALUES (?,?,?,?,?)").run(uuidv4(), userId, task, reason, plan);
     res.json({ plan });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209659,7 +209637,7 @@ Energy pattern: ${energy_pattern || "morning peak"}
 Provide: decisions to automate (standard operating procedures), decisions to batch by time of day, decision trees for recurring choices, default rules to adopt, "if-then" protocols, weekly decision audit template.` }
     ]);
     const framework = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO decision_fatigue_reducers (id,user_id,decisions,framework) VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, decisions, framework);
+    db.prepare("INSERT INTO decision_fatigue_reducers (id,user_id,decisions,framework) VALUES (?,?,?,?)").run(uuidv4(), userId, decisions, framework);
     res.json({ framework });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209679,7 +209657,7 @@ Goals: ${goals || "longer focus sessions"}
 Provide: attention baseline assessment, progressive training schedule (4 weeks), specific exercises (visual, auditory, task-switching), digital environment audit, physiological attention boosters, measurement protocol to track improvement.` }
     ]);
     const protocol = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO attention_trainers (id,user_id,challenges,schedule,protocol) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, challenges, work_style, protocol);
+    db.prepare("INSERT INTO attention_trainers (id,user_id,challenges,schedule,protocol) VALUES (?,?,?,?,?)").run(uuidv4(), userId, challenges, work_style, protocol);
     res.json({ protocol });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209699,7 +209677,7 @@ Current issues: ${current_issues || "afternoon crashes, brain fog"}
 Provide: energy audit by hour, sleep optimization protocol, nutrition for brain performance, movement/exercise timing, mental breaks system, stress inoculation techniques, weekly energy management calendar.` }
     ]);
     const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO mental_energy_optimizers (id,user_id,lifestyle,goals,plan) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, lifestyle, goals, plan);
+    db.prepare("INSERT INTO mental_energy_optimizers (id,user_id,lifestyle,goals,plan) VALUES (?,?,?,?,?)").run(uuidv4(), userId, lifestyle, goals, plan);
     res.json({ plan });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209734,7 +209712,7 @@ Your style: ${your_style || "unknown"}
 Provide: social style analysis (Driver/Expressive/Analytical/Amiable), communication preferences, what they need from interactions, how to build rapport, common friction points, specific language to use/avoid, meeting/email style recommendations.` }
     ]);
     const analysis = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO social_style_decoders (id,user_id,scenario,analysis) VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, scenario, analysis);
+    db.prepare("INSERT INTO social_style_decoders (id,user_id,scenario,analysis) VALUES (?,?,?,?)").run(uuidv4(), userId, scenario, analysis);
     res.json({ analysis });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209754,7 +209732,7 @@ Industry: ${industry || "tech"}
 Provide: 30-day networking action plan, conversation starters for different contexts, follow-up scripts, LinkedIn outreach templates, how to give value before asking, weak ties strategy, virtual vs in-person tactics, metrics to track relationship health.` }
     ]);
     const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO networking_coaches (id,user_id,goals,style,plan) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, goals, style, plan);
+    db.prepare("INSERT INTO networking_coaches (id,user_id,goals,style,plan) VALUES (?,?,?,?,?)").run(uuidv4(), userId, goals, style, plan);
     res.json({ plan });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209774,7 +209752,7 @@ Relationship type: ${relationship_type || "professional"}
 Provide: conflict root cause analysis, each party's likely perspective, common ground identification, step-by-step conversation guide, exact scripts for the difficult conversation, what to avoid saying, how to reach a win-win, follow-up to prevent recurrence.` }
     ]);
     const resolution = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO conflict_mediators (id,user_id,situation,parties,resolution) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, situation, parties, resolution);
+    db.prepare("INSERT INTO conflict_mediators (id,user_id,situation,parties,resolution) VALUES (?,?,?,?,?)").run(uuidv4(), userId, situation, parties, resolution);
     res.json({ resolution });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209794,7 +209772,7 @@ Context: ${context || "professional"}
 Provide: trust audit (what's broken and why), trust-building actions by week, consistency protocols, vulnerability calibration guide, how to repair trust after breaches, signals that trust is growing, long-term maintenance plan.` }
     ]);
     const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO trust_builders (id,user_id,relationship,challenges,plan) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, relationship, challenges, plan);
+    db.prepare("INSERT INTO trust_builders (id,user_id,relationship,challenges,plan) VALUES (?,?,?,?,?)").run(uuidv4(), userId, relationship, challenges, plan);
     res.json({ plan });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209814,7 +209792,7 @@ Severity: ${severity || "mild to moderate"}
 Provide: exposure hierarchy (easy\u2192hard), pre-event preparation ritual, in-the-moment techniques, post-event processing, reframing negative social interpretations, conversation safety scripts, gradual challenge progression over 8 weeks.` }
     ]);
     const protocol = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO social_anxiety_coaches (id,user_id,triggers,goals,protocol) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, triggers, goals, protocol);
+    db.prepare("INSERT INTO social_anxiety_coaches (id,user_id,triggers,goals,protocol) VALUES (?,?,?,?,?)").run(uuidv4(), userId, triggers, goals, protocol);
     res.json({ protocol });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209850,7 +209828,7 @@ Current age: ${age || 30}
 Provide: FIRE number (25x expenses), years to FIRE at current savings rate, years to FIRE at 50%/60%/70% savings rates, safe withdrawal rate breakdown, investment allocation suggestion, FIRE variants (LeanFIRE/FatFIRE/BaristaFIRE) with thresholds, top 3 levers to accelerate timeline.` }
     ]);
     const fireResult = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO fire_calculators (id,user_id,income,expenses,savings,result) VALUES (?,?,?,?,?,?)").run((0, import_uuid.v4)(), userId, annual_income, annual_expenses, current_savings, fireResult);
+    db.prepare("INSERT INTO fire_calculators (id,user_id,income,expenses,savings,result) VALUES (?,?,?,?,?,?)").run(uuidv4(), userId, annual_income, annual_expenses, current_savings, fireResult);
     res.json({ result: fireResult });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209870,7 +209848,7 @@ Monthly expenses: ${monthly_expenses}
 Provide: debt inventory ranked by interest rate, avalanche vs snowball comparison for this situation (with exact numbers), month-by-month payoff schedule, amount saved in interest with avalanche method, extra income needed for 1-year vs 2-year payoff, negotiation scripts for lower interest rates, psychological wins to celebrate.` }
     ]);
     const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO debt_destroyers (id,user_id,debts,income,plan) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, debts, monthly_income, plan);
+    db.prepare("INSERT INTO debt_destroyers (id,user_id,debts,income,plan) VALUES (?,?,?,?,?)").run(uuidv4(), userId, debts, monthly_income, plan);
     res.json({ plan });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209890,7 +209868,7 @@ Time horizon: ${time_horizon || "10+ years"}
 Provide: investing fundamentals checklist, step-by-step learning path (8 weeks), key concepts to master in order, account types to open and why, first investment recommendation with rationale, common mistakes to avoid, books/resources ranked by impact, how to evaluate if you're on track.` }
     ]);
     const curriculum = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO investment_educators (id,user_id,level,goals,curriculum) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, knowledge_level, goals, curriculum);
+    db.prepare("INSERT INTO investment_educators (id,user_id,level,goals,curriculum) VALUES (?,?,?,?,?)").run(uuidv4(), userId, knowledge_level, goals, curriculum);
     res.json({ curriculum });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209910,7 +209888,7 @@ Income goal: ${income_goal || "$1000/month"}
 Provide: top 3 side hustle matches for these skills, fastest path to first dollar for the best match, 30-60-90 day launch plan, pricing strategy, first 5 clients acquisition plan, tools needed (free options first), hourly rate calculator, how to scale from side hustle to full income.` }
     ]);
     const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO side_hustle_launchers (id,user_id,skills,time,plan) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, skills, available_hours, plan);
+    db.prepare("INSERT INTO side_hustle_launchers (id,user_id,skills,time,plan) VALUES (?,?,?,?,?)").run(uuidv4(), userId, skills, available_hours, plan);
     res.json({ plan });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209930,7 +209908,7 @@ Timeline: ${timeline || "10 years"}
 Provide: net worth snapshot template, income growth strategy (career + side income), expense optimization (high-impact cuts only), investment vehicle hierarchy, net worth milestones by year, asset allocation by decade, wealth protection (insurance, legal structure), exact actions for first 30 days.` }
     ]);
     const roadmap = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO net_worth_builders (id,user_id,situation,goals,roadmap) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, current_situation, goals, roadmap);
+    db.prepare("INSERT INTO net_worth_builders (id,user_id,situation,goals,roadmap) VALUES (?,?,?,?,?)").run(uuidv4(), userId, current_situation, goals, roadmap);
     res.json({ roadmap });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209964,7 +209942,7 @@ Audience level: ${audience_level || "educated non-specialist"}
 Provide: one-paragraph plain-English summary, key findings (bulleted), methodology explanation, limitations and caveats, real-world implications, how this fits into the broader field, questions this raises for future research, credibility assessment.` }
     ]);
     const summary = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO research_paper_decoders (id,user_id,paper,summary) VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, paper_text?.slice(0, 500), summary);
+    db.prepare("INSERT INTO research_paper_decoders (id,user_id,paper,summary) VALUES (?,?,?,?)").run(uuidv4(), userId, paper_text?.slice(0, 500), summary);
     res.json({ summary });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -209984,7 +209962,7 @@ Background knowledge: ${background || "general"}
 Provide: 5 specific testable hypotheses (null + alternative form), ranked by novelty and feasibility, variables for each (independent, dependent, controlled), predicted outcomes, potential confounders, falsifiability assessment, which hypothesis would be most publishable.` }
     ]);
     const hypotheses = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO hypothesis_generators (id,user_id,field,observation,hypotheses) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, field, observation, hypotheses);
+    db.prepare("INSERT INTO hypothesis_generators (id,user_id,field,observation,hypotheses) VALUES (?,?,?,?,?)").run(uuidv4(), userId, field, observation, hypotheses);
     res.json({ hypotheses });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -210004,7 +209982,7 @@ Field: ${field || "general science"}
 Provide: experimental design type (RCT, observational, etc.), sample size calculation, control group design, measurement protocol, statistical analysis plan, potential confounders and controls, ethical considerations, materials/equipment list, step-by-step procedure, expected timeline.` }
     ]);
     const design = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO experiment_designers (id,user_id,hypothesis,constraints,design) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, hypothesis, constraints, design);
+    db.prepare("INSERT INTO experiment_designers (id,user_id,hypothesis,constraints,design) VALUES (?,?,?,?,?)").run(uuidv4(), userId, hypothesis, constraints, design);
     res.json({ design });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -210024,7 +210002,7 @@ Context: ${context || "general curiosity"}
 Provide: intuitive first explanation (no jargon), key analogy that captures the essence, step-by-step conceptual build-up, common misconceptions corrected, why this matters in the real world, how it connects to everyday experience, one mind-blowing implication, questions to explore further.` }
     ]);
     const explanation = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO science_explainers (id,user_id,concept,level,explanation) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, concept, level, explanation);
+    db.prepare("INSERT INTO science_explainers (id,user_id,concept,level,explanation) VALUES (?,?,?,?,?)").run(uuidv4(), userId, concept, level, explanation);
     res.json({ explanation });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -210044,7 +210022,7 @@ Purpose: ${purpose || "understanding the field"}
 Provide: field overview and key paradigms, major theoretical frameworks, landmark studies and findings, current debates and controversies, consensus vs contested areas, methodological trends, gaps in the literature, emerging research directions, recommended key papers to read, how to search for more (databases, keywords).` }
     ]);
     const review = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO literature_reviewers (id,user_id,topic,review) VALUES (?,?,?,?)").run((0, import_uuid.v4)(), userId, topic, review);
+    db.prepare("INSERT INTO literature_reviewers (id,user_id,topic,review) VALUES (?,?,?,?)").run(uuidv4(), userId, topic, review);
     res.json({ review });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -210079,7 +210057,7 @@ Team size: ${team_size || "small team"}
 Provide: leadership style assessment, blind spots to watch, strengths to leverage, 3 leadership models to study, 90-day development plan, specific behaviors to start/stop/continue, how to measure leadership effectiveness, book recommendations, one skill to master this quarter.` }
     ]);
     const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO leadership_style_coaches (id,user_id,style,challenges,plan) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, style, challenges, plan);
+    db.prepare("INSERT INTO leadership_style_coaches (id,user_id,style,challenges,plan) VALUES (?,?,?,?,?)").run(uuidv4(), userId, style, challenges, plan);
     res.json({ plan });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -210099,7 +210077,7 @@ Role: ${role || "mid-level manager"}
 Provide: executive presence framework (appearance, communication, gravitas), self-assessment across each dimension, top 3 priority improvements, communication upgrades (body language, vocal authority, language patterns), how to command rooms, writing for executives, managing up, specific 60-day plan.` }
     ]);
     const plan = result.replace(/\`\`\`json\n?|\`\`\`\n?/g, "").trim();
-    db.prepare("INSERT INTO executive_presence_builders (id,user_id,context,gaps,plan) VALUES (?,?,?,?,?)").run((0, import_uuid.v4)(), userId, context, current_gaps, plan);
+    db.prepare("INSERT INTO executive_presence_builders (id,user_id,context,gaps,plan) VALUES (?,?,?,?,?)").run(uuidv4(), userId, context, current_gaps, plan);
     res.json({ plan });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -215085,160 +215063,6 @@ Provide: DM script (Instagram/TikTok, under 150 words, feels personal not templa
   try {
     const result = await callUserLLM(req, prompt);
     res.json({ outreach_scripts: result });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-app.post("/api/brand/voice-analyzer", requireAuth, async (req, res) => {
-  const { text, brand_description } = req.body;
-  const prompt = `Analyze the brand voice in this text:
-
-"${text}"
-
-${brand_description ? `Brand context: ${brand_description}` : ""}
-
-Provide: Tone profile (formal/casual, serious/playful, etc. on a spectrum), Vocabulary analysis (complexity, jargon level, sentence length patterns), Personality traits (which of the 12 Jungian archetypes does this most resemble?), Emotional resonance (what feeling does this create?), 5 words that define this brand voice, What this voice does well, What this voice lacks or risks, 3 concrete examples of how to write in this exact voice, How to differentiate from this voice if it's a competitor.`;
-  try {
-    const result = await callUserLLM(req, prompt);
-    res.json({ analysis: result });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-app.post("/api/content/email-newsletter", requireAuth, async (req, res) => {
-  const { topic, audience } = req.body;
-  const prompt = `Write a complete email newsletter about: ${topic}
-Audience: ${audience}
-
-Structure: Subject line (4 options \u2014 curiosity, benefit, question, bold claim), Preview text (1-2 lines that complement the subject), Opening hook (first 2 sentences that make the reader want to keep going), Body (the actual value \u2014 actionable, specific, not fluff), Key insight or takeaway, Call to action (one clear CTA, not multiple), PS line (optional but often the most read part). Style: conversational, like writing to a friend who happens to be in your target audience. Avoid: buzzwords, passive voice, throat-clearing openers like "In today's issue..."`;
-  try {
-    const result = await callUserLLM(req, prompt);
-    res.json({ newsletter: result });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-app.post("/api/social/twitter-thread", requireAuth, async (req, res) => {
-  const { topic, angle } = req.body;
-  const prompt = `Write a high-engagement Twitter/X thread about: ${topic}
-${angle ? `Angle: ${angle}` : ""}
-
-Format: Tweet 1 (hook \u2014 controversial, surprising, or bold claim that makes people stop scrolling, under 280 chars, no hashtags), Tweets 2-9 (value delivery \u2014 each tweet standalone valuable, numbered "2/", use line breaks, short punchy sentences), Tweet 10 (the big insight or twist), Tweet 11 (CTA \u2014 follow for more, share if this helped, what's your take?). Rules: No "\u{1F9F5} THREAD" openers, no obvious transitions like "First,", each tweet must be interesting alone, use specific numbers and examples over vague claims.`;
-  try {
-    const result = await callUserLLM(req, prompt);
-    res.json({ thread: result });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-app.post("/api/sales/proposal", requireAuth, async (req, res) => {
-  const { client_info, solution_description } = req.body;
-  const prompt = `Write a professional sales proposal.
-Client: ${client_info}
-Solution: ${solution_description}
-
-Include: Executive Summary (their problem in their words, your solution, the outcome they'll get), Situation Analysis (show you understand their current state and the cost of inaction), Proposed Solution (specific scope, not vague promises), Investment (pricing presented as ROI, not cost), Timeline & Milestones, Why Us (specific differentiators, not generic claims), Social Proof (space for a relevant case study or testimonial), Next Steps (clear, low-friction CTA), Terms Summary. Tone: confident but not salesy, specific not generic, focused on their outcome not your features.`;
-  try {
-    const result = await callUserLLM(req, prompt);
-    res.json({ proposal: result });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-app.post("/api/investor/pitch-story", requireAuth, async (req, res) => {
-  const { startup_description, audience } = req.body;
-  const prompt = `Craft a compelling pitch deck narrative for:
-${startup_description}
-Audience: ${audience || "early-stage investors"}
-
-Deliver: The hook (1 sentence that makes the investor lean in \u2014 the "imagine a world where" opener), The villain (the problem, told as a story not a bullet point \u2014 who suffers, how much, why now), The hero's journey (why you, why now \u2014 the founder-market fit story), The magic weapon (your unfair advantage \u2014 what you know or can do that others can't), The proof (traction framed as validation, not just numbers), The vision (paint the 10-year picture that justifies the fund's return), The ask (specific, justified, tied to milestones). Also provide: 3 memorable one-liners to weave throughout the pitch, The one thing you want investors to remember after they leave the room.`;
-  try {
-    const result = await callUserLLM(req, prompt);
-    res.json({ story: result });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-app.post("/api/product/launch-checklist", requireAuth, async (req, res) => {
-  const { product, launch_date } = req.body;
-  const prompt = `Generate a comprehensive product launch checklist for: ${product}
-Launch timeline: ${launch_date || "upcoming"}
-
-Organize by phase:
-
-4 WEEKS BEFORE: (positioning, messaging, assets, beta, press list)
-2 WEEKS BEFORE: (landing page, email sequences, social content, influencer outreach, analytics setup)
-1 WEEK BEFORE: (PR embargo, team briefing, support docs, customer notifications, war room plan)
-LAUNCH DAY: (minute-by-minute schedule, who posts what and when, monitoring checklist, response templates for common reactions)
-FIRST WEEK POST-LAUNCH: (metrics review, feedback collection, follow-up content, iteration plan, win celebration)
-
-For each item note: owner role (Marketing/Engineering/Founder/Support), time required, and if it blocks other items. Flag the 5 most commonly missed items with \u26A0\uFE0F.`;
-  try {
-    const result = await callUserLLM(req, prompt);
-    res.json({ checklist: result });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-app.post("/api/marketing/testimonial-request", requireAuth, async (req, res) => {
-  const { product, customer_segment } = req.body;
-  const prompt = `Write testimonial request email templates for ${product} customers (${customer_segment || "general customers"}).
-
-Provide: 3 email templates (short/medium/long-form request), the ideal timing to send (e.g. after first value moment, after X days of use, after hitting a milestone), the exact questions to ask that produce usable testimonials (not "did you like it?" but "what specific result did you get?"), what format to ask for (written, video, star rating + quote), how to make it easy (Google Form, Loom, TypeForm), follow-up sequence if no reply, how to use the testimonials once collected (where to place them on the site for maximum impact), legal considerations (permission to use their name, company, photo).`;
-  try {
-    const result = await callUserLLM(req, prompt);
-    res.json({ templates: result });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-app.post("/api/investor/fundraising-email", requireAuth, async (req, res) => {
-  const { startup_description, investor_type } = req.body;
-  const prompt = `Write cold investor outreach emails for:
-${startup_description}
-Target investor type: ${investor_type || "seed-stage VCs"}
-
-Provide: 3 cold email variations (different hooks \u2014 traction-led, problem-led, warm intro ask), subject line options for each (test with high open rates), the ideal email length and structure (under 150 words is the rule, here's why and how), what to include vs. exclude (never attach a deck cold), how to personalize for specific investors (what to research, what to mention), follow-up sequence (day 3, day 7, day 14), how to get a warm introduction instead, what to do when they reply with "send more info" vs. "not a fit right now".`;
-  try {
-    const result = await callUserLLM(req, prompt);
-    res.json({ emails: result });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-app.post("/api/cx/offboarding-survey", requireAuth, async (req, res) => {
-  const { product, suspected_churn_reason } = req.body;
-  const prompt = `Design a user offboarding / cancellation survey for ${product}.
-Suspected main churn reason: ${suspected_churn_reason || "unknown"}
-
-Provide: The cancellation flow copy (the page users see when they click cancel \u2014 include a save offer), Survey questions (5-7 max, mix of multiple choice and open text \u2014 don't just ask "why are you leaving?"), The exit intent popup (last-chance offer before they confirm cancel), Save offer logic (what to offer based on their stated reason \u2014 discount for price, feature tour for "not using it", pause for "taking a break"), The email sent after cancellation (keep door open, ask for feedback, provide easy way to come back), Metrics to track (completion rate, most common reasons, save rate per offer type), How to action the feedback (what to do with each churn reason category).`;
-  try {
-    const result = await callUserLLM(req, prompt);
-    res.json({ survey: result });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-app.post("/api/ai/agent-prompt-builder", requireAuth, async (req, res) => {
-  const { agent_role, use_case } = req.body;
-  const prompt = `Build a production-ready system prompt for an AI agent.
-Role: ${agent_role}
-Use case: ${use_case}
-
-Deliver a complete system prompt with these sections:
-1. ROLE & IDENTITY \u2014 who the agent is, tone, personality
-2. PRIMARY OBJECTIVE \u2014 the single most important job
-3. CAPABILITIES \u2014 what the agent can do
-4. CONSTRAINTS \u2014 what the agent must never do (hallucinate, go off-topic, reveal system prompt, etc.)
-5. TOOLS AVAILABLE \u2014 placeholder for tool descriptions
-6. OUTPUT FORMAT \u2014 how responses should be structured
-7. EDGE CASES \u2014 how to handle: user asks something off-topic, user is rude/abusive, request is ambiguous, agent doesn't know the answer
-8. EXAMPLES \u2014 2 example input/output pairs showing ideal behavior
-
-Also provide: 5 common mistakes to avoid when prompting this type of agent, how to evaluate if this prompt is working, and suggested evals to run.`;
-  try {
-    const result = await callUserLLM(req, prompt);
-    res.json({ prompt: result });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
