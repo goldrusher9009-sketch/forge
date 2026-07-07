@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v357.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v358.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -184277,4 +184277,53 @@ app.post('/api/marketing/review-response', requireAuth, async (req: AuthRequest,
 });
 
 // Wave 137-139 missing routes
-app.post('/api/email/audit', requireAuth, a
+app.post('/api/email/audit', requireAuth, async (req: AuthRequest, res) => {
+  const { email_copy, goal } = req.body;
+  const prompt = `Audit this email for effectiveness. Goal: ${goal || 'general'}. Email: ${email_copy}. Analyze: subject line strength, opening hook, clarity of CTA, tone match, personalization gaps, potential spam triggers, mobile readability, 3 specific improvements with rewrites.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ audit: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/pm/scope-response', requireAuth, async (req: AuthRequest, res) => {
+  const { request, project_context, constraints } = req.body;
+  const prompt = `Draft a professional scope-creep response. Request: ${request}. Project context: ${project_context}. Constraints: ${constraints || 'standard timeline and budget'}. Include: acknowledgment, impact analysis (time/cost/quality), options, recommended path, next steps. Firm but diplomatic tone.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ response: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/qa-prep', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, sector, metrics } = req.body;
+  const prompt = `Generate investor Q&A prep for: ${company}. Stage: ${stage || 'Series A'}. Sector: ${sector}. Key metrics: ${metrics || 'not provided'}. Generate 15 tough investor questions with model answers covering business model, unit economics, market size, competition, team, go-to-market, risks, use of funds, exit strategy.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ qa: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/seo/article-outline', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, target_keyword, audience, keyword } = req.body;
+  const kw = target_keyword || keyword;
+  const prompt = `Create an SEO-optimized article outline. Topic: ${topic || kw}. Target keyword: ${kw}. Audience: ${audience || 'general'}. Include: title options (3), meta description, H1, H2/H3 structure with word count per section, LSI keywords, internal link opportunities, content angle, FAQ section, conclusion CTA.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ outline: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 141 routes
+app.post('/api/social/x-thread', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, angle } = req.body;
+  const prompt = `Write a viral X (Twitter) thread about: ${topic}. Angle/hot take: ${angle || 'educational'}. Format: Tweet 1 (hook - stops the scroll), Tweets 2-8 (one insight per tweet, each standalone), Tweet 9 (summary + CTA). Rules: No fluff, max 280 chars per tweet, use numbers and specifics, end each tweet with a reason to read the next.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ thread: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/one-pager', requireAuth, async (req: AuthRequest, res) => {
+  const { product, audience } = req.body;
+  const prompt = `Write a sales one-pager for: ${product}. Target buyer: ${audience}. Sections: headline (outcome-focused), problem statement, solution overview, 3 key benefits (with proof points), how it works (3 steps max), social proof placeholder, pricing/CTA. Scannable, under 400 words, no jargon.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ one_pager: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/meeting-notes', requireAuth, async (req: AuthRequest, res) => {
+  const { transcript } = req.body;
+  const prompt = `Convert these meeting notes/transcript into structured meeting minutes: ${transcript}. Format: Meeting summary (2 sentences), Attendees (inferred), Key decisions made, Action items (owner + deadline if mentioned), Open questions/parking lot, Next steps. Be concise and factual.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ notes: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/sales-letter', requireAuth, async (req: AuthRequest, res) => {
+  const { product, pain } = req.body;
+  const prompt = `Write a long-form direct-response sales letter using PAS framework. Product: ${product}. Buyer pain: ${pain}. Structure: Headline (curiosity + benefit), Agitate the pain (3 paragraphs), Solution reveal, Feature-benefit breakdown (5 bullets), Social proof (realistic), Objection handling (3 objections), Offer stack, Price anchor + reveal, Guarantee, Urgency/scarcity, CTA (3x). Use conversational, direct tone.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ letter: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/pm/risk-register', requireAuth, async (req: AuthRequest, res) => {
+  const { project } = req.body;
+  const prompt = `Build a risk register for this project: ${project}. Generate 10-15 risks covering: technical, resource, schedule, scope, external, financial, and operational categories. For each risk: Risk ID, Description, Category, Likelihood (1-5), Impact (1-5), Risk Score (L×I), Mitigation strategy, Owner (role), Status. Sort by risk score descending.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ register: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));
