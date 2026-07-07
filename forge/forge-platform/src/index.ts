@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v356.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v357.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -184249,4 +184249,32 @@ app.post('/api/sales/win-analysis', requireAuth, async (req: AuthRequest, res) =
   try { const r = await callUserLLM(req, prompt); res.json({ analysis: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));
+// Wave 140 routes
+app.post('/api/sales/cold-call-script', requireAuth, async (req: AuthRequest, res) => {
+  const { prospect, product } = req.body;
+  const prompt = `Write a cold call script for: Prospect: ${prospect}. Product/service: ${product}. Include: 10-second opener, one-sentence value prop, discovery question, 3 objection handlers (no time, not interested, send email), meeting ask, voicemail script. Format with stage labels.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ script: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/case-study', requireAuth, async (req: AuthRequest, res) => {
+  const { customer, outcome } = req.body;
+  const prompt = `Write a compelling B2B case study. Customer background: ${customer}. Results: ${outcome}. Structure: headline with key metric, customer background, the challenge, why they chose us, implementation, quantified results, quote, lesson. Under 600 words.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ case_study: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/team/okr-generator', requireAuth, async (req: AuthRequest, res) => {
+  const { team, period } = req.body;
+  const prompt = `Generate OKRs for ${period}. Team context: ${team}. Create 3 Objectives each with 3-4 measurable Key Results. Include rationale for each objective.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ okrs: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/changelog-entry', requireAuth, async (req: AuthRequest, res) => {
+  const { changes, version } = req.body;
+  const prompt = `Write a polished changelog entry for version ${version}. Raw changes: ${changes}. Use sections: Added, Changed, Fixed, Removed. Write from user perspective in past tense. Include one-line release summary at top.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ changelog: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/review-response', requireAuth, async (req: AuthRequest, res) => {
+  const { review, business } = req.body;
+  const prompt = `Write a professional response to this customer review for ${business}. Review: ${review}. Thank them specifically, address any complaint directly, offer next step if negative, under 100 words, warm and professional tone.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ response: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 137-139 missing routes
+app.post('/api/email/audit', requireAuth, a
