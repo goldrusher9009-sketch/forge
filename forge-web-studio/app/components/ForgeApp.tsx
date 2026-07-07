@@ -51,7 +51,9 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_devcodequalityplan229, ForgeTab_salescustomerexpansion229, ForgeTab_productgrowthhacking229, ForgeTab_marketingretentionloop229, ForgeTab_hrdiversityinclusion229,
   ForgeTab_devdataprivacy230, ForgeTab_investorgrowthnarrative230, ForgeTab_productonboardingflow230, ForgeTab_salesdemomastery230, ForgeTab_marketingthoughtleadership230,
   ForgeTab_devapistrategy231, ForgeTab_salespartnerchannel231, ForgeTab_productaccessibility231, ForgeTab_marketingcommunitybuilding231, ForgeTab_hrlearningdevelopment231,
-  ForgeTab_devcontainerization232, ForgeTab_investorvaluation232, ForgeTab_productfeedbacksystem232, ForgeTab_salesenterprisemotion232, ForgeTab_marketinglaunchplaybook232 } from './WaveComponents';
+  ForgeTab_devcontainerization232, ForgeTab_investorvaluation232, ForgeTab_productfeedbacksystem232, ForgeTab_salesenterprisemotion232, ForgeTab_marketinglaunchplaybook232,
+  ForgeTab_devdocumentationstrategy233, ForgeTab_salesmessagingframework233, ForgeTab_productmobileapp233, ForgeTab_marketingwebsiteconversion233, ForgeTab_hrremoteworkpolicy233,
+  ForgeTab_devincidentpostmortem234, ForgeTab_investorpitchcoach234, ForgeTab_productinternationalization234, ForgeTab_salesqbr234, ForgeTab_marketinginfluencerstrategy234 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -27145,6 +27147,16 @@ export default function ForgeApp() {
         { id:'productfeedbacksystem232', icon:'🎧', label:'Customer Feedback System' },
         { id:'salesenterprisemotion232', icon:'🏢', label:'Enterprise Sales Motion Builder' },
         { id:'marketinglaunchplaybook232', icon:'🚀', label:'Launch Playbook Builder' },
+        { id:'devdocumentationstrategy233', icon:'📝', label:'Documentation Strategy Builder' },
+        { id:'salesmessagingframework233', icon:'💬', label:'Sales Messaging Framework' },
+        { id:'productmobileapp233', icon:'📱', label:'Mobile Strategy Builder' },
+        { id:'marketingwebsiteconversion233', icon:'🎯', label:'Website Conversion Optimizer' },
+        { id:'hrremoteworkpolicy233', icon:'🌐', label:'Remote Work Policy Builder' },
+        { id:'devincidentpostmortem234', icon:'🔍', label:'Incident Postmortem Builder' },
+        { id:'investorpitchcoach234', icon:'🎤', label:'Pitch Coaching Session' },
+        { id:'productinternationalization234', icon:'🌐', label:'Internationalization Plan Builder' },
+        { id:'salesqbr234', icon:'📊', label:'QBR Builder' },
+        { id:'marketinginfluencerstrategy234', icon:'🌟', label:'Influencer Marketing Strategy' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -49416,6 +49428,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'productfeedbacksystem232' && <ForgeTab_productfeedbacksystem232 />}
               {(mainTab as string) === 'salesenterprisemotion232' && <ForgeTab_salesenterprisemotion232 />}
               {(mainTab as string) === 'marketinglaunchplaybook232' && <ForgeTab_marketinglaunchplaybook232 />}
+              {(mainTab as string) === 'devdocumentationstrategy233' && <ForgeTab_devdocumentationstrategy233 />}
+              {(mainTab as string) === 'salesmessagingframework233' && <ForgeTab_salesmessagingframework233 />}
+              {(mainTab as string) === 'productmobileapp233' && <ForgeTab_productmobileapp233 />}
+              {(mainTab as string) === 'marketingwebsiteconversion233' && <ForgeTab_marketingwebsiteconversion233 />}
+              {(mainTab as string) === 'hrremoteworkpolicy233' && <ForgeTab_hrremoteworkpolicy233 />}
+              {(mainTab as string) === 'devincidentpostmortem234' && <ForgeTab_devincidentpostmortem234 />}
+              {(mainTab as string) === 'investorpitchcoach234' && <ForgeTab_investorpitchcoach234 />}
+              {(mainTab as string) === 'productinternationalization234' && <ForgeTab_productinternationalization234 />}
+              {(mainTab as string) === 'salesqbr234' && <ForgeTab_salesqbr234 />}
+              {(mainTab as string) === 'marketinginfluencerstrategy234' && <ForgeTab_marketinginfluencerstrategy234 />}
       </div>
     </div>
   );
