@@ -29,7 +29,9 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_investornarrative185, ForgeTab_teamretro185, ForgeTab_marketingaudit185, ForgeTab_engonboarding185, ForgeTab_productlaunchplan185,
   ForgeTab_salesscript186, ForgeTab_boardupdate186, ForgeTab_hrperformance186, ForgeTab_devloadtest186, ForgeTab_productanalytics186,
   ForgeTab_pricingstrategy187, ForgeTab_culturecode187, ForgeTab_devdebugguide187, ForgeTab_productdiscovery187, ForgeTab_salesqbr187,
-  ForgeTab_designsystem188, ForgeTab_hiringplan188, ForgeTab_marketingfunnel188, ForgeTab_devcicd188, ForgeTab_productgrowth188 } from './WaveComponents';
+  ForgeTab_designsystem188, ForgeTab_hiringplan188, ForgeTab_marketingfunnel188, ForgeTab_devcicd188, ForgeTab_productgrowth188,
+  ForgeTab_salesenablement189, ForgeTab_devmonitor189, ForgeTab_contentcalendar189, ForgeTab_investormodel189, ForgeTab_teamstructure189,
+  ForgeTab_devcontainerize190, ForgeTab_productabtest190, ForgeTab_marketingroi190, ForgeTab_salesprocess190, ForgeTab_devapi190 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -26903,6 +26905,16 @@ export default function ForgeApp() {
           { id:'marketingfunnel188', icon:'🔽', label:'Marketing Funnel' },
           { id:'devcicd188', icon:'⚙️', label:'CI/CD Pipeline' },
           { id:'productgrowth188', icon:'📐', label:'Growth Framework' },
+          { id:'salesenablement189', icon:'🎓', label:'Sales Enablement' },
+          { id:'devmonitor189', icon:'📡', label:'Monitoring Setup' },
+          { id:'contentcalendar189', icon:'📅', label:'Content Calendar' },
+          { id:'investormodel189', icon:'📊', label:'Financial Model Guide' },
+          { id:'teamstructure189', icon:'🏗️', label:'Org Design Advisor' },
+          { id:'devcontainerize190', icon:'🐳', label:'Containerization' },
+          { id:'productabtest190', icon:'🧪', label:'A/B Test Designer' },
+          { id:'marketingroi190', icon:'💡', label:'Marketing ROI Calc' },
+          { id:'salesprocess190', icon:'🔄', label:'Sales Process Design' },
+          { id:'devapi190', icon:'🔌', label:'API Strategy Builder' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -48954,6 +48966,16 @@ export default function ForgeApp() {
           {(mainTab as string) === 'marketingfunnel188' && <ForgeTab_marketingfunnel188 />}
           {(mainTab as string) === 'devcicd188' && <ForgeTab_devcicd188 />}
           {(mainTab as string) === 'productgrowth188' && <ForgeTab_productgrowth188 />}
+          {(mainTab as string) === 'salesenablement189' && <ForgeTab_salesenablement189 />}
+          {(mainTab as string) === 'devmonitor189' && <ForgeTab_devmonitor189 />}
+          {(mainTab as string) === 'contentcalendar189' && <ForgeTab_contentcalendar189 />}
+          {(mainTab as string) === 'investormodel189' && <ForgeTab_investormodel189 />}
+          {(mainTab as string) === 'teamstructure189' && <ForgeTab_teamstructure189 />}
+          {(mainTab as string) === 'devcontainerize190' && <ForgeTab_devcontainerize190 />}
+          {(mainTab as string) === 'productabtest190' && <ForgeTab_productabtest190 />}
+          {(mainTab as string) === 'marketingroi190' && <ForgeTab_marketingroi190 />}
+          {(mainTab as string) === 'salesprocess190' && <ForgeTab_salesprocess190 />}
+          {(mainTab as string) === 'devapi190' && <ForgeTab_devapi190 />}
       </div>
     </div>
   );

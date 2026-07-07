@@ -185902,4 +185902,561 @@ Week-by-week experiment plan:
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
+
+// Wave 189 routes
+app.post('/api/sales/enablement-content', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, objections } = req.body;
+    const prompt = `You are a sales enablement expert who has built content that top reps actually use. Create the enablement package.
+
+Product: ${product}
+Top objections: ${objections}
+
+Create the sales enablement content pack:
+
+## One-Page Product Battle Card
+(For reps to have in every call)
+- Product in one sentence
+- Top 3 value props with proof points
+- Who buys this (titles and company profiles)
+- Who does NOT buy this (save time qualifying out)
+- Competitive positioning (vs. top 2-3 competitors)
+
+## Objection Handling Guide
+For each major objection:
+### "[Objection]"
+**Reframe:** [How to shift the conversation]
+**Response:** [Exact words to use]
+**Proof:** [Evidence or story to use]
+**Next move:** [How to advance the conversation]
+
+## Discovery Question Bank
+By buying stage:
+- Problem discovery (5 questions)
+- Impact discovery (3 questions)
+- Timeline and authority discovery (4 questions)
+- Budget discovery (3 questions)
+
+## Email Templates
+1. Initial outreach (personalized structure)
+2. Post-demo follow-up
+3. Stalled deal re-engage
+4. Champion arm (for internal champions to share)
+
+## Value Story Framework
+How to tell the customer success story that resonates most with each persona`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a sales enablement expert and content strategist.');
+    res.json({ content: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/monitoring-setup', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { system, sla } = req.body;
+    const prompt = `You are a site reliability engineer. Design the monitoring and observability stack.
+
+System: ${system}
+SLA targets: ${sla}
+
+Design the observability setup:
+
+## Observability Philosophy
+- The three pillars (metrics, logs, traces) and what each answers
+- Where to start for maximum signal with minimum overhead
+
+## Tool Stack Recommendation
+- Metrics: [recommended tool and why]
+- Logging: [recommended tool and why]
+- Tracing: [recommended tool and why]
+- Alerting: [recommended tool and why]
+- On-call: [paging tool recommendation]
+
+## Key Metrics to Instrument
+### Golden Signals (must have)
+- Latency (p50, p95, p99): how to instrument
+- Error rate: what to count, how to surface
+- Traffic: requests per second by endpoint
+- Saturation: CPU, memory, connection pools
+
+### Business Metrics
+- Key business events to track (not just technical)
+- How to connect technical metrics to business outcomes
+
+## Alert Design
+### Critical Alerts (page immediately)
+For each: metric, threshold, why this threshold, escalation path
+
+### Warning Alerts (ticket in morning)
+For each: metric, threshold, what to check
+
+### Runbook Link
+- How to structure runbooks for each alert
+
+## Dashboard Design
+### Executive Dashboard
+- Business health in one screen
+
+### Operations Dashboard
+- Infra health for on-call
+
+### Service Dashboard
+- Per-service deep dive
+
+## Log Strategy
+- What to log (not everything — what matters)
+- Structured logging format
+- Log levels and what triggers each
+- Retention policy
+
+## Alerting Anti-Patterns to Avoid
+- Alert fatigue causes and how to prevent`;
+    const result = await callLLM(req.user!.id, prompt, 'You are an SRE and observability expert.');
+    res.json({ setup: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/content-calendar', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { goals, channels } = req.body;
+    const prompt = `You are a content marketing strategist. Build a 30-day content calendar that is realistic and strategic.
+
+Goals: ${goals}
+Channels: ${channels}
+
+Build the content calendar:
+
+## Content Pillars (4-5 themes)
+For each pillar:
+- Theme name and focus
+- Why it serves your audience and goals
+- Content types that work for this pillar
+- Percentage of content mix
+
+## 30-Day Calendar
+Week 1:
+- [Day]: [Channel] — [Post type]: [Specific topic or headline] (Pillar: X)
+[Continue for all publishing days]
+
+Week 2: [Same format]
+Week 3: [Same format]
+Week 4: [Same format]
+
+## Content Production Plan
+- What to create weekly vs. monthly
+- Repurposing workflow (one idea → multiple formats)
+- Who creates what (if team)
+- Review and approval process
+
+## Batch Production Schedule
+- When to create content (batch writing days)
+- Buffer: always be 1-2 weeks ahead
+- Tools and workflow
+
+## Topic Ideas Bank
+30+ specific topic ideas organized by pillar, ready to fill in the calendar
+
+## Engagement and Distribution
+- How to amplify each piece beyond the first post
+- Cross-promotion between channels
+- Community engagement cadence
+
+## Measurement
+- Metrics to track per channel
+- Monthly review process`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a content marketing strategist and editorial director.');
+    res.json({ calendar: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investor/financial-model-guide', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { business, assumptions } = req.body;
+    const prompt = `You are a CFO and financial modeling expert. Guide the financial model build.
+
+Business: ${business}
+Key assumptions: ${assumptions}
+
+Create the financial model guide:
+
+## Model Architecture
+- Recommended tabs/sheets and what goes in each
+- How the model flows (inputs → drivers → outputs)
+- Time horizon (monthly for 24 months, annual for 5 years)
+
+## Revenue Model
+- How to model revenue based on this business model
+- Key revenue drivers and how to build them
+- Cohort-based vs. run-rate approach
+- Upsell and expansion modeling
+
+## Cost Structure
+### COGS
+- What to include, how to model as % of revenue
+- Gross margin targets for this business type
+
+### Operating Expenses
+- S&M: how to model based on hiring plan and quota
+- R&D: engineering headcount model
+- G&A: as % of revenue benchmarks
+- One-time vs. recurring expenses
+
+## Headcount Model
+- Hiring plan integration
+- Fully-loaded cost per employee by function
+- When to hire (model the delay between hire and productivity)
+
+## Cash Flow
+- Working capital modeling
+- Collections and payables timing
+- Runway calculation
+
+## Scenarios
+- Base case: most likely path
+- Bull case: what upside looks like
+- Bear case: what you need to survive
+
+## Investor-Ready Outputs
+- Summary P&L (3-statement model)
+- Key metrics dashboard (ARR bridge, CAC/LTV, Rule of 40)
+- Use of funds table
+
+## Common Modeling Mistakes to Avoid`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a CFO and startup financial modeling expert.');
+    res.json({ guide: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/org-design', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { company, goals } = req.body;
+    const prompt = `You are an organizational design expert. Design the right org structure for this company.
+
+Company: ${company}
+Goals: ${goals}
+
+Design the organization:
+
+## Org Design Diagnosis
+- Current structure type (functional, divisional, matrix, flat)
+- What is working (do not break this)
+- What is broken (coordination failures, accountability gaps, bottlenecks)
+
+## Recommended Structure
+- Recommended org type and why
+- How teams are formed (product teams, functional silos, tribes, etc.)
+- Key principles this structure is designed around
+
+## Team Shapes
+For each major team:
+- Team name and mission
+- Headcount and seniority mix
+- Reporting line
+- Interfaces with other teams
+- Success metrics
+
+## Leadership Spans
+- Recommended span of control at each level
+- Where to run lean vs. where to invest in management
+- Which managers should be IC-managers vs. full managers
+
+## Decision Rights
+- Who decides what (RACI framework for key decisions)
+- How to handle cross-team conflicts
+- Escalation path design
+
+## Transition Plan
+- From current state to target state
+- Who is affected and how
+- Communication approach
+- Timeline and sequencing
+
+## Org Design Trade-offs
+- What this structure optimizes for
+- What it sacrifices
+- How to mitigate the downsides
+
+## 6-Month Review Criteria
+- How to know if this structure is working`;
+    const result = await callLLM(req.user!.id, prompt, 'You are an organizational design and leadership expert.');
+    res.json({ design: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 190 routes
+app.post('/api/dev/containerization-guide', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { app: appDesc, infra } = req.body;
+    const prompt = `You are a DevOps engineer who has containerized dozens of production applications. Build the containerization guide.
+
+Application: ${appDesc}
+Target infrastructure: ${infra}
+
+Create the containerization guide:
+
+## Dockerfile Best Practices
+- Base image selection (official, minimal, distroless)
+- Multi-stage build design for this application
+- Layer caching optimization (what order to add layers)
+- Security: non-root user, read-only filesystem, minimal attack surface
+- Complete Dockerfile with annotations
+
+## Docker Compose (local development)
+- Complete docker-compose.yml for local development
+- How to handle environment variables and secrets locally
+- Volume mounts for hot reload
+
+## Image Optimization
+- Current vs. optimized image size expectations
+- Build cache strategies
+- .dockerignore configuration
+
+## Environment Configuration
+- How to handle environment-specific config (dev, staging, prod)
+- Secret management approach
+- Config injection patterns
+
+## Target Infrastructure Setup
+Specific to ${infra}:
+- Deployment configuration
+- Resource requests and limits
+- Health checks and probes
+- Rolling update strategy
+
+## Local to Production Workflow
+- Build and tag convention
+- Registry push workflow
+- Deployment command sequence
+
+## Troubleshooting Common Issues
+- Container won't start: checklist
+- App works locally but not in container: checklist
+- Performance worse in container: checklist`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a DevOps and containerization expert.');
+    res.json({ guide: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/ab-test-design', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { hypothesis, context } = req.body;
+    const prompt = `You are a product experimentation expert. Design a rigorous A/B test.
+
+Hypothesis: ${hypothesis}
+Context: ${context}
+
+Design the A/B test:
+
+## Hypothesis Evaluation
+- Is this a testable hypothesis? Gaps to address
+- Is the expected effect size realistic?
+- Better framing if needed
+
+## Sample Size Calculation
+- Traffic needed per variant per day
+- Minimum detectable effect (MDE) setting
+- Statistical power target (80% or 95%)
+- Calculated test duration in days
+- Formula: show the calculation
+
+## Test Design
+- Control: what users see today
+- Treatment: exactly what changes (be specific)
+- Traffic split recommendation and why
+- Segmentation: who to include/exclude
+
+## Primary Metric
+- Metric name and exact calculation
+- Current baseline value
+- Success threshold (minimum improvement to ship)
+- Why this is the right primary metric
+
+## Guardrail Metrics
+- Metrics that must not degrade (even if primary improves)
+- Revenue per user, error rate, engagement signals
+- Automatic stop conditions
+
+## Implementation Checklist
+- [ ] Assignment mechanism (cookie, user ID, session)
+- [ ] Logging all assignment events
+- [ ] QA: verified both variants render correctly
+- [ ] AA test first if new framework
+- [ ] Monitoring dashboard set up
+
+## Analysis Plan
+- When to peek at results (resist peeking!)
+- How to handle novelty effect
+- Segmentation analysis to run post-test
+- How to decide: ship, iterate, or discard
+
+## Common Pitfalls for This Test
+- Risks specific to this hypothesis`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a product experimentation and statistics expert.');
+    res.json({ design: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/roi-calculator', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { spend, goals } = req.body;
+    const prompt = `You are a marketing analytics expert. Calculate ROI and build a reporting framework.
+
+Marketing spend: ${spend}
+Results: ${goals}
+
+Calculate and frame the marketing ROI:
+
+## ROI Summary
+- Total marketing spend analyzed
+- Total pipeline/revenue influenced
+- Blended ROI: $X returned per $1 spent
+- Marketing efficiency ratio vs. benchmarks
+
+## Channel-by-Channel Analysis
+For each channel:
+| Channel | Spend | Leads | Pipeline | Revenue | CAC | ROI | Verdict |
+- Calculate each metric
+- Rate efficiency (A/B/C/D)
+- Recommendation: scale, maintain, or cut
+
+## Attribution Model Discussion
+- Current attribution approach and its blind spots
+- Recommended attribution model for this business
+- What changes if you switch models
+
+## True CAC Calculation
+- Full-loaded CAC (include all marketing headcount, tools, overhead)
+- CAC by channel, by segment, by deal size
+- CAC trend over last 3 periods
+
+## Marketing-Influenced Revenue
+- Direct attribution (marketing-sourced)
+- Influenced attribution (touched by marketing)
+- How to communicate both to leadership honestly
+
+## ROI Improvement Plan
+- Top 2-3 levers to improve marketing ROI this quarter
+- Budget reallocation recommendation
+
+## Board/Leadership Dashboard
+- 5 metrics to report to leadership monthly
+- How to frame marketing as a revenue driver, not a cost center`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a marketing analytics and attribution expert.');
+    res.json({ roi: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/process-design', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { current, product } = req.body;
+    const prompt = `You are a sales process expert who has built repeatable sales motions at B2B companies. Design the process.
+
+Current process: ${current}
+Product and deal context: ${product}
+
+Design the sales process:
+
+## Sales Methodology Recommendation
+- Best methodology for this deal type (MEDDIC, Challenger, SPIN, Sandler, etc.)
+- Why this fits your product and buyer
+- Core principles to instill in every rep
+
+## Pipeline Stages
+For each stage:
+### Stage [N]: [Name]
+- Entry criteria: what moves a deal HERE
+- Exit criteria: what moves a deal to NEXT stage (be specific — no vague criteria)
+- Key activities in this stage
+- Typical duration
+- Win rate benchmark at this stage
+- Common reasons deals die here
+
+## Sales Plays
+- Discovery play: first call structure and goals
+- Demo play: how to run a tailored demo
+- Evaluation play: how to control the technical eval
+- Close play: final negotiation and sign sequence
+
+## CRM Hygiene Requirements
+- Required fields at each stage
+- What counts as a qualified opportunity
+- How to handle deals going backwards
+
+## Metrics and Inspection
+- Weekly pipeline review cadence
+- Stage conversion rates to track
+- Red flags: deals to flag in review
+
+## Ramp Certification
+- How a new rep proves they know the process
+- Call shadowing plan
+- First deal milestone
+
+## Process Documentation
+- Where this lives (wiki, CRM, Slack)
+- How to keep it updated
+- How to handle process exceptions`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a sales process design and methodology expert.');
+    res.json({ process: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/api-strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { service, consumers } = req.body;
+    const prompt = `You are an API design expert who has built developer platforms at scale. Build the API strategy.
+
+Service: ${service}
+Consumers: ${consumers}
+
+Design the API strategy:
+
+## API Paradigm Decision
+- REST vs. GraphQL vs. gRPC vs. WebSocket — recommendation and rationale
+- Hybrid approach if needed
+- Migration path from existing API if applicable
+
+## API Design Principles
+- Naming conventions (resources, actions, parameters)
+- Response envelope design
+- Error format standard
+- Pagination approach
+- Filtering and sorting patterns
+
+## Versioning Strategy
+- URL versioning vs. header versioning vs. field-level evolution
+- Deprecation policy and timeline
+- Breaking vs. non-breaking change definitions
+
+## Authentication and Authorization
+- Auth mechanism recommendation (API key, OAuth2, JWT)
+- Scope design
+- How to handle multi-tenant authorization
+- Key rotation and revocation
+
+## Rate Limiting
+- Limit tiers by plan/consumer type
+- Headers to return
+- Error responses and retry guidance
+
+## Developer Experience
+- Documentation approach (OpenAPI spec, API reference, guides)
+- SDK strategy (which languages to support)
+- Sandbox and testing environment
+- Error messages that actually help developers
+
+## API Security
+- Input validation
+- HTTPS enforcement
+- CORS policy
+- Common vulnerabilities checklist
+
+## Monitoring and Analytics
+- Which API calls to monitor
+- Latency SLA per endpoint type
+- Consumer usage analytics`;
+    const result = await callLLM(req.user!.id, prompt, 'You are an API design and developer experience expert.');
+    res.json({ strategy: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));
