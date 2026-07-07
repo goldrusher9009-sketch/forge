@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -149,7 +149,7 @@ app.use(cors({
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
-app.get("/health", (_req, res) => res.json({ status: "ok", environment: NODE_ENV, timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "v329.00" }));
+app.get("/health", (_req, res) => res.json({ status: "ok", environment: NODE_ENV, timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "v348.00" }));
 const httpServer = require("http").createServer(app);
 httpServer.listen(PORT, () => {
   console.log("Forge Platform v144.00 running on port " + PORT);
@@ -2514,7 +2514,7 @@ const MARKETPLACE_APPS = [
 app.get("/api/marketplace", requireAuth, (req, res) => {
   try {
     const userId = req.user.id || req.user.sub;
-    db.exec(`CREATE TABLE IF NOT EXISTS marketplace_installs (id TEXT PRIMARY KEY, user_id TEXT, app_id TEXT, installed_at TEXT)`);
+    db.exec(`CREATE TABLE IF NOT EXISTS marketplace_installs (id TEXT PRIMARY KEY, user_id TEXT, app_id TEXT, installed_at TEXT)`); try { db.exec(`ALTER TABLE marketplace_installs ADD COLUMN app_id TEXT`); } catch (_) {}
     const installed = db.prepare("SELECT app_id FROM marketplace_installs WHERE user_id=?").all(userId);
     const installedIds = new Set(installed.map((r) => r.app_id));
     res.json({ success: true, data: MARKETPLACE_APPS.map((a) => ({ ...a, installed: installedIds.has(a.id) })) });
@@ -5560,7 +5560,7 @@ app.delete("/api/hooks/:id", requireAuth, (req, res) => {
 app.get("/api/user/profile", requireAuth, (req, res) => {
   const uid = req.user.sub;
   try {
-    const user = db.prepare("SELECT id,email,name,plan,created_at FROM users WHERE id=?").get(uid);
+    const user = db.prepare("SELECT id,email,first_name,last_name,role,plan,created_at FROM users WHERE id=?").get(uid);
     if (!user)
       return res.status(404).json({ error: "User not found" });
     res.json({ success: true, data: user });
@@ -5574,7 +5574,7 @@ app.put("/api/user/profile", requireAuth, (req, res) => {
   try {
     if (name)
       db.prepare("UPDATE users SET name=? WHERE id=?").run(name, uid);
-    const user = db.prepare("SELECT id,email,name,plan,created_at FROM users WHERE id=?").get(uid);
+    const user = db.prepare("SELECT id,email,first_name,last_name,role,plan,created_at FROM users WHERE id=?").get(uid);
     res.json({ success: true, data: user });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -7425,7 +7425,7 @@ app.get("/api/journal", authMiddleware, async (req, res) => {
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`).run();
     const limit = Number(req.query.limit) || 30;
-    const entries = db.prepare("SELECT * FROM journal_entries WHERE user_id=? ORDER BY date DESC LIMIT ?").all(userId, limit);
+    const entries = db.prepare("SELECT * FROM journal_entries WHERE user_id=? ORDER BY entry_date DESC LIMIT ?").all(userId, limit);
     res.json(entries);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -7452,7 +7452,7 @@ app.post("/api/journal", authMiddleware, async (req, res) => {
       db.prepare("UPDATE journal_entries SET content=?, mood=?, updated_at=CURRENT_TIMESTAMP WHERE id=?").run(content.trim(), mood, existing.id);
       res.json({ id: existing.id, date: entryDate, content: content.trim(), mood });
     } else {
-      const r = db.prepare("INSERT INTO journal_entries (user_id,date,content,mood) VALUES (?,?,?,?)").run(userId, entryDate, content.trim(), mood);
+      const r = db.prepare("INSERT INTO journal_entries (user_id,entry_date,content,mood) VALUES (?,?,?,?)").run(userId, entryDate, content.trim(), mood);
       res.json({ id: r.lastInsertRowid, date: entryDate, content: content.trim(), mood });
     }
   } catch (e) {
@@ -8214,7 +8214,7 @@ app.get("/api/workspace/stats/advanced", authMiddleware, async (req, res) => {
     const days = Number(req.query.days) || 30;
     const since = new Date(Date.now() - days * 864e5).toISOString();
     const threadsByDay = db.prepare("SELECT date(created_at) as day, COUNT(*) as count FROM threads WHERE user_id=? AND created_at>=? GROUP BY day ORDER BY day").all(userId, since);
-    const tokensByModel = db.prepare("SELECT model_used, SUM(tokens_used) as tokens FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.created_at>=? GROUP BY model_used").all(userId, since);
+    const tokensByModel = db.prepare("SELECT COALESCE(model,'unknown') as model_used, COUNT(*) as tokens FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.created_at>=? GROUP BY model").all(userId, since);
     const msgLengths = db.prepare("SELECT role, AVG(LENGTH(content)) as avg_len FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.created_at>=? GROUP BY role").all(userId, since);
     const longestThread = db.prepare("SELECT t.title, COUNT(*) as c FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.created_at>=? GROUP BY t.id ORDER BY c DESC LIMIT 1").get(userId, since);
     res.json({ threadsByDay, tokensByModel, msgLengths, longestThread, period: days });
@@ -8394,7 +8394,7 @@ app.get("/api/workspace/activity-heatmap", authMiddleware, async (req, res) => {
     const userId = req.user.userId;
     const since = new Date(Date.now() - 30 * 864e5).toISOString();
     const rows = db.prepare(`
-      SELECT strftime('%w', created_at) as dow, strftime('%H', created_at) as hour, COUNT(*) as count
+      SELECT strftime('%w', m.created_at) as dow, strftime('%H', m.created_at) as hour, COUNT(*) as count
       FROM messages m JOIN threads t ON m.thread_id=t.id
       WHERE t.user_id=? AND m.created_at>=?
       GROUP BY dow, hour ORDER BY dow, hour
@@ -9142,7 +9142,7 @@ app.delete("/api/insights-feed/:id", authMiddleware, (req, res) => {
   res.json({ ok: true });
 });
 app.get("/api/workspace/stats-summary", authMiddleware, (req, res) => {
-  const uid = req.user.id;
+  const uid = req.user.userId || req.user.sub || req.user.id;
   const totalThreads = db.prepare("SELECT COUNT(*) as c FROM threads WHERE user_id=?").get(uid)?.c || 0;
   const totalMessages = db.prepare("SELECT COUNT(*) as c FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=?").get(uid)?.c || 0;
   const totalTokens = db.prepare("SELECT SUM(tokens_used) as s FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=?").get(uid)?.s || 0;
@@ -10503,7 +10503,7 @@ app.delete("/api/workspace-tags/:id", authenticateToken, (req, res) => {
   res.json({ ok: true });
 });
 app.get("/api/daily-intentions", authenticateToken, (req, res) => {
-  const rows = db.prepare("SELECT * FROM daily_intentions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(req.user.id);
+  const rows = db.prepare("SELECT * FROM daily_intentions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(req.user.id);
   res.json(rows);
 });
 app.post("/api/daily-intentions", authenticateToken, (req, res) => {
@@ -10658,7 +10658,7 @@ app.delete("/api/workspace-announcements/:id", authenticateToken, (req, res) => 
   res.json({ ok: true });
 });
 app.get("/api/ai-journal", authenticateToken, (req, res) => {
-  const rows = db.prepare("SELECT * FROM ai_journal WHERE user_id=? ORDER BY date DESC LIMIT 30").all(req.user.id);
+  const rows = db.prepare("SELECT * FROM ai_journal WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(req.user.id);
   res.json(rows);
 });
 app.post("/api/ai-journal", authenticateToken, (req, res) => {
@@ -14666,7 +14666,7 @@ app.get("/api/user-time-blocks", requireAuth, (req, res) => {
   const { date } = req.query;
   if (date)
     return res.json(db.prepare("SELECT * FROM user_time_blocks WHERE user_id=? AND date=? ORDER BY start_time").all(req.user.id, date));
-  res.json(db.prepare("SELECT * FROM user_time_blocks WHERE user_id=? ORDER BY date DESC,start_time DESC LIMIT 200").all(req.user.id));
+  res.json(db.prepare("SELECT * FROM user_time_blocks WHERE user_id=? ORDER BY entry_date DESC,start_time DESC LIMIT 200").all(req.user.id));
 });
 app.post("/api/user-time-blocks", requireAuth, (req, res) => {
   const { title, start_time, end_time, date, category = "focus" } = req.body;
@@ -34454,7 +34454,7 @@ app.get("/api/finance/transactions", requireAuth, (req, res) => {
     q += ` AND strftime('%Y-%m',date)=?`;
     params.push(month);
   }
-  q += ` ORDER BY date DESC LIMIT 200`;
+  q += ` ORDER BY entry_date DESC LIMIT 200`;
   const rows = db.prepare(q).all(...params);
   const total = rows.reduce((s, r) => s + (r.type === "income" ? r.amount : -r.amount), 0);
   res.json({ rows, total: rows.length, net: Math.round(total * 100) / 100 });
@@ -38040,7 +38040,7 @@ app.get("/api/finance/transactions", requireAuth, (req, res) => {
     q += ` AND strftime('%Y-%m', date)=?`;
     params.push(month);
   }
-  q += ` ORDER BY date DESC LIMIT ?`;
+  q += ` ORDER BY entry_date DESC LIMIT ?`;
   params.push(parseInt(limit) || 200);
   const rows = db.prepare(q).all(...params);
   const income = rows.filter((r) => r.is_income).reduce((s, r) => s + r.amount, 0);
@@ -40755,7 +40755,7 @@ app.get("/api/trips/:id", requireAuth, (req, res) => {
   const trip = db.prepare(`SELECT * FROM trips_v2 WHERE id=? AND user_id=?`).get(req.params.id, req.user.id);
   if (!trip)
     return res.status(404).json({ error: "not found" });
-  const expenses = db.prepare(`SELECT * FROM trip_expenses WHERE trip_id=? ORDER BY date DESC`).all(req.params.id);
+  const expenses = db.prepare(`SELECT * FROM trip_expenses WHERE trip_id=? ORDER BY entry_date DESC`).all(req.params.id);
   const bookings = db.prepare(`SELECT * FROM travel_bookings WHERE trip_id=? ORDER BY departs_at ASC`).all(req.params.id);
   const packing = db.prepare(`SELECT * FROM packing_lists WHERE trip_id=?`).get(req.params.id);
   const by_category = db.prepare(`SELECT category, SUM(amount) as total FROM trip_expenses WHERE trip_id=? GROUP BY category`).all(req.params.id);
@@ -40931,7 +40931,7 @@ app.get("/api/health/records", requireAuth, (req, res) => {
     q += ` AND record_type=?`;
     p.push(record_type);
   }
-  q += ` ORDER BY date DESC`;
+  q += ` ORDER BY entry_date DESC`;
   res.json({ records: db.prepare(q).all(...p) });
 });
 app.post("/api/health/metrics", requireAuth, (req, res) => {
@@ -44401,7 +44401,7 @@ app.post("/api/podcasts/:id/guests", requireAuth, (req, res) => {
   res.json({ id: r.lastInsertRowid });
 });
 app.get("/api/podcast-episodes/:id/analytics", requireAuth, (req, res) => {
-  const analytics = db.prepare(`SELECT * FROM listening_analytics WHERE episode_id=? AND user_id=? ORDER BY date DESC`).all(req.params.id, req.user.id);
+  const analytics = db.prepare(`SELECT * FROM listening_analytics WHERE episode_id=? AND user_id=? ORDER BY entry_date DESC`).all(req.params.id, req.user.id);
   const totals = analytics.reduce((a, r) => ({ plays: a.plays + r.plays, unique: a.unique + r.unique_listeners }), { plays: 0, unique: 0 });
   res.json({ analytics, totals });
 });
@@ -54087,7 +54087,7 @@ try {
 } catch (e) {
 }
 app.get("/api/negotiations", requireAuth, (req, res) => {
-  const negs = db.prepare(`SELECT * FROM negotiations WHERE user_id=? ORDER BY date DESC`).all(req.user.id);
+  const negs = db.prepare(`SELECT * FROM negotiations WHERE user_id=? ORDER BY entry_date DESC`).all(req.user.id);
   const total_value = negs.reduce((s, n) => s + n.total_value_gained, 0);
   const win_rate = negs.length ? Math.round(negs.filter((n) => n.outcome_type === "win").length / negs.length * 100) : 0;
   res.json({ negotiations: negs, total_value_gained: total_value, win_rate, count: negs.length });
@@ -131277,12 +131277,12 @@ try {
 app.get("/api/money/date", requireAuth, (req, res) => {
   try {
     const uid = req.user.id;
-    const entries = db.prepare(`SELECT * FROM money_date_log WHERE user_id=? ORDER BY date DESC LIMIT 12`).all(uid);
+    const entries = db.prepare(`SELECT * FROM money_date_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 12`).all(uid);
     const trend = db.prepare(`SELECT date, net_worth_snapshot, savings_rate_pct FROM money_date_log WHERE user_id=? ORDER BY date ASC`).all(uid);
     const stats = db.prepare(`SELECT COUNT(*) as dates, MAX(streak_week) as longest_streak, AVG(clarity_score) as avg_clarity FROM money_date_log WHERE user_id=?`).get(uid);
     if (stats.avg_clarity)
       stats.avg_clarity = parseFloat(stats.avg_clarity.toFixed(1));
-    const current_streak = db.prepare(`SELECT streak_week FROM money_date_log WHERE user_id=? ORDER BY date DESC LIMIT 1`).get(uid)?.streak_week || 0;
+    const current_streak = db.prepare(`SELECT streak_week FROM money_date_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 1`).get(uid)?.streak_week || 0;
     res.json({ success: true, entries, trend, stats: { ...stats, current_streak } });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -131293,7 +131293,7 @@ app.post("/api/money/date", requireAuth, (req, res) => {
     const uid = req.user.id;
     const { date, duration_min = 30, net_worth_snapshot, savings_rate_pct, monthly_expenses, monthly_income, investing_pct, wins, areas_to_improve, action_items, clarity_score = 7, notes } = req.body;
     const today = date || (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-    const lastE = db.prepare(`SELECT date, streak_week FROM money_date_log WHERE user_id=? ORDER BY date DESC LIMIT 1`).get(uid);
+    const lastE = db.prepare(`SELECT date, streak_week FROM money_date_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 1`).get(uid);
     let streak_week = 1;
     if (lastE) {
       const d = Math.round((new Date(today).getTime() - new Date(lastE.date).getTime()) / 864e5);
@@ -131402,12 +131402,12 @@ app.get("/api/wealth/architecture/os", requireAuth, (req, res) => {
       }
     };
     const wealth_beliefs = safe2(() => db.prepare(`SELECT COUNT(*) as c FROM wealth_mindset_log WHERE user_id=?`).get(uid)?.c || 0);
-    const money_date_streak = safe2(() => db.prepare(`SELECT streak_week FROM money_date_log WHERE user_id=? ORDER BY date DESC LIMIT 1`).get(uid)?.streak_week || 0);
-    const latest_net_worth = safe2(() => db.prepare(`SELECT net_worth_snapshot FROM money_date_log WHERE user_id=? AND net_worth_snapshot IS NOT NULL ORDER BY date DESC LIMIT 1`).get(uid)?.net_worth_snapshot || 0);
+    const money_date_streak = safe2(() => db.prepare(`SELECT streak_week FROM money_date_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 1`).get(uid)?.streak_week || 0);
+    const latest_net_worth = safe2(() => db.prepare(`SELECT net_worth_snapshot FROM money_date_log WHERE user_id=? AND net_worth_snapshot IS NOT NULL ORDER BY entry_date DESC LIMIT 1`).get(uid)?.net_worth_snapshot || 0);
     const total_impulse_spent = safe2(() => db.prepare(`SELECT SUM(amount_spent) as s FROM spending_trigger_log WHERE user_id=?`).get(uid)?.s || 0);
     const triggers_eliminated = safe2(() => db.prepare(`SELECT SUM(eliminated) as s FROM spending_trigger_log WHERE user_id=?`).get(uid)?.s || 0);
     const fi_milestones_hit = safe2(() => db.prepare(`SELECT COUNT(*) as c FROM fi_milestone_log WHERE user_id=?`).get(uid)?.c || 0);
-    const latest_savings_rate = safe2(() => db.prepare(`SELECT savings_rate_pct FROM money_date_log WHERE user_id=? AND savings_rate_pct IS NOT NULL ORDER BY date DESC LIMIT 1`).get(uid)?.savings_rate_pct || 0);
+    const latest_savings_rate = safe2(() => db.prepare(`SELECT savings_rate_pct FROM money_date_log WHERE user_id=? AND savings_rate_pct IS NOT NULL ORDER BY entry_date DESC LIMIT 1`).get(uid)?.savings_rate_pct || 0);
     res.json({ success: true, milestone: "1920 endpoints \u2014 Wealth Architecture OS", wealth: { wealth_beliefs, money_date_streak, latest_net_worth, total_impulse_spent: parseFloat((total_impulse_spent || 0).toFixed(2)), triggers_eliminated, fi_milestones_hit, latest_savings_rate } });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -142161,7 +142161,7 @@ app.get("/api/neighborhood/events", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS neighborhood_events (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, event_name TEXT, date TEXT, location TEXT, attended INTEGER DEFAULT 0, notes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-    const rows = db.prepare("SELECT * FROM neighborhood_events WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM neighborhood_events WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -143000,7 +143000,7 @@ app.get("/api/press/coverage", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS press_coverage (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, publication TEXT, article_title TEXT, url TEXT, date TEXT, sentiment TEXT DEFAULT 'neutral', reach INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-    const rows = db.prepare("SELECT * FROM press_coverage WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM press_coverage WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -143062,7 +143062,7 @@ app.get("/api/volunteer/hours", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS volunteer_hours (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, organization TEXT, activity TEXT, hours REAL, date TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-    const rows = db.prepare("SELECT * FROM volunteer_hours WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM volunteer_hours WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const total = db.prepare("SELECT SUM(hours) as s FROM volunteer_hours WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, total_hours: total?.s || 0 });
   } catch (e) {
@@ -143084,7 +143084,7 @@ app.get("/api/donations", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS donations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, organization TEXT, amount REAL, date TEXT, tax_deductible INTEGER DEFAULT 1, receipt_url TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-    const rows = db.prepare("SELECT * FROM donations WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM donations WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const total = db.prepare("SELECT SUM(amount) as s FROM donations WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, total_donated: total?.s || 0 });
   } catch (e) {
@@ -143253,7 +143253,7 @@ app.get("/api/meeting/agendas", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS meeting_agendas (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, meeting_title TEXT, attendees TEXT, agenda_items TEXT, date TEXT, duration_mins INTEGER DEFAULT 60, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-    const rows = db.prepare("SELECT * FROM meeting_agendas WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM meeting_agendas WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -143274,7 +143274,7 @@ app.get("/api/decision/log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS decision_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, decision TEXT, context TEXT, alternatives TEXT, outcome TEXT, date TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-    const rows = db.prepare("SELECT * FROM decision_log WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM decision_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -143316,7 +143316,7 @@ app.get("/api/meeting/minutes", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS meeting_minutes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, meeting_title TEXT, date TEXT, attendees TEXT, key_decisions TEXT, next_steps TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
-    const rows = db.prepare("SELECT * FROM meeting_minutes WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM meeting_minutes WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -144825,7 +144825,7 @@ app.get("/api/productivity/time-blocks", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS productivity_time_blocks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, start_time TEXT, end_time TEXT, task TEXT, category TEXT, energy_level INTEGER DEFAULT 3, completed INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM productivity_time_blocks WHERE user_id=? AND date>=date('now','-7 days') ORDER BY date DESC, start_time ASC LIMIT 200").all(u);
+    const rows = db.prepare("SELECT * FROM productivity_time_blocks WHERE user_id=? AND date>=date('now','-7 days') ORDER BY entry_date DESC, start_time ASC LIMIT 200").all(u);
     const completionRate = db.prepare("SELECT COUNT(*) as total, SUM(completed) as done FROM productivity_time_blocks WHERE user_id=? AND date>=date('now','-30 days')").get(u);
     res.json({ success: true, data: rows, completion_rate_pct: completionRate?.total ? Math.round(completionRate.done / completionRate.total * 100) : 0 });
   } catch (e) {
@@ -145066,7 +145066,7 @@ app.get("/api/flow/peak-performance", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS flow_peak_performance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, peak_hours TEXT, avg_flow_score REAL DEFAULT 0, activities TEXT, environment TEXT, sleep_hrs REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM flow_peak_performance WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM flow_peak_performance WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -145121,7 +145121,7 @@ app.get("/api/zen/meditation-log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS zen_meditation_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, duration_min INTEGER DEFAULT 10, type TEXT DEFAULT 'mindfulness', quality INTEGER DEFAULT 3, insights TEXT, mood_before INTEGER DEFAULT 3, mood_after INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM zen_meditation_log WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM zen_meditation_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     const stats = db.prepare("SELECT COUNT(*) as c, SUM(duration_min) as tm, AVG(quality) as aq FROM zen_meditation_log WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, total_sessions: stats?.c || 0, total_min: stats?.tm || 0, avg_quality: stats?.aq || 0 });
   } catch (e) {
@@ -145143,7 +145143,7 @@ app.get("/api/zen/breathwork", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS zen_breathwork (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, technique TEXT, rounds INTEGER DEFAULT 3, duration_min INTEGER DEFAULT 10, effect TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM zen_breathwork WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM zen_breathwork WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -145164,11 +145164,11 @@ app.get("/api/zen/journaling", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS zen_journaling (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, prompt TEXT, entry TEXT, mood INTEGER DEFAULT 3, tags TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT id, date, prompt, LEFT(entry,200) as entry_preview, mood, tags, created_at FROM zen_journaling WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT id, date, prompt, LEFT(entry,200) as entry_preview, mood, tags, created_at FROM zen_journaling WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     try {
-      const rows2 = db.prepare("SELECT id, date, prompt, mood, tags, created_at FROM zen_journaling WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+      const rows2 = db.prepare("SELECT id, date, prompt, mood, tags, created_at FROM zen_journaling WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
       res.json({ success: true, data: rows2 });
     } catch (e2) {
       res.status(500).json({ success: false, error: e2.message });
@@ -145190,7 +145190,7 @@ app.get("/api/zen/nature-time", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS zen_nature_time (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, activity TEXT, duration_min INTEGER DEFAULT 30, location TEXT, mood_boost INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM zen_nature_time WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM zen_nature_time WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const total = db.prepare("SELECT SUM(duration_min) as t FROM zen_nature_time WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, total_nature_min: total?.t || 0 });
   } catch (e) {
@@ -145247,7 +145247,7 @@ app.get("/api/relationships/memories", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS relationships_memories (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, person_name TEXT, memory TEXT, date TEXT, emotion TEXT, tags TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM relationships_memories WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM relationships_memories WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -145467,7 +145467,7 @@ app.get("/api/career/achievements", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS career_achievements (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, achievement TEXT, date TEXT, impact TEXT, metric TEXT, category TEXT, featured INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM career_achievements WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM career_achievements WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -145523,7 +145523,7 @@ app.get("/api/startup/metrics", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS startup_metrics (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, mrr REAL DEFAULT 0, arr REAL DEFAULT 0, users INTEGER DEFAULT 0, churn_rate REAL DEFAULT 0, ltv REAL DEFAULT 0, cac REAL DEFAULT 0, runway_months REAL DEFAULT 0, burn_rate REAL DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM startup_metrics WHERE user_id=? ORDER BY date DESC LIMIT 24").all(u);
+    const rows = db.prepare("SELECT * FROM startup_metrics WHERE user_id=? ORDER BY entry_date DESC LIMIT 24").all(u);
     const latest = rows[0] || null;
     res.json({ success: true, data: rows, latest });
   } catch (e) {
@@ -145615,7 +145615,7 @@ app.get("/api/milestone/startup-os", (req, res) => {
       return d;
     }
   };
-  const latest = safe2(() => db.prepare("SELECT * FROM startup_metrics WHERE user_id=? ORDER BY date DESC LIMIT 1").get(u));
+  const latest = safe2(() => db.prepare("SELECT * FROM startup_metrics WHERE user_id=? ORDER BY entry_date DESC LIMIT 1").get(u));
   const customers = safe2(() => db.prepare("SELECT COUNT(*) as c, SUM(mrr) as m FROM startup_customers WHERE user_id=?").get(u));
   const raised = safe2(() => db.prepare("SELECT SUM(amount_committed) as t FROM startup_fundraising WHERE user_id=? AND status='committed'").get(u));
   res.json({ success: true, startup_os: { mrr: latest?.mrr || 0, users: latest?.users || 0, runway_months: latest?.runway_months || 0, customers: customers?.c || 0, total_raised: raised?.t || 0 } });
@@ -145645,7 +145645,7 @@ app.get("/api/brand/audience-growth", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS brand_audience_growth (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, platform TEXT, date TEXT, followers INTEGER DEFAULT 0, new_followers INTEGER DEFAULT 0, impressions INTEGER DEFAULT 0, engagement_rate REAL DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM brand_audience_growth WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM brand_audience_growth WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -145666,7 +145666,7 @@ app.get("/api/brand/collaborations", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS brand_collaborations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, partner TEXT, type TEXT, platform TEXT, date TEXT, reach REAL DEFAULT 0, result TEXT, status TEXT DEFAULT 'proposed', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM brand_collaborations WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM brand_collaborations WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -145687,7 +145687,7 @@ app.get("/api/brand/media-mentions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS brand_media_mentions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, outlet TEXT, article_title TEXT, date TEXT, sentiment TEXT DEFAULT 'positive', reach INTEGER DEFAULT 0, url TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM brand_media_mentions WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM brand_media_mentions WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const total_reach = db.prepare("SELECT SUM(reach) as t FROM brand_media_mentions WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, total_reach: total_reach?.t || 0 });
   } catch (e) {
@@ -145730,7 +145730,7 @@ app.get("/api/milestone/v22", (req, res) => {
   const deepwork = safe2(() => db.prepare("SELECT SUM(duration_min) as t FROM deepwork_sessions WHERE user_id=?").get(u));
   const flow = safe2(() => db.prepare("SELECT COUNT(*) as c FROM flow_sessions WHERE user_id=?").get(u));
   const zen = safe2(() => db.prepare("SELECT COUNT(*) as c FROM zen_meditation_log WHERE user_id=?").get(u));
-  const startup = safe2(() => db.prepare("SELECT * FROM startup_metrics WHERE user_id=? ORDER BY date DESC LIMIT 1").get(u));
+  const startup = safe2(() => db.prepare("SELECT * FROM startup_metrics WHERE user_id=? ORDER BY entry_date DESC LIMIT 1").get(u));
   const brand = safe2(() => db.prepare("SELECT SUM(reach) as t FROM brand_media_mentions WHERE user_id=?").get(u));
   res.json({
     success: true,
@@ -145813,7 +145813,7 @@ app.get("/api/wealth/net-worth", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS wealth_net_worth (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, total_assets REAL DEFAULT 0, total_liabilities REAL DEFAULT 0, net_worth REAL DEFAULT 0, liquid_assets REAL DEFAULT 0, invested_assets REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM wealth_net_worth WHERE user_id=? ORDER BY date DESC LIMIT 24").all(u);
+    const rows = db.prepare("SELECT * FROM wealth_net_worth WHERE user_id=? ORDER BY entry_date DESC LIMIT 24").all(u);
     const latest = rows[0] || null;
     const delta = rows.length > 1 ? rows[0].net_worth - rows[1].net_worth : 0;
     res.json({ success: true, data: rows, latest, month_delta: delta });
@@ -145884,7 +145884,7 @@ app.get("/api/wealth/spending", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS wealth_spending (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, category TEXT, amount REAL DEFAULT 0, description TEXT, is_essential INTEGER DEFAULT 1, emotion TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM wealth_spending WHERE user_id=? AND date>=date('now','-30 days') ORDER BY date DESC LIMIT 200").all(u);
+    const rows = db.prepare("SELECT * FROM wealth_spending WHERE user_id=? AND date>=date('now','-30 days') ORDER BY entry_date DESC LIMIT 200").all(u);
     const by_cat = db.prepare("SELECT category, SUM(amount) as t FROM wealth_spending WHERE user_id=? AND date>=date('now','-30 days') GROUP BY category ORDER BY t DESC").all(u);
     res.json({ success: true, data: rows, by_category: by_cat });
   } catch (e) {
@@ -145911,7 +145911,7 @@ app.get("/api/milestone/wealth-os", (req, res) => {
       return d;
     }
   };
-  const nw = safe2(() => db.prepare("SELECT * FROM wealth_net_worth WHERE user_id=? ORDER BY date DESC LIMIT 1").get(u));
+  const nw = safe2(() => db.prepare("SELECT * FROM wealth_net_worth WHERE user_id=? ORDER BY entry_date DESC LIMIT 1").get(u));
   const income = safe2(() => db.prepare("SELECT SUM(monthly_amount) as t, SUM(CASE WHEN passive=1 THEN monthly_amount ELSE 0 END) as p FROM wealth_income_streams WHERE user_id=?").get(u));
   const fi = safe2(() => db.prepare("SELECT * FROM wealth_fi_tracker WHERE user_id=? ORDER BY created_at DESC LIMIT 1").get(u));
   res.json({ success: true, wealth_os: { net_worth: nw?.net_worth || 0, total_monthly_income: income?.t || 0, passive_income: income?.p || 0, years_to_fi: fi?.years_to_fi || 0 } });
@@ -145966,7 +145966,7 @@ app.get("/api/investment/trades", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS investment_trades (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, ticker TEXT, action TEXT DEFAULT 'buy', shares REAL DEFAULT 0, price REAL DEFAULT 0, total REAL DEFAULT 0, date TEXT, platform TEXT, thesis TEXT, emotion TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM investment_trades WHERE user_id=? ORDER BY date DESC LIMIT 200").all(u);
+    const rows = db.prepare("SELECT * FROM investment_trades WHERE user_id=? ORDER BY entry_date DESC LIMIT 200").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -145988,7 +145988,7 @@ app.get("/api/investment/dividends", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS investment_dividends (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, ticker TEXT, date TEXT, amount REAL DEFAULT 0, shares_held REAL DEFAULT 0, yield_pct REAL DEFAULT 0, reinvested INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM investment_dividends WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM investment_dividends WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     const ytd = db.prepare("SELECT SUM(amount) as t FROM investment_dividends WHERE user_id=? AND date>=date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_dividends: ytd?.t || 0 });
   } catch (e) {
@@ -146047,7 +146047,7 @@ app.get("/api/crypto/transactions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS crypto_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, symbol TEXT, type TEXT DEFAULT 'buy', amount REAL DEFAULT 0, price_usd REAL DEFAULT 0, total_usd REAL DEFAULT 0, fee_usd REAL DEFAULT 0, date TEXT, exchange TEXT, txhash TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM crypto_transactions WHERE user_id=? ORDER BY date DESC LIMIT 200").all(u);
+    const rows = db.prepare("SELECT * FROM crypto_transactions WHERE user_id=? ORDER BY entry_date DESC LIMIT 200").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -146251,7 +146251,7 @@ app.get("/api/tax/deductions", (req, res) => {
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS tax_deductions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, year INTEGER, category TEXT, description TEXT, amount REAL DEFAULT 0, receipt TEXT, date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
     const year = (/* @__PURE__ */ new Date()).getFullYear();
-    const rows = db.prepare("SELECT * FROM tax_deductions WHERE user_id=? AND year=? ORDER BY date DESC LIMIT 200").all(u, year);
+    const rows = db.prepare("SELECT * FROM tax_deductions WHERE user_id=? AND year=? ORDER BY entry_date DESC LIMIT 200").all(u, year);
     const by_cat = db.prepare("SELECT category, SUM(amount) as t FROM tax_deductions WHERE user_id=? AND year=? GROUP BY category ORDER BY t DESC").all(u, year);
     const total = db.prepare("SELECT SUM(amount) as t FROM tax_deductions WHERE user_id=? AND year=?").get(u, year);
     res.json({ success: true, data: rows, by_category: by_cat, total_deductions: total?.t || 0, year });
@@ -146399,7 +146399,7 @@ app.get("/api/business/expenses", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS business_expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, category TEXT, vendor TEXT, amount REAL DEFAULT 0, description TEXT, deductible INTEGER DEFAULT 1, receipt TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM business_expenses WHERE user_id=? AND date>=date('now','start of month') ORDER BY date DESC LIMIT 200").all(u);
+    const rows = db.prepare("SELECT * FROM business_expenses WHERE user_id=? AND date>=date('now','start of month') ORDER BY entry_date DESC LIMIT 200").all(u);
     const by_cat = db.prepare("SELECT category, SUM(amount) as t FROM business_expenses WHERE user_id=? AND date>=date('now','start of month') GROUP BY category ORDER BY t DESC").all(u);
     res.json({ success: true, data: rows, by_category: by_cat });
   } catch (e) {
@@ -146673,7 +146673,7 @@ app.get("/api/milestone/v23", (req, res) => {
       return d;
     }
   };
-  const nw = safe2(() => db.prepare("SELECT * FROM wealth_net_worth WHERE user_id=? ORDER BY date DESC LIMIT 1").get(u));
+  const nw = safe2(() => db.prepare("SELECT * FROM wealth_net_worth WHERE user_id=? ORDER BY entry_date DESC LIMIT 1").get(u));
   const portfolio = safe2(() => db.prepare("SELECT SUM(market_value) as mv FROM investment_portfolio WHERE user_id=?").get(u));
   const crypto2 = safe2(() => db.prepare("SELECT SUM(market_value_usd) as mv FROM crypto_portfolio WHERE user_id=?").get(u));
   const re = safe2(() => db.prepare("SELECT COUNT(*) as c, SUM(equity) as eq FROM realestate_properties WHERE user_id=?").get(u));
@@ -146702,7 +146702,7 @@ app.get("/api/forge/financial-health", (req, res) => {
       return d;
     }
   };
-  const nw = safe2(() => db.prepare("SELECT net_worth FROM wealth_net_worth WHERE user_id=? ORDER BY date DESC LIMIT 1").get(u));
+  const nw = safe2(() => db.prepare("SELECT net_worth FROM wealth_net_worth WHERE user_id=? ORDER BY entry_date DESC LIMIT 1").get(u));
   const fi = safe2(() => db.prepare("SELECT * FROM wealth_fi_tracker WHERE user_id=? ORDER BY created_at DESC LIMIT 1").get(u));
   const income = safe2(() => db.prepare("SELECT SUM(monthly_amount) as t, SUM(CASE WHEN passive=1 THEN monthly_amount ELSE 0 END) as p FROM wealth_income_streams WHERE user_id=?").get(u));
   const deductions = safe2(() => db.prepare("SELECT SUM(amount) as t FROM tax_deductions WHERE user_id=? AND year=?").get(u, (/* @__PURE__ */ new Date()).getFullYear()));
@@ -146824,7 +146824,7 @@ app.get("/api/ai-research/model-evals", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS ai_model_evals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, model TEXT, benchmark TEXT, score REAL DEFAULT 0, date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM ai_model_evals WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM ai_model_evals WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     const by_model = db.prepare("SELECT model, AVG(score) as avg_score, COUNT(*) as evals FROM ai_model_evals WHERE user_id=? GROUP BY model ORDER BY avg_score DESC").all(u);
     res.json({ success: true, data: rows, by_model });
   } catch (e) {
@@ -146859,7 +146859,7 @@ app.get("/api/science/observations", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS science_observations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, field TEXT, phenomenon TEXT, description TEXT, hypothesis TEXT, follow_up TEXT, verified INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM science_observations WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM science_observations WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -147090,7 +147090,7 @@ app.get("/api/nutrition/body-metrics", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS nutrition_body_metrics (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, weight_lbs REAL DEFAULT 0, body_fat_pct REAL DEFAULT 0, waist_in REAL DEFAULT 0, water_oz REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM nutrition_body_metrics WHERE user_id=? ORDER BY date DESC LIMIT 90").all(u);
+    const rows = db.prepare("SELECT * FROM nutrition_body_metrics WHERE user_id=? ORDER BY entry_date DESC LIMIT 90").all(u);
     res.json({ success: true, data: rows, latest: rows[0] || null });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -147119,14 +147119,14 @@ app.get("/api/milestone/nutrition-science-os", (req, res) => {
   const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
   const today_cal = safe2(() => db.prepare("SELECT SUM(calories) as t FROM nutrition_meals WHERE user_id=? AND date=?").get(u, today));
   const sups = safe2(() => db.prepare("SELECT COUNT(*) as c FROM nutrition_supplements WHERE user_id=? AND taking=1").get(u));
-  const weight = safe2(() => db.prepare("SELECT weight_lbs FROM nutrition_body_metrics WHERE user_id=? ORDER BY date DESC LIMIT 1").get(u));
+  const weight = safe2(() => db.prepare("SELECT weight_lbs FROM nutrition_body_metrics WHERE user_id=? ORDER BY entry_date DESC LIMIT 1").get(u));
   res.json({ success: true, nutrition_science_os: { today_calories: today_cal?.t || 0, active_supplements: sups?.c || 0, current_weight_lbs: weight?.weight_lbs || 0 } });
 });
 app.get("/api/sleep-science/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS sleep_science_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, bedtime TEXT, wake_time TEXT, total_hours REAL DEFAULT 0, quality INTEGER DEFAULT 3, awakenings INTEGER DEFAULT 0, morning_energy INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM sleep_science_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM sleep_science_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const avg = db.prepare("SELECT AVG(total_hours) as h, AVG(quality) as q FROM sleep_science_sessions WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, weekly_avg: { hours: Math.round((avg?.h || 0) * 10) / 10, quality: Math.round((avg?.q || 0) * 10) / 10 } });
   } catch (e) {
@@ -147181,7 +147181,7 @@ app.get("/api/sports-science/training", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS sports_science_training (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, sport TEXT, session_type TEXT DEFAULT 'practice', duration_min INTEGER DEFAULT 60, intensity INTEGER DEFAULT 3, rpe INTEGER DEFAULT 5, technique_focus TEXT, performance_feel INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM sports_science_training WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM sports_science_training WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const weekly = db.prepare("SELECT SUM(duration_min) as m, COUNT(*) as s FROM sports_science_training WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, weekly_summary: { sessions: weekly?.s || 0, total_minutes: weekly?.m || 0 } });
   } catch (e) {
@@ -147203,7 +147203,7 @@ app.get("/api/sports-science/performance-tests", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS sports_science_perf_tests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, test_name TEXT, sport TEXT, result REAL DEFAULT 0, unit TEXT, pr INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM sports_science_perf_tests WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM sports_science_perf_tests WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     const prs = db.prepare("SELECT COUNT(*) as c FROM sports_science_perf_tests WHERE user_id=? AND pr=1").get(u);
     res.json({ success: true, data: rows, total_prs: prs?.c || 0 });
   } catch (e) {
@@ -147238,7 +147238,7 @@ app.get("/api/music-v2/practice-log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS music_v2_practice (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, instrument TEXT, duration_min INTEGER DEFAULT 30, focus TEXT, pieces TEXT, quality INTEGER DEFAULT 3, breakthrough INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM music_v2_practice WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM music_v2_practice WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const total_hours = db.prepare("SELECT SUM(duration_min)/60.0 as h FROM music_v2_practice WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, total_hours: Math.round((total_hours?.h || 0) * 10) / 10 });
   } catch (e) {
@@ -147316,7 +147316,7 @@ app.get("/api/language-v2/immersion-log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS language_v2_immersion (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, language TEXT, type TEXT DEFAULT 'reading', duration_min INTEGER DEFAULT 30, content TEXT, comprehension_pct INTEGER DEFAULT 50, new_words INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM language_v2_immersion WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM language_v2_immersion WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const weekly = db.prepare("SELECT language, SUM(duration_min) as m FROM language_v2_immersion WHERE user_id=? AND date>=date('now','-7 days') GROUP BY language").all(u);
     res.json({ success: true, data: rows, weekly_minutes_by_language: weekly });
   } catch (e) {
@@ -147393,7 +147393,7 @@ app.get("/api/biohacking/biomarkers", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS biohacking_biomarkers (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, marker TEXT, value REAL DEFAULT 0, unit TEXT, optimal_min REAL DEFAULT 0, optimal_max REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM biohacking_biomarkers WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM biohacking_biomarkers WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -147448,7 +147448,7 @@ app.get("/api/longevity/vitals-log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS longevity_vitals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, resting_hr INTEGER DEFAULT 0, hrv REAL DEFAULT 0, systolic INTEGER DEFAULT 0, diastolic INTEGER DEFAULT 0, vo2max REAL DEFAULT 0, grip_strength REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM longevity_vitals WHERE user_id=? ORDER BY date DESC LIMIT 90").all(u);
+    const rows = db.prepare("SELECT * FROM longevity_vitals WHERE user_id=? ORDER BY entry_date DESC LIMIT 90").all(u);
     res.json({ success: true, data: rows, latest: rows[0] || null });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -147475,14 +147475,14 @@ app.get("/api/milestone/longevity-os", (req, res) => {
     }
   };
   const i = safe2(() => db.prepare("SELECT COUNT(*) as c, SUM(doing) as active FROM longevity_interventions WHERE user_id=?").get(u));
-  const v = safe2(() => db.prepare("SELECT hrv, vo2max FROM longevity_vitals WHERE user_id=? ORDER BY date DESC LIMIT 1").get(u));
+  const v = safe2(() => db.prepare("SELECT hrv, vo2max FROM longevity_vitals WHERE user_id=? ORDER BY entry_date DESC LIMIT 1").get(u));
   res.json({ success: true, longevity_os: { interventions: i?.c || 0, active_interventions: i?.active || 0, latest_hrv: v?.hrv || 0, latest_vo2max: v?.vo2max || 0 } });
 });
 app.get("/api/mental-performance/focus-sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS mental_focus_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, start_time TEXT, duration_min INTEGER DEFAULT 25, task TEXT, focus_score INTEGER DEFAULT 3, distractions INTEGER DEFAULT 0, technique TEXT DEFAULT 'pomodoro', created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM mental_focus_sessions WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM mental_focus_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const weekly = db.prepare("SELECT COUNT(*) as s, SUM(duration_min) as m, AVG(focus_score) as f FROM mental_focus_sessions WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, weekly_summary: { sessions: weekly?.s || 0, minutes: weekly?.m || 0, avg_focus: Math.round((weekly?.f || 0) * 10) / 10 } });
   } catch (e) {
@@ -147504,7 +147504,7 @@ app.get("/api/mental-performance/cognitive-tests", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS mental_cognitive_tests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, test_name TEXT, score REAL DEFAULT 0, percentile REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM mental_cognitive_tests WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM mental_cognitive_tests WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -147592,7 +147592,7 @@ app.get("/api/decisions/log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS decision_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, decision TEXT, context TEXT, options_considered TEXT, chosen_option TEXT, reasoning TEXT, confidence INTEGER DEFAULT 5, outcome TEXT, outcome_score INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM decision_log WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM decision_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -147898,7 +147898,7 @@ app.get("/api/emotional-intelligence/journal", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS ei_journal (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, emotion TEXT, intensity INTEGER DEFAULT 5, trigger TEXT, body_sensation TEXT, response TEXT, reflection TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM ei_journal WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM ei_journal WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const emotion_freq = db.prepare("SELECT emotion, COUNT(*) as c FROM ei_journal WHERE user_id=? AND date>=date('now','-30 days') GROUP BY emotion ORDER BY c DESC LIMIT 5").all(u);
     res.json({ success: true, data: rows, top_emotions_30d: emotion_freq });
   } catch (e) {
@@ -147974,7 +147974,7 @@ app.get("/api/parenting/activities-log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS parenting_activities (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, child_id INTEGER, date TEXT, activity TEXT, duration_min INTEGER DEFAULT 30, quality INTEGER DEFAULT 3, child_mood TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM parenting_activities WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM parenting_activities WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const weekly = db.prepare("SELECT SUM(duration_min) as m, COUNT(*) as c FROM parenting_activities WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, weekly_engagement: { sessions: weekly?.c || 0, minutes: weekly?.m || 0 } });
   } catch (e) {
@@ -148174,7 +148174,7 @@ app.get("/api/energy/daily-log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS energy_daily_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, morning_energy INTEGER DEFAULT 3, afternoon_energy INTEGER DEFAULT 3, evening_energy INTEGER DEFAULT 3, peak_hours TEXT, low_hours TEXT, caffeine_mg INTEGER DEFAULT 0, naps INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM energy_daily_log WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM energy_daily_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const avg = db.prepare("SELECT AVG(morning_energy) as m, AVG(afternoon_energy) as a, AVG(evening_energy) as e FROM energy_daily_log WHERE user_id=? AND date>=date('now','-14 days')").get(u);
     res.json({ success: true, data: rows, avg_14d: { morning: Math.round((avg?.m || 0) * 10) / 10, afternoon: Math.round((avg?.a || 0) * 10) / 10, evening: Math.round((avg?.e || 0) * 10) / 10 } });
   } catch (e) {
@@ -148336,7 +148336,7 @@ app.get("/api/legacy/contributions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS legacy_contributions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, category TEXT DEFAULT 'knowledge', description TEXT, impact TEXT, reach TEXT, date TEXT, ongoing INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM legacy_contributions WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM legacy_contributions WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -148443,7 +148443,7 @@ app.get("/api/spiritual/insights", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS spiritual_insights (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, insight TEXT, source TEXT, depth INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM spiritual_insights WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM spiritual_insights WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -148476,7 +148476,7 @@ app.get("/api/gratitude/entries", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS gratitude_entries (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, item_1 TEXT, item_2 TEXT, item_3 TEXT, person_grateful_for TEXT, why TEXT, mood_before INTEGER DEFAULT 3, mood_after INTEGER DEFAULT 3, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM gratitude_entries WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM gratitude_entries WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const streak = db.prepare("SELECT COUNT(*) as c FROM gratitude_entries WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, entries_this_week: streak?.c || 0 });
   } catch (e) {
@@ -148498,7 +148498,7 @@ app.get("/api/gratitude/appreciation-letters", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS gratitude_letters (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, recipient TEXT, relationship TEXT, letter_content TEXT, sent INTEGER DEFAULT 0, date TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM gratitude_letters WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM gratitude_letters WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -148643,7 +148643,7 @@ app.get("/api/influence/speaking", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS influence_speaking (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, venue TEXT, topic TEXT, audience_size INTEGER DEFAULT 0, format TEXT DEFAULT 'presentation', rating INTEGER DEFAULT 3, recording_url TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM influence_speaking WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM influence_speaking WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const total_reached = db.prepare("SELECT SUM(audience_size) as t FROM influence_speaking WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, total_audience_reached: total_reached?.t || 0 });
   } catch (e) {
@@ -148720,7 +148720,7 @@ app.get("/api/writing-v2/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS writing_v2_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, project_id INTEGER, date TEXT, words_written INTEGER DEFAULT 0, duration_min INTEGER DEFAULT 60, flow_state INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM writing_v2_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM writing_v2_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const week_words = db.prepare("SELECT SUM(words_written) as w FROM writing_v2_sessions WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, words_this_week: week_words?.w || 0 });
   } catch (e) {
@@ -148892,7 +148892,7 @@ app.get("/api/adventure/experiences", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS adventure_experiences (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, category TEXT DEFAULT 'travel', date TEXT, location TEXT, people_with TEXT, description TEXT, impact_score INTEGER DEFAULT 3, photos_count INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM adventure_experiences WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM adventure_experiences WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -149012,7 +149012,7 @@ app.get("/api/music/practice", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS music_practice (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, instrument TEXT DEFAULT 'guitar', duration_min INTEGER DEFAULT 30, pieces_practiced TEXT, techniques_worked TEXT, quality INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM music_practice WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM music_practice WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const week_min = db.prepare("SELECT SUM(duration_min) as m FROM music_practice WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, minutes_this_week: week_min?.m || 0 });
   } catch (e) {
@@ -149089,7 +149089,7 @@ app.get("/api/art/study-log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS art_study_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, topic TEXT, resource TEXT, duration_min INTEGER DEFAULT 60, skill_area TEXT DEFAULT 'fundamentals', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM art_study_log WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM art_study_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -149122,7 +149122,7 @@ app.get("/api/photography/shoots", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS photography_shoots (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, location TEXT, genre TEXT DEFAULT 'street', shots_taken INTEGER DEFAULT 0, keepers INTEGER DEFAULT 0, camera TEXT, lens TEXT, conditions TEXT, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM photography_shoots WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM photography_shoots WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const total_shots = db.prepare("SELECT SUM(shots_taken) as t, SUM(keepers) as k FROM photography_shoots WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, total_shots: total_shots?.t || 0, total_keepers: total_shots?.k || 0 });
   } catch (e) {
@@ -149231,7 +149231,7 @@ app.get("/api/sports/activities", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS sports_activities (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, sport TEXT, duration_min INTEGER DEFAULT 60, distance_km REAL DEFAULT 0, calories INTEGER DEFAULT 0, heart_rate_avg INTEGER DEFAULT 0, performance INTEGER DEFAULT 3, weather TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM sports_activities WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM sports_activities WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const week = db.prepare("SELECT COUNT(*) as c, SUM(duration_min) as m FROM sports_activities WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, this_week: { sessions: week?.c || 0, minutes: week?.m || 0 } });
   } catch (e) {
@@ -149286,7 +149286,7 @@ app.get("/api/nutrition-v2/meals", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS nutrition_v2_meals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, meal_type TEXT DEFAULT 'lunch', name TEXT, calories INTEGER DEFAULT 0, protein_g REAL DEFAULT 0, carbs_g REAL DEFAULT 0, fat_g REAL DEFAULT 0, fiber_g REAL DEFAULT 0, satisfaction INTEGER DEFAULT 3, hunger_before INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM nutrition_v2_meals WHERE user_id=? ORDER BY date DESC, meal_type ASC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM nutrition_v2_meals WHERE user_id=? ORDER BY entry_date DESC, meal_type ASC LIMIT 50").all(u);
     const today = db.prepare("SELECT SUM(calories) as c, SUM(protein_g) as p FROM nutrition_v2_meals WHERE user_id=? AND date=date('now')").get(u);
     res.json({ success: true, data: rows, today: { calories: today?.c || 0, protein_g: today?.p || 0 } });
   } catch (e) {
@@ -149341,7 +149341,7 @@ app.get("/api/sleep-v2/log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS sleep_v2_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, bedtime TEXT, wake_time TEXT, duration_hr REAL DEFAULT 0, quality INTEGER DEFAULT 3, rem_min INTEGER DEFAULT 0, deep_min INTEGER DEFAULT 0, awakenings INTEGER DEFAULT 0, dreams INTEGER DEFAULT 0, rested INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM sleep_v2_log WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM sleep_v2_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const avg = db.prepare("SELECT AVG(duration_hr) as d, AVG(quality) as q FROM sleep_v2_log WHERE user_id=? AND date>=date('now','-14 days')").get(u);
     res.json({ success: true, data: rows, avg_14d: { duration_hr: Math.round((avg?.d || 0) * 10) / 10, quality: Math.round((avg?.q || 0) * 10) / 10 } });
   } catch (e) {
@@ -149396,7 +149396,7 @@ app.get("/api/focus/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS focus_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, task TEXT, technique TEXT DEFAULT 'pomodoro', planned_min INTEGER DEFAULT 25, actual_min INTEGER DEFAULT 25, completed INTEGER DEFAULT 1, distractions INTEGER DEFAULT 0, focus_score INTEGER DEFAULT 4, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM focus_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM focus_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const today = db.prepare("SELECT COUNT(*) as c, SUM(actual_min) as m FROM focus_sessions WHERE user_id=? AND date=date('now') AND completed=1").get(u);
     res.json({ success: true, data: rows, today: { sessions: today?.c || 0, minutes: today?.m || 0 } });
   } catch (e) {
@@ -149754,7 +149754,7 @@ app.get("/api/language-v2/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS language_v2_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, language TEXT, date TEXT, duration_min INTEGER DEFAULT 30, activity TEXT DEFAULT 'vocab', words_learned INTEGER DEFAULT 0, quality INTEGER DEFAULT 3, streak_day INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM language_v2_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM language_v2_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const streak = db.prepare("SELECT COUNT(DISTINCT date) as s FROM language_v2_sessions WHERE user_id=? AND date>=date('now','-30 days')").get(u);
     res.json({ success: true, data: rows, days_active_30d: streak?.s || 0 });
   } catch (e) {
@@ -149809,7 +149809,7 @@ app.get("/api/meditation-v2/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS meditation_v2_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, technique TEXT DEFAULT 'mindfulness', duration_min INTEGER DEFAULT 20, quality INTEGER DEFAULT 3, mood_before INTEGER DEFAULT 3, mood_after INTEGER DEFAULT 3, insights TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM meditation_v2_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM meditation_v2_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const streak = db.prepare("SELECT COUNT(DISTINCT date) as s FROM meditation_v2_sessions WHERE user_id=? AND date>=date('now','-30 days')").get(u);
     const total_min = db.prepare("SELECT SUM(duration_min) as m FROM meditation_v2_sessions WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, days_30d: streak?.s || 0, total_minutes: total_min?.m || 0 });
@@ -149887,7 +149887,7 @@ app.get("/api/finance-v2/transactions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS finance_v2_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, account_id INTEGER, category TEXT DEFAULT 'misc', subcategory TEXT, description TEXT, amount REAL DEFAULT 0, type TEXT DEFAULT 'expense', tags TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM finance_v2_transactions WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM finance_v2_transactions WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const month_in = db.prepare("SELECT SUM(amount) as a FROM finance_v2_transactions WHERE user_id=? AND type='income' AND date>=date('now','start of month')").get(u);
     const month_out = db.prepare("SELECT SUM(amount) as a FROM finance_v2_transactions WHERE user_id=? AND type='expense' AND date>=date('now','start of month')").get(u);
     res.json({ success: true, data: rows, this_month: { income: month_in?.a || 0, expenses: month_out?.a || 0 } });
@@ -150553,7 +150553,7 @@ app.get("/api/sports/performance", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS sports_performance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, sport TEXT, date TEXT, metric TEXT, value REAL DEFAULT 0, unit TEXT DEFAULT '', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM sports_performance WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM sports_performance WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -150640,7 +150640,7 @@ app.get("/api/photography/shoots", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS photography_shoots (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, date TEXT, genre TEXT DEFAULT 'portrait', location TEXT, camera TEXT, lens TEXT, shots_taken INTEGER DEFAULT 0, keepers INTEGER DEFAULT 0, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM photography_shoots WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM photography_shoots WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -150802,7 +150802,7 @@ app.get("/api/astronomy/observations", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS astronomy_observations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, target TEXT, type TEXT DEFAULT 'planet', constellation TEXT, equipment TEXT, seeing INTEGER DEFAULT 3, transparency INTEGER DEFAULT 3, magnitude REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM astronomy_observations WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM astronomy_observations WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const types = db.prepare("SELECT type, COUNT(*) as c FROM astronomy_observations WHERE user_id=? GROUP BY type").all(u);
     res.json({ success: true, data: rows, by_type: types });
   } catch (e) {
@@ -150857,7 +150857,7 @@ app.get("/api/chess/games", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS chess_games (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, opponent TEXT, color TEXT DEFAULT 'white', result TEXT DEFAULT 'draw', opening TEXT, time_control TEXT DEFAULT 'rapid', rating_before INTEGER DEFAULT 0, rating_after INTEGER DEFAULT 0, moves INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM chess_games WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM chess_games WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const stats = db.prepare("SELECT result, COUNT(*) as c FROM chess_games WHERE user_id=? GROUP BY result").all(u);
     res.json({ success: true, data: rows, stats });
   } catch (e) {
@@ -150879,7 +150879,7 @@ app.get("/api/chess/study", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS chess_study (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, topic TEXT, duration_min INTEGER DEFAULT 30, type TEXT DEFAULT 'tactics', difficulty INTEGER DEFAULT 3, source TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM chess_study WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM chess_study WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const monthly = db.prepare("SELECT SUM(duration_min) as m FROM chess_study WHERE user_id=? AND date>=date('now','-30 days')").get(u);
     res.json({ success: true, data: rows, study_min_30d: monthly?.m || 0 });
   } catch (e) {
@@ -151183,7 +151183,7 @@ app.get("/api/dance/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS dance_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, style TEXT, date TEXT, duration_min INTEGER DEFAULT 60, type TEXT DEFAULT 'class', energy INTEGER DEFAULT 3, focus TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM dance_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM dance_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const monthly_min = db.prepare("SELECT SUM(duration_min) as m FROM dance_sessions WHERE user_id=? AND date>=date('now','-30 days')").get(u);
     res.json({ success: true, data: rows, monthly_min: monthly_min?.m || 0 });
   } catch (e) {
@@ -151217,7 +151217,7 @@ app.get("/api/martial-arts/training", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS martial_arts_training (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, art TEXT DEFAULT 'bjj', duration_min INTEGER DEFAULT 60, type TEXT DEFAULT 'drilling', intensity INTEGER DEFAULT 3, techniques TEXT, sparring_rounds INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM martial_arts_training WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM martial_arts_training WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const week_sessions = db.prepare("SELECT COUNT(*) as c FROM martial_arts_training WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, sessions_this_week: week_sessions?.c || 0 });
   } catch (e) {
@@ -151272,7 +151272,7 @@ app.get("/api/yoga-v2/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS yoga_v2_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, style TEXT DEFAULT 'hatha', duration_min INTEGER DEFAULT 60, instructor TEXT, setting TEXT DEFAULT 'home', energy_before INTEGER DEFAULT 3, energy_after INTEGER DEFAULT 3, poses_practiced TEXT, intentions TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM yoga_v2_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM yoga_v2_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const streak = db.prepare("SELECT COUNT(*) as c FROM yoga_v2_sessions WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, sessions_7d: streak?.c || 0 });
   } catch (e) {
@@ -151327,7 +151327,7 @@ app.get("/api/cycling/rides", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS cycling_rides (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, distance_km REAL DEFAULT 0, duration_min INTEGER DEFAULT 0, elevation_m INTEGER DEFAULT 0, avg_speed_kmh REAL DEFAULT 0, type TEXT DEFAULT 'road', bike TEXT, calories INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM cycling_rides WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM cycling_rides WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const stats = db.prepare("SELECT SUM(distance_km) as d, COUNT(*) as c FROM cycling_rides WHERE user_id=? AND date>=date('now','-30 days')").get(u);
     res.json({ success: true, data: rows, distance_30d: stats?.d || 0, rides_30d: stats?.c || 0 });
   } catch (e) {
@@ -151437,7 +151437,7 @@ app.get("/api/surfing/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS surfing_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, location TEXT, duration_min INTEGER DEFAULT 90, wave_height_ft REAL DEFAULT 2, conditions TEXT DEFAULT 'fair', board TEXT, waves_caught INTEGER DEFAULT 0, best_wave TEXT, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM surfing_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM surfing_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -151491,7 +151491,7 @@ app.get("/api/cooking-classes/classes", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS cooking_classes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, instructor TEXT, cuisine TEXT DEFAULT 'french', date TEXT, duration_min INTEGER DEFAULT 120, location TEXT, cost REAL DEFAULT 0, rating INTEGER DEFAULT 0, skills_learned TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM cooking_classes WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM cooking_classes WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -151576,7 +151576,7 @@ app.get("/api/nutrition/logs", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS nutrition_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, meal TEXT DEFAULT 'lunch', food TEXT, calories INTEGER DEFAULT 0, protein_g REAL DEFAULT 0, carbs_g REAL DEFAULT 0, fat_g REAL DEFAULT 0, fiber_g REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM nutrition_logs WHERE user_id=? AND date>=date('now','-7 days') ORDER BY date DESC, meal ASC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM nutrition_logs WHERE user_id=? AND date>=date('now','-7 days') ORDER BY entry_date DESC, meal ASC LIMIT 50").all(u);
     const today = db.prepare("SELECT SUM(calories) as cal, SUM(protein_g) as prot FROM nutrition_logs WHERE user_id=? AND date=date('now')").get(u);
     res.json({ success: true, data: rows, today_calories: today?.cal || 0, today_protein: today?.prot || 0 });
   } catch (e) {
@@ -151652,7 +151652,7 @@ app.get("/api/skincare/logs", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS skincare_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, completed_am INTEGER DEFAULT 0, completed_pm INTEGER DEFAULT 0, skin_rating INTEGER DEFAULT 3, breakouts INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM skincare_logs WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM skincare_logs WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const streak = db.prepare("SELECT COUNT(*) as c FROM skincare_logs WHERE user_id=? AND completed_am=1 AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, am_streak_7d: streak?.c || 0 });
   } catch (e) {
@@ -151708,7 +151708,7 @@ app.get("/api/declutter/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS declutter_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, area TEXT, items_processed INTEGER DEFAULT 0, items_removed INTEGER DEFAULT 0, duration_min INTEGER DEFAULT 30, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM declutter_sessions WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM declutter_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -151763,7 +151763,7 @@ app.get("/api/minimalism/purchases", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS minimalism_purchases (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, item TEXT, category TEXT, cost REAL DEFAULT 0, is_essential INTEGER DEFAULT 0, waited_days INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM minimalism_purchases WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM minimalism_purchases WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const impulse = db.prepare("SELECT COUNT(*) as c FROM minimalism_purchases WHERE user_id=? AND is_essential=0 AND date>=date('now','-30 days')").get(u);
     res.json({ success: true, data: rows, impulse_buys_30d: impulse?.c || 0 });
   } catch (e) {
@@ -152100,7 +152100,7 @@ app.get("/api/volunteer/activities", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS volunteer_activities (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, organization TEXT, cause TEXT DEFAULT 'community', date TEXT, hours REAL DEFAULT 2, role TEXT, location TEXT, impact TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM volunteer_activities WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM volunteer_activities WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const total = db.prepare("SELECT SUM(hours) as h, COUNT(*) as c FROM volunteer_activities WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, total_hours: total?.h || 0, total_activities: total?.c || 0 });
   } catch (e) {
@@ -152209,7 +152209,7 @@ app.get("/api/civic/elections", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS civic_elections (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, date TEXT, type TEXT DEFAULT 'local', voted INTEGER DEFAULT 0, researched INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM civic_elections WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM civic_elections WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -152263,7 +152263,7 @@ app.get("/api/environment/impact", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS environment_impact (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, category TEXT DEFAULT 'transport', action TEXT, co2_saved_kg REAL DEFAULT 0, water_saved_l REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM environment_impact WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM environment_impact WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const totals = db.prepare("SELECT SUM(co2_saved_kg) as co2, SUM(water_saved_l) as water FROM environment_impact WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, total_co2_saved: totals?.co2 || 0, total_water_saved: totals?.water || 0 });
   } catch (e) {
@@ -152339,7 +152339,7 @@ app.get("/api/sustainability/purchases", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS sustainability_purchases (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item TEXT, brand TEXT, date TEXT, category TEXT DEFAULT 'food', is_sustainable INTEGER DEFAULT 0, certification TEXT, cost REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM sustainability_purchases WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM sustainability_purchases WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const score = db.prepare("SELECT COUNT(*) as t, SUM(is_sustainable) as s FROM sustainability_purchases WHERE user_id=? AND date>=date('now','-30 days')").get(u);
     const pct = score?.t > 0 ? Math.round((score?.s || 0) / score.t * 100) : 0;
     res.json({ success: true, data: rows, sustainable_pct_30d: pct });
@@ -152374,7 +152374,7 @@ app.get("/api/zero-waste/logs", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS zero_waste_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, waste_kg REAL DEFAULT 0, recycled_kg REAL DEFAULT 0, composted_kg REAL DEFAULT 0, refused_items INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM zero_waste_logs WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM zero_waste_logs WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const week = db.prepare("SELECT SUM(waste_kg) as w, SUM(recycled_kg) as r FROM zero_waste_logs WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, week_waste_kg: week?.w || 0, week_recycled_kg: week?.r || 0 });
   } catch (e) {
@@ -152783,7 +152783,7 @@ app.get("/api/bird/sightings", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS bird_sightings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, species TEXT, common_name TEXT, date TEXT, location TEXT, count INTEGER DEFAULT 1, behavior TEXT, photo INTEGER DEFAULT 0, life_list INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM bird_sightings WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM bird_sightings WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const life_total = db.prepare("SELECT COUNT(DISTINCT species) as c FROM bird_sightings WHERE user_id=? AND life_list=1").get(u);
     res.json({ success: true, data: rows, life_list_total: life_total?.c || 0 });
   } catch (e) {
@@ -152947,7 +152947,7 @@ app.get("/api/coffee-v2/brews", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS coffee_v2_brews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, bean TEXT, origin TEXT, roast TEXT DEFAULT 'medium', method TEXT DEFAULT 'pourover', dose_g REAL DEFAULT 18, yield_g REAL DEFAULT 36, time_sec INTEGER DEFAULT 0, water_temp_c INTEGER DEFAULT 93, rating INTEGER DEFAULT 3, tasting_notes TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM coffee_v2_brews WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM coffee_v2_brews WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -153001,7 +153001,7 @@ app.get("/api/tea/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS tea_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, tea TEXT, type TEXT DEFAULT 'green', origin TEXT, steep_temp_c INTEGER DEFAULT 80, steep_sec INTEGER DEFAULT 120, infusions INTEGER DEFAULT 1, rating INTEGER DEFAULT 3, mood TEXT, tasting_notes TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM tea_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM tea_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -153140,7 +153140,7 @@ app.get("/api/drawing/works", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS drawing_works (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, medium TEXT DEFAULT 'pencil', subject TEXT, style TEXT DEFAULT 'realism', date TEXT, time_hours REAL DEFAULT 0, status TEXT DEFAULT 'completed', rating INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM drawing_works WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM drawing_works WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -153161,7 +153161,7 @@ app.get("/api/drawing/practice", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS drawing_practice (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, focus TEXT DEFAULT 'gesture', duration_min INTEGER DEFAULT 30, exercises INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM drawing_practice WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM drawing_practice WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const week = db.prepare("SELECT SUM(duration_min) as m FROM drawing_practice WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, minutes_this_week: week?.m || 0 });
   } catch (e) {
@@ -153216,7 +153216,7 @@ app.get("/api/sculpture/firings", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS sculpture_firings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, kiln TEXT DEFAULT 'electric', cone TEXT DEFAULT '6', pieces INTEGER DEFAULT 1, outcome TEXT DEFAULT 'success', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM sculpture_firings WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM sculpture_firings WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -153249,7 +153249,7 @@ app.get("/api/calligraphy/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS calligraphy_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, script TEXT DEFAULT 'italic', tool TEXT DEFAULT 'nib', duration_min INTEGER DEFAULT 45, focus TEXT, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM calligraphy_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM calligraphy_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -153324,7 +153324,7 @@ app.get("/api/origami/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS origami_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, model TEXT, duration_min INTEGER DEFAULT 30, attempts INTEGER DEFAULT 1, success INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM origami_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM origami_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -153378,7 +153378,7 @@ app.get("/api/magic/performances", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS magic_performances (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, venue TEXT, audience_size INTEGER DEFAULT 5, tricks_performed TEXT, duration_min INTEGER DEFAULT 10, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM magic_performances WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM magic_performances WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -153411,7 +153411,7 @@ app.get("/api/standup/sets", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS standup_sets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, venue TEXT, duration_min INTEGER DEFAULT 5, audience_size INTEGER DEFAULT 20, laughs_rating INTEGER DEFAULT 3, new_material INTEGER DEFAULT 0, opener TEXT, closer TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM standup_sets WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM standup_sets WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -153465,7 +153465,7 @@ app.get("/api/improv/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS improv_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, type TEXT DEFAULT 'class', duration_min INTEGER DEFAULT 90, group_size INTEGER DEFAULT 8, games_played TEXT, energy INTEGER DEFAULT 3, breakthroughs TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM improv_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM improv_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -153486,7 +153486,7 @@ app.get("/api/improv/shows", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS improv_shows (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, venue TEXT, format TEXT DEFAULT 'shortform', duration_min INTEGER DEFAULT 45, audience INTEGER DEFAULT 30, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM improv_shows WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM improv_shows WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -153540,7 +153540,7 @@ app.get("/api/debate/rounds", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS debate_rounds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, topic TEXT, date TEXT, format TEXT DEFAULT 'oxford', opponent TEXT, side TEXT DEFAULT 'pro', result TEXT DEFAULT 'win', speaker_points REAL DEFAULT 28, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM debate_rounds WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM debate_rounds WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     const wins = db.prepare("SELECT COUNT(*) as c FROM debate_rounds WHERE user_id=? AND result='win'").get(u);
     res.json({ success: true, data: rows, total_wins: wins?.c || 0 });
   } catch (e) {
@@ -153574,7 +153574,7 @@ app.get("/api/escape-room/rooms", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS escape_rooms (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, venue TEXT, theme TEXT, difficulty INTEGER DEFAULT 3, team_size INTEGER DEFAULT 4, date TEXT, escaped INTEGER DEFAULT 0, time_used_min INTEGER DEFAULT 0, time_limit_min INTEGER DEFAULT 60, hints_used INTEGER DEFAULT 0, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM escape_rooms WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM escape_rooms WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const stats = db.prepare("SELECT COUNT(*) as t, SUM(escaped) as e FROM escape_rooms WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, total: stats?.t || 0, escaped: stats?.e || 0 });
   } catch (e) {
@@ -153735,7 +153735,7 @@ app.get("/api/metalworking/welds", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS metalworking_welds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, process TEXT DEFAULT 'MIG', material TEXT, thickness_mm REAL DEFAULT 3, quality INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM metalworking_welds WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM metalworking_welds WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -154039,7 +154039,7 @@ app.get("/api/printmaking/editions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS printmaking_editions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, technique TEXT DEFAULT 'linocut', edition_size INTEGER DEFAULT 10, printed INTEGER DEFAULT 0, paper TEXT DEFAULT 'BFK Rives', ink TEXT DEFAULT 'oil-based', date TEXT, status TEXT DEFAULT 'in-progress', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM printmaking_editions WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM printmaking_editions WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -154114,7 +154114,7 @@ app.get("/api/textile/warps", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS textile_warps (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, sett INTEGER DEFAULT 10, length_yards REAL DEFAULT 3, width_in INTEGER DEFAULT 15, warp_fiber TEXT DEFAULT 'cotton', weft_fiber TEXT DEFAULT 'wool', status TEXT DEFAULT 'on-loom', date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM textile_warps WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM textile_warps WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -154307,7 +154307,7 @@ app.get("/api/robotics/competitions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS robotics_competitions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, date TEXT, robot TEXT, category TEXT, placement INTEGER DEFAULT 0, team_size INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM robotics_competitions WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM robotics_competitions WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -154361,7 +154361,7 @@ app.get("/api/rc/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS rc_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, vehicle TEXT, location TEXT, duration_min INTEGER DEFAULT 30, crashes INTEGER DEFAULT 0, repairs TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM rc_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM rc_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -154415,7 +154415,7 @@ app.get("/api/drones/flights", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS drones_flights (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, drone TEXT, location TEXT, duration_min INTEGER DEFAULT 15, max_altitude_m REAL DEFAULT 0, distance_km REAL DEFAULT 0, mode TEXT DEFAULT 'manual', incidents TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM drones_flights WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM drones_flights WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const totals = db.prepare("SELECT COUNT(*) as c, COALESCE(SUM(duration_min),0) as m FROM drones_flights WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, total_flights: totals?.c || 0, total_minutes: totals?.m || 0 });
   } catch (e) {
@@ -154449,7 +154449,7 @@ app.get("/api/ham-radio/logs", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS ham_radio_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, time_utc TEXT, callsign TEXT, frequency_mhz REAL, band TEXT DEFAULT '40m', mode TEXT DEFAULT 'SSB', rst_sent TEXT DEFAULT '59', rst_recv TEXT DEFAULT '59', country TEXT, grid TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM ham_radio_logs WHERE user_id=? ORDER BY date DESC, time_utc DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM ham_radio_logs WHERE user_id=? ORDER BY entry_date DESC, time_utc DESC LIMIT 50").all(u);
     const dxcc = db.prepare("SELECT COUNT(DISTINCT country) as c FROM ham_radio_logs WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, dxcc_count: dxcc?.c || 0 });
   } catch (e) {
@@ -154504,7 +154504,7 @@ app.get("/api/astronomy/observations", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS astronomy_observations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, object TEXT, type TEXT DEFAULT 'deep-sky', constellation TEXT, magnitude REAL DEFAULT 0, scope TEXT, magnification INTEGER DEFAULT 50, seeing INTEGER DEFAULT 3, transparency INTEGER DEFAULT 3, sketch INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM astronomy_observations WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM astronomy_observations WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -154558,7 +154558,7 @@ app.get("/api/meteorology/readings", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS meteorology_readings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, time TEXT, temp_f REAL DEFAULT 70, humidity_pct INTEGER DEFAULT 50, pressure_mb REAL DEFAULT 1013, wind_dir TEXT DEFAULT 'N', wind_mph REAL DEFAULT 0, rain_in REAL DEFAULT 0, sky TEXT DEFAULT 'clear', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM meteorology_readings WHERE user_id=? ORDER BY date DESC, time DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM meteorology_readings WHERE user_id=? ORDER BY entry_date DESC, time DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -154579,7 +154579,7 @@ app.get("/api/meteorology/events", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS meteorology_events (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, type TEXT DEFAULT 'thunderstorm', severity INTEGER DEFAULT 1, peak_wind_mph REAL DEFAULT 0, total_rain_in REAL DEFAULT 0, snow_in REAL DEFAULT 0, hail INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM meteorology_events WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM meteorology_events WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -154633,7 +154633,7 @@ app.get("/api/geology/field-trips", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS geology_field_trips (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, location TEXT, formation TEXT, specimens_collected INTEGER DEFAULT 0, photos_taken INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM geology_field_trips WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM geology_field_trips WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -154881,7 +154881,7 @@ app.get("/api/wargaming/battles", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS wargaming_battles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, game TEXT, my_army TEXT, opponent_army TEXT, points INTEGER DEFAULT 1000, result TEXT DEFAULT 'win', vp_scored INTEGER DEFAULT 0, vp_conceded INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM wargaming_battles WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM wargaming_battles WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const record = db.prepare("SELECT SUM(CASE WHEN result='win' THEN 1 ELSE 0 END) as w, SUM(CASE WHEN result='loss' THEN 1 ELSE 0 END) as l FROM wargaming_battles WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, wins: record?.w || 0, losses: record?.l || 0 });
   } catch (e) {
@@ -154991,7 +154991,7 @@ app.get("/api/board-games/plays", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS board_game_plays_v2 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, game TEXT, date TEXT, players INTEGER DEFAULT 2, duration_min INTEGER DEFAULT 60, winner TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM board_game_plays_v2 WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM board_game_plays_v2 WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -155298,7 +155298,7 @@ app.get("/api/antiques/appraisals", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS antiques_appraisals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, item_name TEXT, appraiser TEXT, date TEXT, low_usd REAL DEFAULT 0, high_usd REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM antiques_appraisals WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM antiques_appraisals WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -155822,7 +155822,7 @@ app.get("/api/gardening/harvests", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS gardening_harvests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, plant TEXT, bed TEXT, date TEXT, quantity REAL DEFAULT 0, unit TEXT DEFAULT 'lbs', quality INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM gardening_harvests WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM gardening_harvests WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -155876,7 +155876,7 @@ app.get("/api/homestead/produce", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS homestead_produce (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, type TEXT DEFAULT 'eggs', date TEXT, quantity REAL DEFAULT 0, unit TEXT DEFAULT 'count', preserved INTEGER DEFAULT 0, preserve_method TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM homestead_produce WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM homestead_produce WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -155930,7 +155930,7 @@ app.get("/api/beekeeping/inspections", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS beekeeping_inspections (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, hive TEXT, date TEXT, queen_seen INTEGER DEFAULT 0, eggs INTEGER DEFAULT 0, brood TEXT DEFAULT 'good', honey_frames INTEGER DEFAULT 0, temperament TEXT DEFAULT 'calm', varroa_count INTEGER DEFAULT 0, actions TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM beekeeping_inspections WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM beekeeping_inspections WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -155984,7 +155984,7 @@ app.get("/api/aquaponics/readings", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS aquaponics_readings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, system TEXT, date TEXT, ph REAL DEFAULT 7.0, ammonia REAL DEFAULT 0, nitrite REAL DEFAULT 0, nitrate REAL DEFAULT 20, temp_f REAL DEFAULT 72, do_ppm REAL DEFAULT 6, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM aquaponics_readings WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM aquaponics_readings WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -156038,7 +156038,7 @@ app.get("/api/composting/inputs", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS composting_inputs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, bin TEXT, date TEXT, material TEXT, type TEXT DEFAULT 'brown', weight_lbs REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM composting_inputs WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM composting_inputs WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -156092,7 +156092,7 @@ app.get("/api/solar/readings", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS solar_readings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, kwh_generated REAL DEFAULT 0, kwh_consumed REAL DEFAULT 0, kwh_exported REAL DEFAULT 0, kwh_imported REAL DEFAULT 0, battery_pct REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM solar_readings WHERE user_id=? ORDER BY date DESC LIMIT 90").all(u);
+    const rows = db.prepare("SELECT * FROM solar_readings WHERE user_id=? ORDER BY entry_date DESC LIMIT 90").all(u);
     const total = db.prepare("SELECT COALESCE(SUM(kwh_generated),0) as g FROM solar_readings WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, total_kwh_generated: total?.g || 0 });
   } catch (e) {
@@ -156147,7 +156147,7 @@ app.get("/api/rain-harvest/log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS rain_harvest_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tank TEXT, date TEXT, rainfall_in REAL DEFAULT 0, gallons_collected REAL DEFAULT 0, gallons_used REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM rain_harvest_log WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM rain_harvest_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -156288,7 +156288,7 @@ app.get("/api/finance-v2/transactions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS finance_v2_txns (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, account TEXT, category TEXT DEFAULT 'other', description TEXT, amount REAL DEFAULT 0, type TEXT DEFAULT 'expense', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM finance_v2_txns WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM finance_v2_txns WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -156344,7 +156344,7 @@ app.get("/api/investments/dividends", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS investment_dividends (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, ticker TEXT, date TEXT, amount REAL DEFAULT 0, shares_held REAL DEFAULT 0, reinvested INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM investment_dividends WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM investment_dividends WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     const ytd = db.prepare("SELECT COALESCE(SUM(amount),0) as t FROM investment_dividends WHERE user_id=? AND date >= date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_dividends: ytd?.t || 0 });
   } catch (e) {
@@ -156400,7 +156400,7 @@ app.get("/api/crypto-v2/transactions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS crypto_v2_txns (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, symbol TEXT, type TEXT DEFAULT 'buy', quantity REAL DEFAULT 0, price_usd REAL DEFAULT 0, fee_usd REAL DEFAULT 0, exchange TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM crypto_v2_txns WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM crypto_v2_txns WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -156455,7 +156455,7 @@ app.get("/api/real-estate/expenses", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS real_estate_expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, property TEXT, date TEXT, category TEXT DEFAULT 'maintenance', description TEXT, amount REAL DEFAULT 0, deductible INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM real_estate_expenses WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM real_estate_expenses WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -156620,7 +156620,7 @@ app.get("/api/insurance/claims", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS insurance_claims (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, policy TEXT, date TEXT, description TEXT, amount_claimed REAL DEFAULT 0, amount_paid REAL DEFAULT 0, status TEXT DEFAULT 'pending', claim_number TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM insurance_claims WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM insurance_claims WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -156653,7 +156653,7 @@ app.get("/api/side-hustle/income", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS side_hustle_income (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, source TEXT, category TEXT DEFAULT 'freelance', amount REAL DEFAULT 0, client TEXT, project TEXT, hours REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM side_hustle_income WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM side_hustle_income WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     const ytd = db.prepare("SELECT COALESCE(SUM(amount),0) as t FROM side_hustle_income WHERE user_id=? AND date >= date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_income: ytd?.t || 0 });
   } catch (e) {
@@ -156675,7 +156675,7 @@ app.get("/api/side-hustle/expenses", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS side_hustle_expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, category TEXT DEFAULT 'supplies', description TEXT, amount REAL DEFAULT 0, deductible INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM side_hustle_expenses WHERE user_id=? ORDER BY date DESC LIMIT 100").all(u);
+    const rows = db.prepare("SELECT * FROM side_hustle_expenses WHERE user_id=? ORDER BY entry_date DESC LIMIT 100").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -156760,7 +156760,7 @@ app.get("/api/career/achievements", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS career_achievements (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, title TEXT, category TEXT DEFAULT 'project', impact TEXT, metrics TEXT, company TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM career_achievements WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM career_achievements WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -156816,7 +156816,7 @@ app.get("/api/jobs/interviews", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS job_interviews (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, company TEXT, role TEXT, date TEXT, type TEXT DEFAULT 'phone', interviewer TEXT, outcome TEXT DEFAULT 'pending', questions TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM job_interviews WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM job_interviews WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -156872,7 +156872,7 @@ app.get("/api/freelance/invoices", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS freelance_invoices (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, invoice_number TEXT, project TEXT, client TEXT, date TEXT, due_date TEXT, amount REAL DEFAULT 0, status TEXT DEFAULT 'sent', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM freelance_invoices WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM freelance_invoices WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const outstanding = db.prepare("SELECT COALESCE(SUM(amount),0) as t FROM freelance_invoices WHERE user_id=? AND status IN ('sent','overdue')").get(u);
     res.json({ success: true, data: rows, outstanding: outstanding?.t || 0 });
   } catch (e) {
@@ -156928,7 +156928,7 @@ app.get("/api/networking/touchpoints", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS network_touchpoints (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, contact TEXT, date TEXT, type TEXT DEFAULT 'message', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM network_touchpoints WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM network_touchpoints WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -157092,7 +157092,7 @@ app.get("/api/conferences/events", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS conference_events (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, date TEXT, location TEXT, type TEXT DEFAULT 'conference', attended INTEGER DEFAULT 0, spoke INTEGER DEFAULT 0, cost REAL DEFAULT 0, key_takeaways TEXT, contacts_made INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM conference_events WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM conference_events WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const spoke = db.prepare("SELECT COUNT(*) as c FROM conference_events WHERE user_id=? AND spoke=1").get(u);
     res.json({ success: true, data: rows, speaking_engagements: spoke?.c || 0 });
   } catch (e) {
@@ -157159,7 +157159,7 @@ app.get("/api/health-v3/vitals", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS health_v3_vitals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, weight_lbs REAL DEFAULT 0, bmi REAL DEFAULT 0, bp_systolic INTEGER DEFAULT 0, bp_diastolic INTEGER DEFAULT 0, heart_rate INTEGER DEFAULT 0, temp_f REAL DEFAULT 0, spo2 INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM health_v3_vitals WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM health_v3_vitals WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const latest = rows[0] || null;
     res.json({ success: true, data: rows, latest });
   } catch (e) {
@@ -157181,7 +157181,7 @@ app.get("/api/health-v3/symptoms", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS health_v3_symptoms (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, symptom TEXT, severity INTEGER DEFAULT 1, duration_hours REAL DEFAULT 0, triggers TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM health_v3_symptoms WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM health_v3_symptoms WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -157207,14 +157207,14 @@ app.get("/api/milestone/health-v3-os", (req, res) => {
       return d;
     }
   };
-  const v = safe2(() => db.prepare("SELECT * FROM health_v3_vitals WHERE user_id=? ORDER BY date DESC LIMIT 1").get(u));
+  const v = safe2(() => db.prepare("SELECT * FROM health_v3_vitals WHERE user_id=? ORDER BY entry_date DESC LIMIT 1").get(u));
   res.json({ success: true, health_v3_os: { latest_weight: v?.weight_lbs || 0, latest_bp: `${v?.bp_systolic || 0}/${v?.bp_diastolic || 0}` } });
 });
 app.get("/api/fitness/workouts", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS fitness_workouts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, type TEXT DEFAULT 'strength', name TEXT, duration_min INTEGER DEFAULT 0, calories_burned INTEGER DEFAULT 0, intensity TEXT DEFAULT 'moderate', location TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM fitness_workouts WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM fitness_workouts WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const ytd_min = db.prepare("SELECT COALESCE(SUM(duration_min),0) as t FROM fitness_workouts WHERE user_id=? AND date >= date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_minutes: ytd_min?.t || 0 });
   } catch (e) {
@@ -157324,7 +157324,7 @@ app.get("/api/mental-health/moods", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS mental_health_moods (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, time TEXT, mood_score INTEGER DEFAULT 5, energy_score INTEGER DEFAULT 5, anxiety_score INTEGER DEFAULT 5, emotions TEXT, triggers TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM mental_health_moods WHERE user_id=? ORDER BY date DESC, time DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM mental_health_moods WHERE user_id=? ORDER BY entry_date DESC, time DESC LIMIT 30").all(u);
     const avg = db.prepare("SELECT AVG(mood_score) as m, AVG(energy_score) as e, AVG(anxiety_score) as a FROM mental_health_moods WHERE user_id=? AND date >= date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, week_avg: { mood: avg?.m?.toFixed(1) || 0, energy: avg?.e?.toFixed(1) || 0, anxiety: avg?.a?.toFixed(1) || 0 } });
   } catch (e) {
@@ -157346,7 +157346,7 @@ app.get("/api/mental-health/journal", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS mental_health_journal (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, title TEXT, content TEXT, category TEXT DEFAULT 'reflection', mood_score INTEGER DEFAULT 5, private INTEGER DEFAULT 1, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT id,date,title,category,mood_score,created_at FROM mental_health_journal WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT id,date,title,category,mood_score,created_at FROM mental_health_journal WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -157454,7 +157454,7 @@ app.get("/api/doctors/appointments", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS doctor_appointments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, doctor TEXT, specialty TEXT, reason TEXT, location TEXT, outcome TEXT, copay REAL DEFAULT 0, follow_up_needed INTEGER DEFAULT 0, follow_up_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM doctor_appointments WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM doctor_appointments WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const upcoming = db.prepare("SELECT COUNT(*) as c FROM doctor_appointments WHERE user_id=? AND date >= date('now') AND outcome IS NULL OR outcome=''").get(u);
     res.json({ success: true, data: rows, upcoming: upcoming?.c || 0 });
   } catch (e) {
@@ -157488,7 +157488,7 @@ app.get("/api/labs/results", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS lab_results (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, test_name TEXT, value REAL DEFAULT 0, unit TEXT, normal_min REAL DEFAULT 0, normal_max REAL DEFAULT 0, status TEXT DEFAULT 'normal', ordered_by TEXT, lab TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM lab_results WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM lab_results WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const abnormal = db.prepare("SELECT COUNT(*) as c FROM lab_results WHERE user_id=? AND status='abnormal'").get(u);
     res.json({ success: true, data: rows, abnormal_count: abnormal?.c || 0 });
   } catch (e) {
@@ -157510,7 +157510,7 @@ app.get("/api/biometrics/readings", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS biometric_readings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, metric TEXT, value REAL DEFAULT 0, unit TEXT, device TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM biometric_readings WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM biometric_readings WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -157548,7 +157548,7 @@ app.get("/api/milestone/v44", (req, res) => {
       return d;
     }
   };
-  const wt = safe2(() => db.prepare("SELECT * FROM health_v3_vitals WHERE user_id=? ORDER BY date DESC LIMIT 1").get(u));
+  const wt = safe2(() => db.prepare("SELECT * FROM health_v3_vitals WHERE user_id=? ORDER BY entry_date DESC LIMIT 1").get(u));
   const wrk = safe2(() => db.prepare("SELECT COUNT(*) as c FROM fitness_workouts WHERE user_id=? AND date >= date('now','start of year')").get(u));
   const meds = safe2(() => db.prepare("SELECT COUNT(*) as c FROM medications WHERE user_id=? AND active=1").get(u));
   const labs = safe2(() => db.prepare("SELECT COUNT(*) as c FROM lab_results WHERE user_id=? AND status='abnormal'").get(u));
@@ -157595,7 +157595,7 @@ app.get("/api/home/maintenance", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS home_maintenance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, task TEXT, room TEXT, category TEXT DEFAULT 'repair', cost REAL DEFAULT 0, contractor TEXT, status TEXT DEFAULT 'completed', next_due TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM home_maintenance WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM home_maintenance WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const ytd_cost = db.prepare("SELECT COALESCE(SUM(cost),0) as t FROM home_maintenance WHERE user_id=? AND date >= date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_cost: ytd_cost?.t || 0 });
   } catch (e) {
@@ -157650,7 +157650,7 @@ app.get("/api/appliances/service-log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS appliance_service (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, appliance TEXT, date TEXT, type TEXT DEFAULT 'repair', technician TEXT, cost REAL DEFAULT 0, outcome TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM appliance_service WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM appliance_service WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -157955,7 +157955,7 @@ app.get("/api/auto/maintenance", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS auto_maintenance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, vehicle TEXT, date TEXT, mileage INTEGER DEFAULT 0, type TEXT DEFAULT 'oil_change', shop TEXT, cost REAL DEFAULT 0, next_due_miles INTEGER DEFAULT 0, next_due_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM auto_maintenance WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM auto_maintenance WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const ytd = db.prepare("SELECT COALESCE(SUM(cost),0) as t FROM auto_maintenance WHERE user_id=? AND date >= date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_cost: ytd?.t || 0 });
   } catch (e) {
@@ -157977,7 +157977,7 @@ app.get("/api/auto/fuel-log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS fuel_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, vehicle TEXT, date TEXT, mileage INTEGER DEFAULT 0, gallons REAL DEFAULT 0, price_per_gallon REAL DEFAULT 0, total_cost REAL DEFAULT 0, station TEXT, fuel_type TEXT DEFAULT 'regular', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM fuel_log WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM fuel_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const ytd = db.prepare("SELECT COALESCE(SUM(total_cost),0) as t, COALESCE(SUM(gallons),0) as g FROM fuel_log WHERE user_id=? AND date >= date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_fuel_cost: ytd?.t || 0, ytd_gallons: ytd?.g || 0 });
   } catch (e) {
@@ -158065,7 +158065,7 @@ app.get("/api/driver/log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS driver_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, vehicle TEXT, start_location TEXT, end_location TEXT, miles REAL DEFAULT 0, purpose TEXT DEFAULT 'personal', passengers INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM driver_log WHERE user_id=? ORDER BY date DESC LIMIT 50").all(u);
+    const rows = db.prepare("SELECT * FROM driver_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 50").all(u);
     const ytd = db.prepare("SELECT COALESCE(SUM(miles),0) as t FROM driver_log WHERE user_id=? AND date >= date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_miles: ytd?.t || 0 });
   } catch (e) {
@@ -158087,7 +158087,7 @@ app.get("/api/driver/violations", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS driver_violations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, type TEXT DEFAULT 'speeding', location TEXT, fine REAL DEFAULT 0, points INTEGER DEFAULT 0, court_date TEXT, resolved INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM driver_violations WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM driver_violations WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -158281,7 +158281,7 @@ app.get("/api/study-groups/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS study_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, group_name TEXT, date TEXT, duration_min INTEGER DEFAULT 60, topics TEXT, attendance INTEGER DEFAULT 3, productivity_score INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM study_sessions WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM study_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -158369,7 +158369,7 @@ app.get("/api/tutoring/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS tutoring_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, student TEXT, subject TEXT, duration_min INTEGER DEFAULT 60, type TEXT DEFAULT 'one_on_one', rate REAL DEFAULT 0, topics TEXT, progress_notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM tutoring_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM tutoring_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const ytd_earned = db.prepare("SELECT COALESCE(SUM(rate*(duration_min/60.0)),0) as t FROM tutoring_sessions WHERE user_id=? AND date >= date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_earned: ytd_earned?.t || 0 });
   } catch (e) {
@@ -158530,7 +158530,7 @@ app.get("/api/pets/health-records", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS pet_health (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, pet_name TEXT, date TEXT, type TEXT DEFAULT 'checkup', vet TEXT, weight_lbs REAL DEFAULT 0, cost REAL DEFAULT 0, next_due TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM pet_health WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM pet_health WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -158584,7 +158584,7 @@ app.get("/api/garden/log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS garden_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, plant TEXT, activity TEXT DEFAULT 'watered', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM garden_log WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM garden_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -158638,7 +158638,7 @@ app.get("/api/hobbies/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS hobby_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, hobby TEXT, date TEXT, duration_min INTEGER DEFAULT 60, achievement TEXT, mood INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM hobby_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM hobby_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -158779,7 +158779,7 @@ app.get("/api/photography/shoots", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS photo_shoots (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, date TEXT, location TEXT, type TEXT DEFAULT 'landscape', camera TEXT, lens TEXT, photo_count INTEGER DEFAULT 0, edited INTEGER DEFAULT 0, client TEXT, rate REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM photo_shoots WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM photo_shoots WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -158800,7 +158800,7 @@ app.get("/api/music/practice", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS music_practice (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, instrument TEXT, duration_min INTEGER DEFAULT 30, pieces TEXT, focus TEXT DEFAULT 'technique', quality INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM music_practice WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM music_practice WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const total = db.prepare("SELECT COALESCE(SUM(duration_min),0) as t FROM music_practice WHERE user_id=? AND date >= date('now','start of month')").get(u);
     res.json({ success: true, data: rows, monthly_minutes: total?.t || 0 });
   } catch (e) {
@@ -158857,7 +158857,7 @@ app.get("/api/gaming/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS game_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, game TEXT, duration_min INTEGER DEFAULT 60, achievements TEXT, mood INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM game_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM game_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -158908,7 +158908,7 @@ app.get("/api/volunteering/activities", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS volunteer_activities (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, organization TEXT, role TEXT, date TEXT, hours REAL DEFAULT 2, cause TEXT DEFAULT 'community', location TEXT, impact_notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM volunteer_activities WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM volunteer_activities WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const ytd = db.prepare("SELECT COALESCE(SUM(hours),0) as h FROM volunteer_activities WHERE user_id=? AND date >= date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_hours: ytd?.h || 0 });
   } catch (e) {
@@ -158963,7 +158963,7 @@ app.get("/api/charity/donations", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS charity_donations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, organization TEXT, cause TEXT DEFAULT 'general', date TEXT, amount REAL DEFAULT 0, recurring INTEGER DEFAULT 0, frequency TEXT, tax_deductible INTEGER DEFAULT 1, receipt_id TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM charity_donations WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM charity_donations WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const ytd = db.prepare("SELECT COALESCE(SUM(amount),0) as t FROM charity_donations WHERE user_id=? AND date >= date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_donated: ytd?.t || 0 });
   } catch (e) {
@@ -159072,7 +159072,7 @@ app.get("/api/climate/carbon-log", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS carbon_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, category TEXT DEFAULT 'transport', activity TEXT, kg_co2 REAL DEFAULT 0, offset_kg REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM carbon_log WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM carbon_log WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const ytd = db.prepare("SELECT COALESCE(SUM(kg_co2),0) as e, COALESCE(SUM(offset_kg),0) as o FROM carbon_log WHERE user_id=? AND date >= date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_emissions_kg: ytd?.e || 0, ytd_offset_kg: ytd?.o || 0 });
   } catch (e) {
@@ -159199,7 +159199,7 @@ app.get("/api/writing/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS writing_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, project TEXT, date TEXT, words_written INTEGER DEFAULT 0, duration_min INTEGER DEFAULT 60, location TEXT, mood INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM writing_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM writing_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const mtd = db.prepare("SELECT COALESCE(SUM(words_written),0) as w FROM writing_sessions WHERE user_id=? AND date >= date('now','start of month')").get(u);
     res.json({ success: true, data: rows, mtd_words: mtd?.w || 0 });
   } catch (e) {
@@ -159233,7 +159233,7 @@ app.get("/api/journal/entries", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS journal_entries (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, title TEXT, content TEXT, mood INTEGER DEFAULT 3, tags TEXT, gratitude TEXT, affirmation TEXT, private INTEGER DEFAULT 1, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT id,date,title,mood,tags,created_at FROM journal_entries WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT id,date,title,mood,tags,created_at FROM journal_entries WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const streak = db.prepare("SELECT COUNT(DISTINCT date(date)) as s FROM journal_entries WHERE user_id=? AND date >= date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, weekly_streak: streak?.s || 0 });
   } catch (e) {
@@ -159245,7 +159245,7 @@ app.post("/api/journal/entries", (req, res) => {
   const { date, title, content, mood, tags, gratitude, affirmation, private: priv } = req.body || {};
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS journal_entries (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, title TEXT, content TEXT, mood INTEGER DEFAULT 3, tags TEXT, gratitude TEXT, affirmation TEXT, private INTEGER DEFAULT 1, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const r = db.prepare("INSERT INTO journal_entries (user_id,date,title,content,mood,tags,gratitude,affirmation,private) VALUES (?,?,?,?,?,?,?,?,?)").run(u, date || "", title || "", content || "", mood || 3, tags || "", gratitude || "", affirmation || "", priv !== false ? 1 : 0);
+    const r = db.prepare("INSERT INTO journal_entries (user_id,entry_date,title,content,mood,tags,gratitude,affirmation,private) VALUES (?,?,?,?,?,?,?,?,?)").run(u, date || "", title || "", content || "", mood || 3, tags || "", gratitude || "", affirmation || "", priv !== false ? 1 : 0);
     res.json({ success: true, id: r.lastInsertRowid });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -159432,7 +159432,7 @@ app.get("/api/sports/activities", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS sports_activities (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, sport TEXT, date TEXT, duration_min INTEGER DEFAULT 60, distance_miles REAL DEFAULT 0, calories INTEGER DEFAULT 0, heart_rate_avg INTEGER DEFAULT 0, heart_rate_max INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM sports_activities WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM sports_activities WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const mtd = db.prepare("SELECT COALESCE(SUM(duration_min),0) as m, COALESCE(SUM(calories),0) as c FROM sports_activities WHERE user_id=? AND date >= date('now','start of month')").get(u);
     res.json({ success: true, data: rows, mtd_minutes: mtd?.m || 0, mtd_calories: mtd?.c || 0 });
   } catch (e) {
@@ -159487,7 +159487,7 @@ app.get("/api/golf/rounds", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS golf_rounds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, course TEXT, holes INTEGER DEFAULT 18, score INTEGER DEFAULT 90, par INTEGER DEFAULT 72, fairways_hit INTEGER DEFAULT 9, greens_in_regulation INTEGER DEFAULT 10, putts INTEGER DEFAULT 34, penalties INTEGER DEFAULT 2, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM golf_rounds WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM golf_rounds WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     const avg = db.prepare("SELECT AVG(score) as a, MIN(score) as best FROM golf_rounds WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, avg_score: avg?.a?.toFixed(1) || 0, best_score: avg?.best || 0 });
   } catch (e) {
@@ -159509,7 +159509,7 @@ app.get("/api/golf/handicap", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS golf_rounds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, course TEXT, holes INTEGER DEFAULT 18, score INTEGER DEFAULT 90, par INTEGER DEFAULT 72, fairways_hit INTEGER DEFAULT 9, greens_in_regulation INTEGER DEFAULT 10, putts INTEGER DEFAULT 34, penalties INTEGER DEFAULT 2, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const recent = db.prepare("SELECT score, par FROM golf_rounds WHERE user_id=? AND holes=18 ORDER BY date DESC LIMIT 20").all(u);
+    const recent = db.prepare("SELECT score, par FROM golf_rounds WHERE user_id=? AND holes=18 ORDER BY entry_date DESC LIMIT 20").all(u);
     const diffs = recent.map((r) => r.score - r.par);
     const best = diffs.sort((a, b) => a - b).slice(0, 8);
     const handicap = best.length > 0 ? (best.reduce((a, b) => a + b, 0) / best.length * 0.96).toFixed(1) : null;
@@ -159534,7 +159534,7 @@ app.get("/api/cycling/rides", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS cycling_rides (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, route TEXT, distance_miles REAL DEFAULT 0, duration_min INTEGER DEFAULT 60, elevation_ft INTEGER DEFAULT 0, avg_speed_mph REAL DEFAULT 0, max_speed_mph REAL DEFAULT 0, calories INTEGER DEFAULT 0, bike TEXT DEFAULT 'road', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM cycling_rides WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM cycling_rides WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const ytd = db.prepare("SELECT COALESCE(SUM(distance_miles),0) as d, COALESCE(SUM(elevation_ft),0) as e FROM cycling_rides WHERE user_id=? AND date >= date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_miles: ytd?.d || 0, ytd_elevation_ft: ytd?.e || 0 });
   } catch (e) {
@@ -159589,7 +159589,7 @@ app.get("/api/hiking/trips", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS hiking_trips (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, trail TEXT, date TEXT, distance_miles REAL DEFAULT 0, elevation_gain_ft INTEGER DEFAULT 0, duration_min INTEGER DEFAULT 180, difficulty TEXT DEFAULT 'moderate', rating INTEGER DEFAULT 4, companions TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM hiking_trips WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM hiking_trips WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const totals = db.prepare("SELECT COALESCE(SUM(distance_miles),0) as d, COALESCE(SUM(elevation_gain_ft),0) as e FROM hiking_trips WHERE user_id=? AND date >= date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_miles: totals?.d || 0, ytd_elevation_ft: totals?.e || 0 });
   } catch (e) {
@@ -159611,7 +159611,7 @@ app.get("/api/swimming/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS swimming_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, pool TEXT, duration_min INTEGER DEFAULT 45, laps INTEGER DEFAULT 40, yards INTEGER DEFAULT 1000, stroke TEXT DEFAULT 'freestyle', calories INTEGER DEFAULT 300, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM swimming_sessions WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM swimming_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const ytd = db.prepare("SELECT COALESCE(SUM(yards),0) as y FROM swimming_sessions WHERE user_id=? AND date >= date('now','start of year')").get(u);
     res.json({ success: true, data: rows, ytd_yards: ytd?.y || 0 });
   } catch (e) {
@@ -161263,7 +161263,7 @@ app.get("/api/music/practice", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS practice_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, instrument_id INTEGER, date TEXT, duration_min INTEGER DEFAULT 0, focus TEXT, scales TEXT, songs TEXT, notes TEXT, rating INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM practice_sessions WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM practice_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     const this_week = db.prepare("SELECT COALESCE(SUM(duration_min),0) as mins FROM practice_sessions WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, this_week_mins: this_week?.mins || 0 });
   } catch (e) {
@@ -161285,7 +161285,7 @@ app.get("/api/concerts", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS concerts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, artist TEXT, venue TEXT, city TEXT, date TEXT, ticket_price REAL DEFAULT 0, seat TEXT, setlist TEXT, support_acts TEXT, rating INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM concerts WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM concerts WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const total_spent = db.prepare("SELECT COALESCE(SUM(ticket_price),0) as v FROM concerts WHERE user_id=?").get(u);
     res.json({ success: true, data: rows, total_shows: rows.length, total_spent: total_spent?.v || 0 });
   } catch (e) {
@@ -161371,7 +161371,7 @@ app.get("/api/running/logs", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS running_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, distance_km REAL DEFAULT 0, duration_min INTEGER DEFAULT 0, pace_min_per_km REAL DEFAULT 0, route TEXT, surface TEXT DEFAULT 'road', weather TEXT, heart_rate_avg INTEGER DEFAULT 0, calories INTEGER DEFAULT 0, shoes TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM running_logs WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM running_logs WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     const totals = db.prepare("SELECT COALESCE(SUM(distance_km),0) as km, COALESCE(SUM(duration_min),0) as mins FROM running_logs WHERE user_id=? AND date>=date('now','-30 days')").get(u);
     res.json({ success: true, data: rows, month_km: totals?.km || 0, month_mins: totals?.mins || 0 });
   } catch (e) {
@@ -161415,7 +161415,7 @@ app.get("/api/cycling/rides", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS cycling_rides (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, distance_km REAL DEFAULT 0, duration_min INTEGER DEFAULT 0, elevation_m INTEGER DEFAULT 0, avg_speed_kmh REAL DEFAULT 0, bike TEXT, route TEXT, type TEXT DEFAULT 'road', calories INTEGER DEFAULT 0, heart_rate_avg INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM cycling_rides WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM cycling_rides WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     const totals = db.prepare("SELECT COALESCE(SUM(distance_km),0) as km, COALESCE(SUM(elevation_m),0) as elev FROM cycling_rides WHERE user_id=? AND date>=date('now','-30 days')").get(u);
     res.json({ success: true, data: rows, month_km: totals?.km || 0, month_elevation: totals?.elev || 0 });
   } catch (e) {
@@ -161438,7 +161438,7 @@ app.get("/api/gym/workouts", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS gym_workouts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, name TEXT, type TEXT DEFAULT 'strength', duration_min INTEGER DEFAULT 0, total_volume_kg REAL DEFAULT 0, calories INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM gym_workouts WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM gym_workouts WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     const this_week = db.prepare("SELECT COUNT(*) as c FROM gym_workouts WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, sessions_this_week: this_week?.c || 0 });
   } catch (e) {
@@ -161601,7 +161601,7 @@ app.get("/api/fishing/logs", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS fishing_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, location TEXT, species TEXT, weight_kg REAL DEFAULT 0, length_cm REAL DEFAULT 0, lure TEXT, water_temp REAL DEFAULT 0, weather TEXT, kept INTEGER DEFAULT 0, photo_url TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM fishing_logs WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM fishing_logs WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     const pb = db.prepare("SELECT species, MAX(weight_kg) as pb FROM fishing_logs WHERE user_id=? GROUP BY species ORDER BY pb DESC LIMIT 5").all(u);
     res.json({ success: true, data: rows, personal_bests: pb });
   } catch (e) {
@@ -161674,7 +161674,7 @@ app.get("/api/boardgames/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS boardgame_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, game_id INTEGER, game_name TEXT, date TEXT, players TEXT, winner TEXT, my_score INTEGER DEFAULT 0, duration_min INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM boardgame_sessions WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM boardgame_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     const wins = db.prepare("SELECT COUNT(*) as c FROM boardgame_sessions WHERE user_id=? AND winner LIKE '%me%'").get(u);
     res.json({ success: true, data: rows, wins: wins?.c || 0 });
   } catch (e) {
@@ -161741,7 +161741,7 @@ app.get("/api/rpg/sessions", (req, res) => {
   const { campaign_id } = req.query || {};
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS rpg_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, campaign_id INTEGER, session_num INTEGER DEFAULT 1, date TEXT, summary TEXT, key_events TEXT, npcs TEXT, loot TEXT, xp_gained INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = campaign_id ? db.prepare("SELECT * FROM rpg_sessions WHERE user_id=? AND campaign_id=? ORDER BY session_num DESC LIMIT 20").all(u, campaign_id) : db.prepare("SELECT * FROM rpg_sessions WHERE user_id=? ORDER BY date DESC LIMIT 10").all(u);
+    const rows = campaign_id ? db.prepare("SELECT * FROM rpg_sessions WHERE user_id=? AND campaign_id=? ORDER BY session_num DESC LIMIT 20").all(u, campaign_id) : db.prepare("SELECT * FROM rpg_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 10").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -161965,7 +161965,7 @@ app.get("/api/mental/moods", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS mood_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, time TEXT, mood INTEGER DEFAULT 5, energy INTEGER DEFAULT 5, anxiety INTEGER DEFAULT 5, tags TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM mood_logs WHERE user_id=? ORDER BY date DESC, time DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM mood_logs WHERE user_id=? ORDER BY entry_date DESC, time DESC LIMIT 30").all(u);
     const avg = db.prepare("SELECT AVG(mood) as m, AVG(energy) as e, AVG(anxiety) as a FROM mood_logs WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, week_avg: { mood: +(avg?.m || 5).toFixed(1), energy: +(avg?.e || 5).toFixed(1), anxiety: +(avg?.a || 5).toFixed(1) } });
   } catch (e) {
@@ -162008,7 +162008,7 @@ app.get("/api/therapy/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS therapy_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, therapist TEXT, type TEXT DEFAULT 'individual', mood_before INTEGER DEFAULT 5, mood_after INTEGER DEFAULT 5, topics TEXT, insights TEXT, homework TEXT, next_date TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM therapy_sessions WHERE user_id=? ORDER BY date DESC LIMIT 10").all(u);
+    const rows = db.prepare("SELECT * FROM therapy_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 10").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -162029,7 +162029,7 @@ app.get("/api/therapy/cbt", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS cbt_records (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, situation TEXT, automatic_thought TEXT, emotion TEXT, emotion_intensity INTEGER DEFAULT 5, cognitive_distortion TEXT, alternative_thought TEXT, outcome_intensity INTEGER DEFAULT 5, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM cbt_records WHERE user_id=? ORDER BY date DESC LIMIT 10").all(u);
+    const rows = db.prepare("SELECT * FROM cbt_records WHERE user_id=? ORDER BY entry_date DESC LIMIT 10").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -162050,7 +162050,7 @@ app.get("/api/mindfulness/sessions", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS mindfulness_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, type TEXT DEFAULT 'meditation', duration_min INTEGER DEFAULT 10, technique TEXT, mood_before INTEGER DEFAULT 5, mood_after INTEGER DEFAULT 5, streak INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM mindfulness_sessions WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM mindfulness_sessions WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     const this_week = db.prepare("SELECT COUNT(*) as c, COALESCE(SUM(duration_min),0) as m FROM mindfulness_sessions WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, week_sessions: this_week?.c || 0, week_mins: this_week?.m || 0 });
   } catch (e) {
@@ -162185,7 +162185,7 @@ app.get("/api/pets/:id/health", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS pet_health (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, pet_id INTEGER, date TEXT, type TEXT DEFAULT 'vet_visit', description TEXT, weight_kg REAL DEFAULT 0, cost REAL DEFAULT 0, next_due TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM pet_health WHERE user_id=? AND pet_id=? ORDER BY date DESC LIMIT 20").all(u, req.params.id);
+    const rows = db.prepare("SELECT * FROM pet_health WHERE user_id=? AND pet_id=? ORDER BY entry_date DESC LIMIT 20").all(u, req.params.id);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -162316,7 +162316,7 @@ app.get("/api/garden/harvest", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS garden_harvest (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, plant_id INTEGER, plant_name TEXT, date TEXT, quantity REAL DEFAULT 0, unit TEXT DEFAULT 'g', notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM garden_harvest WHERE user_id=? ORDER BY date DESC LIMIT 20").all(u);
+    const rows = db.prepare("SELECT * FROM garden_harvest WHERE user_id=? ORDER BY entry_date DESC LIMIT 20").all(u);
     const this_year = db.prepare("SELECT COUNT(*) as c FROM garden_harvest WHERE user_id=? AND strftime('%Y',date)=strftime('%Y','now')").get(u);
     res.json({ success: true, data: rows, harvests_this_year: this_year?.c || 0 });
   } catch (e) {
@@ -162594,7 +162594,7 @@ app.get("/api/finance/transactions", (req, res) => {
       q += " AND strftime('%Y-%m',date)=?";
       params.push(month);
     }
-    q += " ORDER BY date DESC LIMIT 50";
+    q += " ORDER BY entry_date DESC LIMIT 50";
     const rows = db.prepare(q).all(...params);
     res.json({ success: true, data: rows });
   } catch (e) {
@@ -162760,7 +162760,7 @@ app.get("/api/realestate/rent-payments", (req, res) => {
   const { rental_id } = req.query;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS re_rent_payments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, rental_id INTEGER, date TEXT, amount REAL DEFAULT 0, method TEXT DEFAULT 'bank_transfer', late INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const q = rental_id ? "SELECT * FROM re_rent_payments WHERE user_id=? AND rental_id=? ORDER BY date DESC LIMIT 24" : "SELECT * FROM re_rent_payments WHERE user_id=? ORDER BY date DESC LIMIT 24";
+    const q = rental_id ? "SELECT * FROM re_rent_payments WHERE user_id=? AND rental_id=? ORDER BY entry_date DESC LIMIT 24" : "SELECT * FROM re_rent_payments WHERE user_id=? ORDER BY entry_date DESC LIMIT 24";
     const params = rental_id ? [u, rental_id] : [u];
     const rows = db.prepare(q).all(...params);
     res.json({ success: true, data: rows });
@@ -162971,7 +162971,7 @@ app.get("/api/vehicles/:vehicle_id/maintenance", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS vehicle_maintenance (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, vehicle_id INTEGER, type TEXT DEFAULT 'oil_change', date TEXT, mileage INTEGER DEFAULT 0, cost REAL DEFAULT 0, shop TEXT, next_date TEXT, next_mileage INTEGER, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM vehicle_maintenance WHERE user_id=? AND vehicle_id=? ORDER BY date DESC LIMIT 20").all(u, req.params.vehicle_id);
+    const rows = db.prepare("SELECT * FROM vehicle_maintenance WHERE user_id=? AND vehicle_id=? ORDER BY entry_date DESC LIMIT 20").all(u, req.params.vehicle_id);
     const upcoming = db.prepare("SELECT * FROM vehicle_maintenance WHERE user_id=? AND vehicle_id=? AND next_date>=date('now') ORDER BY next_date ASC LIMIT 5").all(u, req.params.vehicle_id);
     res.json({ success: true, data: rows, upcoming });
   } catch (e) {
@@ -162993,7 +162993,7 @@ app.get("/api/vehicles/:vehicle_id/fuel", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS vehicle_fuel (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, vehicle_id INTEGER, date TEXT, mileage INTEGER DEFAULT 0, gallons REAL DEFAULT 0, price_per_gallon REAL DEFAULT 0, total_cost REAL DEFAULT 0, mpg REAL DEFAULT 0, station TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM vehicle_fuel WHERE user_id=? AND vehicle_id=? ORDER BY date DESC LIMIT 20").all(u, req.params.vehicle_id);
+    const rows = db.prepare("SELECT * FROM vehicle_fuel WHERE user_id=? AND vehicle_id=? ORDER BY entry_date DESC LIMIT 20").all(u, req.params.vehicle_id);
     const avg_mpg = db.prepare("SELECT AVG(mpg) as m FROM vehicle_fuel WHERE user_id=? AND vehicle_id=? AND mpg>0").get(u, req.params.vehicle_id);
     res.json({ success: true, data: rows, avg_mpg: Math.round((avg_mpg?.m || 0) * 10) / 10 });
   } catch (e) {
@@ -163005,7 +163005,7 @@ app.post("/api/vehicles/:vehicle_id/fuel", (req, res) => {
   const { date, mileage, gallons, price_per_gallon, station, notes } = req.body || {};
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS vehicle_fuel (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, vehicle_id INTEGER, date TEXT, mileage INTEGER DEFAULT 0, gallons REAL DEFAULT 0, price_per_gallon REAL DEFAULT 0, total_cost REAL DEFAULT 0, mpg REAL DEFAULT 0, station TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const prev = db.prepare("SELECT mileage FROM vehicle_fuel WHERE user_id=? AND vehicle_id=? ORDER BY date DESC, id DESC LIMIT 1").get(u, req.params.vehicle_id);
+    const prev = db.prepare("SELECT mileage FROM vehicle_fuel WHERE user_id=? AND vehicle_id=? ORDER BY entry_date DESC, id DESC LIMIT 1").get(u, req.params.vehicle_id);
     const g = gallons || 0;
     const ppg = price_per_gallon || 0;
     const total = Math.round(g * ppg * 100) / 100;
@@ -163049,7 +163049,7 @@ app.get("/api/medical/records", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS medical_records (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, type TEXT DEFAULT 'visit', date TEXT, provider TEXT, facility TEXT, diagnosis TEXT, treatment TEXT, follow_up TEXT, cost REAL DEFAULT 0, insurance_covered REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM medical_records WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM medical_records WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     res.json({ success: true, data: rows });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -163114,7 +163114,7 @@ app.get("/api/medical/vaccinations", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS vaccinations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, date TEXT, booster_due TEXT, provider TEXT, lot_number TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM vaccinations WHERE user_id=? ORDER BY date DESC").all(u);
+    const rows = db.prepare("SELECT * FROM vaccinations WHERE user_id=? ORDER BY entry_date DESC").all(u);
     const boosters_due = db.prepare("SELECT COUNT(*) as c FROM vaccinations WHERE user_id=? AND booster_due<=date('now','+30 days')").get(u);
     res.json({ success: true, data: rows, boosters_due: boosters_due?.c || 0 });
   } catch (e) {
@@ -163166,7 +163166,7 @@ app.get("/api/fitness/workouts", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS fitness_workouts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, type TEXT DEFAULT 'strength', date TEXT, duration_min INTEGER DEFAULT 0, calories_burned INTEGER DEFAULT 0, intensity TEXT DEFAULT 'moderate', completed INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM fitness_workouts WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM fitness_workouts WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const this_week = db.prepare("SELECT COUNT(*) as c FROM fitness_workouts WHERE user_id=? AND date>=date('now','-7 days') AND completed=1").get(u);
     const streak = db.prepare("SELECT COUNT(DISTINCT date(date)) as c FROM fitness_workouts WHERE user_id=? AND completed=1 AND date>=date('now','-30 days')").get(u);
     res.json({ success: true, data: rows, workouts_this_week: this_week?.c || 0, active_days_30d: streak?.c || 0 });
@@ -163212,7 +163212,7 @@ app.get("/api/fitness/metrics", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS body_metrics (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, weight REAL DEFAULT 0, weight_unit TEXT DEFAULT 'lbs', body_fat REAL DEFAULT 0, muscle_mass REAL DEFAULT 0, bmi REAL DEFAULT 0, waist REAL DEFAULT 0, chest REAL DEFAULT 0, hips REAL DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM body_metrics WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM body_metrics WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const latest = rows[0];
     const first = db.prepare("SELECT weight FROM body_metrics WHERE user_id=? ORDER BY date ASC LIMIT 1").get(u);
     const change = latest && first ? Math.round((latest.weight - first.weight) * 10) / 10 : 0;
@@ -163243,7 +163243,7 @@ app.get("/api/milestone/v74", (req, res) => {
   };
   const workouts = safe2(() => db.prepare("SELECT COUNT(*) as c FROM fitness_workouts WHERE user_id=? AND completed=1 AND date>=date('now','-7 days')").get(u));
   const total = safe2(() => db.prepare("SELECT COUNT(*) as c FROM fitness_workouts WHERE user_id=? AND completed=1").get(u));
-  const latest_weight = safe2(() => db.prepare("SELECT weight FROM body_metrics WHERE user_id=? ORDER BY date DESC LIMIT 1").get(u));
+  const latest_weight = safe2(() => db.prepare("SELECT weight FROM body_metrics WHERE user_id=? ORDER BY entry_date DESC LIMIT 1").get(u));
   res.json({ success: true, version: "v74.00", total_endpoints: 4950, milestone: "B4950 \u2014 Fitness OS", data: { workouts_this_week: workouts?.c || 0, total_workouts: total?.c || 0, latest_weight: latest_weight?.weight || 0 } });
 });
 app.get("/api/forge/fitness-manifest", (req, res) => {
@@ -163381,7 +163381,7 @@ app.get("/api/wellness/sleep", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS sleep_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, bedtime TEXT, wake_time TEXT, duration_min INTEGER DEFAULT 0, quality INTEGER DEFAULT 3, deep_sleep_min INTEGER DEFAULT 0, rem_min INTEGER DEFAULT 0, interruptions INTEGER DEFAULT 0, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM sleep_logs WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM sleep_logs WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const avg = db.prepare("SELECT AVG(duration_min) as d, AVG(quality) as q FROM sleep_logs WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, avg_duration_min: Math.round(avg?.d || 0), avg_quality: Math.round((avg?.q || 0) * 10) / 10 });
   } catch (e) {
@@ -163411,7 +163411,7 @@ app.get("/api/wellness/stress", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS stress_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, time TEXT, level INTEGER DEFAULT 5, trigger TEXT, coping_used TEXT, notes TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM stress_logs WHERE user_id=? ORDER BY date DESC, time DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM stress_logs WHERE user_id=? ORDER BY entry_date DESC, time DESC LIMIT 30").all(u);
     const avg7 = db.prepare("SELECT AVG(level) as a FROM stress_logs WHERE user_id=? AND date>=date('now','-7 days')").get(u);
     res.json({ success: true, data: rows, avg_stress_7d: Math.round((avg7?.a || 0) * 10) / 10 });
   } catch (e) {
@@ -163434,7 +163434,7 @@ app.get("/api/wellness/gratitude", (req, res) => {
   const u = req.user?.userId || 1;
   try {
     db.prepare(`CREATE TABLE IF NOT EXISTS gratitude_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date TEXT, entry1 TEXT, entry2 TEXT, entry3 TEXT, highlight TEXT, intention TEXT, created_at TEXT DEFAULT (datetime('now')))`).run();
-    const rows = db.prepare("SELECT * FROM gratitude_logs WHERE user_id=? ORDER BY date DESC LIMIT 30").all(u);
+    const rows = db.prepare("SELECT * FROM gratitude_logs WHERE user_id=? ORDER BY entry_date DESC LIMIT 30").all(u);
     const streak = db.prepare("SELECT COUNT(DISTINCT date) as c FROM gratitude_logs WHERE user_id=? AND date>=date('now','-30 days')").get(u);
     res.json({ success: true, data: rows, streak_days: streak?.c || 0 });
   } catch (e) {
@@ -200361,7 +200361,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS compliments (
   id TEXT PRIMARY KEY, user_id TEXT, recipient TEXT, context TEXT, compliments TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`).run();
 db.prepare(`CREATE TABLE IF NOT EXISTS manifestos (
-  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, values TEXT, manifesto TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, brand_values TEXT, manifesto TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`).run();
 db.prepare(`CREATE TABLE IF NOT EXISTS debate_preps (
   id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, position TEXT, prep TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -200481,7 +200481,7 @@ Format as JSON: { title: string, declaration: string, problem: string, vision: s
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g, "").trim());
     const id = uuidv4();
-    db.prepare(`INSERT INTO manifestos (id,user_id,topic,values,manifesto) VALUES (?,?,?,?,?)`).run(id, req.user.id, topic, values, data.full_manifesto);
+    db.prepare(`INSERT INTO manifestos (id,user_id,topic,brand_values,manifesto) VALUES (?,?,?,?,?)`).run(id, req.user.id, topic, values, data.full_manifesto);
     res.json({ id, ...data });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -215066,4 +215066,316 @@ Provide: DM script (Instagram/TikTok, under 150 words, feels personal not templa
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+});
+// Wave 127-130
+app.post("/api/brand/voice-analyzer", requireAuth, async (req, res) => {
+  const { content_samples, brand_name } = req.body;
+  const prompt = `Analyze the brand voice from these content samples for ${brand_name || "this brand"}: ${content_samples}. Provide: Voice attributes (5-7 adjectives with examples), Tone spectrum (formal vs casual, serious vs playful etc), Language patterns (words/phrases they use often), What to avoid, Sample sentences in this voice, Brand voice guide summary.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ voice_analysis: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/email-newsletter", requireAuth, async (req, res) => {
+  const { topic, audience, sections, tone } = req.body;
+  const prompt = `Write a complete email newsletter on: ${topic}. Audience: ${audience || "subscribers"}. Sections: ${sections || "intro, main content, tips, CTA"}. Tone: ${tone || "conversational"}. Include: compelling subject line, preview text, each section fully written, and a clear CTA. Under 600 words. Scannable with headers.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ newsletter: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/social/twitter-thread", requireAuth, async (req, res) => {
+  const { topic, angle, length } = req.body;
+  const prompt = `Write a viral Twitter/X thread on: ${topic}. Angle: ${angle || "educational insight"}. Length: ${length || "10 tweets"}. Tweet 1 must hook immediately. Each tweet under 280 chars. End with CTA. Number each tweet. Include engagement hooks mid-thread.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ thread: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/sales/proposal", requireAuth, async (req, res) => {
+  const { client_name, problem, solution, price } = req.body;
+  const prompt = `Write a sales proposal for ${client_name}. Problem: ${problem}. Solution: ${solution}. Investment: ${price || "TBD"}. Structure: Executive Summary, Understanding the Problem, Proposed Solution, Deliverables, Timeline, Investment, Why Us, Next Steps. Professional but not stuffy.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ proposal: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/investor/pitch-story", requireAuth, async (req, res) => {
+  const { company, problem, solution, traction } = req.body;
+  const prompt = `Write a compelling pitch deck narrative for ${company}. Problem: ${problem}. Solution: ${solution}. Traction: ${traction || "early stage"}. Create a story arc: the villain (the problem), the hero (your solution), proof it works, the big vision. Include slide-by-slide talking points.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ pitch_story: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 128
+app.post("/api/product/launch-checklist", requireAuth, async (req, res) => {
+  const { product, launch_date, team_size } = req.body;
+  const prompt = `Create a launch checklist for ${product}, launching ${launch_date || "soon"}. Team: ${team_size || "small"}. Cover: Pre-launch (30/14/7/1 day out), Launch day (hour by hour), Post-launch (week 1). Include owners, dependencies, go/no-go criteria.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ checklist: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/marketing/testimonial-request", requireAuth, async (req, res) => {
+  const { customer_name, product, outcome } = req.body;
+  const prompt = `Write a testimonial request email to ${customer_name || "a happy customer"} about ${product}. Known outcome: ${outcome || "positive experience"}. Make it easy: specific questions to answer (what problem did you have, what happened after using us, who would you recommend this to), offer to write a draft they can edit, keep it under 150 words.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ email: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/investor/fundraising-email", requireAuth, async (req, res) => {
+  const { company, round, traction, ask } = req.body;
+  const prompt = `Write a fundraising outreach email for ${company} raising ${round || "seed round"}. Traction: ${traction}. Ask: ${ask || "30-min intro call"}. Under 200 words. Lead with the most impressive traction metric. End with a specific, easy ask.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ email: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/cx/offboarding-survey", requireAuth, async (req, res) => {
+  const { product, churn_reason } = req.body;
+  const prompt = `Design an offboarding survey for ${product}. Known churn reason: ${churn_reason || "unknown"}. 5-7 questions max. Mix of multiple choice and open-ended. Focus on: why they're leaving, what would bring them back, what competitor they're switching to, what we could have done differently. Include exit message copy.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ survey: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/ai/agent-prompt-builder", requireAuth, async (req, res) => {
+  const { agent_goal, context, constraints } = req.body;
+  const prompt = `Build a production-ready system prompt for an AI agent with goal: ${agent_goal}. Context: ${context || "general purpose"}. Constraints: ${constraints || "none"}. Include: role definition, task instructions, output format, error handling, examples of good/bad outputs, and edge case handling.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ agent_prompt: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 129
+app.post("/api/startup/idea-validator", requireAuth, async (req, res) => {
+  const { idea, market, founder_background } = req.body;
+  const prompt = `Validate this startup idea: ${idea}. Market: ${market || "not specified"}. Founder background: ${founder_background || "not specified"}. Score 1-10 on: problem severity, market size, solution uniqueness, founder fit, monetization clarity. Give honest verdict: kill it, pivot it, or build it. What to validate before writing a line of code.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ validation: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/social/linkedin-dm", requireAuth, async (req, res) => {
+  const { recipient, context, ask } = req.body;
+  const prompt = `Write a LinkedIn DM to ${recipient || "a connection"}. Context: ${context}. Ask: ${ask}. Under 200 words. Open with something specific about them (not generic). Be direct. Make the ask feel natural. Include a follow-up message if no reply in 7 days.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ message: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/pitch-video-script", requireAuth, async (req, res) => {
+  const { product, audience, length } = req.body;
+  const prompt = `Write a pitch video script for ${product}. Audience: ${audience || "potential customers"}. Length: ${length || "60 seconds"}. Structure: hook (5 sec), problem (10 sec), solution (20 sec), proof (15 sec), CTA (10 sec). Every second counts. Conversational, not scripted-sounding.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ script: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/saas/onboarding-sequence", requireAuth, async (req, res) => {
+  const { product, key_actions, trial_length } = req.body;
+  const prompt = `Design a SaaS onboarding email sequence for ${product}. Key activation actions: ${key_actions || "complete setup, invite team, run first task"}. Trial: ${trial_length || "14 days"}. Write emails for: Day 0 (welcome), Day 1 (quick win), Day 3 (feature education), Day 7 (check-in), Day 12 (urgency before trial ends). Each email: subject, body, CTA.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ sequence: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/product/feedback-analyzer", requireAuth, async (req, res) => {
+  const { feedback_data, product } = req.body;
+  const prompt = `Analyze this product feedback for ${product || "our product"}: ${feedback_data}. Extract: top 3 pain points (with frequency), top 3 things users love, feature requests ranked by mention count, sentiment trend, user segments with different needs, and 5 actionable improvements prioritized by impact. Be specific, cite examples from the data.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ analysis: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 130
+app.post("/api/business/niche-finder", requireAuth, async (req, res) => {
+  const { skills, interests, market } = req.body;
+  const prompt = `Find profitable niches for someone with skills: ${skills}, interests: ${interests}, targeting: ${market || "online market"}. Give 5 specific niche ideas with: demand indicators, competition level, monetization path, first product to build, and why this person has an unfair advantage in it.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ niches: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/youtube-description", requireAuth, async (req, res) => {
+  const { video_title, topic, keywords, channel } = req.body;
+  const prompt = `Write a YouTube description for: "${video_title}" about ${topic}. Channel: ${channel || "not specified"}. Keywords: ${keywords || "derive from topic"}. Include: hook paragraph (first 2 lines must work as preview), full description (200-300 words), timestamps placeholder, links section, hashtags (10-15), and subscribe CTA. SEO-optimized.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ description: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/faq-generator", requireAuth, async (req, res) => {
+  const { product_or_topic, audience, context } = req.body;
+  const prompt = `Generate a comprehensive FAQ for ${product_or_topic}. Audience: ${audience || "general users"}. Context: ${context || ""}. Write 15-20 questions covering: getting started, common problems, pricing/value, technical questions, comparison to alternatives, and edge cases. Each answer: clear, concise, under 100 words. Organize by category.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ faq: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/sales/pricing-objection-handler", requireAuth, async (req, res) => {
+  const { product, price, objection, context } = req.body;
+  const prompt = `Handle this pricing objection for ${product} at ${price}: "${objection}". Context: ${context || "B2B sales conversation"}. Provide: the root concern behind the objection (never just the surface), 3 response scripts (direct, value-reframe, proof-based), questions to ask to understand if price is real or a smokescreen, when to hold firm vs negotiate, and what NOT to say.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ responses: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/writing/executive-summary", requireAuth, async (req, res) => {
+  const { document_content, audience } = req.body;
+  const prompt = `Write an executive summary of the following for ${audience || "senior leadership"}: ${document_content}. Structure: Opening statement (1 sentence), Situation/Background (2-3 sentences), Key findings (3-5 bullets), Financial/impact implications, Risk to flag (1-2 sentences), Recommended action with timeline. Under 400 words. No preamble.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ summary: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 131
+app.post("/api/hr/job-description", requireAuth, async (req, res) => {
+  const { role_title, company, requirements, culture } = req.body;
+  const prompt = `Write a compelling job description for ${role_title} at ${company}. Requirements: ${requirements}. Culture: ${culture || "not specified"}. Include: role overview, key responsibilities (6-8 bullets), required qualifications, nice-to-haves, what we offer. Engaging, clear, bias-free.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ description: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/product-review", requireAuth, async (req, res) => {
+  const { product_name, features, audience, tone } = req.body;
+  const prompt = `Write a detailed, honest product review for ${product_name}. Features: ${features}. Audience: ${audience || "general consumers"}. Tone: ${tone || "balanced"}. Include: intro, pros, cons, standout features, who it's best for, verdict with rating rationale. Min 400 words.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ review: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/marketing/ab-test-copy", requireAuth, async (req, res) => {
+  const { element, context, goal } = req.body;
+  const prompt = `Generate 3 A/B test variations for: "${element}". Context: ${context}. Goal: ${goal || "maximize conversions"}. For each: the copy, psychological principle used, why it might win, hypothesis statement. Format as Variant A, B, C.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ variants: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/product/customer-journey", requireAuth, async (req, res) => {
+  const { product, persona, goal } = req.body;
+  const prompt = `Map the customer journey for ${persona || "a typical user"} using ${product} to achieve: ${goal}. Stages: Awareness, Consideration, Decision, Onboarding, Usage, Retention. For each: touchpoints, user thoughts/feelings, pain points, opportunities. Actionable insights at each stage.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ journey: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/email/re-engage", requireAuth, async (req, res) => {
+  const { product, inactive_period, incentive } = req.body;
+  const prompt = `Write a 3-email re-engagement sequence for users who haven't used ${product} in ${inactive_period || "30 days"}. Incentive: ${incentive || "none"}. Email 1: warm check-in. Email 2: what's new. Email 3: final nudge. Each: subject, preview text, body, CTA. Under 150 words each. Human, not salesy.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ sequence: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 132
+app.post("/api/content/podcast-outline", requireAuth, async (req, res) => {
+  const { topic, guest, duration, audience } = req.body;
+  const prompt = `Create a podcast outline for a ${duration || "45-minute"} episode on: ${topic}. Guest: ${guest || "solo host"}. Audience: ${audience || "general"}. Include: hook/cold open, intro, 4-6 segments with talking points, guest questions, lightning round, outro with CTA.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ outline: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/webinar-script", requireAuth, async (req, res) => {
+  const { topic, duration, audience, cta } = req.body;
+  const prompt = `Write a ${duration || "60-minute"} webinar script on: ${topic}. Audience: ${audience || "professionals"}. End CTA: ${cta || "schedule a demo"}. Include: opening hook, agenda, content segments with speaker notes, engagement prompts, Q&A bridge, closing pitch. Mark timing throughout.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ script: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/product/launch-strategy", requireAuth, async (req, res) => {
+  const { product, market, timeline, budget_tier } = req.body;
+  const prompt = `Create a product launch strategy for ${product} targeting ${market || "target market"}. Timeline: ${timeline || "30 days"}. Budget: ${budget_tier || "bootstrapped"}. Include pre-launch, launch day, post-launch tactics. Channel strategy, success metrics, risk mitigations.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ strategy: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/email/mentor-outreach", requireAuth, async (req, res) => {
+  const { mentor_name, mentor_role, your_background, specific_ask } = req.body;
+  const prompt = `Write a cold outreach email to ${mentor_name || "a potential mentor"}, ${mentor_role || "industry expert"}. My background: ${your_background}. Ask: ${specific_ask || "30-minute coffee chat"}. Under 200 words. Specific, not generic. Easy to say yes. Include subject line and PS.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ email: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/product/feature-announcement", requireAuth, async (req, res) => {
+  const { feature_name, benefit, audience, channel } = req.body;
+  const prompt = `Write a feature announcement for: ${feature_name}. Benefit: ${benefit}. Audience: ${audience || "existing users"}. Channel: ${channel || "email"}. Include: headline, what it does, why it matters, how to get started (1-3 steps), CTA. Under 250 words.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ announcement: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 133
+app.post("/api/product/scope-document", requireAuth, async (req, res) => {
+  const { project_name, objectives, stakeholders, timeline } = req.body;
+  const prompt = `Write a project scope document for: ${project_name}. Objectives: ${objectives}. Stakeholders: ${stakeholders || "TBD"}. Timeline: ${timeline || "TBD"}. Sections: Executive Summary, Objectives, In-Scope, Out-of-Scope, Deliverables, Assumptions, Success Metrics, Milestones, Approval.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ document: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/social/bio-generator", requireAuth, async (req, res) => {
+  const { name, role, achievements, personality, platform } = req.body;
+  const prompt = `Write 3 social media bios for ${name}, ${role}. Achievements: ${achievements}. Personality: ${personality || "professional"}. Platform: ${platform || "LinkedIn/Twitter"}. Version 1: authority-focused. Version 2: conversational. Version 3: bold. Each under 160 chars for Twitter, 300 for LinkedIn.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ bios: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/marketing/discount-copy", requireAuth, async (req, res) => {
+  const { offer, product, urgency, audience } = req.body;
+  const prompt = `Write promo copy for: ${offer} on ${product}. Urgency: ${urgency || "limited time"}. Audience: ${audience || "existing customers"}. Deliver: email subject, email body, landing page headline+subhead, SMS (under 160 chars), social caption. Lead with value, not discount %.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ copy: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/productivity/meeting-report", requireAuth, async (req, res) => {
+  const { meeting_topic, attendees, notes, decisions } = req.body;
+  const prompt = `Convert meeting notes into a report. Topic: ${meeting_topic}. Attendees: ${attendees || "TBD"}. Notes: ${notes}. Decisions: ${decisions || "extract from notes"}. Format: Summary, Decisions Made, Action Items (who/what/when), Open Questions, Next Steps.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ report: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/growth/hack-ideas", requireAuth, async (req, res) => {
+  const { product, stage, constraint } = req.body;
+  const prompt = `Generate 10 creative growth hacks for ${product} at ${stage || "early"} stage. Constraint: ${constraint || "low budget"}. For each: tactic (specific), why it works, effort level, expected impact, first step today. Unconventional, not "post on social media" advice.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ ideas: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 134
+app.post("/api/pr/press-kit", requireAuth, async (req, res) => {
+  const { company, product, founding_story, metrics } = req.body;
+  const prompt = `Write a press kit for ${company}/${product || "their product"}. Story: ${founding_story || "not provided"}. Metrics: ${metrics || "not provided"}. Include: Company Overview (200w), Product Description (100w), Founding Story, Key Stats, Founder Bios, Notable Quotes, Boilerplate (50w), FAQ (5 Q&As).`;
+  try { const r = await callUserLLM(req, prompt); res.json({ press_kit: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/marketing/value-proposition", requireAuth, async (req, res) => {
+  const { product, customer, problem, differentiator } = req.body;
+  const prompt = `Build a value proposition framework for ${product}. Customer: ${customer}. Problem: ${problem}. Differentiator: ${differentiator || "TBD"}. Deliver: 1-sentence value prop, elevator pitch (30 sec), 5 tagline options, homepage headline+subhead, Geoffrey Moore positioning statement, single most compelling reason to buy.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ value_prop: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/dev/api-spec", requireAuth, async (req, res) => {
+  const { api_name, endpoints, auth_method, use_case } = req.body;
+  const prompt = `Write a technical API spec for ${api_name}. Endpoints: ${endpoints}. Auth: ${auth_method || "Bearer token"}. Use case: ${use_case || "TBD"}. For each endpoint: method, path, description, params (type/required), example request/response, error codes. Plus: auth section, rate limits, versioning, base URL.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ spec: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/strategy/exit-plan", requireAuth, async (req, res) => {
+  const { company, revenue, stage, preferences } = req.body;
+  const prompt = `Create an exit strategy analysis. Revenue: ${revenue || "undisclosed"}. Stage: ${stage || "growth"}. Preferences: ${preferences || "open"}. Cover M&A, IPO, secondary sale, MBO, acqui-hire. For each: likelihood, prep needed, timeline, valuation impact, key risks. Plus: what to do in next 12 months to maximize exit optionality.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ exit_plan: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/social/thread-hook", requireAuth, async (req, res) => {
+  const { topic, audience, angle } = req.body;
+  const prompt = `Write 5 high-engagement Twitter/X thread openers for: ${topic}. Audience: ${audience || "professionals"}. Angle: ${angle || "educational"}. Each hook: under 280 chars, creates curiosity gap, avoids clichés, makes bold claim or unanswerable question. Rate viral potential + explain. Provide tweet 2 for hook #1.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ hooks: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 135
+app.post("/api/social/cold-linkedin", requireAuth, async (req, res) => {
+  const { target_name, target_role, company, reason, your_offer } = req.body;
+  const prompt = `Write a cold LinkedIn message to ${target_name || "a prospect"}, ${target_role} at ${company}. Reason: ${reason}. Offer: ${your_offer}. Write both: connection note (under 300 chars) and InMail (under 1000 chars). Specific, peer-to-peer tone, no "I'd love to connect".`;
+  try { const r = await callUserLLM(req, prompt); res.json({ messages: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/product/feedback-survey", requireAuth, async (req, res) => {
+  const { product, goal, audience, length } = req.body;
+  const prompt = `Design a feedback survey for ${product}. Goal: ${goal || "understand satisfaction and pain points"}. Audience: ${audience || "active users"}. Length: ${length || "5-8 questions"}. Mix rating scales, multiple choice, open-ended. Each question: text + why asking + what to do with answer. Intro and thank-you message.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ survey: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/security/bug-bounty-brief", requireAuth, async (req, res) => {
+  const { company, scope, payout_range, excluded } = req.body;
+  const prompt = `Write a bug bounty brief for ${company}. In scope: ${scope || "web app, API, mobile"}. Payouts: ${payout_range || "$100-$10,000"}. Out of scope: ${excluded || "DDoS, social engineering"}. Include: overview, scope, severity levels with payouts, report requirements, disclosure policy, safe harbor, submission process, response SLA.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ brief: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/product/pr-faq", requireAuth, async (req, res) => {
+  const { product, problem, customer, key_features } = req.body;
+  const prompt = `Write an Amazon-style PR/FAQ for: ${product}. Problem: ${problem}. Customer: ${customer}. Features: ${key_features}. Structure: Press Release (headline, opening para, customer quote, company quote, boilerplate), External FAQs (5), Internal FAQs (5 hard questions). Write press release as if product is already shipping.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ pr_faq: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/social/twitter-dm", requireAuth, async (req, res) => {
+  const { recipient, context, ask } = req.body;
+  const prompt = `Write a Twitter/X DM to ${recipient || "a creator"}. Context: ${context}. Ask: ${ask}. 3 variations: concise, with context, question-based. Under 280 chars if possible. Specific observation about them, direct ask, low-pressure. Plus: follow-up if no reply in 5 days.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ messages: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 136
+app.post("/api/product/nps-analysis", requireAuth, async (req, res) => {
+  const { responses, score, product } = req.body;
+  const prompt = `Analyze NPS responses for ${product || "our product"}. Score: ${score || "calculate from responses"}. Responses: ${responses}. Deliver: score breakdown (promoters/passives/detractors %), top 3 themes from promoters, top 3 from detractors, verbatim quotes, priority actions ranked by impact, 2-sentence exec summary.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ analysis: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/marketing/launch-announcement", requireAuth, async (req, res) => {
+  const { product, headline_feature, audience, channels } = req.body;
+  const prompt = `Write a complete launch announcement for ${product}. Headline feature: ${headline_feature}. Audience: ${audience || "customers and prospects"}. Channels: ${channels || "email, social, blog"}. Create: blog post (500w), email (200w), LinkedIn post, Twitter thread (3 tweets), Product Hunt tagline+first comment, internal all-hands (3 bullets).`;
+  try { const r = await callUserLLM(req, prompt); res.json({ announcements: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/team/retrospective", requireAuth, async (req, res) => {
+  const { sprint_or_period, team_size, highlights, challenges } = req.body;
+  const prompt = `Facilitate a retrospective for ${sprint_or_period || "last sprint"}. Team: ${team_size || "TBD"}. Highlights: ${highlights || "not provided"}. Challenges: ${challenges || "not provided"}. Generate: structured agenda, what went well (themes+examples), what didn't (root cause analysis), 3-5 action items with owners+dates, team health check questions, closing morale boost.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ retrospective: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/sales/deck-outline", requireAuth, async (req, res) => {
+  const { company, product, prospect, pain_point } = req.body;
+  const prompt = `Create a sales deck outline for ${company} presenting ${product} to ${prospect || "a prospect"}. Pain point: ${pain_point || "TBD"}. 8 slides: Hook (their problem), Problem, Why Now, Solution, How It Works, Social Proof, ROI/Business Case, Next Steps. Each slide: title, 3 bullets, speaker notes, visual suggestion.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ outline: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/idea-generator", requireAuth, async (req, res) => {
+  const { niche, audience, format, goal } = req.body;
+  const prompt = `Generate 20 content ideas for ${niche} targeting ${audience || "ideal audience"}. Format: ${format || "mix of blog, video, social"}. Goal: ${goal || "build authority"}. For each: title, angle, why it resonates, search volume potential, format recommendation, opening hook. Mix evergreen and timely. Group by theme.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ ideas: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 137
+app.post("/api/email/audit", requireAuth, async (req, res) => {
+  const { email_content, goal, audience } = req.body;
+  const prompt = `Audit this email for performance. Email: ${email_content}. Goal: ${goal || "engagement/conversion"}. Audience: ${audience || "TBD"}. Score (1-10): subject line, preview text, opening line, body, CTA, tone, mobile readability. Provide: 3 rewritten subject lines, improved opening, better CTA, top 3 changes that move the needle most.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ audit: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/social/linkedin-banner", requireAuth, async (req, res) => {
+  const { name, role, value_prop, cta } = req.body;
+  const prompt = `Write LinkedIn banner copy for ${name || "a professional"}, ${role}. Value prop: ${value_prop}. CTA: ${cta || "let's connect"}. Create: primary headline (under 10 words), secondary line (who+outcome), social proof element, CTA line. Plus 3 alternative headlines from different angles and design notes.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ banner_copy: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/sales/demo-script", requireAuth, async (req, res) => {
+  const { product, prospect_role, pain_point, demo_length } = req.body;
+  const prompt = `Write a sales demo script for ${product} with ${prospect_role || "a decision maker"}. Pain point: ${pain_point}. Length: ${demo_length || "30 min"}. Include: opening, discovery questions (3-4), demo narrative (story not feature-dump), price question handling, next steps close. Exact words + what to click + pause points + competitor objection handling.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ script: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/product/changelog-post", requireAuth, async (req, res) => {
+  const { version, changes, audience, tone } = req.body;
+  const prompt = `Write a changelog for version ${version || "this release"}. Changes: ${changes}. Audience: ${audience || "users"}. Tone: ${tone || "friendly"}. Format: headline, New Features (benefit-led), Improvements, Bug Fixes (noteworthy only), Breaking Changes (if any). Under 400 words. Users should feel excited, not overwhelmed.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ changelog: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/ai/agent-brief", requireAuth, async (req, res) => {
+  const { agent_name, task, tools, constraints } = req.body;
+  const prompt = `Write an AI agent briefing for: ${agent_name}. Task: ${task}. Tools: ${tools || "web search, code execution, file I/O"}. Constraints: ${constraints || "none"}. Include: Role Definition, Primary Objective, Success Criteria, Step-by-Step Workflow, Tool Usage Guidelines, Error Handling, Output Format, Example runs (success + edge case).`;
+  try { const r = await callUserLLM(req, prompt); res.json({ brief: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// Wave 138
+app.post("/api/sales/offer-builder", requireAuth, async (req, res) => {
+  const { product, price, audience, transformation } = req.body;
+  const prompt = `Build an irresistible offer for ${product} at ${price || "TBD"}. Buyer: ${audience}. Transformation: ${transformation}. Using Hormozi's framework: Dream Outcome, Value Stack, Bonuses (2-3), Risk Reversal/Guarantee, Scarcity/Urgency, Offer Name. Then write the offer paragraph for a sales page — specific, makes price feel like a no-brainer.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ offer: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/hr/recruiter-outreach", requireAuth, async (req, res) => {
+  const { candidate_name, role, company, candidate_background } = req.body;
+  const prompt = `Write recruiter outreach to ${candidate_name || "a candidate"} for ${role} at ${company}. Background: ${candidate_background || "senior professional"}. 3 versions: LinkedIn InMail (300w), connection message (200 chars), cold email. Each: specific about their background, why this role suits them, one compelling company detail, low-friction CTA. No generic opener.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ outreach: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/content/thought-leadership", requireAuth, async (req, res) => {
+  const { author, topic, perspective, audience } = req.body;
+  const prompt = `Write a thought leadership LinkedIn post for ${author || "a founder/executive"} on: ${topic}. Perspective: ${perspective || "contrarian take"}. Audience: ${audience || "industry professionals"}. Structure: bold hook, specific story/observation, insight/lesson, practical implication, closing question. 800-1200 words. First-person, opinionated, no corporate speak.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ post: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/dev/api-readme", requireAuth, async (req, res) => {
+  const { api_name, description, endpoints, auth_type } = req.body;
+  const prompt = `Write a comprehensive API README for ${api_name}. Description: ${description}. Endpoints: ${endpoints}. Auth: ${auth_type || "API key"}. Sections: Overview, Quick Start (under 5 min), Authentication, Base URL, Endpoints (with curl examples), Error Codes, Rate Limiting, Changelog, Support. Developer-friendly, technical audience.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ readme: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post("/api/sales/win-analysis", requireAuth, async (req, res) => {
+  const { deal_context, outcome, customer_feedback, lost_to } = req.body;
+  const prompt = `Conduct a win/loss analysis. Deal: ${deal_context}. Outcome: ${outcome || "TBD"}. Customer feedback: ${customer_feedback || "unavailable"}. Lost to: ${lost_to || "N/A"}. Analyze: primary win/loss reason (real not surface), secondary factors, what we did right, what to do differently, competitor intel (if loss), pattern recognition, 3 concrete changes to win more deals like this. Brutally honest.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ analysis: r }); } catch(e) { res.status(500).json({ error: e.message }); }
 });
