@@ -21,7 +21,9 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_supportplaybook177, ForgeTab_contentstrategy177, ForgeTab_devdoctemplate177, ForgeTab_pipelinereview177, ForgeTab_termsheet177,
   ForgeTab_brandguide178, ForgeTab_promoreview178, ForgeTab_featurespec178, ForgeTab_exitstrategy178, ForgeTab_onboardingflow178,
   ForgeTab_productladder179, ForgeTab_objectionhandler179, ForgeTab_productmetrics179, ForgeTab_techstack179, ForgeTab_fundraisingplan179,
-  ForgeTab_productlaunchblog180, ForgeTab_employeesurvey180, ForgeTab_dealreview180, ForgeTab_marketingbudget180, ForgeTab_productpositioning180 } from './WaveComponents';
+  ForgeTab_productlaunchblog180, ForgeTab_employeesurvey180, ForgeTab_dealreview180, ForgeTab_marketingbudget180, ForgeTab_productpositioning180,
+  ForgeTab_strategicplan181, ForgeTab_apidesign181, ForgeTab_churnprevention181, ForgeTab_recruitingscript181, ForgeTab_decknarrative181,
+  ForgeTab_retentionprogram182, ForgeTab_okcrsystem182, ForgeTab_datamodel182, ForgeTab_csmplaybook182, ForgeTab_marketingops182 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -26855,6 +26857,16 @@ export default function ForgeApp() {
     { id:'dealreview180', icon:'🔎', label:'Deal Review Assistant' },
     { id:'marketingbudget180', icon:'💸', label:'Marketing Budget Allocator' },
     { id:'productpositioning180', icon:'🎯', label:'Product Positioning Statement' },
+    { id:'strategicplan181', icon:'🗺️', label:'Strategic Plan Builder' },
+    { id:'apidesign181', icon:'🔌', label:'API Design Advisor' },
+    { id:'churnprevention181', icon:'🛟', label:'Churn Prevention Playbook' },
+    { id:'recruitingscript181', icon:'📞', label:'Recruiting Outreach Script' },
+    { id:'decknarrative181', icon:'📊', label:'Pitch Deck Narrative' },
+    { id:'retentionprogram182', icon:'🔄', label:'Retention Program Designer' },
+    { id:'okcrsystem182', icon:'🎯', label:'OKR System Builder' },
+    { id:'datamodel182', icon:'🗄️', label:'Data Model Designer' },
+    { id:'csmplaybook182', icon:'🤝', label:'CSM Playbook Builder' },
+    { id:'marketingops182', icon:'⚙️', label:'Marketing Ops Audit' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -48866,6 +48878,16 @@ export default function ForgeApp() {
           {(mainTab as string) === 'dealreview180' && <ForgeTab_dealreview180 />}
           {(mainTab as string) === 'marketingbudget180' && <ForgeTab_marketingbudget180 />}
           {(mainTab as string) === 'productpositioning180' && <ForgeTab_productpositioning180 />}
+          {(mainTab as string) === 'strategicplan181' && <ForgeTab_strategicplan181 />}
+          {(mainTab as string) === 'apidesign181' && <ForgeTab_apidesign181 />}
+          {(mainTab as string) === 'churnprevention181' && <ForgeTab_churnprevention181 />}
+          {(mainTab as string) === 'recruitingscript181' && <ForgeTab_recruitingscript181 />}
+          {(mainTab as string) === 'decknarrative181' && <ForgeTab_decknarrative181 />}
+          {(mainTab as string) === 'retentionprogram182' && <ForgeTab_retentionprogram182 />}
+          {(mainTab as string) === 'okcrsystem182' && <ForgeTab_okcrsystem182 />}
+          {(mainTab as string) === 'datamodel182' && <ForgeTab_datamodel182 />}
+          {(mainTab as string) === 'csmplaybook182' && <ForgeTab_csmplaybook182 />}
+          {(mainTab as string) === 'marketingops182' && <ForgeTab_marketingops182 />}
       </div>
     </div>
   );
