@@ -21,9 +21,7 @@ import vm from 'vm';
 import { execFile, exec } from 'child_process';
 import { promisify } from 'util';
 import Database from 'better-sqlite3';
-import { setupAutonomy } from './autonomy';
-import { setupHermes } from './hermes';
-import { setupOperator } from './operator';
+// autonomy/hermes/operator removed (files not in git)
 import cron from 'node-cron';
 
 const execAsync = promisify(exec);
@@ -171996,9 +171994,7 @@ app.post('/api/competitor/analyze', requireAuth, async (req:any,res:any)=>{
 });
 app.get('/api/competitor/history', requireAuth, (req:any,res:any)=>{res.json({history:db.prepare(`SELECT id,company,created_at FROM competitor_reports WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id)});});
 
-// ─── Hermes + Operator ────────────────────────────────────────────────────────
-setupHermes(app, db, { requireAuth, getUserLLMKey, callLLM, uuidv4 });
-setupOperator(app, { db, requireAuth, getUserLLMKey, callLLM, uuidv4 });
+// ─── Hermes + Operator (removed — files not in git) ──────────────────────────
 
 // ─── Wave 4 Dream Features ────────────────────────────────────────────────────
 db.exec(`CREATE TABLE IF NOT EXISTS legal_reviews (id TEXT PRIMARY KEY, user_id TEXT, document TEXT, doc_type TEXT DEFAULT 'contract', review TEXT DEFAULT '', risk_level TEXT DEFAULT 'medium', created_at TEXT DEFAULT (datetime('now')))`);
