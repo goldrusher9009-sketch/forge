@@ -19,7 +19,9 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_pricingpage175, ForgeTab_agendabuilder175, ForgeTab_devarchreview175, ForgeTab_salesenablement175, ForgeTab_investorrelations175,
   ForgeTab_contentrepurpose176, ForgeTab_hrpolicydraft176, ForgeTab_productfeedback176, ForgeTab_partnershipdeck176, ForgeTab_casestudy176,
   ForgeTab_supportplaybook177, ForgeTab_contentstrategy177, ForgeTab_devdoctemplate177, ForgeTab_pipelinereview177, ForgeTab_termsheet177,
-  ForgeTab_brandguide178, ForgeTab_promoreview178, ForgeTab_featurespec178, ForgeTab_exitstrategy178, ForgeTab_onboardingflow178 } from './WaveComponents';
+  ForgeTab_brandguide178, ForgeTab_promoreview178, ForgeTab_featurespec178, ForgeTab_exitstrategy178, ForgeTab_onboardingflow178,
+  ForgeTab_productladder179, ForgeTab_objectionhandler179, ForgeTab_productmetrics179, ForgeTab_techstack179, ForgeTab_fundraisingplan179,
+  ForgeTab_productlaunchblog180, ForgeTab_employeesurvey180, ForgeTab_dealreview180, ForgeTab_marketingbudget180, ForgeTab_productpositioning180 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -26843,6 +26845,16 @@ export default function ForgeApp() {
     { id:'featurespec178', icon:'📐', label:'Feature Spec Generator' },
     { id:'exitstrategy178', icon:'🚪', label:'Exit Strategy Planner' },
     { id:'onboardingflow178', icon:'🚀', label:'Onboarding Flow Designer' },
+    { id:'productladder179', icon:'🪜', label:'Career Ladder Builder' },
+    { id:'objectionhandler179', icon:'🛡️', label:'Objection Handler' },
+    { id:'productmetrics179', icon:'📈', label:'Product Metrics Framework' },
+    { id:'techstack179', icon:'🔧', label:'Tech Stack Advisor' },
+    { id:'fundraisingplan179', icon:'💼', label:'Fundraising Plan Builder' },
+    { id:'productlaunchblog180', icon:'✍️', label:'Launch Blog Post Writer' },
+    { id:'employeesurvey180', icon:'📊', label:'Employee Survey Builder' },
+    { id:'dealreview180', icon:'🔎', label:'Deal Review Assistant' },
+    { id:'marketingbudget180', icon:'💸', label:'Marketing Budget Allocator' },
+    { id:'productpositioning180', icon:'🎯', label:'Product Positioning Statement' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -48844,6 +48856,16 @@ export default function ForgeApp() {
           {(mainTab as string) === 'featurespec178' && <ForgeTab_featurespec178 />}
           {(mainTab as string) === 'exitstrategy178' && <ForgeTab_exitstrategy178 />}
           {(mainTab as string) === 'onboardingflow178' && <ForgeTab_onboardingflow178 />}
+          {(mainTab as string) === 'productladder179' && <ForgeTab_productladder179 />}
+          {(mainTab as string) === 'objectionhandler179' && <ForgeTab_objectionhandler179 />}
+          {(mainTab as string) === 'productmetrics179' && <ForgeTab_productmetrics179 />}
+          {(mainTab as string) === 'techstack179' && <ForgeTab_techstack179 />}
+          {(mainTab as string) === 'fundraisingplan179' && <ForgeTab_fundraisingplan179 />}
+          {(mainTab as string) === 'productlaunchblog180' && <ForgeTab_productlaunchblog180 />}
+          {(mainTab as string) === 'employeesurvey180' && <ForgeTab_employeesurvey180 />}
+          {(mainTab as string) === 'dealreview180' && <ForgeTab_dealreview180 />}
+          {(mainTab as string) === 'marketingbudget180' && <ForgeTab_marketingbudget180 />}
+          {(mainTab as string) === 'productpositioning180' && <ForgeTab_productpositioning180 />}
       </div>
     </div>
   );
