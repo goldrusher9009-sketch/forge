@@ -31,7 +31,9 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_pricingstrategy187, ForgeTab_culturecode187, ForgeTab_devdebugguide187, ForgeTab_productdiscovery187, ForgeTab_salesqbr187,
   ForgeTab_designsystem188, ForgeTab_hiringplan188, ForgeTab_marketingfunnel188, ForgeTab_devcicd188, ForgeTab_productgrowth188,
   ForgeTab_salesenablement189, ForgeTab_devmonitor189, ForgeTab_contentcalendar189, ForgeTab_investormodel189, ForgeTab_teamstructure189,
-  ForgeTab_devcontainerize190, ForgeTab_productabtest190, ForgeTab_marketingroi190, ForgeTab_salesprocess190, ForgeTab_devapi190 } from './WaveComponents';
+  ForgeTab_devcontainerize190, ForgeTab_productabtest190, ForgeTab_marketingroi190, ForgeTab_salesprocess190, ForgeTab_devapi190,
+  ForgeTab_fundraisetimeline191, ForgeTab_devobservability191, ForgeTab_productpricing191, ForgeTab_marketingpersona191, ForgeTab_hrcompensation191,
+  ForgeTab_devdataengineering192, ForgeTab_productfeatureflags192, ForgeTab_saleschampion192, ForgeTab_marketingcopyreview192, ForgeTab_productpriorityframework192 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -26915,6 +26917,16 @@ export default function ForgeApp() {
           { id:'marketingroi190', icon:'💡', label:'Marketing ROI Calc' },
           { id:'salesprocess190', icon:'🔄', label:'Sales Process Design' },
           { id:'devapi190', icon:'🔌', label:'API Strategy Builder' },
+          { id:'fundraisetimeline191', icon:'🗓️', label:'Fundraise Timeline' },
+          { id:'devobservability191', icon:'🔭', label:'Observability Audit' },
+          { id:'productpricing191', icon:'💰', label:'Willingness to Pay' },
+          { id:'marketingpersona191', icon:'👤', label:'Buyer Persona Builder' },
+          { id:'hrcompensation191', icon:'📏', label:'Comp Benchmarking' },
+          { id:'devdataengineering192', icon:'🔧', label:'Data Pipeline Design' },
+          { id:'productfeatureflags192', icon:'🚩', label:'Feature Flag Strategy' },
+          { id:'saleschampion192', icon:'🏆', label:'Champion Builder' },
+          { id:'marketingcopyreview192', icon:'✍️', label:'Copy Reviewer' },
+          { id:'productpriorityframework192', icon:'📋', label:'Prioritization Framework' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -48976,6 +48988,16 @@ export default function ForgeApp() {
           {(mainTab as string) === 'marketingroi190' && <ForgeTab_marketingroi190 />}
           {(mainTab as string) === 'salesprocess190' && <ForgeTab_salesprocess190 />}
           {(mainTab as string) === 'devapi190' && <ForgeTab_devapi190 />}
+          {(mainTab as string) === 'fundraisetimeline191' && <ForgeTab_fundraisetimeline191 />}
+          {(mainTab as string) === 'devobservability191' && <ForgeTab_devobservability191 />}
+          {(mainTab as string) === 'productpricing191' && <ForgeTab_productpricing191 />}
+          {(mainTab as string) === 'marketingpersona191' && <ForgeTab_marketingpersona191 />}
+          {(mainTab as string) === 'hrcompensation191' && <ForgeTab_hrcompensation191 />}
+          {(mainTab as string) === 'devdataengineering192' && <ForgeTab_devdataengineering192 />}
+          {(mainTab as string) === 'productfeatureflags192' && <ForgeTab_productfeatureflags192 />}
+          {(mainTab as string) === 'saleschampion192' && <ForgeTab_saleschampion192 />}
+          {(mainTab as string) === 'marketingcopyreview192' && <ForgeTab_marketingcopyreview192 />}
+          {(mainTab as string) === 'productpriorityframework192' && <ForgeTab_productpriorityframework192 />}
       </div>
     </div>
   );

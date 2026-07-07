@@ -186459,4 +186459,550 @@ Design the API strategy:
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
+
+// Wave 191 routes
+app.post('/api/investor/fundraise-timeline', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { stage, metrics } = req.body;
+    const prompt = `You are a fundraising expert who has helped founders close hundreds of rounds. Build the fundraise plan.
+
+Round: ${stage}
+Current metrics: ${metrics}
+
+Build the fundraise timeline:
+
+## Fundraise Readiness Assessment
+- Green lights: what you have that investors want to see
+- Yellow flags: things that will be questioned (have answers ready)
+- Red flags: things to fix before starting (if time allows)
+
+## Pre-Fundraise Milestones
+- Metrics to hit before starting the process (and why)
+- Materials to prepare (deck, data room, model)
+- Warm introductions to cultivate now
+
+## Process Timeline
+### 6 Weeks Before Launch
+- Materials preparation checklist
+- Target investor list building (50-100 investors)
+- Outreach sequencing strategy
+
+### Launch Week
+- How to create momentum (not desperation)
+- Who to pitch first (tier B investors for practice)
+- How to run parallel processes
+
+### Weeks 2-6: Active Process
+- Meeting cadence (how many per week)
+- How to create FOMO without lying
+- Update cadence to interested investors
+- How to handle "we need more time"
+
+### Term Sheet to Close
+- What happens after a term sheet
+- Due diligence management
+- How to handle competing terms
+
+## Investor Targeting
+- Tier 1 targets (best fit) and why
+- How to get warm introductions
+- Cold outreach strategy if needed
+
+## Signals to Watch
+- Signs the process is going well
+- Signs to adjust approach`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a fundraising expert and venture capital advisor.');
+    res.json({ timeline: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/observability-audit', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { services, incidents } = req.body;
+    const prompt = `You are an SRE who specializes in observability and reducing MTTR. Audit the observability gaps.
+
+Services: ${services}
+Recent incidents: ${incidents}
+
+Run the observability audit:
+
+## Current State Assessment
+- What you can see today (instrumented)
+- Critical blind spots (what you cannot see)
+- MTTR analysis: where time was lost in recent incidents
+
+## Blind Spot Priority List
+Ranked by: impact on MTTR vs. implementation effort
+1. [Highest priority gap]: what is missing, what incident would it have prevented
+2. [Next gap]: same format
+[Continue for 5-7 gaps]
+
+## Quick Wins (implement this week)
+- Specific instrumentation changes with estimated MTTR improvement
+- Log improvements that would have helped most
+- Alert threshold adjustments
+
+## Metrics Gaps
+- Services with insufficient metrics
+- Missing RED metrics (Rate, Error, Duration) per service
+- Business metric visibility gaps
+
+## Logging Improvements
+- Structured logging gaps
+- Missing correlation IDs
+- Log verbosity at wrong levels
+
+## Distributed Tracing
+- Where traces are missing or incomplete
+- High-value trace propagation to add
+- Sampling strategy review
+
+## Alert Quality Audit
+- Alerts that are too noisy (false positives)
+- Missing alerts that would catch real issues
+- Alert routing improvements
+
+## 30-Day Improvement Roadmap
+- Week-by-week implementation plan
+- Who owns what
+- Expected MTTR reduction`;
+    const result = await callLLM(req.user!.id, prompt, 'You are an SRE and observability expert focused on reducing MTTR.');
+    res.json({ audit: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/willingness-to-pay', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { segment, value } = req.body;
+    const prompt = `You are a pricing researcher and behavioral economist. Analyze willingness to pay for this segment.
+
+Customer segment: ${segment}
+Value delivered: ${value}
+
+Analyze willingness to pay:
+
+## Value-Based Pricing Anchor
+- Economic value delivered (quantified): how much is this worth in money or time?
+- Rule of thumb: price at 10-20% of value delivered
+- Starting price range based on this analysis
+
+## Van Westendorp Price Sensitivity
+The four key price questions and what answers typically mean:
+- "Too cheap to be credible" threshold: [estimated price]
+- "Good value" range: [estimated range]
+- "Getting expensive but still worth it" threshold: [estimated price]
+- "Too expensive" threshold: [estimated price]
+Recommended: price in the "good value" zone, just below "getting expensive"
+
+## Buyer Budget Category
+- What budget line this comes from (software, headcount, marketing, etc.)
+- Who controls this budget (title and seniority)
+- Typical approval threshold (what requires sign-off)
+- How to position to fit in a favorable budget category
+
+## Competitor Price Anchoring
+- If priced above: how to justify the premium
+- If priced below: risk of being seen as inferior
+- Bundle vs. unbundle strategy for perception
+
+## Price Elasticity Signals
+- What your sales data suggests about price sensitivity
+- Price objection frequency and severity analysis
+- Discount rates being given (red flag: if discounting >20% regularly)
+
+## Testing Plan
+- How to test price sensitivity safely
+- Survey questions to ask prospects
+- Segmented pricing test approach`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a pricing researcher and behavioral economist.');
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/buyer-persona', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { customers, data } = req.body;
+    const prompt = `You are a marketing strategist who builds buyer personas from real data, not assumptions. Build the personas.
+
+Customer data: ${customers}
+Research data: ${data}
+
+Build the buyer personas:
+
+## Persona 1: [Primary Buyer — give a name]
+**Profile**
+- Title and seniority
+- Company profile (size, industry, stage)
+- Day-to-day responsibilities
+
+**Goals and Motivations**
+- What they are trying to achieve professionally
+- How they are measured (their KPIs)
+- What would make them look great to their boss
+
+**Pain Points**
+- Their #1 frustration with the current situation
+- What keeps them up at night related to your problem space
+- What they have tried that did not work
+
+**Buying Triggers**
+- What event or change causes them to start looking for a solution like yours
+- What makes "now" the right time
+- What accelerates their decision
+
+**Objections and Fears**
+- What makes them hesitate
+- Whose approval they need
+- What "failure" looks like for them
+
+**How They Buy**
+- Research process (Google, peers, G2, LinkedIn?)
+- Decision timeline
+- Who else is involved
+
+**Message That Lands**
+- The sentence that makes them feel understood
+- Proof points they find compelling
+- The CTA that converts them
+
+## Persona 2 and 3: [Same format for secondary personas]
+
+## Persona Prioritization
+- Which persona to target first and why
+- How messaging differs per persona`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a marketing strategist specializing in customer research and persona development.');
+    res.json({ personas: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/comp-benchmarking', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { role, market } = req.body;
+    const prompt = `You are a compensation consultant. Benchmark this role and build the comp framework.
+
+Role: ${role}
+Market context: ${market}
+
+Build the compensation benchmark:
+
+## Market Rate Ranges
+Based on public data (Levels.fyi, LinkedIn Salary, Glassdoor, Radford, Mercer benchmarks):
+
+| Level | Base | Equity (annual value) | Total Cash | Total Comp |
+|-------|------|----------------------|------------|------------|
+[Fill in multiple levels around the role specified]
+
+Note: these are estimates based on market data — verify with a compensation survey for final decisions.
+
+## Percentile Positioning
+- 25th percentile (value hire, budget-constrained)
+- 50th percentile (market rate, standard)
+- 75th percentile (competitive, attract top talent)
+- 90th percentile (top of market, employer of choice)
+
+## Comp Philosophy Recommendation
+- Where to position given your stage and goals
+- Trade-offs: higher cash vs. higher equity
+- How to communicate comp philosophy to candidates
+
+## Equity Considerations
+- For early-stage startup: option grant sizing as % of company
+- For growth-stage: RSU grant sizing
+- Vesting schedule norms for this type of role
+
+## Location Adjustment
+- Remote vs. SF/NYC vs. other major markets
+- Geographic differential approach
+
+## Comp Band Structure
+- How to build a band for this role
+- Midpoint, minimum, maximum
+- When to give increases within the band vs. promote
+
+## Offer Construction
+- How to frame total comp in the offer conversation
+- How to handle counteroffers
+- Flexible comp components to negotiate`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a compensation consultant and talent strategy expert.');
+    res.json({ benchmark: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 192 routes
+app.post('/api/dev/data-pipeline-design', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { pipeline, scale } = req.body;
+    const prompt = `You are a data engineering architect. Design the data pipeline.
+
+Pipeline requirements: ${pipeline}
+Scale: ${scale}
+
+Design the data pipeline:
+
+## Architecture Decision
+- Batch vs. streaming vs. micro-batch — recommendation and why for this use case
+- Lambda vs. Kappa architecture if relevant
+- Managed service vs. self-hosted trade-offs
+
+## Tool Stack Recommendation
+- Ingestion: [tool] — e.g. Fivetran, Airbyte, Kafka, custom
+- Processing: [tool] — e.g. dbt, Spark, Flink, pandas
+- Storage: [tool] — e.g. Snowflake, BigQuery, Databricks, PostgreSQL
+- Orchestration: [tool] — e.g. Airflow, Prefect, dbt Cloud
+- Monitoring: [tool]
+
+## Pipeline Architecture
+Step-by-step pipeline design:
+1. Source ingestion layer
+2. Raw storage (landing zone)
+3. Transformation layer
+4. Serving layer
+
+## Data Quality
+- Validation checks at each stage
+- How to handle bad data (dead letter queue, alerting)
+- Data contracts if applicable
+
+## Schema Design
+- Recommended schema evolution approach
+- Type system and nullable field policy
+- Partitioning strategy for query performance
+
+## Reliability
+- Error handling and retry logic
+- Idempotency design (safe to re-run)
+- Monitoring and alerting for failures
+- SLA for data freshness
+
+## Testing Strategy
+- Unit tests for transformations
+- Integration tests for end-to-end flow
+- Data quality tests (dbt tests, Great Expectations)
+
+## Operations
+- How to deploy changes safely
+- Backfill strategy
+- Cost estimation and optimization`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a data engineering architect and pipeline design expert.');
+    res.json({ design: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/feature-flag-strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { team, usecase } = req.body;
+    const prompt = `You are a platform engineer who has implemented feature flag systems at scale. Build the strategy.
+
+Team: ${team}
+Primary use case: ${usecase}
+
+Design the feature flag strategy:
+
+## Flag Types and When to Use Each
+- Release flags: gradual rollouts and kill switches
+- Experiment flags: A/B tests
+- Ops flags: performance and operational controls
+- Permission flags: per-customer features
+
+## Tool Recommendation
+- Best flag tool for this team/use case (LaunchDarkly, Split.io, Flagsmith, GrowthBook, Unleash, homegrown)
+- Why this tool fits
+- Estimated cost vs. build-vs-buy analysis
+
+## Flag Taxonomy
+- Naming convention: [prefix]_[feature]_[variant]
+- Targeting attributes to use (user ID, account ID, plan, etc.)
+- Environment strategy (local, staging, production)
+
+## Rollout Patterns
+- Canary: start with 1% → 5% → 25% → 100%
+- Ring-based: internal → beta → all users
+- Geographic: one region before global
+- Per-account: specific customers first
+
+## Flag Lifecycle Management
+- Creation: who can create flags, required fields
+- Review: approval process for production flags
+- Retirement: when and how to clean up flags
+- Audit: who can see flag change history
+
+## Governance Rules
+- How to prevent flag proliferation (the graveyard problem)
+- Maximum flag age before review
+- Required documentation per flag
+
+## Integration Patterns
+- How to implement flags in your stack (code examples)
+- SDK initialization best practice
+- Server-side vs. client-side evaluation
+- How to handle flag unavailability (default states)
+
+## Incident Response
+- How to use flags as kill switches
+- Rollback procedure using flags
+- On-call access requirements`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a platform engineering and feature management expert.');
+    res.json({ strategy: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/champion-builder', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { deal, champion } = req.body;
+    const prompt = `You are a strategic sales expert. Build the champion strategy for this deal.
+
+Deal: ${deal}
+Champion: ${champion}
+
+Build the champion strategy:
+
+## Champion Assessment
+- Champion strength rating (1-5) and what would strengthen it
+- Their WIIFM (What's In It For Me): their personal stake in success
+- Their power and influence: can they actually move the deal?
+- Risk: signs they might not be a true champion
+
+## Champion Enablement Package
+Create ready-to-use materials for your champion:
+
+### Internal Business Case (they send to their boss)
+- Executive summary (3 sentences)
+- Business problem statement
+- Why this solution vs. alternatives
+- ROI framing with their numbers
+- Risk of not acting
+
+### Budget Justification Deck (5 slides)
+Slide structure for their internal presentation
+
+### FAQ for Internal Stakeholders
+Top 5 questions they will face + answers for each
+
+## Champion Conversation Guide
+How to coach your champion:
+- What to say in the exec meeting
+- How to handle "why now?" from their CFO
+- How to handle "we could build this" from engineering
+- How to neutralize the internal detractor
+
+## Stakeholder Map
+- Decision maker: strategy to get access
+- Technical evaluator: how champion positions your solution
+- Procurement/Legal: how to pre-empt their concerns
+- Finance: how to justify ROI in their language
+
+## Deal Risk Mitigation
+- What could kill this deal even with a champion
+- Backup plan if champion loses influence or leaves
+- How to multi-thread without undermining champion
+
+## Next 30-Day Plan
+Specific actions to strengthen the champion relationship`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a strategic enterprise sales expert specializing in champion development.');
+    res.json({ strategy: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/copy-review', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { copy, audience } = req.body;
+    const prompt = `You are a direct-response copywriter and conversion expert. Review this copy.
+
+Copy: ${copy}
+Target audience and goal: ${audience}
+
+Provide the copy review:
+
+## Overall Assessment
+- Conversion potential: A/B/C/D rating
+- The single biggest problem with this copy
+- What is working (do not cut this)
+
+## Headline Analysis
+- Does it make a promise or create curiosity?
+- Is it specific enough to be credible?
+- Rewrite options (3 alternatives to test)
+
+## Value Proposition Clarity
+- Can the reader explain what this does in 5 seconds?
+- Is the benefit vs. feature balance right?
+- What is missing from the value prop?
+
+## Audience Fit
+- Does this speak the audience's language?
+- Does it acknowledge their specific pain?
+- Jargon or assumptions that would confuse them
+
+## CTA Quality
+- Is the CTA clear and specific?
+- Is there friction to reduce?
+- Alternative CTA language to test
+
+## Trust and Credibility
+- Missing proof elements
+- Claims that need substantiation
+- Social proof opportunities
+
+## Line-by-Line Edits
+[Go through the copy line by line, flagging specific issues and providing rewrites]
+
+## Revised Version
+A rewrite of the full copy incorporating all feedback`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a direct-response copywriter and conversion rate optimization expert.');
+    res.json({ review: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/prioritization-framework', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { backlog, context } = req.body;
+    const prompt = `You are a product strategy expert. Build a prioritization framework and apply it to this backlog.
+
+Backlog: ${backlog}
+Context: ${context}
+
+Build the framework and prioritize:
+
+## Framework Design
+- Recommended framework for this context (RICE, ICE, MoSCoW, Opportunity Scoring, Value/Effort)
+- Why this framework vs. alternatives
+- Scoring criteria and how to weight them
+
+## Scoring Rubric
+For each dimension, define what 1, 3, 5, and 10 look like:
+- Impact: [criteria]
+- Confidence: [criteria]
+- Effort: [criteria]
+- Strategic alignment: [criteria]
+
+## Backlog Scored
+| Item | Impact | Confidence | Effort | Strategic | Score | Rank |
+Apply the framework to every item in the backlog
+
+## Priority Recommendations
+### Now (next sprint/month)
+- Items to do immediately and why
+- What this unlocks
+
+### Next (next quarter)
+- Items on deck
+- Dependencies to clear first
+
+### Later (6+ months)
+- Items worth keeping but not yet
+- Conditions that would move these up
+
+### Never/Kill
+- Items to remove from backlog
+- Why (not wrong to kill — saves focus)
+
+## Stakeholder Communication
+- How to explain the prioritization to each stakeholder group
+- What to say when someone pushes back on a deprioritized item
+- How to keep the framework alive (review cadence)`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a product strategy expert specializing in prioritization and roadmap decisions.');
+    res.json({ framework: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));
