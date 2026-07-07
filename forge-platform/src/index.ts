@@ -173,7 +173,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v344.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v348.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -2438,6 +2438,7 @@ app.get('/api/marketplace', requireAuth, (req: AuthRequest, res) => {
   try {
     const userId = req.user!.id || req.user!.sub;
     db.exec(`CREATE TABLE IF NOT EXISTS marketplace_installs (id TEXT PRIMARY KEY, user_id TEXT, app_id TEXT, installed_at TEXT)`);
+    try { db.exec(`ALTER TABLE marketplace_installs ADD COLUMN app_id TEXT`); } catch {}
     const installed = db.prepare('SELECT app_id FROM marketplace_installs WHERE user_id=?').all(userId) as any[];
     const installedIds = new Set(installed.map((r:any) => r.app_id));
     res.json({ success:true, data: MARKETPLACE_APPS.map(a => ({ ...a, installed: installedIds.has(a.id) })) });
@@ -7788,7 +7789,7 @@ app.get('/api/workspace/activity-heatmap', authMiddleware, async (req: any, res)
     const userId = req.user.userId;
     const since = new Date(Date.now() - 30 * 86400000).toISOString();
     const rows = db.prepare(`
-      SELECT strftime('%w', created_at) as dow, strftime('%H', created_at) as hour, COUNT(*) as count
+      SELECT strftime('%w', m.created_at) as dow, strftime('%H', m.created_at) as hour, COUNT(*) as count
       FROM messages m JOIN threads t ON m.thread_id=t.id
       WHERE t.user_id=? AND m.created_at>=?
       GROUP BY dow, hour ORDER BY dow, hour
@@ -8470,7 +8471,7 @@ app.delete('/api/insights-feed/:id', authMiddleware, (req: any, res: any) => {
 
 // ── Workspace Stats Summary (extended) ──
 app.get('/api/workspace/stats-summary', authMiddleware, (req: any, res: any) => {
-  const uid = req.user.id;
+  const uid = req.user.userId || req.user.sub || req.user.id;
   const totalThreads = (db.prepare('SELECT COUNT(*) as c FROM threads WHERE user_id=?').get(uid) as any)?.c||0;
   const totalMessages = (db.prepare('SELECT COUNT(*) as c FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=?').get(uid) as any)?.c||0;
   const totalTokens = (db.prepare('SELECT SUM(tokens_used) as s FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=?').get(uid) as any)?.s||0;
