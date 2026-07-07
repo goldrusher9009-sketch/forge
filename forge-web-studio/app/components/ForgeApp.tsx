@@ -21230,9 +21230,6 @@ export default function ForgeApp() {
   const [wsKanban, setWsKanban] = useState<any[]>([]);
   const [newKanCard, setNewKanCard] = useState('');
   const [newKanCol, setNewKanCol] = useState('todo');
-  const [readingList, setReadingList] = useState<any[]>([]);
-  const [newRlTitle, setNewRlTitle] = useState('');
-  const [newRlUrl, setNewRlUrl] = useState('');
   const [aiDebugLogs, setAiDebugLogs] = useState<any[]>([]);
   const [newDbMsg, setNewDbMsg] = useState('');
   const [newDbLevel, setNewDbLevel] = useState('info');
@@ -28230,17 +28227,45 @@ export default function ForgeApp() {
               {/* Right panel — hidden in Focus mode */}
               {rightExpanded && !isMobile && forgeMode !== 'focus' && (
                 <div style={{ width:360, background:'var(--fg-bg)', borderLeft:'1px solid var(--fg-border)', display:'flex', flexDirection:'column', flexShrink:0 }}>
-                  <div style={{ display:'flex', borderBottom:'1px solid var(--fg-border)', padding:'0 2px', overflowX:'auto' }}>
-                    {([
-                      {id:'tracker',icon:'📌'},{id:'agents',icon:'🧠'},
-                      {id:'tools',icon:'🛡'},{id:'hooks',icon:'🪝'},{id:'runs',icon:'🏃'},
-                      {id:'agent',icon:'🤖'},{id:'artifacts',icon:'📄'},{id:'tasks',icon:'✓'},
-                      {id:'live',icon:'📺'},{id:'schedule',icon:'📅'},{id:'context',icon:'📊'},
-                      {id:'browser',icon:'🌐'},{id:'terminal',icon:'💻'},{id:'dispatch',icon:'🚀'},
-                    ] as const).map(tab => (
-                      <button key={tab.id} onClick={() => setRightTab(tab.id as any)} title={tab.id} style={{ flex:'0 0 auto', padding:'10px 8px', background:'none', border:'none', borderBottom:rightTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', color:rightTab===tab.id ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:14 }}>{tab.icon}</button>
-                    ))}
-                  </div>
+                  {/* Grouped right-panel nav */}
+                  {(() => {
+                    const GROUPS = [
+                      { label:'Progress', tabs:[{id:'tracker',icon:'📌',title:'Tracker'},{id:'tasks',icon:'✓',title:'Tasks'},{id:'artifacts',icon:'📄',title:'Artifacts'},{id:'runs',icon:'🏃',title:'Runs'}] },
+                      { label:'Connectors', tabs:[{id:'tools',icon:'🛡',title:'Tools'},{id:'hooks',icon:'🪝',title:'Hooks'},{id:'agents',icon:'🧠',title:'Agents'},{id:'agent',icon:'🤖',title:'Agent'}] },
+                      { label:'Context', tabs:[{id:'context',icon:'📊',title:'Context'},{id:'browser',icon:'🌐',title:'Browser'}] },
+                      { label:'Automation', tabs:[{id:'schedule',icon:'📅',title:'Schedule'},{id:'dispatch',icon:'🚀',title:'Dispatch'},{id:'live',icon:'📺',title:'Live'}] },
+                      { label:'System', tabs:[{id:'terminal',icon:'💻',title:'Terminal'}] },
+                    ] as const;
+                    const activeGroup = GROUPS.find(g => g.tabs.some(t => t.id === rightTab));
+                    return (
+                      <div style={{ borderBottom:'1px solid var(--fg-border)' }}>
+                        {/* Group header row */}
+                        <div style={{ display:'flex', overflowX:'auto' }}>
+                          {GROUPS.map(g => {
+                            const isActive = g.tabs.some(t => t.id === rightTab);
+                            return (
+                              <button key={g.label} onClick={() => { const first = g.tabs[0]; setRightTab(first.id as any); }}
+                                style={{ flex:'1 0 auto', padding:'6px 4px 4px', background:'none', border:'none', borderBottom: isActive ? '2px solid var(--fg-orange)' : '2px solid transparent', color: isActive ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:10, fontWeight: isActive ? 700 : 400, letterSpacing:'0.3px', textTransform:'uppercase', whiteSpace:'nowrap' }}>
+                                {g.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {/* Tab icon row for active group */}
+                        {activeGroup && (
+                          <div style={{ display:'flex', padding:'0 2px', background:'var(--fg-bg2)' }}>
+                            {activeGroup.tabs.map(tab => (
+                              <button key={tab.id} onClick={() => setRightTab(tab.id as any)} title={tab.title}
+                                style={{ flex:'1 0 auto', padding:'6px 4px', background:'none', border:'none', borderBottom: rightTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', color: rightTab===tab.id ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:13, display:'flex', flexDirection:'column', alignItems:'center', gap:1 }}>
+                                <span>{tab.icon}</span>
+                                <span style={{ fontSize:9, letterSpacing:'0.2px' }}>{tab.title}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   <div style={{ flex:1, overflowY:'auto', padding:12 }}>
                     {/* PROGRESS TRACKER */}
