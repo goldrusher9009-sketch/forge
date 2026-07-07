@@ -15,7 +15,9 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_reengagement171, ForgeTab_opsreview171, ForgeTab_winlossanalysis171, ForgeTab_productevangelist171, ForgeTab_scenarioplanning171,
   ForgeTab_apichangelog172, ForgeTab_leadscoring172, ForgeTab_productopsplan172, ForgeTab_investorthesis172, ForgeTab_culturecode172,
   ForgeTab_productannounce173, ForgeTab_operationskpi173, ForgeTab_productgoback173, ForgeTab_salessystem173, ForgeTab_investorqa173,
-  ForgeTab_growthexperiment174, ForgeTab_devpostmortem174, ForgeTab_emaildrip174, ForgeTab_teammeeting174, ForgeTab_competitorintel174 } from './WaveComponents';
+  ForgeTab_growthexperiment174, ForgeTab_devpostmortem174, ForgeTab_emaildrip174, ForgeTab_teammeeting174, ForgeTab_competitorintel174,
+  ForgeTab_pricingpage175, ForgeTab_agendabuilder175, ForgeTab_devarchreview175, ForgeTab_salesenablement175, ForgeTab_investorrelations175,
+  ForgeTab_contentrepurpose176, ForgeTab_hrpolicydraft176, ForgeTab_productfeedback176, ForgeTab_partnershipdeck176, ForgeTab_casestudy176 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -26819,6 +26821,16 @@ export default function ForgeApp() {
     { id:'emaildrip174', icon:'📧', label:'Email Drip Sequence Builder' },
     { id:'teammeeting174', icon:'🗓️', label:'Team Meeting Designer' },
     { id:'competitorintel174', icon:'🕵️', label:'Competitor Intel Report' },
+    { id:'pricingpage175', icon:'💰', label:'Pricing Page Copywriter' },
+    { id:'agendabuilder175', icon:'📋', label:'Meeting Agenda Builder' },
+    { id:'devarchreview175', icon:'🏛️', label:'Architecture Review' },
+    { id:'salesenablement175', icon:'🎒', label:'Sales Enablement Kit' },
+    { id:'investorrelations175', icon:'📬', label:'Investor Update Template' },
+    { id:'contentrepurpose176', icon:'♻️', label:'Content Repurposer' },
+    { id:'hrpolicydraft176', icon:'📄', label:'HR Policy Drafter' },
+    { id:'productfeedback176', icon:'🔍', label:'Product Feedback Synthesizer' },
+    { id:'partnershipdeck176', icon:'🤝', label:'Partnership Proposal Builder' },
+    { id:'casestudy176', icon:'📖', label:'Case Study Writer' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -48800,6 +48812,16 @@ export default function ForgeApp() {
           {(mainTab as string) === 'emaildrip174' && <ForgeTab_emaildrip174 />}
           {(mainTab as string) === 'teammeeting174' && <ForgeTab_teammeeting174 />}
           {(mainTab as string) === 'competitorintel174' && <ForgeTab_competitorintel174 />}
+          {(mainTab as string) === 'pricingpage175' && <ForgeTab_pricingpage175 />}
+          {(mainTab as string) === 'agendabuilder175' && <ForgeTab_agendabuilder175 />}
+          {(mainTab as string) === 'devarchreview175' && <ForgeTab_devarchreview175 />}
+          {(mainTab as string) === 'salesenablement175' && <ForgeTab_salesenablement175 />}
+          {(mainTab as string) === 'investorrelations175' && <ForgeTab_investorrelations175 />}
+          {(mainTab as string) === 'contentrepurpose176' && <ForgeTab_contentrepurpose176 />}
+          {(mainTab as string) === 'hrpolicydraft176' && <ForgeTab_hrpolicydraft176 />}
+          {(mainTab as string) === 'productfeedback176' && <ForgeTab_productfeedback176 />}
+          {(mainTab as string) === 'partnershipdeck176' && <ForgeTab_partnershipdeck176 />}
+          {(mainTab as string) === 'casestudy176' && <ForgeTab_casestudy176 />}
       </div>
     </div>
   );
