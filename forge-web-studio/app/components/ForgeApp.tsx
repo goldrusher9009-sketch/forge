@@ -43,7 +43,7 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_devdependencyaudit199, ForgeTab_salesreferencecustomer199, ForgeTab_productplg199, ForgeTab_marketingseostrategy199, ForgeTab_hroffboarding199,
   ForgeTab_devfeatureflagstrategy200, ForgeTab_investorpitchdeck200, ForgeTab_productuserfeedbacksystem200, ForgeTab_salescustomersuccess200, ForgeTab_marketingbrandstory200,
   ForgeTab_devaiintegration201, ForgeTab_salesgtmlaunch201, ForgeTab_productmarketmap201, ForgeTab_marketingdemand201, ForgeTab_hrengagementsurvey201,
-  ForgeTab_devmicroservices202, ForgeTab_investorportfolio202, ForgeTab_productpersona202, ForgeTab_salespipelinemetrics202, ForgeTab_marketinglaunchcalendar202 } from './WaveComponents';
+  ForgeTab_devmicroservices202, ForgeTab_investorportfolio202, ForgeTab_productpersona202, ForgeTab_salespipelinemetrics202, ForgeTab_marketinglaunchcalendar202, ForgeTab_devgraphqldesign203, ForgeTab_salesenterpriseselling203, ForgeTab_productuserstory203, ForgeTab_marketingthoughtleadership203, ForgeTab_hrteamstructure203, ForgeTab_devperfbudget204, ForgeTab_investorsyndicatebuilder204, ForgeTab_productaccessibility204, ForgeTab_salesrevops204, ForgeTab_marketinginfluencer204 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -26987,6 +26987,16 @@ export default function ForgeApp() {
           { id:'productpersona202', icon:'👥', label:'User Persona Builder' },
           { id:'salespipelinemetrics202', icon:'📈', label:'Pipeline Metrics Analyzer' },
           { id:'marketinglaunchcalendar202', icon:'📅', label:'Marketing Launch Calendar' },
+        { id:'devgraphqldesign203', icon:'⚡', label:'GraphQL API Designer' },
+        { id:'salesenterpriseselling203', icon:'🏢', label:'Enterprise Deal Strategy' },
+        { id:'productuserstory203', icon:'📓', label:'User Story Generator' },
+        { id:'marketingthoughtleadership203', icon:'💡', label:'Thought Leadership Plan' },
+        { id:'hrteamstructure203', icon:'🏗️', label:'Team Structure Designer' },
+        { id:'devperfbudget204', icon:'⚡', label:'Performance Budget Builder' },
+        { id:'investorsyndicatebuilder204', icon:'🤝', label:'Investor Syndicate Builder' },
+        { id:'productaccessibility204', icon:'♿', label:'Accessibility Plan Builder' },
+        { id:'salesrevops204', icon:'⚙️', label:'RevOps Audit' },
+        { id:'marketinginfluencer204', icon:'🌟', label:'Influencer Strategy Builder' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -49108,6 +49118,16 @@ export default function ForgeApp() {
             {(mainTab as string) === 'productpersona202' && <ForgeTab_productpersona202 />}
             {(mainTab as string) === 'salespipelinemetrics202' && <ForgeTab_salespipelinemetrics202 />}
             {(mainTab as string) === 'marketinglaunchcalendar202' && <ForgeTab_marketinglaunchcalendar202 />}
+        {(mainTab as string) === 'devgraphqldesign203' && <ForgeTab_devgraphqldesign203 />}
+        {(mainTab as string) === 'salesenterpriseselling203' && <ForgeTab_salesenterpriseselling203 />}
+        {(mainTab as string) === 'productuserstory203' && <ForgeTab_productuserstory203 />}
+        {(mainTab as string) === 'marketingthoughtleadership203' && <ForgeTab_marketingthoughtleadership203 />}
+        {(mainTab as string) === 'hrteamstructure203' && <ForgeTab_hrteamstructure203 />}
+        {(mainTab as string) === 'devperfbudget204' && <ForgeTab_devperfbudget204 />}
+        {(mainTab as string) === 'investorsyndicatebuilder204' && <ForgeTab_investorsyndicatebuilder204 />}
+        {(mainTab as string) === 'productaccessibility204' && <ForgeTab_productaccessibility204 />}
+        {(mainTab as string) === 'salesrevops204' && <ForgeTab_salesrevops204 />}
+        {(mainTab as string) === 'marketinginfluencer204' && <ForgeTab_marketinginfluencer204 />}
       </div>
     </div>
   );
