@@ -11,7 +11,9 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_productnarrative167, ForgeTab_customersegment167, ForgeTab_performancereview167, ForgeTab_apiproductplan167, ForgeTab_pricingstrategy167,
   ForgeTab_crisiscomms168, ForgeTab_meetingfacilitation168, ForgeTab_valueprop168, ForgeTab_revenuemodel168, ForgeTab_teambuilder168,
   ForgeTab_customerjourney169, ForgeTab_productlaunch169, ForgeTab_businessmodel169, ForgeTab_salescycle169, ForgeTab_headlinewriter169,
-  ForgeTab_dataroom170, ForgeTab_remotework170, ForgeTab_coldcall170, ForgeTab_techwriting170, ForgeTab_pitchdeck170 } from './WaveComponents';
+  ForgeTab_dataroom170, ForgeTab_remotework170, ForgeTab_coldcall170, ForgeTab_techwriting170, ForgeTab_pitchdeck170,
+  ForgeTab_reengagement171, ForgeTab_opsreview171, ForgeTab_winlossanalysis171, ForgeTab_productevangelist171, ForgeTab_scenarioplanning171,
+  ForgeTab_apichangelog172, ForgeTab_leadscoring172, ForgeTab_productopsplan172, ForgeTab_investorthesis172, ForgeTab_culturecode172 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -26795,6 +26797,16 @@ export default function ForgeApp() {
         { id:'coldcall170', icon:'📞', label:'Cold Call Script Builder' },
         { id:'techwriting170', icon:'📝', label:'Tech Writing Guide' },
         { id:'pitchdeck170', icon:'🎤', label:'Pitch Deck Coach' },
+        { id:'reengagement171', icon:'🔄', label:'Re-engagement Campaign' },
+        { id:'opsreview171', icon:'⚙️', label:'Operations Review' },
+        { id:'winlossanalysis171', icon:'🔎', label:'Win/Loss Analysis' },
+        { id:'productevangelist171', icon:'📢', label:'Product Evangelist Kit' },
+        { id:'scenarioplanning171', icon:'🌐', label:'Scenario Planning' },
+        { id:'apichangelog172', icon:'📋', label:'API Changelog Writer' },
+        { id:'leadscoring172', icon:'🎯', label:'Lead Scoring Model' },
+        { id:'productopsplan172', icon:'🔧', label:'Product Ops Plan' },
+        { id:'investorthesis172', icon:'💡', label:'Investment Thesis Builder' },
+        { id:'culturecode172', icon:'🏢', label:'Culture Code Writer' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -48756,6 +48768,16 @@ export default function ForgeApp() {
             {(mainTab as string) === 'coldcall170' && <ForgeTab_coldcall170 />}
             {(mainTab as string) === 'techwriting170' && <ForgeTab_techwriting170 />}
             {(mainTab as string) === 'pitchdeck170' && <ForgeTab_pitchdeck170 />}
+            {(mainTab as string) === 'reengagement171' && <ForgeTab_reengagement171 />}
+            {(mainTab as string) === 'opsreview171' && <ForgeTab_opsreview171 />}
+            {(mainTab as string) === 'winlossanalysis171' && <ForgeTab_winlossanalysis171 />}
+            {(mainTab as string) === 'productevangelist171' && <ForgeTab_productevangelist171 />}
+            {(mainTab as string) === 'scenarioplanning171' && <ForgeTab_scenarioplanning171 />}
+            {(mainTab as string) === 'apichangelog172' && <ForgeTab_apichangelog172 />}
+            {(mainTab as string) === 'leadscoring172' && <ForgeTab_leadscoring172 />}
+            {(mainTab as string) === 'productopsplan172' && <ForgeTab_productopsplan172 />}
+            {(mainTab as string) === 'investorthesis172' && <ForgeTab_investorthesis172 />}
+            {(mainTab as string) === 'culturecode172' && <ForgeTab_culturecode172 />}
       </div>
     </div>
   );
