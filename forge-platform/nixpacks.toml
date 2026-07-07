@@ -5,10 +5,10 @@ providers = ["node"]
 nixPkgs = ["nodejs_20"]
 
 [phases.install]
-cmds = ["npm install --omit=dev --prefer-offline || npm install --omit=dev"]
+cmds = ["npm install"]
 
 [phases.build]
-cmds = ["echo 'dist pre-built'"]
+cmds = ["npx esbuild src/index.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist"]
 
 [start]
 cmd = "node --max-old-space-size=4096 dist/index.js"
