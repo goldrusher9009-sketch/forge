@@ -53,7 +53,7 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_devapistrategy231, ForgeTab_salespartnerchannel231, ForgeTab_productaccessibility231, ForgeTab_marketingcommunitybuilding231, ForgeTab_hrlearningdevelopment231,
   ForgeTab_devcontainerization232, ForgeTab_investorvaluation232, ForgeTab_productfeedbacksystem232, ForgeTab_salesenterprisemotion232, ForgeTab_marketinglaunchplaybook232,
   ForgeTab_devdocumentationstrategy233, ForgeTab_salesmessagingframework233, ForgeTab_productmobileapp233, ForgeTab_marketingwebsiteconversion233, ForgeTab_hrremoteworkpolicy233,
-  ForgeTab_devincidentpostmortem234, ForgeTab_investorpitchcoach234, ForgeTab_productinternationalization234, ForgeTab_salesqbr234, ForgeTab_marketinginfluencerstrategy234, ForgeTab_devaiintegration235, ForgeTab_salescoldcallscript235, ForgeTab_productdiscoverysprint235, ForgeTab_marketingpressrelease235, ForgeTab_hrcompensationbenchmark235, ForgeTab_devperformancetesting236, ForgeTab_investorupdateemail236, ForgeTab_productdesignsystem236, ForgeTab_salesleadscoring236, ForgeTab_marketingcasestudywriter236, ForgeTab_devsecurityaudit237, ForgeTab_salesnegotiationstrategy237, ForgeTab_productmonetization237, ForgeTab_marketingsocialmedia237, ForgeTab_hroffboardingplan237, ForgeTab_devdatabasedesign238, ForgeTab_investorduediligence238, ForgeTab_productexperimentplan238, ForgeTab_salesproposaleditor238, ForgeTab_marketingeventstrategy238 } from './WaveComponents';
+  ForgeTab_devincidentpostmortem234, ForgeTab_investorpitchcoach234, ForgeTab_productinternationalization234, ForgeTab_salesqbr234, ForgeTab_marketinginfluencerstrategy234, ForgeTab_devaiintegration235, ForgeTab_salescoldcallscript235, ForgeTab_productdiscoverysprint235, ForgeTab_marketingpressrelease235, ForgeTab_hrcompensationbenchmark235, ForgeTab_devperformancetesting236, ForgeTab_investorupdateemail236, ForgeTab_productdesignsystem236, ForgeTab_salesleadscoring236, ForgeTab_marketingcasestudywriter236, ForgeTab_devsecurityaudit237, ForgeTab_salesnegotiationstrategy237, ForgeTab_productmonetization237, ForgeTab_marketingsocialmedia237, ForgeTab_hroffboardingplan237, ForgeTab_devdatabasedesign238, ForgeTab_investorduediligence238, ForgeTab_productexperimentplan238, ForgeTab_salesproposaleditor238, ForgeTab_marketingeventstrategy238, ForgeTab_devcicdpipeline239, ForgeTab_salesaccountplanning239, ForgeTab_productchangemanagement239, ForgeTab_marketingpodcaststrategy239, ForgeTab_hrperformancepip239, ForgeTab_devcostreduction240, ForgeTab_investormarketmap240, ForgeTab_productuserjourney240, ForgeTab_saleschurnprevention240, ForgeTab_marketingabtest240 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -27177,6 +27177,16 @@ export default function ForgeApp() {
           { id:'productexperimentplan238', icon:'🧪', label:'Experiment Plan Builder' },
           { id:'salesproposaleditor238', icon:'📋', label:'Proposal Editor' },
           { id:'marketingeventstrategy238', icon:'🎪', label:'Event Marketing Strategy' },
+          { id:'devcicdpipeline239', icon:'🔄', label:'CI/CD Pipeline Designer' },
+          { id:'salesaccountplanning239', icon:'🗺️', label:'Strategic Account Plan' },
+          { id:'productchangemanagement239', icon:'🔀', label:'Change Management Plan' },
+          { id:'marketingpodcaststrategy239', icon:'🎙️', label:'Podcast Strategy' },
+          { id:'hrperformancepip239', icon:'📊', label:'Performance Improvement Plan' },
+          { id:'devcostreduction240', icon:'💸', label:'Infrastructure Cost Reduction' },
+          { id:'investormarketmap240', icon:'🗺️', label:'Market Map & Sizing' },
+          { id:'productuserjourney240', icon:'🛤️', label:'User Journey Mapper' },
+          { id:'saleschurnprevention240', icon:'🚨', label:'Churn Prevention Playbook' },
+          { id:'marketingabtest240', icon:'⚗️', label:'A/B Test Design Kit' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -49478,6 +49488,16 @@ export default function ForgeApp() {
                 {(mainTab as string) === 'productexperimentplan238' && <ForgeTab_productexperimentplan238 />}
                 {(mainTab as string) === 'salesproposaleditor238' && <ForgeTab_salesproposaleditor238 />}
                 {(mainTab as string) === 'marketingeventstrategy238' && <ForgeTab_marketingeventstrategy238 />}
+                {(mainTab as string) === 'devcicdpipeline239' && <ForgeTab_devcicdpipeline239 />}
+                {(mainTab as string) === 'salesaccountplanning239' && <ForgeTab_salesaccountplanning239 />}
+                {(mainTab as string) === 'productchangemanagement239' && <ForgeTab_productchangemanagement239 />}
+                {(mainTab as string) === 'marketingpodcaststrategy239' && <ForgeTab_marketingpodcaststrategy239 />}
+                {(mainTab as string) === 'hrperformancepip239' && <ForgeTab_hrperformancepip239 />}
+                {(mainTab as string) === 'devcostreduction240' && <ForgeTab_devcostreduction240 />}
+                {(mainTab as string) === 'investormarketmap240' && <ForgeTab_investormarketmap240 />}
+                {(mainTab as string) === 'productuserjourney240' && <ForgeTab_productuserjourney240 />}
+                {(mainTab as string) === 'saleschurnprevention240' && <ForgeTab_saleschurnprevention240 />}
+                {(mainTab as string) === 'marketingabtest240' && <ForgeTab_marketingabtest240 />}
       </div>
     </div>
   );
