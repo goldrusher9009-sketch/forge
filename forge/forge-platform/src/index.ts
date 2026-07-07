@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v358.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v359.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -184325,5 +184325,33 @@ app.post('/api/pm/risk-register', requireAuth, async (req: AuthRequest, res) => 
   const prompt = `Build a risk register for this project: ${project}. Generate 10-15 risks covering: technical, resource, schedule, scope, external, financial, and operational categories. For each risk: Risk ID, Description, Category, Likelihood (1-5), Impact (1-5), Risk Score (L×I), Mitigation strategy, Owner (role), Status. Sort by risk score descending.`;
   try { const r = await callUserLLM(req, prompt); res.json({ register: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
+
+// Wave 142 routes
+app.post('/api/marketing/producthunt-launch', requireAuth, async (req: AuthRequest, res) => {
+  const { product, tagline } = req.body;
+  const prompt = `Generate a Product Hunt launch kit for: ${product}. Draft tagline: ${tagline || 'none'}. Include: 5 tagline options (60 chars max each), product description (260 chars, no buzzwords), first comment from maker (personal story + offer), top hunter DM template, launch day checklist. Focus on authenticity over hype.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ launch_kit: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/writing/relationship-repair', requireAuth, async (req: AuthRequest, res) => {
+  const { situation, relationship } = req.body;
+  const prompt = `Write a relationship repair message. Situation: ${situation}. Relationship: ${relationship}. Rules: Acknowledge specifically what happened (no vague "if I offended you"), take appropriate ownership without over-apologizing, express genuine intent to repair, propose a concrete next step. Tone: direct, warm, not defensive. Under 150 words.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ message: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/tech-debt-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { codebase } = req.body;
+  const prompt = `Create a tech debt prioritization plan for: ${codebase}. Structure: Executive Summary (for non-technical stakeholders), Debt Inventory (categorized: security, performance, maintainability, scalability), Priority Matrix (Impact vs Effort 2x2), Top 5 items to tackle first with rationale, Proposed paydown schedule (% of sprint capacity), ROI framing for each major item. Be specific and actionable.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ plan: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/pricing-page-copy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, tiers } = req.body;
+  const prompt = `Write pricing page copy for: ${product}. Tiers: ${tiers}. Include: Page headline + subheadline, tier names (don't use Starter/Pro/Enterprise), feature bullets per tier (outcomes not features), "Most Popular" tier callout with reason, 5 pricing FAQ answers, annual discount messaging if applicable, enterprise CTA copy. Apply price anchoring psychology to make the recommended tier feel like the obvious choice.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ copy: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/weekly-review', requireAuth, async (req: AuthRequest, res) => {
+  const { week } = req.body;
+  const prompt = `Process this weekly brain dump into a structured review: ${week}. Output: Top 3 wins (reframe positively), Lessons learned (be specific, not generic), Energy drains to address, Incomplete items + why they slipped, Patterns/themes to watch, Next week's top 3 priorities, One commitment for personal growth. Keep it honest and forward-looking.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ review: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 
 app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));
