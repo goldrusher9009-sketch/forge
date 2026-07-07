@@ -149,7 +149,7 @@ app.use(cors({
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
-app.get("/health", (_req, res) => res.json({ status: "ok", environment: NODE_ENV, timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "v348.00" }));
+app.get("/health", (_req, res) => res.json({ status: "ok", environment: NODE_ENV, timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "v350.00" }));
 const httpServer = require("http").createServer(app);
 httpServer.listen(PORT, () => {
   console.log("Forge Platform v144.00 running on port " + PORT);
@@ -210361,9 +210361,7 @@ Provide:
     res.status(500).json({ error: e.message });
   }
 });
-app.listen(PORT, () => {
-  console.log(`Forge API running on port ${PORT}`);
-});
+// port already bound above
 app.post("/api/email/cold-personalize", requireAuth, async (req, res) => {
   const userId = req.user.id;
   const { prospect, prospect_role, your_product, pain_point, tone } = req.body;
@@ -215366,16 +215364,4 @@ app.post("/api/hr/recruiter-outreach", requireAuth, async (req, res) => {
 });
 app.post("/api/content/thought-leadership", requireAuth, async (req, res) => {
   const { author, topic, perspective, audience } = req.body;
-  const prompt = `Write a thought leadership LinkedIn post for ${author || "a founder/executive"} on: ${topic}. Perspective: ${perspective || "contrarian take"}. Audience: ${audience || "industry professionals"}. Structure: bold hook, specific story/observation, insight/lesson, practical implication, closing question. 800-1200 words. First-person, opinionated, no corporate speak.`;
-  try { const r = await callUserLLM(req, prompt); res.json({ post: r }); } catch(e) { res.status(500).json({ error: e.message }); }
-});
-app.post("/api/dev/api-readme", requireAuth, async (req, res) => {
-  const { api_name, description, endpoints, auth_type } = req.body;
-  const prompt = `Write a comprehensive API README for ${api_name}. Description: ${description}. Endpoints: ${endpoints}. Auth: ${auth_type || "API key"}. Sections: Overview, Quick Start (under 5 min), Authentication, Base URL, Endpoints (with curl examples), Error Codes, Rate Limiting, Changelog, Support. Developer-friendly, technical audience.`;
-  try { const r = await callUserLLM(req, prompt); res.json({ readme: r }); } catch(e) { res.status(500).json({ error: e.message }); }
-});
-app.post("/api/sales/win-analysis", requireAuth, async (req, res) => {
-  const { deal_context, outcome, customer_feedback, lost_to } = req.body;
-  const prompt = `Conduct a win/loss analysis. Deal: ${deal_context}. Outcome: ${outcome || "TBD"}. Customer feedback: ${customer_feedback || "unavailable"}. Lost to: ${lost_to || "N/A"}. Analyze: primary win/loss reason (real not surface), secondary factors, what we did right, what to do differently, competitor intel (if loss), pattern recognition, 3 concrete changes to win more deals like this. Brutally honest.`;
-  try { const r = await callUserLLM(req, prompt); res.json({ analysis: r }); } catch(e) { res.status(500).json({ error: e.message }); }
-});
+  const prompt = `Write a thought leadership LinkedIn post for ${author || "a founder/executive"} on: ${topic}. Perspective: ${perspective || "contrarian take"}. Audience: ${audience || "industry professionals"}. Structure: bold hook, specific story/observation, insight/lesson, practical implication, closing question. 800-1200 words. First-person, opinion

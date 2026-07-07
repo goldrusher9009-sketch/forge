@@ -173,7 +173,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v348.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v350.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -180213,9 +180213,7 @@ app.post('/api/story/brand', requireAuth, async (req: AuthRequest, res) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-app.listen(PORT, () => {
-  console.log(`Forge API running on port ${PORT}`);
-});
+// port already bound above (httpServer.listen)
 
 // ── WAVE 99 ────────────────────────────────────────────────────────────────
 
