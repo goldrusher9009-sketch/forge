@@ -41,7 +41,9 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_devarchitecturedecision197, ForgeTab_salesnegotiation197, ForgeTab_productengineersprintalign197, ForgeTab_marketingpartnerprogram197, ForgeTab_hrcompensationphilosophy197,
   ForgeTab_devpostmortem198, ForgeTab_investorvaluation198, ForgeTab_productroadmappresentation198, ForgeTab_saleswinlossanalysis198, ForgeTab_marketingpodcastpitch198,
   ForgeTab_devdependencyaudit199, ForgeTab_salesreferencecustomer199, ForgeTab_productplg199, ForgeTab_marketingseostrategy199, ForgeTab_hroffboarding199,
-  ForgeTab_devfeatureflagstrategy200, ForgeTab_investorpitchdeck200, ForgeTab_productuserfeedbacksystem200, ForgeTab_salescustomersuccess200, ForgeTab_marketingbrandstory200 } from './WaveComponents';
+  ForgeTab_devfeatureflagstrategy200, ForgeTab_investorpitchdeck200, ForgeTab_productuserfeedbacksystem200, ForgeTab_salescustomersuccess200, ForgeTab_marketingbrandstory200,
+  ForgeTab_devaiintegration201, ForgeTab_salesgtmlaunch201, ForgeTab_productmarketmap201, ForgeTab_marketingdemand201, ForgeTab_hrengagementsurvey201,
+  ForgeTab_devmicroservices202, ForgeTab_investorportfolio202, ForgeTab_productpersona202, ForgeTab_salespipelinemetrics202, ForgeTab_marketinglaunchcalendar202 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -26975,6 +26977,16 @@ export default function ForgeApp() {
           { id:'productuserfeedbacksystem200', icon:'📬', label:'User Feedback System Designer' },
           { id:'salescustomersuccess200', icon:'🎯', label:'Customer Success Playbook' },
           { id:'marketingbrandstory200', icon:'📖', label:'Brand Story Builder' },
+          { id:'devaiintegration201', icon:'🤖', label:'AI Integration Plan' },
+          { id:'salesgtmlaunch201', icon:'🚀', label:'GTM Launch Planner' },
+          { id:'productmarketmap201', icon:'🗺️', label:'Competitive Market Map' },
+          { id:'marketingdemand201', icon:'📣', label:'Demand Generation Plan' },
+          { id:'hrengagementsurvey201', icon:'📊', label:'Engagement Survey Designer' },
+          { id:'devmicroservices202', icon:'🏛️', label:'Microservices Migration Plan' },
+          { id:'investorportfolio202', icon:'💼', label:'Portfolio Company Support' },
+          { id:'productpersona202', icon:'👥', label:'User Persona Builder' },
+          { id:'salespipelinemetrics202', icon:'📈', label:'Pipeline Metrics Analyzer' },
+          { id:'marketinglaunchcalendar202', icon:'📅', label:'Marketing Launch Calendar' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -49086,6 +49098,16 @@ export default function ForgeApp() {
             {(mainTab as string) === 'productuserfeedbacksystem200' && <ForgeTab_productuserfeedbacksystem200 />}
             {(mainTab as string) === 'salescustomersuccess200' && <ForgeTab_salescustomersuccess200 />}
             {(mainTab as string) === 'marketingbrandstory200' && <ForgeTab_marketingbrandstory200 />}
+            {(mainTab as string) === 'devaiintegration201' && <ForgeTab_devaiintegration201 />}
+            {(mainTab as string) === 'salesgtmlaunch201' && <ForgeTab_salesgtmlaunch201 />}
+            {(mainTab as string) === 'productmarketmap201' && <ForgeTab_productmarketmap201 />}
+            {(mainTab as string) === 'marketingdemand201' && <ForgeTab_marketingdemand201 />}
+            {(mainTab as string) === 'hrengagementsurvey201' && <ForgeTab_hrengagementsurvey201 />}
+            {(mainTab as string) === 'devmicroservices202' && <ForgeTab_devmicroservices202 />}
+            {(mainTab as string) === 'investorportfolio202' && <ForgeTab_investorportfolio202 />}
+            {(mainTab as string) === 'productpersona202' && <ForgeTab_productpersona202 />}
+            {(mainTab as string) === 'salespipelinemetrics202' && <ForgeTab_salespipelinemetrics202 />}
+            {(mainTab as string) === 'marketinglaunchcalendar202' && <ForgeTab_marketinglaunchcalendar202 />}
       </div>
     </div>
   );
