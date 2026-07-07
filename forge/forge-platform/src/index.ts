@@ -184354,4 +184354,479 @@ app.post('/api/productivity/weekly-review', requireAuth, async (req: AuthRequest
 });
 
 
+
+// Wave 183 routes
+app.post('/api/finance/saas-metrics', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { company, stage } = req.body;
+    const prompt = `You are a SaaS CFO and metrics expert. Calculate and benchmark key SaaS metrics for this company.
+
+Company data: ${company}
+Stage: ${stage}
+
+Provide a comprehensive SaaS metrics analysis including:
+
+## Core Metrics
+- ARR/MRR calculation and growth rate
+- Net Revenue Retention (NRR) and Gross Revenue Retention (GRR)
+- Customer Acquisition Cost (CAC) by channel
+- Customer Lifetime Value (LTV) and LTV:CAC ratio
+- CAC Payback Period (months)
+- Churn rate (logo and revenue)
+
+## Unit Economics Assessment
+- LTV:CAC ratio benchmark (target: 3x+)
+- CAC Payback assessment (target: <18 months)
+- Burn Multiple analysis
+- Magic Number (sales efficiency)
+- Rule of 40 score
+
+## Benchmarks
+- How your metrics compare to top-quartile SaaS at this stage
+- Red flags to address
+- Green flags showing strength
+
+## Recommendations
+- Top 3 levers to improve unit economics
+- Which metrics to prioritize fixing first
+- What investors will focus on at next fundraise
+
+Be specific with numbers and calculations based on the data provided.`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a SaaS metrics expert and CFO advisor.');
+    res.json({ metrics: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productivity/communication-plan', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { change, stakeholders } = req.body;
+    const prompt = `You are an organizational change management expert. Build a comprehensive communication plan.
+
+Change: ${change}
+Stakeholder groups: ${stakeholders}
+
+Create a communication plan with:
+
+## Stakeholder Analysis
+For each group: their key concerns, what they need to know, their influence level, and preferred channel
+
+## Message Architecture
+- Core narrative (the 2-3 sentences that anchor all communications)
+- Key messages tailored per stakeholder group
+- What to emphasize, what to de-emphasize for each group
+- Questions you anticipate and how to address them
+
+## Communication Sequence
+- Who hears first and why (sequencing matters)
+- Timing for each group
+- Channel for each touchpoint (all-hands, 1:1, email, Slack, town hall)
+- Who delivers each message
+
+## Communication Calendar
+Week-by-week rollout with specific actions
+
+## Feedback Loops
+- How to collect reactions
+- What signals mean the plan is working vs. failing
+- Escalation path for concerns
+
+## Templates
+- 3-5 draft messages ready to send (tailored to key stakeholder groups)`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a change management and communications expert.');
+    res.json({ plan: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/ux-research-plan', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, question } = req.body;
+    const prompt = `You are a UX research lead. Design a rigorous research study to answer this question.
+
+Product: ${product}
+Research question: ${question}
+
+Design the study:
+
+## Method Selection
+- Best research method for this question and why (interviews, usability test, survey, diary study, A/B test, etc.)
+- What this method will and won't tell you
+- If mixed methods, how to combine them
+
+## Research Design
+- Specific study structure and protocol
+- Number of participants and why
+- Recruitment criteria and screener questions
+- Compensation recommendation
+
+## Discussion Guide / Protocol
+- Opening and context-setting
+- Core questions (5-8, open-ended, in order)
+- Probing techniques for each section
+- Tasks if usability testing (with scenarios)
+- Closing questions
+
+## Synthesis Approach
+- How to analyze findings (affinity mapping, themes, etc.)
+- How to turn insights into product decisions
+- Confidence thresholds for acting on findings
+
+## Timeline & Effort
+- Realistic timeline from recruitment to readout
+- Team needed
+- Deliverables
+
+## Decision Framework
+- What findings would lead to which product decisions`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a senior UX researcher and product strategist.');
+    res.json({ plan: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/contract-negotiation', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { contract, position } = req.body;
+    const prompt = `You are a seasoned contract negotiator and deal lawyer. Build a negotiation strategy.
+
+Contract terms: ${contract}
+Position: ${position}
+
+Provide a complete negotiation strategy:
+
+## Situation Assessment
+- Power dynamics analysis (who needs this deal more)
+- Key leverage points on each side
+- Deadline pressure analysis
+- BATNA (Best Alternative To Negotiated Agreement) for each party
+
+## Prioritized Issue List
+For each contested issue: your opening position, target, walk-away point, and rationale
+
+## Issue-by-Issue Strategy
+### High Priority (fight for these)
+- Specific language to request
+- Rationale to give the other side
+- Acceptable compromise
+
+### Medium Priority (trade these)
+- What to concede in exchange for what
+
+### Low Priority (let them win these)
+- Issues to concede to build goodwill
+
+## Negotiation Tactics
+- Opening move recommendation
+- How to frame each ask
+- Responses to likely pushback
+- When to introduce package deals vs. line-by-line
+
+## Walk-Away Criteria
+- Non-negotiables and why
+- Deal-breaker signals to watch for
+
+## Closing Strategy
+- How to create urgency without desperation
+- Path to yes`;
+    const result = await callLLM(req.user!.id, prompt, 'You are an expert contract negotiator and commercial lawyer.');
+    res.json({ strategy: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/code-review-guide', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { code, context } = req.body;
+    const prompt = `You are a senior engineer doing a thorough code review. Go beyond style — find real issues.
+
+Code/PR: ${code}
+Context: ${context}
+
+Provide a structured code review:
+
+## Critical Issues (must fix before merge)
+- Bugs that will cause failures in production
+- Security vulnerabilities (injection, auth bypass, data exposure)
+- Data corruption risks
+- Race conditions or concurrency bugs
+
+## Performance Issues
+- N+1 queries or unnecessary database calls
+- Missing indexes or cache opportunities
+- Memory leaks or resource mismanagement
+- Blocking operations that should be async
+
+## Edge Cases Not Handled
+- Null/undefined/empty input handling
+- Integer overflow, float precision issues
+- Timeout and retry logic
+- Concurrent modification scenarios
+
+## Error Handling Gaps
+- Unhandled promise rejections or exceptions
+- Error messages that leak sensitive info
+- Missing logging for debugging
+
+## Code Quality (lower priority, but worth fixing)
+- Readability and naming issues
+- Logic that could be simplified
+- Missing or incorrect tests
+- Documentation gaps for complex logic
+
+## What's Done Well
+- Acknowledge good patterns to reinforce
+
+## Suggested Test Cases
+- Specific test scenarios the PR is missing`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a senior software engineer doing a production code review.');
+    res.json({ review: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 184 routes
+app.post('/api/product/pricing-model', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, customers } = req.body;
+    const prompt = `You are a SaaS pricing strategist. Build a pricing model from first principles.
+
+Product: ${product}
+Customers: ${customers}
+
+Design the pricing model:
+
+## Pricing Metric Selection
+- What is the natural value metric (seats, usage, outcomes, features)?
+- Why this metric aligns customer value with your revenue
+- Alternatives considered and why rejected
+
+## Pricing Structure
+- Recommended model (per-seat, usage-based, tiered flat, hybrid)
+- Number of tiers and what differentiates each
+- Free tier or freemium strategy (yes/no and why)
+- Annual vs. monthly discount recommendation
+
+## Price Points
+- Specific price recommendation for each tier
+- Rationale based on value delivered, not cost
+- How prices should scale
+- Anchor pricing strategy
+
+## Package Design
+For each tier:
+- Included features (what drives upgrades)
+- Usage limits if applicable
+- Who this tier is designed for
+
+## Go-To-Market Pricing
+- Launch pricing vs. long-term pricing
+- Early adopter discounts
+- Enterprise negotiation floor
+
+## Price Testing
+- How to validate these price points
+- A/B test approach
+- Signals that price is too high vs. too low
+
+## Revenue Projection
+- Expected mix across tiers
+- Projected ARPU and ACV`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a SaaS pricing strategist and revenue expert.');
+    res.json({ model: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/offer-letter', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { candidate, offer } = req.body;
+    const prompt = `You are a talent acquisition expert. Write an offer letter that makes candidates excited to say yes.
+
+Candidate: ${candidate}
+Offer details: ${offer}
+
+Write a complete, compelling offer letter:
+
+---
+[Company Name]
+[Date]
+
+Dear [Name],
+
+[Opening paragraph: Express genuine excitement about them specifically — reference what impressed you and why you are excited about them joining. Make it personal, not boilerplate.]
+
+[Role and reporting paragraph: Confirm the position, who they will report to, and a sentence about the scope and impact of the role.]
+
+[Compensation section with all components clearly stated:]
+- Base Salary: $[amount] per year, paid [bi-weekly/semi-monthly]
+- [Equity if applicable: X options/RSUs, [cliff/vesting schedule], at [$X strike price/FMV]]
+- [Bonus if applicable: Target of X% of base, paid [quarterly/annually], subject to [criteria]]
+- Benefits: [health, dental, vision, 401k, etc.]
+- [Other perks: PTO policy, remote work, equipment, learning budget, etc.]
+
+[Start date and logistics paragraph]
+
+[Closing: Reinforce the mission, the team, and why this is a special opportunity. Invite them to reach out with questions.]
+
+Please indicate your acceptance by signing below by [deadline].
+
+[Signature block]
+---
+
+[After the letter: Add a brief negotiation guide — what has room to flex if they push back, what is firm]`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a talent acquisition expert who writes compelling offer letters.');
+    res.json({ letter: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/mvp-scope', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { idea, constraints } = req.body;
+    const prompt = `You are a product strategist who has shipped dozens of MVPs. Define what to build and what to cut.
+
+Product idea: ${idea}
+Constraints: ${constraints}
+
+Define the MVP:
+
+## Core Hypothesis
+- The single most important assumption this MVP must validate
+- What failure looks like (what would tell you to pivot)
+- What success looks like (specific, measurable)
+
+## Ruthless Scope Decision
+### In MVP
+- Features that directly test the core hypothesis
+- The minimum required to get real user feedback
+- What "good enough" looks like for each feature
+
+### Cut from MVP (with rationale)
+- Feature X: cut because [reason — distraction, can fake it, not hypothesis-critical]
+- Feature Y: cut because [reason]
+- [Continue for each feature mentioned]
+
+### Fake/Manual First
+- What can be done manually before building it properly
+- What can be a mockup or Wizard of Oz
+
+## Build Plan
+- Week-by-week breakdown within constraints
+- What to build in what order and why
+- Dependencies that could delay you
+
+## Launch Strategy
+- Who to show it to first and how to recruit them
+- What to tell them (framing)
+- How to collect feedback
+
+## Decision Gate
+- After MVP, what data decides next move: build on, pivot, or stop`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a product strategist expert in MVP design and lean methodology.');
+    res.json({ scope: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/sales-comp-design', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { role, model } = req.body;
+    const prompt = `You are a sales compensation expert. Design a comp plan that drives the right behaviors.
+
+Role: ${role}
+Business model: ${model}
+
+Design the compensation plan:
+
+## OTE Structure
+- Total OTE recommendation (base + variable split)
+- Why this split for this role type
+- Market benchmarks for this role/stage
+
+## Quota Design
+- Quota methodology (top-down vs. bottoms-up)
+- Recommended quota per rep
+- Ramp schedule for new hires (months 1, 2, 3)
+- Quota attainment distribution goal (50-70% should hit)
+
+## Commission Mechanics
+- Commission rate at 100% attainment
+- Accelerator structure (below/above quota rates)
+- Payment timing (monthly/quarterly)
+- Clawback policy
+
+## Bonus Components (if applicable)
+- MBO targets and weightings
+- Quarterly bonuses vs. annual SPIFFs
+- Team vs. individual metrics
+
+## Plan Guardrails
+- Cap (recommended: uncapped for most roles)
+- Minimum performance standard before commission kicks in
+- Deal quality gates (preventing sandbagging)
+
+## Behavioral Alignment Check
+- What the plan incentivizes (confirm these are behaviors you want)
+- Potential gaming risks and how to prevent them
+
+## Implementation Checklist
+- Changes needed from current plan
+- Communication approach to existing reps
+- When to launch`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a sales compensation design expert.');
+    res.json({ comp: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/migration-plan', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { migration, system } = req.body;
+    const prompt = `You are a senior infrastructure engineer who has led complex migrations without downtime. Build a migration plan.
+
+Migration: ${migration}
+System: ${system}
+
+Create a comprehensive migration plan:
+
+## Risk Assessment
+- Probability and impact of each failure mode
+- Data loss risks and mitigation
+- Performance degradation risks
+- Rollback complexity
+
+## Migration Strategy
+- Recommended approach: Big Bang vs. Strangler Fig vs. Blue-Green vs. Parallel Run
+- Why this approach for this specific migration
+- Zero-downtime technique if applicable
+
+## Pre-Migration Checklist
+- [ ] Backups verified and tested
+- [ ] Rollback procedure documented and tested
+- [ ] Monitoring and alerting configured
+- [ ] Performance baseline captured
+- [ ] All stakeholders notified
+- [ ] Maintenance window scheduled (if needed)
+- [Additional items specific to this migration]
+
+## Migration Phases
+### Phase 1: [Name]
+- What changes, commands/steps, validation checks, estimated time
+
+### Phase 2: [Name]
+- What changes, commands/steps, validation checks, estimated time
+
+[Continue for each phase]
+
+## Validation Gates
+- Smoke tests to run after each phase
+- Data integrity checks
+- Performance benchmarks to verify
+
+## Rollback Procedure
+- Exact steps to undo each phase
+- Decision criteria: when to roll back vs. push forward
+- Maximum acceptable time before rollback decision
+
+## Post-Migration
+- 24/48/72-hour monitoring plan
+- When to declare migration complete
+- Documentation to update`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a senior infrastructure engineer expert in complex system migrations.');
+    res.json({ plan: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));

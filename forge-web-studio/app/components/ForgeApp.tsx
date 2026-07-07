@@ -23,7 +23,9 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_productladder179, ForgeTab_objectionhandler179, ForgeTab_productmetrics179, ForgeTab_techstack179, ForgeTab_fundraisingplan179,
   ForgeTab_productlaunchblog180, ForgeTab_employeesurvey180, ForgeTab_dealreview180, ForgeTab_marketingbudget180, ForgeTab_productpositioning180,
   ForgeTab_strategicplan181, ForgeTab_apidesign181, ForgeTab_churnprevention181, ForgeTab_recruitingscript181, ForgeTab_decknarrative181,
-  ForgeTab_retentionprogram182, ForgeTab_okcrsystem182, ForgeTab_datamodel182, ForgeTab_csmplaybook182, ForgeTab_marketingops182 } from './WaveComponents';
+  ForgeTab_retentionprogram182, ForgeTab_okcrsystem182, ForgeTab_datamodel182, ForgeTab_csmplaybook182, ForgeTab_marketingops182,
+  ForgeTab_saasmetrics183, ForgeTab_communicationplan183, ForgeTab_uxresearch183, ForgeTab_contractnegotiate183, ForgeTab_devcodereview183,
+  ForgeTab_productpricingmodel184, ForgeTab_hrofferletter184, ForgeTab_productmvp184, ForgeTab_salescomp184, ForgeTab_devmigration184 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -26867,6 +26869,16 @@ export default function ForgeApp() {
     { id:'datamodel182', icon:'🗄️', label:'Data Model Designer' },
     { id:'csmplaybook182', icon:'🤝', label:'CSM Playbook Builder' },
     { id:'marketingops182', icon:'⚙️', label:'Marketing Ops Audit' },
+          { id:'saasmetrics183', icon:'💹', label:'SaaS Metrics Calc' },
+          { id:'communicationplan183', icon:'📢', label:'Communication Plan' },
+          { id:'uxresearch183', icon:'🔬', label:'UX Research Plan' },
+          { id:'contractnegotiate183', icon:'⚖️', label:'Contract Negotiation' },
+          { id:'devcodereview183', icon:'🔍', label:'Code Review Guide' },
+          { id:'productpricingmodel184', icon:'🧮', label:'Pricing Model Builder' },
+          { id:'hrofferletter184', icon:'📝', label:'Offer Letter Writer' },
+          { id:'productmvp184', icon:'🚀', label:'MVP Scope Definer' },
+          { id:'salescomp184', icon:'💰', label:'Sales Comp Designer' },
+          { id:'devmigration184', icon:'🔀', label:'Migration Plan Builder' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -48888,6 +48900,16 @@ export default function ForgeApp() {
           {(mainTab as string) === 'datamodel182' && <ForgeTab_datamodel182 />}
           {(mainTab as string) === 'csmplaybook182' && <ForgeTab_csmplaybook182 />}
           {(mainTab as string) === 'marketingops182' && <ForgeTab_marketingops182 />}
+          {(mainTab as string) === 'saasmetrics183' && <ForgeTab_saasmetrics183 />}
+          {(mainTab as string) === 'communicationplan183' && <ForgeTab_communicationplan183 />}
+          {(mainTab as string) === 'uxresearch183' && <ForgeTab_uxresearch183 />}
+          {(mainTab as string) === 'contractnegotiate183' && <ForgeTab_contractnegotiate183 />}
+          {(mainTab as string) === 'devcodereview183' && <ForgeTab_devcodereview183 />}
+          {(mainTab as string) === 'productpricingmodel184' && <ForgeTab_productpricingmodel184 />}
+          {(mainTab as string) === 'hrofferletter184' && <ForgeTab_hrofferletter184 />}
+          {(mainTab as string) === 'productmvp184' && <ForgeTab_productmvp184 />}
+          {(mainTab as string) === 'salescomp184' && <ForgeTab_salescomp184 />}
+          {(mainTab as string) === 'devmigration184' && <ForgeTab_devmigration184 />}
       </div>
     </div>
   );
