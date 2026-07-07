@@ -173,7 +173,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v344.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v354.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -180220,9 +180220,7 @@ app.post('/api/story/brand', requireAuth, async (req: AuthRequest, res) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
-app.listen(PORT, () => {
-  console.log(`Forge API running on port ${PORT}`);
-});
+// port already bound above (httpServer.listen)
 
 // ── WAVE 99 ────────────────────────────────────────────────────────────────
 
@@ -184252,5 +184250,4 @@ app.post('/api/dev/api-readme', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/sales/win-analysis', requireAuth, async (req: AuthRequest, res) => {
   const { deal_context, outcome, customer_feedback, lost_to } = req.body;
   const prompt = `Conduct a win/loss analysis for this deal. Deal context: ${deal_context}. Outcome: ${outcome || 'not specified'}. Customer feedback: ${customer_feedback || 'not available'}. Lost to (if loss): ${lost_to || 'N/A'}. Analyze: Primary win/loss reason (the real one, not the surface reason), Secondary factors, What we did right in the sales process, What we should have done differently, Competitor intelligence (if loss), Pattern recognition (what does this tell us about our ICP, positioning, or product?), 3 concrete changes to win more deals like this. Be brutally honest.`;
-  try { const r = await callUserLLM(req, prompt); res.json({ analysis: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
-});
+  try { const r = await callUserLLM(req, prompt); res.json({ analysis: r }); } catch(e:any) { res.status(500).json({ error: e.mes
