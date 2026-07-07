@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Forge Platform v6.83 — Full production: SQLite + GraphQL + webhooks + rate-limiting + multi-model
  * SQLite + JWT + bcrypt. Admin routes, platform keys, model management.
  * DB persists on Railway via /data volume mount (set RAILWAY_ENVIRONMENT).
@@ -184209,7 +184209,7 @@ app.post('/api/email/audit', requireAuth, async (req: AuthRequest, res) => {
 });
 app.post('/api/social/linkedin-banner', requireAuth, async (req: AuthRequest, res) => {
   const { name, role, value_prop, cta } = req.body;
-  const prompt = `Write LinkedIn banner copy for ${name || 'a professional'}, ${role}. Value proposition: ${value_prop}. Call to action: ${cta || 'let's connect'}. Create: Primary headline (under 10 words, bold statement about what they help people do), Secondary line (who they help + specific outcome), Social proof element (clients served, results achieved, credentials — keep it humble), CTA line. Also provide: 3 alternative headline options from different angles (authority, outcome, curiosity), and design notes for the visual layout (what to emphasize, color psychology suggestion).`;
+  const prompt = `Write LinkedIn banner copy for ${name || 'a professional'}, ${role}. Value proposition: ${value_prop}. Call to action: ${cta || 'let us connect'}. Create: Primary headline (under 10 words, bold statement about what they help people do), Secondary line (who they help + specific outcome), Social proof element (clients served, results achieved, credentials — keep it humble), CTA line. Also provide: 3 alternative headline options from different angles (authority, outcome, curiosity), and design notes for the visual layout (what to emphasize, color psychology suggestion).`;
   try { const r = await callUserLLM(req, prompt); res.json({ banner_copy: r }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 app.post('/api/sales/demo-script', requireAuth, async (req: AuthRequest, res) => {
