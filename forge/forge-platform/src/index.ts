@@ -184829,4 +184829,530 @@ Create a comprehensive migration plan:
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
+
+// Wave 185 routes
+app.post('/api/investor/narrative-builder', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { company, stage } = req.body;
+    const prompt = `You are a storytelling expert who has helped hundreds of founders raise capital. Build the investor narrative.
+
+Company: ${company}
+Stage: ${stage}
+
+Build the narrative:
+
+## The Core Insight
+- The non-obvious insight that makes this market opportunity real
+- Why now (what changed that makes this the right moment)
+- Why most people are wrong about this space
+
+## The Story Arc
+### The World Before
+- The problem as customers experience it today (vivid, specific)
+- The inadequacy of existing solutions and why they fall short
+
+### The Inevitable Solution
+- Why your approach is the natural answer to this problem
+- The "of course" moment investors should have
+
+### Proof It's Working
+- The traction that proves you are right (not features, outcomes)
+- The customers who prove the market is real
+
+### The Vision
+- Where this goes if you execute
+- Why the market is bigger than it first appears
+
+## The Fundraise Narrative
+- Why you are raising now (not "we need money" — strategic moment)
+- What this round specifically enables
+- The milestone that changes everything
+
+## Slide-by-Slide Story Flow
+Recommended narrative sequence for a 10-12 slide deck
+
+## Phrases to Use / Avoid
+- Language that lands with investors vs. language that sounds like every other pitch`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a venture capital pitch storytelling expert.');
+    res.json({ narrative: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productivity/team-retro', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { sprint, team } = req.body;
+    const prompt = `You are an Agile coach who facilitates high-quality retrospectives. Design and run this retro.
+
+Sprint/period: ${sprint}
+Team: ${team}
+
+Provide the complete retrospective:
+
+## Format Selection
+- Recommended format for this team/context (4Ls, Start/Stop/Continue, Mad/Sad/Glad, Sailboat, etc.)
+- Why this format for this specific situation
+
+## Warm-Up (5 min)
+- Quick check-in question to get people talking
+
+## What Went Well
+- 5-7 specific prompts to surface genuine wins
+- How to celebrate without being superficial
+
+## What Needs Improvement
+- Prompts that surface real issues (not just surface complaints)
+- How to separate symptoms from root causes
+- Dot voting or prioritization method
+
+## Root Cause Analysis
+- Pick the top 1-2 issues for deeper analysis
+- 5 Whys or fishbone to find the real cause
+
+## Action Items
+- Template: [Specific action] owned by [Name] done by [Date]
+- 3-5 concrete actions (not vague intentions)
+- How to make actions stick (check-in rhythm)
+
+## Retrospective on the Retro
+- Quick close: what made this retro useful or not
+- How to improve the retro process itself`;
+    const result = await callLLM(req.user!.id, prompt, 'You are an expert Agile coach and team facilitator.');
+    res.json({ retro: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/channel-audit', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { business, channels } = req.body;
+    const prompt = `You are a growth marketing expert. Audit these marketing channels and find where to double down and where to cut.
+
+Business: ${business}
+Current channels: ${channels}
+
+Provide the channel audit:
+
+## Channel Performance Scorecard
+For each channel: efficiency rating (A/B/C/D), CAC vs. target, volume potential, and verdict
+
+## Channel-by-Channel Analysis
+### [Channel Name]
+- What the numbers tell you
+- Why it is or isn't working
+- What would need to be true to improve it
+- Recommendation: scale, maintain, test changes, or cut
+
+## Budget Reallocation Recommendation
+- Where to shift budget from (and why)
+- Where to shift budget to (and why)
+- Projected impact on blended CAC
+
+## Untested Channel Opportunities
+- 2-3 channels you should test given your profile
+- Why each fits your ICP and stage
+- Minimum budget/time to get signal
+
+## Quick Wins (next 30 days)
+- Actions that improve performance without major investment
+
+## 90-Day Channel Strategy
+- Priority focus for next quarter
+- Success metrics to track`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a growth marketing expert specializing in channel strategy.');
+    res.json({ audit: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/engineer-onboarding', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { role, stack } = req.body;
+    const prompt = `You are an engineering manager who has onboarded dozens of engineers. Build the onboarding plan.
+
+Role: ${role}
+Tech stack and context: ${stack}
+
+Create the 30/60/90-day onboarding plan:
+
+## Day 1 Checklist
+- Access and credentials to set up
+- People to meet (with context on who they are)
+- First things to read (docs, code areas, architecture)
+- Environment setup steps
+
+## Week 1 Goals
+- Learn the codebase orientation (which repos, how they connect)
+- First PR: something small but meaningful
+- Team rituals to attend and understand
+
+## 30-Day Milestone
+- What "good" looks like at 30 days
+- First project or ownership area
+- Technical skills to demonstrate
+- Team integration markers
+
+## 60-Day Milestone
+- Independent contribution level expected
+- Code review skills and standards
+- Team processes fully internalized
+
+## 90-Day Milestone
+- Full productivity benchmark
+- Beginning to lead small initiatives
+- Feedback checkpoint conversation topics
+
+## Buddy/Mentor Structure
+- What to look for in a buddy for this role
+- Check-in cadence and topics
+
+## Learning Resources
+- Key docs, RFCs, or design docs to read
+- Codebase areas to explore in order
+- Internal tools to master
+
+## First Week Project Ideas
+- Starter projects appropriate for this role and stack`;
+    const result = await callLLM(req.user!.id, prompt, 'You are an experienced engineering manager and onboarding expert.');
+    res.json({ plan: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/launch-plan', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, timeline } = req.body;
+    const prompt = `You are a product marketing and launch expert. Build the complete launch plan.
+
+Product: ${product}
+Timeline: ${timeline}
+
+Build the launch plan:
+
+## Launch Strategy
+- Launch type (soft launch, invite-only, public launch, Product Hunt, press launch)
+- Primary objective of this launch (signups, revenue, press, feedback)
+- Target: what does a successful launch look like in numbers
+
+## Pre-Launch (Weeks -6 to -1)
+- Week-by-week preparation checklist
+- Beta users to recruit and how
+- Press and influencer outreach sequencing
+- Content to produce in advance
+- Internal readiness checks
+
+## Launch Week
+- Day-by-day plan (what happens each day, who owns it)
+- Launch day morning checklist
+- Communications going out (email, social, PR, communities)
+- Who monitors what and escalation path
+
+## Channel Strategy
+- Primary launch channel and why
+- Supporting channels and timing
+- Community and forum strategy (HN, Reddit, Twitter/X, LinkedIn)
+- Paid amplification if applicable
+
+## Messaging
+- Launch headline
+- Value prop in one sentence
+- Key messages for each channel
+
+## Post-Launch (Week +1 to +4)
+- Retention and follow-up communications
+- How to capitalize on launch momentum
+- Metrics to track daily
+
+## Launch Checklist
+- 50-point pre-launch checklist specific to this product`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a product launch and go-to-market expert.');
+    res.json({ plan: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 186 routes
+app.post('/api/sales/call-script', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, persona } = req.body;
+    const prompt = `You are a top sales trainer who has coached hundreds of reps to quota. Build a call script that works.
+
+Product: ${product}
+Prospect persona: ${persona}
+
+Write the complete call script:
+
+## Cold Open (first 30 seconds)
+- Pattern interrupt opener (not "Did I catch you at a bad time?")
+- Who you are + why you are calling in one sentence
+- Permission to continue
+
+## Hook (30-60 seconds)
+- The trigger or insight that makes this call relevant to them now
+- The problem statement framed in their language
+- Question to test if they have this problem
+
+## Discovery (3-5 minutes)
+Discovery questions in order:
+1. Situational questions (understand their current state)
+2. Problem questions (surface the pain)
+3. Implication questions (expand why it matters)
+4. Need-payoff questions (get them to say what they need)
+
+## Positioning (1-2 minutes)
+- How to introduce the product after you understand their situation
+- Proof points relevant to their specific situation
+- What to show/demo if they are interested
+
+## Objection Handling
+### "Not interested"
+- Response:
+
+### "We already have a solution"
+- Response:
+
+### "Send me information"
+- Response:
+
+### "No budget"
+- Response:
+
+### "Talk to [gatekeeper]"
+- Response:
+
+## Next Step Close
+- How to propose a clear next step (not "I'll follow up")
+- If they say yes: exactly what to confirm
+- If they say no: how to keep the door open
+
+## Voicemail Script (15 seconds)
+- What to leave that gets callbacks`;
+    const result = await callLLM(req.user!.id, prompt, 'You are an expert sales trainer and call coach.');
+    res.json({ script: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investor/board-update', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { period, metrics } = req.body;
+    const prompt = `You are a CEO coach who helps founders communicate with boards effectively. Write the board update.
+
+Period: ${period}
+Metrics and narrative: ${metrics}
+
+Write a complete board update:
+
+## Executive Summary (3-5 sentences)
+The honest one-paragraph state of the business — what is going well, what is not, what you are focused on
+
+## Key Metrics Scorecard
+| Metric | This Period | Last Period | Target | Status |
+Format the key metrics as a clear table with trend indicators
+
+## Wins This Period
+- 3-5 specific, concrete wins with context on why they matter
+
+## Misses and Challenges
+- 3-5 honest assessments of where you fell short
+- Root cause of each (not excuses — honest analysis)
+- What you are doing differently
+
+## Strategic Updates
+- Progress on key initiatives
+- Any pivots or strategy changes and why
+
+## Financial Update
+- Revenue/ARR vs. plan
+- Burn and runway
+- Any changes to financial guidance
+
+## Team Updates
+- Key hires, departures, org changes
+
+## Asks from the Board
+- Specific, actionable requests (introductions, advice, approvals)
+
+## Looking Ahead
+- Key priorities for next period
+- Risks to watch
+
+[Tone note: Write as if you are talking to respected advisors, not performing for shareholders. Be direct, be honest, be human.]`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a CEO coach specializing in investor and board communication.');
+    res.json({ update: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/performance-review', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { employee, context } = req.body;
+    const prompt = `You are an experienced people manager. Write a performance review that is honest, specific, and useful.
+
+Employee: ${employee}
+Context: ${context}
+
+Write the complete performance review:
+
+## Overall Assessment
+- 2-3 sentence summary of performance this period
+- The one thing that most defines their contribution
+
+## Strengths (with specific evidence)
+### Strength 1: [Name]
+Evidence: [specific example]
+Impact: [what this enabled]
+
+### Strength 2: [Name]
+[Same format]
+
+### Strength 3: [Name]
+[Same format]
+
+## Areas for Development (honest, not softened)
+### Area 1: [Name]
+Specific observation: [what you have seen]
+Impact: [why this matters]
+Development path: [concrete actions]
+
+### Area 2: [Name]
+[Same format]
+
+## Goals Achievement
+- Review each goal set at start of period
+- Assessment of achievement vs. expectation
+
+## Key Wins
+- 3-5 specific accomplishments with business impact quantified where possible
+
+## Development Goals for Next Period
+- 2-3 SMART goals with owner and timeline
+- Learning and growth investments
+
+## Compensation Recommendation
+[If applicable]: merit increase recommendation and rationale
+
+## Career Trajectory Note
+- Where you see them heading
+- What they need to do to get there`;
+    const result = await callLLM(req.user!.id, prompt, 'You are an expert people manager and performance management coach.');
+    res.json({ review: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/load-test-plan', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { system, targets } = req.body;
+    const prompt = `You are a performance engineering expert. Design a load test that finds real breaking points.
+
+System: ${system}
+Performance targets: ${targets}
+
+Create the load test plan:
+
+## Test Objectives
+- What you are trying to learn from this test
+- Success and failure criteria
+
+## Tool Selection
+- Recommended tool (k6, Locust, JMeter, Artillery, Gatling) and why for this system
+- Sample configuration for the recommended tool
+
+## Test Scenarios
+### Scenario 1: Baseline Load Test
+- Traffic pattern, duration, ramp-up
+- What to measure
+
+### Scenario 2: Stress Test
+- Push until something breaks
+- What to observe as load increases
+
+### Scenario 3: Spike Test (if relevant)
+- Sudden traffic surge simulation
+
+### Scenario 4: Endurance/Soak Test (if relevant)
+- Sustained load for memory leaks
+
+## Traffic Modeling
+- Realistic user journeys to simulate (not just GET homepage)
+- Request mix that reflects real usage
+- Think time and session patterns
+
+## Monitoring Setup
+- What to instrument before running tests
+- Key metrics to watch during test (latency percentiles, error rate, CPU, memory, DB connections)
+- Dashboards to have open
+
+## Execution Plan
+- Pre-test checklist
+- Who runs what during the test
+- How to safely stop if something goes wrong
+
+## Expected Breaking Points
+- Where you expect the system to struggle (hypothesis)
+- How to confirm vs. diagnose
+
+## Result Interpretation
+- How to read the output
+- What common patterns mean (timeout spike, memory growth, etc.)`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a performance engineering and load testing expert.');
+    res.json({ plan: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/analytics-strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, goals } = req.body;
+    const prompt = `You are a product analytics expert who has built data systems for high-growth companies. Design the analytics strategy.
+
+Product: ${product}
+Business goals: ${goals}
+
+Design the analytics strategy:
+
+## Instrumentation Plan
+### Core Events to Track
+For each key user action:
+- Event name (using a consistent taxonomy)
+- Properties to capture
+- Why this event matters for your goals
+
+### User Identity
+- Identify call on signup/login (what properties to capture)
+- Anonymous to identified user linking
+- Group/account-level tracking if B2B
+
+## Key Metrics Framework
+### North Star Metric
+- The single metric that best captures whether users get value
+- Why this metric for this product
+
+### Supporting Metrics
+- Acquisition: how users find you
+- Activation: first value moment measurement
+- Retention: DAU/WAU/MAU, D1/D7/D30 retention
+- Revenue: conversion and expansion signals
+- Referral: organic growth signals
+
+## Funnel Analysis
+- Key funnels to instrument and monitor
+- Drop-off points to prioritize investigating
+
+## Dashboard Design
+### Executive Dashboard (weekly review)
+- 5-7 metrics, nothing more
+
+### Product Dashboard (daily)
+- Feature usage, funnel health, active users
+
+### Growth Dashboard
+- Acquisition channels, activation, retention cohorts
+
+## Tool Recommendations
+- Analytics tool recommendation for this stage
+- Event tracking implementation approach
+- Reporting and visualization layer
+
+## Implementation Priority
+- Phase 1 (launch with this): must-have events
+- Phase 2 (first month): nice-to-have events
+- Phase 3 (scale): advanced analytics`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a product analytics and data strategy expert.');
+    res.json({ strategy: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));
