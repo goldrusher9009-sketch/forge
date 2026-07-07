@@ -43,7 +43,7 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_devdependencyaudit199, ForgeTab_salesreferencecustomer199, ForgeTab_productplg199, ForgeTab_marketingseostrategy199, ForgeTab_hroffboarding199,
   ForgeTab_devfeatureflagstrategy200, ForgeTab_investorpitchdeck200, ForgeTab_productuserfeedbacksystem200, ForgeTab_salescustomersuccess200, ForgeTab_marketingbrandstory200,
   ForgeTab_devaiintegration201, ForgeTab_salesgtmlaunch201, ForgeTab_productmarketmap201, ForgeTab_marketingdemand201, ForgeTab_hrengagementsurvey201,
-  ForgeTab_devmicroservices202, ForgeTab_investorportfolio202, ForgeTab_productpersona202, ForgeTab_salespipelinemetrics202, ForgeTab_marketinglaunchcalendar202, ForgeTab_devgraphqldesign203, ForgeTab_salesenterpriseselling203, ForgeTab_productuserstory203, ForgeTab_marketingthoughtleadership203, ForgeTab_hrteamstructure203, ForgeTab_devperfbudget204, ForgeTab_investorsyndicatebuilder204, ForgeTab_productaccessibility204, ForgeTab_salesrevops204, ForgeTab_marketinginfluencer204, ForgeTab_devdboptimize205, ForgeTab_saleschampionbuilder205, ForgeTab_productexperimentdesign205, ForgeTab_marketingabtest205, ForgeTab_hrperfimprovement205, ForgeTab_devcicdpipeline206, ForgeTab_investorboardmanagement206, ForgeTab_productonboardingflow206, ForgeTab_salespricingconversation206, ForgeTab_marketingretentionemail206, ForgeTab_devloadtesting207, ForgeTab_salestorytelling207, ForgeTab_productlaunchreadiness207, ForgeTab_marketingwebinarbuild207, ForgeTab_hrbenefitsdesign207, ForgeTab_devcodereview208, ForgeTab_investorsafenoteterms208, ForgeTab_productdatamodel208, ForgeTab_salesmeetingagenda208, ForgeTab_marketingpricing208, ForgeTab_devapidocgen209, ForgeTab_salesclosingstrategy209, ForgeTab_productkpiframework209, ForgeTab_marketingcommunitybuilding209, ForgeTab_hrculturecodebuilder209, ForgeTab_devdisasterrecovery210, ForgeTab_investorgrowthmetrics210, ForgeTab_productintegrationstrategy210, ForgeTab_salespartnerprogram210, ForgeTab_marketingviralhook210, ForgeTab_devobservability211, ForgeTab_salescustomerexpansion211, ForgeTab_productmigrationplan211, ForgeTab_marketingproductlaunchpr211, ForgeTab_hrremoteculture211, ForgeTab_devmonorepo212, ForgeTab_investorexitplanning212, ForgeTab_productselfserve212, ForgeTab_salesdemoflow212, ForgeTab_marketingconversioncopy212 } from './WaveComponents';
+  ForgeTab_devmicroservices202, ForgeTab_investorportfolio202, ForgeTab_productpersona202, ForgeTab_salespipelinemetrics202, ForgeTab_marketinglaunchcalendar202, ForgeTab_devgraphqldesign203, ForgeTab_salesenterpriseselling203, ForgeTab_productuserstory203, ForgeTab_marketingthoughtleadership203, ForgeTab_hrteamstructure203, ForgeTab_devperfbudget204, ForgeTab_investorsyndicatebuilder204, ForgeTab_productaccessibility204, ForgeTab_salesrevops204, ForgeTab_marketinginfluencer204, ForgeTab_devdboptimize205, ForgeTab_saleschampionbuilder205, ForgeTab_productexperimentdesign205, ForgeTab_marketingabtest205, ForgeTab_hrperfimprovement205, ForgeTab_devcicdpipeline206, ForgeTab_investorboardmanagement206, ForgeTab_productonboardingflow206, ForgeTab_salespricingconversation206, ForgeTab_marketingretentionemail206, ForgeTab_devloadtesting207, ForgeTab_salestorytelling207, ForgeTab_productlaunchreadiness207, ForgeTab_marketingwebinarbuild207, ForgeTab_hrbenefitsdesign207, ForgeTab_devcodereview208, ForgeTab_investorsafenoteterms208, ForgeTab_productdatamodel208, ForgeTab_salesmeetingagenda208, ForgeTab_marketingpricing208, ForgeTab_devapidocgen209, ForgeTab_salesclosingstrategy209, ForgeTab_productkpiframework209, ForgeTab_marketingcommunitybuilding209, ForgeTab_hrculturecodebuilder209, ForgeTab_devdisasterrecovery210, ForgeTab_investorgrowthmetrics210, ForgeTab_productintegrationstrategy210, ForgeTab_salespartnerprogram210, ForgeTab_marketingviralhook210, ForgeTab_devobservability211, ForgeTab_salescustomerexpansion211, ForgeTab_productmigrationplan211, ForgeTab_marketingproductlaunchpr211, ForgeTab_hrremoteculture211, ForgeTab_devmonorepo212, ForgeTab_investorexitplanning212, ForgeTab_productselfserve212, ForgeTab_salesdemoflow212, ForgeTab_marketingconversioncopy212, ForgeTab_devsecurityposture213, ForgeTab_salespipelineforecast213, ForgeTab_productswotanalysis213, ForgeTab_marketingpaidacquisition213, ForgeTab_hrsuccessionplan213, ForgeTab_devplatformengineering214, ForgeTab_investordatastorycreation214, ForgeTab_productchurnanalysis214, ForgeTab_salescoldcallscript214, ForgeTab_marketingannualplan214 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -27037,6 +27037,16 @@ export default function ForgeApp() {
         { id:'productselfserve212', icon:'⚡', label:'Self-Serve Motion Builder' },
         { id:'salesdemoflow212', icon:'🖥️', label:'Demo Flow Builder' },
         { id:'marketingconversioncopy212', icon:'✍️', label:'Conversion Copywriter' },
+        { id:'devsecurityposture213', icon:'🔐', label:'Security Posture Assessment' },
+        { id:'salespipelineforecast213', icon:'🔮', label:'Pipeline Forecast Builder' },
+        { id:'productswotanalysis213', icon:'📋', label:'SWOT Analysis Builder' },
+        { id:'marketingpaidacquisition213', icon:'💸', label:'Paid Acquisition Strategy' },
+        { id:'hrsuccessionplan213', icon:'👑', label:'Succession Planning Guide' },
+        { id:'devplatformengineering214', icon:'🏗️', label:'Platform Engineering Strategy' },
+        { id:'investordatastorycreation214', icon:'📊', label:'Data Story Creator' },
+        { id:'productchurnanalysis214', icon:'📉', label:'Churn Analysis Builder' },
+        { id:'salescoldcallscript214', icon:'📞', label:'Cold Call Script Builder' },
+        { id:'marketingannualplan214', icon:'📅', label:'Annual Marketing Plan' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -49208,6 +49218,16 @@ export default function ForgeApp() {
         {(mainTab as string) === 'productselfserve212' && <ForgeTab_productselfserve212 />}
         {(mainTab as string) === 'salesdemoflow212' && <ForgeTab_salesdemoflow212 />}
         {(mainTab as string) === 'marketingconversioncopy212' && <ForgeTab_marketingconversioncopy212 />}
+        {(mainTab as string) === 'devsecurityposture213' && <ForgeTab_devsecurityposture213 />}
+        {(mainTab as string) === 'salespipelineforecast213' && <ForgeTab_salespipelineforecast213 />}
+        {(mainTab as string) === 'productswotanalysis213' && <ForgeTab_productswotanalysis213 />}
+        {(mainTab as string) === 'marketingpaidacquisition213' && <ForgeTab_marketingpaidacquisition213 />}
+        {(mainTab as string) === 'hrsuccessionplan213' && <ForgeTab_hrsuccessionplan213 />}
+        {(mainTab as string) === 'devplatformengineering214' && <ForgeTab_devplatformengineering214 />}
+        {(mainTab as string) === 'investordatastorycreation214' && <ForgeTab_investordatastorycreation214 />}
+        {(mainTab as string) === 'productchurnanalysis214' && <ForgeTab_productchurnanalysis214 />}
+        {(mainTab as string) === 'salescoldcallscript214' && <ForgeTab_salescoldcallscript214 />}
+        {(mainTab as string) === 'marketingannualplan214' && <ForgeTab_marketingannualplan214 />}
       </div>
     </div>
   );
