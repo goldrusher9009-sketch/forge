@@ -172923,7 +172923,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS compliments (
 )`).run();
 
 db.prepare(`CREATE TABLE IF NOT EXISTS manifestos (
-  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, values TEXT, manifesto TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, brand_values TEXT, manifesto TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`).run();
 
 db.prepare(`CREATE TABLE IF NOT EXISTS debate_preps (
@@ -172990,7 +172990,7 @@ app.post('/api/manifesto/write', requireAuth, async (req: AuthRequest, res) => {
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
     const id = uuidv4();
-    db.prepare(`INSERT INTO manifestos (id,user_id,topic,values,manifesto) VALUES (?,?,?,?,?)`).run(id, req.user!.id, topic, values, data.full_manifesto);
+    db.prepare(`INSERT INTO manifestos (id,user_id,topic,brand_values,manifesto) VALUES (?,?,?,?,?)`).run(id, req.user!.id, topic, values, data.full_manifesto);
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
