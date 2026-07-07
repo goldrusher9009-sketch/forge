@@ -35,7 +35,9 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_fundraisetimeline191, ForgeTab_devobservability191, ForgeTab_productpricing191, ForgeTab_marketingpersona191, ForgeTab_hrcompensation191,
   ForgeTab_devdataengineering192, ForgeTab_productfeatureflags192, ForgeTab_saleschampion192, ForgeTab_marketingcopyreview192, ForgeTab_productpriorityframework192,
   ForgeTab_devplatformeng193, ForgeTab_salesaccountplan193, ForgeTab_productactivation193, ForgeTab_marketingpressrelease193, ForgeTab_hrinterview193,
-  ForgeTab_devrefactorplan194, ForgeTab_investoroutreach194, ForgeTab_productretention194, ForgeTab_salesdiscovery194, ForgeTab_marketingwebsite194 } from './WaveComponents';
+  ForgeTab_devrefactorplan194, ForgeTab_investoroutreach194, ForgeTab_productretention194, ForgeTab_salesdiscovery194, ForgeTab_marketingwebsite194,
+  ForgeTab_devdocumentationreview195, ForgeTab_salesproposal195, ForgeTab_productjobstobedone195, ForgeTab_marketinggrowthexperiment195, ForgeTab_hrleaderdevelopment195,
+  ForgeTab_devsecurityaudit196, ForgeTab_investorduediligence196, ForgeTab_productpricingexperiment196, ForgeTab_salesterritoryplan196, ForgeTab_marketingcommunitybuilding196 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -26939,6 +26941,16 @@ export default function ForgeApp() {
           { id:'productretention194', icon:'🔒', label:'Retention Playbook Builder' },
           { id:'salesdiscovery194', icon:'🔎', label:'Discovery Framework Builder' },
           { id:'marketingwebsite194', icon:'🌐', label:'Website Copy Writer' },
+          { id:'devdocumentationreview195', icon:'📄', label:'Documentation Reviewer' },
+          { id:'salesproposal195', icon:'📋', label:'Proposal Builder' },
+          { id:'productjobstobedone195', icon:'🎯', label:'Jobs-to-Be-Done Analysis' },
+          { id:'marketinggrowthexperiment195', icon:'🧪', label:'Growth Experiment Designer' },
+          { id:'hrleaderdevelopment195', icon:'👑', label:'Leader Development Plan' },
+          { id:'devsecurityaudit196', icon:'🔐', label:'Security Audit Framework' },
+          { id:'investorduediligence196', icon:'🔍', label:'Due Diligence Prep' },
+          { id:'productpricingexperiment196', icon:'💰', label:'Pricing Experiment Designer' },
+          { id:'salesterritoryplan196', icon:'🗺️', label:'Territory Plan Builder' },
+          { id:'marketingcommunitybuilding196', icon:'🌱', label:'Community Building Strategy' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -49020,6 +49032,16 @@ export default function ForgeApp() {
             {(mainTab as string) === 'productretention194' && <ForgeTab_productretention194 />}
             {(mainTab as string) === 'salesdiscovery194' && <ForgeTab_salesdiscovery194 />}
             {(mainTab as string) === 'marketingwebsite194' && <ForgeTab_marketingwebsite194 />}
+            {(mainTab as string) === 'devdocumentationreview195' && <ForgeTab_devdocumentationreview195 />}
+            {(mainTab as string) === 'salesproposal195' && <ForgeTab_salesproposal195 />}
+            {(mainTab as string) === 'productjobstobedone195' && <ForgeTab_productjobstobedone195 />}
+            {(mainTab as string) === 'marketinggrowthexperiment195' && <ForgeTab_marketinggrowthexperiment195 />}
+            {(mainTab as string) === 'hrleaderdevelopment195' && <ForgeTab_hrleaderdevelopment195 />}
+            {(mainTab as string) === 'devsecurityaudit196' && <ForgeTab_devsecurityaudit196 />}
+            {(mainTab as string) === 'investorduediligence196' && <ForgeTab_investorduediligence196 />}
+            {(mainTab as string) === 'productpricingexperiment196' && <ForgeTab_productpricingexperiment196 />}
+            {(mainTab as string) === 'salesterritoryplan196' && <ForgeTab_salesterritoryplan196 />}
+            {(mainTab as string) === 'marketingcommunitybuilding196' && <ForgeTab_marketingcommunitybuilding196 />}
       </div>
     </div>
   );
