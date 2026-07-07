@@ -7,7 +7,9 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_acquisitionstrat163, ForgeTab_onepagerpm163, ForgeTab_refundpolicy163, ForgeTab_teampriorities163, ForgeTab_microswot163,
   ForgeTab_churnanalysis164, ForgeTab_partnerproposal164, ForgeTab_engineeringspec164, ForgeTab_messagingguide164, ForgeTab_investordeck164,
   ForgeTab_saleshypothesis165, ForgeTab_marketingcalendar165, ForgeTab_techdebtaudit165, ForgeTab_boarddeck165, ForgeTab_jobleveling165,
-  ForgeTab_seocontentplan166, ForgeTab_productfeedback166, ForgeTab_hiringscorecard166, ForgeTab_executivedashboard166, ForgeTab_fundraisingupdate166 } from './WaveComponents';
+  ForgeTab_seocontentplan166, ForgeTab_productfeedback166, ForgeTab_hiringscorecard166, ForgeTab_executivedashboard166, ForgeTab_fundraisingupdate166,
+  ForgeTab_productnarrative167, ForgeTab_customersegment167, ForgeTab_performancereview167, ForgeTab_apiproductplan167, ForgeTab_pricingstrategy167,
+  ForgeTab_crisiscomms168, ForgeTab_meetingfacilitation168, ForgeTab_valueprop168, ForgeTab_revenuemodel168, ForgeTab_teambuilder168 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -26771,6 +26773,16 @@ export default function ForgeApp() {
         { id:'hiringscorecard166', icon:'✅', label:'Hiring Scorecard Builder' },
         { id:'executivedashboard166', icon:'📊', label:'Executive Dashboard Design' },
         { id:'fundraisingupdate166', icon:'💰', label:'Fundraising Update Writer' },
+        { id:'productnarrative167', icon:'📖', label:'Product Narrative Builder' },
+        { id:'customersegment167', icon:'🎯', label:'Customer Segmentation' },
+        { id:'performancereview167', icon:'📋', label:'Performance Review Writer' },
+        { id:'apiproductplan167', icon:'🔌', label:'API Product Plan' },
+        { id:'pricingstrategy167', icon:'💲', label:'Pricing Strategy Builder' },
+        { id:'crisiscomms168', icon:'🚨', label:'Crisis Communications' },
+        { id:'meetingfacilitation168', icon:'🎙️', label:'Meeting Facilitation Guide' },
+        { id:'valueprop168', icon:'⭐', label:'Value Proposition Builder' },
+        { id:'revenuemodel168', icon:'💹', label:'Revenue Model Designer' },
+        { id:'teambuilder168', icon:'👥', label:'Team Structure Designer' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -48712,6 +48724,16 @@ export default function ForgeApp() {
             {(mainTab as string) === 'hiringscorecard166' && <ForgeTab_hiringscorecard166 />}
             {(mainTab as string) === 'executivedashboard166' && <ForgeTab_executivedashboard166 />}
             {(mainTab as string) === 'fundraisingupdate166' && <ForgeTab_fundraisingupdate166 />}
+            {(mainTab as string) === 'productnarrative167' && <ForgeTab_productnarrative167 />}
+            {(mainTab as string) === 'customersegment167' && <ForgeTab_customersegment167 />}
+            {(mainTab as string) === 'performancereview167' && <ForgeTab_performancereview167 />}
+            {(mainTab as string) === 'apiproductplan167' && <ForgeTab_apiproductplan167 />}
+            {(mainTab as string) === 'pricingstrategy167' && <ForgeTab_pricingstrategy167 />}
+            {(mainTab as string) === 'crisiscomms168' && <ForgeTab_crisiscomms168 />}
+            {(mainTab as string) === 'meetingfacilitation168' && <ForgeTab_meetingfacilitation168 />}
+            {(mainTab as string) === 'valueprop168' && <ForgeTab_valueprop168 />}
+            {(mainTab as string) === 'revenuemodel168' && <ForgeTab_revenuemodel168 />}
+            {(mainTab as string) === 'teambuilder168' && <ForgeTab_teambuilder168 />}
       </div>
     </div>
   );
