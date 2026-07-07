@@ -53,7 +53,7 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_devapistrategy231, ForgeTab_salespartnerchannel231, ForgeTab_productaccessibility231, ForgeTab_marketingcommunitybuilding231, ForgeTab_hrlearningdevelopment231,
   ForgeTab_devcontainerization232, ForgeTab_investorvaluation232, ForgeTab_productfeedbacksystem232, ForgeTab_salesenterprisemotion232, ForgeTab_marketinglaunchplaybook232,
   ForgeTab_devdocumentationstrategy233, ForgeTab_salesmessagingframework233, ForgeTab_productmobileapp233, ForgeTab_marketingwebsiteconversion233, ForgeTab_hrremoteworkpolicy233,
-  ForgeTab_devincidentpostmortem234, ForgeTab_investorpitchcoach234, ForgeTab_productinternationalization234, ForgeTab_salesqbr234, ForgeTab_marketinginfluencerstrategy234 } from './WaveComponents';
+  ForgeTab_devincidentpostmortem234, ForgeTab_investorpitchcoach234, ForgeTab_productinternationalization234, ForgeTab_salesqbr234, ForgeTab_marketinginfluencerstrategy234, ForgeTab_devaiintegration235, ForgeTab_salescoldcallscript235, ForgeTab_productdiscoverysprint235, ForgeTab_marketingpressrelease235, ForgeTab_hrcompensationbenchmark235, ForgeTab_devperformancetesting236, ForgeTab_investorupdateemail236, ForgeTab_productdesignsystem236, ForgeTab_salesleadscoring236, ForgeTab_marketingcasestudywriter236 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -27157,6 +27157,16 @@ export default function ForgeApp() {
         { id:'productinternationalization234', icon:'🌐', label:'Internationalization Plan Builder' },
         { id:'salesqbr234', icon:'📊', label:'QBR Builder' },
         { id:'marketinginfluencerstrategy234', icon:'🌟', label:'Influencer Marketing Strategy' },
+          { id:'devaiintegration235', icon:'🤖', label:'AI Integration Plan' },
+          { id:'salescoldcallscript235', icon:'📞', label:'Cold Call Script' },
+          { id:'productdiscoverysprint235', icon:'🔬', label:'Discovery Sprint' },
+          { id:'marketingpressrelease235', icon:'📰', label:'Press Release Builder' },
+          { id:'hrcompensationbenchmark235', icon:'💰', label:'Compensation Benchmarking' },
+          { id:'devperformancetesting236', icon:'⚡', label:'Performance Testing' },
+          { id:'investorupdateemail236', icon:'📨', label:'Investor Update Email' },
+          { id:'productdesignsystem236', icon:'🎨', label:'Design System Builder' },
+          { id:'salesleadscoring236', icon:'🎯', label:'Lead Scoring Model' },
+          { id:'marketingcasestudywriter236', icon:'📖', label:'Case Study Writer' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -49438,6 +49448,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'productinternationalization234' && <ForgeTab_productinternationalization234 />}
               {(mainTab as string) === 'salesqbr234' && <ForgeTab_salesqbr234 />}
               {(mainTab as string) === 'marketinginfluencerstrategy234' && <ForgeTab_marketinginfluencerstrategy234 />}
+                {(mainTab as string) === 'devaiintegration235' && <ForgeTab_devaiintegration235 />}
+                {(mainTab as string) === 'salescoldcallscript235' && <ForgeTab_salescoldcallscript235 />}
+                {(mainTab as string) === 'productdiscoverysprint235' && <ForgeTab_productdiscoverysprint235 />}
+                {(mainTab as string) === 'marketingpressrelease235' && <ForgeTab_marketingpressrelease235 />}
+                {(mainTab as string) === 'hrcompensationbenchmark235' && <ForgeTab_hrcompensationbenchmark235 />}
+                {(mainTab as string) === 'devperformancetesting236' && <ForgeTab_devperformancetesting236 />}
+                {(mainTab as string) === 'investorupdateemail236' && <ForgeTab_investorupdateemail236 />}
+                {(mainTab as string) === 'productdesignsystem236' && <ForgeTab_productdesignsystem236 />}
+                {(mainTab as string) === 'salesleadscoring236' && <ForgeTab_salesleadscoring236 />}
+                {(mainTab as string) === 'marketingcasestudywriter236' && <ForgeTab_marketingcasestudywriter236 />}
       </div>
     </div>
   );
