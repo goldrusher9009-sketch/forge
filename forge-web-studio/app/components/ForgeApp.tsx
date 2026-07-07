@@ -9,7 +9,9 @@ import { ForgeTab_coldemail99, ForgeTab_seobrief99, ForgeTab_legaldraft99, Forge
   ForgeTab_saleshypothesis165, ForgeTab_marketingcalendar165, ForgeTab_techdebtaudit165, ForgeTab_boarddeck165, ForgeTab_jobleveling165,
   ForgeTab_seocontentplan166, ForgeTab_productfeedback166, ForgeTab_hiringscorecard166, ForgeTab_executivedashboard166, ForgeTab_fundraisingupdate166,
   ForgeTab_productnarrative167, ForgeTab_customersegment167, ForgeTab_performancereview167, ForgeTab_apiproductplan167, ForgeTab_pricingstrategy167,
-  ForgeTab_crisiscomms168, ForgeTab_meetingfacilitation168, ForgeTab_valueprop168, ForgeTab_revenuemodel168, ForgeTab_teambuilder168 } from './WaveComponents';
+  ForgeTab_crisiscomms168, ForgeTab_meetingfacilitation168, ForgeTab_valueprop168, ForgeTab_revenuemodel168, ForgeTab_teambuilder168,
+  ForgeTab_customerjourney169, ForgeTab_productlaunch169, ForgeTab_businessmodel169, ForgeTab_salescycle169, ForgeTab_headlinewriter169,
+  ForgeTab_dataroom170, ForgeTab_remotework170, ForgeTab_coldcall170, ForgeTab_techwriting170, ForgeTab_pitchdeck170 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -26783,6 +26785,16 @@ export default function ForgeApp() {
         { id:'valueprop168', icon:'⭐', label:'Value Proposition Builder' },
         { id:'revenuemodel168', icon:'💹', label:'Revenue Model Designer' },
         { id:'teambuilder168', icon:'👥', label:'Team Structure Designer' },
+        { id:'customerjourney169', icon:'🗺️', label:'Customer Journey Mapper' },
+        { id:'productlaunch169', icon:'🚀', label:'Product Launch Plan' },
+        { id:'businessmodel169', icon:'🏗️', label:'Business Model Canvas' },
+        { id:'salescycle169', icon:'⚡', label:'Sales Cycle Optimizer' },
+        { id:'headlinewriter169', icon:'✏️', label:'Headline Writer' },
+        { id:'dataroom170', icon:'📁', label:'Data Room Checklist' },
+        { id:'remotework170', icon:'🌐', label:'Remote Work Playbook' },
+        { id:'coldcall170', icon:'📞', label:'Cold Call Script Builder' },
+        { id:'techwriting170', icon:'📝', label:'Tech Writing Guide' },
+        { id:'pitchdeck170', icon:'🎤', label:'Pitch Deck Coach' },
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
@@ -48734,6 +48746,16 @@ export default function ForgeApp() {
             {(mainTab as string) === 'valueprop168' && <ForgeTab_valueprop168 />}
             {(mainTab as string) === 'revenuemodel168' && <ForgeTab_revenuemodel168 />}
             {(mainTab as string) === 'teambuilder168' && <ForgeTab_teambuilder168 />}
+            {(mainTab as string) === 'customerjourney169' && <ForgeTab_customerjourney169 />}
+            {(mainTab as string) === 'productlaunch169' && <ForgeTab_productlaunch169 />}
+            {(mainTab as string) === 'businessmodel169' && <ForgeTab_businessmodel169 />}
+            {(mainTab as string) === 'salescycle169' && <ForgeTab_salescycle169 />}
+            {(mainTab as string) === 'headlinewriter169' && <ForgeTab_headlinewriter169 />}
+            {(mainTab as string) === 'dataroom170' && <ForgeTab_dataroom170 />}
+            {(mainTab as string) === 'remotework170' && <ForgeTab_remotework170 />}
+            {(mainTab as string) === 'coldcall170' && <ForgeTab_coldcall170 />}
+            {(mainTab as string) === 'techwriting170' && <ForgeTab_techwriting170 />}
+            {(mainTab as string) === 'pitchdeck170' && <ForgeTab_pitchdeck170 />}
       </div>
     </div>
   );
