@@ -185355,4 +185355,551 @@ For each key user action:
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
+
+// Wave 187 routes
+app.post('/api/marketing/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { market, competitors } = req.body;
+    const prompt = `You are a pricing strategist with deep expertise in buyer psychology and competitive positioning.
+
+Market: ${market}
+Competitors: ${competitors}
+
+Develop the pricing strategy:
+
+## Market Positioning Decision
+- Where to position on price (premium, mid-market, value) and why
+- What your price signals about your product
+- The risk of each positioning option
+
+## Competitive Price Analysis
+- Competitor pricing mapped out
+- Gaps and opportunities in the pricing landscape
+- Where you can command a premium and why
+
+## Buyer Psychology
+- How your buyers think about price (budget category, comparison set, ROI framing)
+- Price anchoring opportunities
+- How to frame price to minimize friction
+
+## Price Point Recommendations
+- Specific price points for each tier with rationale
+- Annual discount strategy
+- Enterprise custom pricing floor
+
+## Price Communication
+- How to present price on your website
+- When to show price vs. hide it (talk to sales)
+- How to handle price objections in sales
+
+## Price Testing Plan
+- How to test price sensitivity without hurting existing deals
+- A/B testing approach for web
+- Signals that price is wrong (too high vs. too low)
+
+## Price Evolution
+- Where prices should go as you grow
+- How to raise prices without losing customers`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a pricing strategy and buyer psychology expert.');
+    res.json({ strategy: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/culture-code', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { values, behaviors } = req.body;
+    const prompt = `You are an organizational design expert who has built cultures at high-growth companies.
+
+Values: ${values}
+Observed behaviors: ${behaviors}
+
+Write the culture code:
+
+## Our Core Values
+For each value (4-6 total):
+### [Value Name]
+**What it means:** One sentence that is specific, not generic
+**What it looks like in action:** 3 concrete examples of this value in daily work
+**What it is not:** The thing people confuse this value for
+**How we hire for it:** The interview question that surfaces it
+
+## How We Work
+- How decisions get made (who has authority, how disagreements resolve)
+- How we communicate (sync vs. async, documentation norms)
+- How we give feedback (radical candor, directness norms)
+- How mistakes are handled (blameless postmortems, no shame culture)
+- How success is defined (outcomes not hours, results not effort)
+
+## What Gets You Fired
+- The behaviors that are incompatible with this culture (be specific)
+- The values violations that have no second chance
+
+## Who Thrives Here
+- The profile of someone who will love this environment
+- The profile of someone who will struggle
+
+## Culture FAQs
+Common questions new hires ask + honest answers
+
+## Living the Culture
+- How we reinforce culture beyond words (rituals, hiring, reviews, recognition)`;
+    const result = await callLLM(req.user!.id, prompt, 'You are an organizational culture and values design expert.');
+    res.json({ culture: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/debug-guide', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { issue, environment } = req.body;
+    const prompt = `You are a senior engineer who debugs complex production issues. Build a systematic debug guide.
+
+Issue: ${issue}
+Environment: ${environment}
+
+Create the debug guide:
+
+## Initial Triage (first 5 minutes)
+- Is this user-impacting? How many users? Since when?
+- Severity assessment and escalation decision
+- First questions to answer before digging in
+
+## Hypothesis Generation
+Based on the symptoms, ranked hypotheses:
+1. Most likely: [hypothesis] — evidence: [what supports this]
+2. [Next hypothesis] — evidence: [what supports this]
+3. [Continue]
+
+## Investigation Steps
+### Step 1: Confirm the symptom
+- Exact commands/queries to reproduce or confirm the issue
+- What to look for
+
+### Step 2: Narrow the scope
+- How to determine if it is infrastructure, code, data, or config
+- Specific checks for each
+
+### Step 3: Find the root cause
+- Logs to examine (exact grep patterns)
+- Metrics to check
+- Database queries to run
+- Traces to examine
+
+## Common Root Causes for This Type of Issue
+- [Root cause pattern 1]: how to confirm and fix
+- [Root cause pattern 2]: how to confirm and fix
+
+## Fix and Verify
+- Once root cause found: how to fix safely
+- How to verify the fix worked
+- Rollback if fix makes things worse
+
+## Post-Fix
+- What to document
+- What monitoring to add to catch this earlier next time`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a senior production engineer and debugging expert.');
+    res.json({ guide: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/discovery-sprint', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { problem, users } = req.body;
+    const prompt = `You are a product discovery expert who has run hundreds of user research sprints. Plan this sprint.
+
+Problem space: ${problem}
+Target users: ${users}
+
+Plan the discovery sprint:
+
+## Sprint Goal
+- The single question this sprint must answer
+- How you will know if you got a real answer
+- Decision this sprint enables
+
+## Assumption Mapping
+List your key assumptions, ranked by:
+- How uncertain are you? (low/medium/high uncertainty)
+- How important is it to the concept? (low/medium/high importance)
+- Priority to test: high uncertainty + high importance first
+
+## Sprint Activities (5 days)
+### Day 1: Align and Map
+- Team alignment on assumptions
+- Customer journey mapping
+- Competitor analysis for inspiration
+
+### Day 2-3: Research
+- User interviews: 5-8 participants
+- Interview guide (key questions)
+- Observation or diary study if relevant
+
+### Day 4: Synthesize
+- Affinity mapping process
+- Key insight extraction
+- Hypothesis refinement
+
+### Day 5: Decide
+- Findings readout format
+- Decision framework: build, learn more, or pivot
+- Next steps owner
+
+## Interview Guide
+Core questions for this specific problem space (10-12 questions)
+
+## Outputs
+- What documents and decisions come out of this sprint
+- How to communicate findings to stakeholders`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a product discovery and design sprint expert.');
+    res.json({ sprint: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/qbr-prep', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { quarter, data } = req.body;
+    const prompt = `You are a customer success leader. Build a QBR that makes renewal and expansion feel obvious.
+
+Quarter: ${quarter}
+Customer data: ${data}
+
+Build the complete QBR:
+
+## QBR Objective
+- Primary goal of this meeting (renew, expand, stabilize, escalate)
+- Success criteria: what needs to happen for this to be a good QBR
+
+## Agenda (60-90 minutes)
+Structured agenda with time allocations and who runs each section
+
+## Business Review
+- Their goals vs. what they achieved (be honest)
+- Metrics that matter to them (not your product metrics — their business outcomes)
+- ROI delivered: quantified where possible
+
+## Product Usage Analysis
+- Active users vs. licensed (adoption)
+- Feature utilization highlights
+- Underutilized features that would deliver more value
+
+## Wins to Celebrate
+- Specific success stories from this quarter
+- Quantified impact where possible
+
+## Challenges and How We Addressed Them
+- Honest acknowledgment of issues
+- What we did and what we are still doing
+
+## Roadmap Preview
+- Upcoming features relevant to their use case
+- How to get their input on the roadmap
+
+## Expansion Opportunity
+- Natural expansion pitch (if appropriate)
+- Framed in terms of their goals, not your quota
+
+## Next Quarter Goals
+- Collaborative goal-setting
+- How you will measure success
+
+## Action Items
+- Clear owner and due date for each
+
+## Renewal Conversation Guide
+- How to bring up renewal naturally
+- Responses to common objections`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a customer success and QBR expert.');
+    res.json({ qbr: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// Wave 188 routes
+app.post('/api/product/design-system-guide', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, current } = req.body;
+    const prompt = `You are a design systems architect who has built component libraries at scale. Build the design system guide.
+
+Product: ${product}
+Current state: ${current}
+
+Create the design system guide:
+
+## Design System Foundation
+- Core design tokens to define first (color, typography, spacing, radius, shadow)
+- Token naming convention
+- How tokens map to semantic names (primary, secondary, danger, etc.)
+
+## Component Priority List
+Phase 1 — build these first (highest reuse, highest leverage):
+1. Button (all variants and states)
+2. Input/Form fields
+3. Typography scale
+4. [Continue with 5-7 more]
+
+Phase 2 — build after core is stable:
+[Additional components]
+
+## Component Specification Template
+For each component document:
+- Variants (size, style, state)
+- Props/API design
+- Accessibility requirements
+- Do/Don't examples
+- Usage guidelines
+
+## Figma/Design File Structure
+- How to organize your Figma library
+- Component naming conventions
+- How to keep design and code in sync
+
+## Code Implementation
+- Recommended component architecture
+- Props interface pattern
+- Theming approach
+- Testing requirements per component
+
+## Adoption Strategy
+- How to get the team to actually use the system
+- Migration from existing ad-hoc components
+- Governance: how new components get added
+
+## Documentation Site
+- What to include
+- Tools recommendation (Storybook, Zeroheight, etc.)
+
+## Maintenance
+- Versioning strategy
+- How to handle breaking changes
+- Owner and contribution model`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a design systems architect and component library expert.');
+    res.json({ guide: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/hiring-plan', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { stage, goals } = req.body;
+    const prompt = `You are a talent strategy advisor who has helped startups scale from 5 to 500. Build the hiring plan.
+
+Company stage: ${stage}
+Goals: ${goals}
+
+Create the hiring plan:
+
+## Hiring Philosophy
+- What type of hiring fits this stage (generalists vs. specialists, senior-heavy vs. junior)
+- Velocity recommendation and why
+- Culture risk to watch as you scale
+
+## Role Priority Matrix
+Rank all roles being considered:
+| Role | Priority | Why Now | Dependencies | Estimated Start |
+[Fill in for each role]
+
+## Sequencing Logic
+- Why hire in this order
+- Which hires unlock other hires
+- Roles to delay and why
+
+## Budget
+- Total comp budget for plan period
+- Cost per hire (recruiting fees, interview time, tools)
+- Equity pool implications
+
+## Timeline
+Month-by-month hiring plan with:
+- Roles to open each month
+- Time-to-hire estimates
+- Onboarding overlap
+
+## Sourcing Strategy
+- For each priority role: where to find candidates (inbound, outbound, referrals, agencies)
+- Referral program recommendation
+- Recruiter vs. in-house recommendation for this stage
+
+## Interview Process Design
+- Recommended process length (stages, interviewers) for this hiring velocity
+- How to move fast without sacrificing quality
+
+## Risk Mitigation
+- Hiring mistakes that kill culture at this stage
+- Red flags in candidates for early-stage roles
+- How to make great offers`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a talent strategy advisor for high-growth startups.');
+    res.json({ plan: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/funnel-design', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { business, stage } = req.body;
+    const prompt = `You are a demand generation expert. Design the full marketing funnel.
+
+Business: ${business}
+Buying stage complexity: ${stage}
+
+Design the marketing funnel:
+
+## Funnel Architecture
+- Recommended funnel structure for this business (PLG, sales-led, hybrid)
+- Key stages with names that fit your motion
+
+## Top of Funnel (Awareness)
+- Target volume and source mix
+- Content types and channels that work for your ICP
+- SEO, paid, social, community split recommendation
+- Benchmark: awareness-to-interest conversion rate target
+
+## Middle of Funnel (Consideration)
+- Lead magnet and nurture strategy
+- Email sequence design (cadence, content arc)
+- Retargeting approach
+- Benchmark: MQL-to-SQL conversion rate target
+
+## Bottom of Funnel (Decision)
+- Trial/demo conversion strategy
+- Sales handoff criteria (what makes an MQL an SQL)
+- Objection handling content
+- Social proof deployment
+- Benchmark: SQL-to-close rate target
+
+## Conversion Points
+- Primary CTA and why
+- Secondary CTAs for lower-intent visitors
+- How to A/B test CTAs
+
+## Funnel Metrics Dashboard
+- Key metrics to track at each stage
+- Weekly review cadence
+- Alert thresholds (when is a metric bad enough to act)
+
+## Funnel Improvement Methodology
+- How to identify and fix the biggest leak
+- Testing framework for funnel optimization`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a demand generation and funnel optimization expert.');
+    res.json({ funnel: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/cicd-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { stack, requirements } = req.body;
+    const prompt = `You are a DevOps engineer who has designed CI/CD systems for teams of all sizes. Design the pipeline.
+
+Tech stack: ${stack}
+Requirements: ${requirements}
+
+Design the CI/CD pipeline:
+
+## Tool Recommendation
+- Best CI/CD platform for this stack and team size
+- Rationale vs. alternatives
+- Key integrations needed
+
+## Pipeline Stages
+### Stage 1: Code Quality
+- Linting and formatting checks
+- Static analysis
+- Runtime: target under 2 minutes
+
+### Stage 2: Test Suite
+- Unit tests (fast, isolated)
+- Integration tests (database, external services)
+- Test parallelization strategy
+- Runtime: target under 10 minutes
+
+### Stage 3: Build
+- Build process and artifact creation
+- Container image build if applicable
+- Caching strategy for dependencies
+
+### Stage 4: Staging Deploy
+- Staging environment strategy
+- Smoke tests post-deploy
+- How staging mirrors production
+
+### Stage 5: Production Deploy
+- Deploy strategy (rolling, blue-green, canary)
+- Rollback trigger and process
+- Post-deploy verification
+
+## Sample Pipeline Config
+YAML configuration for the recommended CI platform with all stages
+
+## Branch Strategy
+- Branch naming and protection rules
+- When to deploy to staging vs. production
+- Feature flags integration
+
+## Monitoring Integration
+- Alerting on pipeline failures
+- Deploy notifications
+- Performance regression detection
+
+## Reliability Improvements
+- How to reduce flaky tests
+- Caching to speed up builds
+- Parallelization opportunities`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a DevOps engineer and CI/CD pipeline expert.');
+    res.json({ pipeline: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/growth-framework', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { product, constraint } = req.body;
+    const prompt = `You are a growth expert who has scaled multiple products past 1M users. Build the growth framework.
+
+Product: ${product}
+Biggest constraint: ${constraint}
+
+Build the growth framework:
+
+## Growth Diagnosis
+- Is this an acquisition, activation, retention, or monetization problem?
+- Evidence from the metrics that confirms the diagnosis
+- Why solving this constraint unlocks the most growth
+
+## North Star and Input Metrics
+- North Star Metric for this product (the one that drives everything)
+- 3-5 input metrics that lead to the North Star
+- How each input connects to the North Star
+
+## Constraint Analysis: ${constraint}
+- Root causes of this constraint
+- Experiments that have worked at similar companies
+- Quick wins vs. structural fixes
+
+## Growth Levers
+### Lever 1: [Name]
+- What it is
+- Expected impact and confidence level
+- How to test it cheaply
+- Resource required
+
+### Lever 2 and 3: [Same format]
+
+## Experiment Roadmap (next 90 days)
+Week-by-week experiment plan:
+- Hypothesis
+- Test design
+- Success metric
+- Decision threshold
+
+## Growth Model
+- Simple spreadsheet model showing how input metrics drive North Star
+- Sensitivity analysis: which inputs matter most
+
+## Team and Process
+- Growth team structure for this stage
+- Experiment velocity target (tests per week)
+- Review cadence and decision process
+
+## Leading Indicators
+- What you will see first if growth is working
+- Time lag between lever and result`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a product growth expert and experimentation strategist.');
+    res.json({ framework: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));
