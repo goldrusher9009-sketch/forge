@@ -5136,6 +5136,12 @@ app.post('/api/prompts/:id/use', requireAuth, (req: AuthRequest, res) => {
   res.json({ success:true, data:p });
 });
 app.delete('/api/prompts/:id', requireAuth, (req: AuthRequest, res) => { db.prepare('DELETE FROM prompt_cache WHERE id=? AND user_id=?').run(req.params.id,req.user!.sub); res.json({ success:true }); });
+app.post('/api/prompts/improve', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body || {};
+  if (!prompt) { res.status(400).json({ error:'prompt required' }); return; }
+  const improved = `You are a prompt engineering expert. Improve this prompt to be clearer, more specific, and more effective:\n\n${prompt}\n\nProvide the improved prompt only, no explanation.`;
+  res.json({ success:true, data:{ original:prompt, improved } });
+});
 
 // ─── Search ───────────────────────────────────────────────────────────────────
 // POST /api/chat/simple — single non-streaming completion for compare/quick use
@@ -5200,7 +5206,7 @@ app.delete('/api/hooks/:id', requireAuth, (req: AuthRequest, res) => {
 app.get('/api/user/profile', requireAuth, (req: AuthRequest, res) => {
   const uid = req.user!.sub;
   try {
-    const user = db.prepare('SELECT id,email,name,plan,created_at FROM users WHERE id=?').get(uid) as any;
+    const user = db.prepare('SELECT id,email,first_name,last_name,role,plan,created_at FROM users WHERE id=?').get(uid) as any;
     if(!user) return res.status(404).json({ error:'User not found' });
     res.json({ success:true, data: user });
   } catch(e:any){ res.status(500).json({ error:e.message }); }
@@ -5208,10 +5214,11 @@ app.get('/api/user/profile', requireAuth, (req: AuthRequest, res) => {
 
 app.put('/api/user/profile', requireAuth, (req: AuthRequest, res) => {
   const uid = req.user!.sub;
-  const { name } = req.body;
+  const { first_name, last_name } = req.body;
   try {
-    if(name) db.prepare('UPDATE users SET name=? WHERE id=?').run(name, uid);
-    const user = db.prepare('SELECT id,email,name,plan,created_at FROM users WHERE id=?').get(uid) as any;
+    if(first_name) db.prepare('UPDATE users SET first_name=? WHERE id=?').run(first_name, uid);
+    if(last_name) db.prepare('UPDATE users SET last_name=? WHERE id=?').run(last_name, uid);
+    const user = db.prepare('SELECT id,email,first_name,last_name,role,plan,created_at FROM users WHERE id=?').get(uid) as any;
     res.json({ success:true, data: user });
   } catch(e:any){ res.status(500).json({ error:e.message }); }
 });
@@ -6921,17 +6928,11 @@ app.post('/api/threads/:id/milestones', authMiddleware, async (req: any, res) =>
 app.get('/api/journal', authMiddleware, async (req: any, res) => {
   try {
     const userId = req.user.userId;
-    db.prepare(`CREATE TABLE IF NOT EXISTS journal_entries (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      date TEXT NOT NULL,
-      content TEXT NOT NULL,
-      mood TEXT DEFAULT 'neutral',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`).run();
     const limit = Number(req.query.limit) || 30;
-    const entries = db.prepare('SELECT * FROM journal_entries WHERE user_id=? ORDER BY date DESC LIMIT ?').all(userId, limit);
+    const all = req.query.all === '1';
+    const entries = all
+      ? db.prepare('SELECT * FROM journal_entries WHERE user_id=? ORDER BY entry_date DESC').all(userId)
+      : db.prepare('SELECT * FROM journal_entries WHERE user_id=? ORDER BY entry_date DESC LIMIT ?').all(userId, limit);
     res.json(entries);
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
@@ -6941,23 +6942,14 @@ app.post('/api/journal', authMiddleware, async (req: any, res) => {
     const { date, content, mood = 'neutral' } = req.body;
     if (!content?.trim()) return res.status(400).json({ error: 'content required' });
     const entryDate = date || new Date().toISOString().slice(0, 10);
-    db.prepare(`CREATE TABLE IF NOT EXISTS journal_entries (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      date TEXT NOT NULL,
-      content TEXT NOT NULL,
-      mood TEXT DEFAULT 'neutral',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`).run();
-    // Upsert by date
-    const existing = db.prepare('SELECT id FROM journal_entries WHERE user_id=? AND date=?').get(userId, entryDate) as any;
+    // Upsert by entry_date
+    const existing = db.prepare('SELECT id FROM journal_entries WHERE user_id=? AND entry_date=?').get(userId, entryDate) as any;
     if (existing) {
       db.prepare('UPDATE journal_entries SET content=?, mood=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(content.trim(), mood, existing.id);
-      res.json({ id: existing.id, date: entryDate, content: content.trim(), mood });
+      res.json({ id: existing.id, entry_date: entryDate, content: content.trim(), mood });
     } else {
-      const r = db.prepare('INSERT INTO journal_entries (user_id,date,content,mood) VALUES (?,?,?,?)').run(userId, entryDate, content.trim(), mood);
-      res.json({ id: r.lastInsertRowid, date: entryDate, content: content.trim(), mood });
+      const r = db.prepare('INSERT INTO journal_entries (user_id,entry_date,content,mood) VALUES (?,?,?,?)').run(userId, entryDate, content.trim(), mood);
+      res.json({ id: r.lastInsertRowid, entry_date: entryDate, content: content.trim(), mood });
     }
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
@@ -7629,7 +7621,7 @@ app.get('/api/workspace/stats/advanced', authMiddleware, async (req: any, res) =
     const days = Number(req.query.days) || 30;
     const since = new Date(Date.now() - days * 86400000).toISOString();
     const threadsByDay = db.prepare("SELECT date(created_at) as day, COUNT(*) as count FROM threads WHERE user_id=? AND created_at>=? GROUP BY day ORDER BY day").all(userId, since) as any[];
-    const tokensByModel = db.prepare("SELECT model_used, SUM(tokens_used) as tokens FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.created_at>=? GROUP BY model_used").all(userId, since) as any[];
+    const tokensByModel = db.prepare("SELECT COALESCE(model,'unknown') as model_used, COUNT(*) as tokens FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.created_at>=? GROUP BY model").all(userId, since) as any[];
     const msgLengths = db.prepare("SELECT role, AVG(LENGTH(content)) as avg_len FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.created_at>=? GROUP BY role").all(userId, since) as any[];
     const longestThread = db.prepare("SELECT t.title, COUNT(*) as c FROM messages m JOIN threads t ON m.thread_id=t.id WHERE t.user_id=? AND m.created_at>=? GROUP BY t.id ORDER BY c DESC LIMIT 1").get(userId, since) as any;
     res.json({ threadsByDay, tokensByModel, msgLengths, longestThread, period: days });
@@ -172923,7 +172915,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS compliments (
 )`).run();
 
 db.prepare(`CREATE TABLE IF NOT EXISTS manifestos (
-  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, values TEXT, manifesto TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  id TEXT PRIMARY KEY, user_id TEXT, topic TEXT, brand_values TEXT, manifesto TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`).run();
 
 db.prepare(`CREATE TABLE IF NOT EXISTS debate_preps (
@@ -172990,7 +172982,7 @@ app.post('/api/manifesto/write', requireAuth, async (req: AuthRequest, res) => {
     ]);
     const data = JSON.parse(result.replace(/```json\n?|```\n?/g,'').trim());
     const id = uuidv4();
-    db.prepare(`INSERT INTO manifestos (id,user_id,topic,values,manifesto) VALUES (?,?,?,?,?)`).run(id, req.user!.id, topic, values, data.full_manifesto);
+    db.prepare(`INSERT INTO manifestos (id,user_id,topic,brand_values,manifesto) VALUES (?,?,?,?,?)`).run(id, req.user!.id, topic, values, data.full_manifesto);
     res.json({ id, ...data });
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
