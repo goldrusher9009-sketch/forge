@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v628.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v629.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201917,6 +201917,66 @@ app.post('/api/marketing/business-storytelling', requireAuth, async (req: AuthRe
 app.post('/api/operations/supply-chain', requireAuth, async (req: AuthRequest, res) => {
   const { network, products, constraints } = req.body;
   const prompt = `You are a supply chain optimization and operations management expert. Optimize the ${network} supply chain for ${products} under ${constraints}. Cover the supply chain strategy and network design, the demand forecasting and planning, the inventory optimization and positioning, the supplier relationship management, the logistics network optimization, the supply chain risk and resilience, the supply chain visibility and technology, the sustainability and ESG integration, the supply chain metrics and KPIs, and how to design supply chains that balance cost efficiency with resilience and agility, that use data and technology to improve decision-making, and that create sustainable competitive advantage through supply chain capability rather than treating it as a commodity function.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/investment-thesis', requireAuth, async (req: AuthRequest, res) => {
+  const { company, market, thesis } = req.body;
+  const prompt = `You are an investment analysis and venture capital expert. Build the investment thesis for ${company} in ${market} based on ${thesis}. Cover the investment thesis framework, the market size and growth analysis, the business model quality assessment, the competitive moat analysis, the team and execution capability assessment, the financial model and unit economics review, the risk and downside analysis, the investment return modeling, the portfolio fit and strategic rationale, and how to build investment theses that are rigorous, clearly articulate the key assumptions and risks, identify the specific factors that will determine whether the investment succeeds, and give investment committees what they need to make informed decisions with confidence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, touchpoints, competitors } = req.body;
+  const prompt = `You are a brand audit and brand health assessment expert. Audit the ${brand} brand across ${touchpoints} benchmarked against ${competitors}. Cover the brand audit framework, the brand identity consistency audit, the brand perception research, the customer brand experience audit, the competitor brand comparison, the brand portfolio audit, the brand channel consistency audit, the brand equity measurement, the brand health metrics, and how to conduct a comprehensive brand audit that gives leadership an accurate picture of where their brand is strong and where it is inconsistent or weak, and a prioritized roadmap for brand improvements that will have the greatest impact on business results.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/tech-debt-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { codebase, debt, team } = req.body;
+  const prompt = `You are a technical debt management and engineering quality expert. Manage the technical debt in ${codebase} for ${debt} types with ${team}. Cover the technical debt taxonomy and classification, the debt measurement and quantification, the debt prioritization framework, the debt payment strategy and roadmap, the debt prevention practices, the refactoring approach and strategies, the strangler fig and incremental rewrite patterns, the debt management governance, the debt communication to stakeholders, and how to manage technical debt as a strategic engineering concern that balances the need to pay down accumulated debt with the need to continue shipping new value, and builds the engineering discipline to prevent debt from accumulating faster than it can be paid down.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/testing-program', requireAuth, async (req: AuthRequest, res) => {
+  const { product, team, coverage } = req.body;
+  const prompt = `You are a software testing strategy and quality assurance expert. Design the testing program for ${product} with ${team} achieving ${coverage}. Cover the testing strategy framework, the testing pyramid and test type balance, the unit testing strategy, the integration testing design, the end-to-end testing architecture, the contract testing design, the performance testing program, the security testing integration, the test automation architecture, and how to design testing programs that give teams confidence to ship quickly without regressions, that catch bugs before they reach users, that create fast feedback loops for developers, and that are maintainable as the product grows in complexity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/influencer-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, category, goals } = req.body;
+  const prompt = `You are an influencer marketing and creator economy expert. Design the influencer strategy for ${brand} in ${category} to achieve ${goals}. Cover the influencer strategy framework, the influencer tier and type selection, the influencer identification and vetting, the campaign concept and creative brief design, the influencer relationship and partnership model, the content rights and usage strategy, the influencer compensation model, the campaign measurement and attribution, the always-on influencer program design, and how to build an influencer strategy that generates authentic content that resonates with target audiences, that builds genuine creator relationships rather than one-off transactional campaigns, and that creates measurable business impact through earned media and social proof.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/tech-horizon', requireAuth, async (req: AuthRequest, res) => {
+  const { industry, horizon, impacts } = req.body;
+  const prompt = `You are a technology foresight and emerging technology expert. Scan the technology horizon for ${industry} over ${horizon} timeframe assessing ${impacts}. Cover the technology scanning methodology, the emerging technology taxonomy and radar, the technology maturity assessment, the technology impact and disruption potential, the adoption curve and timing analysis, the technology-to-business model connection, the organizational capability implications, the investment and experimentation priorities, the technology risk and threat landscape, and how to build a systematic technology horizon scanning capability that gives leadership early warning of technologies that could disrupt their business model and identifies opportunities to gain competitive advantage through early technology adoption.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/regulatory-landscape', requireAuth, async (req: AuthRequest, res) => {
+  const { industry, geography, activities } = req.body;
+  const prompt = `You are a regulatory landscape analysis and compliance strategy expert. Map the regulatory landscape for ${industry} in ${geography} covering ${activities}. Cover the regulatory landscape mapping methodology, the regulatory agency identification and mapping, the key regulation identification and summary, the regulatory risk assessment, the compliance obligation analysis, the regulatory trend and direction analysis, the regulatory relationship strategy, the compliance program design, the regulatory monitoring system, and how to build regulatory intelligence capabilities that keep your organization ahead of regulatory changes, identify compliance gaps before they become enforcement actions, and allow the business to operate confidently in complex multi-jurisdictional regulatory environments.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/m-and-a', requireAuth, async (req: AuthRequest, res) => {
+  const { acquirer, target, rationale } = req.body;
+  const prompt = `You are an M&A strategy and corporate development expert. Evaluate the acquisition of ${target} by ${acquirer} with ${rationale} strategic rationale. Cover the M&A strategy framework, the strategic rationale and value creation thesis, the target screening and evaluation framework, the financial valuation methodology, the synergy identification and quantification, the deal structure design, the due diligence program design, the integration planning approach, the deal risk assessment, and how to evaluate acquisitions with the rigor and discipline that gives boards and leadership teams the confidence that the deal creates rather than destroys value, and how to plan integrations that actually capture the synergies that justified the deal.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/scenario-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, uncertainties, horizon } = req.body;
+  const prompt = `You are a scenario planning and strategic foresight expert. Build the scenarios for ${organization} exploring ${uncertainties} over ${horizon} horizon. Cover the scenario planning methodology, the driving force identification and analysis, the critical uncertainty selection, the scenario logic and framework design, the scenario narrative development, the implication analysis for each scenario, the leading indicator identification, the strategic option development, the monitoring and trigger system, and how to use scenario planning to challenge strategic assumptions, prepare leadership teams for a range of possible futures, identify strategic options that are robust across scenarios, and develop the organizational agility to respond effectively when the future reveals itself.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/deep-work', requireAuth, async (req: AuthRequest, res) => {
+  const { professional, work_type, obstacles } = req.body;
+  const prompt = `You are a deep work and cognitive productivity expert. Optimize the deep work practice of ${professional} doing ${work_type} overcoming ${obstacles}. Cover the deep work philosophy and principles, the cognitive capacity and attention science, the deep work scheduling and time blocking, the distraction and interruption elimination, the environment design for deep work, the ritual and routine design, the deep work metrics and tracking, the shallow work reduction strategy, the recovery and restoration design, and how to build deep work habits and systems that enable knowledge workers to consistently produce their best work by protecting and maximizing the high-concentration time that produces most of their value, while managing the shallow work demands that are unavoidable in organizational life.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
