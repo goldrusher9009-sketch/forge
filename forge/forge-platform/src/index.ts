@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v421.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v422.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190330,6 +190330,59 @@ app.post('/api/product/integration-strategy-v2', requireAuth, async (req: AuthRe
 app.post('/api/sales/channel-sales', requireAuth, async (req: AuthRequest, res) => {
   const { product, partnerType, margins } = req.body;
   const prompt = `Design a channel sales program.\nProduct: ${product}\nPartner type: ${partnerType}\nMargin structure: ${margins}\nInclude: partner tiers and benefits, enablement program, deal registration process, co-selling motions, partner portal requirements, and recruitment strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 263+264 routes
+app.post('/api/dev/terraform-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { cloud, resources, environment } = req.body;
+  const prompt = `Create a Terraform infrastructure plan.\nCloud: ${cloud}\nResources needed: ${resources}\nEnvironment: ${environment}\nInclude: module structure, state management strategy, variable organization, workspace setup, CI/CD integration, and cost estimation approach.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/enterprise-map', requireAuth, async (req: AuthRequest, res) => {
+  const { target, contacts, useCase } = req.body;
+  const prompt = `Build an enterprise account mapping strategy.\nTarget company: ${target}\nKnown contacts: ${contacts}\nUse case: ${useCase}\nInclude: org chart reconstruction, power mapping, initiative alignment, multi-threaded outreach plan, and executive access strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/vc-narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { product, traction, market } = req.body;
+  const prompt = `Write a VC-ready product narrative.\nProduct: ${product}\nTraction: ${traction}\nMarket: ${market}\nInclude: the insight that others miss, why this team, why now, the path to dominance, and the 10x better story. Make it compelling enough to get a second meeting.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/seo-content-v2', requireAuth, async (req: AuthRequest, res) => {
+  const { keyword, intent, competitor } = req.body;
+  const prompt = `Create an SEO content brief and outline.\nTarget keyword: ${keyword}\nSearch intent: ${intent}\nTop competitor URL: ${competitor}\nInclude: title options (5), meta description, H1-H4 structure, word count recommendation, internal linking opportunities, schema markup type, and content differentiation angle.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/engagement-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { score, issues, team } = req.body;
+  const prompt = `Create an employee engagement improvement plan.\nEngagement score: ${score}\nTop issues: ${issues}\nTeam: ${team}\nInclude: root cause analysis, 30/60/90-day action plan, manager enablement steps, quick wins, and measurement approach.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/deck-review', requireAuth, async (req: AuthRequest, res) => {
+  const { slide, stage, feedback } = req.body;
+  const prompt = `Review and improve a pitch deck slide.\nSlide content: ${slide}\nCompany stage: ${stage}\nPrevious feedback: ${feedback}\nInclude: what works, what to cut, what's missing, revised copy suggestion, and how a top VC would react to this slide.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/websocket-design', requireAuth, async (req: AuthRequest, res) => {
+  const { useCase, scale, protocol } = req.body;
+  const prompt = `Design a WebSocket implementation.\nUse case: ${useCase}\nScale: ${scale}\nProtocol preference: ${protocol}\nInclude: connection management, room/channel design, authentication flow, reconnection strategy, message queuing, and scaling with Redis pub/sub.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/content-ops-v2', requireAuth, async (req: AuthRequest, res) => {
+  const { team, output, tools } = req.body;
+  const prompt = `Design a content operations system.\nTeam: ${team}\nContent output: ${output}\nCurrent tools: ${tools}\nInclude: editorial workflow, content calendar system, briefing templates, review/approval process, distribution checklist, and performance tracking.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/launch-retrospective', requireAuth, async (req: AuthRequest, res) => {
+  const { product, results, team } = req.body;
+  const prompt = `Facilitate a product launch retrospective.\nProduct launched: ${product}\nResults: ${results}\nTeam: ${team}\nInclude: what went well, what didn't, timeline analysis, cross-functional feedback synthesis, top 5 learnings, and process improvements for the next launch.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/enablement-kit-v2', requireAuth, async (req: AuthRequest, res) => {
+  const { product, persona, stage } = req.body;
+  const prompt = `Build a sales enablement kit.\nProduct: ${product}\nBuyer persona: ${persona}\nDeal stage: ${stage}\nInclude: battle card, objection handler, discovery question bank, competitive differentiation cheat sheet, and proof point library with customer quotes.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
