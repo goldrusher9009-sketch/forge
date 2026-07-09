@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v588.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v589.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199517,6 +199517,66 @@ app.post('/api/finance/cost-optimize', requireAuth, async (req: AuthRequest, res
 app.post('/api/strategy/future-of-work', requireAuth, async (req: AuthRequest, res) => {
   const { company, workforce, horizon } = req.body;
   const prompt = `You are a future of work strategy expert. Design the future of work strategy for ${company} with ${workforce} workforce over ${horizon} horizon. Cover the future of work forces analysis, skills taxonomy and future-readiness assessment, human-AI collaboration model design, talent strategy for the future, work design principles, hybrid work model design, workforce transition plan, and how to build organizational agility to adapt as the future of work continues to evolve.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/nlp', requireAuth, async (req: AuthRequest, res) => {
+  const { task, data, model } = req.body;
+  const prompt = `You are an NLP and natural language processing engineering expert. Build the NLP pipeline for ${task} task using ${data} data with ${model} model approach. Cover the NLP task taxonomy and how to frame the problem, the data preprocessing pipeline for text, the tokenization and text normalization strategy, the feature engineering approach for traditional ML vs. fine-tuning for transformers, the model selection rationale for this specific task, the evaluation metrics appropriate for the NLP task, the training and fine-tuning methodology, the model serving architecture for NLP at scale, how to handle multilingual requirements, the common failure modes in NLP systems and mitigation strategies, and the monitoring approach for NLP model drift.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/payments', requireAuth, async (req: AuthRequest, res) => {
+  const { product, markets, volume } = req.body;
+  const prompt = `You are a payments architecture and fintech infrastructure expert. Design the payment stack for ${product} operating in ${markets} at ${volume} transaction volume. Cover the payment method landscape by market, the payment processor and gateway selection criteria, the merchant account vs. payment facilitator model, the payment flow design for the key use cases, the fraud detection and prevention architecture, the PCI DSS compliance requirements and implementation approach, the recurring billing and subscription management design, the refund and dispute handling process, the payment reconciliation and settlement process, the multi-currency handling strategy, the payment analytics and reporting requirements, and how to build payment resilience with fallback processors.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/ux-research', requireAuth, async (req: AuthRequest, res) => {
+  const { product, question, timeline } = req.body;
+  const prompt = `You are a UX research methodology and user insights expert. Plan the UX research for ${product} to answer ${question} within ${timeline}. Cover the research question sharpening (what decision will this research inform?), the research method selection for the question type (generative vs. evaluative, qualitative vs. quantitative), the participant recruitment strategy and screener design, the research guide or survey design for the chosen method, the usability test protocol design, the card sorting and tree testing methodology for IA research, the diary study and longitudinal research design, the synthesis methodology (affinity mapping, thematic analysis), how to communicate research findings for maximum impact on product decisions, and how to build a continuous research practice rather than one-off studies.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { team, gap, method } = req.body;
+  const prompt = `You are a sales performance coaching and enablement expert. Build the sales coaching system for ${team} to close ${gap} performance gap using ${method} coaching method. Cover the sales skill diagnostic (what skills are causing the performance gap — prospecting, discovery, demo, objection handling, closing, negotiation?), the coaching cadence design (how often, what format, who delivers coaching?), the call recording and conversation intelligence program, the role-play and practice methodology, the feedback delivery model (what makes feedback stick vs. bounce?), the sales manager as coach development program, the peer coaching and mentoring program design, the scorecard design for tracking skill development, how to measure coaching ROI, and how to build a culture of continuous improvement where coaching is welcomed rather than feared.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ecosystem', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, partners, value } = req.body;
+  const prompt = `You are an ecosystem strategy and partner development expert. Build the ecosystem strategy for ${platform} developing ${partners} type partners to deliver ${value} value. Cover the ecosystem value proposition design, the partner program architecture, the partner segmentation and tiering model, the partner recruitment and activation strategy, the enablement program design, the co-marketing and co-selling playbook, the deal registration and lead sharing model, the partner economics design, the technology partnership and integration strategy, the marketplace design for the ecosystem, and how to measure ecosystem health and partner success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/pr/internal-comms', requireAuth, async (req: AuthRequest, res) => {
+  const { company, audience, change } = req.body;
+  const prompt = `You are an internal communications and employee engagement expert. Build the internal communications strategy for ${company} reaching ${audience} audience through ${change} change. Cover the internal comms principles, the channel strategy for different message types and audiences, the leadership communication cadence design, the all-hands meeting design, the manager communication cascade model, the change communication framework, the rumor and uncertainty management strategy, the feedback and listening program design, the internal comms measurement framework, and how to build a culture of transparency and trust through communication.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/revenue-model', requireAuth, async (req: AuthRequest, res) => {
+  const { company, customers, value } = req.body;
+  const prompt = `You are a revenue model design and monetization strategy expert. Design the revenue model for ${company} serving ${customers} capturing ${value} as revenue. Cover the revenue model taxonomy, the value-based pricing foundation, the revenue stream diversification strategy, the recurring vs. transactional revenue balance, the expansion revenue model design, the free-to-paid conversion optimization, the pricing ladder design, the bundle and package design, the enterprise vs. SMB revenue model differences, the seasonal and cyclical revenue smoothing strategies, and how to model and forecast revenue from each stream.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/employer-brand', requireAuth, async (req: AuthRequest, res) => {
+  const { company, talent, message } = req.body;
+  const prompt = `You are an employer branding and talent attraction expert. Build the employer brand for ${company} targeting ${talent} talent with ${message} core message. Cover the employer value proposition development, the employee value proposition research methodology, the employer brand audit, the candidate persona design, the careers site optimization strategy, the social media employer brand content strategy, the employee advocacy program design, the candidate experience design at each hiring stage, the employer brand measurement framework, and how to keep the employer brand authentic and aligned with the actual employee experience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/api-economics', requireAuth, async (req: AuthRequest, res) => {
+  const { api, users, model } = req.body;
+  const prompt = `You are an API monetization and developer platform economics expert. Design the API monetization strategy for ${api} targeting ${users} developer users with ${model} pricing model. Cover the API business model taxonomy, the freemium vs. paid API model design, the usage-based pricing design for APIs, the tier design for API plans, the rate limiting as a monetization lever, the enterprise API pricing strategy, the API usage analytics for monetization insights, the API marketplace and distribution strategy, the partner and reseller program for API distribution, and how to evolve API pricing as the product matures.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/learning-design', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, learners, outcome } = req.body;
+  const prompt = `You are a learning experience design and instructional design expert. Design the learning experience for ${topic} for ${learners} to achieve ${outcome}. Cover the learning objectives design using Bloom taxonomy, the learning needs analysis methodology, the learning modality selection, the spaced repetition and retrieval practice principles, the scenario-based learning design, the assessment design aligned to objectives, the social and peer learning integration, the microlearning and just-in-time learning design, the learning technology selection, and how to measure learning transfer from training to on-the-job performance.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
