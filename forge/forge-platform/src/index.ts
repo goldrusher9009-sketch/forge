@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v611.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v612.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200897,6 +200897,66 @@ app.post('/api/marketing/email-strategy', requireAuth, async (req: AuthRequest, 
 app.post('/api/growth/model', requireAuth, async (req: AuthRequest, res) => {
   const { company, engine, levers } = req.body;
   const prompt = `You are a growth modeling and business model design expert. Build the growth model for ${company} with ${engine} engine and ${levers} key levers. Cover the growth model canvas design, the customer acquisition engine design, the viral and referral loop design, the retention and engagement model, the monetization model design, the payback period and LTV:CAC analysis, the growth accounting model, the cohort analysis design, the growth experiment framework, and how to build a growth model that identifies the highest-leverage actions to compound your business growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/api-design', requireAuth, async (req: AuthRequest, res) => {
+  const { service, consumers, style } = req.body;
+  const prompt = `You are an API design and developer experience expert. Design the API for ${service} for ${consumers} using ${style} style. Cover the API design principles and REST vs GraphQL vs gRPC trade-offs, the resource modeling and URL design, the request and response schema design, the authentication and authorization design, the versioning and backward compatibility strategy, the rate limiting and quota design, the error handling and error response design, the pagination and filtering design, the API documentation and OpenAPI spec, and how to design APIs that developers love to use and that are maintainable over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/operations', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stack, funnel } = req.body;
+  const prompt = `You are a marketing operations and martech strategy expert. Design the marketing ops function for ${company} with ${stack} technology stack managing ${funnel} funnel. Cover the marketing operations charter and responsibilities, the martech stack audit and rationalization, the data and attribution architecture, the lead management and scoring design, the marketing automation workflow design, the campaign operations and project management, the marketing-sales SLA and handoff design, the marketing performance reporting, the marketing data governance, and how to build marketing operations that make the marketing team more effective and accountable.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/ethical-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { company, usecase, risk } = req.body;
+  const prompt = `You are an AI ethics and responsible AI design expert. Build the ethical AI framework for ${company} for ${usecase} managing ${risk} risk. Cover the AI ethics principles and values, the AI risk assessment and classification, the bias and fairness evaluation methodology, the explainability and transparency requirements, the human oversight and control design, the AI governance and review board, the AI incident response plan, the stakeholder impact assessment, the regulatory compliance mapping, and how to implement responsible AI practices that build trust and prevent harm while enabling innovation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/executive/board-deck', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, audience } = req.body;
+  const prompt = `You are a board presentation and investor communications expert. Design the board deck for ${company} at ${stage} stage for ${audience}. Cover the board deck structure and narrative arc, the business performance section design, the strategic update and priorities section, the financial results and forecast section, the key decisions and asks section, the risk and mitigation section, the competitive and market update, the team and organizational update, the board pre-read vs. presentation distinction, and how to design board materials that inform, build confidence, and get good governance decisions from your board.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/talent-brand', requireAuth, async (req: AuthRequest, res) => {
+  const { company, culture, talent } = req.body;
+  const prompt = `You are a talent brand and employer branding expert. Build the talent brand for ${company} with ${culture} culture to attract ${talent}. Cover the employer brand strategy and positioning, the employee value proposition design, the talent brand audit and gap analysis, the talent brand content and storytelling strategy, the career site and job description optimization, the social media talent brand strategy, the employee advocacy program, the candidate experience design, the talent brand measurement and tracking, and how to build an employer brand that attracts and retains exceptional people who thrive in your culture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/governance', requireAuth, async (req: AuthRequest, res) => {
+  const { company, domains, maturity } = req.body;
+  const prompt = `You are a data governance and data management expert. Build the data governance program for ${company} covering ${domains} data domains at ${maturity} maturity. Cover the data governance charter and organizational design, the data ownership and stewardship model, the data catalog and metadata management, the data quality standards and measurement, the master data management design, the data lineage and provenance tracking, the data access and security governance, the data retention and lifecycle management, the data governance operating model, and how to build data governance that enables data-driven decisions without creating bureaucratic friction.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/service-design', requireAuth, async (req: AuthRequest, res) => {
+  const { service, journey, moments } = req.body;
+  const prompt = `You are a service design and customer journey expert. Design the service for ${service} mapping ${journey} journey and designing ${moments} key moments. Cover the service design methodology and principles, the service blueprint development, the front-stage and back-stage design, the customer journey mapping, the pain point and opportunity identification, the service concept development, the touchpoint and channel design, the service environment design, the service measurement and KPIs, and how to design services that deliver consistently great experiences across all touchpoints.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/okr-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, level, cycle } = req.body;
+  const prompt = `You are an OKR system design and goal-setting expert. Design the OKR system for ${company} at ${level} organizational level with ${cycle} cycle. Cover the OKR philosophy and principles, the OKR hierarchy and alignment design, the objective writing and quality criteria, the key result design and measurability, the OKR setting process and cadence, the OKR check-in and review rhythm, the OKR grading and learning process, the OKR software and tooling selection, the OKR change management, and how to implement OKRs in a way that creates focus, alignment, and accountability without becoming a bureaucratic compliance exercise.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customer/journey-mapping', requireAuth, async (req: AuthRequest, res) => {
+  const { customer, journey, metric } = req.body;
+  const prompt = `You are a customer experience and journey mapping expert. Map the ${customer} customer journey through ${journey} with ${metric} success metric. Cover the journey mapping methodology and scope, the customer persona development, the awareness and discovery stage design, the consideration and evaluation stage, the purchase and onboarding stage design, the usage and engagement stage design, the renewal and advocacy stage design, the cross-channel journey integration, the pain point prioritization framework, and how to use journey maps as a living tool that drives cross-functional collaboration and continuous CX improvement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/discovery', requireAuth, async (req: AuthRequest, res) => {
+  const { prospect, situation, solution } = req.body;
+  const prompt = `You are a sales discovery and qualification expert. Design the discovery approach for ${prospect} in ${situation} to position ${solution}. Cover the discovery philosophy and mindset, the pre-call research and preparation, the discovery question framework design, the business pain and impact excavation, the decision process and stakeholder mapping, the budget and timeline qualification, the competitive situation mapping, the mutual success plan design, the discovery-to-proposal bridge, and how to run discovery calls that uncover the real problem, build trust, and create the foundation for a compelling and differentiated solution.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
