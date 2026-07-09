@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v664.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v665.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204077,6 +204077,66 @@ app.post('/api/strategy/cx-design', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/strategy/revenue-growth', requireAuth, async (req: AuthRequest, res) => {
   const { company, levers, horizon } = req.body;
   const prompt = `You are a revenue growth strategy and commercial excellence expert. Design revenue growth for ${company} using ${levers} over ${horizon}. Cover revenue growth framework, organic vs inorganic growth paths, market penetration and share gain, market development and new segments, product development and portfolio expansion, pricing and revenue management, sales productivity and effectiveness, customer retention and expansion, revenue growth governance, and how to develop revenue growth strategies that combine the right mix of growth levers to achieve ambitious but achievable targets in a way that builds sustainable competitive advantage rather than growth that erodes profitability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ma-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, target, rationale } = req.body;
+  const prompt = `You are a mergers and acquisitions strategy and deal execution expert. Design the M and A strategy for ${company} targeting ${target} with ${rationale}. Cover M and A strategy framework, strategic rationale and value creation thesis, target identification and screening, valuation and deal structuring, due diligence design and execution, integration planning and value capture, deal negotiation and closing, post-merger integration management, synergy realization tracking, and how to execute acquisitions that deliver the promised strategic and financial value rather than the majority of acquisitions that destroy value through overpaying or failing at integration.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, domains, maturity } = req.body;
+  const prompt = `You are a digital transformation strategy and change leadership expert. Design digital transformation for ${organization} across ${domains} from ${maturity}. Cover digital transformation framework, business model and process digitization, customer experience digitization, data and analytics capability, technology platform modernization, digital talent and culture, agile and DevOps ways of working, digital governance and investment, transformation roadmap and sequencing, and how to lead digital transformations that create genuine business value by focusing on the business outcomes that digital enables rather than on technology adoption as an end in itself.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/corporate-finance', requireAuth, async (req: AuthRequest, res) => {
+  const { company, decision, capital } = req.body;
+  const prompt = `You are a corporate finance strategy and capital allocation expert. Advise ${company} on ${decision} with ${capital}. Cover corporate finance framework, capital structure optimization, cost of capital and WACC, capital allocation and investment prioritization, financial modeling and valuation, dividend and buyback policy, working capital management, financial risk management, investor relations strategy, and how to make corporate finance decisions that maximize long-term value creation by allocating capital to the investments that generate returns above the cost of capital while maintaining the financial flexibility needed to navigate uncertainty.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/esg-sustainability', requireAuth, async (req: AuthRequest, res) => {
+  const { company, priorities, stakeholders } = req.body;
+  const prompt = `You are an ESG strategy and corporate sustainability expert. Design ESG strategy for ${company} focusing on ${priorities} for ${stakeholders}. Cover ESG strategy framework, materiality assessment and issue prioritization, environmental strategy and decarbonization, social impact and human rights, governance excellence and board effectiveness, ESG data and reporting standards, ESG integration into strategy and operations, stakeholder engagement on ESG, ESG risk management, and how to develop ESG strategies that create genuine business value through improved risk management and innovation and stakeholder relationships rather than greenwashing that satisfies reporting requirements without changing anything meaningful.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/corporate-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, portfolio, goals } = req.body;
+  const prompt = `You are a corporate strategy and portfolio management expert. Design corporate strategy for ${company} managing ${portfolio} toward ${goals}. Cover corporate strategy framework, corporate parenting and value creation, portfolio composition and balance, resource allocation across business units, corporate synergies and shared services, corporate center design and mandate, growth and retrenchment decisions, corporate governance and oversight, corporate brand and identity, and how to develop corporate strategies that clarify how the corporation creates more value by owning a set of businesses together than those businesses could create independently, which is the fundamental test that every diversified corporation must pass to justify its existence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/product-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { product, launch, audience } = req.body;
+  const prompt = `You are a product marketing strategy and launch execution expert. Design product marketing for ${product} launching ${launch} to ${audience}. Cover product marketing framework, positioning and messaging development, buyer persona and ICP definition, competitive differentiation and battle cards, launch strategy and go-to-market plan, sales enablement and training, content strategy for awareness and consideration, analyst and press relations, launch metrics and success criteria, and how to build product marketing capabilities that connect product capabilities to customer needs in ways that enable sales to close deals and customers to achieve success with the product.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/customer-retention', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, churnrate } = req.body;
+  const prompt = `You are a customer retention strategy and churn reduction expert. Design customer retention for ${company} with ${segment} at ${churnrate}. Cover retention strategy framework, churn analysis and root cause identification, customer health scoring and early warning, proactive intervention design, customer success and adoption programs, at-risk customer rescue programs, win-back and re-engagement campaigns, retention economics and LTV modeling, retention metrics and governance, and how to build retention programs that keep customers by delivering ongoing value rather than by creating switching costs and contractual lock-in that generate resentment and eventual churn anyway.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/globalization', requireAuth, async (req: AuthRequest, res) => {
+  const { company, regions, model } = req.body;
+  const prompt = `You are a globalization strategy and international business expert. Design the globalization strategy for ${company} entering ${regions} with ${model}. Cover globalization strategy framework, market attractiveness and entry sequencing, entry mode selection and joint ventures, local adaptation vs global standardization, regulatory and compliance navigation, global operating model design, cross-cultural management, global talent strategy, global brand and marketing, and how to design globalization strategies that capture international growth opportunities while managing the operational and financial complexity that global expansion creates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/investor-relations', requireAuth, async (req: AuthRequest, res) => {
+  const { company, investors, narrative } = req.body;
+  const prompt = `You are an investor relations strategy and capital markets expert. Design investor relations for ${company} targeting ${investors} with ${narrative}. Cover investor relations framework, equity story and investment thesis development, investor targeting and segmentation, earnings communication and guidance strategy, investor day and conference strategy, analyst coverage and sell-side management, shareholder engagement and activism defense, disclosure strategy and materiality, IR metrics and feedback loops, and how to build investor relations programs that communicate the value creation strategy to the right investors in ways that result in a fair valuation and a shareholder base aligned with the long-term direction of the company.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/workforce-analytics', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, questions, data } = req.body;
+  const prompt = `You are a workforce analytics and people data expert. Design workforce analytics for ${organization} answering ${questions} using ${data}. Cover workforce analytics framework, people data architecture and integration, headcount and workforce planning analytics, talent acquisition analytics, engagement and retention analytics, performance and productivity analytics, diversity and inclusion analytics, workforce planning and scenario modeling, people analytics governance and ethics, and how to build people analytics capabilities that provide leaders with evidence-based insights about their workforce that enable better decisions about talent while maintaining the trust and privacy of employees whose data powers the analysis.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
