@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v767.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v768.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210257,6 +210257,66 @@ app.post('/api/it/enterprisearch', requireAuth, async (req: AuthRequest, res) =>
 app.post('/api/it/softwareeng', requireAuth, async (req: AuthRequest, res) => {
   const { organization, platform, teams } = req.body;
   const prompt = `You are a software engineering strategy and developer productivity expert. Design software engineering strategy for ${organization} building ${platform} with ${teams}. Cover software engineering strategy framework, software development lifecycle and methodology, microservices and API-first architecture, developer experience and platform engineering, technical debt management, code quality and testing strategy, CI/CD and DevOps maturity, engineering metrics and DORA, team topology and organization, and how to build software engineering programs that achieve the delivery velocity and the code quality and the system reliability that high-performing engineering organizations require by measuring the engineering effectiveness with the DORA metrics and the deployment frequency and the change failure rate and the lead time and the mean time to recovery that provide the objective baseline for the improvement investment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/security/cloud', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, platform, risks } = req.body;
+  const prompt = `You are a cloud security strategy and architecture expert. Design cloud security strategy for ${organization} on ${platform} addressing ${risks}. Cover cloud security framework, shared responsibility model, identity and access management, network security and segmentation, data protection and encryption, security monitoring and threat detection, compliance in cloud, cloud security posture management, container and serverless security, and how to build cloud security programs that achieve the data protection and the compliance posture and the threat detection that secure cloud adoption requires by implementing the security controls in the cloud infrastructure as code with the policy-as-code guardrails and the automated compliance checking that ensures the secure baseline is maintained across the cloud estate.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/security/appsec', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, applications, risks } = req.body;
+  const prompt = `You are an application security strategy and DevSecOps expert. Design application security strategy for ${organization} protecting ${applications} from ${risks}. Cover application security framework, secure software development lifecycle, threat modeling, code review and SAST, penetration testing and DAST, dependency security and SCA, API security and authentication, web application firewall, DevSecOps integration, and how to build application security programs that achieve the vulnerability reduction and the secure code quality and the threat resistance that modern application security requires by shifting the security left into the development process with the automated security testing in the CI/CD pipeline and the developer security training that builds the security capability in the engineering team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/security/zerotrust', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, network, users } = req.body;
+  const prompt = `You are a zero trust architecture strategy and network security expert. Design zero trust architecture for ${organization} securing ${network} for ${users}. Cover zero trust architecture framework, identity-centric security model, micro-segmentation and network access, device trust and endpoint security, data classification and access control, continuous verification and adaptive access, privileged access management, SASE and SD-WAN, zero trust maturity model, and how to build zero trust programs that achieve the lateral movement prevention and the least-privilege access and the continuous verification that zero trust security requires by implementing the identity-aware proxy and the micro-segmentation that replaces the implicit trust of the perimeter model with the explicit verification of every access request regardless of network location.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/security/grc', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, frameworks, risks } = req.body;
+  const prompt = `You are a governance risk and compliance strategy and program management expert. Design GRC strategy for ${organization} implementing ${frameworks} managing ${risks}. Cover GRC strategy framework, risk management and risk register, compliance program management, internal controls and testing, policy and procedure management, third-party risk management, audit management, GRC technology and automation, integrated risk reporting, and how to build GRC programs that achieve the risk visibility and the compliance assurance and the board reporting that effective governance requires by implementing the integrated GRC platform with the risk register and the control mapping and the compliance calendar that provides the single source of truth for the risk and compliance posture across the enterprise.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/security/threatintel', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, sector, threats } = req.body;
+  const prompt = `You are a threat intelligence strategy and cyber threat analysis expert. Design threat intelligence program for ${organization} in ${sector} against ${threats}. Cover threat intelligence framework, intelligence lifecycle and requirements, OSINT and commercial feeds, threat actor profiling and TTPs, indicator of compromise management, intelligence sharing and ISACs, intelligence-driven security operations, threat hunting and proactive detection, threat intelligence platform, and how to build threat intelligence programs that achieve the situational awareness and the proactive defense and the incident anticipation that strategic intelligence requires by operationalizing the threat intelligence with the SIEM integration and the automated indicator enrichment and the threat actor playbooks that enable the security operations team to detect and respond to threats faster.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/security/soc', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, environment, maturity } = req.body;
+  const prompt = `You are a security operations center strategy and incident response expert. Design SOC operations strategy for ${organization} protecting ${environment} at ${maturity} level. Cover SOC operations framework, SOC model and staffing, SIEM and log management, detection engineering and use cases, incident response playbooks, threat hunting and proactive detection, vulnerability management integration, metrics and KPIs, SOC technology stack, and how to build SOC operations programs that achieve the mean time to detect and the mean time to respond and the analyst efficiency that mature security operations require by implementing the detection engineering process with the use case library and the playbook automation and the analyst workflow tooling that reduces the alert triage time and the investigation time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/security/privacy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, jurisdictions, data } = req.body;
+  const prompt = `You are a privacy program strategy and data protection expert. Design privacy program for ${organization} in ${jurisdictions} handling ${data}. Cover privacy program framework, GDPR and CCPA compliance, data mapping and inventory, privacy by design, consent management, data subject rights, privacy impact assessment, cross-border data transfers, privacy monitoring and breach response, and how to build privacy programs that achieve the regulatory compliance and the individual rights protection and the data governance that global privacy law requires by conducting the data mapping exercise with the process register and the data flow diagram and the lawful basis analysis that identifies every personal data processing activity and the legal basis for each processing purpose.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/security/identity', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, users, systems } = req.body;
+  const prompt = `You are an identity security strategy and IAM architecture expert. Design identity security strategy for ${organization} managing ${users} accessing ${systems}. Cover identity security framework, identity governance and administration, authentication and MFA, single sign-on and federation, privileged access management, identity lifecycle management, directory services and LDAP, identity threat detection, just-in-time access, and how to build identity security programs that achieve the access governance and the authentication assurance and the privileged access control that identity-centric security requires by implementing the identity governance platform with the access request and the access certification and the role management that provides the lifecycle controls from joiner to mover to leaver.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/security/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { ciso, organization, threats } = req.body;
+  const prompt = `You are a cybersecurity strategy and CISO advisory expert. Design cybersecurity strategy for ${ciso} at ${organization} facing ${threats}. Cover cybersecurity strategy framework, risk-based security prioritization, security architecture and roadmap, security investment justification, board and executive communication, security culture and awareness, security organization design, vendor and third-party risk, cyber insurance and resilience, and how to build cybersecurity strategy programs that achieve the risk reduction and the business alignment and the security culture that board-level security leadership requires by translating the technical security risk into the business impact language that connects the security investment to the enterprise risk appetite and the regulatory obligation that the board understands.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/security/bcm', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, operations, threats } = req.body;
+  const prompt = `You are a business continuity management strategy and resilience expert. Design business continuity management strategy for ${organization} protecting ${operations} from ${threats}. Cover business continuity framework, business impact analysis, recovery time and point objectives, business continuity plan development, disaster recovery and technology resilience, crisis management and communication, third-party resilience, testing and exercising, regulatory BCM requirements, and how to build business continuity programs that achieve the operational resilience and the recovery capability and the stakeholder confidence that effective BCM requires by conducting the business impact analysis with the process criticality ranking and the dependency mapping and the RTO/RPO assignment that provides the prioritized recovery sequence for the IT disaster recovery plan.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
