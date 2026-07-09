@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v412.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v413.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -1113,6 +1113,15 @@ function humanizeToolStep(toolName: string, args: Record<string, any>): { icon: 
     default:
       return { icon: '🔧', message: `Using ${toolName.replace(/_/g, ' ')}…` };
   }
+}
+
+// Convenience wrapper used by wave tool routes
+async function callUserLLM(req: AuthRequest, prompt: string): Promise<string> {
+  const userId = (req.user as any)?.userId || (req.user as any)?.id || (req.user as any)?.sub;
+  const apiKey = getUserKey(userId, 'anthropic');
+  if (!apiKey) throw new Error('Anthropic API key required. Add your key in Settings.');
+  const r = await callLLM('anthropic', apiKey, 'claude-opus-4-5', [{ role: 'user', content: prompt }]);
+  return r.content;
 }
 
 async function callAnthropicWithTools(
@@ -187107,5 +187116,2788 @@ app.post('/api/marketing/copy-testing', requireAuth, async (req: AuthRequest, re
   const msg = await client.messages.create({ model: 'claude-opus-4-5', max_tokens: 1024, messages: [{ role: 'user', content: `Analyze and rewrite this marketing copy:\n\nCopy: ${copy}\n\nAudience and context: ${audience}\n\nInclude: clarity score (1-10), persuasion audit by emotion, specific rewrites for each weak section with reasoning, headline variants to test, CTA alternatives, and A/B test recommendations.` }] });
   res.json({ analysis: msg.content[0].type === 'text' ? msg.content[0].text : JSON.stringify(msg.content) });
 });
+
+
+// === AUTO-GENERATED ROUTES v413 - Full 633-tool coverage ===
+app.post('/api/ai/agent-prompt-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert ai strategist. Help with: Agent Prompt Builder. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/analytics/data-story', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert analytics strategist. Help with: Data Story. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/analytics/feedback', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert analytics strategist. Help with: Feedback. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/brand/voice-analyzer', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert brand strategist. Help with: Voice Analyzer. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/career/salary-negotiation', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert career strategist. Help with: Salary Negotiation. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/content/email-newsletter', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert content strategist. Help with: Email Newsletter. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/content/press-release', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert content strategist. Help with: Press Release. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/content/thread', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert content strategist. Help with: Thread. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/content/youtube-script', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert content strategist. Help with: Youtube Script. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/cx/offboarding-survey', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert cx strategist. Help with: Offboarding Survey. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/design/ux-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert design strategist. Help with: Ux Audit. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/ai-integration', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Ai Integration. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/ai-integration-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Ai Integration Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/api-changelog', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Api Changelog. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/api-design', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Api Design. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/api-product', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Api Product. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/api-product-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Api Product Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/app-security', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: App Security. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/architecture-decision', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Architecture Decision. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/architecture-review', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Architecture Review. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/bug-prioritization', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Bug Prioritization. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/cloud-cost', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Cloud Cost. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/code-quality', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Code Quality. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/code-review', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Code Review. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/containerization', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Containerization. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/cost-reduction', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Cost Reduction. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/data-model', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Data Model. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/data-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Data Pipeline. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/data-privacy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Data Privacy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/database-design', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Database Design. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/database-schema', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Database Schema. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/db-optimization', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Db Optimization. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/deployment-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Deployment Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/disaster-recovery', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Disaster Recovery. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/docs-template', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Docs Template. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/documentation-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Documentation Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/documentation-review', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Documentation Review. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/engineering-spec', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Engineering Spec. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/feature-flag-system', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Feature Flag System. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/feature-flags', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Feature Flags. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/graphql-schema', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Graphql Schema. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/load-balancing', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Load Balancing. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/load-testing', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Load Testing. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/microservices', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Microservices. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/microservices-migration', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Microservices Migration. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/mobile-app-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Mobile App Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/monitoring-alerts', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Monitoring Alerts. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/monorepo-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Monorepo Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/observability', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Observability. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/open-source', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Open Source. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/performance-budget', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Performance Budget. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/performance-testing', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Performance Testing. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/platform-engineering', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Platform Engineering. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/platform-engineering-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Platform Engineering Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/platform-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Platform Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/postmortem', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Postmortem. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/postmortem-writer', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Postmortem Writer. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/production-checklist', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Production Checklist. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/refactor-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Refactor Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/scaling-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Scaling Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/security-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Security Audit. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/security-posture', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Security Posture. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/system-design', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: System Design. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/tech-debt-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Tech Debt Audit. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/tech-stack', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Tech Stack. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/tech-stack-advisor', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Tech Stack Advisor. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/tech-writing-guide', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert dev strategist. Help with: Tech Writing Guide. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/email/subject-test', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert email strategist. Help with: Subject Test. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/finance/revenue-forecast', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert finance strategist. Help with: Revenue Forecast. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/finance/saas-health-check', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert finance strategist. Help with: Saas Health Check. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/benefits-design', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Benefits Design. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/career-ladder', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Career Ladder. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/careers-page-copy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Careers Page Copy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/comp-philosophy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Comp Philosophy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/compensation-benchmark', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Compensation Benchmark. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/compensation-philosophy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Compensation Philosophy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/cultural-values', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Cultural Values. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/culture-code-writer', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Culture Code Writer. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/dei-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Dei Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/employee-survey', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Employee Survey. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/engagement-survey', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Engagement Survey. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/exit-interview', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Exit Interview. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/hiring-scorecard', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Hiring Scorecard. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/interview-guide', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Interview Guide. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/job-leveling', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Job Leveling. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/leader-development', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Leader Development. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/learning-development', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Learning Development. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/manager-coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Manager Coaching. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/new-hire-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: New Hire Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/offboarding-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Offboarding Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/onboarding-program', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Onboarding Program. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/performance-improvement', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Performance Improvement. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/performance-pip', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Performance Pip. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/policy-drafter', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Policy Drafter. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/promotion-case', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Promotion Case. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/recruiting-script', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Recruiting Script. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/remote-culture', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Remote Culture. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/remote-work-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Remote Work Playbook. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/remote-work-policy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Remote Work Policy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/succession-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Succession Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/talent-acquisition', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Talent Acquisition. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/team-rituals', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Team Rituals. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/team-structure', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Team Structure. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/tech-interview-kit', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert hr strategist. Help with: Tech Interview Kit. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/board-deck', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Board Deck. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/board-deck-outline', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Board Deck Outline. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/board-management', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Board Management. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/closing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Closing Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/cold-outreach', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Cold Outreach. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/data-room-checklist', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Data Room Checklist. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/data-story', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Data Story. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/deck-narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Deck Narrative. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/deck-outline', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Deck Outline. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/due-diligence', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Due Diligence. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/due-diligence-prep', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Due Diligence Prep. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/exit-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Exit Planning. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/exit-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Exit Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/founder-narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Founder Narrative. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/fundraising-deck', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Fundraising Deck. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/fundraising-email', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Fundraising Email. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/fundraising-narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Fundraising Narrative. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/fundraising-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Fundraising Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/fundraising-update', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Fundraising Update. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/growth-metrics', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Growth Metrics. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/growth-narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Growth Narrative. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/investment-memo', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Investment Memo. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/investment-thesis', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Investment Thesis. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/investor-qa-prep', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Investor Qa Prep. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/investor-update-template', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Investor Update Template. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/market-map', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Market Map. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/pitch-coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Pitch Coaching. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/pitch-deck-coach', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Pitch Deck Coach. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/pitch-deck-outline', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Pitch Deck Outline. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/pitch-feedback', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Pitch Feedback. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/pitch-story', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Pitch Story. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/portfolio-support', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Portfolio Support. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/research-guide', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Research Guide. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/saas-metrics', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Saas Metrics. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/safe-note-terms', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Safe Note Terms. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/strategic-partnerships', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Strategic Partnerships. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/syndicate-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Syndicate Builder. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/term-sheet', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Term Sheet. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/term-sheet-explainer', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Term Sheet Explainer. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/update-email', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Update Email. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/valuation', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Valuation. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/valuation-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Valuation Framework. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/vc-narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert investor strategist. Help with: Vc Narrative. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/legal/draft', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert legal strategist. Help with: Draft. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/ab-test', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Ab Test. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/ab-test-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Ab Test Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/abm-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Abm Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/acquisition-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Acquisition Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/agency-brief', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Agency Brief. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/annual-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Annual Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/app-store', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: App Store. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/brand-guide', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Brand Guide. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/brand-guidelines', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Brand Guidelines. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/brand-story', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Brand Story. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/budget-allocation', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Budget Allocation. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/case-study-writer', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Case Study Writer. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/category-design', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Category Design. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/community-building', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Community Building. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/community-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Community Growth. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/content-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Content Audit. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/content-distribution', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Content Distribution. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/content-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Content Ops. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/content-repurpose', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Content Repurpose. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/content-strategy-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Content Strategy Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/conversion-copy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Conversion Copy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/crisis-comms', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Crisis Comms. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/customer-avatar', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Customer Avatar. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/demand-gen-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Demand Gen Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/demo-story', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Demo Story. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/email-drip', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Email Drip. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/email-drip-sequence', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Email Drip Sequence. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/email-hooks', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Email Hooks. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/email-sequence', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Email Sequence. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/event-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Event Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/event-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Event Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/growth-experiment', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Growth Experiment. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/gtm-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Gtm Playbook. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/influencer-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Influencer Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/landing-copy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Landing Copy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/landing-page', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Landing Page. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/landing-page-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Landing Page Audit. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/launch-blog-post', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Launch Blog Post. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/launch-calendar', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Launch Calendar. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/launch-email-sequence', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Launch Email Sequence. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/launch-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Launch Playbook. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/linkedin-company', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Linkedin Company. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/marketing-ops-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Marketing Ops Audit. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/media-pitch', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Media Pitch. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/messaging-guide', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Messaging Guide. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/newsletter-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Newsletter Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/paid-acquisition', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Paid Acquisition. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/partner-comarketing', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Partner Comarketing. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/partner-program', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Partner Program. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/persona', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Persona. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/podcast-pitch', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Podcast Pitch. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/podcast-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Podcast Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/pr-pitch', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Pr Pitch. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/press-release', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Press Release. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/pricing-page', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Pricing Page. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/pricing-psychology', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Pricing Psychology. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/product-announcement', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Product Announcement. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/product-evangelist-kit', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Product Evangelist Kit. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/product-faq', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Product Faq. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/product-launch-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Product Launch Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/product-launch-pr', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Product Launch Pr. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/quarterly-calendar', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Quarterly Calendar. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/rebrand-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Rebrand Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/reengagement-campaign', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Reengagement Campaign. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/referral-program', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Referral Program. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/retention-email', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Retention Email. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/retention-loop', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Retention Loop. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/retention-program', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Retention Program. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/seo-content-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Seo Content Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/seo-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Seo Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/social-media-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Social Media Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/social-presence', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Social Presence. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/testimonial-request', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Testimonial Request. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/thought-leadership', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Thought Leadership. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/thought-leadership-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Thought Leadership Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/ugc-brief', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Ugc Brief. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/video-content-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Video Content Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/viral-hook', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Viral Hook. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/webinar-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Webinar Builder. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/website-conversion', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Website Conversion. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/website-copy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert marketing strategist. Help with: Website Copy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/meetings/extract-actions', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert meetings strategist. Help with: Extract Actions. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/pm/feature-spec', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert pm strategist. Help with: Feature Spec. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/pm/prd-writer', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert pm strategist. Help with: Prd Writer. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/pm/product-one-pager', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert pm strategist. Help with: Product One Pager. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/pm/product-ops-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert pm strategist. Help with: Product Ops Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/pm/sprint-retrospective', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert pm strategist. Help with: Sprint Retrospective. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/pm/user-stories', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert pm strategist. Help with: User Stories. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/ab-test-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Ab Test Framework. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/accessibility-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Accessibility Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/activation-optimization', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Activation Optimization. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/annual-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Annual Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/api-pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Api Pricing Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/beta-program', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Beta Program. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/business-model-canvas', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Business Model Canvas. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/change-management', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Change Management. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/churn-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Churn Analysis. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/churn-interview', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Churn Interview. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/churn-prevention', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Churn Prevention. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/competitive-landscape', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Competitive Landscape. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/competitor-intel', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Competitor Intel. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/customer-segmentation', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Customer Segmentation. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/customer-success-program', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Customer Success Program. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/data-model', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Data Model. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/design-brief', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Design Brief. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/design-system', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Design System. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/documentation-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Documentation Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/engineer-sprint-align', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Engineer Sprint Align. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/executive-dashboard', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Executive Dashboard. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/experiment-design', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Experiment Design. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/experiment-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Experiment Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/feature-prioritization', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Feature Prioritization. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/feature-request-response', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Feature Request Response. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/feature-spec', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Feature Spec. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/feedback-action-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Feedback Action Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/feedback-synthesis', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Feedback Synthesis. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/feedback-synthesizer', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Feedback Synthesizer. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/feedback-system', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Feedback System. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/go-to-market', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Go To Market. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/growth-experiment', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Growth Experiment. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/growth-experiments', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Growth Experiments. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/growth-model', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Growth Model. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/gtm-timeline', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Gtm Timeline. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/integration-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Integration Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/internationalization', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Internationalization. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/jobs-to-be-done', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Jobs To Be Done. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/kpi-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Kpi Framework. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/launch-checklist', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Launch Checklist. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/launch-readiness', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Launch Readiness. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/market-entry', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Market Entry. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/market-map', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Market Map. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/metrics-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Metrics Framework. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/micro-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Micro Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/migration-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Migration Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/mobile-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Mobile Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/monetization', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Monetization. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/monetization-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Monetization Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/nps-action-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Nps Action Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/objection-handler', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Objection Handler. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/positioning', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Positioning. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/positioning-statement', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Positioning Statement. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/pricing-experiment', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Pricing Experiment. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/pricing-page', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Pricing Page. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/pricing-page-design', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Pricing Page Design. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/pricing-recommendation', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Pricing Recommendation. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/pricing-tiers', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Pricing Tiers. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/product-narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Product Narrative. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/product-roast', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Product Roast. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/release-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Release Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/retention-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Retention Playbook. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/retention-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Retention Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/roadmap-presentation', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Roadmap Presentation. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/scaling-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Scaling Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/scenario-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Scenario Planning. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/search-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Search Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/second-order-thinking', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Second Order Thinking. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/self-serve', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Self Serve. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/strategic-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Strategic Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/swot-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Swot Analysis. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/user-journey', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: User Journey. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/user-research-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: User Research Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/user-stories', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: User Stories. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/value-map', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert product strategist. Help with: Value Map. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/agenda-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert productivity strategist. Help with: Agenda Builder. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/csm-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert productivity strategist. Help with: Csm Playbook. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/data-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert productivity strategist. Help with: Data Analysis. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/decision-log', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert productivity strategist. Help with: Decision Log. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/email-clarity', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert productivity strategist. Help with: Email Clarity. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/meeting-facilitation', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert productivity strategist. Help with: Meeting Facilitation. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/okr-system', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert productivity strategist. Help with: Okr System. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/operations-kpis', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert productivity strategist. Help with: Operations Kpis. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/ops-review', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert productivity strategist. Help with: Ops Review. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/quarterly-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert productivity strategist. Help with: Quarterly Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/support-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert productivity strategist. Help with: Support Playbook. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/team-meeting-design', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert productivity strategist. Help with: Team Meeting Design. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/team-priorities', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert productivity strategist. Help with: Team Priorities. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/productivity/workshop-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert productivity strategist. Help with: Workshop Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/account-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Account Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/account-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Account Planning. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/call-coach', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Call Coach. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/case-study', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Case Study. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/channel-partner-proposal', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Channel Partner Proposal. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/churn-prevention', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Churn Prevention. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/closing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Closing Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/cold-outreach-system', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Cold Outreach System. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/commission-design', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Commission Design. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/cs-handoff', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Cs Handoff. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/cs-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Cs Playbook. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/customer-expansion', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Customer Expansion. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/deal-review', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Deal Review. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/demo-flow', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Demo Flow. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/demo-mastery', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Demo Mastery. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/discovery-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Discovery Framework. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/discovery-questions', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Discovery Questions. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/enablement-kit', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Enablement Kit. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/enterprise-deal-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Enterprise Deal Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/enterprise-motion', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Enterprise Motion. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/gtm-launch', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Gtm Launch. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/hypothesis-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Hypothesis Builder. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/lead-scoring', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Lead Scoring. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/lead-scoring-model', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Lead Scoring Model. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/meddic', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Meddic. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/meeting-agenda', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Meeting Agenda. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/messaging-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Messaging Framework. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/negotiation-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Negotiation Playbook. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/negotiation-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Negotiation Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/onboarding-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Onboarding Playbook. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/partner-channel', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Partner Channel. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/partner-program', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Partner Program. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/partnership-proposal', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Partnership Proposal. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/pipeline-forecast', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Pipeline Forecast. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/pipeline-metrics', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Pipeline Metrics. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/pipeline-review', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Pipeline Review. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/pipeline-velocity', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Pipeline Velocity. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/pricing-conversation', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Pricing Conversation. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/project-proposal', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Project Proposal. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/proposal', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Proposal. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/proposal-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Proposal Builder. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/proposal-editor', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Proposal Editor. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/qbr-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Qbr Builder. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/reference-program', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Reference Program. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/revenue-model', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Revenue Model. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/revops-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Revops Audit. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/revops-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Revops Playbook. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/sales-cycle-optimizer', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Sales Cycle Optimizer. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/sales-system-design', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Sales System Design. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/sdr-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Sdr Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/story-selling', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Story Selling. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/territory-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Territory Plan. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/vendor-negotiation', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Vendor Negotiation. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/win-loss', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Win Loss. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/win-loss-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert sales strategist. Help with: Win Loss Analysis. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/social/linkedin-article', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert social strategist. Help with: Linkedin Article. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/social/linkedin-dm', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert social strategist. Help with: Linkedin Dm. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/social/linkedin-profile-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert social strategist. Help with: Linkedin Profile Audit. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/social/twitter-bio', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert social strategist. Help with: Twitter Bio. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/social/twitter-thread', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert social strategist. Help with: Twitter Thread. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/startup/idea-validator', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert startup strategist. Help with: Idea Validator. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/strategy/competitor-teardown', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert strategy strategist. Help with: Competitor Teardown. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/strategy/niche-finder', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert strategy strategist. Help with: Niche Finder. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/team/announcement', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert team strategist. Help with: Announcement. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/writing/conference-pitch', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert writing strategist. Help with: Conference Pitch. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/writing/executive-bio', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert writing strategist. Help with: Executive Bio. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/writing/grant-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert writing strategist. Help with: Grant Strategy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/writing/headline-writer', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert writing strategist. Help with: Headline Writer. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/writing/mentor-outreach', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert writing strategist. Help with: Mentor Outreach. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/writing/refund-policy', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert writing strategist. Help with: Refund Policy. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/writing/resignation-letter', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert writing strategist. Help with: Resignation Letter. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/writing/talking-points', requireAuth, async (req: AuthRequest, res) => {
+  const { data, details, input, context, ...rest } = req.body;
+  const d = data || input || context || Object.values(rest).join(' ') || 'no context provided';
+  const det = details || '';
+  const prompt = `You are an expert writing strategist. Help with: Talking Points. Context: ${d}. Details: ${det}. Be specific, actionable, and professional.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+// === END AUTO-GENERATED ROUTES ===
 
 app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));
