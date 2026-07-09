@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v774.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v775.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210677,6 +210677,66 @@ app.post('/api/science/spacetech', requireAuth, async (req: AuthRequest, res) =>
 app.post('/api/science/quantum', requireAuth, async (req: AuthRequest, res) => {
   const { organization, application, timeline } = req.body;
   const prompt = `You are a quantum technology strategy and quantum computing expert. Design quantum technology strategy for ${organization} developing ${application} over ${timeline}. Cover quantum technology framework, quantum computing and qubits, quantum error correction and fault tolerance, quantum algorithms and advantage, quantum sensing and metrology, quantum communication and cryptography, quantum hardware platforms, hybrid classical-quantum computing, quantum software and programming, and how to build quantum technology programs that achieve the quantum advantage and the practical application and the technology readiness that quantum computing deployment requires by assessing the problem fit with the quantum algorithm analysis and the near-term noise limitations and the error correction overhead that determines the quantum hardware requirements for the application advantage over the classical alternative.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/writing', requireAuth, async (req: AuthRequest, res) => {
+  const { writer, genre, project } = req.body;
+  const prompt = `You are a creative writing strategy and literary craft expert. Design creative writing strategy for ${writer} in ${genre} developing ${project}. Cover creative writing framework, story structure and narrative arc, character development and voice, setting and world building, dialogue and scene writing, point of view and perspective, revision and editing process, writer block and creative habits, publishing and query strategy, and how to build creative writing programs that achieve the compelling narrative and the authentic voice and the reader engagement that memorable fiction requires by developing the character with the internal contradiction and the want versus the need and the wound that creates the dramatic tension and the character arc that gives the story its emotional resonance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/content', requireAuth, async (req: AuthRequest, res) => {
+  const { creator, platform, audience } = req.body;
+  const prompt = `You are a content creation strategy and digital media expert. Design content creation strategy for ${creator} on ${platform} reaching ${audience}. Cover content creation framework, content strategy and editorial calendar, format selection and production, headline and hook writing, SEO and discoverability, content distribution and promotion, audience growth and engagement, content monetization, analytics and iteration, and how to build content creation programs that achieve the audience growth and the engagement rate and the monetization that sustainable content creation requires by developing the content system with the topic research and the production workflow and the distribution checklist that enables the consistent high-quality output that builds the audience and the algorithm trust.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/video', requireAuth, async (req: AuthRequest, res) => {
+  const { creator, format, platform } = req.body;
+  const prompt = `You are a video production strategy and visual storytelling expert. Design video production strategy for ${creator} making ${format} for ${platform}. Cover video production framework, pre-production and scripting, shot planning and storyboarding, camera and lighting techniques, audio production and sound design, editing and post-production, motion graphics and visual effects, platform optimization and encoding, distribution and promotion, and how to build video production programs that achieve the production quality and the storytelling impact and the platform performance that successful video content requires by designing the production workflow with the pre-production planning and the production execution and the post-production quality review that ensures the consistent delivery of the compelling video that retains the viewer through the first thirty seconds.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/podcast', requireAuth, async (req: AuthRequest, res) => {
+  const { host, topic, audience } = req.body;
+  const prompt = `You are a podcast production strategy and audio content expert. Design podcast strategy for ${host} covering ${topic} for ${audience}. Cover podcast production framework, podcast format and structure, guest booking and interview preparation, recording setup and audio quality, editing and post-production, show notes and transcript, distribution and hosting platform, podcast growth and discoverability, monetization and sponsorship, and how to build podcast programs that achieve the listener loyalty and the audience growth and the monetization that successful podcasting requires by developing the podcast positioning with the unique angle and the consistent format and the guest selection criteria that differentiates the show in the crowded category and delivers the specific value that the target listener seeks.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/graphicdesign', requireAuth, async (req: AuthRequest, res) => {
+  const { designer, project, client } = req.body;
+  const prompt = `You are a graphic design strategy and visual communication expert. Design graphic design strategy for ${designer} working on ${project} for ${client}. Cover graphic design framework, design brief and discovery, typography and visual hierarchy, color theory and palette, layout and composition, brand identity and consistency, digital and print production, client presentation and feedback, design process and tools, and how to build graphic design programs that achieve the visual communication and the brand alignment and the client satisfaction that professional design requires by developing the design concept with the visual research and the mood board and the concept rationale that grounds the aesthetic decision in the strategic objective and the brand insight that the client can evaluate against the brief.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/music', requireAuth, async (req: AuthRequest, res) => {
+  const { artist, genre, goals } = req.body;
+  const prompt = `You are a music production strategy and audio engineering expert. Design music production strategy for ${artist} in ${genre} achieving ${goals}. Cover music production framework, song arrangement and structure, recording and tracking, mixing and balance, mastering and loudness, music production software and workflow, sample and synthesis, music business and distribution, playlist and promotion strategy, and how to build music production programs that achieve the sonic quality and the artistic vision and the commercial release that professional music requires by developing the production approach with the reference tracks and the sonic palette and the arrangement template that establishes the sonic identity of the project and the production workflow that achieves the sound within the budget and the timeline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/photography', requireAuth, async (req: AuthRequest, res) => {
+  const { photographer, genre, clients } = req.body;
+  const prompt = `You are a photography strategy and visual arts expert. Design photography strategy for ${photographer} shooting ${genre} for ${clients}. Cover photography strategy framework, photographic vision and style development, technical mastery and equipment, lighting and composition, post-processing and editing workflow, portfolio development and presentation, client acquisition and relationship, photography business and pricing, social media and online presence, and how to build photography programs that achieve the artistic vision and the technical excellence and the client satisfaction that professional photography requires by developing the photographic style with the consistent visual language and the editing preset and the shooting approach that produces the recognizable body of work that attracts the ideal client.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/filmmaking', requireAuth, async (req: AuthRequest, res) => {
+  const { filmmaker, project, budget } = req.body;
+  const prompt = `You are a filmmaking strategy and cinematic storytelling expert. Design filmmaking strategy for ${filmmaker} producing ${project} with ${budget}. Cover filmmaking strategy framework, screenplay and story development, pre-production and production planning, directing and visual storytelling, cinematography and camera language, production design and art direction, film editing and pacing, sound design and music, film distribution and festivals, and how to build filmmaking programs that achieve the cinematic vision and the production value and the distribution success that independent film requires by developing the production plan with the location scout and the casting strategy and the shot list and the production schedule that maximizes the production value within the budget constraint.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/gamedesign', requireAuth, async (req: AuthRequest, res) => {
+  const { designer, genre, platform } = req.body;
+  const prompt = `You are a game design strategy and interactive entertainment expert. Design game design strategy for ${designer} creating ${genre} for ${platform}. Cover game design framework, game mechanics and systems design, narrative and world building, level design and progression, user experience and onboarding, visual design and art direction, audio design and music, monetization and live service, playtesting and iteration, and how to build game design programs that achieve the player engagement and the retention and the commercial success that successful games require by designing the core loop with the challenge and the reward and the mastery progression that creates the intrinsic motivation and the session-to-session retention that builds the player habit and the long-term engagement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/animation', requireAuth, async (req: AuthRequest, res) => {
+  const { studio, project, audience } = req.body;
+  const prompt = `You are an animation strategy and visual storytelling expert. Design animation strategy for ${studio} producing ${project} for ${audience}. Cover animation strategy framework, animation style and visual development, character design and expression, storyboard and animatic, production pipeline and workflow, rigging and character setup, scene layout and staging, animation principles and timing, rendering and compositing, and how to build animation programs that achieve the visual quality and the character performance and the production efficiency that professional animation requires by establishing the production pipeline with the asset management and the shot tracking and the review process that ensures the quality control and the on-schedule delivery across the distributed production team.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
