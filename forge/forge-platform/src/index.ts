@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v703.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v704.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -206417,6 +206417,66 @@ app.post('/api/strategy/medical-device', requireAuth, async (req: AuthRequest, r
 app.post('/api/strategy/crisis-communications', requireAuth, async (req: AuthRequest, res) => {
   const { company, crisis, stakeholders } = req.body;
   const prompt = `You are a crisis communications strategy and reputation management expert. Design crisis communications for ${company} facing ${crisis} with ${stakeholders}. Cover crisis communications framework, crisis assessment and severity classification, immediate response and holding statement, spokesperson selection and media training, stakeholder communication prioritization, social media monitoring and response, investigation and facts gathering, narrative development and message discipline, recovery and reputation rebuilding, and how to manage crisis communications that preserve organizational trust by responding rapidly with the facts known at the time rather than waiting for complete information, taking genuine accountability for what went wrong rather than issuing the non-apology that signals the organization is managing image rather than addressing harm, and demonstrating through concrete actions the changes made to prevent recurrence rather than promising to do better without visible follow-through.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/tax-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, structure, jurisdictions } = req.body;
+  const prompt = `You are a corporate tax strategy and tax planning expert. Design tax strategy for ${company} with ${structure} across ${jurisdictions}. Cover tax strategy framework, entity structure and tax efficiency, transfer pricing and intercompany transactions, tax treaty optimization, R and D tax credits and incentives, capital structure and interest deductibility, international tax planning and BEPS compliance, tax risk management and uncertain tax positions, tax technology and compliance automation, and how to build corporate tax strategies that minimize the effective tax rate within legal bounds by structuring business operations and transactions to take advantage of available deductions, credits, and treaty benefits, managing the transfer pricing documentation that supports intercompany arrangements under regulatory scrutiny, and maintaining the tax compliance infrastructure that manages the increasing complexity of international tax rules without creating unacceptable tax risk.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/sports-business', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, sport, market } = req.body;
+  const prompt = `You are a sports business strategy and sports management expert. Design sports business strategy for ${organization} in ${sport} in ${market}. Cover sports business framework, media rights strategy and broadcast deals, sponsorship sales and activation, ticketing and attendance revenue, merchandise and licensing, facility and venue strategy, athlete development and talent acquisition, international expansion, sports technology and fan engagement, and how to build sports business organizations that generate sustainable revenue by leveraging the passionate fan bases that make sports uniquely valuable as a media and entertainment product, developing the sponsorship relationships that connect brands to those fan communities authentically, and investing in the athlete and team performance that maintains the competitive success that keeps fans engaged and media partners paying premium rights fees.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/energy-management', requireAuth, async (req: AuthRequest, res) => {
+  const { company, facilities, targets } = req.body;
+  const prompt = `You are an energy management strategy and sustainability expert. Design energy management for ${company} across ${facilities} targeting ${targets}. Cover energy management framework, energy audit and baseline establishment, energy efficiency opportunity identification, renewable energy procurement and PPAs, energy storage and demand response, carbon footprint measurement and reduction, energy management systems, ISO 50001 certification, employee engagement and behavior change, and how to build energy management programs that reduce both cost and carbon emissions by conducting rigorous energy audits that identify the highest-return efficiency opportunities, implementing the monitoring and control systems that prevent energy waste from equipment running when not needed, and structuring renewable energy procurement to match consumption profile with clean generation at costs competitive with grid power.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/insurtech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, segment } = req.body;
+  const prompt = `You are an InsurTech strategy and insurance innovation expert. Design InsurTech strategy for ${company} with ${product} targeting ${segment}. Cover InsurTech strategy framework, insurance product design and underwriting innovation, distribution channel disruption, claims automation and fraud detection, telematics and usage-based insurance, embedded insurance and ecosystem integration, reinsurance and capital efficiency, regulatory compliance across jurisdictions, legacy system integration, and how to build InsurTech businesses that compete successfully in insurance by identifying the specific inefficiencies in existing insurance products, underwriting, or distribution that technology enables the company to solve better, designing the actuarial models that price risk accurately with new data sources while managing adverse selection, and building the reinsurance relationships that provide the capacity to scale without taking on unmanageable underwriting risk.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/narrative-change', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, issue, audience } = req.body;
+  const prompt = `You are a narrative change strategy and strategic communications expert. Design narrative change strategy for ${organization} on ${issue} targeting ${audience}. Cover narrative change framework, dominant narrative analysis and counter-narrative design, values and messenger strategy, coalition building and ally activation, media strategy and earned media, social media and digital organizing, storytelling and case study development, messager training and talking points, long-term narrative shift measurement, and how to build narrative change campaigns that genuinely shift how people think about an issue by understanding the existing narratives and mental models that shape current thinking, designing counter-narratives that engage emotions and values rather than just presenting facts that people filter through their existing beliefs, and building the coalition of credible messengers across the political and cultural spectrum that gives the new narrative the breadth of endorsement that makes it feel like common sense.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/operating-model', requireAuth, async (req: AuthRequest, res) => {
+  const { company, strategy, current } = req.body;
+  const prompt = `You are an operating model strategy and organizational design expert. Design operating model for ${company} executing ${strategy} from ${current}. Cover operating model framework, organizational structure and reporting relationships, governance and decision rights, management processes and cadence, performance management and accountability, capabilities and talent model, technology and data infrastructure, culture and ways of working, operating model change management, and how to design operating models that efficiently execute strategy by aligning organizational structure with the decisions that need to be made fast and close to the customer, establishing the governance and decision rights that prevent the bottlenecks and escalations that slow organizations down without creating the accountability gaps that allow poor decisions to go unchallenged, and building the management systems that give leaders the information they need to manage performance without drowning in reporting that consumes time without improving decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/asset-management', requireAuth, async (req: AuthRequest, res) => {
+  const { firm, strategies, clients } = req.body;
+  const prompt = `You are an asset management strategy and investment management expert. Design asset management strategy for ${firm} with ${strategies} serving ${clients}. Cover asset management framework, investment philosophy and process articulation, portfolio construction and risk management, performance attribution and factor exposure, client segmentation and distribution strategy, fee model and competitive positioning, regulatory compliance and fiduciary standards, talent strategy and portfolio manager development, product development and launch, and how to build asset management businesses that generate durable competitive advantage through consistent investment performance by developing an investment philosophy with genuine analytical edge rather than style-box beta, building the research and portfolio construction process that translates the philosophy into portfolios that perform consistently rather than cyclically, and distributing products through the channels that reach clients who need the specific risk-return profile and time horizon the strategy is designed to serve.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/public-affairs', requireAuth, async (req: AuthRequest, res) => {
+  const { company, issues, governments } = req.body;
+  const prompt = `You are a public affairs strategy and government relations expert. Design public affairs strategy for ${company} on ${issues} with ${governments}. Cover public affairs framework, political landscape and stakeholder mapping, legislative and regulatory monitoring, coalition building and third-party advocacy, direct lobbying and government engagement, grassroots and grasstops mobilization, political action committees and political giving, regulatory affairs and comment strategy, crisis government relations, and how to build public affairs programs that shape the regulatory and legislative environment favorably by building genuine relationships with policymakers based on the company being a credible source of expertise on the issues rather than just a special interest seeking preferential treatment, engaging through coalitions that broaden the advocacy beyond just the company, and demonstrating the legitimate economic and social contributions that make the company a valued constituency rather than an adversary.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/social-enterprise', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, mission, model } = req.body;
+  const prompt = `You are a social enterprise strategy and mission-driven business expert. Design social enterprise strategy for ${organization} pursuing ${mission} with ${model}. Cover social enterprise framework, theory of change and impact measurement, earned revenue model design, grant and philanthropic capital strategy, stakeholder model and governance, social return on investment, mission lock and governance structures, scaling impact and organizational growth, hybrid legal structure design, and how to build social enterprises that achieve genuine scale of mission impact by designing earned revenue models that are structurally aligned with the social mission rather than separate activities that fund mission work, building the impact measurement infrastructure that demonstrates the social outcomes that justify public and philanthropic support, and maintaining mission integrity through growth by embedding social purpose in governance structures that survive leadership changes and commercial pressures.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/knowledge-work', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, workers, output } = req.body;
+  const prompt = `You are a knowledge work strategy and productivity expert. Design knowledge work strategy for ${organization} with ${workers} targeting ${output}. Cover knowledge work framework, deep work and focus time protection, meeting culture and async communication, knowledge management and institutional memory, tools and workflow design, performance measurement for knowledge workers, creative environment and autonomy, learning and skill development, remote and hybrid work design, and how to build knowledge work organizations that produce exceptional output by creating the conditions where knowledge workers can do their best thinking through protecting uninterrupted focus time, reducing the coordination overhead of unnecessary meetings and approvals, and building the knowledge management systems that make expertise and context accessible to everyone rather than locked in individual minds or email inboxes.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
