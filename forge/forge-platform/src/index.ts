@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v685.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v686.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205337,6 +205337,66 @@ app.post('/api/strategy/legislative-advocacy', requireAuth, async (req: AuthRequ
 app.post('/api/strategy/data-privacy', requireAuth, async (req: AuthRequest, res) => {
   const { organization, data, jurisdictions } = req.body;
   const prompt = `You are a data privacy strategy and compliance expert. Design data privacy strategy for ${organization} handling ${data} in ${jurisdictions}. Cover data privacy framework, privacy by design principles, GDPR and CCPA and global privacy law compliance, data mapping and records of processing, consent management and preference centers, data subject rights and request management, privacy impact assessment, vendor and third-party privacy governance, privacy training and culture, and how to build data privacy programs that go beyond compliance checkbox exercises to genuinely respect user privacy by minimizing data collection to what is necessary, using data only for purposes users would expect and consent to, and building the data governance infrastructure that makes privacy commitments operationally real rather than aspirational.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/foodtech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, category, market } = req.body;
+  const prompt = `You are a food technology strategy and alternative protein expert. Design FoodTech strategy for ${company} in ${category} for ${market}. Cover FoodTech strategy framework, plant-based and fermentation technology, cultivated meat development pathway, functional food and nutrition science, food safety and regulatory approval, consumer acceptance and behavior change, retail and foodservice distribution, food manufacturing and scale-up, sustainability claims and measurement, and how to commercialize food technology innovations by navigating the combination of scientific complexity, regulatory requirements, manufacturing scale-up challenges, and consumer behavior change that make food technology one of the more demanding industries for bringing innovations from the laboratory to commercial success at scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/nlp-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, application, data } = req.body;
+  const prompt = `You are an NLP strategy and natural language AI expert. Design NLP strategy for ${company} in ${application} with ${data}. Cover NLP strategy framework, text classification and entity recognition, sentiment and opinion analysis, question answering and information extraction, text generation and summarization, conversational AI and dialogue systems, multilingual NLP and localization, NLP model selection and fine-tuning, NLP evaluation and bias testing, and how to deploy NLP capabilities that deliver genuine value in specific business applications by carefully defining the natural language task, curating or generating sufficient training data, selecting the appropriate model architecture, and evaluating performance on the specific language patterns and edge cases that matter most in the target domain.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/edge-computing', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, applications, infrastructure } = req.body;
+  const prompt = `You are an edge computing strategy and distributed infrastructure expert. Design edge computing for ${organization} in ${applications} on ${infrastructure}. Cover edge computing framework, edge vs cloud vs hybrid architecture decisions, IoT and edge device management, edge AI and inference at the edge, latency and bandwidth optimization, edge security and compliance, content delivery and edge caching, industrial edge and OT integration, edge computing platforms and standards, and how to design edge computing architectures that deliver the latency, bandwidth, and data sovereignty benefits that specific applications require by intelligently distributing compute between the edge and cloud based on what each tier does best rather than treating edge computing as a simple extension of cloud.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cyber-threats', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, industry, systems } = req.body;
+  const prompt = `You are a cyber threat intelligence strategy and threat landscape expert. Design cyber threat management for ${organization} in ${industry} protecting ${systems}. Cover cyber threat intelligence framework, threat actor profiling and attribution, threat intelligence collection and analysis, indicators of compromise management, threat hunting methodology, vulnerability management and prioritization, attack simulation and red teaming, intelligence sharing and community, threat-informed defense strategy, and how to build threat intelligence capabilities that allow the organization to understand the specific threat actors most likely to target it, the techniques those actors use, and how to prioritize defensive investments to address the most realistic and impactful threats rather than trying to defend against all possible attacks equally.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/computer-vision', requireAuth, async (req: AuthRequest, res) => {
+  const { company, application, data } = req.body;
+  const prompt = `You are a computer vision strategy and visual AI expert. Design computer vision for ${company} in ${application} with ${data}. Cover computer vision framework, image classification and object detection, semantic segmentation and scene understanding, video analysis and action recognition, OCR and document understanding, 3D vision and depth estimation, model architecture selection and training, data labeling and augmentation, deployment and inference optimization, and how to build computer vision systems that solve specific business problems by carefully defining the visual recognition task, collecting or generating sufficient labeled training data, selecting the appropriate model architecture, and validating performance on the edge cases and distribution shifts that matter most in the specific operating environment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/security-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, environment, team } = req.body;
+  const prompt = `You are a security operations strategy and SOC excellence expert. Design security operations for ${organization} in ${environment} with ${team}. Cover security operations framework, SIEM and log management architecture, alert triage and investigation workflow, threat detection use case development, incident response playbooks, SOC metrics and KPIs, automation and SOAR integration, analyst skill development and retention, threat intelligence integration in SOC, and how to build security operations capabilities that detect and respond to threats faster by reducing alert fatigue through better detection engineering, automating the repetitive tasks that consume analyst time, and building the playbooks and tooling that allow analysts to investigate and contain incidents efficiently when they occur.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/entrepreneurship', requireAuth, async (req: AuthRequest, res) => {
+  const { founder, idea, stage } = req.body;
+  const prompt = `You are an entrepreneurship strategy and venture building expert. Design entrepreneurship journey for ${founder} with ${idea} at ${stage}. Cover entrepreneurship framework, problem validation and customer discovery, business model design and testing, MVP design and build, early customer acquisition and PMF, founding team and equity, startup financing and fundraising, scaling from early to growth, founder mental health and resilience, and how to navigate the entrepreneurial journey by staying ruthlessly focused on learning whether the proposed solution actually solves a real problem for real customers before spending significant resources building and scaling, while maintaining the resilience and adaptability needed to persist through the setbacks and pivots that are a normal part of building something new.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/medtech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, technology, indication } = req.body;
+  const prompt = `You are a medical technology strategy and digital health expert. Design MedTech strategy for ${company} with ${technology} in ${indication}. Cover MedTech strategy framework, FDA regulatory pathway for digital health and SaMD, clinical validation and evidence generation, EHR integration and interoperability, hospital and health system sales, physician and patient adoption, reimbursement strategy for digital health, data security and HIPAA compliance, real-world evidence and post-market surveillance, and how to commercialize medical technology innovations by navigating the regulatory, clinical evidence, and workflow integration requirements that determine whether clinicians will actually use a technology in their practice and whether payers will reimburse for it.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/virtual-assistant', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, function, users } = req.body;
+  const prompt = `You are a virtual assistant strategy and conversational AI expert. Design virtual assistant for ${organization} in ${function} serving ${users}. Cover virtual assistant framework, intent design and conversational flow, entity extraction and slot filling, knowledge base design and maintenance, escalation and human handoff design, multi-turn dialogue management, voice vs text vs multimodal design, integration with backend systems, virtual assistant analytics and improvement, and how to design virtual assistants that handle the specific queries and tasks users most frequently need help with by focusing on the high-volume and high-value use cases where automation genuinely reduces friction rather than trying to make the assistant handle every possible request and ending up with an experience that handles none of them well.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/procurement-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, spend, priorities } = req.body;
+  const prompt = `You are a procurement strategy and strategic sourcing expert. Design procurement strategy for ${organization} with ${spend} across ${priorities}. Cover procurement strategy framework, spend categorization and category strategy, supply market analysis and supplier landscape, total cost of ownership approach, strategic vs tactical sourcing, preferred supplier program, innovation and value creation in procurement, sustainability in supply chain, procurement KPIs and performance management, and how to develop procurement strategies that create genuine competitive advantage by sourcing more effectively than competitors through superior market intelligence, stronger supplier relationships, and more sophisticated approaches to specification, total cost, and risk management rather than simply negotiating harder on unit price.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
