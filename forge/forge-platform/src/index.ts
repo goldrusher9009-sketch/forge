@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v765.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v766.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210137,6 +210137,66 @@ app.post('/api/logistics/fleet', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/logistics/wholesale', requireAuth, async (req: AuthRequest, res) => {
   const { trader, commodities, markets } = req.body;
   const prompt = `You are a wholesale trading strategy and commodity markets expert. Design wholesale trading strategy for ${trader} trading ${commodities} in ${markets}. Cover wholesale trading framework, commodity market structure and participants, price discovery and basis trading, hedging strategy and risk management, physical delivery and logistics, contract terms and INCOTERMS, credit and counterparty risk, trading technology and execution, market information and intelligence, and how to build wholesale trading programs that achieve the margin and the risk management and the market position that profitable commodity trading requires by developing the market intelligence with the supply and demand analysis and the cost curve and the inventory data that identifies the price driver and the market inefficiency that the trading position can exploit within the risk limit that the capital and the risk appetite define.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investing/portfoliotheory', requireAuth, async (req: AuthRequest, res) => {
+  const { investor, portfolio, constraints } = req.body;
+  const prompt = `You are a portfolio theory strategy and quantitative finance expert. Design portfolio theory strategy for ${investor} managing ${portfolio} within ${constraints}. Cover portfolio theory framework, modern portfolio theory and efficient frontier, factor investing and smart beta, risk-parity and equal weight, Black-Litterman model, portfolio optimization and constraints, performance attribution and risk decomposition, tail risk and drawdown management, alternative investments and diversification, and how to build portfolio theory programs that achieve the risk-adjusted return and the diversification benefit and the factor exposure that institutional portfolio management requires by constructing the efficient frontier with the expected return and the covariance matrix estimation that identifies the optimal allocation across the asset classes and the factors that maximizes the Sharpe ratio within the liquidity and the concentration and the benchmark tracking constraints that the investment mandate specifies.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investing/hedgefund', requireAuth, async (req: AuthRequest, res) => {
+  const { fund, strategy, investors } = req.body;
+  const prompt = `You are a hedge fund strategy and alternative investment expert. Design hedge fund strategy for ${fund} pursuing ${strategy} for ${investors}. Cover hedge fund strategy framework, long-short equity and market neutral, global macro and systematic, event-driven and arbitrage, multi-strategy and fund of funds, risk management and position sizing, investor relations and capital raising, prime brokerage and leverage, performance fee structures, and how to build hedge fund programs that achieve the alpha generation and the risk-adjusted performance and the institutional investor satisfaction that successful hedge funds require by developing the investment process with the research edge and the analytical framework and the portfolio construction discipline that generates the consistent alpha that survives the transaction cost and the market impact and the fees that erode the gross return to the net return that investors actually receive.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investing/privateequity', requireAuth, async (req: AuthRequest, res) => {
+  const { fund, strategy, sectors } = req.body;
+  const prompt = `You are a private equity strategy and buyout investment expert. Design private equity strategy for ${fund} pursuing ${strategy} in ${sectors}. Cover private equity strategy framework, deal sourcing and proprietary flow, LBO modeling and returns analysis, due diligence and deal structuring, portfolio company value creation, management team assessment, exit strategy and timing, LP relations and fund marketing, carried interest and waterfall, and how to build private equity programs that achieve the return multiple and the IRR and the DPI that LP investors require by sourcing the deals with the proprietary relationships and the sector expertise that finds the undervalued asset or the operational improvement opportunity before the competitive auction process that prices the deal at the fair value that eliminates the return.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investing/vc', requireAuth, async (req: AuthRequest, res) => {
+  const { fund, stage, sectors } = req.body;
+  const prompt = `You are a venture capital strategy and startup investment expert. Design venture capital strategy for ${fund} investing at ${stage} in ${sectors}. Cover venture capital strategy framework, deal flow and sourcing strategy, term sheet and deal structuring, founder and team evaluation, market size and growth assessment, portfolio construction and follow-on, board governance and value-add, fund economics and carry, LP fundraising and reporting, and how to build venture capital programs that achieve the fund return and the portfolio company success and the ecosystem reputation that top-tier venture funds require by developing the investment thesis with the market map and the technology trend and the founder pattern recognition that identifies the emerging opportunity before the consensus and the competitive pricing that eliminate the return.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investing/familyoffice', requireAuth, async (req: AuthRequest, res) => {
+  const { family, assets, goals } = req.body;
+  const prompt = `You are a family office strategy and wealth management expert. Design family office strategy for ${family} managing ${assets} pursuing ${goals}. Cover family office strategy framework, single versus multi-family office structure, investment policy statement and governance, direct investments and co-investments, family philanthropy and impact investing, next generation education and governance, family council and constitution, tax and estate planning integration, concierge services and lifestyle management, and how to build family office programs that achieve the wealth preservation and the investment performance and the family governance that multi-generational wealth management requires by establishing the investment policy statement with the return objective and the risk tolerance and the liquidity need and the time horizon and the constraints that provides the framework for the investment decisions that the family office and the external managers execute.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investing/microfinance', requireAuth, async (req: AuthRequest, res) => {
+  const { institution, products, clients } = req.body;
+  const prompt = `You are a microfinance strategy and financial inclusion expert. Design microfinance strategy for ${institution} offering ${products} to ${clients}. Cover microfinance strategy framework, group lending and solidarity model, individual lending and credit scoring, microsavings and deposit products, microinsurance and risk protection, mobile money and digital financial services, impact measurement and social performance, sustainability and financial self-sufficiency, delinquency management and portfolio quality, and how to build microfinance programs that achieve the financial inclusion and the portfolio quality and the institutional sustainability that responsible microfinance requires by designing the credit methodology with the progressive lending and the group guarantee mechanism that aligns the incentive for the repayment and the social accountability that reduces the credit risk in the absence of the collateral and the formal credit history.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/accounting', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, standard, transactions } = req.body;
+  const prompt = `You are an accounting standards strategy and financial reporting expert. Design accounting standards strategy for ${organization} applying ${standard} to ${transactions}. Cover accounting standards framework, GAAP versus IFRS differences, revenue recognition ASC 606, lease accounting ASC 842, financial instruments and fair value, business combinations and goodwill, stock-based compensation and equity awards, segment reporting and disclosures, accounting policy election and judgment, and how to build accounting programs that achieve the financial statement accuracy and the disclosure completeness and the audit readiness that financial reporting requires by applying the accounting standards with the technical analysis of the specific transaction that identifies the relevant standard and the judgment areas and the disclosure requirement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/corporate', requireAuth, async (req: AuthRequest, res) => {
+  const { company, decision, stakeholders } = req.body;
+  const prompt = `You are a corporate finance strategy and capital markets expert. Design corporate finance strategy for ${company} making ${decision} for ${stakeholders}. Cover corporate finance framework, capital structure and cost of capital, valuation and DCF modeling, M and A strategy and deal economics, debt financing and credit markets, equity offering and IPO process, dividend policy and capital return, financial planning and treasury, working capital management, and how to build corporate finance programs that achieve the shareholder value and the financial flexibility and the stakeholder confidence that sustainable corporate finance requires by optimizing the capital structure with the WACC analysis and the debt capacity and the credit rating constraint that identifies the leverage level that minimizes the cost of capital without the financial distress risk that the creditors and the customers and the employees impose on the over-leveraged company.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/ma', requireAuth, async (req: AuthRequest, res) => {
+  const { acquirer, target, rationale } = req.body;
+  const prompt = `You are a mergers and acquisitions strategy and deal execution expert. Design M and A strategy for ${acquirer} acquiring ${target} based on ${rationale}. Cover M and A strategy framework, acquisition screening and target identification, synergy analysis and value creation, due diligence planning and execution, deal structuring and consideration, negotiation strategy and term sheet, regulatory approval and antitrust, integration planning and PMO, purchase price allocation and goodwill, and how to build M and A programs that achieve the strategic objective and the financial return and the integration success that value-creating acquisitions require by quantifying the synergies with the bottom-up analysis that identifies the specific revenue and cost opportunities and the implementation timeline and the probability that provides the defensible valuation basis for the premium above the standalone market value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/fpa', requireAuth, async (req: AuthRequest, res) => {
+  const { team, company, processes } = req.body;
+  const prompt = `You are an FP and A strategy and financial planning expert. Design FP and A strategy for ${team} supporting ${company} through ${processes}. Cover FP and A strategy framework, annual budget and planning process, rolling forecast and driver-based modeling, variance analysis and business partnering, scenario planning and sensitivity analysis, management reporting and dashboards, KPI framework and metric definition, zero-based budgeting, long-range planning, and how to build FP and A programs that achieve the forecast accuracy and the business insight and the decision support that effective financial planning requires by developing the driver-based model with the operating metrics and the financial ratios that connect the business activity to the financial outcome in a way that the business partner and the executive can interrogate to understand the financial implication of the operating decision.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
