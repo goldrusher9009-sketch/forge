@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v637.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v638.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202457,6 +202457,66 @@ app.post('/api/operations/nps-program', requireAuth, async (req: AuthRequest, re
 app.post('/api/marketing/mind-share', requireAuth, async (req: AuthRequest, res) => {
   const { brand, category, position } = req.body;
   const prompt = `You are a brand mind share and category ownership expert. Build the mind share for ${brand} in ${category} owning ${position}. Cover the mind share strategy framework, the category definition and ownership, the thought leadership content strategy, the analyst and research firm strategy, the speaking and conference strategy, the awards and recognition strategy, the media and press strategy, the digital presence and SEO strategy, the mind share measurement, and how to build brand mind share that positions your company as the definitive authority in your category so that when buyers think about your problem space they think of your brand first, that is built through genuine expertise and value creation rather than just marketing spend, and that translates into the consideration and preference that drives pipeline and revenue.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/tech-valuation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, metrics, comps } = req.body;
+  const prompt = `You are a technology company valuation and investment banking expert. Value the technology company ${company} using ${metrics} and comparable ${comps}. Cover the technology valuation framework, the revenue multiple analysis, the ARR and growth rate valuation, the Rule of 40 application, the comparable company analysis, the precedent transaction analysis, the DCF for tech companies, the sum-of-the-parts valuation, the venture capital method, and how to triangulate technology company value using multiple methodologies, understanding when to weight different approaches based on stage and business model, how to adjust for growth premium and discount for execution risk, and how to present valuation ranges that are defensible to investors and acquirers rather than single-point estimates that create unnecessary negotiating exposure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/channel-enablement', requireAuth, async (req: AuthRequest, res) => {
+  const { company, partners, products } = req.body;
+  const prompt = `You are a channel partner enablement and indirect sales expert. Design the channel enablement program for ${company} with ${partners} selling ${products}. Cover the channel enablement framework, the partner segmentation and tiering, the partner onboarding program, the product and technical training, the sales enablement content for partners, the co-selling and joint go-to-market strategy, the partner portal and resource center, the MDF and co-op fund management, the partner certification and badging, and how to build channel enablement programs that give partners the knowledge, tools, and motivation to sell your product effectively, that align partner incentives with customer success rather than just transactions, and that scale partner-led revenue without requiring a proportional increase in partner management headcount.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/revenue-attribution', requireAuth, async (req: AuthRequest, res) => {
+  const { company, channels, model } = req.body;
+  const prompt = `You are a marketing attribution and revenue measurement expert. Design the revenue attribution for ${company} across ${channels} using ${model}. Cover the attribution model framework, the first-touch and last-touch models, the multi-touch attribution models, the data-driven attribution, the attribution window selection, the cross-device attribution, the offline to online attribution, the attribution for long sales cycles, the attribution measurement and validation, and how to build revenue attribution systems that accurately credit the marketing channels and touchpoints that drive revenue, that help optimize marketing spend toward the highest-ROI channels, and that create the measurement infrastructure to run controlled experiments that prove what is actually causing revenue rather than just correlating with it.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/competitive-intel', requireAuth, async (req: AuthRequest, res) => {
+  const { company, competitors, markets } = req.body;
+  const prompt = `You are a competitive intelligence and strategic analysis expert. Analyze the competitive landscape for ${company} against ${competitors} in ${markets}. Cover the competitive intelligence framework, the competitive position mapping, the feature and capability comparison, the pricing and packaging comparison, the win/loss analysis, the customer perception research, the competitor monitoring system, the strategic intent inference, the competitive response playbook, and how to build competitive intelligence programs that give your team accurate, actionable intelligence about competitor strategy and positioning, that identify early signals of competitive moves before they execute, and that translate competitive insights into product roadmap decisions, sales enablement, and go-to-market positioning adjustments that help you win more deals.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/ops-calendar', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, cadences, stakeholders } = req.body;
+  const prompt = `You are an operational planning and business rhythm expert. Design the operations calendar for ${organization} covering ${cadences} for ${stakeholders}. Cover the operating cadence framework, the daily and weekly management rhythms, the monthly business review design, the quarterly business review structure, the annual planning calendar, the board meeting cadence, the all-hands and town hall design, the performance review calendar, the budget and planning cycle, and how to design operational calendars that create the right balance of short-term execution focus and long-term strategic alignment, that make management rhythms additive rather than administrative burdens, and that give leaders the information and decision-making forums they need to keep the organization aligned and moving toward its goals.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, stage, priorities } = req.body;
+  const prompt = `You are a digital transformation strategy and change management expert. Design the digital transformation for ${organization} at ${stage} focusing on ${priorities}. Cover the digital transformation framework, the digital maturity assessment, the transformation roadmap and phasing, the technology architecture modernization, the data and analytics capability building, the process automation strategy, the digital talent and capability development, the change management for transformation, the transformation governance and measurement, and how to design digital transformation programs that deliver measurable business value rather than technology projects that miss the point, that sequence change in ways that build momentum and organizational confidence, and that develop internal capabilities rather than creating permanent dependency on external consultants and vendors.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/pricing-psychology', requireAuth, async (req: AuthRequest, res) => {
+  const { product, target, model } = req.body;
+  const prompt = `You are a behavioral pricing and consumer psychology expert. Apply pricing psychology to ${product} for ${target} using ${model}. Cover the pricing psychology framework, the anchoring and reference price effects, the decoy pricing strategy, the price ending and charm pricing, the bundling and unbundling psychology, the scarcity and urgency pricing, the social proof in pricing, the price framing and presentation, the subscription and payment cadence psychology, and how to apply behavioral economics principles to pricing in ways that increase perceived value and conversion rates, that ethically guide customers toward choices that serve both their interests and your revenue objectives, and that test and validate psychological pricing tactics with real customer data rather than just implementing techniques from books without understanding what actually works for your specific product and customer.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/board-prep', requireAuth, async (req: AuthRequest, res) => {
+  const { company, metrics, decisions } = req.body;
+  const prompt = `You are a board meeting preparation and corporate governance expert. Prepare the board meeting for ${company} covering ${metrics} and decisions ${decisions}. Cover the board meeting preparation framework, the board package structure and content, the financial and operational metrics presentation, the strategic update structure, the board decision memo design, the pre-meeting board member engagement, the management presentation skills, the difficult question anticipation, the board discussion facilitation, and how to prepare for board meetings in ways that make the most productive use of board members time, that proactively address the questions and concerns board members will have rather than being caught off guard, that present information in ways that facilitate good governance decisions, and that build the board relationship and trust that makes your company more resilient when you need to bring difficult news or request board support for controversial decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/podcast-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { podcast, audience, goals } = req.body;
+  const prompt = `You are a podcast growth strategy and audience development expert. Grow the podcast ${podcast} for ${audience} achieving ${goals}. Cover the podcast growth strategy framework, the audience avatar and content positioning, the discoverability and SEO for podcasts, the guest booking strategy for growth, the cross-promotion and podcast swap strategy, the social media amplification strategy, the email list integration, the monetization and sponsorship strategy, the listener community building, and how to build podcast audiences that are engaged and growing rather than flat, that translate into business outcomes like leads, sales, and brand authority rather than just download numbers, and that develop the loyal listener communities that make podcasts enduring media assets rather than one-season experiments that never find their audience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/influencer-campaigns', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, product, goals } = req.body;
+  const prompt = `You are an influencer marketing and creator partnership expert. Design the influencer campaign for ${brand} featuring ${product} to achieve ${goals}. Cover the influencer campaign framework, the influencer identification and vetting, the tier strategy from nano to mega influencers, the influencer brief and creative direction, the compensation and deal structure, the content approval and brand safety, the campaign measurement and attribution, the influencer relationship management, the UGC rights and usage strategy, and how to design influencer campaigns that generate authentic content that actually moves the needle for your brand rather than paid endorsements that audiences have learned to ignore, that build creator relationships that compound over multiple campaigns rather than one-off transactions, and that measure true business impact like sales and brand lift rather than just vanity metrics like impressions and engagement rate.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
