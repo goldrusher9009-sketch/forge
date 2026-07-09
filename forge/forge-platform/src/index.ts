@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v457.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v458.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -192238,6 +192238,59 @@ app.post('/api/product/differentiation-design', requireAuth, async (req: AuthReq
 app.post('/api/sales/cs-handoff', requireAuth, async (req: AuthRequest, res) => {
   const { account, deal, context } = req.body;
   const prompt = `Design a sales to CS handoff process.\nAccount: ${account}\nDeal context: ${deal}\nKey context to transfer: ${context}\nInclude: handoff timing (at close vs. after contract vs. after kickoff), handoff document design (why they bought/promised outcomes/stakeholder map/red flags/champion/economic buyer/technical contacts/contracted scope/expansion potential), internal handoff meeting structure, customer introduction email design, kickoff meeting design that reinforces the sales narrative, how to avoid the "what did sales promise?" problem, CS access to deal recordings and notes, post-handoff AE involvement model, handoff quality metrics, and how to design a handoff that sets the customer up for success and the CS team up to expand.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 335+336 routes
+app.post('/api/dev/caching-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { layer, patterns, invalidation } = req.body;
+  const prompt = `Design a caching strategy.\nCaching layer: ${layer}\nAccess patterns: ${patterns}\nInvalidation approach: ${invalidation}\nInclude: caching layer selection (CDN/application/database query/object), cache key design, TTL strategy by data type (static vs. semi-static vs. dynamic), cache invalidation strategies (TTL expiry/event-driven/write-through/cache-aside), distributed cache design (Redis cluster/Memcached), cache stampede prevention (mutex lock/probabilistic early expiration), cache warming strategies, cache hit rate monitoring, memory management (eviction policies/memory sizing), multi-region cache consistency, and how to measure and optimize caching impact on latency and infrastructure cost.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/sales-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { segment, motion, stage } = req.body;
+  const prompt = `Build a sales playbook.\nTarget segment: ${segment}\nSales motion: ${motion}\nCompany stage: ${stage}\nInclude: playbook structure (ICP/buyer journey/discovery framework/demo guide/objection handling/competitive intel/closing techniques), qualification framework (MEDDPICC/BANT/SPICE), discovery question bank by pain category, email templates for every stage (intro/follow-up/break-up/contract sent), call script structures, deal inspection checklist, escalation playbook, forecast qualification criteria, onboarding checklist for new reps using the playbook, playbook maintenance process, and how to make the playbook something reps actually use instead of ignoring.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/growth-model', requireAuth, async (req: AuthRequest, res) => {
+  const { levers, metrics, target } = req.body;
+  const prompt = `Build a product growth model.\nGrowth levers: ${levers}\nKey metrics: ${metrics}\nGrowth target: ${target}\nInclude: growth accounting framework (new + reactivated - churned = net growth), acquisition funnel model (visits→signups→activated→retained), retention curve modeling, expansion revenue model, viral/referral coefficient calculation, growth loop identification and modeling, bottleneck analysis (where is growth constrained?), scenario modeling (what happens if we improve each lever by X%), growth model sensitivity analysis, leading vs. lagging metric hierarchy, and how to use the growth model to make better prioritization decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/paid-media-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { channels, budget, team } = req.body;
+  const prompt = `Design a paid media operations framework.\nChannels: ${channels}\nBudget: ${budget}\nTeam: ${team}\nInclude: paid media org structure (in-house vs. agency vs. hybrid), budget allocation framework across channels, campaign naming and taxonomy convention, QA checklist before campaign launch, pacing and budget management process, weekly/monthly optimization workflow, creative production pipeline (briefing→production→testing→scaling), bid strategy management (manual vs. automated), negative keyword/audience exclusion management, competitor conquesting strategy, reporting cadence and dashboard design, and how to build a paid media operation that gets smarter and more efficient over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/success-profile', requireAuth, async (req: AuthRequest, res) => {
+  const { role, outcomes, behaviors } = req.body;
+  const prompt = `Build a success profile for a role.\nRole: ${role}\nRequired outcomes: ${outcomes}\nKey behaviors: ${behaviors}\nInclude: success profile components (outcomes/competencies/behaviors/experience/culture fit), outcome-based job description design, competency framework for the role (hard skills/soft skills/leadership), behavioral indicator examples (what does great look like vs. acceptable vs. not meeting expectations), interview question mapping to competencies, assessment design for key competencies, 30-60-90 day success milestones, how to use the success profile for hiring/onboarding/performance review/promotion decisions, and how to validate the success profile against actual top performer data.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/debt-covenants', requireAuth, async (req: AuthRequest, res) => {
+  const { facility, stage, metrics } = req.body;
+  const prompt = `Navigate venture debt covenants.\nDebt facility: ${facility}\nCompany stage: ${stage}\nKey metrics: ${metrics}\nInclude: venture debt vs. bank debt vs. revenue-based financing comparison, covenant types (financial covenants/reporting covenants/affirmative covenants/negative covenants), common financial covenant metrics (minimum cash/ARR coverage/leverage ratio), covenant negotiation strategy (what to push back on), compliance monitoring system design, covenant cure period management, covenant breach early warning and response, drawdown strategy and timing, warrant coverage negotiation, prepayment penalty management, and how to use venture debt strategically to extend runway without losing equity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/ai-integration-design', requireAuth, async (req: AuthRequest, res) => {
+  const { usecase, model, constraints } = req.body;
+  const prompt = `Design an AI/LLM integration architecture.\nUse case: ${usecase}\nModel selection: ${model}\nConstraints: ${constraints}\nInclude: model selection criteria (capability/cost/latency/privacy), prompt engineering architecture (system prompt design/few-shot examples/output format specification), context window management strategy, RAG (retrieval augmented generation) architecture if needed, streaming vs. batch response design, error handling and fallback strategy, prompt injection defense, output validation and safety layer, cost monitoring and optimization (caching/token reduction), latency optimization (parallel requests/streaming/pre-generation), human-in-the-loop design for high-stakes outputs, and how to evaluate and improve AI feature quality over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/launch-pr-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, news, audience } = req.body;
+  const prompt = `Design a product launch PR strategy.\nProduct: ${product}\nKey news angle: ${news}\nTarget audience: ${audience}\nInclude: news hook identification (what makes this genuinely newsworthy), embargo strategy and timing, media list building (tier 1 tech/vertical/trade/local), exclusive vs. simultaneous announcement trade-offs, press kit design (press release/screenshots/demo video/exec quotes/fact sheet), journalist outreach personalization, spokesperson preparation and media training, social media amplification timing, earned vs. owned vs. paid media integration, measurement framework (press hits/reach/tone/referral traffic), and how to sustain momentum after day-one launch coverage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/beta-program', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, users, goals } = req.body;
+  const prompt = `Design a beta program.\nFeature: ${feature}\nBeta user profile: ${users}\nProgram goals: ${goals}\nInclude: beta program type selection (closed/open/public preview), beta user recruitment and selection criteria, beta agreement and expectations setting, feedback collection infrastructure (surveys/interviews/in-app/usage data), structured beta feedback sessions design, beta community management, bug triage process during beta, success criteria for exiting beta, how to convert beta users into advocates, beta feedback synthesis into product decisions, and how to run a beta that generates real signal rather than just positive sentiment from fans.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/deal-review', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, stage, risks } = req.body;
+  const prompt = `Conduct a deal inspection and review.\nDeal: ${deal}\nCurrent stage: ${stage}\nKnown risks: ${risks}\nInclude: deal health scorecard (MEDDPICC completeness/stakeholder coverage/competitive position/next steps/timeline), deal risk categorization (champion strength/economic buyer access/technical validation/legal risk/competitive threat/budget confirmed), deal coaching questions for each risk area, recommended next actions with owners and dates, probability adjustment recommendation with rationale, deal acceleration options, when to escalate for executive involvement, deal review cadence and format for the team, common deal inspection pitfalls (rationalizing vs. diagnosing), and how to use deal reviews to improve win rates over time.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
