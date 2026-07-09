@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v569.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v570.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198377,6 +198377,66 @@ app.post('/api/engineering/kpis', requireAuth, async (req: AuthRequest, res) => 
 app.post('/api/product/roadmap-process', requireAuth, async (req: AuthRequest, res) => {
   const { company, inputs, cadence } = req.body;
   const prompt = `You are a product planning and roadmap management expert. Design a roadmap process for ${company} incorporating ${inputs} input sources on ${cadence} planning cadence. Cover the annual planning process (strategy to roadmap), quarterly roadmap refinement, how to handle inbound requests (feature requests, sales asks, leadership asks), prioritization framework selection (RICE, ICE, value vs. effort), how to communicate roadmap decisions and trade-offs, the discovery process that feeds the roadmap, and how to maintain roadmap discipline under pressure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, levers } = req.body;
+  const prompt = `You are a growth strategy expert. Build a comprehensive growth strategy for ${company} at ${stage} stage with ${levers} growth levers. Define the growth model (viral, paid, content, product-led, enterprise), identify the primary growth constraint (acquisition, activation, retention, or monetization), design the growth team structure and responsibilities, build the growth experiment roadmap, model the growth scenarios and required investments, and design the reporting and learning cadence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/customer-story', requireAuth, async (req: AuthRequest, res) => {
+  const { customer, useCase, results } = req.body;
+  const prompt = `You are a customer marketing and case study expert. Write a compelling customer story for ${customer} using ${useCase} achieving ${results}. Structure: the hook (dramatic before/after), customer background and context, the problem they were struggling with, why they chose your product, the implementation journey, the measurable results achieved, a direct customer quote that is specific and credible, lessons learned, and the future. Include a one-page executive summary version and a short social media version.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/communication', requireAuth, async (req: AuthRequest, res) => {
+  const { team, audience, context } = req.body;
+  const prompt = `You are an engineering communication expert. Create an engineering communication guide for ${team} communicating with ${audience} in ${context}. Cover how to write effective technical specs, incident communication templates, architecture decision records, engineering blog posts that attract talent, how to present technical trade-offs to non-technical stakeholders, async communication best practices for remote teams, how to run effective engineering meetings, and how to build a writing culture in engineering.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/positioning-statement', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, differentiation } = req.body;
+  const prompt = `You are a product positioning expert. Build a positioning statement for ${product} for ${segment} customer segment with ${differentiation} differentiation. Use the Geoffrey Moore positioning template, evaluate alternatives using the messaging hierarchy (vision → category → differentiation → proof), test the positioning against competitor alternatives and customer alternatives, create the positioning house with pillars and proof points, design the messaging for different buyer personas and sales stages, and how to operationalize the positioning across marketing and sales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/tech-debt-reduction', requireAuth, async (req: AuthRequest, res) => {
+  const { system, debtAreas, capacity } = req.body;
+  const prompt = `You are a software engineering and technical debt management expert. Create a tech debt reduction plan for ${system} with debt areas: ${debtAreas} using ${capacity} engineering capacity. Categorize and score the debt (impact, risk, remediation effort), design the paydown approach (strangler pattern, incremental refactoring, big bang rewrite trade-offs), allocate engineering time across new features vs. debt (the 70/20/10 model), create measurable debt reduction metrics, and how to prevent debt from accumulating faster than it is paid down.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/monetization', requireAuth, async (req: AuthRequest, res) => {
+  const { product, users, stage } = req.body;
+  const prompt = `You are a product monetization and business model expert. Design a monetization strategy for ${product} with ${users} user base at ${stage} stage. Evaluate monetization models (subscription, usage, marketplace, advertising, data, services), estimate monetization potential for each model, design the free-to-paid conversion funnel, create the pricing tier architecture, design the paywall placement and upgrade prompts, model the revenue per user at scale, and how to test monetization without destroying user trust or growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/offsite', requireAuth, async (req: AuthRequest, res) => {
+  const { team, goals, duration } = req.body;
+  const prompt = `You are a product team and organizational design expert. Design a product team offsite for ${team} with goals: ${goals} over ${duration}. Structure the agenda: pre-work and context-setting, team health and relationship building, strategic discussion and alignment sessions, decision-making workshops, retrospective and learning review, goal and commitment setting for next period, and celebration. Include facilitation guides for each session, how to set the right creative vs. productive balance, and how to ensure the offsite leads to real change back at work.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/data-privacy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, dataTypes, regulations } = req.body;
+  const prompt = `You are a data privacy and compliance expert. Build a data privacy program for ${company} handling ${dataTypes} under ${regulations}. Cover privacy by design principles, data inventory and mapping, privacy impact assessment process, consent management implementation, data subject rights fulfillment process (access, delete, portability), vendor data processing agreements, employee privacy training, privacy incident response plan, and how to build privacy as a competitive differentiator rather than just a compliance obligation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/innovation-kpi', requireAuth, async (req: AuthRequest, res) => {
+  const { company, horizons, stakeholders } = req.body;
+  const prompt = `You are an innovation measurement and portfolio expert. Design an innovation KPI framework for ${company} across ${horizons} innovation horizons for ${stakeholders} stakeholders. Cover the innovation pipeline metrics (ideas generated, experiments run, stage conversion rates), output metrics (revenue from new products, time to market), impact metrics (market share gained, customer problem resolution), innovation investment metrics (ROI on innovation spend), and how to use the metrics to make resource allocation decisions without killing promising early-stage work.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cs/enterprise-quickstart', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customer, timeToValue } = req.body;
+  const prompt = `You are a customer success and enterprise onboarding expert. Design an enterprise quick start program for ${product} for ${customer} enterprise customer targeting ${timeToValue} time to value. Build the 30-day quick start: week 1 (discovery and configuration), week 2 (pilot with power users), week 3 (first value delivery), week 4 (expansion planning). Include executive sponsor engagement model, success criteria definition, early warning indicators that the customer is at risk, and how to celebrate early wins to build momentum for broader adoption.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
