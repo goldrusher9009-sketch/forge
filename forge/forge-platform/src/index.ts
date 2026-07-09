@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v441.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v442.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191390,6 +191390,59 @@ app.post('/api/product/mvp-scope', requireAuth, async (req: AuthRequest, res) =>
 app.post('/api/sales/pitch-deck-outline', requireAuth, async (req: AuthRequest, res) => {
   const { product, audience, ask } = req.body;
   const prompt = `Create a sales pitch deck outline.\nProduct: ${product}\nAudience: ${audience}\nAsk: ${ask}\nInclude: slide-by-slide outline (problem/solution/market/product/traction/team/financials/ask), opening hook design, data visualization recommendations per slide, executive summary one-pager, leave-behind design, objection pre-handling slides, competitive differentiation slide approach, social proof placement, ROI calculator slide, and closing call-to-action design.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 303+304 routes
+app.post('/api/dev/messaging-queue', requireAuth, async (req: AuthRequest, res) => {
+  const { useCase, volume, reliability } = req.body;
+  const prompt = `Design a messaging queue architecture.\nUse case: ${useCase}\nMessage volume: ${volume}\nReliability requirements: ${reliability}\nInclude: queue technology selection (RabbitMQ/Kafka/SQS/Pub-Sub), message schema design, producer and consumer patterns, dead letter queue design, retry policy with exponential backoff, idempotency key strategy, message ordering guarantees, poison message handling, monitoring metrics (queue depth/lag/throughput), and scaling the consumer fleet.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/closing-techniques', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, objection, stage } = req.body;
+  const prompt = `Master sales closing for this deal.\nDeal context: ${deal}\nRemaining objection: ${objection}\nDeal stage: ${stage}\nInclude: closing technique selection (assumptive/summary/urgency/trial), exact closing language to use, multi-threading to accelerate decision, economic buyer engagement script, procurement acceleration tactics, mutual action plan (MAP) template, competitive displacement if applicable, executive sponsor mobilization, last-mile objection handling, and contract/redline acceleration strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/innovation-sprint', requireAuth, async (req: AuthRequest, res) => {
+  const { problem, constraints, team } = req.body;
+  const prompt = `Design a product innovation sprint.\nProblem to solve: ${problem}\nConstraints: ${constraints}\nTeam composition: ${team}\nInclude: sprint format selection (Design Sprint/Hackathon/Think Week), pre-sprint problem framing, diverge phase exercises (crazy 8s/SCAMPER/analogous inspiration), converge phase decision methods, prototype fidelity recommendation, user testing setup for rapid validation, insight synthesis framework, decision to pivot/pursue/park, and how to operationalize winning concepts post-sprint.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/retargeting-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { audience, funnel, budget } = req.body;
+  const prompt = `Design a retargeting strategy.\nTarget audience: ${audience}\nFunnel stage: ${funnel}\nBudget: ${budget}\nInclude: audience segmentation by intent signal (page visited/time on site/video watched/cart abandoned), ad creative strategy per segment, frequency capping to avoid ad fatigue, exclusion list design (recent purchasers/unconverted after N impressions), channel mix (Google/Meta/LinkedIn/programmatic), sequential messaging design, attribution model for retargeting, and budget allocation across funnel stages.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/learning-development', requireAuth, async (req: AuthRequest, res) => {
+  const { skills, roles, format } = req.body;
+  const prompt = `Design a Learning & Development program.\nSkills to develop: ${skills}\nTarget roles: ${roles}\nPreferred format: ${format}\nInclude: skills gap analysis methodology, learning pathway design per role, build vs. buy vs. partner decision, 70-20-10 learning model application, manager enablement program, leadership development track, technical skills curriculum, soft skills integration, learning measurement (Kirkpatrick model), budget allocation, and LMS/platform selection criteria.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/pitch-practice', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, deck, questions } = req.body;
+  const prompt = `Run a pitch practice session.\nFunding stage: ${stage}\nDeck overview: ${deck}\nAnticipated tough questions: ${questions}\nProvide: the 15 hardest questions investors will ask at this stage, model answers for each question, what signals investors are actually looking for in each answer, common founder mistakes on these questions, data points to prepare in advance, how to handle questions you don't know the answer to, closing the meeting technique, and follow-up email template post-pitch.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/code-review-guide', requireAuth, async (req: AuthRequest, res) => {
+  const { language, team, standards } = req.body;
+  const prompt = `Create a code review guide.\nLanguage/stack: ${language}\nTeam size: ${team}\nCurrent standards: ${standards}\nInclude: code review philosophy and goals, what to look for checklist (correctness/security/performance/readability/tests), what NOT to bikeshed on, PR size guidelines, reviewer assignment strategy, review turnaround SLA, how to give constructive feedback (examples of good vs. bad comments), when to approve vs. request changes vs. block, async vs. synchronous review, and how to build a review culture that improves code quality without slowing velocity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/pr-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, news, outlets } = req.body;
+  const prompt = `Design a PR and media strategy.\nCompany: ${company}\nNews to announce: ${news}\nTarget outlets: ${outlets}\nInclude: story angle development (why this matters NOW), press release structure, media list building strategy, journalist outreach sequence, exclusive vs. embargo vs. wide release decision, spokesperson preparation, spokesperson briefing document, social amplification plan, managing negative coverage, and how to build ongoing journalist relationships beyond one-off pitches.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/user-testing', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, userType, questions } = req.body;
+  const prompt = `Design a user testing plan.\nFeature to test: ${feature}\nUser type: ${userType}\nResearch questions: ${questions}\nInclude: test methodology selection (moderated/unmoderated/guerrilla/usability lab), participant recruitment criteria and screener, test script with tasks and probing questions, think-aloud protocol, success metrics definition, recording and note-taking setup, analysis framework (affinity mapping/severity rating), how many participants needed, debrief synthesis template, and how to present findings to stakeholders.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/sales-enablement', requireAuth, async (req: AuthRequest, res) => {
+  const { persona, stage, format } = req.body;
+  const prompt = `Create a sales enablement content plan.\nBuyer persona: ${persona}\nDeal stage: ${stage}\nPreferred format: ${format}\nInclude: content audit by funnel stage, content gap analysis, top 5 assets to create first (ROI-ranked), battle card template, objection handling one-pager, discovery question cheat sheet, demo script, POC/trial success kit, executive business review template, and how to measure sales enablement content effectiveness (usage/win rate/deal velocity impact).`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
