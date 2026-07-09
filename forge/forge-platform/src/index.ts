@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v656.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v657.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203597,6 +203597,66 @@ app.post('/api/strategy/acquisition-integration', requireAuth, async (req: AuthR
 app.post('/api/operations/ops-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const { organization, operations, goals } = req.body;
   const prompt = `You are an operational intelligence and business process insights expert. Design the ops intelligence system for ${organization} covering ${operations} toward ${goals}. Cover the ops intelligence framework, the key operational metrics and KPIs, the operational data sources and integration, the process mining and discovery, the operational anomaly detection, the predictive operations and forecasting, the operational benchmarking, the continuous improvement feedback loops, the ops intelligence reporting, and how to build operational intelligence systems that give decision-makers real-time visibility into operational performance, that automatically surface the anomalies and bottlenecks that require attention before they become crises, and that connect operational metrics to business outcomes so teams can understand which operational improvements have the highest impact on the business results that matter.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/stakeholder-mgmt', requireAuth, async (req: AuthRequest, res) => {
+  const { project, stakeholders, challenge } = req.body;
+  const prompt = `You are a stakeholder management and organizational influence expert. Design the stakeholder strategy for ${project} with ${stakeholders} addressing ${challenge}. Cover the stakeholder management framework, the stakeholder mapping and power-interest grid, the stakeholder analysis and motivations, the engagement strategy by stakeholder type, the communication planning and messaging, the resistance management, the coalition building, the executive sponsorship, the stakeholder reporting, and how to manage stakeholders in ways that build the genuine support and engagement needed for project success rather than managing stakeholders as obstacles to navigate around, that identify the underlying interests and concerns of resistant stakeholders so you can address the actual issues rather than trying to overcome resistance through force of authority.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/agile-coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { team, stage, problems } = req.body;
+  const prompt = `You are an agile coaching and team performance expert. Coach the ${team} at ${stage} addressing ${problems}. Cover the agile coaching framework, the agile values and principles in practice, the scrum and kanban implementation, the sprint planning and retrospectives, the agile metrics and team health, the product ownership and backlog management, the agile scaling for larger organizations, the technical practices and engineering excellence, the agile culture and mindset, and how to help teams internalize agile values and practices in ways that improve their ability to deliver value and respond to change rather than going through the motions of agile ceremonies while maintaining the waterfall thinking that produces the dysfunction agile was designed to solve.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/knowledge-mgmt', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, knowledge, goals } = req.body;
+  const prompt = `You are a knowledge management strategy and organizational learning expert. Design the knowledge management system for ${organization} capturing ${knowledge} toward ${goals}. Cover the knowledge management framework, the tacit vs. explicit knowledge, the knowledge capture and documentation, the knowledge organization and taxonomy, the knowledge search and retrieval, the knowledge sharing and communities of practice, the expert identification and expertise location, the knowledge workflow integration, the knowledge management platform selection, and how to design knowledge management systems that make the collective intelligence of the organization accessible to people who need it at the moment they need it rather than knowledge repositories that are comprehensive but not used, that capture tacit expert knowledge before it walks out the door when people leave, and that create the knowledge sharing culture where people contribute their expertise rather than hoarding it for job security.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/venture-studio', requireAuth, async (req: AuthRequest, res) => {
+  const { studio, model, portfolio } = req.body;
+  const prompt = `You are a venture studio strategy and startup factory design expert. Design the venture studio for ${studio} using ${model} building ${portfolio}. Cover the venture studio framework, the studio model types and differentiation, the idea generation and validation process, the studio operating model and team, the founder identification and recruitment, the studio-founder relationship and equity, the shared infrastructure and resources, the portfolio management and graduation, the studio economics and return model, and how to build venture studios that create genuine value by applying systematic processes, shared resources, and operational expertise to reduce the cost and risk of building startups, that attract exceptional founders who value the studio model rather than going the traditional VC route, and that build the institutional knowledge and repeatable processes that improve with each successive company built.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/cx-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, customers, goals } = req.body;
+  const prompt = `You are a customer experience strategy and CX transformation expert. Design the CX strategy for ${company} serving ${customers} toward ${goals}. Cover the CX strategy framework, the customer experience vision and principles, the customer journey orchestration, the CX measurement and VoC program, the experience design and service blueprinting, the CX technology and enablement, the employee experience and CX culture, the CX governance and accountability, the CX ROI and business case, and how to design customer experience strategies that create genuine emotional connections with customers that drive loyalty, advocacy, and lifetime value rather than incremental improvements to individual touchpoints that do not add up to a meaningfully better overall experience, that align the entire organization around delivering the experience rather than optimizing individual functions at the expense of the customer.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/ops-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, scope, goals } = req.body;
+  const prompt = `You are an operations audit and process improvement expert. Conduct the operations audit for ${organization} covering ${scope} toward ${goals}. Cover the operations audit framework, the current state process mapping, the performance benchmarking, the waste and inefficiency identification, the root cause analysis methodology, the improvement opportunity prioritization, the quick wins vs. strategic improvements, the implementation roadmap, the audit findings communication, and how to conduct operations audits that identify the most significant improvement opportunities and build the organizational commitment to implement them, rather than comprehensive audits that produce thick reports of findings that are never acted on because they lack the prioritization and action planning needed to drive change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/entrepreneurship', requireAuth, async (req: AuthRequest, res) => {
+  const { founder, idea, stage } = req.body;
+  const prompt = `You are an entrepreneurship strategy and founder development expert. Guide ${founder} building ${idea} at ${stage}. Cover the entrepreneurship framework, the founder-market fit assessment, the idea validation methodology, the co-founder and team building, the startup financing options, the early customer development, the product development approach, the startup operations and legal setup, the founder psychology and resilience, and how to navigate the entrepreneurial journey in ways that maximize the probability of building a successful company, that develop the founder capabilities and mindset needed to lead through the inevitable challenges and pivots of building something new, and that make the early decisions about co-founders, investors, and customers that are very difficult to reverse and have outsized impact on the trajectory of the company.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/remote-teams', requireAuth, async (req: AuthRequest, res) => {
+  const { team, context, challenges } = req.body;
+  const prompt = `You are a remote and distributed team management and culture expert. Design the remote team system for ${team} in ${context} addressing ${challenges}. Cover the remote team framework, the async-first communication design, the documentation and knowledge sharing, the remote meeting culture and rituals, the virtual team building and connection, the remote performance management, the remote onboarding and culture transmission, the timezone management and global coordination, the remote tooling and infrastructure, and how to build remote teams that are more productive than co-located teams rather than less productive, that create genuine human connection and belonging without shared physical space, and that develop the async-first communication discipline and documentation culture that allows distributed teams to move fast without the constant synchronous communication that becomes a coordination bottleneck at scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/purchase-experience', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customers, channel } = req.body;
+  const prompt = `You are a purchase experience design and conversion optimization expert. Design the purchase experience for ${product} for ${customers} through ${channel}. Cover the purchase experience framework, the buyer journey and decision stages, the friction and objection identification, the trust and credibility signals, the social proof and reviews, the pricing presentation and comparison, the checkout and payment optimization, the post-purchase experience, the return and guarantee policy design, and how to design purchase experiences that help customers make the decision to buy with confidence by providing the information and signals they need at each stage of the buying journey, that remove the friction and hesitation points that cause otherwise motivated buyers to abandon rather than complete their purchase, and that create the post-purchase experience that confirms the buyer made a good decision and sets them up to become repeat customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/decision-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { decision, options, criteria } = req.body;
+  const prompt = `You are a decision analysis and structured decision-making expert. Analyze the ${decision} choosing between ${options} against ${criteria}. Cover the decision analysis framework, the decision framing and problem definition, the option generation and analysis, the criteria weighting and evaluation, the uncertainty and risk analysis, the decision tree and expected value, the scenario analysis and stress testing, the cognitive bias mitigation, the decision documentation and accountability, and how to make important decisions in ways that are rigorous enough to overcome the cognitive biases and political pressures that lead to poor organizational decisions, that are fast enough to maintain decision velocity, and that document the reasoning and assumptions clearly enough that you can learn from the decision quality over time rather than just outcome quality.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
