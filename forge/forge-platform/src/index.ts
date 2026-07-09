@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v544.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v545.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -196877,6 +196877,66 @@ app.post('/api/sales/territory', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/cx/knowledge-base', requireAuth, async (req: AuthRequest, res) => {
   const { product, topIssues, audience } = req.body;
   const prompt = `You are a technical documentation expert. Design and structure a knowledge base for ${product} addressing top issues: ${topIssues} for audience: ${audience}. Create article taxonomy, writing guidelines, self-service flow design, search optimization strategy, and content maintenance cadence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { company, mission, marketContext } = req.body;
+  const prompt = `You are a strategic communications expert. Build a compelling strategic narrative for ${company} with mission: ${mission} in market context: ${marketContext}. Craft the origin story, problem framing, unique insight, solution positioning, and future vision that resonates with investors, customers, and employees.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/cofounder', requireAuth, async (req: AuthRequest, res) => {
+  const { founders, equitySplit, roles } = req.body;
+  const prompt = `You are a startup legal expert. Draft a co-founder agreement framework for ${founders} with equity split ${equitySplit} and roles: ${roles}. Cover vesting schedules, IP assignment, decision-making authority, exit scenarios, non-compete clauses, and dispute resolution. Recommend consulting a lawyer.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/demand-gen', requireAuth, async (req: AuthRequest, res) => {
+  const { product, targetICP, budget } = req.body;
+  const prompt = `You are a B2B demand generation expert. Create a demand generation plan for ${product} targeting ICP: ${targetICP} with ${budget} budget. Cover inbound/outbound mix, content strategy, paid channels, SDR sequencing, conversion funnel optimization, and pipeline attribution model.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/infra/cloud-cost', requireAuth, async (req: AuthRequest, res) => {
+  const { provider, monthlySpend, workloads } = req.body;
+  const prompt = `You are a cloud infrastructure cost expert. Optimize cloud costs for ${provider} with ${monthlySpend} monthly spend running workloads: ${workloads}. Identify rightsizing opportunities, reserved instance strategy, spot instance usage, waste elimination, and architectural changes to reduce spend by 20-40%.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/ab-test', requireAuth, async (req: AuthRequest, res) => {
+  const { hypothesis, metric, traffic } = req.body;
+  const prompt = `You are a product experimentation expert. Design an A/B test strategy to validate hypothesis: ${hypothesis} measuring ${metric} with ${traffic} daily traffic. Cover test design, sample size calculation, segmentation, statistical significance thresholds, guardrail metrics, and analysis plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/community', requireAuth, async (req: AuthRequest, res) => {
+  const { product, targetMembers, platform } = req.body;
+  const prompt = `You are a community building expert. Create a community building playbook for ${product} targeting ${targetMembers} on ${platform}. Cover community charter, engagement loops, content calendar, moderation guidelines, ambassador programs, events strategy, and monetization approach.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/efficiency', requireAuth, async (req: AuthRequest, res) => {
+  const { department, headcount, painPoints } = req.body;
+  const prompt = `You are an operations excellence expert. Conduct an efficiency audit for ${department} with ${headcount} people experiencing pain points: ${painPoints}. Identify waste using lean principles, quantify improvement opportunities, prioritize quick wins vs strategic fixes, and create an implementation roadmap.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/research/persona', requireAuth, async (req: AuthRequest, res) => {
+  const { product, targetSegment, dataPoints } = req.body;
+  const prompt = `You are a user research and personas expert. Build a comprehensive persona research pack for ${product} targeting segment ${targetSegment} based on data: ${dataPoints}. Create primary and secondary personas with demographics, psychographics, jobs to be done, pain points, goals, and buying triggers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/exit-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, revenue, exitTimeline } = req.body;
+  const prompt = `You are an M&A and exit strategy expert. Plan an exit strategy for ${company} with ${revenue} revenue targeting exit in ${exitTimeline}. Cover acquisition targets, IPO readiness checklist, valuation multiples benchmarking, EBITDA optimization, due diligence preparation, and timeline to exit.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/ops-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, challenges } = req.body;
+  const prompt = `You are a product operations expert. Build a product operations playbook for ${company} at ${stage} stage facing challenges: ${challenges}. Cover prioritization frameworks, roadmap process, cross-functional alignment, metrics reviews, release management, and customer feedback loops.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
