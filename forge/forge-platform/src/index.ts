@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v435.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v436.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191072,6 +191072,59 @@ app.post('/api/product/pricing-page', requireAuth, async (req: AuthRequest, res)
 app.post('/api/sales/enterprise-land', requireAuth, async (req: AuthRequest, res) => {
   const { target, department, useCase } = req.body;
   const prompt = `Design an enterprise land strategy.\nTarget company: ${target}\nDepartment to land: ${department}\nUse case: ${useCase}\nInclude: land entry point selection, pilot proposal design, success criteria for pilot, executive sponsor identification, security/procurement navigation, legal agreement strategy, and land-to-expand playbook post-signature.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 291+292 routes
+app.post('/api/dev/platform-engineering', requireAuth, async (req: AuthRequest, res) => {
+  const { orgSize, teams, painPoints } = req.body;
+  const prompt = `Design a Platform Engineering organization.\nOrg size: ${orgSize}\nDev teams to serve: ${teams}\nPain points: ${painPoints}\nInclude: platform team charter and mission, internal developer platform (IDP) design, golden path vs. paved road philosophy, self-service capabilities to build first, toil elimination roadmap, platform SLA commitments to product teams, success metrics (DORA, deployment frequency, lead time), and how to build platform as a product.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/objection-suite', requireAuth, async (req: AuthRequest, res) => {
+  const { objection, product, persona } = req.body;
+  const prompt = `Handle a sales objection with precision.\nObjection: ${objection}\nProduct: ${product}\nBuyer persona: ${persona}\nProvide: root cause of the objection (fear/lack of info/competitor/timing/budget), acknowledge-and-pivot script, three alternative framings, proof points and case studies to deploy, trial-close language after the response, red flag signals in the objection, and escalation path if objection persists.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/analytics-dashboard', requireAuth, async (req: AuthRequest, res) => {
+  const { metrics, audience, goals } = req.body;
+  const prompt = `Design a marketing analytics dashboard.\nKey metrics to track: ${metrics}\nAudience for dashboard: ${audience}\nBusiness goals: ${goals}\nInclude: KPI hierarchy (north star → leading indicators → lagging), dashboard layout recommendations, attribution model selection, cohort analysis design, anomaly detection thresholds, weekly/monthly reporting cadence, and how to avoid vanity metric traps.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/experiment-design', requireAuth, async (req: AuthRequest, res) => {
+  const { hypothesis, metric, audience } = req.body;
+  const prompt = `Design a rigorous product experiment.\nHypothesis: ${hypothesis}\nPrimary metric: ${metric}\nTarget audience: ${audience}\nInclude: experiment type (A/B/multivariate/holdout), sample size calculation with power analysis, randomization unit (user/session/account), guardrail metrics to monitor, experiment duration, pre-registration plan, analysis approach (frequentist vs. Bayesian), and decision criteria for ship/kill/iterate.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/onboarding-program', requireAuth, async (req: AuthRequest, res) => {
+  const { role, team, duration } = req.body;
+  const prompt = `Design a comprehensive onboarding program.\nRole: ${role}\nTeam: ${team}\nOnboarding duration: ${duration}\nInclude: pre-day-1 checklist, week-by-week milestones, buddy/mentor pairing structure, 30/60/90 day success criteria, technical ramp plan, culture immersion activities, manager touchpoint cadence, first real project assignment timing, and how to measure onboarding effectiveness.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/deal-structure', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, amount, terms } = req.body;
+  const prompt = `Analyze and optimize deal structure.\nFunding stage: ${stage}\nAmount: ${amount}\nProposed terms: ${terms}\nInclude: valuation methodology for stage, term sheet key provisions (liquidation preference, anti-dilution, pro-rata rights, information rights, board composition), founder-friendly vs. investor-friendly term comparison, dilution modeling, option pool sizing impact, and red flag terms to negotiate against.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/database-optimize', requireAuth, async (req: AuthRequest, res) => {
+  const { schema, queries, scale } = req.body;
+  const prompt = `Optimize database performance.\nSchema description: ${schema}\nProblem queries: ${queries}\nScale target: ${scale}\nInclude: indexing strategy (composite, partial, covering indexes), query rewrite recommendations, normalization vs. denormalization trade-offs, partitioning strategy for large tables, connection pooling configuration, caching layer design (Redis/Memcached), read replica setup, and performance monitoring queries to track improvement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/affiliate-program', requireAuth, async (req: AuthRequest, res) => {
+  const { product, commission, partners } = req.body;
+  const prompt = `Design an affiliate marketing program.\nProduct: ${product}\nCommission model: ${commission}\nTarget partner types: ${partners}\nInclude: affiliate tier structure, commission rate benchmarking by category, tracking and attribution setup, creative asset requirements, affiliate agreement key clauses, fraud prevention measures, partner recruitment playbook, content compliance guidelines, and ROI model for affiliate vs. direct acquisition.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/user-retention', requireAuth, async (req: AuthRequest, res) => {
+  const { churnRate, segment, triggers } = req.body;
+  const prompt = `Build a user retention strategy.\nCurrent churn rate: ${churnRate}\nSegment to focus: ${segment}\nChurn triggers: ${triggers}\nInclude: retention funnel diagnosis (activation/engagement/habit/expansion), early warning signals system design, win-back campaign sequence, feature engagement correlation with retention, in-app messaging strategy, customer success intervention thresholds, loyalty/rewards program design, and metric targets for 90-day retention improvement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/account-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { account, contacts, opportunities } = req.body;
+  const prompt = `Build a strategic account plan.\nAccount: ${account}\nKey contacts: ${contacts}\nExpansion opportunities: ${opportunities}\nInclude: account health scorecard, stakeholder map with influence/interest matrix, white space analysis, competitive displacement opportunities, renewal risk assessment, executive sponsor engagement strategy, QBR agenda template, cross-sell/upsell playbook, and 90-day action plan with owner assignments.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
