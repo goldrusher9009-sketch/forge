@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v696.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v697.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205997,6 +205997,66 @@ app.post('/api/strategy/customer-success', requireAuth, async (req: AuthRequest,
 app.post('/api/strategy/neuromorphic', requireAuth, async (req: AuthRequest, res) => {
   const { organization, application, requirements } = req.body;
   const prompt = `You are a neuromorphic computing strategy and brain-inspired AI hardware expert. Design neuromorphic computing for ${organization} in ${application} with ${requirements}. Cover neuromorphic computing framework, spiking neural network architecture, event-driven processing and temporal coding, neuromorphic hardware platforms including Intel Loihi and IBM TrueNorth, energy efficiency advantages for edge inference, on-chip learning and adaptation, comparison with conventional deep learning hardware, programming models for neuromorphic systems, application domains including sensory processing and robotics, and how to evaluate neuromorphic computing for specific applications by understanding where the energy efficiency and temporal processing advantages of neuromorphic approaches justify the immaturity of the development ecosystem and the need to rethink algorithms for spiking neural network implementation rather than directly porting conventional deep learning models.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/outsourcing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, functions, providers } = req.body;
+  const prompt = `You are an outsourcing strategy and vendor management expert. Design outsourcing strategy for ${company} outsourcing ${functions} to ${providers}. Cover outsourcing strategy framework, make versus buy decision and total cost of ownership, vendor selection and RFP design, contract structure and SLA definition, transition and knowledge transfer planning, governance model and relationship management, performance management and continuous improvement, risk and business continuity for outsourced functions, insourcing and vendor change strategy, and how to design outsourcing relationships that deliver the cost and capability benefits promised in the business case by investing in the transition and knowledge transfer that sets vendors up for success, building governance structures that maintain quality accountability without micromanaging operations, and structuring contracts that incentivize the vendor performance improvements that reduce cost and improve quality over the life of the relationship.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/change-management', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, change, stakeholders } = req.body;
+  const prompt = `You are a change management strategy and organizational transformation expert. Design change management for ${organization} implementing ${change} with ${stakeholders}. Cover change management framework, change readiness assessment, case for change and burning platform, vision and desired future state articulation, stakeholder analysis and engagement planning, communications planning and cascade, training and capability building, resistance identification and management, reinforcement and sustainment mechanisms, and how to lead organizational change that actually sticks by building genuine commitment rather than just compliance, investing in the two-way communication that allows the concerns of those most affected to shape implementation, and creating the accountability mechanisms that ensure leaders at all levels model the new behaviors and hold their teams accountable for sustaining the change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/credit-risk', requireAuth, async (req: AuthRequest, res) => {
+  const { lender, portfolio, segment } = req.body;
+  const prompt = `You are a credit risk strategy and loan portfolio management expert. Design credit risk for ${lender} with ${portfolio} targeting ${segment}. Cover credit risk framework, credit policy and underwriting standards, credit scoring and risk rating, application fraud detection, portfolio monitoring and early warning, collections strategy and recovery, portfolio stress testing and scenario analysis, credit risk technology and model governance, regulatory capital and credit risk, and how to manage credit risk in lending portfolios that generate strong risk-adjusted returns by developing underwriting models that accurately predict credit performance across economic cycles, building monitoring systems that identify deteriorating credits early enough to take corrective action, and calibrating collections and recovery strategies to maximize recovery while maintaining the customer relationships worth preserving.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/quantum-computing', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, problem, horizon } = req.body;
+  const prompt = `You are a quantum computing strategy and quantum advantage expert. Design quantum computing for ${organization} solving ${problem} over ${horizon}. Cover quantum computing framework, quantum hardware landscape including superconducting, trapped ion, and photonic, quantum advantage and supremacy analysis, near-term NISQ applications versus fault-tolerant era, quantum algorithms including variational, optimization, and simulation, quantum software stack and programming models, hybrid quantum-classical computing, quantum error correction, quantum-safe cryptography migration, and how to build quantum computing strategies that position organizations to benefit from quantum advantages when they mature by identifying the specific computational problems where quantum algorithms provide genuine speedup, building quantum expertise now when the talent is less expensive, and developing quantum-safe cryptography readiness since the threat from future quantum computers to current encryption is real and requires migration regardless of when quantum computing achieves broad computational advantage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/sales-enablement', requireAuth, async (req: AuthRequest, res) => {
+  const { company, sales_team, gaps } = req.body;
+  const prompt = `You are a sales enablement strategy and revenue productivity expert. Design sales enablement for ${company} with ${sales_team} addressing ${gaps}. Cover sales enablement framework, sales content and asset management, onboarding and ramp time acceleration, just-in-time learning and training delivery, sales process and methodology adoption, competitive intelligence and battlecard enablement, technology stack and CRM adoption, sales enablement analytics and content performance, buyer enablement and digital sales rooms, and how to build sales enablement programs that measurably improve sales productivity by focusing on the specific seller behaviors and capability gaps that most constrain quota attainment, making content and training available in the flow of work rather than as separate training events, and measuring enablement impact in terms of the sales metrics that matter rather than training completion rates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/food-industry', requireAuth, async (req: AuthRequest, res) => {
+  const { company, category, channels } = req.body;
+  const prompt = `You are a food industry strategy and consumer packaged goods expert. Design food strategy for ${company} in ${category} across ${channels}. Cover food industry strategy framework, consumer insight and category dynamics, product innovation and renovation pipeline, brand architecture and portfolio management, trade channel strategy and shelf positioning, foodservice versus retail channel prioritization, supply chain and ingredient sourcing, clean label and better-for-you positioning, food safety and quality management, and how to build food industry strategies that achieve sustainable growth by developing deep consumer insight about the evolving needs and values that drive food choices, building product innovation pipelines grounded in real consumer problems rather than technical capabilities, and managing the trade relationships and shelf economics that determine whether great products actually reach consumers and generate trial.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/luxury', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, category, market } = req.body;
+  const prompt = `You are a luxury strategy and premium brand management expert. Design luxury strategy for ${brand} in ${category} across ${market}. Cover luxury strategy framework, luxury brand identity and heritage, craftsmanship and quality as competitive advantage, scarcity management and exclusivity, luxury retail and flagships, digital luxury and online experience, luxury clienteling and relationship management, accessible versus aspirational luxury positioning, anti-laws of luxury marketing, and how to manage luxury brands that maintain their desirability and premium pricing power over time by resisting the short-term revenue temptation of over-distribution and licensing that degrades brand exclusivity, investing in the craftsmanship and authenticity that justify premium pricing, and managing the accessibility-exclusivity paradox that makes luxury brands simultaneously aspirational to many while remaining genuinely exclusive to few.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/blockchain-apps', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, use_case, stakeholders } = req.body;
+  const prompt = `You are a blockchain applications strategy and distributed ledger expert. Design blockchain application for ${organization} in ${use_case} with ${stakeholders}. Cover blockchain applications framework, public versus private versus consortium blockchain, smart contract design and security, tokenization and digital asset models, DeFi protocols and financial applications, NFT and digital ownership models, supply chain traceability on blockchain, digital identity and self-sovereign identity, blockchain scalability and interoperability, and how to evaluate blockchain for specific use cases by honestly assessing whether the problem actually requires a distributed ledger without a trusted central party, since many blockchain use cases can be solved more simply and cheaply with a traditional database, and focusing blockchain investment on the genuine use cases where decentralization and immutability provide irreplaceable value that justifies the added complexity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/edtech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, learners } = req.body;
+  const prompt = `You are an educational technology strategy and learning innovation expert. Design EdTech strategy for ${company} with ${product} serving ${learners}. Cover EdTech strategy framework, learning science and pedagogy integration, B2C versus B2B2C versus institutional EdTech, curriculum alignment and standards mapping, learning outcomes measurement and efficacy research, accessibility and universal design for learning, teacher and institutional sales cycles, engagement and completion mechanics, AI personalization in EdTech, and how to build EdTech products that generate genuine learning improvement and sustainable business models by grounding product design in learning science evidence rather than engagement mechanics that optimize for time-on-platform without improving learning outcomes, demonstrating efficacy through rigorous research that institutional buyers require for adoption decisions, and building business models that align the financial incentives of the EdTech company with the learning outcomes of students.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cross-border-commerce', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, markets } = req.body;
+  const prompt = `You are a cross-border commerce strategy and international e-commerce expert. Design cross-border commerce for ${company} selling ${products} in ${markets}. Cover cross-border commerce framework, market selection and prioritization, customs and import duties management, local payment method integration, localization and translation, local logistics and last-mile delivery, marketplace versus direct-to-consumer strategy, returns management across borders, local regulatory and product compliance, and how to build cross-border commerce operations that successfully penetrate international markets by investing in the localization and local payment infrastructure that converts international shoppers, partnering with local logistics providers that understand last-mile delivery challenges in each market, and managing customs and duties in ways that give customers predictable landed costs rather than surprising them with unexpected import fees at delivery.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
