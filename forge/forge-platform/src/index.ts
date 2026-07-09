@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v418.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v419.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190171,6 +190171,59 @@ app.post('/api/product/beta-program-design', requireAuth, async (req: AuthReques
 app.post('/api/sales/cold-call-script', requireAuth, async (req: AuthRequest, res) => {
   const { persona, pain, product } = req.body;
   const prompt = `Write a cold call script that actually books meetings.\nBuyer persona: ${persona}\nKey pain points: ${pain}\nProduct: ${product}\nInclude: opener (10 seconds), permission-based pitch, qualifying questions, objection handlers (not interested, send an email, no budget, wrong time), and close for the meeting.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 257+258 routes
+app.post('/api/dev/grafana-dashboard', requireAuth, async (req: AuthRequest, res) => {
+  const { service, metrics, alerts } = req.body;
+  const prompt = `Design a Grafana dashboard for a production service.\nService: ${service}\nKey metrics: ${metrics}\nAlert thresholds: ${alerts}\nInclude: panel layout, PromQL queries for each panel, alert rules with runbook links, and variable templates for environment/namespace filtering.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/qbr-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { account, metrics, nextGoals } = req.body;
+  const prompt = `Prepare a Quarterly Business Review strategy.\nAccount: ${account}\nCurrent metrics: ${metrics}\nNext quarter goals: ${nextGoals}\nInclude: QBR agenda, executive summary, ROI recap, success story, renewal/expansion case, and mutual success plan for next quarter.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/pricing-ab-test', requireAuth, async (req: AuthRequest, res) => {
+  const { currentPrices, hypothesis, segment } = req.body;
+  const prompt = `Design a pricing A/B test.\nCurrent prices: ${currentPrices}\nHypothesis: ${hypothesis}\nTarget segment: ${segment}\nInclude: test design, control vs variant, sample size calculation, duration, guardrail metrics, and decision framework for acting on results.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/demand-gen-plan-v2', requireAuth, async (req: AuthRequest, res) => {
+  const { budget, icp, pipeline } = req.body;
+  const prompt = `Create a demand generation plan.\nBudget: ${budget}\nICP: ${icp}\nPipeline target: ${pipeline}\nInclude: channel mix, content strategy, ABM approach, MQL/SQL definitions, lead scoring model, and 90-day execution roadmap with budget breakdown.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/people-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { headcount, stage, challenges } = req.body;
+  const prompt = `Design a People Operations framework.\nHeadcount: ${headcount}\nCompany stage: ${stage}\nChallenges: ${challenges}\nInclude: HR tech stack recommendations, core processes (hire-to-retire), manager enablement, compliance checklist, and OKRs for the People function.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/series-a-prep', requireAuth, async (req: AuthRequest, res) => {
+  const { arr, growth, market } = req.body;
+  const prompt = `Prepare a Series A fundraising strategy.\nARR: ${arr}\nGrowth rate: ${growth}\nMarket: ${market}\nInclude: ideal investor profile, pitch narrative arc, data room checklist, due diligence prep, term sheet considerations, and 6-month fundraising timeline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/microservice-design', requireAuth, async (req: AuthRequest, res) => {
+  const { service, dependencies, scale } = req.body;
+  const prompt = `Design a microservice architecture.\nService: ${service}\nDependencies: ${dependencies}\nScale requirements: ${scale}\nInclude: service boundaries, API contracts, event-driven vs sync communication, data ownership, service mesh considerations, and deployment topology.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/brand-launch', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, audience, channels } = req.body;
+  const prompt = `Plan a brand launch campaign.\nBrand: ${brand}\nTarget audience: ${audience}\nChannels: ${channels}\nInclude: launch narrative, visual identity rollout plan, channel-specific content (social, PR, paid, email), influencer strategy, and 30-day post-launch momentum plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/north-star', requireAuth, async (req: AuthRequest, res) => {
+  const { product, stage, currentMetrics } = req.body;
+  const prompt = `Define the North Star metric and supporting framework.\nProduct: ${product}\nStage: ${stage}\nCurrent metrics: ${currentMetrics}\nInclude: North Star metric definition and rationale, 3-5 input metrics, leading indicators, measurement approach, and how to socialize it across the team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/outbound-sequence', requireAuth, async (req: AuthRequest, res) => {
+  const { persona, product, channel } = req.body;
+  const prompt = `Write a 7-touch outbound sales sequence.\nBuyer persona: ${persona}\nProduct: ${product}\nChannel: ${channel}\nInclude: Touch 1 (day 1), Touch 2 (day 3), Touch 3 (day 7), Touch 4 (day 10), Touch 5 (day 14), Touch 6 (day 21), Touch 7 (day 30 - breakup). Write full copy for each touch with subject lines.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
