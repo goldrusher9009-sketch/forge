@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v762.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v763.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -209957,6 +209957,66 @@ app.post('/api/learning/leadership', requireAuth, async (req: AuthRequest, res) 
 app.post('/api/learning/mentalmodels', requireAuth, async (req: AuthRequest, res) => {
   const { thinker, domain, decisions } = req.body;
   const prompt = `You are a mental models strategy and decision-making expert. Design mental models strategy for ${thinker} operating in ${domain} making ${decisions}. Cover mental models framework, first principles thinking, inversion and second-order thinking, systems thinking and feedback loops, probabilistic thinking and expected value, opportunity cost and tradeoffs, map versus territory distinction, compounding and exponential growth, margin of safety and redundancy, and how to build mental models practice that achieves the decision quality and the problem framing and the intellectual versatility that high-performance thinking requires by developing the multidisciplinary toolkit of models from physics and biology and economics and psychology that provides the multiple lenses that see different aspects of the complex problem that the single-discipline expert misses when they apply the familiar framework to the unfamiliar problem.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/writing', requireAuth, async (req: AuthRequest, res) => {
+  const { writer, genre, project } = req.body;
+  const prompt = `You are a creative writing strategy and storytelling expert. Design creative writing strategy for ${writer} in ${genre} developing ${project}. Cover creative writing framework, story structure and plot architecture, character development and arc, point of view and narrative voice, dialogue and subtext, scene construction and pacing, theme and symbol, world-building and setting, revision and editing process, and how to build creative writing skills that achieve the narrative engagement and the emotional resonance and the artistic vision that memorable fiction requires by developing the character with the specific desire and the wound and the belief system that drives the choices and the actions that create the plot rather than the plot events that happen to the passive character, constructing the scene with the concrete sensory detail and the character interiority and the subtext-laden dialogue that shows the scene rather than the summary narration that tells the reader what happened.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/screenwriting', requireAuth, async (req: AuthRequest, res) => {
+  const { writer, format, project } = req.body;
+  const prompt = `You are a screenwriting strategy and script development expert. Design screenwriting strategy for ${writer} in ${format} developing ${project}. Cover screenwriting framework, three-act structure and save the cat, scene heading and action lines, dialogue and subtext for screen, character function and transformation, sequence approach and act breaks, pilot writing and series bible, feature versus TV formatting, logline and pitch writing, and how to build screenwriting skills that achieve the visual storytelling and the commercial viability and the emotional impact that successful scripts require by writing the action lines with the economical prose that describes only what the camera sees and what the audience hears without the novelistic description and the camera direction that the professional screenwriter avoids, constructing the dialogue with the subtext and the character voice that advances the story and reveals the character through the conflict and the want rather than the on-the-nose exposition.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/poetry', requireAuth, async (req: AuthRequest, res) => {
+  const { poet, tradition, collection } = req.body;
+  const prompt = `You are a poetry strategy and verse craft expert. Design poetry strategy for ${poet} working in ${tradition} building ${collection}. Cover poetry strategy framework, formal verse and prosody, free verse and organic form, image and metaphor development, line breaks and white space, sound devices and musicality, lyric and narrative poetry, confessional and persona poems, publication and submission strategy, and how to build poetry practice that achieves the linguistic precision and the emotional depth and the artistic originality that enduring poetry requires by developing the image with the concrete and the specific and the unexpected rather than the abstract and the general and the predictable that describes the emotion without the sensory detail that evokes the emotion in the reader, using the line break as the meaning-making device that controls the rhythm and the emphasis and the ambiguity that prose cannot achieve.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/journalism', requireAuth, async (req: AuthRequest, res) => {
+  const { journalist, beat, publication } = req.body;
+  const prompt = `You are a journalism strategy and investigative reporting expert. Design journalism strategy for ${journalist} covering ${beat} for ${publication}. Cover journalism framework, news judgment and story selection, source development and cultivation, interviewing techniques, investigative reporting and document research, data journalism and FOIA requests, narrative and feature writing, fact-checking and verification, publication strategy and distribution, and how to build journalism practices that achieve the accountability reporting and the public interest service and the source trust that credible journalism requires by developing the source network with the systematic relationship building across the beat that creates the off-the-record context and the document access and the tip flow that allows the investigative reporter to find the story that the powerful would prefer to keep hidden.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/copywriting', requireAuth, async (req: AuthRequest, res) => {
+  const { writer, product, audience } = req.body;
+  const prompt = `You are a copywriting strategy and persuasion writing expert. Design copywriting strategy for ${writer} promoting ${product} to ${audience}. Cover copywriting framework, headline writing and hooks, AIDA and PAS frameworks, benefit versus feature writing, social proof and testimonials, call-to-action optimization, email copywriting and subject lines, landing page and sales page structure, direct response versus brand copywriting, and how to build copywriting skills that achieve the conversion rate and the reader engagement and the brand voice that effective marketing copy requires by writing the headline with the specific benefit or the curiosity gap or the bold promise that stops the scroll and earns the first sentence read, developing the body copy with the before and after contrast and the social proof and the objection handling that moves the reader through the funnel.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/technicalwriting', requireAuth, async (req: AuthRequest, res) => {
+  const { writer, documentation, users } = req.body;
+  const prompt = `You are a technical writing strategy and documentation expert. Design technical writing strategy for ${writer} creating ${documentation} for ${users}. Cover technical writing framework, audience analysis and user personas, task-based documentation design, API documentation and developer docs, user manual and help content, process and procedure writing, style guide and terminology management, visual communication and diagrams, docs-as-code and version control, and how to build technical writing programs that achieve the user comprehension and the task completion and the documentation completeness that excellent technical documentation requires by designing the documentation with the user goal orientation that organizes the content around what the user is trying to accomplish rather than the product features that the developer built, writing the procedure with the numbered steps and the prerequisite and the expected result that allows the user to follow the task without the ambiguity that creates the support ticket.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/contentmarketing', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, content_type, audience } = req.body;
+  const prompt = `You are a content marketing strategy and audience development expert. Design content marketing strategy for ${brand} creating ${content_type} for ${audience}. Cover content marketing framework, content strategy and editorial planning, SEO and keyword research, thought leadership and authority building, content distribution and promotion, email newsletter strategy, social content and platform optimization, content performance and analytics, repurposing and content multiplication, and how to build content marketing programs that achieve the audience growth and the lead generation and the brand authority that strategic content requires by identifying the content niche where the brand has the expertise and the perspective that the target audience values and that the competing content has not fully addressed, creating the content with the original research or the practitioner insight or the contrarian perspective that earns the link and the share that the derivative content summary does not.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/socialmedia', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, platforms, goals } = req.body;
+  const prompt = `You are a social media strategy and digital audience expert. Design social media strategy for ${brand} on ${platforms} achieving ${goals}. Cover social media strategy framework, platform algorithm and content optimization, content pillars and posting cadence, community management and engagement, influencer partnership and UGC, paid social and boosting strategy, social commerce and conversion, analytics and performance reporting, crisis management and brand safety, and how to build social media programs that achieve the audience growth and the engagement rate and the business conversion that effective social media requires by developing the content strategy with the entertainment and the education and the inspiration pillars that serve the audience with the value that earns the follow and the save and the share that the purely promotional content cannot generate.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/video', requireAuth, async (req: AuthRequest, res) => {
+  const { creator, format, platform } = req.body;
+  const prompt = `You are a video production strategy and content creation expert. Design video production strategy for ${creator} making ${format} for ${platform}. Cover video production framework, pre-production and scripting, camera and lighting fundamentals, audio recording and quality, editing workflow and software, color grading and post-production, thumbnail and title optimization, YouTube and platform algorithm, short-form and long-form strategy, and how to build video production programs that achieve the view count and the watch time and the subscriber growth that successful video channels require by scripting the hook with the open loop and the visual demonstration and the pattern interrupt that captures the attention in the first three seconds before the algorithm and the viewer decide to continue watching, structuring the content with the pacing and the b-roll and the retention editing that maintains the watch time that the algorithm rewards with the distribution.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creative/podcast', requireAuth, async (req: AuthRequest, res) => {
+  const { host, format, audience } = req.body;
+  const prompt = `You are a podcast strategy and audio content expert. Design podcast strategy for ${host} producing ${format} for ${audience}. Cover podcast strategy framework, show concept and positioning, interview technique and guest research, audio production and editing, show notes and transcript, podcast SEO and discoverability, monetization and sponsorship, listener community and engagement, distribution and promotion, and how to build podcast programs that achieve the listener growth and the episode completion rate and the community engagement that successful podcasts require by developing the show concept with the specific niche and the unique perspective and the consistent format that serves the target listener with the specific value that the competing shows in the category do not provide, producing the episode with the preparation and the audio quality and the editing discipline that respects the listener time and the attention.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
