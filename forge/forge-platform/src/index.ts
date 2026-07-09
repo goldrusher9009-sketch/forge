@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v639.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v640.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202577,6 +202577,66 @@ app.post('/api/strategy/creator-economy', requireAuth, async (req: AuthRequest, 
 app.post('/api/product/product-ops', requireAuth, async (req: AuthRequest, res) => {
   const { organization, stage, priorities } = req.body;
   const prompt = `You are a product operations and product management excellence expert. Design the product operations for ${organization} at ${stage} focusing on ${priorities}. Cover the product operations framework, the product process and workflow design, the product data and analytics infrastructure, the roadmap management and communication, the product tool stack and integration, the cross-functional coordination model, the product decision framework, the product experimentation infrastructure, the product team health and performance, and how to build product operations systems that make product teams dramatically more effective by reducing the operational overhead that gets in the way of strategy and customer discovery, that create the data and feedback infrastructure that enables evidence-based product decisions, and that scale product management processes as the team and product grow without adding proportional management overhead.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-adoption', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, usecase, barriers } = req.body;
+  const prompt = `You are an enterprise AI adoption strategy and change management expert. Design the AI adoption plan for ${organization} around ${usecase} overcoming ${barriers}. Cover the AI adoption framework, the AI maturity assessment, the use case prioritization and ROI analysis, the build vs. buy vs. partner decision, the data readiness assessment, the AI governance framework, the change management for AI, the AI skill building and training, the AI measurement and value tracking, and how to design AI adoption programs that deliver measurable business value rather than AI experiments that never escape the pilot stage, that build the organizational capabilities and trust needed for AI to become a sustained competitive advantage, and that manage the workforce transitions that AI adoption creates in ways that preserve the human capabilities you need while augmenting them with AI where that creates the most value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/revops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, gaps } = req.body;
+  const prompt = `You are a revenue operations strategy and process design expert. Design the RevOps strategy for ${company} at ${stage} addressing ${gaps}. Cover the RevOps framework, the revenue process mapping and optimization, the go-to-market alignment model, the revenue technology stack, the data and reporting infrastructure, the pipeline management and forecasting, the customer lifecycle revenue optimization, the RevOps team structure and hiring, the RevOps measurement and KPIs, and how to design revenue operations systems that eliminate the friction, handoff failures, and data gaps that leak revenue from your pipeline, that create the single source of truth about pipeline and revenue that enables accurate forecasting, and that align sales, marketing, and customer success around the shared revenue metrics and processes that drive efficient growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/forecasting', requireAuth, async (req: AuthRequest, res) => {
+  const { company, model, data } = req.body;
+  const prompt = `You are a sales forecasting methodology and accuracy improvement expert. Build the sales forecast for ${company} using ${model} from ${data}. Cover the sales forecasting framework, the pipeline stage probability methodology, the weighted pipeline calculation, the bottoms-up vs. tops-down forecasting, the forecast call methodology, the commit vs. upside vs. pipeline categorization, the forecast accuracy measurement, the machine learning for forecasting, the forecast review and adjustment process, and how to build sales forecasting processes that produce accurate, reliable forecasts that leadership can trust for business planning, that identify the deals most likely to close and the risks that could cause forecast misses early enough to take corrective action, and that create the accountability and discipline that makes forecast accuracy a team performance metric rather than just a finance exercise.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/content-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, volume, channels } = req.body;
+  const prompt = `You are a content operations and editorial process expert. Design the content operations for ${organization} producing ${volume} across ${channels}. Cover the content operations framework, the content strategy and editorial calendar, the content creation workflow and process, the content team structure and roles, the content technology stack and tools, the content governance and quality standards, the content distribution and promotion workflow, the content performance measurement, the content repurposing and recycling strategy, and how to design content operations that consistently produce high-quality content at scale without burning out your team, that create the systematic processes that allow content to be planned, produced, and distributed efficiently, and that build the measurement infrastructure to know which content is actually driving business outcomes so you can double down on what works.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/financial-model', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, purpose } = req.body;
+  const prompt = `You are a financial modeling and business planning expert. Build the financial model for ${company} at ${stage} for ${purpose}. Cover the financial model framework, the revenue model and assumptions, the cost structure and unit economics, the headcount plan and personnel costs, the P&L projection structure, the balance sheet modeling, the cash flow model, the scenario analysis and sensitivity, the model governance and assumption documentation, and how to build financial models that are flexible enough to test scenarios and update assumptions as the business evolves, that are documented well enough that someone other than the builder can understand and maintain them, and that provide the investor-grade financial projections and unit economic analysis that support fundraising, board reporting, and strategic decision-making with credible, bottom-up financial logic rather than hockey-stick projections disconnected from business reality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/human-resources/hiring-scaling', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, roles } = req.body;
+  const prompt = `You are a talent acquisition and hiring process scaling expert. Design the hiring process for ${company} at ${stage} for ${roles}. Cover the hiring process framework, the job description and requirements design, the sourcing strategy by role, the structured interview process design, the interview team training, the candidate evaluation rubric, the offer negotiation strategy, the candidate experience design, the hiring metrics and funnel analytics, and how to build hiring processes that identify and attract the best candidates for your specific company and stage, that evaluate candidates objectively against the criteria that actually predict job success rather than gut feel, that create the candidate experiences that make your best offers acceptance inevitable, and that scale from founder-led hiring to a systematic process that produces consistently good hires as you build out the team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/email-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, list, goals } = req.body;
+  const prompt = `You are an email marketing strategy and deliverability expert. Design the email marketing program for ${brand} with ${list} to achieve ${goals}. Cover the email marketing strategy framework, the list building and segmentation, the email content strategy, the automation and sequence design, the deliverability and inbox placement, the subject line and preview text optimization, the email design and mobile optimization, the A/B testing strategy, the email analytics and performance optimization, and how to build email marketing programs that consistently drive opens, clicks, and conversions rather than landing in spam or getting ignored, that build subscriber relationships through valuable content rather than just promotional blasts, and that use segmentation and automation to deliver the right message to the right subscriber at the right moment in their journey with your brand.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/enterprise-sales', requireAuth, async (req: AuthRequest, res) => {
+  const { company, prospect, deal } = req.body;
+  const prompt = `You are an enterprise sales strategy and complex deal management expert. Navigate the enterprise sale for ${company} at ${prospect} for ${deal}. Cover the enterprise sales framework, the account mapping and power dynamics, the economic buyer identification and access, the buying committee navigation, the champion development strategy, the value quantification and business case, the competitive positioning strategy, the procurement and legal navigation, the multi-threaded relationship strategy, and how to navigate enterprise sales cycles that involve dozens of stakeholders, months or years of selling time, and procurement processes designed to commoditize vendors, developing the executive relationships and business cases that allow you to win on value rather than competing on price, and building the internal champions who can sell your solution when you are not in the room.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/mba-frameworks', requireAuth, async (req: AuthRequest, res) => {
+  const { company, challenge, framework } = req.body;
+  const prompt = `You are a business strategy and management consulting frameworks expert. Apply strategic frameworks to ${company} facing ${challenge} using ${framework}. Cover the strategy framework selection methodology, the Porter Five Forces analysis, the SWOT and TOWS matrix application, the BCG Growth-Share Matrix, the McKinsey 7S Framework, the Jobs to Be Done analysis, the Blue Ocean Strategy canvas, the Business Model Canvas, the Value Chain Analysis, and how to select and apply the right strategic framework for the business challenge at hand rather than defaulting to the same framework for every problem, how to gather the data needed to populate frameworks credibly, and how to translate framework insights into specific strategic recommendations and action plans that executives can evaluate and implement rather than just presenting frameworks as deliverables.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/personal-development', requireAuth, async (req: AuthRequest, res) => {
+  const { professional, strengths, goals } = req.body;
+  const prompt = `You are a personal development planning and peak performance expert. Design the personal development plan for ${professional} leveraging ${strengths} toward ${goals}. Cover the personal development framework, the strengths and values assessment, the development area prioritization, the learning and skill development plan, the habit and routine design for peak performance, the mentorship and coaching strategy, the networking and relationship building, the personal brand development, the feedback and reflection practices, and how to design personal development plans that play to your natural strengths and values rather than trying to become someone you are not, that focus development energy on the specific skills and experiences that unlock your next level of career and life impact, and that build the daily habits and practices that compound into the personal excellence and professional success you want to achieve over a sustained period of effort and growth.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
