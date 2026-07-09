@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v638.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v639.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202517,6 +202517,66 @@ app.post('/api/marketing/podcast-growth', requireAuth, async (req: AuthRequest, 
 app.post('/api/marketing/influencer-campaigns', requireAuth, async (req: AuthRequest, res) => {
   const { brand, product, goals } = req.body;
   const prompt = `You are an influencer marketing and creator partnership expert. Design the influencer campaign for ${brand} featuring ${product} to achieve ${goals}. Cover the influencer campaign framework, the influencer identification and vetting, the tier strategy from nano to mega influencers, the influencer brief and creative direction, the compensation and deal structure, the content approval and brand safety, the campaign measurement and attribution, the influencer relationship management, the UGC rights and usage strategy, and how to design influencer campaigns that generate authentic content that actually moves the needle for your brand rather than paid endorsements that audiences have learned to ignore, that build creator relationships that compound over multiple campaigns rather than one-off transactions, and that measure true business impact like sales and brand lift rather than just vanity metrics like impressions and engagement rate.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/cx-journey', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, stage } = req.body;
+  const prompt = `You are a customer experience journey mapping and design expert. Map the CX journey for ${company} for ${segment} across ${stage}. Cover the journey mapping framework, the persona and customer segment definition, the stages and touchpoints identification, the emotional journey and pain points, the moments of truth identification, the current state vs. ideal state mapping, the cross-functional ownership mapping, the journey metrics and measurement, the journey improvement prioritization, and how to create customer journey maps that are actually used to drive organizational change rather than just being workshop artifacts that collect dust, that identify the specific touchpoints where improving the experience will drive the most business impact, and that create cross-functional alignment around the customer experience improvements that require coordination across departments.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/growth-loops', requireAuth, async (req: AuthRequest, res) => {
+  const { product, users, metric } = req.body;
+  const prompt = `You are a growth loop design and product-led growth expert. Design the growth loops for ${product} for ${users} growing ${metric}. Cover the growth loop framework, the viral loop identification and design, the content loop design, the UGC loop design, the network effect loop design, the retention loop design, the referral loop optimization, the loop measurement and instrumentation, the compound growth modeling, and how to identify and build the self-reinforcing growth loops that power the fastest-growing products, moving from paid acquisition dependence toward organic growth engines that get stronger over time, and designing product features and user experiences that naturally generate referrals, content, and network effects that compound into durable competitive advantages.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/supply-chain', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, constraints } = req.body;
+  const prompt = `You are a supply chain strategy and operations optimization expert. Optimize the supply chain for ${company} producing ${product} with ${constraints}. Cover the supply chain strategy framework, the network design and optimization, the supplier selection and qualification, the inventory optimization strategy, the demand forecasting and planning, the lead time reduction strategy, the supply chain risk and resilience, the sustainability and ESG in supply chain, the supply chain technology and digitization, and how to build supply chains that deliver the right products at the right time and cost while maintaining the resilience to handle disruptions, that optimize the trade-offs between cost efficiency and operational flexibility, and that create supplier relationships that give you competitive advantages through preferential access, innovation collaboration, and supply security that your competitors cannot easily replicate.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/community-building', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, audience, platform } = req.body;
+  const prompt = `You are a brand community building and management expert. Build the community for ${brand} with ${audience} on ${platform}. Cover the community strategy framework, the community purpose and value proposition, the community platform selection, the founding member recruitment strategy, the community content and programming, the community moderation and governance, the community engagement and retention, the community monetization strategy, the community metrics and health measurement, and how to build brand communities that create genuine belonging and peer value for members rather than thinly veiled marketing channels, that generate the user-generated content and peer recommendations that build brand credibility, and that create the network effects and switching costs that make your brand increasingly sticky as the community grows and the connections between members deepen.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/b2b-demand-gen', requireAuth, async (req: AuthRequest, res) => {
+  const { company, icp, channels } = req.body;
+  const prompt = `You are a B2B demand generation strategy and execution expert. Design the demand generation for ${company} targeting ${icp} through ${channels}. Cover the demand generation framework, the ICP and buying committee definition, the demand capture vs. demand creation strategy, the content marketing for demand generation, the SEO and organic demand strategy, the paid demand generation strategy, the event and webinar strategy, the account-based marketing integration, the demand generation measurement and attribution, and how to build B2B demand generation programs that fill the pipeline with the right opportunities rather than just maximizing lead volume, that create the buyer awareness and education that shortens sales cycles and improves close rates, and that align marketing investment to the pipeline and revenue outcomes that the business needs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/dashboard-design', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, metrics, audience } = req.body;
+  const prompt = `You are an operations dashboard design and business intelligence expert. Design the operations dashboard for ${organization} tracking ${metrics} for ${audience}. Cover the dashboard design framework, the metric selection and definition, the dashboard hierarchy and drill-down, the visualization type selection, the leading vs. lagging indicator balance, the alert and exception design, the data freshness and update cadence, the dashboard adoption strategy, the dashboard governance and maintenance, and how to design operations dashboards that drive the right behaviors and decisions rather than just displaying data, that show the leading indicators that allow managers to intervene before problems become crises, and that present information in ways that make it immediately obvious what needs attention and what actions should be taken rather than requiring users to interpret raw numbers without context.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, segment } = req.body;
+  const prompt = `You are a pricing strategy and monetization expert. Design the pricing strategy for ${product} in ${market} for ${segment}. Cover the pricing strategy framework, the value-based pricing methodology, the competitive pricing analysis, the price elasticity measurement, the pricing model selection, the tiering and packaging design, the price point selection and testing, the pricing communication strategy, the price change management, and how to design pricing strategies that capture the value your product creates rather than competing on cost, that align price with the value different customer segments receive so you can optimize both volume and margin, and that create the pricing architecture that grows revenue per customer over time through expansions, upgrades, and additional product adoption rather than treating initial price as the only monetization opportunity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/churn-prevention', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, signals } = req.body;
+  const prompt = `You are a customer churn prevention and retention strategy expert. Design the churn prevention for ${product} for ${segment} using ${signals}. Cover the churn prevention framework, the churn prediction model design, the early warning signal identification, the customer health score design, the at-risk customer intervention playbook, the success milestone and value realization tracking, the proactive outreach and check-in strategy, the product adoption and engagement strategy, the win-back campaign for churned customers, and how to build churn prevention programs that intervene before customers decide to leave rather than reacting after the decision is made, that address the root causes of churn rather than just treating symptoms, and that systematically move customers toward the product depth and habit formation that makes them loyal, expanding customers rather than candidates for churn.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/creator-economy', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, creators, model } = req.body;
+  const prompt = `You are a creator economy strategy and creator monetization expert. Design the creator strategy for ${platform} with ${creators} using ${model}. Cover the creator economy framework, the creator monetization model design, the creator acquisition and onboarding, the creator tools and infrastructure, the creator analytics and insights, the creator fund and revenue sharing design, the brand partnership facilitation, the creator community and support, the creator retention strategy, and how to design creator economy platforms and programs that attract the right creators, give them the tools to build sustainable businesses, and create the flywheel between creator success and platform growth where each creator success attracts more creators and more audience, creating a network effect that makes your platform the home for the creators in your niche.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/product-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, stage, priorities } = req.body;
+  const prompt = `You are a product operations and product management excellence expert. Design the product operations for ${organization} at ${stage} focusing on ${priorities}. Cover the product operations framework, the product process and workflow design, the product data and analytics infrastructure, the roadmap management and communication, the product tool stack and integration, the cross-functional coordination model, the product decision framework, the product experimentation infrastructure, the product team health and performance, and how to build product operations systems that make product teams dramatically more effective by reducing the operational overhead that gets in the way of strategy and customer discovery, that create the data and feedback infrastructure that enables evidence-based product decisions, and that scale product management processes as the team and product grow without adding proportional management overhead.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
