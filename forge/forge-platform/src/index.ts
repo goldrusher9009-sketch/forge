@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v768.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v769.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210317,6 +210317,66 @@ app.post('/api/security/strategy', requireAuth, async (req: AuthRequest, res) =>
 app.post('/api/security/bcm', requireAuth, async (req: AuthRequest, res) => {
   const { organization, operations, threats } = req.body;
   const prompt = `You are a business continuity management strategy and resilience expert. Design business continuity management strategy for ${organization} protecting ${operations} from ${threats}. Cover business continuity framework, business impact analysis, recovery time and point objectives, business continuity plan development, disaster recovery and technology resilience, crisis management and communication, third-party resilience, testing and exercising, regulatory BCM requirements, and how to build business continuity programs that achieve the operational resilience and the recovery capability and the stakeholder confidence that effective BCM requires by conducting the business impact analysis with the process criticality ranking and the dependency mapping and the RTO/RPO assignment that provides the prioritized recovery sequence for the IT disaster recovery plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/supplychain', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, challenge } = req.body;
+  const prompt = `You are a supply chain optimization strategy and operations expert. Design supply chain optimization strategy for ${company} producing ${product} addressing ${challenge}. Cover supply chain optimization framework, demand forecasting and planning, inventory optimization and safety stock, network design and distribution, supplier performance management, transportation and logistics optimization, supply chain visibility and control tower, S and OP and IBP process, supply chain resilience and risk, and how to build supply chain optimization programs that achieve the service level and the inventory reduction and the cost efficiency that optimized supply chains deliver by implementing the demand sensing with the statistical forecasting and the market intelligence and the collaborative forecasting that reduces the forecast error and the safety stock requirement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/procurement', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, spend, categories } = req.body;
+  const prompt = `You are a procurement strategy and strategic sourcing expert. Design procurement strategy for ${organization} managing ${spend} across ${categories}. Cover procurement strategy framework, spend analysis and category management, strategic sourcing and RFP, supplier selection and evaluation, contract management and compliance, procurement technology and e-procurement, supplier relationship management, should-cost modeling and negotiation, procurement operating model, and how to build procurement programs that achieve the cost savings and the supply security and the supplier innovation that strategic procurement delivers by conducting the spend analysis with the category segmentation and the supply market analysis that identifies the strategic versus tactical spend and the sourcing lever that provides the maximum value in each category.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/manufacturing', requireAuth, async (req: AuthRequest, res) => {
+  const { plant, products, goals } = req.body;
+  const prompt = `You are a manufacturing excellence strategy and operational improvement expert. Design manufacturing excellence strategy for ${plant} producing ${products} achieving ${goals}. Cover manufacturing excellence framework, lean manufacturing and waste elimination, total productive maintenance, six sigma and quality management, overall equipment effectiveness, production planning and scheduling, manufacturing technology and Industry 4.0, workforce development and standard work, manufacturing cost management, and how to build manufacturing excellence programs that achieve the productivity improvement and the quality level and the cost reduction that world-class manufacturing requires by implementing the lean transformation with the value stream mapping and the kaizen events and the standard work documentation that eliminates the waste and the variability from the production process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/logistics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, network, requirements } = req.body;
+  const prompt = `You are a logistics and distribution strategy and network design expert. Design logistics strategy for ${company} with ${network} meeting ${requirements}. Cover logistics strategy framework, distribution network design and optimization, transportation mode selection, warehouse design and operations, last-mile delivery strategy, carrier management and TMS, reverse logistics and returns, cold chain and specialty logistics, logistics cost management, and how to build logistics programs that achieve the delivery performance and the cost efficiency and the network flexibility that competitive logistics requires by modeling the distribution network with the service level and the cost trade-off analysis that identifies the optimal number and location of distribution centers and the transportation routing that minimizes the total delivered cost.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/quality', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, products, standards } = req.body;
+  const prompt = `You are a quality management strategy and continuous improvement expert. Design quality management strategy for ${organization} producing ${products} to ${standards}. Cover quality management framework, ISO 9001 and quality management systems, statistical process control and SPC, supplier quality management, incoming inspection and incoming quality control, FMEA and risk-based quality, customer complaint management, quality cost analysis, quality culture and continuous improvement, and how to build quality management programs that achieve the defect reduction and the customer satisfaction and the regulatory compliance that quality excellence requires by implementing the quality management system with the documented procedures and the measurement system analysis and the statistical process control that provides the real-time signal when the process is going out of control before the defect reaches the customer.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/operations', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, processes, kpis } = req.body;
+  const prompt = `You are an operations management strategy and performance improvement expert. Design operations management strategy for ${organization} managing ${processes} against ${kpis}. Cover operations management framework, operational excellence and lean thinking, capacity management and planning, performance management and KPI dashboards, operational risk management, process improvement and standard work, cross-functional operations integration, technology and automation in operations, operational change management, and how to build operations management programs that achieve the productivity and the quality and the cost performance that operational excellence requires by establishing the operating rhythm with the daily management system and the tiered accountability meetings and the visual management boards that create the performance transparency and the rapid problem-solving cadence that drives continuous improvement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/portfolio', requireAuth, async (req: AuthRequest, res) => {
+  const { investor, portfolio, strategy } = req.body;
+  const prompt = `You are a real estate portfolio strategy and investment management expert. Design real estate portfolio strategy for ${investor} with ${portfolio} executing ${strategy}. Cover real estate portfolio framework, asset allocation and diversification, real estate market analysis, acquisition underwriting and valuation, asset management and NOI optimization, capital markets and financing, portfolio rebalancing and dispositions, real estate fund structures and REIT, real estate technology and proptech, and how to build real estate portfolio programs that achieve the return on investment and the portfolio diversification and the income stability that institutional real estate requires by conducting the market analysis with the supply and demand fundamentals and the cap rate trends and the rent growth projections that support the underwriting assumptions for the acquisition decision.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/propertymanagement', requireAuth, async (req: AuthRequest, res) => {
+  const { portfolio, properties, goals } = req.body;
+  const prompt = `You are a property management strategy and real estate operations expert. Design property management strategy for ${portfolio} across ${properties} achieving ${goals}. Cover property management framework, tenant acquisition and retention, lease administration and compliance, maintenance management and preventive maintenance, capital improvement planning, vendor management and service contracts, property accounting and reporting, tenant experience and amenities, property management technology, and how to build property management programs that achieve the occupancy rate and the net operating income and the tenant satisfaction that effective property management requires by implementing the preventive maintenance program with the inspection schedule and the work order system and the vendor performance tracking that reduces the reactive maintenance and the capital replacement cost.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/commercial', requireAuth, async (req: AuthRequest, res) => {
+  const { developer, project, market } = req.body;
+  const prompt = `You are a commercial real estate development and leasing expert. Design commercial real estate strategy for ${developer} developing ${project} in ${market}. Cover commercial real estate framework, market analysis and site selection, development feasibility and pro forma, commercial leasing and tenant mix, construction management and delivery, financing and capital stack, asset stabilization and value creation, commercial property types and trends, real estate regulation and permitting, and how to build commercial real estate programs that achieve the development returns and the lease-up and the asset value that successful commercial development requires by conducting the feasibility analysis with the market rent study and the absorption analysis and the construction cost estimate and the financing terms that validates the project economics before committing the development capital.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/residential', requireAuth, async (req: AuthRequest, res) => {
+  const { developer, units, market } = req.body;
+  const prompt = `You are a residential real estate development and investment expert. Design residential real estate strategy for ${developer} developing ${units} in ${market}. Cover residential real estate framework, residential market analysis and demographics, residential development and entitlement, single family versus multifamily strategy, affordable housing and workforce housing, residential construction and delivery, residential sales and marketing, residential rental management, residential real estate financing, and how to build residential real estate programs that achieve the absorption pace and the profit margin and the community creation that successful residential development requires by analyzing the residential demand with the household formation data and the income demographics and the competitive supply pipeline that determines the product type and the price point and the amenity package that matches the market demand.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
