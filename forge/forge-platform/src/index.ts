@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v781.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v782.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211097,6 +211097,66 @@ app.post('/api/architecture/bim', requireAuth, async (req: AuthRequest, res) => 
 app.post('/api/architecture/projectfinance', requireAuth, async (req: AuthRequest, res) => {
   const { developer, project, structure } = req.body;
   const prompt = `You are a project finance strategy and capital structuring expert. Design project finance strategy for ${developer} financing ${project} with ${structure}. Cover project finance framework, financial modeling and cash flow analysis, debt structuring and lender requirements, equity structuring and investor returns, risk allocation and credit enhancement, government incentives and tax credits, construction financing and draw schedule, permanent financing and refinancing, project securitization, and how to build project finance programs that achieve the capital efficiency and the risk allocation and the investor return that successful project financing requires by structuring the capital stack with the senior debt and the mezzanine and the equity in the proportions that maximize the leverage while maintaining the debt service coverage ratio and the loan to value that lenders require for the project type and the market and the sponsor credit.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { executive, brand, audience } = req.body;
+  const prompt = `You are a media strategy and communications expert. Design media strategy for ${executive} building ${brand} reaching ${audience}. Cover media strategy framework, audience research and segmentation, media mix and channel selection, paid media planning and buying, earned media and PR strategy, owned media and content, social media strategy, influencer and creator partnerships, measurement and attribution, and how to build media programs that achieve the reach and the frequency and the brand impact that successful media campaigns require by developing the media plan with the channel mix and the budget allocation and the flighting schedule and the creative format that delivers the message to the target audience at the right moment with the right context across the right touchpoints to drive the brand awareness and the consideration and the conversion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/pr', requireAuth, async (req: AuthRequest, res) => {
+  const { executive, organization, message } = req.body;
+  const prompt = `You are a public relations strategy and communications expert. Design public relations strategy for ${executive} representing ${organization} communicating ${message}. Cover public relations framework, media relations and press office, executive communications and thought leadership, crisis communications and reputation management, stakeholder communications, corporate social responsibility, issues management, social media and digital PR, measurement and analytics, and how to build public relations programs that achieve the reputation and the credibility and the stakeholder trust that successful communications require by developing the PR plan with the media list and the story angle and the press materials and the spokesperson preparation that builds the media relationships and generates the earned media coverage that reaches the target audience with the authentic brand story.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/broadcast', requireAuth, async (req: AuthRequest, res) => {
+  const { producer, program, network } = req.body;
+  const prompt = `You are a broadcast media strategy and television production expert. Design broadcast media strategy for ${producer} producing ${program} for ${network}. Cover broadcast media framework, program development and format, production planning and scheduling, talent and casting, studio and field production, post-production and editing, distribution and broadcast standards, ratings and audience research, monetization and advertising sales, and how to build broadcast media programs that achieve the audience rating and the advertiser value and the production quality that successful broadcast content requires by developing the program with the format bible and the episode arc and the production schedule and the budget that guides the production team to deliver the program to the broadcast standard and the network schedule with the story quality and the production value that attracts and retains the target audience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/digital', requireAuth, async (req: AuthRequest, res) => {
+  const { executive, platform, content } = req.body;
+  const prompt = `You are a digital media strategy and online publishing expert. Design digital media strategy for ${executive} building ${platform} with ${content}. Cover digital media framework, content strategy and editorial planning, SEO and search strategy, social media and distribution, video and podcast production, newsletter and email, subscription and paywall, programmatic advertising and revenue, audience development and retention, and how to build digital media programs that achieve the audience growth and the engagement and the revenue that successful digital publishing requires by developing the content plan with the editorial calendar and the SEO keyword strategy and the distribution channel and the monetization model that grows the audience and the advertiser and the subscriber revenue to build a sustainable digital media business.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/entertainment', requireAuth, async (req: AuthRequest, res) => {
+  const { executive, studio, market } = req.body;
+  const prompt = `You are an entertainment strategy and content business expert. Design entertainment strategy for ${executive} at ${studio} in ${market}. Cover entertainment strategy framework, IP development and content slate, production and financing, distribution and windowing, streaming and digital, talent and creator relations, international and local content, franchises and universe building, licensing and merchandising, and how to build entertainment programs that achieve the audience reach and the IP value and the business economics that successful entertainment requires by developing the content strategy with the audience insight and the genre and the format and the budget tier that creates the IP with the story quality and the production value and the marketing support that breaks through the content abundance and builds the loyal audience and the franchise potential.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/gaming', requireAuth, async (req: AuthRequest, res) => {
+  const { developer, game, platform } = req.body;
+  const prompt = `You are a gaming industry strategy and game development expert. Design gaming industry strategy for ${developer} developing ${game} for ${platform}. Cover gaming industry framework, game design and mechanics, monetization and live ops, platform strategy and distribution, player acquisition and retention, esports and community, mobile and cross-platform, game engine and technology, IP and franchise development, and how to build gaming industry programs that achieve the player engagement and the monetization and the community that successful game development requires by designing the core loop and the progression and the social system and the monetization that creates the player habit and the spending behavior and the community that drives the daily active user and the average revenue per user and the long-term retention that makes the game commercially viable.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/music', requireAuth, async (req: AuthRequest, res) => {
+  const { executive, label, artist } = req.body;
+  const prompt = `You are a music streaming strategy and music industry expert. Design music streaming strategy for ${executive} at ${label} representing ${artist}. Cover music streaming framework, music distribution and aggregation, streaming optimization and playlist strategy, artist development and release strategy, sync licensing and brand partnerships, touring and live, merchandise and direct fan, publishing and royalties, international market strategy, and how to build music streaming programs that achieve the stream count and the chart performance and the artist brand that successful music careers require by developing the release strategy with the advance single and the playlist pitching and the social content and the press campaign that builds the algorithmic momentum and the fan engagement and the cultural moment that breaks the release through the algorithmic recommendation and the editorial playlist.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/podcast', requireAuth, async (req: AuthRequest, res) => {
+  const { creator, show, niche } = req.body;
+  const prompt = `You are a podcasting strategy and audio content expert. Design podcasting strategy for ${creator} building ${show} in ${niche}. Cover podcasting framework, show format and episode structure, recording and production quality, hosting and interviewing, RSS and podcast distribution, SEO and discoverability, audience building and community, sponsorship and monetization, premium content and membership, and how to build podcasting programs that achieve the download and the subscriber and the revenue that successful podcasts require by developing the show with the niche positioning and the guest strategy and the content calendar and the distribution plan that grows the listener through the algorithmic discovery and the word of mouth and the cross-promotion that builds the loyal audience and the sponsor appeal that makes the show commercially viable.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/news', requireAuth, async (req: AuthRequest, res) => {
+  const { editor, outlet, beat } = req.body;
+  const prompt = `You are a news media strategy and journalism expert. Design news media strategy for ${editor} building ${outlet} covering ${beat}. Cover news media framework, editorial standards and ethics, breaking news and live coverage, investigative journalism, audience development and reader revenue, newsletter and push notification, social media and engagement, video and multimedia, monetization and business model, and how to build news media programs that achieve the journalistic impact and the audience trust and the business sustainability that successful news media requires by developing the editorial strategy with the beat coverage and the investigative project and the multimedia format and the audience engagement that builds the reader habit and the subscription conversion and the advertiser appeal that funds the journalism and sustains the newsroom.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/vr', requireAuth, async (req: AuthRequest, res) => {
+  const { developer, experience, application } = req.body;
+  const prompt = `You are a virtual reality strategy and immersive media expert. Design virtual reality strategy for ${developer} creating ${experience} for ${application}. Cover virtual reality framework, VR content design and UX, headset and platform selection, 3D modeling and environment, spatial audio and haptics, performance optimization and comfort, multiplayer and social VR, enterprise and training VR, distribution and go to market, and how to build virtual reality programs that achieve the immersion and the user adoption and the business impact that successful VR requires by designing the experience with the comfort and the interaction model and the visual fidelity and the performance that delivers the presence and the engagement without the motion sickness and the friction that prevents the user from completing the experience and returning for the repeat use.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
