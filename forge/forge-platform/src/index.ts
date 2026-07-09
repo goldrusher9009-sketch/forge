@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v430.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v431.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190807,6 +190807,59 @@ app.post('/api/product/competitive-moat', requireAuth, async (req: AuthRequest, 
 app.post('/api/sales/territory-plan', requireAuth, async (req: AuthRequest, res) => {
   const { region, accounts, quota } = req.body;
   const prompt = `Build a sales territory plan.\nRegion: ${region}\nAccount base: ${accounts}\nQuota: ${quota}\nInclude: account tiering (tier 1/2/3), time allocation by tier, coverage model, top 10 target account deep dives, quarterly milestone breakdown, pipeline build strategy, and what winning looks like in 90/180/365 days.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 281+282 routes — 800+ TOOLS MILESTONE
+app.post('/api/dev/platform-engineering', requireAuth, async (req: AuthRequest, res) => {
+  const { team, pain, stack } = req.body;
+  const prompt = `Design a platform engineering strategy.\nTeam size: ${team}\nDeveloper pain points: ${pain}\nCurrent stack: ${stack}\nInclude: internal developer platform (IDP) design, golden path definition, self-service capabilities roadmap, paved-road abstractions, developer portal features, platform team topology, and how to measure developer productivity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/hyper-personalization', requireAuth, async (req: AuthRequest, res) => {
+  const { prospect, signals, product } = req.body;
+  const prompt = `Create hyper-personalized outreach.\nProspect: ${prospect}\nSignals observed: ${signals}\nProduct: ${product}\nInclude: personalization framework (company/role/moment/problem), 3 email variants (email 1/follow-up/break-up), LinkedIn opener, call opener, and how to scale personalization without losing authenticity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/category-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, vision } = req.body;
+  const prompt = `Design a new market category.\nProduct: ${product}\nExisting market: ${market}\nVision: ${vision}\nInclude: category name candidates, problem reframing (old world vs. new world), category POV manifesto, ecosystem development strategy, analyst relations plan, and how to get competitors to play on your terms.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/twitter-thread-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, angle, audience } = req.body;
+  const prompt = `Create a viral Twitter/X thread strategy.\nTopic: ${topic}\nUnique angle: ${angle}\nTarget audience: ${audience}\nInclude: hook tweet (3 variants), thread structure (10-15 tweets), engagement hooks throughout, visual/screenshot suggestions, call-to-action finale, optimal posting time, and thread repurposing strategy (newsletter, LinkedIn, etc).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/remote-work-policy', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, roles, culture } = req.body;
+  const prompt = `Design a remote work policy.\nCompany stage: ${stage}\nRole types: ${roles}\nCulture goals: ${culture}\nInclude: work location policy (fully remote/hybrid/in-person), core hours definition, async vs. sync communication norms, home office stipend structure, meeting etiquette, documentation requirements, and how to maintain culture and belonging remotely.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/angel-investing-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { thesis, stage, check } = req.body;
+  const prompt = `Build an angel investing framework.\nInvestment thesis: ${thesis}\nTarget stage: ${stage}\nCheck size: ${check}\nInclude: deal sourcing strategy, evaluation scorecard, diligence checklist, value-add positioning, portfolio construction (concentration vs. diversification), pro-rata strategy, and how to add value without being annoying.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/privacy-by-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, data, regulation } = req.body;
+  const prompt = `Implement privacy by design.\nProduct: ${product}\nData collected: ${data}\nApplicable regulations: ${regulation}\nInclude: data minimization principles, consent architecture, data subject rights implementation (access/deletion/portability), retention policy, privacy impact assessment template, vendor data processing agreements checklist, and incident response playbook.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/podcast-guest-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { expertise, goals, shows } = req.body;
+  const prompt = `Build a podcast guest appearance strategy.\nExpertise areas: ${expertise}\nGoals: ${goals}\nTarget shows: ${shows}\nInclude: topic positioning, speaker one-sheet content, outreach sequence, how to prepare for maximum impact, episode promotion playbook, how to repurpose episodes, and how to turn listeners into leads.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/user-segmentation', requireAuth, async (req: AuthRequest, res) => {
+  const { users, behaviors, goal } = req.body;
+  const prompt = `Design a user segmentation framework.\nUser base: ${users}\nKey behaviors: ${behaviors}\nGoal: ${goal}\nInclude: segmentation dimensions (demographic/behavioral/attitudinal/needs-based), segment profiles with size estimates, high-value segment identification, segment-specific product strategy, and how to operationalize segments in the product and in marketing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/churn-prevention', requireAuth, async (req: AuthRequest, res) => {
+  const { signals, account, playbook } = req.body;
+  const prompt = `Build a churn prevention playbook.\nChurn signals: ${signals}\nAt-risk account context: ${account}\nExisting playbook: ${playbook}\nInclude: health score model design, early warning system, tiered intervention protocols by risk level, save conversation guide, executive escalation path, win-back program for churned accounts, and root cause analysis framework.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
