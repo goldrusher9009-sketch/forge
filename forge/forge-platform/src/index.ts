@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v633.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v634.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202217,6 +202217,66 @@ app.post('/api/marketing/lead-generation', requireAuth, async (req: AuthRequest,
 app.post('/api/engineering/agile-transformation', requireAuth, async (req: AuthRequest, res) => {
   const { organization, maturity, goals } = req.body;
   const prompt = `You are an agile transformation and organizational agility expert. Design the agile transformation for ${organization} at ${maturity} maturity toward ${goals}. Cover the agile transformation strategy, the agile maturity assessment, the agile framework selection, the team structure and topology for agile, the agile ceremonies and cadence design, the product ownership model, the engineering practices for agile, the agile metrics and measurement, the leadership and culture change for agile, and how to design agile transformations that produce genuine improvements in delivery speed, quality, and responsiveness to change rather than cargo-cult agile adoptions that have the ceremonies without the mindset, and that build the organizational agility needed to compete in fast-moving markets.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/edtech', requireAuth, async (req: AuthRequest, res) => {
+  const { product, learners, outcomes } = req.body;
+  const prompt = `You are an educational technology and learning experience design expert. Design the EdTech strategy for ${product} serving ${learners} to achieve ${outcomes}. Cover the EdTech market analysis, the learning science and pedagogy foundation, the learning experience design, the curriculum and content strategy, the assessment and credentialing design, the learner engagement and retention, the instructor and facilitator model, the EdTech business model and monetization, the learning analytics and measurement, and how to build EdTech products that produce genuine learning outcomes rather than engagement metrics, that apply learning science to improve knowledge retention and skill transfer, and that create sustainable business models that align commercial incentives with educational quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/sustainability', requireAuth, async (req: AuthRequest, res) => {
+  const { company, emissions, goals } = req.body;
+  const prompt = `You are a corporate sustainability and ESG strategy expert. Design the sustainability strategy for ${company} reducing ${emissions} toward ${goals}. Cover the sustainability strategy framework, the materiality assessment, the emissions measurement and baseline, the decarbonization roadmap, the renewable energy strategy, the circular economy design, the supply chain sustainability, the ESG reporting framework, the sustainability stakeholder engagement, and how to build sustainability strategies that are credible and science-based rather than greenwashing, that create genuine business value through efficiency and risk reduction alongside environmental benefit, and that build the measurement and reporting infrastructure to credibly communicate progress to investors, customers, employees, and regulators.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/network-effects', requireAuth, async (req: AuthRequest, res) => {
+  const { product, sides, flywheel } = req.body;
+  const prompt = `You are a network effects strategy and marketplace design expert. Design the network effects for ${product} across ${sides} building ${flywheel}. Cover the network effects taxonomy and classification, the network effect strength and defensibility, the cold start problem solution, the multi-sided network design, the local vs. global network effects, the direct vs. indirect network effects, the network effect measurement, the network effects in the product design, the competitive moat from network effects, and how to design products and businesses that benefit from network effects that create genuine competitive advantages by making the product more valuable as more people use it, and how to solve the chicken-and-egg problem that all network businesses face at launch.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/gtm-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, motion } = req.body;
+  const prompt = `You are a go-to-market strategy and revenue playbook expert. Build the GTM playbook for ${product} targeting ${segment} with ${motion} motion. Cover the GTM strategy framework, the ideal customer profile definition, the value proposition and messaging, the sales motion and process design, the channel strategy and partner model, the pricing and packaging, the demand generation strategy, the sales and marketing alignment, the GTM metrics and performance management, and how to build GTM playbooks that give sales and marketing teams a consistent, repeatable approach to winning new customers, that are grounded in deep customer insight, that align all revenue-generating activities toward a common strategy, and that are regularly updated based on what is working and what is not.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/data-engineering', requireAuth, async (req: AuthRequest, res) => {
+  const { system, sources, consumers } = req.body;
+  const prompt = `You are a data engineering and data platform architecture expert. Design the data engineering architecture for ${system} ingesting ${sources} serving ${consumers}. Cover the data engineering strategy, the data ingestion and pipeline design, the streaming vs. batch processing trade-offs, the data lake and data warehouse architecture, the data transformation and modeling layer, the data quality and validation framework, the data catalog and lineage, the data engineering tooling selection, the data platform operations and SLAs, and how to design data engineering platforms that reliably deliver high-quality data to the business and analytics teams that depend on it, that scale cost-effectively, and that enable the organization to move from descriptive analytics to predictive and prescriptive analytics as maturity increases.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/internal-comms', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, change, culture } = req.body;
+  const prompt = `You are an internal communications and employee experience expert. Design the internal communications strategy for ${organization} through ${change} building ${culture}. Cover the internal communications strategy framework, the audience segmentation and channel mix, the leadership communication design, the all-hands and town hall design, the manager communication cascades, the change communication strategy, the crisis internal communications, the employee voice and feedback channels, the internal communications measurement, and how to build internal communications capabilities that inform and engage employees, that maintain organizational alignment and culture through periods of rapid change, and that create genuine two-way dialogue rather than one-way broadcast that leaves employees feeling heard and connected to the organizations mission and direction.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/business-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, drivers, scope } = req.body;
+  const prompt = `You are a business transformation and strategic change expert. Design the business transformation for ${company} driven by ${drivers} in ${scope} scope. Cover the transformation strategy framework, the transformation diagnosis and case for change, the transformation vision and ambition setting, the transformation architecture and workstream design, the transformation governance and leadership, the change management strategy, the transformation resourcing and capability, the transformation metrics and milestones, the transformation risk management, and how to design and execute business transformations that actually deliver the step-change improvement in performance that transformations promise but rarely achieve, through disciplined execution, genuine leadership commitment, rigorous change management, and the organizational capability to sustain the changes once the transformation program ends.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/founder-mode', requireAuth, async (req: AuthRequest, res) => {
+  const { founder, company, challenge } = req.body;
+  const prompt = `You are a founder strategy and startup leadership expert. Advise ${founder} on leading ${company} through ${challenge}. Cover the founder leadership framework, the founder vs. manager mode transitions, the founder vision and strategy setting, the founder hiring and team building, the founder culture creation, the founder investor relationship management, the founder board management, the founder mental health and resilience, the founder succession and role evolution, and how founders can maintain the intensity, conviction, and speed that made their company successful while building the organizational capabilities and management systems needed to scale, navigating the constant tension between doing things at founder pace and building an organization that can operate at institutional scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/platform-ecosystem', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, partners, value } = req.body;
+  const prompt = `You are a platform ecosystem and developer relations expert. Build the ecosystem strategy for ${platform} with ${partners} creating ${value}. Cover the ecosystem strategy framework, the partner type identification and segmentation, the partner value proposition design, the partner onboarding and enablement, the marketplace design and governance, the ISV and developer program design, the ecosystem economics and revenue sharing, the partner performance management, the ecosystem network effects, and how to build platform ecosystems that attract the right partners, that create genuine value for all participants including end customers, that generate the network effects that make the platform increasingly valuable and defensible over time, and that avoid the common failure modes of ecosystems that become extractive or that fail to curate quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/tax-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, structure, jurisdictions } = req.body;
+  const prompt = `You are a corporate tax strategy and tax planning expert. Design the tax strategy for ${company} with ${structure} across ${jurisdictions}. Cover the tax strategy framework, the legal entity structure optimization, the transfer pricing strategy, the R&D tax credit optimization, the capital gains planning, the international tax planning, the tax risk management, the deferred tax optimization, the tax controversy management, the tax compliance program design, and how to build tax strategies that legitimately minimize tax burden through proper planning and structure while maintaining full legal compliance, that manage tax risk appropriately, and that are sustainable as tax laws and enforcement priorities evolve, avoiding aggressive positions that create reputational or legal risk disproportionate to the tax savings.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
