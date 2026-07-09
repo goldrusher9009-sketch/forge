@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v576.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v577.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198797,6 +198797,66 @@ app.post('/api/marketing/content-calendar', requireAuth, async (req: AuthRequest
 app.post('/api/finance/vc-fundraising', requireAuth, async (req: AuthRequest, res) => {
   const { stage, amount, focus } = req.body;
   const prompt = `You are a venture capital fundraising and investor relations expert. Advise on a ${stage} raise of ${amount} with ${focus} as the investment thesis. Cover the fundraising preparation checklist (data room, pitch deck, financial model, reference customers), how to build and work a VC investor list, the outreach strategy (warm vs. cold intros, email templates), the pitch process (first meeting → deep dives → partner meeting → term sheet), how to run a competitive process to create urgency, term sheet negotiation (valuation, dilution, pro-rata, protective provisions, board composition), the closing process timeline, and how to manage investor relations post-close.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/security-posture', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stack, threats } = req.body;
+  const prompt = `You are a cybersecurity strategy and security engineering expert. Assess and improve the security posture for ${company} running ${stack} facing ${threats} threat landscape. Cover the security framework (SOC2, ISO 27001, NIST CSF) selection and roadmap, identity and access management architecture, network security and zero trust implementation, application security (SAST, DAST, SCA, secrets management), data security and encryption strategy, incident response plan design, vulnerability management program, security awareness training program, how to build a security-first engineering culture, and the security maturity roadmap from current state to target state.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-arch', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, audience } = req.body;
+  const prompt = `You are a brand strategy and architecture expert. Build the brand architecture for ${company} with ${products} product portfolio for ${audience}. Cover the brand architecture models (monolithic, endorsed, hybrid, house of brands), which model fits this company and why, how to name products within the architecture, the parent brand vs. sub-brand identity system, how to extend the brand to new markets without dilution, brand architecture governance (who owns brand decisions), how to evolve the brand architecture as the portfolio grows, and how to audit brand consistency across touchpoints.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/investor-narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, thesis } = req.body;
+  const prompt = `You are an investor relations and fundraising narrative expert. Build the investor narrative for ${company} at ${stage} stage with ${thesis} investment thesis. Cover the problem and why it matters now, the solution and why it is better, the market size and why it is big and growing, the business model and unit economics, the traction and why it validates the thesis, the team and why this team wins, the competitive advantage and defensibility, the go-to-market strategy and growth levers, the use of proceeds and milestones they will achieve, and the vision for what this company looks like in 5-10 years. Make it a story, not a slide deck.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/leadership-transition', requireAuth, async (req: AuthRequest, res) => {
+  const { role, predecessor, timeline } = req.body;
+  const prompt = `You are a leadership transition and executive onboarding expert. Design the leadership transition plan for ${role} role from ${predecessor} over ${timeline}. Cover the transition phases (observe → understand → decide → act), the knowledge transfer process from predecessor to successor, stakeholder mapping and relationship-building priorities (board, direct reports, key customers, peers), the first 30-60-90 day plan with specific milestones, how to build credibility quickly without stepping on landmines, the cultural assessment and how to adapt leadership style, early wins strategy, how to communicate your leadership philosophy to the team, and how to avoid the top five leadership transition mistakes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/analytics-setup', requireAuth, async (req: AuthRequest, res) => {
+  const { product, stack, questions } = req.body;
+  const prompt = `You are a product analytics and instrumentation expert. Set up product analytics for ${product} on ${stack} to answer ${questions}. Cover the event taxonomy design (what to track and why), the user identification and identity resolution strategy, funnel definition and conversion tracking, cohort analysis setup, retention measurement (day 1, 7, 30), A/B testing infrastructure, the analytics tool selection (Mixpanel, Amplitude, PostHog, Heap), dashboard design for each team (product, growth, engineering, exec), data quality and validation process, and how to build a data-informed product culture where every decision starts with a question and ends with a metric.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/supply-chain', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, challenge } = req.body;
+  const prompt = `You are a supply chain strategy and operations expert. Optimize the supply chain for ${company} manufacturing ${product} facing ${challenge}. Cover supply chain mapping and visibility (tier 1, 2, 3 suppliers), risk assessment and concentration analysis, inventory optimization (safety stock, reorder points, EOQ), supplier diversification and qualification strategy, logistics optimization (modes, routes, 3PL selection), demand forecasting and S&OP process, supply chain resilience and redundancy planning, sustainability and ESG considerations, technology enablement (ERP, WMS, TMS, control tower), and the metrics dashboard for supply chain performance (OTIF, inventory turns, fill rate, supplier OTD).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/customer-research', requireAuth, async (req: AuthRequest, res) => {
+  const { product, stage, questions } = req.body;
+  const prompt = `You are a customer research and user insights expert. Build a customer research system for ${product} at ${stage} to answer ${questions}. Cover the research methodology selection (quantitative vs. qualitative, generative vs. evaluative), the research recruiting strategy (finding the right participants), interview guide design for discovery vs. validation, survey design best practices, usability testing protocol, research synthesis frameworks (affinity mapping, Jobs-to-be-Done, opportunity scoring), how to build a continuous discovery process, the research repository design, how to democratize research across the team, and how to translate research findings into product decisions with speed and confidence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/pr-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, news, audience } = req.body;
+  const prompt = `You are a public relations and media strategy expert. Build a PR and media strategy for ${company} announcing ${news} to ${audience}. Cover the PR strategy framework (earned, owned, paid media integration), how to build a media list of relevant journalists and outlets, the press release structure and writing guide, the media pitch (short, specific, why now, why you), embargo and exclusive strategy, spokesperson preparation and media training, crisis communications readiness, how to measure PR impact (coverage volume, sentiment, SOV, website traffic lift), how to build long-term journalist relationships, and how to integrate PR with your broader marketing calendar.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/platform', requireAuth, async (req: AuthRequest, res) => {
+  const { company, ecosystem, value } = req.body;
+  const prompt = `You are a platform strategy and ecosystem design expert. Design the platform strategy for ${company} building ${ecosystem} to deliver ${value}. Cover the platform vs. product distinction and when to make the transition, the network effects design (which type of network effects, how to seed both sides), the platform governance model (rules, standards, developer relations), the API strategy and developer ecosystem, the marketplace economics (take rate, pricing, trust), how to attract the first participants to a two-sided marketplace (cold start problem), platform data strategy, how to prevent platform commoditization, and how to measure platform health (GMV, participants, NPS, ecosystem revenue).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/experience-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, persona, emotion } = req.body;
+  const prompt = `You are a user experience and human-centered design expert. Create an experience design blueprint for ${product} for ${persona} persona targeting ${emotion} emotional outcome. Cover the experience principles that guide design decisions, the experience map from first awareness to advocacy, the moments that matter (touchpoints that disproportionately impact perception), the emotional design framework (what users feel at each stage), the interaction design principles specific to this product, the visual design language (color psychology, typography, spacing, motion), accessibility and inclusive design requirements, how to test for emotional resonance in user research, and the experience quality metrics (task success, time on task, SUS, NPS, emotional satisfaction).`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
