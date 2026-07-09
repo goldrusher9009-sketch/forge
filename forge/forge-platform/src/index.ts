@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v609.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v610.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200777,6 +200777,66 @@ app.post('/api/sales/operations', requireAuth, async (req: AuthRequest, res) => 
 app.post('/api/data/revenue-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const { company, signals, actions } = req.body;
   const prompt = `You are a revenue intelligence and conversation analytics expert. Build the revenue intelligence program for ${company} using ${signals} to drive ${actions}. Cover the revenue intelligence data sources, the call and email intelligence design, the CRM signal integration, the buyer intent signal collection, the pipeline risk and opportunity signal detection, the rep performance intelligence, the competitive intelligence signals, the revenue intelligence dashboard design, the revenue intelligence to action workflow, and how to operationalize revenue intelligence so insights consistently drive better selling.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-segmentation', requireAuth, async (req: AuthRequest, res) => {
+  const { market, criteria, segments } = req.body;
+  const prompt = `You are a market segmentation and customer targeting expert. Segment ${market} using ${criteria} to identify ${segments} actionable segments. Cover the segmentation methodology selection, the demographic and firmographic segmentation, the psychographic and behavioral segmentation, the needs-based segmentation design, the segment sizing and attractiveness scoring, the segment validation research, the segment persona development, the segment prioritization and selection, the segment go-to-market design, and how to use segmentation to focus resources and drive superior returns.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/leadership-vision', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, org, horizon } = req.body;
+  const prompt = `You are a leadership vision and organizational direction expert. Help ${leader} create the vision for ${org} over ${horizon} horizon. Cover the vision development methodology, the external environment and future scanning, the organizational aspiration articulation, the vision narrative and story design, the vision to strategy connection, the vision communication and activation, the vision internalization by teams, the vision as a decision-making filter, the vision evolution and refresh, and how to create a vision that inspires people to do their best work.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/offshoring-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, functions, location } = req.body;
+  const prompt = `You are an offshoring strategy and global delivery expert. Design the offshoring strategy for ${company} moving ${functions} to ${location}. Cover the offshoring decision framework, the function suitability assessment, the location selection criteria, the build vs. buy vs. outsource model, the transition and knowledge transfer design, the governance and oversight model, the quality and compliance management, the cultural integration and communication, the cost-benefit analysis model, and how to manage offshore operations for sustained quality and cost advantage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/story-mapping', requireAuth, async (req: AuthRequest, res) => {
+  const { product, users, outcomes } = req.body;
+  const prompt = `You are a user story mapping and product discovery expert. Facilitate the story map for ${product} for ${users} to achieve ${outcomes}. Cover the story mapping methodology and principles, the user activity and task identification, the story map structure design, the slice and MVP definition from the map, the story map facilitation techniques, the cross-functional story mapping session design, the story map to backlog conversion, the story map maintenance and evolution, the story map for release planning, and how to use story mapping to build shared understanding and alignment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/inside-sales', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, model } = req.body;
+  const prompt = `You are an inside sales and sales development expert. Design the inside sales model for ${company} targeting ${segment} using ${model} approach. Cover the inside sales model design and trade-offs, the SDR and AE partnership design, the cadence and sequence design, the inbound vs. outbound inside sales, the inside sales technology stack, the inside sales quota and compensation design, the inside sales manager and coaching model, the inside sales playbook design, the inside sales metrics and dashboards, and how to build an inside sales engine that generates consistent pipeline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/revenue-recognition', requireAuth, async (req: AuthRequest, res) => {
+  const { company, model, standard } = req.body;
+  const prompt = `You are a revenue recognition and ASC 606 compliance expert. Design the revenue recognition policy for ${company} with ${model} business model under ${standard}. Cover the revenue recognition standard application, the five-step revenue recognition model, the performance obligation identification, the transaction price determination, the variable consideration and constraint, the contract modification handling, the multi-element arrangement accounting, the disclosure requirements, the revenue recognition controls design, and how to implement revenue recognition in a way that provides accurate financial reporting.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-experience', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, touchpoints, signature } = req.body;
+  const prompt = `You are a brand experience and experience design expert. Design the brand experience for ${brand} across ${touchpoints} creating ${signature} signature moments. Cover the brand experience vision and principles, the customer touchpoint inventory and prioritization, the signature moment design, the sensory branding design, the digital brand experience design, the physical brand experience design, the employee-delivered brand experience, the brand experience consistency and governance, the brand experience measurement, and how to design brand experiences that create emotional connection and loyalty.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/operations', requireAuth, async (req: AuthRequest, res) => {
+  const { company, volume, budget } = req.body;
+  const prompt = `You are a legal operations and in-house counsel efficiency expert. Build the legal ops function for ${company} handling ${volume} matters with ${budget} budget. Cover the legal operations charter and scope, the matter management system design, the outside counsel management program, the legal spend management and billing guidelines, the contract management and CLM, the legal technology stack design, the legal process automation, the legal KPI and metrics design, the legal business partnership model, and how to transform a legal department from a cost center to a strategic business partner.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { company, buyer, problem } = req.body;
+  const prompt = `You are a sales narrative and sales storytelling expert. Build the sales narrative for ${company} for ${buyer} buyer addressing ${problem}. Cover the sales narrative framework, the problem and status quo story, the hero and transformation story, the differentiation narrative design, the proof and evidence story, the financial ROI narrative, the risk narrative and risk reversal, the implementation and success story, the executive narrative vs. technical narrative, and how to train a sales team to tell compelling stories that move buyers to action.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/cicd-protocol', requireAuth, async (req: AuthRequest, res) => {
+  const { team, stack, cadence } = req.body;
+  const prompt = `You are a CI/CD pipeline design and DevOps engineering expert. Design the CI/CD protocol for ${team} using ${stack} at ${cadence} release cadence. Cover the CI/CD pipeline architecture, the source control branching strategy, the automated testing pyramid design, the build and artifact management, the deployment pipeline design, the environment promotion strategy, the feature flag integration, the rollback and recovery design, the security scanning integration, and how to build a CI/CD pipeline that enables fast and safe software delivery.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
