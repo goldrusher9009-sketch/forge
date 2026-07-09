@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v644.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v645.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202877,6 +202877,66 @@ app.post('/api/strategy/coaching-business', requireAuth, async (req: AuthRequest
 app.post('/api/strategy/media-company', requireAuth, async (req: AuthRequest, res) => {
   const { company, content, audience } = req.body;
   const prompt = `You are a media company strategy and audience monetization expert. Design the media strategy for ${company} with ${content} for ${audience}. Cover the media company strategy framework, the content strategy and editorial positioning, the audience development and growth, the media business model design, the advertising and sponsorship strategy, the subscription and membership revenue, the licensing and syndication strategy, the media technology and distribution, the media M&A and partnership strategy, and how to build media businesses that develop loyal audiences through consistent, distinctive content that serves a specific audience better than any alternative, that monetize those audiences through the right mix of advertising, subscriptions, events, and commerce that aligns with audience expectations and content positioning, and that build the editorial and production capabilities that maintain content quality and velocity as the organization scales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/go-to-market', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, motion } = req.body;
+  const prompt = `You are a go-to-market strategy and launch expert. Design the GTM strategy for ${product} targeting ${segment} using ${motion}. Cover the GTM strategy framework, the ICP and market segmentation, the positioning and messaging framework, the sales motion and channel strategy, the marketing mix and demand generation, the pricing and packaging strategy, the launch sequencing and timeline, the sales enablement and tooling, the GTM metrics and success criteria, and how to design GTM strategies that coordinate all the commercial functions around a shared understanding of who you are selling to, what problem you solve, and how you will reach and convert buyers, that sequence market entry in ways that build momentum from early wins and reference customers, and that create the feedback loops that allow you to iterate on your GTM based on what is actually working in the market rather than just executing the original plan regardless of what the data shows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { company, portfolio, strategy } = req.body;
+  const prompt = `You are a brand architecture and portfolio strategy expert. Design the brand architecture for ${company} with ${portfolio} using ${strategy}. Cover the brand architecture framework, the branded house vs. house of brands strategy, the endorsed brand architecture, the hybrid architecture design, the sub-brand strategy, the brand hierarchy and naming, the brand extension evaluation, the brand portfolio rationalization, the brand architecture communication, and how to design brand architectures that create clarity for customers about how your products and services relate to each other, that allow you to efficiently extend your brand into new categories and segments without diluting the core brand, and that organize your portfolio in ways that support your commercial strategy by making it easy for buyers to understand what you offer and to navigate to the right solution for their specific need.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/market-research', requireAuth, async (req: AuthRequest, res) => {
+  const { company, questions, methodology } = req.body;
+  const prompt = `You are a market research strategy and insights generation expert. Design the market research for ${company} answering ${questions} using ${methodology}. Cover the market research framework, the research question definition, the qualitative research methodology, the quantitative research methodology, the primary vs. secondary research strategy, the survey design and sampling, the focus group and interview design, the data analysis and synthesis, the insight communication and activation, and how to design market research programs that generate insights that actually change decisions and strategies rather than confirming what management already believes, that choose the right methodology for each type of question rather than defaulting to surveys for everything, and that translate research findings into clear, compelling insights and recommendations that non-research stakeholders can understand and act on.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/executive-communication', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, audience, message } = req.body;
+  const prompt = `You are an executive communication strategy and leadership presence expert. Design the executive communication for ${leader} to ${audience} delivering ${message}. Cover the executive communication framework, the executive narrative and storytelling, the board and investor communication, the all-hands and town hall communication, the media and analyst communication, the written executive communication, the crisis and difficult news communication, the executive presence and delivery, the communication channel strategy, and how to develop executive communication skills that project confidence, clarity, and conviction in every forum from one-on-one conversations to large audiences, that tell compelling stories that connect business strategy to human meaning in ways that inspire action rather than just conveying information, and that build the authentic personal brand and communication style that allows leaders to influence and inspire the internal and external stakeholders whose support they need to execute their strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/learning-design', requireAuth, async (req: AuthRequest, res) => {
+  const { program, learners, outcomes } = req.body;
+  const prompt = `You are a learning design and instructional design expert. Design the learning program for ${program} for ${learners} achieving ${outcomes}. Cover the learning design framework, the learning objective and outcome definition, the adult learning principles, the curriculum sequencing and scaffolding, the instructional strategy selection, the engagement and motivation design, the practice and feedback design, the assessment design, the learning transfer strategy, and how to design learning programs that produce the behavior change and skill development that participants need rather than just exposing them to content, that apply adult learning principles to design experiences that respect learners time and prior knowledge, and that create the practice and application opportunities that are essential to genuine skill development in contrast to passive content consumption that feels productive but does not create lasting capability change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/network-effects', requireAuth, async (req: AuthRequest, res) => {
+  const { product, users, mechanism } = req.body;
+  const prompt = `You are a network effects strategy and marketplace dynamics expert. Design the network effects for ${product} with ${users} via ${mechanism}. Cover the network effects framework, the direct vs. indirect network effects, the same-side and cross-side network effects, the data network effects, the geographic and temporal network effects, the network effects defensibility, the cold start problem solutions, the critical mass strategy, the network effects metrics and measurement, and how to identify and build the network effects that create compounding competitive advantages as your product grows, that solve the chicken-and-egg cold start problem that prevents network effects products from reaching critical mass, and that design the product features and community mechanics that strengthen network effects over time rather than allowing competitor products to pick off users by serving specific use cases better than your general platform.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/public-speaking', requireAuth, async (req: AuthRequest, res) => {
+  const { speaker, topic, audience } = req.body;
+  const prompt = `You are a public speaking and presentation skills expert. Coach ${speaker} on presenting ${topic} to ${audience}. Cover the public speaking framework, the message architecture and storytelling, the opening and closing design, the content structure and flow, the slide design and visual communication, the vocal delivery and body language, the nervousness and anxiety management, the Q&A handling strategy, the virtual presentation skills, and how to develop public speaking skills that command attention, build credibility, and move audiences to action rather than just delivering information in a structured way, that develop the authentic presenter voice and style that makes your communication feel genuine rather than rehearsed, and that handle the inevitable challenges of live speaking from technical failures to hostile questions with the composure and adaptability that separates truly excellent presenters from merely competent ones.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-mapping', requireAuth, async (req: AuthRequest, res) => {
+  const { industry, segments, players } = req.body;
+  const prompt = `You are a market mapping and competitive landscape analysis expert. Map the market for ${industry} across ${segments} including ${players}. Cover the market mapping framework, the market segmentation and sizing, the competitive player mapping, the value chain analysis, the market maturity and evolution analysis, the adjacency and white space identification, the power dynamics analysis, the market consolidation trends, the disruption risk assessment, and how to create market maps that give leadership teams a shared mental model of the competitive landscape, that identify the whitespace opportunities and unmet needs that represent the most attractive entry and expansion opportunities, and that track market evolution over time to anticipate competitive moves and market shifts before they happen rather than reacting to competitive threats after they have already impacted your business.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/service-design', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, service, users } = req.body;
+  const prompt = `You are a service design and service innovation expert. Design the service for ${organization} delivering ${service} to ${users}. Cover the service design framework, the service blueprint development, the frontstage and backstage design, the service concept development, the touchpoint and channel design, the staff experience design, the service recovery design, the service prototype and testing, the service implementation and scaling, and how to design services that create consistent, differentiated experiences across all touchpoints by designing both the visible customer experience and the invisible operational processes that deliver it, that identify the failure points and recovery opportunities that determine whether a service experience is remembered as exceptional or forgettable, and that create the service standards and staff empowerment that allow frontline employees to deliver the designed experience and recover gracefully when things go wrong.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/venture-building', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, opportunity, resources } = req.body;
+  const prompt = `You are a corporate venture building and new business creation expert. Design the venture build for ${organization} around ${opportunity} with ${resources}. Cover the venture building framework, the opportunity identification and validation, the venture thesis development, the team formation strategy, the MVP and validation approach, the venture governance and structure, the corporate-venture relationship design, the funding and investment strategy, the venture scaling strategy, and how to design corporate venture building programs that give new ventures the autonomy and speed they need to move like startups while leveraging the corporate assets of brand, distribution, data, and capital that give corporate ventures structural advantages over purely independent startups, and that navigate the organizational tensions between corporate control and venture autonomy in ways that allow ventures to move fast enough to win while maintaining the strategic alignment that justifies the corporate investment.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
