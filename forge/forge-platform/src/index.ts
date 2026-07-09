@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v542.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v543.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -196757,6 +196757,66 @@ app.post('/api/research/synthesize', requireAuth, async (req: AuthRequest, res) 
 app.post('/api/strategy/international', requireAuth, async (req: AuthRequest, res) => {
   const { company, targetCountries, budget } = req.body;
   const prompt = `You are an international business development expert. Plan international expansion for ${company} into ${targetCountries} with ${budget} budget. Cover localization requirements, regulatory compliance, partnership models, cultural adaptation, and phased market entry timeline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/eng/data-model', requireAuth, async (req: AuthRequest, res) => {
+  const { domain, entities, relationships } = req.body;
+  const prompt = `You are a database architect. Design a comprehensive data model for ${domain} with entities: ${entities} and relationships: ${relationships}. Cover schema design, normalization, indexing strategy, partitioning, and query optimization patterns.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/pr/press-release', requireAuth, async (req: AuthRequest, res) => {
+  const { announcement, company, audience } = req.body;
+  const prompt = `You are a PR communications expert. Write a compelling press release for ${announcement} from ${company} targeting ${audience}. Include headline, dateline, lead paragraph, key quotes, boilerplate, and media contact information following AP style.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/channel-partner', requireAuth, async (req: AuthRequest, res) => {
+  const { product, partnerType, region } = req.body;
+  const prompt = `You are a channel strategy expert. Design a channel partner program for ${product} targeting ${partnerType} partners in ${region}. Cover partner tiers, margin structure, co-marketing funds, enablement resources, deal registration, and joint go-to-market motions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/eng/agile-ceremonies', requireAuth, async (req: AuthRequest, res) => {
+  const { teamSize, sprintLength, challenges } = req.body;
+  const prompt = `You are an agile coach. Design optimized agile ceremonies for a ${teamSize} person team with ${sprintLength} sprints facing challenges: ${challenges}. Structure standup, planning, review, retrospective, and backlog refinement with time-boxes and facilitation guides.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/revenue-forecast', requireAuth, async (req: AuthRequest, res) => {
+  const { businessModel, currentARR, growthDrivers } = req.body;
+  const prompt = `You are a financial modeling expert. Build a revenue forecast model for ${businessModel} business with current ARR of ${currentARR} and growth drivers: ${growthDrivers}. Cover assumptions, scenario analysis (base/bull/bear), key metrics, and sensitivity analysis.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/security/threat-model', requireAuth, async (req: AuthRequest, res) => {
+  const { system, dataTypes, attackSurface } = req.body;
+  const prompt = `You are a security architect. Create a threat model for ${system} handling ${dataTypes} with attack surface: ${attackSurface}. Apply STRIDE framework, identify threat actors, assess risk severity, and design security controls and mitigations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ecosystem', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, industry, integrations } = req.body;
+  const prompt = `You are a platform strategy expert. Map the ecosystem partner landscape for ${platform} in ${industry} targeting integrations with ${integrations}. Identify strategic partnerships, ISV opportunities, technology alliances, and marketplace dynamics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/engagement', requireAuth, async (req: AuthRequest, res) => {
+  const { company, painPoints, budget } = req.body;
+  const prompt = `You are an HR and organizational culture expert. Create an employee engagement plan for ${company} addressing pain points: ${painPoints} with ${budget} budget. Cover recognition programs, career development paths, manager effectiveness, and measurement frameworks.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/demo-script', requireAuth, async (req: AuthRequest, res) => {
+  const { product, buyerPersona, useCase } = req.body;
+  const prompt = `You are a sales engineering expert. Build a compelling product demo script for ${product} for ${buyerPersona} focusing on use case: ${useCase}. Cover discovery questions, demo flow, live proof points, objection handling moments, and clear call-to-action.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/automation-finder', requireAuth, async (req: AuthRequest, res) => {
+  const { department, processes, toolStack } = req.body;
+  const prompt = `You are a business process automation expert. Identify automation opportunities in ${department} with processes: ${processes} using tool stack: ${toolStack}. Prioritize by ROI, assess implementation complexity, and create an automation roadmap with quick wins.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
