@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v590.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v591.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199637,6 +199637,66 @@ app.post('/api/strategy/flywheel', requireAuth, async (req: AuthRequest, res) =>
 app.post('/api/meta/forge-builder', requireAuth, async (req: AuthRequest, res) => {
   const { tool, problem, users } = req.body;
   const prompt = `You are a product and platform strategy expert specializing in AI-powered tool platforms. Design the strategy for building ${tool} tool in Forge to solve ${problem} for ${users} users. Cover the tool design principles for AI-powered tools, the prompt engineering strategy for expert-level output, the user input design to minimize friction, the output format optimization, the tool differentiation strategy, the use case mapping and persona design, the monetization approach for individual tools, the viral and sharing mechanics for tool outputs, how to measure tool adoption and value delivery, and the long-term platform strategy for building a library of expert-grade AI tools that make professionals dramatically more productive.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/contract-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, volume, type } = req.body;
+  const prompt = `You are a contract operations and CLM strategy expert. Build the contract operations program for ${company} handling ${volume} contracts of ${type} type. Cover the contract lifecycle management process design, the contract template and playbook library, the approval workflow and authority matrix, the contract management technology selection, the contract data extraction and analytics, the obligation tracking and compliance monitoring, the contract renewal management program, the contract risk scoring methodology, and how to measure contract operations efficiency and business impact.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/growth-experiment', requireAuth, async (req: AuthRequest, res) => {
+  const { metric, hypothesis, audience } = req.body;
+  const prompt = `You are a growth experimentation and A/B testing expert. Design the growth experiment for ${metric} metric testing ${hypothesis} with ${audience} audience. Cover the experiment hypothesis formulation framework, the sample size calculation and statistical power, the experiment design for A/B and multivariate tests, the holdout group design, the metric selection and guardrail metrics, the experiment duration determination, the statistical significance and practical significance distinction, the experiment analysis methodology, the experiment documentation and learnings repository, and how to build a high-velocity experimentation culture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/debt-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, purpose, structure } = req.body;
+  const prompt = `You are a corporate finance and debt capital markets expert. Design the debt strategy for ${company} using debt for ${purpose} with ${structure} preferred structure. Cover the debt vs. equity capital decision framework, the debt instrument taxonomy, the lender relationship management, the covenant negotiation strategy, the debt capacity analysis, the debt maturity management and refinancing strategy, the interest rate risk management, the debt structure optimization for the business model, the rating agency management strategy, and how to build a sustainable capital structure over the business lifecycle.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/secops', requireAuth, async (req: AuthRequest, res) => {
+  const { org, maturity, threats } = req.body;
+  const prompt = `You are a security operations and threat intelligence expert. Build the security operations capability for ${org} at ${maturity} maturity level against ${threats} threat landscape. Cover the SOC design and staffing model, the threat intelligence program, the security monitoring and detection architecture, the incident response playbook, the vulnerability management process, the threat hunting program, the security automation and SOAR design, the metrics and KPI framework for security operations, the vendor management for security tooling, and the continuous improvement program for security operations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/workplace', requireAuth, async (req: AuthRequest, res) => {
+  const { company, model, outcome } = req.body;
+  const prompt = `You are a workplace strategy and employee experience design expert. Design the workplace experience for ${company} with ${model} work model to achieve ${outcome}. Cover the workplace strategy vision and principles, the space design for different work modes, the hybrid work protocol design, the technology stack for workplace experience, the neighborhood and team zone design, the wellness and amenity strategy, the commute and mobility program, the workplace data and utilization analytics, the change management for workplace transformation, and how to measure workplace experience impact on productivity and engagement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-story', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, origin, customer } = req.body;
+  const prompt = `You are a brand storytelling and narrative strategy expert. Build the brand story for ${brand} using ${origin} origin story for ${customer} customer. Cover the hero journey applied to brand storytelling, the founder story extraction and crafting, the customer transformation story framework, the brand purpose articulation, the brand conflict and tension design, the brand story for different audiences and contexts, the content series design around the brand story, the employee as brand storyteller activation, the brand story measurement framework, and how to evolve the brand story as the company grows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/churn-prevention', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, signal } = req.body;
+  const prompt = `You are a customer retention and churn prevention strategy expert. Build the churn prevention engine for ${product} targeting ${segment} segment using ${signal} early warning signal. Cover the churn definition and measurement framework, the churn prediction model design, the health score methodology, the early warning signal identification and monitoring, the proactive intervention playbook by churn risk level, the save motion design for at-risk accounts, the win-back program for churned customers, the churn root cause analysis methodology, the customer success capacity model aligned to churn risk, and how to make churn prevention a company-wide priority not just a CS responsibility.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/social-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, platforms, goals } = req.body;
+  const prompt = `You are a social media strategy and community building expert. Build the social media strategy for ${brand} on ${platforms} to achieve ${goals}. Cover the platform selection rationale, the content strategy by platform, the posting cadence and scheduling, the community management protocols, the creator and influencer partnership strategy, the paid social amplification framework, the social listening and brand monitoring setup, the crisis communication protocols for social media, the social media measurement framework, and how to build a distinctive brand voice and community that drives business results.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/tech-debt-registry', requireAuth, async (req: AuthRequest, res) => {
+  const { codebase, team, sprint } = req.body;
+  const prompt = `You are a software engineering and technical debt management expert. Build the tech debt registry for ${codebase} codebase managed by ${team} team allocating ${sprint} per sprint to debt reduction. Cover the tech debt identification and categorization methodology, the tech debt scoring model, the registry design and tooling, the prioritization framework for debt reduction, the tech debt visualization and reporting, the developer workflow integration for ongoing debt tracking, the principal and interest mental model for communicating debt, the business case for tech debt reduction, the dedicated capacity allocation model, and how to prevent new debt from accumulating while paying down existing debt.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/product-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { team, process, tools } = req.body;
+  const prompt = `You are a product operations and product management excellence expert. Build the product operations function for ${team} team optimizing ${process} processes with ${tools} tooling. Cover the product operations charter, the product data and analytics infrastructure, the product process standardization, the roadmap management and communication system, the release management process, the customer feedback collection and routing system, the competitive intelligence program, the product team onboarding and enablement program, the product health dashboard design, and how to measure product operations impact on team velocity and product quality.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
