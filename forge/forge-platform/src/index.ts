@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v777.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v778.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210857,6 +210857,66 @@ app.post('/api/personal/spirituality', requireAuth, async (req: AuthRequest, res
 app.post('/api/personal/retirement', requireAuth, async (req: AuthRequest, res) => {
   const { person, timeline, lifestyle } = req.body;
   const prompt = `You are a retirement planning strategy and financial security expert. Design retirement planning strategy for ${person} retiring in ${timeline} with ${lifestyle}. Cover retirement planning framework, retirement income needs and analysis, Social Security optimization, retirement account strategy and distribution, Medicare and healthcare planning, portfolio construction for retirement, sequence of returns risk, tax-efficient withdrawal strategy, estate planning and legacy, and how to build retirement planning programs that achieve the retirement security and the lifestyle maintenance and the legacy planning that effective retirement requires by calculating the retirement income need with the inflation-adjusted expense projection and the longevity scenario and the Monte Carlo simulation that tests the portfolio sustainability across the range of market and longevity outcomes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fnb/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are a food and beverage strategy and consumer products expert. Design food and beverage strategy for ${company} with ${product} in ${market}. Cover food and beverage strategy framework, product development and innovation, brand positioning and packaging, distribution and channel strategy, retail and foodservice go-to-market, food safety and quality, regulatory and labeling compliance, pricing and margin management, consumer trend and insight, and how to build food and beverage strategy programs that achieve the distribution gain and the trial and repeat and the brand equity that successful food and beverage products require by developing the product with the consumer insight and the sensory validation and the business case that confirms the product addresses the genuine consumer need with the differentiated taste and the compelling value proposition.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fnb/restaurant', requireAuth, async (req: AuthRequest, res) => {
+  const { operator, concept, market } = req.body;
+  const prompt = `You are a restaurant management strategy and hospitality operations expert. Design restaurant management strategy for ${operator} running ${concept} in ${market}. Cover restaurant management framework, menu design and engineering, kitchen operations and efficiency, front of house service and training, labor scheduling and cost control, food cost and inventory management, restaurant marketing and loyalty, guest experience and reviews, multi-unit and franchise, and how to build restaurant management programs that achieve the guest satisfaction and the labor efficiency and the food cost control that profitable restaurant operations require by engineering the menu with the contribution margin analysis and the category balance and the recipe standardization that optimizes the mix of high-margin and high-velocity items.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fnb/foodscience', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, challenge } = req.body;
+  const prompt = `You are a food science strategy and product development expert. Design food science strategy for ${company} developing ${product} solving ${challenge}. Cover food science framework, ingredient functionality and formulation, food texture and structure, flavor development and masking, preservation and shelf life, food processing and manufacturing, nutritional optimization and health claims, clean label and natural formulation, food safety and microbiology, and how to build food science programs that achieve the sensory quality and the shelf stability and the clean label that consumer-preferred food products require by designing the formulation with the ingredient functionality understanding and the processing condition and the stability testing that delivers the target sensory profile and the desired shelf life.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fnb/nutrition', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, population, goals } = req.body;
+  const prompt = `You are a nutrition strategy and dietary science expert. Design nutrition strategy for ${organization} serving ${population} achieving ${goals}. Cover nutrition strategy framework, dietary guidelines and evidence base, macro and micronutrient needs, meal planning and menu design, behavior change and food environment, nutrition labeling and communication, special dietary needs, sports and performance nutrition, clinical nutrition and therapeutic diets, and how to build nutrition strategy programs that achieve the dietary quality improvement and the health outcome and the behavior change that effective nutrition intervention requires by designing the food environment with the healthy default and the choice architecture and the nutrition education that makes the healthier choice the easier choice for the population.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fnb/foodretail', requireAuth, async (req: AuthRequest, res) => {
+  const { retailer, format, shoppers } = req.body;
+  const prompt = `You are a food retail strategy and grocery industry expert. Design food retail strategy for ${retailer} with ${format} serving ${shoppers}. Cover food retail strategy framework, category management and assortment, private label and own brand, fresh department strategy, pricing and promotional strategy, store operations and labor, omnichannel and e-grocery, shopper marketing and loyalty, food retail technology, and how to build food retail strategy programs that achieve the basket size and the trip frequency and the market share that successful food retail requires by developing the category strategy with the shopper insight and the competitive price gap and the assortment architecture that delivers the shopper need and the retailer margin across the priority category.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fnb/cpg', requireAuth, async (req: AuthRequest, res) => {
+  const { company, brand, category } = req.body;
+  const prompt = `You are a consumer packaged goods strategy and brand management expert. Design CPG strategy for ${company} with ${brand} in ${category}. Cover CPG strategy framework, brand architecture and positioning, consumer insight and segmentation, innovation and renovation pipeline, retail execution and trade strategy, CPG pricing and revenue management, media and marketing mix, category development and shelf strategy, international expansion, and how to build CPG strategy programs that achieve the market share growth and the brand equity and the retail velocity that successful consumer brands require by developing the brand positioning with the functional and emotional benefit and the reason to believe and the purchase occasion that connects the brand to the consumer need state and the consumption moment in the category.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retail/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { retailer, format, market } = req.body;
+  const prompt = `You are a retail strategy and omnichannel commerce expert. Design retail strategy for ${retailer} with ${format} in ${market}. Cover retail strategy framework, customer experience and journey, assortment and merchandising, pricing and promotions, store network and format, omnichannel and digital commerce, loyalty and customer relationship, supply chain and inventory, retail technology and data, and how to build retail strategy programs that achieve the sales per square foot and the customer loyalty and the omnichannel integration that successful modern retail requires by designing the customer experience with the seamless online-to-offline integration and the personalization and the frictionless fulfillment that meets the omnichannel shopper wherever they want to buy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retail/ecommerce', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, customers } = req.body;
+  const prompt = `You are an e-commerce strategy and digital retail expert. Design e-commerce strategy for ${company} selling ${products} to ${customers}. Cover e-commerce strategy framework, e-commerce platform and technology, product catalog and content, customer acquisition and paid media, conversion rate optimization, email and retention marketing, fulfillment and logistics, customer service and returns, marketplace and multi-channel, and how to build e-commerce strategy programs that achieve the revenue growth and the customer acquisition efficiency and the retention rate that profitable e-commerce requires by optimizing the conversion funnel with the product page and the checkout experience and the trust signal that removes the purchase friction and converts the site visitor to the buyer and the first-time buyer to the loyal repeat customer.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retail/luxury', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, category, market } = req.body;
+  const prompt = `You are a luxury brand strategy and premium positioning expert. Design luxury brand strategy for ${brand} in ${category} for ${market}. Cover luxury brand strategy framework, heritage and craftsmanship narrative, exclusivity and desire creation, luxury distribution and retail experience, pricing and price architecture, luxury customer relationship, brand extension and diversification, digital luxury and social media, counterfeit protection and brand integrity, and how to build luxury brand strategy programs that achieve the brand desirability and the price premium and the customer loyalty that iconic luxury requires by managing the tension between the exclusivity that creates the desire and the accessibility that drives the revenue with the distribution control and the product tiering that maintains the brand dream while growing the business.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retail/fashion', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, category, customer } = req.body;
+  const prompt = `You are a fashion strategy and apparel industry expert. Design fashion strategy for ${brand} in ${category} for ${customer}. Cover fashion strategy framework, brand identity and aesthetic, collection development and trend, sourcing and production, fashion distribution and wholesale, direct to consumer and digital, fashion marketing and influencer, sustainability and circularity, fashion retail and merchandising, and how to build fashion strategy programs that achieve the brand relevance and the distribution growth and the sell-through rate that successful fashion requires by developing the collection with the trend intelligence and the brand DNA and the commercial editing that balances the fashion-forward statement with the core commercial product that delivers the revenue.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
