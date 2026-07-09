@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v439.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v440.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191284,6 +191284,59 @@ app.post('/api/product/mobile-design', requireAuth, async (req: AuthRequest, res
 app.post('/api/sales/customer-health', requireAuth, async (req: AuthRequest, res) => {
   const { metrics, segments, signals } = req.body;
   const prompt = `Build a customer health scoring system.\nMetrics available: ${metrics}\nCustomer segments: ${segments}\nChurn signals observed: ${signals}\nInclude: health score formula design (weighted metrics), leading vs. lagging indicator balance, red/yellow/green threshold definitions, segment-specific health models, early warning alert triggers, CS playbook per health tier, executive dashboard design, churn prediction model inputs, health score review cadence, and how to use health scores in renewal and expansion conversations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 299+300 routes — WAVE 300 MILESTONE
+app.post('/api/dev/serverless-design', requireAuth, async (req: AuthRequest, res) => {
+  const { useCase, provider, scale } = req.body;
+  const prompt = `Design a serverless architecture.\nUse case: ${useCase}\nCloud provider: ${provider}\nScale requirements: ${scale}\nInclude: function decomposition strategy, cold start mitigation techniques, event source design (HTTP/queue/schedule/stream), state management approach (DynamoDB/Step Functions), timeout and retry configuration, VPC connectivity for serverless, cost modeling (invocations × duration × memory), testing strategy for serverless, observability with distributed tracing, and when NOT to use serverless.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/deep-discovery', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, stage } = req.body;
+  const prompt = `Conduct a deep sales discovery.\nCompany: ${company}\nIndustry: ${industry}\nDeal stage: ${stage}\nProvide: situation questions to map current state, problem questions to surface pain, implication questions to amplify urgency, need-payoff questions to co-create the solution, organizational politics map, budget decision process, technical evaluation criteria, competitor footprint, multi-threaded engagement plan, and discovery summary template for internal handoff.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/growth-loops', requireAuth, async (req: AuthRequest, res) => {
+  const { product, acquisition, retention } = req.body;
+  const prompt = `Design product growth loops.\nProduct: ${product}\nAcquisition channel: ${acquisition}\nRetention driver: ${retention}\nInclude: growth loop anatomy (input→action→output→reinvestment), viral loop design (content/product/word-of-mouth), acquisition loop vs. engagement loop vs. monetization loop, compounding vs. linear growth comparison, loop velocity and conversion rate optimization, network effect identification, anti-loop failure modes, instrumentation plan to measure loop performance, and prioritization framework for which loop to strengthen first.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/podcast-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { niche, audience, goal } = req.body;
+  const prompt = `Build a podcast marketing strategy.\nNiche: ${niche}\nTarget audience: ${audience}\nGoal: ${goal}\nInclude: show format and positioning, episode cadence and length, guest selection criteria and outreach templates, distribution platform strategy, show notes and SEO optimization, promotional clip strategy for social, listener journey from pod to product, sponsorship model if applicable, growth tactics (cross-promotion/guesting/SEO), and ROI measurement for B2B podcast marketing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/culture-design', requireAuth, async (req: AuthRequest, res) => {
+  const { values, size, remote } = req.body;
+  const prompt = `Design organizational culture intentionally.\nCore values: ${values}\nOrg size: ${size}\nRemote/hybrid/office: ${remote}\nInclude: values operationalization (from words to behaviors), culture rituals and artifacts design, hiring for culture add (not culture fit), performance management alignment to values, culture decay warning signs, remote culture considerations, executive modeling requirements, new employee culture immersion plan, culture audit methodology, and how to evolve culture during hypergrowth without losing it.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/term-sheet-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { terms, stage, amount } = req.body;
+  const prompt = `Analyze a venture term sheet.\nKey terms: ${terms}\nFunding stage: ${stage}\nAmount: ${amount}\nProvide: clause-by-clause analysis, economic terms impact (valuation/dilution/option pool), control terms red flags (drag-along/protective provisions/information rights), liquidation preference modeling (participating vs. non-participating), anti-dilution scenario modeling (broad-based WA vs. ratchet), negotiation priorities ranked by founder impact, market standard comparison, and specific language to push back on.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/data-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  const { sources, transforms, destinations } = req.body;
+  const prompt = `Design a data pipeline architecture.\nData sources: ${sources}\nTransformations needed: ${transforms}\nDestinations: ${destinations}\nInclude: ingestion pattern (batch/streaming/micro-batch), pipeline orchestration tool selection (Airflow/Prefect/Dagster), transformation layer design (dbt/Spark/SQL), schema evolution strategy, data quality checks and validation, lineage tracking, error handling and dead letter queues, monitoring and alerting, cost optimization for data movement, and data freshness SLA design.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/demand-generation', requireAuth, async (req: AuthRequest, res) => {
+  const { icp, budget, channels } = req.body;
+  const prompt = `Build a demand generation engine.\nIdeal customer profile: ${icp}\nBudget: ${budget}\nChannels: ${channels}\nInclude: demand gen vs. lead gen philosophy, content-led demand creation, channel mix and budget allocation, MQL definition and scoring model, nurture track design, sales and marketing SLA, account-based marketing (ABM) overlay, intent data integration, pipeline attribution model, and how to build a demand gen machine that scales with the business.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/wave300-milestone', requireAuth, async (req: AuthRequest, res) => {
+  const { vision, achievements, next } = req.body;
+  const prompt = `Create a milestone reflection and forward vision.\nProduct vision: ${vision}\nKey achievements: ${achievements}\nNext phase goals: ${next}\nGenerate: a compelling milestone narrative celebrating progress, key metrics and outcomes summary, lessons learned from the journey, what the product has become vs. original vision, the next 10x opportunity, team recognition framework, investor/stakeholder update language, and an energizing vision statement for the next chapter. This is Wave 300 — a major milestone worth celebrating and documenting.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/revops-blueprint', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, team, tools } = req.body;
+  const prompt = `Design a Revenue Operations blueprint.\nCompany stage: ${stage}\nGTM team size: ${team}\nCurrent tools: ${tools}\nInclude: RevOps org design (centralized vs. embedded), tech stack rationalization and integration architecture, lead routing and assignment rules, deal desk and approval workflow design, revenue reporting and forecasting infrastructure, quota setting methodology, territory planning process, commission plan administration, CRM data hygiene standards, and RevOps OKRs to measure the function's impact on revenue velocity.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
