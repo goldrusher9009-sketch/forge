@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v568.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v569.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198317,6 +198317,66 @@ app.post('/api/engineering/analytics-stack', requireAuth, async (req: AuthReques
 app.post('/api/growth/model', requireAuth, async (req: AuthRequest, res) => {
   const { product, channels, unit } = req.body;
   const prompt = `You are a growth modeling and strategy expert. Build a growth model for ${product} with ${channels} acquisition channels and ${unit} unit economics. Design the full growth model: top-of-funnel (awareness, traffic, leads), conversion funnel (activation, engagement, monetization), retention model (cohort analysis, churn), expansion model (NRR, upsell), and viral coefficient. Connect each lever to revenue, identify the highest-leverage growth opportunities, and build scenarios showing what 2x/5x growth requires across each lever.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/roadmap-presentation', requireAuth, async (req: AuthRequest, res) => {
+  const { product, audience, horizon } = req.body;
+  const prompt = `You are a product roadmap communication expert. Build a compelling roadmap presentation for ${product} for ${audience} audience over ${horizon} horizon. Cover how to structure the roadmap narrative (problems being solved, not just features), choosing the right roadmap format (now/next/later, theme-based, timeline), how to handle the feature request trap, communicating what is NOT on the roadmap and why, managing stakeholder expectations, how to present confidently without over-committing, and the quarterly roadmap review process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/planning', requireAuth, async (req: AuthRequest, res) => {
+  const { team, quarter, capacity } = req.body;
+  const prompt = `You are an engineering planning and delivery expert. Facilitate quarterly engineering planning for ${team} for ${quarter} with ${capacity} capacity. Cover the planning process: review previous quarter learnings, capacity calculation (headcount × focus factor), roadmap input from product, tech debt and infrastructure allocation, dependency identification and risk assessment, sprint breakdown and milestone definition, how to build in buffer for uncertainty, and how to run the planning meeting to get alignment and ownership from the team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/integration', requireAuth, async (req: AuthRequest, res) => {
+  const { product, aiFeature, stack } = req.body;
+  const prompt = `You are an AI product integration expert. Design the AI integration architecture for ${product} adding ${aiFeature} feature on ${stack} tech stack. Cover LLM selection and evaluation criteria, prompt design and versioning, latency and cost optimization (caching, model routing), streaming vs. batch response design, fallback and degradation strategy, evaluation framework (accuracy, latency, cost, user satisfaction), data privacy and PII handling, and how to iterate the AI feature post-launch using real usage data.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ux/information-arch', requireAuth, async (req: AuthRequest, res) => {
+  const { product, content, users } = req.body;
+  const prompt = `You are a UX and information architecture expert. Design the information architecture for ${product} organizing ${content} for ${users}. Apply card sorting methodology, tree testing to validate navigation, design the sitemap and content hierarchy, navigation model selection (flat vs. deep, hub-and-spoke), search and filter design, labeling and taxonomy, how to handle content growth over time, and how to test and iterate the IA with real users.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/quality-metrics', requireAuth, async (req: AuthRequest, res) => {
+  const { product, team, goals } = req.body;
+  const prompt = `You are a software quality engineering expert. Design a quality metrics dashboard for ${product} with ${team} team targeting ${goals}. Define metrics across: reliability (uptime, error rates, MTTR), performance (p50/p95/p99 latency, throughput), code quality (test coverage, tech debt ratio, code complexity), deployment health (deployment frequency, change failure rate, lead time), and customer quality (bug escape rate, customer-reported issues). Build the dashboard, alerting thresholds, and quality review cadence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/copy-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, voice, flows } = req.body;
+  const prompt = `You are a product copywriting and UX writing expert. Design a product copy strategy for ${product} with ${voice} brand voice across ${flows} user flows. Cover copy hierarchy (headlines, subheads, CTAs, body), microcopy patterns for each UI component type, empty state and error message templates, onboarding copy progression, copy localization considerations, A/B testing copy hypotheses, how to build a copy review process, and a copy audit methodology to find and fix inconsistencies across the product.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ux/experience-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { product, userGoals, principles } = req.body;
+  const prompt = `You are a product experience and interaction design expert. Design the product experience architecture for ${product} serving ${userGoals} user goals guided by ${principles}. Define the experience principles in action (with examples of what they mean and dont mean), design the core experience patterns (how we handle data entry, selection, feedback, progression), create the interaction model (direct manipulation vs. form-based vs. conversational), and how to evaluate experience quality through usability testing, satisfaction metrics, and design reviews.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/trust-safety', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, contentTypes, scale } = req.body;
+  const prompt = `You are a trust and safety product expert. Build a trust and safety framework for ${platform} handling ${contentTypes} at ${scale}. Cover policy framework (community guidelines, terms of service), detection systems (automated content moderation, signals and classifiers), review queue and human review process, enforcement taxonomy (warning, removal, suspension, termination), appeals process, transparency reporting, proactive safety features, law enforcement response process, and how to balance user safety with free expression and privacy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/kpis', requireAuth, async (req: AuthRequest, res) => {
+  const { team, goals, cadence } = req.body;
+  const prompt = `You are an engineering metrics and DORA expert. Design an engineering KPI system for ${team} supporting ${goals} on ${cadence} review cadence. Cover the four DORA metrics (deployment frequency, lead time for changes, change failure rate, MTTR), developer experience metrics (developer NPS, meeting load, context-switching), product quality metrics (defect escape rate, customer-reported bugs), operational metrics (on-call load, alert fatigue), and how to use the metrics to run effective engineering reviews without creating perverse incentives.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/roadmap-process', requireAuth, async (req: AuthRequest, res) => {
+  const { company, inputs, cadence } = req.body;
+  const prompt = `You are a product planning and roadmap management expert. Design a roadmap process for ${company} incorporating ${inputs} input sources on ${cadence} planning cadence. Cover the annual planning process (strategy to roadmap), quarterly roadmap refinement, how to handle inbound requests (feature requests, sales asks, leadership asks), prioritization framework selection (RICE, ICE, value vs. effort), how to communicate roadmap decisions and trade-offs, the discovery process that feeds the roadmap, and how to maintain roadmap discipline under pressure.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
