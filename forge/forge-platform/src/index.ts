@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v684.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v685.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205277,6 +205277,66 @@ app.post('/api/strategy/nanotechnology', requireAuth, async (req: AuthRequest, r
 app.post('/api/strategy/automotive', requireAuth, async (req: AuthRequest, res) => {
   const { company, segment, transition } = req.body;
   const prompt = `You are an automotive strategy and mobility transformation expert. Design automotive strategy for ${company} in ${segment} through ${transition}. Cover automotive strategy framework, electrification strategy and EV transition, software-defined vehicle architecture, autonomous driving capability development, mobility services and fleet business models, supply chain for electrification and chips, OEM and supplier relationship transformation, connected vehicle and data monetization, regulatory and policy landscape for EVs, and how to navigate the automotive industry transformation from internal combustion to electric and software-defined vehicles by making the technology investments, capability acquisitions, and business model adaptations needed to compete in both the current ICE business and the emerging EV and software business while managing the financial and operational complexity of running both simultaneously.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/blockchain-biz', requireAuth, async (req: AuthRequest, res) => {
+  const { company, usecase, stakeholders } = req.body;
+  const prompt = `You are a blockchain business strategy and distributed ledger expert. Design blockchain strategy for ${company} in ${usecase} with ${stakeholders}. Cover blockchain business framework, public vs private vs consortium blockchain selection, smart contract design and governance, tokenomics and token design, decentralized identity and credentialing, supply chain traceability on blockchain, DeFi and financial services applications, NFT and digital asset strategy, blockchain interoperability, and how to evaluate whether blockchain technology genuinely solves a specific business problem better than a conventional database or system of record by assessing whether the use case actually requires the decentralization, immutability, or trustless coordination properties that blockchain uniquely provides rather than being a solution looking for a problem.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, current, vision } = req.body;
+  const prompt = `You are a digital transformation strategy and organizational change expert. Design digital transformation for ${organization} from ${current} toward ${vision}. Cover digital transformation framework, digital maturity assessment, transformation roadmap and sequencing, customer experience digitization, operational process digitization, data and analytics capability building, technology modernization and cloud migration, digital talent and culture change, transformation governance and investment, and how to lead digital transformations that deliver genuine business outcomes rather than technology installations by keeping the focus on the customer experiences and operational capabilities that the transformation is meant to improve, and measuring success by business metrics rather than technology deployment milestones.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/energy-transition', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, energy, timeline } = req.body;
+  const prompt = `You are an energy transition strategy and decarbonization expert. Design energy transition for ${organization} using ${energy} over ${timeline}. Cover energy transition framework, carbon footprint baseline and target setting, renewable energy procurement and PPA, energy efficiency and demand management, electrification of heat and transportation, green hydrogen strategy, scope 3 emissions reduction, carbon offsets and removal, energy transition financing and incentives, and how to design energy transition strategies that credibly reduce emissions on a timeline aligned with Paris Agreement goals by prioritizing the highest-impact decarbonization actions for the specific business model and energy profile rather than pursuing generic sustainability initiatives that look good but do not meaningfully reduce the organization carbon footprint.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/workflow-automation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, processes, tools } = req.body;
+  const prompt = `You are a workflow automation strategy and process excellence expert. Design workflow automation for ${organization} in ${processes} using ${tools}. Cover workflow automation framework, process discovery and documentation, automation opportunity assessment and prioritization, RPA and intelligent automation, low-code and no-code automation platforms, human-in-the-loop design, automation governance and control, change management for automation, automation center of excellence, and how to build workflow automation capabilities that deliver meaningful productivity improvements and error reduction by selecting the right automation approach for each process type, ensuring adequate human oversight where judgment is required, and managing the organizational change needed to realize the full benefit when automated processes free employees from manual work.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/cost-optimization', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, cost, targets } = req.body;
+  const prompt = `You are a cost optimization strategy and value engineering expert. Design cost optimization for ${organization} with ${cost} toward ${targets}. Cover cost optimization framework, cost baseline and benchmarking, zero-based budgeting methodology, cost reduction opportunity identification, complexity reduction and simplification, procurement and vendor optimization, real estate and facilities optimization, workforce and organizational efficiency, technology cost optimization, and how to design cost optimization programs that deliver sustainable savings by addressing the underlying cost drivers rather than implementing across-the-board cuts that reduce costs temporarily while damaging the capabilities and investments that are needed for the business to compete and grow.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/mobility', requireAuth, async (req: AuthRequest, res) => {
+  const { company, modes, cities } = req.body;
+  const prompt = `You are a mobility strategy and transportation innovation expert. Design mobility strategy for ${company} in ${modes} across ${cities}. Cover mobility strategy framework, multimodal transportation integration, shared mobility and ride-hailing, electric vehicle integration, autonomous vehicle deployment, mobility as a service platform design, urban mobility data and analytics, regulatory environment for mobility, partnership with transit authorities, and how to develop mobility strategies that improve access and reduce congestion and emissions in cities by integrating multiple transportation modes into seamless multimodal journeys that are convenient enough and affordable enough to attract users away from private car dependence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/telehealth', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, services, patients } = req.body;
+  const prompt = `You are a telehealth strategy and virtual care expert. Design telehealth strategy for ${organization} offering ${services} to ${patients}. Cover telehealth strategy framework, virtual care modality selection, platform and technology selection, clinical workflow integration, licensing and credentialing for telehealth, payer reimbursement strategy, patient onboarding and adoption, remote monitoring and RPM integration, hybrid care model design, and how to develop telehealth strategies that extend access to care, improve convenience for patients, and reduce cost of care delivery by identifying the clinical services and patient populations where virtual care can match or exceed the quality of in-person care rather than applying virtual care indiscriminately where it cannot serve patients as well.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-personalization', requireAuth, async (req: AuthRequest, res) => {
+  const { company, users, channels } = req.body;
+  const prompt = `You are an AI personalization strategy and recommendation systems expert. Design AI personalization for ${company} serving ${users} across ${channels}. Cover AI personalization framework, user data and behavioral signal capture, collaborative and content-based filtering, contextual and real-time personalization, personalization across the customer journey, cold start and exploration vs exploitation, privacy-preserving personalization, personalization measurement and uplift testing, editorial and human-in-the-loop curation, and how to build AI personalization systems that genuinely improve user experience and business outcomes by surfacing the most relevant content, products, and experiences for each user based on what they actually prefer rather than creating filter bubbles or exploiting behavioral patterns in ways that generate short-term engagement at the cost of user trust and long-term relationship.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/legislative-advocacy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, issue, targets } = req.body;
+  const prompt = `You are a legislative advocacy strategy and government affairs expert. Design legislative advocacy for ${organization} on ${issue} with ${targets}. Cover legislative advocacy framework, policy landscape analysis, stakeholder coalition building, legislative strategy and bill drafting, regulatory comment and engagement, grassroots and grasstops mobilization, political intelligence and relationship management, advocacy communication and messaging, lobbying compliance and disclosure, and how to design legislative advocacy programs that shape policy outcomes in favor of the organization mission by building genuine relationships with legislators and their staffs, marshaling credible evidence and compelling stories, and assembling broad coalitions of allies who can demonstrate that the policy position reflects the interests of more than just one organization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-privacy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, data, jurisdictions } = req.body;
+  const prompt = `You are a data privacy strategy and compliance expert. Design data privacy strategy for ${organization} handling ${data} in ${jurisdictions}. Cover data privacy framework, privacy by design principles, GDPR and CCPA and global privacy law compliance, data mapping and records of processing, consent management and preference centers, data subject rights and request management, privacy impact assessment, vendor and third-party privacy governance, privacy training and culture, and how to build data privacy programs that go beyond compliance checkbox exercises to genuinely respect user privacy by minimizing data collection to what is necessary, using data only for purposes users would expect and consent to, and building the data governance infrastructure that makes privacy commitments operationally real rather than aspirational.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
