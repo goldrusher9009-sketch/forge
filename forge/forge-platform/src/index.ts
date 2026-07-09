@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v693.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v694.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205817,6 +205817,66 @@ app.post('/api/strategy/environmental', requireAuth, async (req: AuthRequest, re
 app.post('/api/finance/venture-capital', requireAuth, async (req: AuthRequest, res) => {
   const { fund, thesis, stage } = req.body;
   const prompt = `You are a venture capital strategy and early stage investment expert. Design venture capital for ${fund} with ${thesis} investing at ${stage}. Cover venture capital framework, fund strategy and portfolio construction, deal sourcing and network development, term sheet and deal structuring, founder assessment and team evaluation, market sizing and venture scale analysis, board management and portfolio company support, follow-on investment and reserve management, fund economics and LP reporting, and how to build venture capital investment practices that generate strong returns by developing genuine pattern recognition about what makes companies succeed in specific sectors, building the founder network that generates access to the best deals before they are widely marketed, and adding value to portfolio companies through the network connections, recruiting help, and strategic guidance that justify the board seat and justify founders choosing one investor over another when the terms are similar.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/channel-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, channels } = req.body;
+  const prompt = `You are a channel strategy and distribution management expert. Design channel strategy for ${company} with ${product} across ${channels}. Cover channel strategy framework, channel economics and margin structure, direct versus indirect channel decision, channel partner selection and recruitment, channel conflict management, dealer and distributor enablement, e-commerce and direct-to-consumer integration, channel performance management and incentives, international channel strategy, and how to design channel strategies that maximize market coverage and revenue at acceptable cost by choosing channels that are genuinely efficient at reaching target customers, building partner relationships where the economics work for both parties, and managing channel conflict in ways that protect the overall business rather than letting channel conflicts go unaddressed until they damage both partner relationships and direct sales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/media-buying', requireAuth, async (req: AuthRequest, res) => {
+  const { advertiser, budget, audience } = req.body;
+  const prompt = `You are a media buying strategy and paid media management expert. Design media buying for ${advertiser} with ${budget} targeting ${audience}. Cover media buying framework, media planning and channel allocation, programmatic versus direct buying, audience targeting and segmentation, bid strategy and campaign optimization, creative testing and ad format selection, attribution modeling and measurement, brand safety and fraud prevention, media mix modeling, and how to build media buying programs that deliver the target audience reach and frequency at the lowest cost per quality impression by combining the scale of programmatic with the precision of direct placements, investing in creative quality that makes paid placements actually effective at changing brand perception and driving conversion, and measuring outcomes in terms of business results rather than media metrics that can be gamed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ethical-supply-chain', requireAuth, async (req: AuthRequest, res) => {
+  const { company, suppliers, standards } = req.body;
+  const prompt = `You are an ethical supply chain strategy and responsible sourcing expert. Design ethical supply chain for ${company} with ${suppliers} to ${standards}. Cover ethical supply chain framework, supplier code of conduct and standards, supplier audit and assessment methodology, labor rights and working conditions monitoring, environmental standards in supply chain, conflict minerals and raw material traceability, supplier capacity building and improvement, ethical sourcing communications and transparency, grievance mechanisms and remediation, and how to build ethical supply chain programs that produce genuine improvement in labor and environmental conditions in supply chains rather than creating audit and certification systems that give large companies cover while suppliers continue violating standards because the auditing methodology is easy to game and the commercial incentives that drive poor conditions are never addressed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/iot-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, devices, application } = req.body;
+  const prompt = `You are an IoT strategy and connected device architecture expert. Design IoT strategy for ${company} with ${devices} for ${application}. Cover IoT strategy framework, IoT architecture and connectivity protocols, edge computing versus cloud processing, IoT platform selection and integration, device security and firmware management, data collection and processing pipeline, predictive maintenance and anomaly detection, digital twin design, IoT business model and monetization, and how to design IoT systems that deliver genuine operational value by starting with the specific operational decisions the sensor data is meant to improve, designing data collection and processing to support those decisions reliably, and building security into IoT systems from the start rather than bolting it on after deployment when the cost and difficulty of securing millions of deployed devices is far greater.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/capital-markets', requireAuth, async (req: AuthRequest, res) => {
+  const { company, instrument, market } = req.body;
+  const prompt = `You are a capital markets strategy and corporate finance expert. Design capital markets strategy for ${company} using ${instrument} in ${market}. Cover capital markets framework, capital structure optimization, equity capital markets and IPO process, debt capital markets and credit strategy, rating agency management, investor relations and equity story, convertible and hybrid securities, private placements and alternative capital, market timing and capital raising execution, and how to build capital markets strategies that access capital efficiently by maintaining the financial credibility and operational transparency that allow companies to access debt and equity capital at attractive terms, timing capital raises to market conditions without creating dependency on short windows of favorable market sentiment, and choosing capital structures that match the risk profile of the business rather than maximizing leverage to boost near-term returns at the cost of financial fragility.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/behavior-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, behavior, users } = req.body;
+  const prompt = `You are a behavior design strategy and persuasive technology expert. Design behavior change for ${product} promoting ${behavior} with ${users}. Cover behavior design framework, BJ Fogg behavior model and motivation-ability-prompt, habit formation and cue-routine-reward loops, friction reduction and default design, social norms and social proof, commitment devices and implementation intentions, progress visualization and feedback loops, variable reward and engagement mechanics, ethical persuasion principles, and how to design products that genuinely help users achieve the behaviors they want for themselves rather than engineering engagement and habit formation that serves the product at the expense of user wellbeing, which requires being explicit about whose interests the behavior design serves and choosing persuasion techniques that are transparent and aligned with user goals rather than exploiting psychological vulnerabilities.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pharma-commercial', requireAuth, async (req: AuthRequest, res) => {
+  const { company, drug, indication } = req.body;
+  const prompt = `You are a pharmaceutical commercial strategy and drug launch expert. Design pharma commercial strategy for ${company} launching ${drug} in ${indication}. Cover pharma commercial framework, patient journey and treatment landscape analysis, physician segmentation and targeting, reimbursement and market access strategy, key account management for health systems, medical affairs and medical education, patient support programs and adherence, launch sequencing across geographies, commercial operations and CRM, and how to design pharmaceutical commercial strategies that drive appropriate utilization of medicines in the patients who will genuinely benefit by investing in the medical education and disease awareness that helps physicians identify the right patients, building patient support programs that improve adherence and outcomes, and working with payers to demonstrate the value of the medicine in terms that justify coverage rather than relying on volume incentives that drive inappropriate prescribing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/sports', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, sport, goals } = req.body;
+  const prompt = `You are a sports strategy and athletic organization management expert. Design sports strategy for ${organization} in ${sport} pursuing ${goals}. Cover sports strategy framework, talent identification and scouting systems, player development and coaching philosophy, performance science and sports analytics, contract strategy and roster construction, fan engagement and experience design, media rights and broadcast strategy, commercial partnerships and sponsorship, venue and facility strategy, and how to build sports organizations that win consistently and build strong fan loyalty by investing in the talent identification and development systems that generate competitive advantage, using data and analytics to make better decisions about player performance and game strategy, and building the organizational culture and systems that attract the coaches and players who will commit to a long-term approach rather than optimizing for short-term results.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/community-building', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, members, purpose } = req.body;
+  const prompt = `You are a community building strategy and engagement design expert. Design community for ${brand} with ${members} around ${purpose}. Cover community building framework, community purpose and value proposition definition, platform selection and technical infrastructure, onboarding and new member activation, content and programming strategy, community moderation and governance, super-user and ambassador programs, community metrics and health indicators, monetization and community sustainability, and how to build communities that generate genuine member value and brand loyalty by focusing on the connections and shared value that members get from each other rather than using community as a cheap marketing channel, investing in the moderation and programming that maintains community quality as it scales, and measuring community success in terms of member engagement and value rather than vanity metrics like member count.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/automation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, processes, workforce } = req.body;
+  const prompt = `You are an automation strategy and robotic process automation expert. Design automation strategy for ${company} automating ${processes} with ${workforce}. Cover automation strategy framework, process assessment and automation potential, RPA versus intelligent automation versus AI, build versus buy versus hyperscaler decision, automation ROI and business case development, process redesign before automation, change management and workforce transition, center of excellence and governance model, automation maintenance and lifecycle, and how to build automation strategies that deliver genuine productivity gains while managing the workforce impact responsibly by starting with the honest business case for automation including maintenance costs and exception handling, redesigning processes to be automation-friendly before automating, and investing in the workforce reskilling and transition support that allows employees whose work is automated to move to higher-value activities rather than simply using automation as a euphemism for workforce reduction.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
