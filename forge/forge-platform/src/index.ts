@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v585.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v586.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199337,6 +199337,66 @@ app.post('/api/strategy/brand-extension', requireAuth, async (req: AuthRequest, 
 app.post('/api/hr/learning-culture', requireAuth, async (req: AuthRequest, res) => {
   const { company, skill, cadence } = req.body;
   const prompt = `You are a learning and development strategy and organizational capability building expert. Design the learning culture for ${company} focused on ${skill} capability building at ${cadence} cadence. Cover the learning culture diagnostic (where is the company now — does it value learning?), the learning architecture design (formal learning, social learning, experiential learning — what mix?), the skills taxonomy and future-readiness assessment, the learning content strategy (build vs. buy vs. partner), the learning technology stack (LMS, content platforms, coaching tools), the manager role in learning (how to make managers learn-enablers not blockers), the measurement framework (learning → behavior change → business impact), how to create psychological safety for learning from failure, the cohort learning and peer learning program design, and how to sustain a learning culture as the company grows and faces execution pressure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/scalability', requireAuth, async (req: AuthRequest, res) => {
+  const { system, load, constraint } = req.body;
+  const prompt = `You are a distributed systems and scalability engineering expert. Design the scalability architecture for ${system} to handle ${load} with ${constraint} as the primary constraint. Cover the scalability dimensions (vertical vs. horizontal, stateless vs. stateful, read vs. write scaling), the load profile analysis (what are the traffic patterns, peaks, and growth projections?), the bottleneck identification methodology, the database scaling patterns (read replicas, sharding, caching layers, eventual consistency tradeoffs), the application tier scaling (stateless design, session management, connection pooling), the caching strategy (CDN, application cache, database cache — what to cache and for how long?), the message queue and async processing design, the auto-scaling configuration, the capacity planning methodology, and the load testing strategy to validate scalability before production.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/content-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { team, volume, channels } = req.body;
+  const prompt = `You are a content operations and content strategy execution expert. Build the content operations system for ${team} producing ${volume} content across ${channels} channels. Cover the content operations framework (strategy → creation → review → publishing → distribution → measurement), the editorial calendar design and governance, the content brief template that makes creation faster and more consistent, the review and approval workflow (who reviews what, how to avoid bottlenecks), the content asset management system (how to organize, find, and reuse content), the SEO integration into the content process (how to make SEO considerations part of creation, not an afterthought), the content distribution and amplification playbook, the content performance measurement framework (what to measure, when, and how to act on data), the content team structure and role definitions, and how to use AI to scale content production without sacrificing quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/cross-functional', requireAuth, async (req: AuthRequest, res) => {
+  const { teams, project, friction } = req.body;
+  const prompt = `You are an organizational effectiveness and cross-functional collaboration expert. Solve the cross-functional collaboration challenges between ${teams} on ${project} type projects with ${friction} as the main friction point. Cover the root causes of cross-functional friction (goal misalignment, unclear ownership, communication gaps, cultural differences), the RACI matrix design for cross-functional work, the cross-functional meeting structure (who attends what, what decisions are made where), the shared OKR design that creates natural alignment, the escalation path for cross-functional conflicts, how to build informal relationships that enable formal collaboration, the cross-functional communication norms (when to use Slack vs. email vs. document vs. meeting), how to create shared context across teams with different backgrounds, the DRI (directly responsible individual) model for cross-functional decisions, and how to measure and improve cross-functional collaboration health.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/digital-transform', requireAuth, async (req: AuthRequest, res) => {
+  const { company, function, barrier } = req.body;
+  const prompt = `You are a digital transformation strategy and change management expert. Lead the digital transformation for ${company} starting with ${function} function and overcoming ${barrier} as the primary barrier. Cover the digital transformation maturity assessment (where is the company now?), the vision and case for change (what does success look like in 3-5 years, and why does it matter?), the transformation roadmap design (quick wins vs. long-term capability building, sequencing logic), the technology architecture modernization strategy (legacy system migration, API-first design, cloud adoption), the data strategy for transformation (data as a strategic asset — how to build this capability?), the organizational capability building required (digital skills, ways of working, culture change), the change management approach for digital transformation (why most fail and how to be different), the governance model for transformation programs, and how to measure and communicate transformation progress.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-intel', requireAuth, async (req: AuthRequest, res) => {
+  const { market, competitors, cadence } = req.body;
+  const prompt = `You are a competitive intelligence and market intelligence expert. Build the market intelligence system for ${market} tracking ${competitors} competitors at ${cadence} cadence. Cover the intelligence requirements mapping (what decisions does the business need intelligence to make?), the competitor monitoring framework (what to track: strategy, product, pricing, marketing, hiring, financials, partnerships), the intelligence source portfolio (public sources: filings, press, job postings, patents; primary research: win/loss, customer intelligence; purchased data: analyst reports, data providers), the intelligence collection and curation workflow, the competitor battlecard design and maintenance process, the market signal detection methodology (how to spot important changes early), the intelligence distribution model (who gets what, in what format, how often), the win/loss analysis program design, and how to build competitive intelligence as an organizational capability rather than a one-time project.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ethical-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { company, growth, tension } = req.body;
+  const prompt = `You are a business ethics and sustainable growth strategy expert. Design the ethical growth framework for ${company} pursuing ${growth} growth while managing ${tension} ethical tension. Cover the ethical growth principles (growth that creates value for all stakeholders — customers, employees, communities, shareholders), the stakeholder value mapping (who benefits and who is harmed by current growth strategies?), the dark pattern audit (what growth tactics are manipulative, coercive, or deceptive?), the consent and autonomy framework (how to design products that respect user agency), the data ethics policy (collection minimization, purpose limitation, user control), the environmental impact accounting (how does growth affect carbon footprint and resource consumption?), the labor practices in the supply chain and gig economy, the community impact assessment, the board and investor reporting on ethical growth KPIs, and how to build a culture where ethical concerns about growth are raised and addressed rather than suppressed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/leadership/decisions', requireAuth, async (req: AuthRequest, res) => {
+  const { decision, stakes, uncertainty } = req.body;
+  const prompt = `You are a decision science and executive decision-making quality expert. Train decision-making quality for ${decision} type decisions with ${stakes} stakes under ${uncertainty} uncertainty. Cover the decision quality framework (framing → alternatives → information → values → reasoning → commitment), how to distinguish good process from good outcomes (resulting fallacy), the cognitive bias catalog most relevant to this type of decision (overconfidence, anchoring, availability, confirmation bias — and how to counter each), the pre-mortem technique for de-risking decisions, how to calibrate confidence and uncertainty (when to decide now vs. gather more information), the decision log design for organizational learning, how to design decision rights (who decides what, how to avoid decision gridlock), the reversible vs. irreversible decision framework (two-way vs. one-way doors), the dissent and red team process, and how to build a high-quality decision culture where bad process is called out even when outcomes are good.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/workflow-auto', requireAuth, async (req: AuthRequest, res) => {
+  const { workflow, tool, outcome } = req.body;
+  const prompt = `You are a business process automation and workflow design expert. Design the automation for ${workflow} workflow using ${tool} to achieve ${outcome}. Cover the automation readiness assessment (is the process stable, well-defined, and high-volume enough to justify automation?), the process mapping and documentation before automation (automate a well-designed process, not a broken one), the automation architecture design (which steps to automate, which to keep human, how to handle exceptions), the tool selection and integration design, the data flow and transformation design, the error handling and fallback procedures, the testing strategy for automated workflows, the rollout approach (parallel run vs. cutover), the monitoring and alerting design for automated workflows, how to measure automation ROI (time saved, error reduction, cost reduction), and the maintenance plan for keeping automations working as underlying systems change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/data-ethics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, data, risk } = req.body;
+  const prompt = `You are a data ethics, privacy, and responsible data use expert. Build the data ethics framework for ${company} using ${data} data with ${risk} ethical risk profile. Cover the data ethics principles (fairness, accountability, transparency, privacy, security, beneficence), the data lifecycle ethics (collection → storage → use → sharing → deletion), the algorithmic fairness framework (how to detect and mitigate bias in data-driven systems), the informed consent design (meaningful consent vs. consent theater), the data minimization principle and how to implement it, the data subject rights program (access, rectification, erasure, portability — how to operationalize them), the third-party data sharing ethics review process, the data ethics impact assessment for new products and features, how to build an internal data ethics review board, and how to communicate data ethics commitments credibly to customers and regulators.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { company, audience, moment } = req.body;
+  const prompt = `You are a strategic narrative and corporate storytelling expert. Craft the strategic narrative for ${company} for ${audience} at this ${moment} inflection point. Cover the strategic narrative architecture (why now → what we believe → what we are building → why we will win → what we need), the market framing strategy (how to define the category so you win), the villain and urgency creation (what is the enemy — the old way, the broken system, the missing solution), the hero positioning (who is the customer, what is their transformation?), the proof architecture (what evidence makes the narrative credible?), the narrative differentiation from competitor stories, how to embed the narrative across all communications (investor deck, sales pitch, recruiting, PR, all-hands), the narrative evolution strategy (how to update the story as the company grows), and how to test whether the narrative is landing with the target audience.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
