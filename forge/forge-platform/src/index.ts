@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v663.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v664.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204017,6 +204017,66 @@ app.post('/api/strategy/brand-strategy', requireAuth, async (req: AuthRequest, r
 app.post('/api/strategy/growth-marketing', requireAuth, async (req: AuthRequest, res) => {
   const { product, channel, stage } = req.body;
   const prompt = `You are a growth marketing strategy and customer acquisition expert. Design growth marketing for ${product} using ${channel} at ${stage}. Cover growth marketing framework, acquisition channel identification and testing, customer acquisition cost and payback period, channel attribution and measurement, content marketing and SEO, paid acquisition and performance marketing, viral and referral mechanics, retention marketing and lifecycle campaigns, growth marketing team and capability, and how to build growth marketing engines that find and scale the most efficient customer acquisition channels through systematic experimentation and data-driven optimization rather than brand intuition alone.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/channel-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, channels, customers } = req.body;
+  const prompt = `You are a distribution channel strategy and go-to-market expert. Design channel strategy for ${company} using ${channels} to reach ${customers}. Cover channel strategy framework, direct vs indirect channel tradeoffs, channel partner selection and criteria, channel economics and margin design, channel enablement and support, channel conflict management, digital and physical channel integration, channel performance measurement, channel optimization and evolution, and how to design distribution strategies that get products to customers in the most efficient and effective way while building channel relationships that create competitive advantage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/nps-system', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, goals } = req.body;
+  const prompt = `You are a Net Promoter System and customer loyalty expert. Design the NPS system for ${company} across ${segment} toward ${goals}. Cover NPS framework and methodology, transactional vs relational NPS, survey design and timing, closed-loop feedback process, inner loop and outer loop closing, root cause analysis from verbatims, NPS improvement roadmap, NPS governance and accountability, NPS integration with operations, and how to implement Net Promoter Systems that drive genuine loyalty improvement rather than gaming the metric by creating the closed-loop processes that translate customer feedback into operational changes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/product-led-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { product, motion, bottleneck } = req.body;
+  const prompt = `You are a product-led growth strategy and PLG execution expert. Design product-led growth for ${product} with ${motion} addressing ${bottleneck}. Cover PLG framework, free tier and trial design, activation and time-to-value optimization, product virality and sharing mechanics, usage-based expansion and account growth, PLG metrics and north star, self-serve revenue and conversion, PLG sales assist model, PLG infrastructure and data requirements, and how to build product-led growth motions where the product itself drives acquisition and conversion and expansion rather than relying primarily on sales and marketing to create growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/business-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, decisions, data } = req.body;
+  const prompt = `You are a business intelligence strategy and data-driven decision making expert. Design business intelligence for ${organization} supporting ${decisions} using ${data}. Cover BI framework and architecture, data warehouse and data mart design, KPI and metrics framework, dashboard and reporting design, self-service analytics and democratization, data quality and governance, BI tool selection and adoption, predictive analytics integration, BI roadmap and maturity model, and how to build business intelligence capabilities that genuinely change how decisions are made in the organization rather than producing reports that are glanced at and ignored.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/employer-branding', requireAuth, async (req: AuthRequest, res) => {
+  const { company, talent, differentiators } = req.body;
+  const prompt = `You are an employer brand strategy and talent attraction expert. Design employer branding for ${company} attracting ${talent} using ${differentiators}. Cover employer brand framework, employee value proposition development, employer brand research and insights, candidate persona development, employer brand content and storytelling, social media and digital presence, employee ambassador and referral programs, candidate experience design, employer brand measurement and tracking, and how to build employer brands that authentically communicate what makes working at an organization genuinely distinctive so that the right talent self-selects in while poor fits self-select out.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/sales-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, team, goals } = req.body;
+  const prompt = `You are a sales operations and sales effectiveness expert. Design sales operations for ${company} with ${team} toward ${goals}. Cover sales operations framework, sales process design and documentation, CRM strategy and data hygiene, sales territory and quota design, sales forecasting and pipeline management, sales metrics and dashboards, compensation and incentive plan design, sales enablement and training, sales technology stack optimization, and how to build sales operations capabilities that allow sales leaders to focus on coaching and strategy while operations handles the infrastructure and analytics that make the sales team more effective and predictable.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/competitive-int', requireAuth, async (req: AuthRequest, res) => {
+  const { company, competitors, dimensions } = req.body;
+  const prompt = `You are a competitive intelligence and market analysis expert. Analyze competitive landscape for ${company} against ${competitors} across ${dimensions}. Cover competitive intelligence framework, competitor profiling and monitoring, win-loss analysis and competitive patterns, product and feature comparison, pricing and commercial intelligence, strategic intent analysis, competitive response playbooks, competitive intelligence distribution, CI governance and ethics, and how to build competitive intelligence programs that give decision makers the timely and accurate information they need to make better strategic choices rather than being surprised by competitor moves.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/supplier-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, suppliers, categories } = req.body;
+  const prompt = `You are a supplier strategy and procurement excellence expert. Design supplier strategy for ${company} with ${suppliers} across ${categories}. Cover supplier strategy framework, supplier segmentation and tiering, strategic supplier relationship management, supplier development and capability building, dual sourcing and supply risk management, total cost of ownership analysis, supplier innovation and co-development, supplier sustainability and ESG, supplier performance management, and how to develop supplier strategies that go beyond transactional purchasing to create genuine competitive advantage through supplier relationships that give access to innovation and capabilities not available to competitors.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cx-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, touchpoints, standards } = req.body;
+  const prompt = `You are a customer experience design and service excellence expert. Design customer experience for ${company} across ${touchpoints} to ${standards}. Cover CX design framework, customer research and insight generation, experience principles and standards, service blueprint design, moment of truth design, employee experience and CX connection, CX measurement and voice of customer, CX governance and accountability, CX improvement prioritization, and how to design customer experiences that create genuine emotional connections and deliver on the brand promise consistently across every touchpoint in a way that builds loyalty and advocacy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/revenue-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { company, levers, horizon } = req.body;
+  const prompt = `You are a revenue growth strategy and commercial excellence expert. Design revenue growth for ${company} using ${levers} over ${horizon}. Cover revenue growth framework, organic vs inorganic growth paths, market penetration and share gain, market development and new segments, product development and portfolio expansion, pricing and revenue management, sales productivity and effectiveness, customer retention and expansion, revenue growth governance, and how to develop revenue growth strategies that combine the right mix of growth levers to achieve ambitious but achievable targets in a way that builds sustainable competitive advantage rather than growth that erodes profitability.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
