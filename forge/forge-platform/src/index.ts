@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v447.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v448.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191708,6 +191708,59 @@ app.post('/api/product/product-telemetry', requireAuth, async (req: AuthRequest,
 app.post('/api/sales/deal-profitability', requireAuth, async (req: AuthRequest, res) => {
   const { deal, costs, margin } = req.body;
   const prompt = `Analyze deal profitability.\nDeal details: ${deal}\nDeal costs: ${costs}\nTarget margin: ${margin}\nInclude: deal P&L structure (revenue/COGS/gross margin/S&M allocation/G&A allocation), customer-level profitability calculation, CAC payback period for this deal, LTV projection, implementation cost absorption analysis, professional services margin, discount impact modeling, minimum viable deal size recommendation, and how to improve deal economics through packaging, pricing, or implementation efficiency.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 315+316 routes
+app.post('/api/dev/cicd-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  const { stack, tests, deploy } = req.body;
+  const prompt = `Design a CI/CD pipeline architecture.\nTech stack: ${stack}\nTest suite: ${tests}\nDeployment target: ${deploy}\nInclude: pipeline stage design (build/test/security/deploy), branch strategy and trigger rules, parallel vs sequential test execution, artifact management, secret management in CI, environment promotion strategy (dev→staging→prod), rollback automation, pipeline-as-code best practices, caching strategy for faster builds, notification and alerting setup, and how to measure and improve pipeline speed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/champion-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { champion, situation, goal } = req.body;
+  const prompt = `Build a champion development plan.\nChampion profile: ${champion}\nDeal situation: ${situation}\nGoal: ${goal}\nInclude: champion vs. sponsor vs. coach distinction, champion assessment scoring, how to test if someone is actually a champion, tools to give your champion (internal pitch deck/ROI model/objection handling), how to coach your champion for internal selling, executive access strategy through the champion, what to do when your champion goes quiet, champion backup strategy, and how to turn a champion into a long-term customer advocate.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/adoption-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { segment, barriers, features } = req.body;
+  const prompt = `Create a product adoption playbook.\nUser segment: ${segment}\nAdoption barriers: ${barriers}\nKey features to drive: ${features}\nInclude: adoption funnel (aware→activated→habitual→advocate), barrier removal strategies, feature discovery design, habit loop design for core features, in-app guidance strategy, adoption milestone definition, CS and product hand-off model, power user identification and cultivation, adoption health scoring by segment, and how to use adoption data to prioritize the product roadmap.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/podcast-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, audience, format } = req.body;
+  const prompt = `Build a podcast strategy.\nBrand: ${brand}\nTarget audience: ${audience}\nPreferred format: ${format}\nInclude: show concept and positioning, episode format design (interview/solo/panel/narrative), publishing cadence recommendation, guest selection strategy and outreach templates, recording and production workflow, distribution platform strategy, show notes and SEO, cross-promotion and growth tactics, monetization options (sponsorship/paid community/lead gen), measurement framework, and how to align podcast content with demand generation goals.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/burnout-prevention', requireAuth, async (req: AuthRequest, res) => {
+  const { team, signals, culture } = req.body;
+  const prompt = `Design a burnout prevention strategy.\nTeam context: ${team}\nBurnout signals observed: ${signals}\nCurrent culture: ${culture}\nInclude: burnout vs. stress distinction and diagnostic framework, early warning signal detection system, manager conversation guide for at-risk employees, workload audit methodology, meeting load and focus time analysis, PTO utilization analysis and intervention, psychological safety measurement, role clarity and boundary-setting practices, recovery plan for already-burned-out employees, and culture changes that prevent burnout structurally.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/board-prep', requireAuth, async (req: AuthRequest, res) => {
+  const { company, quarter, decisions } = req.body;
+  const prompt = `Prepare for a board meeting.\nCompany: ${company}\nQuarter: ${quarter}\nDecisions needed: ${decisions}\nInclude: board package structure (executive summary/KPIs/financials/strategic update/decisions), how to present bad news without losing board confidence, metrics dashboard design, narrative arc for the board meeting, decision item framing (context/options/recommendation), pre-board read distribution and pre-work, managing difficult board members, how to use the board meeting vs. committee meetings, post-meeting follow-up and action tracking, and how to build a board that actually helps.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/observability-stack', requireAuth, async (req: AuthRequest, res) => {
+  const { services, sla, budget } = req.body;
+  const prompt = `Design an observability stack.\nServices: ${services}\nSLA requirements: ${sla}\nBudget constraints: ${budget}\nInclude: three pillars implementation (logs/metrics/traces), tool selection rationale (open source vs. managed), instrumentation strategy per service type, SLO/SLA/SLI definition framework, alerting philosophy (symptom vs. cause), on-call runbook structure, cardinality management for metrics, distributed tracing sampling strategy, cost optimization (log levels/sampling/retention), and how to build an error budget and use it for decision-making.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/abm-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { tier, accounts, channels } = req.body;
+  const prompt = `Build an Account-Based Marketing strategy.\nABM tier: ${tier}\nTarget accounts: ${accounts}\nAvailable channels: ${channels}\nInclude: tier 1/2/3 ABM model design, account selection and ICP scoring, account research and insight gathering, personalization strategy by tier, channel orchestration (ads/content/events/direct mail/SDR), content personalization at scale, intent data integration, sales and marketing alignment model, measurement framework (account engagement score/pipeline influence/revenue), and how to prove ABM ROI to leadership.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/onboarding-flow', requireAuth, async (req: AuthRequest, res) => {
+  const { persona, aha, steps } = req.body;
+  const prompt = `Design a product onboarding flow.\nUser persona: ${persona}\nAha moment: ${aha}\nCurrent steps: ${steps}\nInclude: time-to-value optimization strategy, job-to-be-done framework for onboarding, progressive disclosure design (don't overwhelm on day 1), checklist vs. guided tour vs. empty state design, activation milestone definition, email onboarding sequence integration, in-app messaging triggers, persona-specific onboarding paths, success metrics (D1/D7/D30 activation), and how to use onboarding data to identify and fix drop-off points.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/technical-win', requireAuth, async (req: AuthRequest, res) => {
+  const { product, competitor, objections } = req.body;
+  const prompt = `Create a technical win strategy.\nProduct: ${product}\nCompetitor: ${competitor}\nTechnical objections: ${objections}\nInclude: technical evaluation stage management, SE/presales strategy and discovery questions, POC/pilot design (scope/success criteria/timeline), competitive differentiation on technical dimensions, handling the "we built it ourselves" objection, security review and compliance acceleration, integration capability proof strategy, technical champion identification and cultivation, reference architecture documentation, and how to turn a technical win into a commercial win.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
