@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v691.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v692.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205697,6 +205697,66 @@ app.post('/api/strategy/compliance-program', requireAuth, async (req: AuthReques
 app.post('/api/strategy/tokenomics', requireAuth, async (req: AuthRequest, res) => {
   const { project, token, ecosystem } = req.body;
   const prompt = `You are a tokenomics design strategy and web3 economics expert. Design tokenomics for ${project} with ${token} in ${ecosystem}. Cover tokenomics framework, token utility and value accrual mechanisms, token supply and emission schedule, distribution and vesting for team, investors, and community, governance and voting design, staking and yield mechanisms, treasury management and protocol revenue, token burn and deflationary mechanisms, economic attack vectors and security, and how to design tokenomics that create genuine economic sustainability for the protocol by ensuring that token demand is driven by real utility and protocol usage rather than speculative reflexivity, that token supply dynamics do not create sell pressure that undermines the ecosystem, and that incentive mechanisms reward the behaviors that actually make the protocol more valuable rather than optimizing for metrics that look good without creating underlying value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/software-arch', requireAuth, async (req: AuthRequest, res) => {
+  const { system, requirements, constraints } = req.body;
+  const prompt = `You are a software architecture strategy and system design expert. Design software architecture for ${system} with ${requirements} under ${constraints}. Cover software architecture framework, architectural patterns and style selection, microservices versus monolith decision, API design and contract management, data architecture and storage selection, scalability and performance design, security architecture and zero trust, observability and monitoring architecture, deployment architecture and CI CD, and how to make software architecture decisions that balance technical ideals with the practical constraints of team size, timeline, and existing systems, choosing the simplest architecture that meets the genuine requirements rather than over-engineering systems for scale and flexibility that will never be needed while under-investing in the operational reliability and observability that running real software in production actually requires.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/insurance', requireAuth, async (req: AuthRequest, res) => {
+  const { insurer, lines, market } = req.body;
+  const prompt = `You are an insurance strategy and risk underwriting expert. Design insurance strategy for ${insurer} offering ${lines} in ${market}. Cover insurance strategy framework, underwriting strategy and risk selection, pricing actuarial and competitive, distribution channel strategy, claims management and operational efficiency, reinsurance and capital management, regulatory and solvency requirements, digital transformation in insurance, embedded and parametric insurance innovation, and how to build insurance strategies that generate sustainable underwriting profitability by developing genuine underwriting expertise in the risks being written, pricing that reflects actual loss experience and emerging risk trends, and distribution capabilities that attract the profitable segments of the market rather than growth strategies that generate premium volume by writing risks that generate adverse loss ratios.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/private-equity', requireAuth, async (req: AuthRequest, res) => {
+  const { firm, thesis, portfolio } = req.body;
+  const prompt = `You are a private equity strategy and value creation expert. Design private equity strategy for ${firm} with ${thesis} across ${portfolio}. Cover private equity framework, investment thesis and sector focus, deal sourcing and origination, due diligence methodology, deal structuring and leverage, 100-day planning and value creation, operational improvement and buy-and-build, management assessment and incentive alignment, exit strategy and timing, LP reporting and fund management, and how to build private equity value creation programs that generate strong investment returns by developing deep operational expertise in portfolio company improvement, making investment decisions grounded in rigorous analysis of competitive position and value creation potential, and executing against value creation plans with the management discipline that turns strategic intentions into operational results.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/retail', requireAuth, async (req: AuthRequest, res) => {
+  const { retailer, format, market } = req.body;
+  const prompt = `You are a retail strategy and omnichannel commerce expert. Design retail strategy for ${retailer} with ${format} in ${market}. Cover retail strategy framework, store format and network strategy, assortment planning and category management, pricing and promotional strategy, omnichannel integration and fulfillment, private label and exclusive product strategy, loyalty and customer data strategy, retail media and partnership revenue, workforce and store operations, and how to build retail strategies that create genuine customer preference and sustainable margin by offering assortments, experiences, and value propositions that give customers a reason to shop with the retailer rather than Amazon, investing in the store operations and associate training that make physical retail better than online, and using customer data to personalize offers without being creepy about how the data was collected.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/enterprise-sales', requireAuth, async (req: AuthRequest, res) => {
+  const { company, solution, accounts } = req.body;
+  const prompt = `You are an enterprise sales strategy and complex deal management expert. Design enterprise sales for ${company} selling ${solution} to ${accounts}. Cover enterprise sales framework, enterprise buyer journey and decision-making process, multi-threaded account strategy, economic buyer and champion identification, competitive differentiation and objection handling, business case and ROI development, procurement and legal navigation, enterprise pricing and contract structure, pilot and proof of concept design, and how to build enterprise sales capabilities that close large complex deals by understanding the organizational dynamics and individual motivations of each decision maker, building a champion who has the credibility and motivation to drive internal approval, and demonstrating business value in terms that resonate with each stakeholder rather than presenting feature lists that highlight product capabilities without connecting them to business outcomes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/health-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, customers } = req.body;
+  const prompt = `You are a health technology strategy and digital health innovation expert. Design health technology for ${company} with ${product} serving ${customers}. Cover health technology framework, healthcare IT landscape and EMR integration, FDA regulatory pathway for digital health, HIPAA compliance and health data security, clinical validation and evidence generation, provider and payer sales strategy, patient engagement and behavior change, value-based care alignment, interoperability and data standards, and how to build health technology companies that achieve genuine clinical adoption and commercial success by solving real workflow problems for clinicians, demonstrating clinical and economic outcomes that justify the investment and workflow change required, navigating the complex healthcare sales process that involves clinical champions, IT governance, and administrative approval across organizations where decisions move slowly and implementation is often harder than the sale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/learning-design', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, audience, outcomes } = req.body;
+  const prompt = `You are a learning design strategy and instructional design expert. Design learning for ${organization} targeting ${audience} toward ${outcomes}. Cover learning design framework, needs analysis and performance gap assessment, learning objectives and outcome alignment, adult learning principles and cognitive load theory, blended learning and modality selection, scenario-based and experiential learning, microlearning and spaced repetition, assessment and knowledge check design, learning technology selection and integration, and how to design learning experiences that produce genuine capability improvement by starting with the performance outcomes the organization needs and working backward to the knowledge, skills, and practice opportunities that produce those outcomes, rather than designing content-first courses that efficiently transfer information without building the on-the-job capability that justifies the training investment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/infrastructure', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, assets, horizon } = req.body;
+  const prompt = `You are an infrastructure strategy and asset management expert. Design infrastructure strategy for ${organization} with ${assets} over ${horizon}. Cover infrastructure strategy framework, asset condition assessment and remaining useful life, infrastructure investment prioritization, lifecycle cost analysis, demand forecasting and capacity planning, resilience and redundancy design, regulatory compliance and safety standards, funding and financing infrastructure, digital infrastructure and smart systems integration, and how to build infrastructure strategies that maintain asset reliability and deliver capacity for long-term demand growth by making disciplined investment decisions based on asset condition and risk rather than deferring maintenance to manage short-term budgets in ways that increase long-term cost and create the reliability failures that are far more expensive than the preventive maintenance that could have avoided them.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/space-commerce', requireAuth, async (req: AuthRequest, res) => {
+  const { company, service, market } = req.body;
+  const prompt = `You are a commercial space strategy and new space economy expert. Design space commerce for ${company} offering ${service} in ${market}. Cover space commerce framework, launch services and rideshare market, earth observation and remote sensing applications, satellite communications and broadband, in-space manufacturing and microgravity applications, lunar and cislunar economy, space tourism and human spaceflight, regulatory and licensing environment, government and commercial customer strategy, and how to build commercial space businesses that achieve sustainable economics by identifying space-enabled applications where the unique capabilities of the space environment justify the cost and complexity compared to ground-based alternatives, navigating the regulatory requirements across multiple jurisdictions, and building the operational reliability that commercial and government customers require before committing critical missions to new providers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-ethics', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, ai_systems, stakeholders } = req.body;
+  const prompt = `You are an AI ethics strategy and responsible AI governance expert. Design AI ethics for ${organization} deploying ${ai_systems} serving ${stakeholders}. Cover AI ethics framework, bias and fairness assessment in AI systems, AI transparency and explainability, privacy-preserving AI and data minimization, AI safety and robustness testing, algorithmic accountability and human oversight, AI impact assessment on affected communities, AI ethics governance and review process, regulatory compliance for AI, and how to build AI ethics programs that produce genuinely responsible AI deployment by integrating ethical considerations into the design and development process rather than reviewing for ethics after systems are built, and by going beyond technical fairness metrics to understand the real-world impacts on the people and communities the AI systems affect.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
