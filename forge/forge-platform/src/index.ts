@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v540.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v541.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -196637,6 +196637,66 @@ app.post('/api/product/strategy-framework', requireAuth, async (req: AuthRequest
 app.post('/api/finance/startup-financials', requireAuth, async (req: AuthRequest, res) => {
   const { model, stage, metrics } = req.body;
   const prompt = `Build startup financial models and metrics.\nBusiness model: ${model}\nCompany stage: ${stage}\nKey metrics: ${metrics}\nInclude: startup financial modeling philosophy (the model as the financial story / the the model that's the business in numbers / the the startup model that shows the path / the the model that's a tool for thinking / the the model that investors read), the three statement model for startups (the three: the the income statement / the the balance sheet / the the cash flow / the the three that tell the full story / the the three that are linked), revenue modeling (the revenue: the the revenue model / the the the the bottoms-up / the the the the the the the the the revenue that's modeled by segment / the the the the the the the the the the the the the assumptions that drive revenue), unit economics in the model (the unit: the the LTV / the the CAC / the the the the the the the the the the the the the unit economics that underpin the model / the the the the the the the the the the the the the the cohort analysis), headcount planning in the model (the headcount: the the team / the the the the the the the the the the the the the the the the the headcount plan / the the the the the the the the the the the the the the the the the the the the the the the headcount that's the biggest cost), burn rate and runway (the burn: the the monthly burn / the the the the the the the the the the the the the the the the the the the the the the the the the the the runway / the the the the the the the the the the the the the the the the the the the the the the the the the the the burn that's managed), cash flow forecasting (the forecast: the the cash flow / the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the cash forecast), SaaS metrics in the model (the SaaS metrics: the the ARR / the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the NRR / the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the churn), investor-ready financial models (the investor: the the model that investors trust / the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the assumptions that are documented / the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the sensitivity analysis), and financial model best practices (the best practices: the the model that's well-structured / the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the assumption sheet / the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the model that's easy to audit).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/ai-calendar', requireAuth, async (req: AuthRequest, res) => {
+  const { topics, audience, frequency } = req.body;
+  const prompt = `You are a content strategy expert. Create a detailed AI-powered content calendar for topics: ${topics}, target audience: ${audience}, posting frequency: ${frequency}. Include content themes, formats, distribution channels, and engagement tactics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brand/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, market, values } = req.body;
+  const prompt = `You are a brand strategist. Build a comprehensive brand strategy for ${company} operating in ${market} with core values: ${values}. Cover positioning, messaging architecture, visual identity direction, and brand voice.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/success-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customerType, goals } = req.body;
+  const prompt = `You are a customer success expert. Create a detailed customer success plan for ${product} serving ${customerType} customers with goals: ${goals}. Include onboarding milestones, health scores, QBR frameworks, and churn prevention strategies.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/eng/tech-debt', requireAuth, async (req: AuthRequest, res) => {
+  const { codebaseSize, painPoints, timeline } = req.body;
+  const prompt = `You are a software architect. Analyze tech debt for a ${codebaseSize} codebase with these pain points: ${painPoints}, with a ${timeline} remediation timeline. Prioritize debt items, estimate impact, and create a phased remediation roadmap.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/pitch-coach', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, sector, askAmount } = req.body;
+  const prompt = `You are a venture capital pitch coach. Coach a ${stage} startup in ${sector} raising ${askAmount}. Provide slide-by-slide narrative, anticipate investor questions, identify red flags to address, and suggest compelling proof points.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { productType, competitors, targetMargin } = req.body;
+  const prompt = `You are a pricing strategy expert. Design a comprehensive pricing strategy for ${productType} competing against ${competitors} targeting ${targetMargin} margins. Cover pricing models, tiers, packaging, discounting policies, and price psychology.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/competitive-map', requireAuth, async (req: AuthRequest, res) => {
+  const { product, competitors, dimensions } = req.body;
+  const prompt = `You are a competitive intelligence analyst. Create a competitive positioning map for ${product} versus ${competitors} across dimensions: ${dimensions}. Identify whitespace opportunities, competitive moats, and strategic repositioning options.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/enablement', requireAuth, async (req: AuthRequest, res) => {
+  const { product, buyerPersona, salesCycle } = req.body;
+  const prompt = `You are a sales enablement specialist. Build a sales enablement toolkit for ${product} targeting ${buyerPersona} with a ${salesCycle} sales cycle. Include battlecards, objection handlers, discovery questions, and proof points for each deal stage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devrel/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, devCommunity, goals } = req.body;
+  const prompt = `You are a developer relations expert. Design a DevRel strategy for ${product} targeting ${devCommunity} developers with goals: ${goals}. Cover community building, technical content, developer advocacy, hackathons, and ecosystem partnerships.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/experiments', requireAuth, async (req: AuthRequest, res) => {
+  const { metric, channel, budget } = req.body;
+  const prompt = `You are a growth hacking expert. Design a portfolio of growth experiments to improve ${metric} via ${channel} with ${budget} budget. Include hypothesis, test design, success metrics, expected lift, and prioritization framework using ICE scoring.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
