@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v763.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v764.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210017,6 +210017,66 @@ app.post('/api/creative/video', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/creative/podcast', requireAuth, async (req: AuthRequest, res) => {
   const { host, format, audience } = req.body;
   const prompt = `You are a podcast strategy and audio content expert. Design podcast strategy for ${host} producing ${format} for ${audience}. Cover podcast strategy framework, show concept and positioning, interview technique and guest research, audio production and editing, show notes and transcript, podcast SEO and discoverability, monetization and sponsorship, listener community and engagement, distribution and promotion, and how to build podcast programs that achieve the listener growth and the episode completion rate and the community engagement that successful podcasts require by developing the show concept with the specific niche and the unique perspective and the consistent format that serves the target listener with the specific value that the competing shows in the category do not provide, producing the episode with the preparation and the audio quality and the editing discipline that respects the listener time and the attention.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/branding/identity', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, market, customers } = req.body;
+  const prompt = `You are a brand identity strategy and visual design expert. Design brand identity strategy for ${brand} in ${market} serving ${customers}. Cover brand identity framework, brand positioning and differentiation, visual identity and logo design, brand voice and personality, brand architecture and portfolio, brand guidelines and standards, brand experience and touchpoints, brand research and testing, brand evolution and refresh, and how to build brand identity programs that achieve the recognition and the differentiation and the emotional connection that powerful brands require by developing the positioning with the brand essence and the promise and the archetype that captures the distinctive identity in a way that the target customer finds relevant and that the competitive landscape has not claimed, expressing the identity with the visual system and the voice and the behavior that consistently signals the brand character across every touchpoint from the packaging to the customer service to the digital experience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/branding/pr', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, campaign, stakeholders } = req.body;
+  const prompt = `You are a public relations strategy and media relations expert. Design public relations strategy for ${organization} running ${campaign} targeting ${stakeholders}. Cover public relations framework, media relations and press strategy, earned media and newsworthiness, crisis communication and reputation management, thought leadership and executive visibility, community relations and stakeholder engagement, social media reputation, narrative and message development, measurement and media monitoring, and how to build public relations programs that achieve the media coverage and the reputation management and the stakeholder trust that effective PR requires by developing the story with the news hook and the human angle and the data point that makes the pitch newsworthy from the journalist perspective rather than the organizational announcement that the reporter does not find interesting.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/branding/events', requireAuth, async (req: AuthRequest, res) => {
+  const { organizer, event, audience } = req.body;
+  const prompt = `You are an event marketing strategy and experiential design expert. Design event marketing strategy for ${organizer} producing ${event} for ${audience}. Cover event marketing framework, event concept and theme development, venue selection and logistics, speaker and talent curation, attendee experience design, sponsorship and partnership, event technology and registration, marketing and promotion strategy, measurement and ROI, and how to build event programs that achieve the attendee satisfaction and the brand experience and the business outcome that successful events require by designing the attendee journey from the invitation through the registration and the arrival and the programming and the networking and the departure with the intentional experience at each touchpoint that creates the emotional memory and the business connection that make the event investment worthwhile.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/branding/cx', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, journey, customers } = req.body;
+  const prompt = `You are a customer experience strategy and service design expert. Design customer experience strategy for ${organization} mapping ${journey} for ${customers}. Cover customer experience framework, customer journey mapping and personas, voice of customer and NPS, service blueprint and touchpoint design, customer effort and friction reduction, emotional experience design, service recovery and complaint handling, employee experience and CX culture, CX measurement and KPIs, and how to build customer experience programs that achieve the customer loyalty and the net promoter score and the revenue growth that exceptional CX requires by mapping the actual customer journey with the ethnographic research and the journey mapping workshops that reveal the moments of truth where the experience falls below the customer expectation and the moments of delight where the experience exceeds the expectation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/branding/influencer', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, campaign, creators } = req.body;
+  const prompt = `You are an influencer marketing strategy and creator partnership expert. Design influencer marketing strategy for ${brand} running ${campaign} with ${creators}. Cover influencer marketing framework, creator tier strategy from nano to mega, audience alignment and authenticity, content brief and creative freedom, performance metrics and attribution, contract terms and FTC compliance, long-term ambassador versus one-off, platform-specific creator strategy, influencer discovery and vetting, and how to build influencer marketing programs that achieve the authentic reach and the content quality and the conversion that creator partnerships require by selecting the creators with the audience overlap and the content aesthetic and the engagement rate that signals genuine influence rather than the follower count that inflated profiles and inactive audiences can manufacture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, platform, indications } = req.body;
+  const prompt = `You are a biotech strategy and life sciences business expert. Design biotech strategy for ${company} developing ${platform} targeting ${indications}. Cover biotech strategy framework, drug discovery and target identification, preclinical development and IND filing, clinical development and trial design, regulatory strategy and FDA interaction, biomarker and patient selection, manufacturing and CMC, partnership and out-licensing, financing and capital markets, and how to build biotech companies that achieve the clinical validation and the regulatory approval and the commercial success that the drug development investment requires by designing the development program with the indication selection and the patient population and the clinical endpoint that provides the clearest path to the regulatory approval with the available mechanism of action evidence and the competitive landscape analysis.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/pharmacommercial', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are a pharmaceutical commercial strategy and market access expert. Design pharma commercial strategy for ${company} launching ${product} in ${market}. Cover pharma commercial framework, market assessment and patient population sizing, competitive landscape and positioning, payer strategy and reimbursement, medical affairs and KOL engagement, sales force sizing and deployment, patient services and support programs, market access and pricing, launch execution and tracking, and how to build pharmaceutical commercial programs that achieve the market penetration and the revenue and the patient access that successful drug launches require by engaging the payers with the HEOR evidence and the value dossier and the contracting strategy that demonstrates the clinical and economic value that justifies the reimbursement at the pricing that supports the product investment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/meddevice', requireAuth, async (req: AuthRequest, res) => {
+  const { company, device, indication } = req.body;
+  const prompt = `You are a medical device strategy and regulatory affairs expert. Design medical device strategy for ${company} developing ${device} for ${indication}. Cover medical device strategy framework, device classification and regulatory pathway, predicate device and 510k strategy, PMA and clinical trial design, quality management system and FDA requirements, human factors and usability engineering, reimbursement and CPT coding, hospital value analysis committee, physician training and adoption, and how to build medical device companies that achieve the regulatory clearance and the clinical adoption and the reimbursement that the device commercialization requires by selecting the regulatory pathway with the predicate analysis and the substantial equivalence argument that supports the 510k clearance where the device performance and the intended use allow the expedited pathway rather than the PMA that requires the clinical trial.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/diagnostics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, test, market } = req.body;
+  const prompt = `You are a diagnostics strategy and laboratory medicine expert. Design diagnostics strategy for ${company} developing ${test} for ${market}. Cover diagnostics strategy framework, assay development and analytical validation, clinical validation and utility studies, regulatory strategy for IVD and LDT, reimbursement and CPT code access, laboratory channel and distribution, clinical workflow integration, companion diagnostic and therapeutic partnership, direct-to-consumer testing strategy, and how to build diagnostics companies that achieve the clinical adoption and the reimbursement and the scale that sustainable diagnostics business requires by demonstrating the clinical utility with the outcomes data that shows the test changes the clinical management decision in a way that improves the patient outcome, which is the evidence that the payer requires beyond the analytical performance that demonstrates the test accuracy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/clinicalresearch', requireAuth, async (req: AuthRequest, res) => {
+  const { sponsor, trial, indication } = req.body;
+  const prompt = `You are a clinical research strategy and trial management expert. Design clinical research strategy for ${sponsor} running ${trial} in ${indication}. Cover clinical research framework, protocol design and endpoints, site selection and startup, patient recruitment and retention, data management and EDC, monitoring and oversight, regulatory submission and IND, safety reporting and pharmacovigilance, biostatistics and analysis plan, and how to build clinical research programs that achieve the enrollment target and the data quality and the timeline that successful trials require by designing the protocol with the eligibility criteria and the visit schedule and the endpoint assessment that balances the scientific rigor with the patient burden that determines the enrollment feasibility and the retention rate at the sites that must recruit and retain the patients.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
