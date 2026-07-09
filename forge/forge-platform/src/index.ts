@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v622.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v623.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201557,6 +201557,66 @@ app.post('/api/hr/compensation-model', requireAuth, async (req: AuthRequest, res
 app.post('/api/ops/meeting-design', requireAuth, async (req: AuthRequest, res) => {
   const { meeting, objective, participants } = req.body;
   const prompt = `You are a meeting design and organizational effectiveness expert. Design the ${meeting} meeting to achieve ${objective} with ${participants}. Cover the meeting purpose and type classification, the meeting format and structure design, the agenda design and time allocation, the facilitation technique selection, the decision-making protocol design, the participation and inclusion design, the pre-meeting preparation design, the documentation and follow-through design, the meeting cadence and frequency, and how to design meetings that are purposeful, productive, and that create energy and alignment rather than draining time and attention from the work that actually matters.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/pipeline-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { system, data, throughput } = req.body;
+  const prompt = `You are a data pipeline and streaming architecture expert. Design the pipeline architecture for ${system} processing ${data} at ${throughput} throughput. Cover the pipeline architecture patterns and trade-offs, the batch vs. streaming vs. micro-batch design, the message queue and event streaming selection, the data ingestion and extraction design, the transformation and processing design, the data quality and validation design, the pipeline monitoring and alerting, the pipeline error handling and recovery, the pipeline scaling and performance, and how to design data pipelines that are reliable, scalable, and maintainable while delivering data with the latency and quality the business requires.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/hiring-manager', requireAuth, async (req: AuthRequest, res) => {
+  const { manager, role, urgency } = req.body;
+  const prompt = `You are a hiring manager coach and talent acquisition expert. Coach ${manager} to hire for ${role} with ${urgency} urgency. Cover the job design and success profile, the sourcing strategy activation, the resume screening and shortlist criteria, the phone screen design, the interview process design and panel selection, the interview debrief and decision process, the offer strategy and negotiation, the candidate communication and experience, the reference check process, and how to help hiring managers take ownership of talent acquisition as a core leadership responsibility rather than delegating it entirely to HR and then complaining about the result.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/price-negotiation', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, buyer, pressure } = req.body;
+  const prompt = `You are a price negotiation and deal closing expert. Navigate the price negotiation for ${deal} with ${buyer} under ${pressure} pressure. Cover the price negotiation preparation framework, the value-based justification design, the anchoring and framing strategy, the concession strategy and sequencing, the procurement tactics recognition and response, the multi-variable negotiation design, the discounting governance and discipline, the no-discount alternatives, the walk-away and BATNA design, and how to navigate price negotiations in a way that closes deals at fair value without unnecessary discounting that destroys margin and sets dangerous precedents.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/retail', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, channel, customer } = req.body;
+  const prompt = `You are a retail strategy and omnichannel commerce expert. Design the retail strategy for ${brand} via ${channel} for ${customer}. Cover the retail channel strategy and mix, the store format and concept design, the digital and physical integration, the assortment and merchandising strategy, the pricing and promotion strategy, the customer experience design, the retail operations design, the retail technology stack, the retail performance metrics, and how to build a retail strategy that creates differentiated customer experiences, drives conversion, and generates profitable growth across physical and digital channels.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/public-policy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, policy, impact } = req.body;
+  const prompt = `You are a public policy analysis and regulatory strategy expert. Analyze ${company} position on ${policy} and design response to ${impact}. Cover the policy analysis framework, the regulatory landscape mapping, the policy impact assessment, the stakeholder and coalition mapping, the policy advocacy strategy, the regulatory comment and participation design, the industry association strategy, the policy scenario planning, the business adaptation strategy, and how to engage proactively with the policy environment in a way that shapes favorable outcomes, prepares the business for regulatory change, and builds constructive relationships with policymakers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-entry', requireAuth, async (req: AuthRequest, res) => {
+  const { company, market, barriers } = req.body;
+  const prompt = `You are a market entry strategy and new market development expert. Design the entry into ${market} for ${company} overcoming ${barriers}. Cover the market entry strategy framework, the market attractiveness and fit assessment, the competitive landscape in the new market, the entry mode selection, the beachhead market and segment selection, the product adaptation and localization, the go-to-market for market entry, the distribution and channel partner strategy, the market entry resource and investment plan, and how to enter new markets in a disciplined way that maximizes the probability of success while managing the risk of overextension and distraction from core business performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/segmentation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, criteria, motion } = req.body;
+  const prompt = `You are a sales segmentation and territory design expert. Design the sales segmentation for ${company} using ${criteria} to determine ${motion} sales motion. Cover the segmentation strategy and criteria selection, the ICP and account scoring model, the enterprise vs. mid-market vs. SMB motion design, the territory and account assignment design, the motion-to-segment alignment, the coverage model and capacity planning, the segmentation governance and updates, the segmentation impact on quota and compensation, the segmentation analytics, and how to build a sales segmentation model that puts the right sales resources against the right accounts to maximize win rates and revenue efficiency.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/design-system', requireAuth, async (req: AuthRequest, res) => {
+  const { product, teams, components } = req.body;
+  const prompt = `You are a design system and component library expert. Architect the design system for ${product} used by ${teams} teams with ${components} components. Cover the design system strategy and governance, the design token and foundation design, the component library architecture, the component documentation design, the design system contribution model, the Figma and code synchronization, the design system versioning and releases, the adoption and change management, the design system metrics, and how to build a design system that speeds up design and development, ensures consistency, and evolves with the product without becoming a bureaucratic bottleneck or a source of technical debt.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customer/voice-of-customer', requireAuth, async (req: AuthRequest, res) => {
+  const { company, channels, frequency } = req.body;
+  const prompt = `You are a voice of customer and customer listening expert. Build the VoC program for ${company} across ${channels} at ${frequency} cadence. Cover the VoC strategy and program design, the listening channel selection, the survey and feedback design, the interview and focus group program, the social and review listening, the support ticket and complaint analysis, the VoC synthesis and theme identification, the VoC-to-action process, the VoC metrics and tracking, and how to build a VoC program that systematically surfaces what customers really think, routes insights to people who can act on them, and creates a feedback loop that drives continuous product and experience improvement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/enterprise-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { company, domains, principles } = req.body;
+  const prompt = `You are an enterprise architecture and systems integration expert. Design the enterprise architecture for ${company} across ${domains} domains with ${principles} guiding principles. Cover the enterprise architecture framework selection, the business architecture design, the application architecture design, the data architecture design, the technology architecture design, the integration architecture and API design, the security architecture, the EA governance and decision-making, the EA roadmap and transition plan, and how to build enterprise architecture that enables business agility and innovation rather than becoming a layer of bureaucracy that slows down technology change and frustrates developers.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
