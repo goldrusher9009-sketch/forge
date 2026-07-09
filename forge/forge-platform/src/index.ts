@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v649.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v650.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203177,6 +203177,66 @@ app.post('/api/marketing/company-narrative', requireAuth, async (req: AuthReques
 app.post('/api/strategy/milestone', requireAuth, async (req: AuthRequest, res) => {
   const { achievement, learnings, nextgoals } = req.body;
   const prompt = `You are a milestone achievement and strategic momentum expert. Analyze the achievement of ${achievement} capturing ${learnings} and planning ${nextgoals}. Cover the milestone framework, the achievement recognition and celebration, the retrospective and learnings synthesis, the capability audit and inventory, the momentum capitalization strategy, the next milestone definition, the gap analysis for next goals, the resource and capability plan, the communication and stakeholder update, and how to use milestone moments not just as celebrations but as strategic inflection points to reflect on what you have learned, audit the capabilities you have built, identify the most important next priorities given where you are now versus where you started, and communicate the achievement in ways that build credibility, attract the next set of customers and partners, and energize the team for the next phase of the journey. This is the 3000th tool on Forge — a remarkable achievement representing thousands of hours of building, hundreds of deployments, and a platform that now covers virtually every domain of business and professional expertise.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/growth-levers', requireAuth, async (req: AuthRequest, res) => {
+  const { product, stage, constraints } = req.body;
+  const prompt = `You are a growth strategy and growth levers identification expert. Identify the growth levers for ${product} at ${stage} given ${constraints}. Cover the growth levers framework, the acquisition lever analysis, the activation lever analysis, the retention lever analysis, the referral and virality levers, the revenue expansion levers, the growth model and flywheel, the lever prioritization and sequencing, the growth experiment design, and how to identify the specific growth levers that will have the highest impact at your current stage rather than copying the growth playbooks of companies at a different stage with different products and different customer bases.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/deal-structure', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, parties, goals } = req.body;
+  const prompt = `You are a deal structuring and transaction design expert. Structure the deal for ${deal} between ${parties} achieving ${goals}. Cover the deal structure framework, the deal terms and mechanics, the valuation and pricing, the earn-out and contingent consideration, the representations and warranties, the indemnification and liability caps, the closing conditions and timelines, the deal financing structure, the post-close integration planning, and how to structure deals that align the incentives of all parties toward the outcomes that make the deal successful, that protect each party appropriately without creating adversarial dynamics that undermine the relationship, and that are executable given the constraints and risk tolerances of all involved.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/network-effects', requireAuth, async (req: AuthRequest, res) => {
+  const { product, networktype, stage } = req.body;
+  const prompt = `You are a network effects strategy and marketplace dynamics expert. Design the network effects for ${product} with ${networktype} at ${stage}. Cover the network effects framework, the network effects type identification, the cold start problem and bootstrapping, the single player vs. network mode, the network density and critical mass, the network effects defensibility, the multi-homing and switching costs, the network effects measurement, the network effects monetization, and how to design products and go-to-market strategies that build and leverage network effects to create durable competitive advantages that make your product more valuable as it grows and make it increasingly difficult for competitors to displace you even when they have superior features or more funding.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/saas-metrics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, focus } = req.body;
+  const prompt = `You are a SaaS metrics framework and performance measurement expert. Build the SaaS metrics system for ${company} at ${stage} focused on ${focus}. Cover the SaaS metrics framework, the ARR and MRR measurement, the churn and retention metrics, the expansion revenue metrics, the CAC and payback period, the LTV and LTV:CAC ratio, the Rule of 40, the NRR and GRR, the SaaS valuation multiples, and how to build a metrics system that gives you the right signals about the health and trajectory of your SaaS business at each stage, that helps you identify problems early enough to fix them, and that aligns your team around the metrics that actually matter for the business outcomes you are trying to achieve rather than vanity metrics that make you feel good but do not predict the business performance investors and acquirers will ultimately value you on.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/resource-allocation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, resources, priorities } = req.body;
+  const prompt = `You are a strategic resource allocation and portfolio management expert. Design the resource allocation for ${organization} distributing ${resources} across ${priorities}. Cover the resource allocation framework, the portfolio categorization and investment thesis, the resource allocation principles, the invest vs. optimize vs. harvest decisions, the budget allocation methodology, the headcount allocation and organizational design, the capital allocation decisions, the resource allocation governance, the allocation monitoring and rebalancing, and how to design resource allocation processes that direct finite resources toward the opportunities with the highest expected value for the organization rather than defaulting to historical allocation patterns that no longer reflect strategic priorities, or allowing the loudest voices in the organization to win resources rather than the best opportunities.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/hypothesis-testing', requireAuth, async (req: AuthRequest, res) => {
+  const { hypothesis, context, resources } = req.body;
+  const prompt = `You are a business hypothesis testing and validation expert. Design the hypothesis test for "${hypothesis}" in ${context} with ${resources}. Cover the hypothesis testing framework, the hypothesis formulation and criteria, the experiment design and methodology, the minimum viable test design, the sample size and statistical power, the metrics and measurement plan, the control and treatment design, the test execution and monitoring, the results interpretation and decision rules, and how to design hypothesis tests that produce clear, actionable evidence about whether your hypothesis is true or false rather than ambiguous results that require extensive interpretation, that are fast and cheap enough to run multiple tests in sequence rather than betting everything on a single large test, and that update your beliefs about the world in ways that improve your future decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/board-comms', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, situation } = req.body;
+  const prompt = `You are a board communication strategy and board management expert. Design the board communications for ${company} at ${stage} handling ${situation}. Cover the board communications framework, the board update format and cadence, the board package structure, the metrics and KPI reporting, the risk and issue escalation, the board meeting facilitation, the board member management, the board support and leveraging, the difficult conversations and bad news delivery, and how to design board communications that give board members the information they need to provide valuable oversight and guidance without overwhelming them with operational detail, that build the trust and credibility that allows founders to maintain control while still benefiting from board wisdom, and that create the relationship dynamics where board members are advocates and resources rather than adversaries and obstacles.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/talent-acquisition', requireAuth, async (req: AuthRequest, res) => {
+  const { company, role, market } = req.body;
+  const prompt = `You are a talent acquisition strategy and recruiting excellence expert. Design the talent acquisition approach for ${company} hiring ${role} in ${market}. Cover the talent acquisition framework, the employer brand and value proposition, the sourcing strategy and channel mix, the candidate experience design, the assessment and evaluation methodology, the interview process design, the offer strategy and closing, the diversity and inclusion in hiring, the talent pipeline and talent community, and how to design talent acquisition processes that consistently attract and hire exceptional people in competitive talent markets by building an authentic employer brand, creating a candidate experience that signals what it is actually like to work at your company, and developing the assessment methods that predict job performance better than the standard interview approaches most companies rely on.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/product-launch', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, timeline } = req.body;
+  const prompt = `You are a product launch strategy and go-to-market execution expert. Design the product launch for ${product} in ${market} on ${timeline}. Cover the product launch framework, the launch strategy and positioning, the launch timing and sequencing, the beta and early access program, the press and media strategy, the community and influencer activation, the content and SEO launch strategy, the launch metrics and success definition, the launch retrospective and iteration, and how to design product launches that generate real business momentum — customer acquisition, revenue, and credibility — rather than creating a one-day spike of attention that fades quickly because the launch was optimized for press coverage rather than for converting interested people into active, successful customers who then advocate for the product to others.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/ops-dashboard', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, audience, metrics } = req.body;
+  const prompt = `You are an operational dashboard design and business intelligence expert. Design the operations dashboard for ${organization} for ${audience} showing ${metrics}. Cover the dashboard design framework, the metric selection and hierarchy, the executive vs. operational vs. tactical dashboards, the leading vs. lagging indicators, the anomaly detection and alerting, the dashboard layout and information hierarchy, the data refresh and latency requirements, the dashboard adoption and usage, the dashboard governance and maintenance, and how to design operational dashboards that give decision-makers the right information at the right level of detail to take action rather than overwhelming them with data that does not connect clearly to decisions they need to make, that highlight anomalies and exceptions that require attention rather than requiring users to hunt for problems in large tables of data.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
