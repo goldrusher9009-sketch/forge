@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v427.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v428.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190648,6 +190648,59 @@ app.post('/api/product/win-loss-analysis', requireAuth, async (req: AuthRequest,
 app.post('/api/sales/multithreading', requireAuth, async (req: AuthRequest, res) => {
   const { account, contacts, goal } = req.body;
   const prompt = `Build a multithreading strategy for a sales deal.\nAccount: ${account}\nKnown contacts: ${contacts}\nDeal goal: ${goal}\nInclude: stakeholder map, engagement plan per persona, executive outreach sequence, how to get introductions laterally, neutralizing blockers, creating a coalition, and signals that you've achieved sufficient multi-threading.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 275+276 routes
+app.post('/api/dev/message-queue-design', requireAuth, async (req: AuthRequest, res) => {
+  const { useCase, volume, ordering } = req.body;
+  const prompt = `Design a message queue architecture.\nUse case: ${useCase}\nMessage volume: ${volume}\nOrdering requirements: ${ordering}\nInclude: tool selection (SQS/RabbitMQ/Kafka/Redis Streams), queue topology, producer/consumer patterns, dead letter queue strategy, idempotency handling, retry policy, and monitoring approach.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/executive-proposal', requireAuth, async (req: AuthRequest, res) => {
+  const { company, problem, solution } = req.body;
+  const prompt = `Write an executive-level sales proposal.\nProspect company: ${company}\nBusiness problem: ${problem}\nProposed solution: ${solution}\nInclude: executive summary (1 page), situation analysis, proposed approach, business case with ROI, implementation timeline, investment summary, risk mitigation, and next steps. Tone: board-room ready.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/accessibility-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { product, standard, issues } = req.body;
+  const prompt = `Conduct an accessibility audit framework.\nProduct: ${product}\nStandard: ${standard}\nKnown issues: ${issues}\nInclude: WCAG checklist for key areas (perceivable/operable/understandable/robust), screen reader test plan, color contrast requirements, keyboard navigation audit, ARIA usage review, and prioritized remediation roadmap.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/influencer-strategy-v2', requireAuth, async (req: AuthRequest, res) => {
+  const { product, niche, budget } = req.body;
+  const prompt = `Build an influencer marketing strategy.\nProduct: ${product}\nNiche: ${niche}\nBudget: ${budget}\nInclude: tier strategy (nano/micro/macro/mega), vetting criteria, outreach template, brief template, compensation model, usage rights, FTC compliance, content calendar integration, and ROI measurement (EMV, CPC, conversion tracking).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/team-structure', requireAuth, async (req: AuthRequest, res) => {
+  const { func, headcount, stage } = req.body;
+  const prompt = `Design an optimal team structure.\nFunction: ${func}\nHeadcount: ${headcount}\nCompany stage: ${stage}\nInclude: org design options with pros/cons, span of control recommendations, specialist vs. generalist balance, hiring sequence, role definitions for each level, cross-functional dependencies, and when to restructure as the team grows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/cap-table-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, rounds, ownership } = req.body;
+  const prompt = `Analyze a startup cap table.\nStage: ${stage}\nFunding rounds: ${rounds}\nCurrent ownership: ${ownership}\nInclude: dilution analysis through next 2 rounds, founder ownership trajectory, option pool sizing recommendation, liquidation preference stack, pro-rata implications, and red flags in the current structure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/database-sharding', requireAuth, async (req: AuthRequest, res) => {
+  const { dataSize, queryPattern, growth } = req.body;
+  const prompt = `Design a database sharding strategy.\nData size: ${dataSize}\nQuery patterns: ${queryPattern}\nGrowth projection: ${growth}\nInclude: sharding key selection, horizontal vs. vertical partitioning, consistent hashing approach, cross-shard query handling, resharding plan, hotspot prevention, and operational considerations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/partnership-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, partners, goal } = req.body;
+  const prompt = `Design a partner marketing strategy.\nProduct: ${product}\nPotential partners: ${partners}\nGoal: ${goal}\nInclude: partner tier design, ideal partner profile, co-marketing playbook, joint GTM framework, integration partnership vs. referral vs. reseller models, partner enablement program, and revenue sharing structure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/deprecation-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, users, timeline } = req.body;
+  const prompt = `Create a product feature deprecation plan.\nFeature to deprecate: ${feature}\nAffected users: ${users}\nTimeline: ${timeline}\nInclude: impact assessment, migration path to replacement, communication strategy (in-app, email, docs), sunset milestones, support commitments during transition, exception handling for large customers, and how to measure successful migration.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/competitive-displacement', requireAuth, async (req: AuthRequest, res) => {
+  const { competitor, account, wedge } = req.body;
+  const prompt = `Build a competitive displacement strategy.\nIncumbent competitor: ${competitor}\nTarget account: ${account}\nWedge opportunity: ${wedge}\nInclude: incumbent weakness identification, switching cost analysis, land-and-expand entry point, ROI of switching argument, risk reversal offer, proof points needed, timeline to full displacement, and how to protect the account once won.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
