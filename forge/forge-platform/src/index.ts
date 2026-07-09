@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v456.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v457.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -192185,6 +192185,59 @@ app.post('/api/product/accessibility-design', requireAuth, async (req: AuthReque
 app.post('/api/sales/sales-storytelling', requireAuth, async (req: AuthRequest, res) => {
   const { product, persona, outcome } = req.body;
   const prompt = `Build a sales storytelling framework.\nProduct: ${product}\nBuyer persona: ${persona}\nDesired outcome: ${outcome}\nInclude: the hero's journey structure applied to B2B sales (prospect as hero/vendor as guide), before/after/bridge narrative framework, customer story selection criteria, quantified result integration, villain identification (the status quo/the competitor/the risk), emotional resonance techniques for B2B, opening hook design (pattern interrupt/bold statement/challenging question), evidence hierarchy (data→story→analogy), story length calibration by channel (30s elevator vs. 3min demo vs. full case study), and how to practice and refine sales stories until they become automatic.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 333+334 routes
+app.post('/api/dev/db-migration-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { schema, data, downtime } = req.body;
+  const prompt = `Design a database migration strategy.\nSchema changes: ${schema}\nData migration needs: ${data}\nDowntime tolerance: ${downtime}\nInclude: migration types (additive/destructive/data-only/schema-only), zero-downtime migration patterns (expand-contract/blue-green/shadow writes), migration tooling selection (Flyway/Liquibase/custom/ORM migrations), testing migration against production data clone, rollback strategy design, migration execution checklist, monitoring during migration, handling large table migrations at scale (batching/background jobs/online schema change tools like pt-online-schema-change), multi-tenant migration orchestration, and how to build a migration culture where schema changes are safe and routine.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/commission-design', requireAuth, async (req: AuthRequest, res) => {
+  const { model, roles, stage } = req.body;
+  const prompt = `Design a sales commission structure.\nCurrent model: ${model}\nSales roles: ${roles}\nCompany stage: ${stage}\nInclude: OTE (on-target earnings) design by role and market, base vs. variable split rationale (50/50 vs. 60/40 vs. 70/30), quota setting methodology (top-down vs. bottoms-up/market-based/historical), accelerators and decelerators design, new logo vs. renewal vs. expansion commission differentiation, draw vs. recoverable draw vs. guarantee for new reps, SPIFs and contests design, multi-year deal commission treatment, clawback policy design, commission plan change management (timing/grandfathering), and how to design commission plans that motivate the right behaviors.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/product-moat', requireAuth, async (req: AuthRequest, res) => {
+  const { product, category, competitors } = req.body;
+  const prompt = `Analyze and strengthen a product moat.\nProduct: ${product}\nCategory: ${category}\nCompetitors: ${competitors}\nInclude: moat type identification (network effects/switching costs/data advantages/brand/scale economies/unique technology), moat strength assessment (how wide/how deep/how durable), moat-widening strategies for each type, network effect flywheel design, switching cost engineering (data lock-in/workflow integration/switching friction), data moat construction (unique data collection/proprietary dataset strategy), competitive response anticipation, moat measurement metrics, and how to make product decisions that systematically widen the moat with every release.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/cro-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { funnel, traffic, goals } = req.body;
+  const prompt = `Build a conversion rate optimization strategy.\nFunnel: ${funnel}\nTraffic volume: ${traffic}\nConversion goals: ${goals}\nInclude: CRO audit methodology (heuristic evaluation/session recording/heatmaps/funnel analysis), conversion funnel mapping and drop-off identification, hypothesis generation framework (prioritization by impact/confidence/ease), A/B test design best practices (one variable/statistical power/duration), landing page optimization checklist, form optimization principles, social proof placement strategy, CTA copy and design testing, page speed impact on conversion, mobile conversion optimization, and how to build a continuous CRO program that compounds improvements over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/pip-design', requireAuth, async (req: AuthRequest, res) => {
+  const { role, issues, timeline } = req.body;
+  const prompt = `Design a Performance Improvement Plan.\nRole: ${role}\nPerformance issues: ${issues}\nTimeline: ${timeline}\nInclude: PIP purpose framework (genuine improvement tool vs. documentation tool), when to use a PIP vs. other interventions, PIP structure (specific expectations/measurable goals/support provided/timeline/consequences), goal-setting that is specific and achievable, manager conversation guide for PIP introduction, check-in cadence during PIP, documentation best practices, how to handle employee reactions (denial/agreement/resignation), legal considerations (HR and legal review/consistency across employees), successful PIP completion process, and how to prevent the situations that lead to PIPs through earlier intervention.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/safe-design', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, valuation, terms } = req.body;
+  const prompt = `Design a SAFE instrument structure.\nCompany stage: ${stage}\nValuation context: ${valuation}\nKey terms: ${terms}\nInclude: SAFE vs. convertible note comparison (interest/maturity/simplicity), post-money vs. pre-money SAFE design and dilution implications, valuation cap setting methodology, discount rate design and trade-offs, MFN (most favored nation) clause considerations, pro-rata rights on SAFEs, side letter considerations, SAFE stack modeling (multiple SAFEs converting at different caps), conversion mechanics at priced round, SAFE in bridge financing vs. primary fundraising context, and how to model SAFE dilution scenarios for founders.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/frontend-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { app, team, scale } = req.body;
+  const prompt = `Design a frontend architecture.\nApplication type: ${app}\nTeam structure: ${team}\nScale requirements: ${scale}\nInclude: framework selection rationale (React/Vue/Angular/Svelte trade-offs for this use case), state management design (local vs. global/Redux vs. Zustand vs. React Query), component architecture (atomic design/feature folders/domain-driven), micro-frontend architecture decision, build tooling selection (Vite/Next.js/Remix/webpack), TypeScript configuration and strictness level, testing strategy (unit/component/e2e ratio), performance optimization (code splitting/lazy loading/bundle analysis), CSS architecture (CSS modules/Tailwind/styled-components/CSS-in-JS), and how to set up a frontend architecture that scales with the team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/copy-testing', requireAuth, async (req: AuthRequest, res) => {
+  const { copy, audience, metric } = req.body;
+  const prompt = `Design a copy testing strategy.\nCopy to test: ${copy}\nTarget audience: ${audience}\nSuccess metric: ${metric}\nInclude: copy testing methodology (A/B testing/multivariate/5-second test/user interviews), what to test first (headline/CTA/value proposition/social proof), test design principles (one variable at a time/statistical significance/duration), email subject line testing framework, landing page headline testing, ad copy testing across platforms, message resonance research techniques (survey/focus group/concept testing), how to write copy hypotheses, interpreting results beyond statistical significance, and how to build institutional knowledge from copy tests that improves all future copy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/differentiation-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, rivals } = req.body;
+  const prompt = `Design a product differentiation strategy.\nProduct: ${product}\nTarget segment: ${segment}\nKey rivals: ${rivals}\nInclude: differentiation axis identification (performance/price/experience/integration/vertical/service), differentiation vs. parity feature analysis, where to be uniquely excellent vs. where to be table stakes, differentiation durability analysis (copyable vs. structural), blue ocean strategy application (eliminate/reduce/raise/create), how to make differentiation visible and credible to buyers, differentiation in the product roadmap (saying no to parity features), aligning differentiation with ICP pain, and how to communicate differentiation in sales and marketing so it creates real competitive advantage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/cs-handoff', requireAuth, async (req: AuthRequest, res) => {
+  const { account, deal, context } = req.body;
+  const prompt = `Design a sales to CS handoff process.\nAccount: ${account}\nDeal context: ${deal}\nKey context to transfer: ${context}\nInclude: handoff timing (at close vs. after contract vs. after kickoff), handoff document design (why they bought/promised outcomes/stakeholder map/red flags/champion/economic buyer/technical contacts/contracted scope/expansion potential), internal handoff meeting structure, customer introduction email design, kickoff meeting design that reinforces the sales narrative, how to avoid the "what did sales promise?" problem, CS access to deal recordings and notes, post-handoff AE involvement model, handoff quality metrics, and how to design a handoff that sets the customer up for success and the CS team up to expand.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
