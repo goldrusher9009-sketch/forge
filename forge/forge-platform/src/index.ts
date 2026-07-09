@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v564.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v565.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198077,6 +198077,66 @@ app.post('/api/product/launch-sequence', requireAuth, async (req: AuthRequest, r
 app.post('/api/finance/unit-economics', requireAuth, async (req: AuthRequest, res) => {
   const { product, segment, period } = req.body;
   const prompt = `You are a SaaS finance and unit economics expert. Calculate and optimize unit economics for ${product} in ${segment} segment for ${period} time period. Build the full unit economics model: CAC (by channel), LTV (using churn-adjusted revenue), LTV:CAC ratio, CAC payback period, gross margin per customer, contribution margin, magic number, and payback period at scale. Identify which unit economic levers to pull to improve the model and what the improved unit economics enable strategically.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ux/design-sprint', requireAuth, async (req: AuthRequest, res) => {
+  const { challenge, team, constraint } = req.body;
+  const prompt = `You are a design sprint expert (Google Ventures methodology). Facilitate a 5-day design sprint for ${challenge} with ${team} team within ${constraint} constraints. Day 1: Map and target (problem framing, expert interviews, HMW notes, sprint target). Day 2: Sketch solutions (lightning demos, crazy 8s, solution sketches). Day 3: Decide (solution presentation, heatmap voting, storyboard). Day 4: Prototype (realistic facade). Day 5: Test (user interviews, pattern identification). Output: decision point after each day and sprint report template.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/closing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, stage, blocker } = req.body;
+  const prompt = `You are a SaaS sales closing expert. Design a deal closing strategy for ${deal} deal at ${stage} sales stage with ${blocker} primary blocker. Cover champion enablement to sell internally, multi-threading the buying committee, creating urgency without being pushy, negotiation framework (what to give vs. what to get), mutual close plan design, legal and procurement navigation, discount governance, and what to do if the deal goes dark.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/incident-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { system, severityLevel, team } = req.body;
+  const prompt = `You are a site reliability and incident management expert. Build a production incident response playbook for ${system} at ${severityLevel} severity level for ${team} team. Cover incident detection and alerting thresholds, initial triage protocol (5-minute assessment), incident commander role, communication templates (internal Slack, status page, customer email), war room process, escalation matrix, post-incident review template, blameless postmortem facilitation, and how to turn incidents into system reliability improvements.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/business-case', requireAuth, async (req: AuthRequest, res) => {
+  const { initiative, investment, stakeholders } = req.body;
+  const prompt = `You are a business case and investment analysis expert. Build a compelling business case for ${initiative} requiring ${investment} for ${stakeholders} approval. Cover problem statement and strategic alignment, proposed solution and alternatives considered, financial model (NPV, IRR, payback period, sensitivity analysis), non-financial benefits, risks and mitigation plan, resource requirements, implementation timeline, success metrics, and an executive summary that leads with the return and asks for a clear decision.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/innovation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, horizon, resources } = req.body;
+  const prompt = `You are a product innovation and portfolio management expert. Design an innovation process for ${company} across ${horizon} time horizons using ${resources}. Apply the 3-horizon model (H1 core, H2 adjacent, H3 transformational), design the idea pipeline and intake process, build the stage-gate evaluation framework, resource allocation across horizons, innovation metrics (pipeline health, stage conversion, revenue from new products), how to protect innovation from the core business, and the governance model for innovation investment decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/segmentation', requireAuth, async (req: AuthRequest, res) => {
+  const { product, data, goals } = req.body;
+  const prompt = `You are a customer analytics and segmentation expert. Design a customer segmentation framework for ${product} using ${data} data to achieve ${goals}. Cover segmentation dimensions (firmographic, behavioral, psychographic, needs-based), clustering methodology, segment sizing and prioritization, segment-specific product and marketing strategies, how to assign customers to segments dynamically, how to measure segment health over time, and how to use segmentation to personalize the product experience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/startup-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { startup, stage, market } = req.body;
+  const prompt = `You are a startup advisor and venture builder expert. Build a tech startup playbook for ${startup} at ${stage} stage in ${market} market. Cover the stage-specific priorities (0-1, 1-10, 10-100 company building), the decisions that matter most at each stage (hiring, product, GTM), common stage-specific mistakes, the metrics that signal readiness to move to the next stage, how to structure the founding team and first 10 hires, fundraising strategy and timing, and how to navigate the valley of death.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ux/usability-test', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, users, questions } = req.body;
+  const prompt = `You are a UX research and usability testing expert. Design a usability test for ${feature} with ${users} user participants to answer ${questions}. Cover test objectives and hypotheses, task scenario design, think-aloud protocol, moderator guide (intro, tasks, debrief), observation and note-taking framework, metrics to capture (task completion, time-on-task, error rate, SUS score), how to recruit the right participants, analysis and synthesis approach, and how to present findings to drive product decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/acceleration', requireAuth, async (req: AuthRequest, res) => {
+  const { company, target, timeframe } = req.body;
+  const prompt = `You are a revenue acceleration and sales strategy expert. Build a revenue acceleration plan for ${company} targeting ${target} revenue in ${timeframe}. Diagnose the current revenue engine (pipeline, conversion rates, deal velocity, churn), identify the top 3 revenue acceleration levers, design the go-to-market plays for each lever, build the operational plan (hiring, enablement, process changes), create the revenue model with weekly milestones, and define the leading indicators that predict whether you will hit the target.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/platform-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, ecosystem, participants } = req.body;
+  const prompt = `You are a platform strategy and ecosystem design expert. Design a platform strategy for ${product} building an ecosystem with ${ecosystem} partners involving ${participants}. Cover the platform architecture (interaction, infrastructure, or aggregation platform), network effect design (same-side vs. cross-side), chicken-and-egg problem solution, platform governance and rules, pricing structure across participant types, curation vs. openness trade-offs, how to attract and retain the most critical participants, and how to measure platform health and ecosystem vitality.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
