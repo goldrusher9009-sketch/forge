@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v784.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v785.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211277,6 +211277,66 @@ app.post('/api/healthcare/insurance', requireAuth, async (req: AuthRequest, res)
 app.post('/api/healthcare/device', requireAuth, async (req: AuthRequest, res) => {
   const { executive, device, market } = req.body;
   const prompt = `You are a medical device strategy and commercial excellence expert. Design medical device strategy for ${executive} commercializing ${device} in ${market}. Cover medical device strategy framework, regulatory clearance and approval pathway, clinical evidence and health economics, market development and clinical adoption, hospital and IDN selling, physician training and proctoring, reimbursement and coding, competitive differentiation, post-market surveillance, and how to build medical device strategy programs that achieve the market penetration and the clinical adoption and the revenue that successful device commercialization requires by developing the commercial strategy with the clinical evidence and the economic value story and the KOL development and the sales training and the reimbursement support that overcomes the clinical inertia and the hospital value analysis committee and the budget constraint to achieve the adoption and the utilization and the outcome that drives the repeat purchase.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { executive, network, objective } = req.body;
+  const prompt = `You are a logistics strategy and supply chain network expert. Design logistics strategy for ${executive} optimizing ${network} achieving ${objective}. Cover logistics strategy framework, network design and optimization, transportation modes and routing, warehouse and distribution center, inventory positioning and safety stock, freight procurement and carrier management, last mile delivery, reverse logistics and returns, logistics technology and TMS, and how to build logistics strategy programs that achieve the service level and the cost efficiency and the network flexibility that successful supply chain logistics requires by designing the network with the demand analysis and the facility location model and the transportation optimization and the inventory positioning that minimizes the total logistics cost while meeting the customer service requirement and the delivery speed and the reliability that drives the customer satisfaction and the competitive differentiation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/warehouse', requireAuth, async (req: AuthRequest, res) => {
+  const { manager, facility, throughput } = req.body;
+  const prompt = `You are a warehouse operations strategy and distribution management expert. Design warehouse operations strategy for ${manager} managing ${facility} achieving ${throughput}. Cover warehouse operations framework, facility layout and slotting, receiving and put-away, picking and packing methods, shipping and outbound, warehouse management systems, labor management and productivity, inventory accuracy and cycle count, safety and ergonomics, automation and robotics, and how to build warehouse operations programs that achieve the throughput and the accuracy and the labor productivity that successful distribution requires by designing the warehouse with the flow path and the slotting strategy and the picking method and the WMS configuration and the labor standard that minimizes the travel time and the handling cost and the error rate while scaling the throughput to meet the peak demand without proportional labor increase.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/transport', requireAuth, async (req: AuthRequest, res) => {
+  const { director, fleet, region } = req.body;
+  const prompt = `You are a transportation management strategy and freight optimization expert. Design transportation management strategy for ${director} managing ${fleet} in ${region}. Cover transportation management framework, mode selection and optimization, carrier procurement and RFP, load planning and consolidation, routing and dispatch, freight audit and payment, carrier performance management, regulatory compliance and safety, fuel management and sustainability, and how to build transportation management programs that achieve the freight cost reduction and the service reliability and the carrier capacity that successful transportation requires by implementing the TMS with the load optimization and the carrier scorecard and the freight audit and the mode shift analysis that identifies the lane consolidation and the mode optimization and the carrier contract opportunity that reduces the transportation cost per unit while maintaining the delivery performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/coldchain', requireAuth, async (req: AuthRequest, res) => {
+  const { manager, product, network } = req.body;
+  const prompt = `You are a cold chain management strategy and temperature-controlled logistics expert. Design cold chain management strategy for ${manager} moving ${product} through ${network}. Cover cold chain management framework, temperature monitoring and visibility, cold storage facility design, refrigerated transport and last mile, packaging and insulation, regulatory compliance and food safety, cold chain risk management, pharmaceutical cold chain, cold chain technology and IoT, and how to build cold chain programs that achieve the temperature integrity and the product quality and the regulatory compliance that successful cold chain logistics requires by designing the cold chain with the temperature mapping and the excursion monitoring and the contingency plan and the validation protocol that maintains the product temperature from the production to the consumer throughout the transportation and the storage chain to prevent the quality loss and the safety risk and the regulatory violation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/customs', requireAuth, async (req: AuthRequest, res) => {
+  const { manager, company, market } = req.body;
+  const prompt = `You are a customs and trade compliance strategy and international trade expert. Design customs and trade strategy for ${manager} at ${company} trading in ${market}. Cover customs and trade framework, import and export classification, customs valuation and duty optimization, free trade agreements and preferential duty, customs bonds and entry filing, import security and C-TPAT, export controls and ITAR, trade compliance program and audit, customs broker management, and how to build customs and trade programs that achieve the duty savings and the compliance assurance and the supply chain velocity that successful global trade requires by implementing the trade compliance program with the classification review and the FTA qualification and the binding ruling and the customs audit that minimizes the duty liability and the compliance risk and the customs delay while leveraging the free trade agreement and the duty drawback and the foreign trade zone to reduce the landed cost.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/freight', requireAuth, async (req: AuthRequest, res) => {
+  const { forwarder, shipment, route } = req.body;
+  const prompt = `You are a freight forwarding strategy and international shipping expert. Design freight forwarding strategy for ${forwarder} managing ${shipment} on ${route}. Cover freight forwarding framework, ocean freight and FCL and LCL, air freight and charter, multimodal transportation, documentation and compliance, Incoterms and trade terms, customs clearance and brokerage, cargo insurance, freight rate negotiation, and how to build freight forwarding programs that achieve the transit time and the cost efficiency and the cargo security that successful international shipping requires by selecting the routing and the mode and the carrier with the transit time and the frequency and the reliability and the rate that meets the shipment requirement and the budget while managing the documentation and the customs and the cargo insurance and the exception to deliver the shipment on time and in full without damage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/visibility', requireAuth, async (req: AuthRequest, res) => {
+  const { manager, supply_chain, stakeholders } = req.body;
+  const prompt = `You are a supply chain visibility strategy and end-to-end tracking expert. Design supply chain visibility strategy for ${manager} across ${supply_chain} serving ${stakeholders}. Cover supply chain visibility framework, real-time tracking and IoT, control tower and exception management, supplier visibility and collaboration, demand sensing and signal, inventory visibility and positioning, shipment tracking and ETA prediction, risk monitoring and disruption alert, data integration and API, and how to build supply chain visibility programs that achieve the real-time awareness and the exception management and the decision support that successful supply chain control requires by implementing the visibility platform with the data integration from the supplier and the carrier and the warehouse and the customer that provides the end-to-end shipment status and the inventory position and the demand signal and the risk alert that enables the proactive exception management and the collaborative problem solving before the disruption impacts the customer.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/procurement', requireAuth, async (req: AuthRequest, res) => {
+  const { CPO, category, spend } = req.body;
+  const prompt = `You are a procurement strategy and strategic sourcing expert. Design procurement strategy for ${CPO} managing ${category} with ${spend}. Cover procurement strategy framework, category management and segmentation, strategic sourcing and RFP, supplier selection and evaluation, contract negotiation and management, supplier relationship management, spend analytics and visibility, savings tracking and value, procurement technology and eProcurement, and how to build procurement strategy programs that achieve the cost savings and the supply assurance and the supplier innovation that successful procurement requires by implementing the category strategy with the spend analysis and the market intelligence and the sourcing event and the negotiation and the contract that achieves the best total cost of ownership and the supply reliability and the sustainability and the innovation that the business requires from the supply base.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/supplierquality', requireAuth, async (req: AuthRequest, res) => {
+  const { manager, supplier, standard } = req.body;
+  const prompt = `You are a supplier quality strategy and supply chain quality management expert. Design supplier quality strategy for ${manager} managing ${supplier} to ${standard}. Cover supplier quality framework, supplier selection and qualification, quality management system audit, incoming inspection and sampling, supplier scorecard and performance, corrective action and 8D, supplier development and improvement, quality agreement and specification, supply chain risk and continuity, and how to build supplier quality programs that achieve the incoming quality and the supplier performance and the supply chain risk reduction that successful supplier management requires by implementing the supplier quality system with the qualification audit and the control plan and the incoming inspection and the scorecard and the corrective action process that ensures the supplier understands and consistently meets the specification and the quality system requirement and the delivery performance that the business requires.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/demand', requireAuth, async (req: AuthRequest, res) => {
+  const { planner, product, market } = req.body;
+  const prompt = `You are a demand planning strategy and sales and operations planning expert. Design demand planning strategy for ${planner} forecasting ${product} in ${market}. Cover demand planning framework, statistical forecasting and algorithms, market intelligence and signal sensing, new product introduction forecasting, promotional lift modeling, consensus demand process, forecast accuracy and bias measurement, S and OP and IBP integration, planning system and technology, and how to build demand planning programs that achieve the forecast accuracy and the inventory optimization and the service level that successful demand-driven supply chain requires by implementing the demand sensing with the POS data and the customer signal and the market intelligence and the statistical model and the collaborative consensus process that produces the accurate and the unbiased demand plan that drives the supply plan and the inventory target and the capacity plan to meet the customer demand at the lowest inventory cost.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
