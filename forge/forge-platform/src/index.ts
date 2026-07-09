@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v759.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v760.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -209777,6 +209777,66 @@ app.post('/api/sports/strategy', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/entertainment/strategy', requireAuth, async (req: AuthRequest, res) => {
   const { company, property, audience } = req.body;
   const prompt = `You are an entertainment strategy and IP development expert. Design entertainment strategy for ${company} building ${property} for ${audience}. Cover entertainment strategy framework, IP development and franchise building, film and television production, streaming and distribution strategy, talent acquisition and relationships, marketing and audience development, merchandise and licensing, live events and experiences, international expansion, and how to build entertainment companies that achieve the IP value and the audience connection and the revenue diversification that successful entertainment franchises require by developing the core IP with the character and the world-building and the thematic resonance that creates the emotional connection that audiences invest in beyond the single viewing experience, extending the IP across the media formats and the merchandise categories and the live experiences that multiply the revenue streams from the core audience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/management', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, mission, community } = req.body;
+  const prompt = `You are a nonprofit management strategy and social impact expert. Design nonprofit management strategy for ${organization} pursuing ${mission} serving ${community}. Cover nonprofit management framework, theory of change and impact measurement, fundraising strategy and donor cultivation, grant writing and foundation relationships, board governance and fiduciary duty, program design and evaluation, volunteer management and engagement, financial management and reserves, advocacy and policy engagement, and how to build nonprofit organizations that achieve the mission impact and the financial sustainability that serving communities requires by developing the theory of change with the logic model and the outcome metrics that demonstrate the causal pathway from the program intervention to the social outcome that donors and funders are investing in.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/fundraising', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, goal, donors } = req.body;
+  const prompt = `You are a fundraising strategy and donor development expert. Design fundraising strategy for ${organization} raising ${goal} from ${donors}. Cover fundraising strategy framework, major gift cultivation and stewardship, annual fund and direct mail, online fundraising and crowdfunding, planned giving and endowment, corporate partnerships and sponsorships, events and galas, grant prospecting and research, case for support and messaging, and how to build fundraising programs that achieve the revenue goal and the donor retention and the pipeline development that nonprofit financial sustainability requires by identifying the major gift prospects with the wealth screening and the philanthropic interest and the organizational connection that prioritizes the cultivation time on the donors with the capacity and the affinity and the readiness that produces the transformational gifts.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/socialenterprise', requireAuth, async (req: AuthRequest, res) => {
+  const { enterprise, model, beneficiaries } = req.body;
+  const prompt = `You are a social enterprise strategy and impact business expert. Design social enterprise strategy for ${enterprise} using ${model} serving ${beneficiaries}. Cover social enterprise framework, hybrid value creation and blended value, earned revenue and social mission integration, B Corp certification and benefit corporation, impact measurement and social return on investment, impact investing and social finance, market-based solutions to social problems, cross-sector partnerships, scaling social impact, and how to build social enterprises that achieve the financial sustainability and the social mission integration that the hybrid organization requires by designing the business model with the earned revenue stream that is structurally connected to the social mission rather than the revenue diversification that divorces the commercial activity from the impact that the organization exists to create.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/govtech/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { agency, solution, citizens } = req.body;
+  const prompt = `You are a government technology strategy and civic innovation expert. Design government technology strategy for ${agency} deploying ${solution} serving ${citizens}. Cover government technology framework, digital government and citizen services, procurement reform and agile government, open data and transparency, identity verification and authentication, cybersecurity for government systems, legacy modernization and migration, human-centered design for government, interoperability and data sharing between agencies, and how to build government technology programs that improve the citizen experience and the government efficiency and the public trust that democratic institutions require by applying the human-centered design with the user research and the usability testing that identifies the friction in the citizen service journey and the digital divide barriers that prevent the technology access for the populations most dependent on government services.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/govtech/policy', requireAuth, async (req: AuthRequest, res) => {
+  const { analyst, policy, stakeholders } = req.body;
+  const prompt = `You are a policy analysis strategy and public policy expert. Design policy analysis for ${analyst} analyzing ${policy} affecting ${stakeholders}. Cover policy analysis framework, problem definition and issue framing, evidence synthesis and research methods, stakeholder mapping and interest analysis, policy option development and evaluation, cost-benefit and cost-effectiveness analysis, political feasibility and implementation, equity and distributional analysis, monitoring and evaluation design, and how to build policy analysis that informs the decision maker with the evidence and the tradeoff analysis that the policy choice requires by defining the problem with the data and the root cause analysis that distinguishes the policy-amenable drivers from the structural factors that policy cannot address, developing the policy options with the theoretical mechanism and the evidence base and the implementation pathway that connects the policy instrument to the intended outcome.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/govtech/civic', requireAuth, async (req: AuthRequest, res) => {
+  const { city, challenge, residents } = req.body;
+  const prompt = `You are a civic innovation strategy and public problem solving expert. Design civic innovation strategy for ${city} addressing ${challenge} for ${residents}. Cover civic innovation framework, smart city technology and data, participatory design and community engagement, civic technology and open source, public-private partnerships, behavioral economics and nudge design, government innovation labs and sandboxes, procurement innovation and startup engagement, cross-sector collaboration and collective impact, and how to build civic innovation programs that solve the public problems with the resident-centered design and the technology enablement and the institutional partnership that improve the quality of life in cities by engaging the residents as co-designers of the solution rather than the beneficiaries of the government service.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/philanthropy', requireAuth, async (req: AuthRequest, res) => {
+  const { foundation, strategy, impact_areas } = req.body;
+  const prompt = `You are a philanthropy strategy and foundation management expert. Design philanthropy strategy for ${foundation} implementing ${strategy} across ${impact_areas}. Cover philanthropy strategy framework, strategic philanthropy and theory of change, grantmaking strategy and portfolio design, capacity building and general operating support, systems change and advocacy funding, evaluation and learning, impact investing and program-related investments, collaborative philanthropy and funder networks, equity and justice in grantmaking, and how to build philanthropy programs that achieve the social change ambition and the grantee effectiveness and the learning culture that transformative foundations require by designing the grantmaking with the unrestricted general operating support and the multi-year grants that provide the grantee organizations the flexibility and the stability that effective program delivery and organizational development requires.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/communitydev', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, community, assets } = req.body;
+  const prompt = `You are a community development strategy and neighborhood revitalization expert. Design community development strategy for ${organization} serving ${community} leveraging ${assets}. Cover community development framework, asset-based community development, affordable housing and community land trusts, economic development and small business support, workforce development and job training, health equity and social determinants, youth development and education, immigrant and refugee services, collective impact and backbone organizations, and how to build community development programs that achieve the neighborhood revitalization and the resident empowerment and the economic opportunity that thriving communities require by centering the resident voice in the planning process with the participatory methods and the community organizing that builds the power and the ownership that makes the development sustainable beyond the program funding.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/volunteer', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, program, volunteers } = req.body;
+  const prompt = `You are a volunteer management strategy and nonprofit engagement expert. Design volunteer management strategy for ${organization} running ${program} with ${volunteers}. Cover volunteer management framework, recruitment and onboarding strategy, skills-based volunteering and pro bono, volunteer training and development, recognition and appreciation programs, volunteer retention and engagement, corporate volunteer programs, virtual volunteering and remote engagement, impact measurement and reporting, and how to build volunteer programs that achieve the volunteer satisfaction and the organizational impact and the retention that sustainable volunteer programs require by matching the volunteer skills and the interests and the availability to the organizational needs that benefit from the volunteer contribution without the supervision burden that exceeds the value of the volunteer work.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/advocacy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, issue, targets } = req.body;
+  const prompt = `You are an advocacy strategy and policy change expert. Design advocacy strategy for ${organization} advancing ${issue} influencing ${targets}. Cover advocacy strategy framework, theory of change for policy advocacy, coalition building and power mapping, grassroots organizing and base building, media strategy and earned media, legislative advocacy and lobbying compliance, regulatory comment and administrative advocacy, litigation strategy and legal advocacy, electoral engagement and voter mobilization, and how to build advocacy programs that achieve the policy change and the power building and the narrative shift that the social and political change requires by mapping the power with the stakeholder analysis that identifies the decision makers and the influencers and the allies and the opponents that shape the policy decision, building the coalition with the organizations and the constituencies that bring the political power and the credibility and the diverse voices that move the decision maker.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
