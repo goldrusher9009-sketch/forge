@@ -39172,3 +39172,283 @@ export function ForgeTab_productenablement1070() {
     </div>
   );
 }
+
+export function ForgeTab_productdatagovernance1071() {
+  const [org, setOrg] = React.useState('');
+  const [data, setData] = React.useState('');
+  const [regulation, setRegulation] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/data/governance', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({org, data, regulation})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>🗄 Data Governance Architect</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="org" value={org} onChange={e=>setOrg(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="data" value={data} onChange={e=>setData(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="regulation" value={regulation} onChange={e=>setRegulation(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productaccountplan1072() {
+  const [account, setAccount] = React.useState('');
+  const [goal, setGoal] = React.useState('');
+  const [stakeholder, setStakeholder] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/sales/account-plan', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({account, goal, stakeholder})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>🗂 Strategic Account Planner</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="account" value={account} onChange={e=>setAccount(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="goal" value={goal} onChange={e=>setGoal(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="stakeholder" value={stakeholder} onChange={e=>setStakeholder(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productcontentops1073() {
+  const [team, setTeam] = React.useState('');
+  const [volume, setVolume] = React.useState('');
+  const [channels, setChannels] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/marketing/content-ops', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({team, volume, channels})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>🏭 Content Operations Pro</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="team" value={team} onChange={e=>setTeam(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="volume" value={volume} onChange={e=>setVolume(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="channels" value={channels} onChange={e=>setChannels(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productsocialselling1074() {
+  const [role, setRole] = React.useState('');
+  const [platform, setPlatform] = React.useState('');
+  const [icp, setIcp] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/sales/social-selling', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({role, platform, icp})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>💬 Social Selling Pro</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="role" value={role} onChange={e=>setRole(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="platform" value={platform} onChange={e=>setPlatform(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="icp" value={icp} onChange={e=>setIcp(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productdatamesh1075() {
+  const [org, setOrg] = React.useState('');
+  const [domains, setDomains] = React.useState('');
+  const [platform, setPlatform] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/data/mesh-architecture', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({org, domains, platform})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>🕸 Data Mesh Architect</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="org" value={org} onChange={e=>setOrg(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="domains" value={domains} onChange={e=>setDomains(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="platform" value={platform} onChange={e=>setPlatform(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productcommsplan1076() {
+  const [org, setOrg] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [goal, setGoal] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/marketing/comms-plan', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({org, audience, goal})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>📢 Communications Strategist</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="org" value={org} onChange={e=>setOrg(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="audience" value={audience} onChange={e=>setAudience(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="goal" value={goal} onChange={e=>setGoal(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productdealreview1077() {
+  const [deal, setDeal] = React.useState('');
+  const [stage, setStage] = React.useState('');
+  const [risk, setRisk] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/sales/deal-review', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({deal, stage, risk})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>🔍 Deal Review Coach</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="deal" value={deal} onChange={e=>setDeal(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="stage" value={stage} onChange={e=>setStage(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="risk" value={risk} onChange={e=>setRisk(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productpriceincrease1078() {
+  const [product, setProduct] = React.useState('');
+  const [segment, setSegment] = React.useState('');
+  const [increase, setIncrease] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/strategy/price-increase', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({product, segment, increase})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>💵 Price Increase Strategist</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="product" value={product} onChange={e=>setProduct(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="segment" value={segment} onChange={e=>setSegment(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="increase" value={increase} onChange={e=>setIncrease(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productoutboundseq1079() {
+  const [persona, setPersona] = React.useState('');
+  const [problem, setProblem] = React.useState('');
+  const [offer, setOffer] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/sales/outbound-sequence', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({persona, problem, offer})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>📨 Outbound Sequence Builder</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="persona" value={persona} onChange={e=>setPersona(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="problem" value={problem} onChange={e=>setProblem(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="offer" value={offer} onChange={e=>setOffer(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productmergeracquis1080() {
+  const [acquirer, setAcquirer] = React.useState('');
+  const [target, setTarget] = React.useState('');
+  const [rationale, setRationale] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/strategy/ma-advisor', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({acquirer, target, rationale})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>🔗 M&A Advisor Pro</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="acquirer" value={acquirer} onChange={e=>setAcquirer(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="target" value={target} onChange={e=>setTarget(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="rationale" value={rationale} onChange={e=>setRationale(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}

@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v597.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v598.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200057,6 +200057,66 @@ app.post('/api/strategy/b2b-plg', requireAuth, async (req: AuthRequest, res) => 
 app.post('/api/sales/enablement', requireAuth, async (req: AuthRequest, res) => {
   const { team, challenge, stage } = req.body;
   const prompt = `You are a sales enablement and revenue readiness expert. Build the enablement program for ${team} sales team addressing ${challenge} at ${stage} deal stage. Cover the sales enablement charter and scope, the content strategy for each deal stage, the playbook design, the onboarding and ramp program, the ongoing training and coaching design, the competitive intelligence program, the win-loss analysis process, the technology and CRM enablement, the enablement measurement and ROI, and how to build a world-class sales enablement function.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/governance', requireAuth, async (req: AuthRequest, res) => {
+  const { org, data, regulation } = req.body;
+  const prompt = `You are a data governance and enterprise data management expert. Build the data governance program for ${org} covering ${data} data assets under ${regulation} regulations. Cover the data governance framework and operating model, the data stewardship and ownership model, the data catalog and lineage design, the master data management strategy, the data quality program, the data classification and sensitivity handling, the data privacy and consent management, the data access control design, the data governance metrics, and how to build a data-literate organization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/account-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { account, goal, stakeholder } = req.body;
+  const prompt = `You are a strategic account management and enterprise selling expert. Build the strategic account plan for ${account} to achieve ${goal} with ${stakeholder} as champion. Cover the account strategy and vision, the white space and expansion opportunity mapping, the stakeholder and power map, the value hypothesis for each stakeholder, the competitive displacement strategy, the relationship development plan, the executive engagement strategy, the mutual success plan design, the account risk management, and how to grow a strategic account to its full potential.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/content-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { team, volume, channels } = req.body;
+  const prompt = `You are a content operations and content supply chain expert. Build the content operations system for ${team} producing ${volume} content across ${channels} channels. Cover the content operations model design, the editorial calendar and planning process, the content workflow and approval design, the content production system, the asset management and DAM strategy, the content localization and transcreation process, the content distribution and syndication, the content performance measurement, the content technology stack design, and how to scale content production without sacrificing quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/social-selling', requireAuth, async (req: AuthRequest, res) => {
+  const { role, platform, icp } = req.body;
+  const prompt = `You are a social selling and digital sales prospecting expert. Build the social selling program for ${role} on ${platform} targeting ${icp}. Cover the personal brand foundation for social selling, the content strategy for thought leadership, the prospecting and connection strategy, the engagement and conversation starters, the social listening for buyer signals, the outreach sequencing via social, the content calendar for social sellers, the measuring social selling effectiveness, the social selling tools and technology, and how to make social selling a consistent revenue generator.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/mesh-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { org, domains, platform } = req.body;
+  const prompt = `You are a data mesh architecture and distributed data platform expert. Design the data mesh for ${org} with ${domains} data domains on ${platform}. Cover the data mesh principles and why they apply here, the domain decomposition and data product design, the data product interface and contract design, the self-serve data platform design, the federated computational governance model, the data product discovery and marketplace, the data quality as code approach, the data mesh adoption sequence, the data mesh team and organizational design, and how to measure data mesh success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/comms-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { org, audience, goal } = req.body;
+  const prompt = `You are a corporate communications and stakeholder engagement expert. Build the communications plan for ${org} reaching ${audience} to achieve ${goal}. Cover the communications audit and baseline, the messaging architecture and narrative, the channel strategy for each audience, the proactive communications calendar, the crisis communications preparedness, the executive communications program, the internal communications alignment, the media relations strategy, the measurement and listening program, and how to build a communications function that drives organizational outcomes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/deal-review', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, stage, risk } = req.body;
+  const prompt = `You are a sales deal coaching and opportunity management expert. Coach the deal team on ${deal} at ${stage} stage with ${risk} as the top risk. Cover the deal assessment framework, the MEDDIC or MEDDPICC qualification scoring, the stakeholder mapping completeness, the competitive position assessment, the value hypothesis validation, the decision criteria alignment, the procurement and legal process navigation, the close plan design, the risk mitigation strategies, and how to advance the deal to close with high confidence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/price-increase', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, increase } = req.body;
+  const prompt = `You are a pricing strategy and price increase execution expert. Design the price increase for ${product} in ${segment} targeting a ${increase} increase. Cover the price increase justification framework, the timing and trigger analysis, the segmentation of the increase by customer type, the grandfathering and transition design, the customer communication and framing, the sales team enablement for the conversation, the legal and contractual review, the competitive reaction management, the churn risk mitigation, and how to implement a price increase that customers accept.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/outbound-sequence', requireAuth, async (req: AuthRequest, res) => {
+  const { persona, problem, offer } = req.body;
+  const prompt = `You are an outbound sales and cold outreach sequencing expert. Build the outbound sequence for ${persona} addressing ${problem} with ${offer}. Cover the sequence strategy and philosophy, the touchpoint design across email phone and social, the email subject line and opening hook, the value proposition framing for cold outreach, the pattern interrupt techniques, the follow-up cadence and persistence strategy, the personalization at scale approach, the call script design, the objection handling for initial outreach, and how to test and optimize the sequence over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ma-advisor', requireAuth, async (req: AuthRequest, res) => {
+  const { acquirer, target, rationale } = req.body;
+  const prompt = `You are a mergers and acquisitions strategy and integration expert. Advise on the acquisition of ${target} by ${acquirer} with ${rationale} as the strategic rationale. Cover the strategic fit assessment, the valuation framework and methodology, the due diligence scope design, the deal structure options, the synergy identification and quantification, the integration planning approach, the cultural assessment and integration risk, the organizational design post-merger, the Day 1 readiness planning, and the 100-day integration plan.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
