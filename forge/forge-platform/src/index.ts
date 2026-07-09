@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v657.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v658.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203657,6 +203657,66 @@ app.post('/api/marketing/purchase-experience', requireAuth, async (req: AuthRequ
 app.post('/api/strategy/decision-analysis', requireAuth, async (req: AuthRequest, res) => {
   const { decision, options, criteria } = req.body;
   const prompt = `You are a decision analysis and structured decision-making expert. Analyze the ${decision} choosing between ${options} against ${criteria}. Cover the decision analysis framework, the decision framing and problem definition, the option generation and analysis, the criteria weighting and evaluation, the uncertainty and risk analysis, the decision tree and expected value, the scenario analysis and stress testing, the cognitive bias mitigation, the decision documentation and accountability, and how to make important decisions in ways that are rigorous enough to overcome the cognitive biases and political pressures that lead to poor organizational decisions, that are fast enough to maintain decision velocity, and that document the reasoning and assumptions clearly enough that you can learn from the decision quality over time rather than just outcome quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/sales-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are a sales playbook design and sales methodology expert. Build the sales playbook for ${company} selling ${product} in ${market}. Cover the playbook framework, the ideal customer profile and qualification criteria, the discovery process and questions, the value proposition and messaging by persona, the objection handling guide, the competitive differentiation, the demo and presentation best practices, the proposal and pricing approach, the negotiation tactics, and how to create sales playbooks that give salespeople the knowledge and tools to consistently execute the sales process that works for your specific product and market rather than relying on individual heroics, that capture the tribal knowledge of your best salespeople in a format that can accelerate the development of new hires and raise the performance of the whole team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/channel-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, channels } = req.body;
+  const prompt = `You are a channel strategy and partner ecosystem expert. Design the channel strategy for ${company} selling ${product} through ${channels}. Cover the channel strategy framework, the direct vs. channel economics, the partner profile and ideal partner, the channel value proposition, the partner recruitment and onboarding, the partner enablement and training, the deal registration and conflict management, the partner tiers and incentives, the channel program management, and how to build channel programs that create genuine incremental revenue through partners rather than conflict with direct sales, that attract and motivate partners who have the customer relationships and domain expertise to position and sell your product effectively, and that design the economics and incentive structures that make partners prioritize your product in their portfolio.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/customer-success-dna', requireAuth, async (req: AuthRequest, res) => {
+  const { company, customers, stage } = req.body;
+  const prompt = `You are a customer success strategy and CS organization design expert. Design the customer success DNA for ${company} serving ${customers} at ${stage}. Cover the CS DNA framework, the customer success philosophy and principles, the CS team structure and roles, the customer segmentation and coverage model, the onboarding and time-to-value, the health scoring and risk management, the QBR and executive engagement, the CS playbooks and intervention, the CS technology stack, and how to build customer success organizations that genuinely drive customer outcomes rather than relationship management without accountability for results, that scale efficiently through tech-touch and pooled models while maintaining the human relationships that drive renewal decisions, and that create the feedback loops between customer success insights and product development that lead to continuous improvement of the product and customer experience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/pricing-experiment', requireAuth, async (req: AuthRequest, res) => {
+  const { product, currentprice, hypothesis } = req.body;
+  const prompt = `You are a pricing experimentation and revenue optimization expert. Design the pricing experiment for ${product} at ${currentprice} testing "${hypothesis}". Cover the pricing experiment framework, the pricing experiment design, the customer segmentation for testing, the willingness-to-pay research, the price sensitivity measurement, the experiment execution and analysis, the price change implementation, the customer communication strategy, the pricing model iteration, and how to run pricing experiments that produce clear evidence about whether a pricing change will increase revenue without destroying the customer relationships and trust that are more valuable than short-term revenue optimization, that use the right research and testing methods for the specific pricing questions you are trying to answer.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/sourcing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, category, goals } = req.body;
+  const prompt = `You are a strategic sourcing and procurement excellence expert. Design the sourcing strategy for ${organization} in ${category} toward ${goals}. Cover the sourcing strategy framework, the spend analysis and categorization, the supplier market analysis, the make vs. buy decisions, the supplier qualification and selection, the RFP and competitive bidding, the total cost of ownership analysis, the contract and commercial terms, the supplier relationship management, and how to design sourcing strategies that create sustainable cost advantages and supply chain resilience rather than optimizing purely for unit price in ways that create quality and supply risk, that build the supplier relationships that provide preferential access to capacity and innovation, and that align procurement decisions with the strategic priorities of the business rather than optimizing locally within each category.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/corporate-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, portfolio, horizon } = req.body;
+  const prompt = `You are a corporate strategy and portfolio management expert. Design the corporate strategy for ${company} with ${portfolio} over ${horizon}. Cover the corporate strategy framework, the corporate purpose and vision, the portfolio strategy and business unit roles, the corporate advantage identification, the capital allocation across portfolio, the M&A and divestiture strategy, the corporate center design, the synergy extraction across portfolio, the corporate strategy process, and how to develop corporate strategies that articulate the specific logic by which the corporate parent creates value that the businesses could not create independently, that make the portfolio composition and capital allocation decisions that maximize total shareholder value over the strategic horizon, and that build the corporate center capabilities that enable rather than burden the business units with overhead that does not create value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/transition-mgmt', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, transition, timeline } = req.body;
+  const prompt = `You are a organizational transition and change management expert. Manage the transition for ${organization} through ${transition} over ${timeline}. Cover the transition management framework, the transition readiness assessment, the stakeholder impact analysis, the change management strategy, the communication planning, the resistance identification and mitigation, the training and capability building, the transition governance and tracking, the sustainability and embedding, and how to manage organizational transitions that achieve the intended outcomes by taking the people dimension as seriously as the technical and process dimensions, that create the leadership alignment and visible commitment that signals to the organization that the change is real and permanent, and that build the new capabilities and behaviors that allow people to succeed in the new model rather than reverting to old ways.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/fractional-exec', requireAuth, async (req: AuthRequest, res) => {
+  const { executive, function, companies } = req.body;
+  const prompt = `You are a fractional executive strategy and portfolio career expert. Design the fractional approach for ${executive} leading ${function} across ${companies}. Cover the fractional executive framework, the fractional engagement model design, the client selection and portfolio management, the fractional scope and deliverables, the time allocation and scheduling, the fractional pricing model, the onboarding and context management, the fractional team building, the transition planning, and how to build a successful fractional executive practice that delivers genuine value to clients who need senior executive expertise but cannot justify or afford a full-time hire, that manages the complexity of working across multiple organizations simultaneously, and that builds the reputation and referral network that generates a consistent pipeline of high-quality engagements.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/quality-mgmt', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, products, standards } = req.body;
+  const prompt = `You are a quality management system and continuous improvement expert. Design the quality system for ${organization} producing ${products} to ${standards}. Cover the quality management framework, the quality management system design, the quality planning and standards, the quality assurance and defect prevention, the quality control and inspection, the root cause analysis and corrective action, the continuous improvement and kaizen, the quality metrics and measurement, the quality culture and employee involvement, and how to build quality management systems that prevent defects through robust process design and statistical process control rather than inspecting quality in at the end, that build the quality culture where every employee takes ownership of quality in their work rather than delegating quality to a separate quality department, and that achieve the quality standards required by customers without the cost and waste of excessive inspection and rework.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/story-branding', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, audience, transformation } = req.body;
+  const prompt = `You are a StoryBrand framework and brand clarity expert. Apply story branding to ${brand} for ${audience} delivering ${transformation}. Cover the StoryBrand framework, the hero identification and empathy, the villain and external problem, the internal and philosophical problems, the guide positioning, the plan and call to action, the success and transformation vision, the failure stakes and urgency, the brand script development, and how to clarify your brand message using the StoryBrand framework so that customers clearly understand what you offer, how it solves their problem, and what they need to do to get it, positioning your brand as the guide rather than the hero of the customers story, which research shows is the most effective way to create the emotional connection that drives purchase decisions.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
