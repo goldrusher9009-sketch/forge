@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v701.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v702.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -206297,6 +206297,66 @@ app.post('/api/strategy/cx-leadership', requireAuth, async (req: AuthRequest, re
 app.post('/api/strategy/workforce-planning', requireAuth, async (req: AuthRequest, res) => {
   const { company, horizon, risks } = req.body;
   const prompt = `You are a workforce planning strategy and talent supply chain expert. Design workforce plan for ${company} over ${horizon} addressing ${risks}. Cover workforce planning framework, demand forecasting and headcount modeling, skills inventory and gap analysis, build versus buy versus borrow decisions, talent pipeline development, succession planning and critical role coverage, workforce flexibility and contingent labor strategy, automation and workforce transformation, workforce analytics, and how to build workforce planning capabilities that ensure the organization has the talent needed to execute its strategy by modeling the talent demand implications of the business plan, assessing the current workforce against future requirements to identify gaps, and making the systematic investments in internal development, external hiring, and alternative labor models that close those gaps before they constrain business performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-ethics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, system, risks } = req.body;
+  const prompt = `You are an AI ethics strategy and responsible AI deployment expert. Design AI ethics framework for ${company} deploying ${system} addressing ${risks}. Cover AI ethics framework, fairness and bias assessment, transparency and explainability requirements, privacy and data minimization, accountability and human oversight, safety and robustness testing, governance and ethics review process, stakeholder impact assessment, regulatory compliance, and how to build responsible AI programs that deploy AI systems that are genuinely fair and beneficial by conducting rigorous bias testing across demographic groups before deployment, building the technical infrastructure for explainability that lets affected parties understand AI decisions, and establishing the governance structures that make humans accountable for AI outcomes rather than hiding behind algorithmic authority when AI systems cause harm.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/open-innovation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, challenge, ecosystem } = req.body;
+  const prompt = `You are an open innovation strategy and ecosystem partnership expert. Design open innovation for ${company} addressing ${challenge} with ${ecosystem}. Cover open innovation framework, inbound and outbound innovation strategies, technology scouting and horizon scanning, startup engagement and corporate venture, academic and research partnerships, hackathon and crowdsourcing programs, IP licensing and technology transfer, innovation ecosystem mapping, open innovation metrics, and how to build open innovation programs that access external ideas and technologies more efficiently than internal R and D alone by systematically scanning the external innovation landscape for relevant developments, building the partnership structures that allow rapid experimentation with external technologies without the legal and operational friction that normally slows corporate collaboration.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/retail', requireAuth, async (req: AuthRequest, res) => {
+  const { retailer, format, market } = req.body;
+  const prompt = `You are a retail strategy and omnichannel commerce expert. Design retail strategy for ${retailer} with ${format} in ${market}. Cover retail strategy framework, store format and footprint optimization, merchandise assortment and category management, private label and exclusive product strategy, omnichannel integration and fulfillment, customer loyalty and data analytics, store operations and labor model, supplier and vendor management, real estate and location strategy, and how to build retail strategies that generate sustainable competitive advantage by identifying the specific customer missions and shopping occasions the format serves better than alternatives, designing the assortment and experience around those missions, and building the operational excellence in execution that makes the promise consistent across every store and interaction rather than excellent on paper but inconsistent in practice.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/dei', requireAuth, async (req: AuthRequest, res) => {
+  const { company, workforce, goals } = req.body;
+  const prompt = `You are a diversity equity and inclusion strategy and organizational change expert. Design DEI strategy for ${company} with ${workforce} targeting ${goals}. Cover DEI strategy framework, representation data analysis and goal setting, bias identification in talent processes, inclusive culture assessment, pay equity analysis, ERG strategy and sponsorship, inclusive leadership development, DEI metrics and accountability, external partnership and pipeline development, and how to build DEI strategies that create measurable progress by addressing the specific systemic barriers in talent acquisition, development, and retention that explain representation gaps rather than relying on awareness training that changes attitudes without changing the structural processes that shape who gets hired, promoted, and retained.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ecosystem-mapping', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, role } = req.body;
+  const prompt = `You are an ecosystem mapping strategy and platform economics expert. Design ecosystem strategy for ${company} in ${industry} as ${role}. Cover ecosystem mapping framework, value chain analysis and disintermediation risk, platform versus pipeline economics, complementor and partner identification, ecosystem governance and rules, data network effects and data moats, ecosystem health metrics, adjacency expansion, ecosystem orchestration, and how to build ecosystem strategies that create sustainable competitive advantage by identifying the position in the value chain that provides leverage over both supply and demand, designing the platform rules and governance that attract the right participants while preventing the free-rider dynamics that degrade platform quality, and building the data and network effects that make the ecosystem increasingly valuable and difficult to replicate as it grows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cyber', requireAuth, async (req: AuthRequest, res) => {
+  const { company, assets, threats } = req.body;
+  const prompt = `You are a cybersecurity strategy and enterprise security program expert. Design cyber strategy for ${company} protecting ${assets} against ${threats}. Cover cybersecurity strategy framework, threat intelligence and adversary modeling, risk quantification and prioritization, security program maturity assessment, defense-in-depth architecture, identity-centric security model, security operations and detection capability, incident response and cyber resilience, board and executive communication, and how to build cybersecurity programs that provide genuine protection rather than compliance theater by prioritizing security investments based on actual threat intelligence and business impact rather than compliance checklists, building detection and response capabilities that assume determined adversaries will breach perimeter defenses, and creating the security culture where employees are partners in security rather than the weakest link.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/behavior-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, behavior, users } = req.body;
+  const prompt = `You are a behavior design strategy and habit formation expert. Design behavior change program for ${company} targeting ${behavior} in ${users}. Cover behavior design framework, motivation and ability assessment, trigger and cue design, habit loop and routine formation, friction reduction and environment design, social proof and norm-setting, feedback and progress visualization, reward design and intrinsic motivation, and how to design behavior change programs that achieve lasting change by addressing motivation, ability, and prompts simultaneously rather than assuming that information alone changes behavior, designing the environment and defaults that make the desired behavior the path of least resistance rather than requiring willpower and sustained effort, and building the feedback loops that give people the sense of progress that sustains engagement until the behavior becomes automatic.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/platform-governance', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, users, issues } = req.body;
+  const prompt = `You are a platform governance strategy and trust and safety expert. Design platform governance for ${platform} with ${users} addressing ${issues}. Cover platform governance framework, content policy design and moderation principles, automated detection and human review, appeals and due process, transparency reporting, advertiser brand safety, creator and developer relations, government and regulatory engagement, harmful content taxonomy, and how to build platform governance systems that maintain trust with both users and society by establishing content policies that are principled and consistently enforced rather than arbitrary, building the moderation systems at the scale platforms operate that combine automated detection with human judgment for context-dependent decisions, and engaging transparently with governments and civil society about governance decisions rather than treating policy as a competitive secret.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/family-office', requireAuth, async (req: AuthRequest, res) => {
+  const { family, wealth, goals } = req.body;
+  const prompt = `You are a family office strategy and multi-generational wealth management expert. Design family office for ${family} with ${wealth} targeting ${goals}. Cover family office framework, single versus multi-family office decision, investment policy statement and asset allocation, direct investment and co-investment strategy, operating business ownership and governance, philanthropy and impact investing, family governance and council structure, next-generation education and wealth transfer, tax and estate planning integration, and how to build family office structures that preserve and grow multi-generational wealth by establishing the investment discipline that prevents the concentration risk and performance chasing that destroys family wealth, designing the family governance that makes investment decisions on principle rather than emotion, and preparing the next generation for responsible stewardship through education and graduated responsibility.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/narrow-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { company, problem, data } = req.body;
+  const prompt = `You are a narrow AI applications strategy and machine learning deployment expert. Design narrow AI for ${company} solving ${problem} with ${data}. Cover narrow AI framework, problem framing and ML suitability assessment, data requirements and data engineering, model selection and architecture, training and validation methodology, production deployment and MLOps, model monitoring and drift detection, human-in-the-loop design, continuous improvement pipeline, and how to deploy narrow AI applications that deliver reliable business value by rigorously assessing whether the problem has the data characteristics and stability that make ML appropriate rather than building ML solutions to problems that simpler rule-based approaches solve better, designing the human oversight and escalation that catches model failures before they cause harm, and building the MLOps infrastructure that maintains model performance after deployment as data distributions shift.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
