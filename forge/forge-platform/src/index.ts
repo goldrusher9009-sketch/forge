@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v627.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v628.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201857,6 +201857,66 @@ app.post('/api/hr/learning-organization', requireAuth, async (req: AuthRequest, 
 app.post('/api/growth/customer-success', requireAuth, async (req: AuthRequest, res) => {
   const { product, segments, outcomes } = req.body;
   const prompt = `You are a customer success and expansion revenue expert. Design the customer success strategy for ${product} across ${segments} driving ${outcomes}. Cover the customer success strategy framework, the customer segmentation and success model, the onboarding and time-to-value design, the customer health scoring, the proactive success motion, the quarterly business review design, the expansion and upsell motion, the advocacy and reference program, the customer success metrics and compensation, and how to build a customer success function that drives net revenue retention above 120%, creates a systematic pipeline of expansion revenue, and turns customers into advocates who fuel new customer acquisition.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/funnel-optimization', requireAuth, async (req: AuthRequest, res) => {
+  const { funnel, stage, metric } = req.body;
+  const prompt = `You are a conversion funnel and growth optimization expert. Optimize the ${funnel} funnel at ${stage} stage improving ${metric}. Cover the funnel diagnosis and baseline measurement, the conversion rate analysis at each stage, the funnel leak identification and prioritization, the user research and qualitative insight methods, the A/B testing strategy and program design, the landing page optimization, the onboarding flow optimization, the checkout and conversion optimization, the funnel measurement and attribution, and how to build a systematic funnel optimization program that produces continuous improvement in conversion rates through disciplined experimentation and customer insight rather than random changes based on intuition.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/infra-security', requireAuth, async (req: AuthRequest, res) => {
+  const { infrastructure, threats, compliance } = req.body;
+  const prompt = `You are an infrastructure security and cloud security expert. Secure ${infrastructure} against ${threats} achieving ${compliance}. Cover the infrastructure security framework, the network security and segmentation, the identity and privilege management, the secrets and credential management, the container and orchestration security, the cloud security posture management, the vulnerability management program, the security monitoring and SIEM, the incident detection and response, and how to design infrastructure security that is defense-in-depth and based on zero-trust principles, that is automated and consistent at scale, and that meets regulatory compliance requirements without creating operational friction that slows engineering velocity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/behavior-design', requireAuth, async (req: AuthRequest, res) => {
+  const { behavior, users, context } = req.body;
+  const prompt = `You are a behavioral design and persuasive technology expert. Design for ${behavior} change in ${users} within ${context}. Cover the behavior change framework, the motivation and ability analysis, the behavioral diagnosis and mapping, the trigger and prompt design, the reward and reinforcement design, the friction reduction strategy, the social proof and norms design, the commitment and consistency design, the feedback and progress visibility design, and how to apply behavioral science to product and service design in ways that genuinely help users achieve their goals through ethical persuasion and well-designed choice architectures rather than manipulative dark patterns.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/platform', requireAuth, async (req: AuthRequest, res) => {
+  const { business, sides, network } = req.body;
+  const prompt = `You are a platform strategy and marketplace economics expert. Design the platform strategy for ${business} with ${sides} sides and ${network} network effects. Cover the platform business model design, the multi-sided market economics, the network effect design and classification, the chicken and egg problem solution, the platform governance design, the pricing and monetization strategy, the trust and safety design, the platform rules and standards, the ecosystem development strategy, and how to design platform businesses that create genuine value for all sides, generate the network effects that create defensible competitive moats, and build the ecosystem relationships that sustain platform growth over the long term.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/data-privacy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, data, jurisdiction } = req.body;
+  const prompt = `You are a data privacy and privacy engineering expert. Design the privacy architecture for ${product} handling ${data} in ${jurisdiction}. Cover the privacy by design principles and framework, the data mapping and inventory, the privacy risk assessment methodology, the consent management design, the data minimization strategy, the data retention and deletion design, the access control and data masking, the privacy monitoring and audit, the breach response design, and how to build privacy protections that comply with GDPR, CCPA, and other regulations while actually respecting user rights and building the kind of trust that becomes a genuine competitive advantage in a world where customers increasingly care about how their data is handled.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/pipeline-optimization', requireAuth, async (req: AuthRequest, res) => {
+  const { pipeline, stage, value } = req.body;
+  const prompt = `You are a sales pipeline and revenue forecasting expert. Optimize the ${pipeline} pipeline at ${stage} stage with ${value} deal value. Cover the pipeline health diagnosis, the stage conversion rate analysis, the pipeline coverage and buffer analysis, the deal qualification framework, the pipeline hygiene practices, the weighted pipeline and forecast model, the pipeline velocity optimization, the pipeline review cadence and process, the pipeline management technology, and how to build a pipeline management system that produces accurate revenue forecasts, identifies and fixes pipeline problems early, and creates the sales management visibility needed to coach reps effectively and intervene in deals before they are lost.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/content-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { team, volume, channels } = req.body;
+  const prompt = `You are a content operations and editorial workflow expert. Design the content operations for ${team} producing ${volume} across ${channels}. Cover the content operations strategy and charter, the content workflow and process design, the content calendar and planning system, the content brief and creation standards, the content review and approval workflow, the content management and organization, the content performance measurement, the content technology stack, the content team structure and roles, and how to build content operations that enable teams to produce high volumes of quality content consistently, that creates clarity about what to create and why, and that builds the measurement infrastructure to continuously improve content effectiveness.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/change-management', requireAuth, async (req: AuthRequest, res) => {
+  const { change, organization, resistance } = req.body;
+  const prompt = `You are a change management and organizational transformation expert. Manage the ${change} in ${organization} addressing ${resistance}. Cover the change management framework and methodology, the change readiness assessment, the stakeholder mapping and engagement strategy, the case for change development, the change vision and narrative, the communication strategy and plan, the training and capability building, the resistance diagnosis and mitigation, the change reinforcement and sustainment, and how to design and execute change management that produces actual behavior change rather than superficial compliance, that addresses the real human concerns about change, and that builds the organizational capability to keep adapting as the pace of change accelerates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/business-storytelling', requireAuth, async (req: AuthRequest, res) => {
+  const { presenter, audience, message } = req.body;
+  const prompt = `You are a business storytelling and executive communication expert. Help ${presenter} communicate ${message} to ${audience} through story. Cover the storytelling framework and narrative structure, the audience analysis and insight, the story arc design, the opening hook and attention capture, the conflict and tension design, the data and evidence integration, the visual storytelling design, the emotional resonance techniques, the call to action design, and how to develop the storytelling skills that separate great communicators from average ones by learning to translate complex business ideas into compelling narratives that capture attention, create understanding, build trust, and inspire action in any business context.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/supply-chain', requireAuth, async (req: AuthRequest, res) => {
+  const { network, products, constraints } = req.body;
+  const prompt = `You are a supply chain optimization and operations management expert. Optimize the ${network} supply chain for ${products} under ${constraints}. Cover the supply chain strategy and network design, the demand forecasting and planning, the inventory optimization and positioning, the supplier relationship management, the logistics network optimization, the supply chain risk and resilience, the supply chain visibility and technology, the sustainability and ESG integration, the supply chain metrics and KPIs, and how to design supply chains that balance cost efficiency with resilience and agility, that use data and technology to improve decision-making, and that create sustainable competitive advantage through supply chain capability rather than treating it as a commodity function.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
