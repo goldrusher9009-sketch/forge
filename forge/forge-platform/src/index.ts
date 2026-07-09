@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v761.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v762.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -209897,6 +209897,66 @@ app.post('/api/education/vocational', requireAuth, async (req: AuthRequest, res)
 app.post('/api/education/online', requireAuth, async (req: AuthRequest, res) => {
   const { platform, courses, learners } = req.body;
   const prompt = `You are an online education strategy and digital learning expert. Design online education strategy for ${platform} delivering ${courses} to ${learners}. Cover online education framework, synchronous versus asynchronous design, video production and multimedia learning, discussion and social learning design, learner support and academic integrity, accessibility and universal design, completion rate optimization, learning community and cohort design, micro-credentials and badges, and how to build online education programs that achieve the learning outcomes and the learner engagement and the completion rates that effective online education requires by designing the course with the chunked content and the active learning and the social connection that combat the isolation and the distraction that reduce the online learning completion to the low rates that poorly designed online courses produce.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/research/methodology', requireAuth, async (req: AuthRequest, res) => {
+  const { researcher, question, field } = req.body;
+  const prompt = `You are a research methodology strategy and academic research expert. Design research methodology for ${researcher} investigating ${question} in ${field}. Cover research methodology framework, quantitative and qualitative design, experimental and quasi-experimental designs, survey design and sampling, interview and ethnographic methods, mixed methods integration, systematic review and meta-analysis, research ethics and IRB, data collection and analysis, and how to build research programs that achieve the internal validity and the external validity and the methodological rigor that credible research requires by selecting the research design with the validity threat analysis that identifies the confounds and the biases that the design controls for and acknowledges the limitations that the design cannot eliminate, ensuring the measurement validity with the instrument development and the pilot testing and the reliability assessment that demonstrates the measures capture the constructs they claim to measure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/research/writing', requireAuth, async (req: AuthRequest, res) => {
+  const { author, paper, audience } = req.body;
+  const prompt = `You are an academic writing strategy and scholarly communication expert. Design academic writing strategy for ${author} writing ${paper} for ${audience}. Cover academic writing framework, argument structure and thesis development, literature review and synthesis, methodology section writing, results presentation and data visualization, discussion and implication writing, academic style and citation, peer review response and revision, journal selection and submission, and how to build academic writing skills that achieve the scholarly contribution and the reader comprehension and the publication success that academic careers require by constructing the argument with the clear thesis and the logical progression of evidence and the counterargument engagement that demonstrates the scholarly rigor and the intellectual honesty that the academic community values, synthesizing the literature with the thematic organization and the critical analysis rather than the annotated bibliography that summarizes each source without building the argument.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/research/grantwriting', requireAuth, async (req: AuthRequest, res) => {
+  const { researcher, project, funder } = req.body;
+  const prompt = `You are a grant writing strategy and research funding expert. Design grant writing strategy for ${researcher} proposing ${project} to ${funder}. Cover grant writing framework, specific aims and significance, innovation and approach sections, preliminary data and feasibility, budget justification and cost sharing, team and collaboration strategy, reviewers criteria and scoring, revision and resubmission strategy, program officer communication, and how to build grant writing programs that achieve the funding success and the reviewer persuasion and the scientific communication that competitive grant awards require by crafting the specific aims with the compelling problem statement and the knowledge gap and the research objective that hooks the reviewer in the first page and communicates the significance and the feasibility and the innovation that the funding agency values in its portfolio.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/research/scicomm', requireAuth, async (req: AuthRequest, res) => {
+  const { scientist, findings, audience } = req.body;
+  const prompt = `You are a science communication strategy and public engagement expert. Design science communication strategy for ${scientist} sharing ${findings} with ${audience}. Cover science communication framework, plain language and jargon translation, storytelling and narrative science, visual communication and data visualization, media relations and press releases, social media and public engagement, science policy communication, risk and uncertainty communication, deficit model critique and dialogue approaches, and how to build science communication programs that achieve the public understanding and the policy influence and the trust in science that effective scientific communication requires by translating the technical findings with the analogy and the metaphor and the concrete example that makes the abstract concept accessible without the oversimplification that loses the scientific nuance that matters for the policy implication.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/research/philosophy', requireAuth, async (req: AuthRequest, res) => {
+  const { philosopher, question, tradition } = req.body;
+  const prompt = `You are a philosophy strategy and analytical thinking expert. Design philosophical analysis for ${philosopher} investigating ${question} in ${tradition}. Cover philosophy framework, logic and argumentation, epistemology and knowledge theory, metaphysics and ontology, ethics and moral philosophy, political philosophy and justice, philosophy of mind and consciousness, philosophy of science and methodology, continental and analytic traditions, and how to build philosophical inquiry that achieves the conceptual clarity and the argumentative rigor and the intellectual insight that serious philosophy requires by defining the terms with the precision that prevents the equivocation and the ambiguity that allow the philosophical confusion to masquerade as substantive disagreement, constructing the argument with the valid logical form and the true or justified premises that the philosophical opponent must either accept or provide the specific objection that identifies the problematic premise.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/learning/language', requireAuth, async (req: AuthRequest, res) => {
+  const { learner, language, goals } = req.body;
+  const prompt = `You are a language learning strategy and applied linguistics expert. Design language learning strategy for ${learner} acquiring ${language} for ${goals}. Cover language learning framework, comprehensible input and acquisition, spaced repetition and vocabulary, speaking and pronunciation practice, grammar instruction and application, immersion and extensive reading, language exchange and conversation practice, CEFR levels and proficiency benchmarks, motivation and learning mindset, and how to build language learning programs that achieve the communicative fluency and the cultural competence that language mastery requires by prioritizing the comprehensible input with the reading and the listening at the appropriate level that provides the massive exposure to the target language patterns that the natural acquisition process requires, supplementing with the spaced repetition for the high-frequency vocabulary that provides the coverage needed to understand the authentic material.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/learning/publicspeaking', requireAuth, async (req: AuthRequest, res) => {
+  const { speaker, topic, audience } = req.body;
+  const prompt = `You are a public speaking strategy and presentation skills expert. Design public speaking strategy for ${speaker} presenting ${topic} to ${audience}. Cover public speaking framework, speech structure and opening hooks, storytelling and narrative techniques, vocal variety and delivery, body language and stage presence, slide design and visual aids, handling nerves and anxiety, Q and A management, virtual and hybrid presentation, and how to build public speaking skills that achieve the audience engagement and the message persuasion and the speaker confidence that impactful presentations require by opening with the hook that creates the curiosity or the emotional connection or the surprising fact that captures the attention before the audience decides to disengage, structuring the content with the clear narrative arc that moves from the problem to the solution to the call to action with the stories and the data that support each point without the cognitive overload that causes the audience to lose the thread.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/learning/criticalthinking', requireAuth, async (req: AuthRequest, res) => {
+  const { thinker, domain, problems } = req.body;
+  const prompt = `You are a critical thinking strategy and reasoning skills expert. Design critical thinking strategy for ${thinker} in ${domain} solving ${problems}. Cover critical thinking framework, logical fallacy identification, argument mapping and analysis, evidence evaluation and source assessment, cognitive bias recognition, probabilistic thinking and base rates, decision frameworks and mental models, steelmanning and dialectical thinking, epistemic humility and uncertainty, and how to build critical thinking skills that achieve the sound reasoning and the bias reduction and the intellectual rigor that good thinking requires by developing the habit of steelmanning the opposing view before the critique that ensures the engagement with the strongest version of the argument rather than the strawman that is easily defeated but does not represent the actual position, calibrating the confidence with the base rate thinking and the reference class forecasting that anchors the probability estimate in the empirical evidence rather than the availability bias and the narrative that make the confident prediction feel more accurate than it is.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/learning/leadership', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, stage, context } = req.body;
+  const prompt = `You are a leadership development strategy and executive coaching expert. Design leadership development strategy for ${leader} at ${stage} in ${context}. Cover leadership development framework, leadership style and situational leadership, emotional intelligence and self-awareness, strategic thinking and vision, team building and talent development, change leadership and transformation, executive presence and influence, difficult conversation and feedback, board and stakeholder management, and how to build leadership development programs that achieve the leader effectiveness and the team performance and the organizational impact that strong leadership requires by developing the self-awareness with the 360 feedback and the assessments and the coaching that helps the leader understand the gap between the intent and the impact of their behavior and the blind spots that limit the effectiveness without the awareness that makes the change possible.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/learning/mentalmodels', requireAuth, async (req: AuthRequest, res) => {
+  const { thinker, domain, decisions } = req.body;
+  const prompt = `You are a mental models strategy and decision-making expert. Design mental models strategy for ${thinker} operating in ${domain} making ${decisions}. Cover mental models framework, first principles thinking, inversion and second-order thinking, systems thinking and feedback loops, probabilistic thinking and expected value, opportunity cost and tradeoffs, map versus territory distinction, compounding and exponential growth, margin of safety and redundancy, and how to build mental models practice that achieves the decision quality and the problem framing and the intellectual versatility that high-performance thinking requires by developing the multidisciplinary toolkit of models from physics and biology and economics and psychology that provides the multiple lenses that see different aspects of the complex problem that the single-discipline expert misses when they apply the familiar framework to the unfamiliar problem.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
