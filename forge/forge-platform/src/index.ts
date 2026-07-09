@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v621.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v622.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201497,6 +201497,66 @@ app.post('/api/hr/leadership-development', requireAuth, async (req: AuthRequest,
 app.post('/api/product/payment-design', requireAuth, async (req: AuthRequest, res) => {
   const { product, market, friction } = req.body;
   const prompt = `You are a payment experience and checkout optimization expert. Design the payment experience for ${product} in ${market} reducing ${friction}. Cover the payment strategy and method selection, the checkout flow design and optimization, the payment security and PCI compliance design, the international payment and currency design, the subscription and recurring payment design, the payment failure and retry design, the refund and dispute handling, the payment analytics and optimization, the buy-now-pay-later integration, and how to design payment experiences that maximize conversion, minimize friction, and build trust with customers at the most critical moment in the purchase journey.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/network-effects', requireAuth, async (req: AuthRequest, res) => {
+  const { product, nodes, flywheel } = req.body;
+  const prompt = `You are a network effects and platform strategy expert. Design the network effects for ${product} connecting ${nodes} to create ${flywheel} flywheel. Cover the network effect types and classification, the cold start problem solutions, the critical mass and tipping point design, the single-player vs. multi-player mode, the network density and clustering design, the negative network effect mitigation, the network effect moat deepening, the network effects measurement, the cross-side and same-side network effects, and how to build products where the value compounds with each new user in a way that creates an ever-widening moat against competitors.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/contract-negotiation', requireAuth, async (req: AuthRequest, res) => {
+  const { contract, party, priorities } = req.body;
+  const prompt = `You are a contract negotiation and commercial deal expert. Negotiate the ${contract} contract with ${party} prioritizing ${priorities}. Cover the contract negotiation preparation framework, the key terms and risk allocation analysis, the negotiation strategy and opening position, the acceptable range and BATNA design, the must-have vs. nice-to-have prioritization, the concession strategy and trade-offs, the escalation and approval process, the redlining and markup strategy, the closing and execution process, and how to negotiate contracts that protect your interests while preserving the relationship and getting deals closed efficiently.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/media-relations', requireAuth, async (req: AuthRequest, res) => {
+  const { company, story, journalists } = req.body;
+  const prompt = `You are a media relations and PR strategy expert. Design the media relations strategy for ${company} pitching ${story} to ${journalists}. Cover the media relations strategy and objectives, the journalist and publication mapping, the story angle and narrative design, the press release and media kit design, the proactive pitch strategy, the reactive and rapid response design, the exclusive and embargo strategy, the spokesperson preparation and media training, the media coverage tracking and reporting, and how to build media relationships that generate consistent, favorable coverage that shapes public perception and drives brand awareness.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/developer-experience', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, devs, friction } = req.body;
+  const prompt = `You are a developer experience and platform engineering expert. Improve the developer experience on ${platform} for ${devs} reducing ${friction}. Cover the DX strategy and principles, the developer journey mapping, the onboarding and time-to-hello-world design, the documentation design and maintenance, the SDK and client library design, the API design for developer ergonomics, the local development and testing experience, the error messages and debugging experience, the developer feedback loop and community, and how to build platform experiences that make developers feel productive and empowered from the first interaction through the most complex use cases.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/category-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, problem, category } = req.body;
+  const prompt = `You are a category design and market creation expert. Design the ${company} to create and own ${category} addressing ${problem}. Cover the category design strategy and philosophy, the problem definition and framing, the category name and taxonomy design, the category narrative and point of view, the category ecosystem and allies, the category king position design, the PR and analyst relations for category, the event and community for category, the category measurement and tracking, and how to use category design to escape competitive commoditization by creating a new market where you set the rules, define the problem, and position all competitors as inferior alternatives.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/operational-excellence', requireAuth, async (req: AuthRequest, res) => {
+  const { company, function, standard } = req.body;
+  const prompt = `You are an operational excellence and continuous improvement expert. Build operational excellence in ${company} for ${function} achieving ${standard}. Cover the operational excellence strategy and framework, the process standardization and documentation, the quality management system design, the operational metrics and KPI design, the performance management and accountability, the root cause analysis methodology, the kaizen and improvement culture, the operational audit and assessment, the excellence recognition and sharing, and how to build operational excellence as a competitive capability that delivers consistent, high-quality results at scale through disciplined process and a culture of continuous improvement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/field-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, region, events } = req.body;
+  const prompt = `You are a field marketing and event marketing expert. Design the field marketing program for ${company} in ${region} using ${events} event strategy. Cover the field marketing strategy and objectives, the event mix and format selection, the owned event vs. industry event strategy, the field marketing and sales alignment design, the event ROI and pipeline attribution, the event content and speaker program, the event production and logistics, the pre and post event nurture design, the field marketing metrics, and how to build a field marketing program that generates qualified pipeline, accelerates deals in progress, and builds the brand in key markets.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/design-thinking', requireAuth, async (req: AuthRequest, res) => {
+  const { challenge, users, constraint } = req.body;
+  const prompt = `You are a design thinking and human-centered design expert. Facilitate design thinking for ${challenge} with ${users} under ${constraint} constraints. Cover the design thinking framework and phases, the empathy and user research methods, the problem definition and HMW questions, the ideation and brainstorming methods, the prototype selection and design, the testing and feedback methods, the design thinking facilitation techniques, the cross-functional design thinking workshop design, the design thinking integration into product development, and how to use design thinking to consistently generate solutions that meet real human needs rather than solutions that solve problems engineers and business people imagined users have.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/compensation-model', requireAuth, async (req: AuthRequest, res) => {
+  const { company, role, market } = req.body;
+  const prompt = `You are a compensation design and total rewards expert. Design the compensation model for ${company} for ${role} benchmarked to ${market}. Cover the compensation philosophy and principles, the job leveling and career ladder design, the market benchmarking methodology, the base salary band design, the variable compensation and bonus design, the equity compensation design, the benefits and perks design, the total rewards communication, the compensation review process, and how to design a compensation model that attracts and retains the talent you need while managing costs and creating internal equity and transparency that builds trust.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/meeting-design', requireAuth, async (req: AuthRequest, res) => {
+  const { meeting, objective, participants } = req.body;
+  const prompt = `You are a meeting design and organizational effectiveness expert. Design the ${meeting} meeting to achieve ${objective} with ${participants}. Cover the meeting purpose and type classification, the meeting format and structure design, the agenda design and time allocation, the facilitation technique selection, the decision-making protocol design, the participation and inclusion design, the pre-meeting preparation design, the documentation and follow-through design, the meeting cadence and frequency, and how to design meetings that are purposeful, productive, and that create energy and alignment rather than draining time and attention from the work that actually matters.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
