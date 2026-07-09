@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v640.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v641.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202637,6 +202637,66 @@ app.post('/api/strategy/mba-frameworks', requireAuth, async (req: AuthRequest, r
 app.post('/api/career/personal-development', requireAuth, async (req: AuthRequest, res) => {
   const { professional, strengths, goals } = req.body;
   const prompt = `You are a personal development planning and peak performance expert. Design the personal development plan for ${professional} leveraging ${strengths} toward ${goals}. Cover the personal development framework, the strengths and values assessment, the development area prioritization, the learning and skill development plan, the habit and routine design for peak performance, the mentorship and coaching strategy, the networking and relationship building, the personal brand development, the feedback and reflection practices, and how to design personal development plans that play to your natural strengths and values rather than trying to become someone you are not, that focus development energy on the specific skills and experiences that unlock your next level of career and life impact, and that build the daily habits and practices that compound into the personal excellence and professional success you want to achieve over a sustained period of effort and growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/meeting-design', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, meeting_type, goals } = req.body;
+  const prompt = `You are a meeting design and organizational effectiveness expert. Design the meeting system for ${organization} for ${meeting_type} to achieve ${goals}. Cover the meeting design framework, the meeting purpose and outcome definition, the attendee selection and preparation, the agenda design and facilitation, the decision-making and action tracking, the meeting cadence and scheduling, the virtual and hybrid meeting design, the meeting culture and norms, the meeting effectiveness measurement, and how to design meeting systems that respect time, make decisions, and move work forward rather than theater that consumes calendars and produces no outcomes, that ensure the right people are in the right conversations with the right preparation, and that create the accountability for actions and decisions that makes meetings add up to organizational progress rather than just filling the workweek.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/leadership-coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, challenges, goals } = req.body;
+  const prompt = `You are an executive leadership coaching and development expert. Coach the leader ${leader} through ${challenges} toward ${goals}. Cover the leadership coaching framework, the leadership style and identity, the executive presence development, the strategic thinking and vision, the team building and talent development, the decision-making under uncertainty, the organizational change leadership, the stakeholder management and influence, the resilience and self-care, and how to develop as a leader in ways that are authentic to your values and strengths rather than mimicking a leadership archetype that does not fit you, that build the specific capabilities your leadership role requires at your current stage of growth, and that develop the self-awareness and continuous learning habits that enable you to keep growing as the scale and complexity of your leadership responsibilities increases.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/logo-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, values, audience } = req.body;
+  const prompt = `You are a brand identity and logo design strategy expert. Design the logo strategy for ${brand} expressing ${values} for ${audience}. Cover the logo strategy framework, the brand identity principles, the logo concept development process, the typography and color system strategy, the logo mark vs. wordmark vs. combination mark decision, the logo usage and application guidelines, the logo evolution and refresh strategy, the logo competitive differentiation, the logo testing and feedback methodology, and how to develop logo strategies that create visual identities that are distinctive, memorable, and appropriate for your brand positioning and target audience, that work across all the applications your brand needs from digital to physical, and that build the visual consistency and recognition that make your brand feel coherent and professional everywhere customers encounter it.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/crisis-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, crisis_type, stakeholders } = req.body;
+  const prompt = `You are a crisis management strategy and communications expert. Design the crisis response for ${organization} facing ${crisis_type} with ${stakeholders}. Cover the crisis management framework, the crisis assessment and classification, the crisis command structure, the stakeholder notification and communication strategy, the media and public communications, the employee communications, the regulatory and legal notification, the crisis containment strategy, the reputation recovery plan, and how to manage crises in ways that protect the organization while maintaining the trust of customers, employees, investors, and the public, that respond with appropriate speed and transparency rather than denial and delay that makes crises worse, and that use the crisis as an opportunity to demonstrate organizational values and build stronger relationships with stakeholders through how you handle the adversity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/popup-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, location, goals } = req.body;
+  const prompt = `You are a pop-up retail strategy and experiential commerce expert. Design the pop-up sales strategy for ${brand} at ${location} to achieve ${goals}. Cover the pop-up strategy framework, the location and timing selection, the pop-up concept and design, the inventory and product curation, the staffing and training strategy, the customer acquisition and traffic generation, the experiential elements and brand activation, the data capture and follow-up strategy, the pop-up economics and ROI, and how to design pop-up experiences that drive both immediate sales and longer-term customer relationships, that create the brand moments and social media content that amplify reach beyond the physical location, and that test new markets, products, and concepts with lower risk before committing to permanent retail locations or larger inventory investments.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/human-resources/tech-recruiting', requireAuth, async (req: AuthRequest, res) => {
+  const { company, roles, market } = req.body;
+  const prompt = `You are a technical recruiting strategy and talent acquisition expert. Design the technical recruiting for ${company} hiring ${roles} in ${market}. Cover the technical recruiting framework, the employer brand for engineers, the technical job description design, the sourcing strategy for technical talent, the technical screening and interview design, the coding assessment and technical evaluation, the engineering team and culture showcase, the compensation and equity benchmarking, the offer closing strategy for technical candidates, and how to compete for technical talent in a market where the best engineers have multiple competing offers, building the recruiting processes and employer brand that make your company the choice of the engineers who would make the most impact, and creating the candidate experience that builds your reputation in the engineering community even with candidates you do not ultimately hire.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/procurement', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, spend, vendors } = req.body;
+  const prompt = `You are a procurement strategy and purchasing optimization expert. Optimize the purchasing for ${organization} with ${spend} across ${vendors}. Cover the procurement strategy framework, the spend analysis and categorization, the vendor consolidation strategy, the RFP and vendor selection process, the contract negotiation strategy, the total cost of ownership analysis, the supplier relationship management, the procurement technology stack, the procurement governance and controls, and how to build procurement processes that reduce costs through better negotiation and supplier management rather than just buying what business units request at whatever price vendors propose, that create the preferred supplier relationships that give you access to better terms, innovation, and supply security, and that build the procurement capabilities that turn purchasing from a transaction function into a source of competitive advantage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/account-based', requireAuth, async (req: AuthRequest, res) => {
+  const { company, accounts, strategy } = req.body;
+  const prompt = `You are an account-based marketing strategy and execution expert. Design the ABM program for ${company} targeting ${accounts} with ${strategy}. Cover the ABM strategy framework, the account selection and tier definition, the account intelligence and research, the personalized content and messaging strategy, the account-based advertising and digital tactics, the sales and marketing alignment for ABM, the multi-channel ABM orchestration, the ABM measurement and attribution, the ABM technology stack, and how to design ABM programs that treat target accounts as markets of one, delivering personalized experiences that resonate with each account buying committee, that align sales and marketing in shared account plans and shared accountability for account revenue, and that create the account engagement and pipeline that justifies the higher per-account investment that ABM requires compared to broad-based demand generation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/website-conversion', requireAuth, async (req: AuthRequest, res) => {
+  const { website, audience, goal } = req.body;
+  const prompt = `You are a website conversion rate optimization and UX expert. Optimize the conversion for ${website} for ${audience} toward ${goal}. Cover the conversion optimization framework, the conversion funnel analysis, the visitor behavior analysis, the landing page design and optimization, the CTA design and placement, the form optimization, the social proof and trust signals, the page speed and technical performance, the A/B testing methodology, and how to systematically improve website conversion rates through data-driven experimentation rather than guessing, that identify the specific friction points and objections that prevent visitors from converting and address them through design, copy, and trust-building elements, and that build the testing infrastructure and culture that continuously improves conversion performance rather than doing a site redesign once and hoping for the best.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/social-ads', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, platform, audience } = req.body;
+  const prompt = `You are a social media advertising strategy and performance marketing expert. Design the social media ads for ${brand} on ${platform} targeting ${audience}. Cover the social media ads strategy framework, the audience targeting and segmentation, the creative strategy and ad formats, the campaign structure and budget allocation, the bid strategy and optimization, the creative testing methodology, the retargeting strategy, the lookalike audience strategy, the social ads measurement and attribution, and how to build social media advertising programs that generate measurable returns rather than just impressions and engagement, that develop the creative testing velocity to find winning creative before exhausting budgets on underperforming ads, and that build the audience and measurement infrastructure that improves advertising efficiency over time as you accumulate data about what resonates with your target customers on each platform.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
