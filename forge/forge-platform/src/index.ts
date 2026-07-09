@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v610.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v611.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200837,6 +200837,66 @@ app.post('/api/sales/narrative', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/engineering/cicd-protocol', requireAuth, async (req: AuthRequest, res) => {
   const { team, stack, cadence } = req.body;
   const prompt = `You are a CI/CD pipeline design and DevOps engineering expert. Design the CI/CD protocol for ${team} using ${stack} at ${cadence} release cadence. Cover the CI/CD pipeline architecture, the source control branching strategy, the automated testing pyramid design, the build and artifact management, the deployment pipeline design, the environment promotion strategy, the feature flag integration, the rollback and recovery design, the security scanning integration, and how to build a CI/CD pipeline that enables fast and safe software delivery.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/scalability', requireAuth, async (req: AuthRequest, res) => {
+  const { system, load, target } = req.body;
+  const prompt = `You are a systems scalability and distributed systems expert. Design the scalability architecture for ${system} to handle ${load} scaling to ${target}. Cover the scalability dimensions and bottlenecks, the horizontal vs vertical scaling trade-offs, the database scalability patterns, the caching architecture for scalability, the load balancing and traffic distribution, the asynchronous processing and queue design, the microservices decomposition for scale, the stateless service design, the scalability testing and load testing, and how to build systems that scale gracefully and cost-effectively.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, model } = req.body;
+  const prompt = `You are a pricing strategy and monetization expert. Design the pricing strategy for ${product} in ${market} using ${model} approach. Cover the pricing strategy framework and objectives, the customer value and willingness-to-pay research, the competitive pricing analysis, the cost-based pricing foundation, the value-based pricing design, the price architecture and tier design, the packaging and bundling strategy, the pricing psychology and anchoring, the price change and communication strategy, and how to price in a way that captures value while driving growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/partnerships/ecosystem', requireAuth, async (req: AuthRequest, res) => {
+  const { company, ecosystem, value } = req.body;
+  const prompt = `You are a partner ecosystem and strategic alliance expert. Build the partner ecosystem for ${company} in ${ecosystem} delivering ${value} value. Cover the ecosystem strategy and vision, the partner type segmentation, the partner value proposition design, the partner recruitment and onboarding, the partner tiering and incentive design, the co-selling and co-marketing programs, the partner enablement program, the partner portal and technology stack, the partner success and performance management, and how to build an ecosystem that multiplies your go-to-market reach and creates compounding value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/revenue/operations', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, friction } = req.body;
+  const prompt = `You are a revenue operations and GTM efficiency expert. Design the RevOps function for ${company} at ${stage} stage to eliminate ${friction} friction. Cover the RevOps charter and organizational design, the data and CRM architecture, the lead-to-cash process design, the handoff and SLA design between marketing, sales, and customer success, the territory and quota design, the forecasting process and cadence, the tech stack consolidation and integration, the revenue analytics and reporting, the RevOps KPIs and operating cadence, and how to build RevOps as a strategic function that accelerates revenue growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customer/nps-improvement', requireAuth, async (req: AuthRequest, res) => {
+  const { company, score, segment } = req.body;
+  const prompt = `You are an NPS improvement and customer loyalty expert. Improve the NPS for ${company} from ${score} focusing on ${segment}. Cover the NPS driver analysis and root cause identification, the detractor recovery program, the passive conversion program, the promoter amplification program, the NPS survey design and sampling, the closed-loop feedback system, the NPS-to-product roadmap connection, the NPS operational integration, the NPS benchmark and competitive context, and how to systematically improve NPS in a way that drives retention and growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/analytics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, workforce, objective } = req.body;
+  const prompt = `You are an HR analytics and people data expert. Build the HR analytics capability for ${company} with ${workforce} workforce to achieve ${objective}. Cover the HR data architecture and governance, the workforce planning analytics, the recruiting funnel and efficiency analytics, the employee performance analytics, the attrition prediction and retention analytics, the compensation equity analytics, the learning and development ROI analytics, the manager effectiveness analytics, the HR dashboard and reporting design, and how to use people data to make better talent decisions and improve organizational effectiveness.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/mobile-ux', requireAuth, async (req: AuthRequest, res) => {
+  const { app, users, platform } = req.body;
+  const prompt = `You are a mobile UX design and mobile-first product expert. Design the mobile UX for ${app} for ${users} on ${platform}. Cover the mobile UX principles and constraints, the mobile navigation pattern design, the touch interaction and gesture design, the mobile content hierarchy and information design, the mobile form design and input optimization, the mobile performance and perceived speed, the mobile onboarding design, the push notification strategy, the mobile accessibility design, and how to design mobile experiences that are intuitive, delightful, and drive engagement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/community-led', requireAuth, async (req: AuthRequest, res) => {
+  const { product, community, flywheel } = req.body;
+  const prompt = `You are a community-led growth and developer community expert. Build the community-led growth engine for ${product} via ${community} to create ${flywheel} flywheel. Cover the community-led growth strategy, the community platform and infrastructure selection, the founding member recruitment and activation, the community content and programming design, the community-to-product feedback loop, the community advocacy and ambassador program, the community metrics and health tracking, the community monetization design, the community governance and moderation, and how to build a community that becomes a sustainable competitive advantage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/email-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, list, goal } = req.body;
+  const prompt = `You are an email marketing and lifecycle marketing expert. Design the email marketing program for ${brand} with ${list} to achieve ${goal}. Cover the email program strategy and goals, the list building and segmentation design, the email sequence and automation design, the email content strategy and calendar, the deliverability and sender reputation management, the email design and mobile optimization, the personalization and dynamic content, the A/B testing and optimization program, the email analytics and attribution, and how to build an email program that drives revenue and strengthens customer relationships.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/model', requireAuth, async (req: AuthRequest, res) => {
+  const { company, engine, levers } = req.body;
+  const prompt = `You are a growth modeling and business model design expert. Build the growth model for ${company} with ${engine} engine and ${levers} key levers. Cover the growth model canvas design, the customer acquisition engine design, the viral and referral loop design, the retention and engagement model, the monetization model design, the payback period and LTV:CAC analysis, the growth accounting model, the cohort analysis design, the growth experiment framework, and how to build a growth model that identifies the highest-leverage actions to compound your business growth.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
