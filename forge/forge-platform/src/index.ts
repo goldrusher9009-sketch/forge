@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v572.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v573.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198557,6 +198557,66 @@ app.post('/api/growth/ecommerce', requireAuth, async (req: AuthRequest, res) => 
 app.post('/api/strategy/board-deck', requireAuth, async (req: AuthRequest, res) => {
   const { company, quarter, focus } = req.body;
   const prompt = `You are a board presentation and investor relations expert. Build a board deck for ${company} for ${quarter} with ${focus} as the key focus area. Structure: executive summary (1 slide), company performance vs. plan (metrics dashboard), business highlights (wins and losses), financial deep dive (P&L, cash position, burn, runway), product and roadmap update, team and org update, key decisions needed from the board, and next quarter outlook. For each section, provide the key narrative, the key data to include, and the questions the board will likely ask. Include dos and donts for board presentations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/tech-writing', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, audience, format } = req.body;
+  const prompt = `You are a technical writing and documentation expert. Create a technical writing guide for ${topic} targeting ${audience} in ${format} format. Cover structure and organization best practices, how to write for technical vs. non-technical readers, API documentation best practices (reference docs, tutorials, how-to guides), code example standards, how to write release notes and changelogs, documentation testing (is it accurate? does it work?), maintaining docs alongside code changes, and the documentation toolchain (tools, hosting, search, versioning).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/devrel', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, community } = req.body;
+  const prompt = `You are a developer relations and community building expert. Build a DevRel strategy for ${company} building ${product} for ${community} developer community. Cover the DevRel charter (awareness, education, feedback loop), community building tactics (Discord, GitHub, meetups, conferences), content strategy for developers (blog posts, tutorials, video, live coding), developer advocacy program (how to identify and activate community champions), feedback loop from community to product, measuring DevRel impact (community size, contributor growth, NPS, influenced pipeline), and how to hire and structure a DevRel team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-model', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, competitors } = req.body;
+  const prompt = `You are a SaaS pricing strategy and monetization expert. Design a pricing model for ${product} in ${market} with ${competitors} as competitive context. Analyze pricing models (per seat, usage-based, feature-tiered, outcome-based), recommend the optimal model for this product and market, design the tier structure with feature allocation, determine price points using value-based pricing methodology, design the free trial and freemium strategy, annual vs. monthly pricing strategy and discounts, enterprise pricing and custom deals policy, and how to communicate pricing changes to existing customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/community', requireAuth, async (req: AuthRequest, res) => {
+  const { company, community, goal } = req.body;
+  const prompt = `You are a community-led growth and developer community expert. Build a community-led growth strategy for ${company} building ${community} to achieve ${goal}. Cover community platform selection (Discord, Slack, Circle, forum), community programming (events, AMAs, challenges, showcases), content contributed by community vs. company, moderation and community health, community → product feedback loop, community → revenue connection (how community drives conversions), recognition and reward systems for top contributors, and how to measure community health and impact.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/revops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, goals } = req.body;
+  const prompt = `You are a revenue operations and GTM systems expert. Build a RevOps framework for ${company} at ${stage} stage to achieve ${goals}. Cover the RevOps mandate (aligning sales, marketing, CS around revenue), tech stack audit and recommendations (CRM, MAP, CS platform, data warehouse), data governance (single source of truth, definitions, hygiene standards), the revenue funnel design and measurement (stage definitions, conversion benchmarks), forecasting process and cadence, territory and quota design, compensation plan principles, and how to staff and structure the RevOps function.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, maturity, goals } = req.body;
+  const prompt = `You are a data strategy and analytics leadership expert. Build a data strategy roadmap for ${company} at ${maturity} data maturity level to achieve ${goals}. Cover data infrastructure (warehouse, lakehouse, data mesh), data governance framework (ownership, quality, security, privacy), analytics maturity curve (reporting → insights → predictions → prescriptive), the modern data stack recommendations (ingestion, transformation, BI), data team structure and hiring plan, how to build a data-driven culture, measuring ROI of data investments, and the 12-month roadmap with priorities.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { team, stage, gaps } = req.body;
+  const prompt = `You are a sales coaching and performance management expert. Build a sales coaching system for ${team} at ${stage} stage with identified ${gaps}. Cover the coaching philosophy (teach vs. tell, manager as coach), call recording and review cadence, the skills assessment framework (discovery, demo, negotiation, closing), individual development plans by rep archetype (new rep, ramping rep, veteran), deal inspection methodology, pipeline review cadence and format, how to run 1:1s for performance vs. development, and how to measure coaching effectiveness (skill improvement, ramp time, quota attainment, conversion rates).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/agent-workforce', requireAuth, async (req: AuthRequest, res) => {
+  const { company, processes, goals } = req.body;
+  const prompt = `You are an AI transformation and agentic systems expert. Design an AI agent workforce for ${company} automating ${processes} to achieve ${goals}. Map each process to the right agent type (research agent, writing agent, analysis agent, action agent, orchestrator), design the human-in-the-loop checkpoints, build the governance and override framework, design the evaluation and quality assurance process for agent outputs, the rollout strategy (pilot → validate → scale), how to train employees to work alongside agents, measuring ROI and productivity gains, and the roadmap from first agent to full workforce deployment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/prompt-library', requireAuth, async (req: AuthRequest, res) => {
+  const { useCase, audience, model } = req.body;
+  const prompt = `You are an AI prompt engineering and LLM optimization expert. Build a prompt library for ${useCase} for ${audience} users optimized for ${model}. For each use case: provide the production-ready prompt template with variables, the prompt engineering techniques used (chain of thought, few-shot examples, persona, constraints), common failure modes and how the prompt addresses them, example inputs and expected outputs, testing criteria, and prompt versioning strategy. Include meta-prompts for prompt generation, a style guide for prompt writing in this organization, and how to maintain and improve the prompt library over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/digital-transform', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, goals } = req.body;
+  const prompt = `You are a digital transformation and change management expert. Design a digital transformation program for ${company} in ${industry} to achieve ${goals}. Cover the transformation vision and case for change, stakeholder mapping and change readiness assessment, the transformation architecture (processes, technology, data, culture), workstream design and governance structure, technology roadmap and vendor selection approach, change management and communication plan, capability building and training program, quick wins to build momentum in the first 90 days, how to measure transformation progress, and how to sustain the transformation after the initial program ends.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
