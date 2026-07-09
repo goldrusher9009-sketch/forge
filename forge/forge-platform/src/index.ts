@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v674.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v675.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204677,6 +204677,66 @@ app.post('/api/strategy/marketing-ops', requireAuth, async (req: AuthRequest, re
 app.post('/api/strategy/brand-voice', requireAuth, async (req: AuthRequest, res) => {
   const { brand, audience, channels } = req.body;
   const prompt = `You are a brand voice and content strategy expert. Design brand voice for ${brand} speaking to ${audience} across ${channels}. Cover brand voice framework, brand personality and character, tone spectrum and situational adaptation, language and vocabulary choices, writing style and grammar approach, visual language alignment, channel-specific voice adaptation, voice governance and training, voice measurement and consistency, and how to develop brand voices that are distinctive and consistent across every touchpoint because they are rooted in genuine brand character rather than style guide rules that are difficult to apply consistently without the underlying understanding of who the brand is and what it stands for.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/purchase-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, volume, categories } = req.body;
+  const prompt = `You are a purchase operations and procurement excellence expert. Design purchase operations for ${company} at ${volume} across ${categories}. Cover purchase operations framework, purchase-to-pay process design, supplier selection and onboarding, purchase order management, three-way matching and invoice processing, payment terms and cash flow optimization, maverick spend control, purchase compliance and policy, purchasing technology and automation, and how to build purchase operations capabilities that control spending, reduce costs, and ensure supply continuity while remaining agile enough to support the business units they serve and building supplier relationships that are genuinely strategic.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/regulatory-affairs', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, region } = req.body;
+  const prompt = `You are a regulatory affairs strategy and regulatory science expert. Design regulatory strategy for ${company} with ${product} in ${region}. Cover regulatory affairs framework, regulatory pathway selection, regulatory intelligence and landscape, pre-submission meetings strategy, regulatory dossier preparation, submission management and tracking, regulatory authority interactions, post-approval lifecycle management, regulatory risk management, and how to develop regulatory strategies that navigate the regulatory requirements in target markets efficiently while building regulatory intelligence capabilities that allow the organization to anticipate regulatory changes and adapt its development programs accordingly.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/value-chain-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, activities } = req.body;
+  const prompt = `You are a value chain analysis and competitive strategy expert. Analyze value chain for ${company} in ${industry} across ${activities}. Cover value chain analysis framework, primary and support activity mapping, cost driver identification, value driver analysis, competitive benchmarking, linkage analysis and coordination, value chain reconfiguration options, outsourcing and make-vs-buy decisions, digital transformation of value chain activities, and how to use value chain analysis to identify where the organization creates and captures value, where cost reductions are possible, and what activities represent genuine sources of competitive advantage worth investing in and protecting.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/network-effects', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, users, segments } = req.body;
+  const prompt = `You are a network effects strategy and platform dynamics expert. Design network effects for ${platform} with ${users} across ${segments}. Cover network effects framework, same-side and cross-side network effects, cold start problem and seeding strategies, minimum viable network design, network effects defensibility and moats, disintermediation risk management, multi-homing and lock-in dynamics, network effects measurement and flywheel design, monetization timing relative to network density, and how to build platforms where the value for each participant increases as more participants join in ways that are genuinely sustainable and not easily replicated by competitors who arrive later with similar offerings.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-monetization', requireAuth, async (req: AuthRequest, res) => {
+  const { company, data, channels } = req.body;
+  const prompt = `You are a data monetization strategy and data product expert. Design data monetization for ${company} using ${data} across ${channels}. Cover data monetization framework, data asset inventory and valuation, internal vs external monetization, data product design and packaging, data marketplace and exchange strategy, privacy and compliance in data monetization, data partnership models, data as a service design, monetization pricing and commercialization, and how to develop data monetization strategies that unlock the commercial value of data assets while maintaining the trust and privacy standards that data subjects and regulators require.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/alliance-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, partners, goals } = req.body;
+  const prompt = `You are a strategic alliance and partnership management expert. Design alliance strategy for ${company} with ${partners} toward ${goals}. Cover alliance strategy framework, partner selection and screening, alliance structure and governance, deal terms and value sharing, integration planning and operations, relationship management and trust building, alliance performance measurement, conflict resolution and renegotiation, alliance portfolio management, and how to build strategic alliances that deliver the access to markets, technologies, or capabilities that neither party could achieve independently while creating enough mutual value that both parties are genuinely committed to making the alliance work over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/business-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, strategy, capabilities } = req.body;
+  const prompt = `You are a business architecture and enterprise design expert. Design business architecture for ${organization} aligned to ${strategy} built on ${capabilities}. Cover business architecture framework, capability map development, value stream analysis, business motivation modeling, information architecture and data model, organization design alignment, process architecture, technology architecture alignment, architecture governance, and how to build business architectures that translate strategic intent into concrete organizational design choices about what capabilities to build, how processes and information flow across the organization, and what the operating model looks like at the level where it can actually be implemented.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/digital-commerce', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, markets } = req.body;
+  const prompt = `You are a digital commerce strategy and ecommerce growth expert. Design digital commerce for ${company} selling ${products} in ${markets}. Cover digital commerce framework, ecommerce platform selection and architecture, customer acquisition and digital marketing, conversion rate optimization and UX, product catalog and content strategy, checkout and payment optimization, fulfillment and logistics for digital commerce, customer retention and lifetime value, international ecommerce expansion, and how to build digital commerce capabilities that generate revenue growth while delivering the customer experience that builds loyalty and drives the repeat purchase behavior that makes ecommerce businesses profitable at scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/leadership-dev', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, level, goals } = req.body;
+  const prompt = `You are a leadership development strategy and organizational capability expert. Design leadership development for ${organization} at ${level} toward ${goals}. Cover leadership development framework, leadership competency model design, assessment and development planning, experiential learning and stretch assignments, coaching and mentoring programs, leadership development programs and academies, succession planning and pipeline development, leadership culture and role modeling, leadership development measurement and ROI, and how to design leadership development systems that build the leadership capabilities the organization needs for its strategy at every level rather than generic leadership training that improves individual skills but does not create the organizational leadership capacity the business requires.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/growth-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, channels } = req.body;
+  const prompt = `You are a growth marketing strategy and acquisition funnel expert. Design growth marketing for ${company} at ${stage} across ${channels}. Cover growth marketing framework, acquisition funnel design and optimization, growth loop identification and design, product-led growth and viral mechanics, paid acquisition strategy and unit economics, content and SEO for organic growth, referral and word-of-mouth programs, retention and reactivation as growth drivers, growth experimentation and testing, and how to build growth marketing capabilities that generate sustainable customer acquisition at scale by combining analytical rigor in measuring what works with creative excellence in building campaigns and experiences that resonate with the target audience.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
