@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v459.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v460.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -192344,6 +192344,59 @@ app.post('/api/product/agile-process', requireAuth, async (req: AuthRequest, res
 app.post('/api/sales/sdr-strategy', requireAuth, async (req: AuthRequest, res) => {
   const { segment, channels, quota } = req.body;
   const prompt = `Build an SDR outbound strategy.\nTarget segment: ${segment}\nOutreach channels: ${channels}\nMeeting quota: ${quota}\nInclude: SDR target account prioritization (ICP scoring/intent signals/trigger events), multi-channel sequence design (email/phone/LinkedIn/video/direct mail), email personalization framework (research→angle→relevance), cold call script and objection handling, LinkedIn outreach strategy (connection note/InMail/engagement), sequence timing and touchpoint cadence, research workflow (how long to spend researching before outreach), meeting qualification criteria (don't book bad meetings), pipeline handoff to AE, SDR metrics and performance management, coaching model for SDR managers, and how to build SDR productivity to 40+ meetings booked per month.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 339+340 routes
+app.post('/api/finance/scenario-modeling', requireAuth, async (req: AuthRequest, res) => {
+  const { baseline, drivers, scenarios } = req.body;
+  const prompt = `Build a financial scenario model.\nBaseline assumptions: ${baseline}\nKey value drivers: ${drivers}\nScenarios to model: ${scenarios}\nInclude: scenario model structure (base/bull/bear cases), driver identification and sensitivity ranking (which variables move the outcome most), scenario assumption tables for each case, revenue build-up by scenario (unit economics + volume assumptions), cost structure by scenario (fixed vs. variable), EBITDA and cash flow by scenario, scenario probability weighting and expected value calculation, breakeven analysis (what needs to be true for each scenario), scenario narrative (tell the story behind each case), how to update the model as actuals come in, and presentation format for board/investor scenario reviews.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/cicd-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  const { stack, team, environments } = req.body;
+  const prompt = `Design a CI/CD pipeline.\nTech stack: ${stack}\nTeam size: ${team}\nEnvironments: ${environments}\nInclude: CI/CD tool selection (GitHub Actions/GitLab CI/CircleCI/Jenkins/BuildKite comparison for this stack), pipeline stage design (build→test→security scan→artifact→deploy), test pyramid in CI (unit/integration/e2e allocation), parallelization strategy to minimize pipeline time, caching strategies (npm cache/Docker layer/test result caching), artifact management and versioning, environment promotion strategy (dev→staging→prod), deployment strategies (blue-green/canary/rolling/feature flags), rollback automation, secrets management in CI, pipeline monitoring and failure alerting, and target pipeline time benchmarks (test suite < 10min/full pipeline < 20min).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/enablement-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { reps, gaps, products } = req.body;
+  const prompt = `Build a sales enablement program.\nSales rep profile: ${reps}\nSkill gaps identified: ${gaps}\nProducts to sell: ${products}\nInclude: enablement program structure (onboarding ramp/ongoing training/just-in-time resources), sales methodology selection and adoption (MEDDIC/SPIN/Challenger/Command of the Message), product knowledge curriculum design, competitive intelligence training, objection handling playbook, discovery question library, demo certification program, content library organization (what reps can find in < 30 sec), sales tool training (CRM/sequencing/intelligence), coaching framework (manager role in enablement), enablement metrics (ramp time/quota attainment/win rate/deal size), and how to build an enablement function that reps actually use.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/feature-prioritization', requireAuth, async (req: AuthRequest, res) => {
+  const { features, criteria, resources } = req.body;
+  const prompt = `Prioritize a product feature backlog.\nFeature list: ${features}\nPrioritization criteria: ${criteria}\nResources available: ${resources}\nInclude: prioritization framework selection (RICE/ICE/Kano/MoSCoW/Value vs. Effort matrix — which fits this context), scoring each feature against chosen framework, dependency mapping (which features unlock others), confidence levels in estimates (how uncertain are the impact/effort scores), quick win identification (high value, low effort — do these first), strategic bet identification (high potential, high uncertainty), technical debt allocation in the roadmap, how to handle stakeholder disagreements about priority, communicating prioritization decisions to stakeholders, and how to revisit and rebalance priority as new information arrives.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/paid-acquisition', requireAuth, async (req: AuthRequest, res) => {
+  const { budget, channels, goals } = req.body;
+  const prompt = `Design a paid acquisition strategy.\nBudget: ${budget}\nChannels to consider: ${channels}\nAcquisition goals: ${goals}\nInclude: channel selection rationale for this budget/goal combination, budget allocation across channels with rationale, target CAC by channel and how to model it before launch, creative strategy by channel (what ad formats/messages work), landing page and conversion rate optimization, attribution model selection (last-touch/first-touch/linear/data-driven), testing framework (A/B testing cadence/statistical significance requirements), bidding strategy by channel, audience targeting and exclusion strategy, retargeting architecture, paid + organic coordination (how to avoid cannibalization), budget scaling triggers (when to increase spend), and how to know if paid acquisition is working vs. subsidizing non-sticky customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/data-room-setup', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, raise, investors } = req.body;
+  const prompt = `Set up an investor data room.\nCompany stage: ${stage}\nRaise details: ${raise}\nTarget investors: ${investors}\nInclude: data room structure (folder hierarchy optimized for investor diligence flow), document priority tiers (what to have ready on day 1 vs. provide on request), essential documents checklist (deck/financials/cap table/legal/team/product/customer), financial model requirements (historical actuals + 3-year projection + assumptions), cap table structure and format (include option pool, SAFE notes, previous rounds), customer evidence packaging (logos/case studies/NPS/churn/expansion data), legal document organization (formation/IP assignment/key contracts/employment), how to control data room access and track engagement, red flags to remove before investor review, and data room hygiene practices that signal operational maturity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/microservices-design', requireAuth, async (req: AuthRequest, res) => {
+  const { domain, team, scale } = req.body;
+  const prompt = `Design a microservices architecture.\nBusiness domain: ${domain}\nTeam structure: ${team}\nScale requirements: ${scale}\nInclude: service decomposition by bounded context (DDD approach), service boundary definition criteria (what makes a good service boundary), data ownership model (each service owns its data — polyglot persistence strategy), inter-service communication patterns (sync REST/gRPC vs. async events — when to use each), API gateway design and responsibilities, service discovery and registry, distributed transaction handling (SAGA pattern/eventual consistency/outbox pattern), observability architecture (distributed tracing/centralized logging/service-level metrics), circuit breaker and resilience patterns, service template / chassis for consistency across teams, Conway's Law alignment (does team structure match service boundaries), and migration path from monolith to microservices.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/compensation-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, roles, market } = req.body;
+  const prompt = `Design a compensation strategy.\nCompany stage: ${stage}\nKey roles to comp: ${roles}\nMarket context: ${market}\nInclude: compensation philosophy design (above/at/below market positioning — why and for what components), compensation structure (base/equity/bonus/benefits — how to weight each component by role level/function), salary band design (number of levels/spread within bands/band overlap), equity compensation design (grant size by level/cliff and vesting/refresh grants), equity vs. cash tradeoff framework (how to explain equity value to candidates), market data sources and benchmarking methodology (Levels.fyi/Radford/Comp/Glassdoor), pay equity audit approach, total rewards statement design, compensation review cadence, promotion compensation changes, and how to comp transparently without creating internal equity problems.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/seo-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { site, niche, goals } = req.body;
+  const prompt = `Build a comprehensive SEO strategy.\nWebsite: ${site}\nNiche/industry: ${niche}\nSEO goals: ${goals}\nInclude: SEO audit framework (technical/on-page/off-page/content analysis), keyword strategy (intent-based categorization: informational/navigational/commercial/transactional), content cluster architecture (pillar pages + supporting content), technical SEO priorities (Core Web Vitals/crawl budget/site architecture/schema markup), link acquisition strategy (digital PR/guest posting/HARO/resource pages/partnerships), competitive gap analysis approach, content calendar driven by keyword opportunity, local SEO if applicable, E-E-A-T signals for ranking in AI-assisted search, measurement framework (organic traffic/keyword rankings/CTR/conversion by organic), and realistic SEO timeline (what to expect in months 1/3/6/12).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/deal-structure', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, buyer, constraints } = req.body;
+  const prompt = `Structure a sales deal.\nDeal details: ${deal}\nBuyer profile: ${buyer}\nConstraints: ${constraints}\nInclude: deal structure options (annual/multi-year/usage-based/milestone-based — tradeoffs for this buyer), pricing presentation strategy (land-and-expand vs. full platform vs. modular), discount architecture (what to discount vs. protect — never discount seat price, use free months or services), multi-year incentive design (price lock/additional seats/professional services), payment terms negotiation (net 30/45/60 — what to give vs. take), contract structure (MSA + Order Form vs. single agreement), expansion clause design (auto-renewal/expansion rights/price escalators), deal acceleration tactics (end-of-quarter incentives/POC-to-paid conversion), legal term strategy (what to concede vs. hold), and deal review approval process for discounts and non-standard terms.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
