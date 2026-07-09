@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v661.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v662.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203897,6 +203897,66 @@ app.post('/api/strategy/transformation-lead', requireAuth, async (req: AuthReque
 app.post('/api/strategy/cognitive-bias', requireAuth, async (req: AuthRequest, res) => {
   const { decision, biases, stakes } = req.body;
   const prompt = `You are a cognitive bias identification and decision-quality expert. Analyze the ${decision} for ${biases} at ${stakes}. Cover cognitive bias framework, confirmation bias and information selection, anchoring and adjustment effects, availability heuristic and recency bias, overconfidence and planning fallacy, sunk cost fallacy, groupthink and social pressure, narrative fallacy and pattern matching, de-biasing techniques and red teams, and how to make higher-quality decisions by systematically identifying and counteracting cognitive biases before they lead to costly mistakes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/scenario-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, uncertainty, horizon } = req.body;
+  const prompt = `You are a scenario planning and strategic foresight expert. Design scenario plans for ${organization} around ${uncertainty} over ${horizon}. Cover scenario planning framework, driving forces and critical uncertainties, scenario development and narrative, early warning indicators, strategic implications of each scenario, robust strategy development, scenario monitoring and updating, organizational scenario capability, and how to use scenario planning to make better strategic decisions under deep uncertainty by preparing for multiple possible futures rather than betting on a single forecast.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/zero-trust', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, infrastructure, threats } = req.body;
+  const prompt = `You are a zero trust architecture and cybersecurity expert. Design zero trust architecture for ${organization} protecting ${infrastructure} against ${threats}. Cover zero trust principles and never trust always verify, identity and access management, device and endpoint security, network microsegmentation, application and workload security, data classification and protection, visibility and analytics, automation and orchestration, zero trust maturity model, and how to implement zero trust architectures that dramatically reduce the attack surface and limit the blast radius of security breaches.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/rev-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, bottleneck } = req.body;
+  const prompt = `You are a revenue operations design and GTM alignment expert. Design revenue operations for ${company} at ${stage} addressing ${bottleneck}. Cover revenue operations framework, marketing and sales and customer success alignment, funnel design and handoff optimization, data and metrics architecture, technology stack and CRM optimization, forecasting and pipeline management, compensation and incentive alignment, customer journey orchestration, revenue operations analytics, and how to design revenue operations systems that break down silos between revenue-generating functions to create predictable and scalable revenue growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/crisis-comm', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, crisis, stakeholders } = req.body;
+  const prompt = `You are a crisis communication strategy and reputation management expert. Design crisis communications for ${organization} facing ${crisis} with ${stakeholders}. Cover crisis communication framework, pre-crisis preparation and playbooks, crisis assessment and severity classification, spokesperson preparation and message development, media relations and press management, social media crisis management, internal communication during crisis, regulatory and legal coordination, post-crisis recovery and reputation rebuilding, and how to communicate in crisis situations that preserve organizational trust and credibility by being transparent and accountable.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/brand-portfolio', requireAuth, async (req: AuthRequest, res) => {
+  const { company, brands, strategy } = req.body;
+  const prompt = `You are a brand portfolio strategy and brand architecture expert. Design the brand portfolio for ${company} managing ${brands} with ${strategy}. Cover brand portfolio framework, branded house vs house of brands architecture, brand role definitions and hierarchy, portfolio rationalization and optimization, brand extension and stretch decisions, sub-brand and endorsed brand design, brand portfolio resource allocation, portfolio governance and stewardship, brand portfolio evolution over time, and how to design brand portfolios that maximize the combined value of all brands while minimizing brand confusion and internal competition.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-monetization', requireAuth, async (req: AuthRequest, res) => {
+  const { company, data, market } = req.body;
+  const prompt = `You are a data monetization strategy and data product expert. Design data monetization for ${company} using ${data} in ${market}. Cover data monetization framework, data asset inventory and valuation, internal vs external monetization paths, data product design and development, data marketplace and partnership models, data licensing and pricing strategies, privacy and regulatory compliance, data quality and governance requirements, data monetization roadmap, and how to turn organizational data assets into sustainable revenue streams while maintaining the trust of customers and partners whose data creates the value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/growth-experiment', requireAuth, async (req: AuthRequest, res) => {
+  const { product, metric, hypothesis } = req.body;
+  const prompt = `You are a growth experimentation and rapid testing expert. Design growth experiments for ${product} improving ${metric} based on ${hypothesis}. Cover growth experimentation framework, hypothesis development and prioritization, experiment design and statistical validity, minimum viable test design, A/B testing and multivariate testing, qualitative and quantitative research integration, experiment velocity and learning rate, experiment documentation and knowledge management, scaling winning experiments, and how to build growth experimentation systems that generate compounding learning about what drives growth rather than running isolated tests.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/community-led', requireAuth, async (req: AuthRequest, res) => {
+  const { product, community, stage } = req.body;
+  const prompt = `You are a community-led growth strategy and online community expert. Design community-led growth for ${product} with ${community} at ${stage}. Cover community-led growth framework, community strategy and purpose design, community platform and tool selection, community content and programming, community moderation and culture, member journey and engagement ladder, community to product feedback loop, community events and rituals, community metrics and health indicators, and how to build communities that generate growth by creating genuine belonging and value for members rather than using community instrumentally as a marketing channel.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segments, competition } = req.body;
+  const prompt = `You are a pricing strategy and monetization design expert. Design pricing strategy for ${product} across ${segments} against ${competition}. Cover pricing strategy framework, value-based vs cost-plus vs competitive pricing, willingness to pay research and segmentation, pricing architecture and good-better-best, packaging and bundling optimization, pricing psychology and behavioral economics, discounting and promotion strategy, price increase management, international and multi-market pricing, and how to design pricing strategies that capture appropriate value for the genuine value delivered rather than leaving money on the table through underpricing or destroying demand through overpricing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/operational-excellence', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, process, goals } = req.body;
+  const prompt = `You are an operational excellence and process improvement expert. Design operational excellence for ${organization} improving ${process} toward ${goals}. Cover operational excellence framework, process mapping and waste identification, lean and six sigma methodologies, continuous improvement culture and systems, standard work and process documentation, visual management and performance boards, problem-solving methodologies, operational metrics and balanced scorecard, operational excellence governance, and how to build organizations that continuously improve operations by embedding the mindset and tools of operational excellence into daily management rather than treating improvement as a series of projects.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
