@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v613.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v614.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201017,6 +201017,66 @@ app.post('/api/sales/deal-management', requireAuth, async (req: AuthRequest, res
 app.post('/api/ops/supply-chain', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, region } = req.body;
   const prompt = `You are a supply chain design and operations expert. Design the supply chain for ${company} with ${product} serving ${region}. Cover the supply chain network design and optimization, the supplier selection and qualification, the inventory optimization and safety stock design, the demand planning and forecasting, the procurement strategy and negotiation, the logistics and transportation design, the warehouse and distribution center design, the supply chain risk management and resilience, the supply chain technology and visibility, and how to build a supply chain that balances cost, speed, flexibility, and resilience to create competitive advantage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/security/cyber-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, threat, maturity } = req.body;
+  const prompt = `You are a cybersecurity strategy and information security expert. Build the cybersecurity strategy for ${company} addressing ${threat} threat landscape at ${maturity} maturity level. Cover the cybersecurity strategy framework and objectives, the threat landscape and risk assessment, the security architecture and zero-trust design, the identity and access management strategy, the endpoint and network security design, the cloud security architecture, the security operations center design, the incident response plan, the security awareness and culture program, and how to build a cybersecurity program that effectively manages risk while enabling the business to move fast.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/launch-command', requireAuth, async (req: AuthRequest, res) => {
+  const { product, audience, channel } = req.body;
+  const prompt = `You are a product launch and go-to-market execution expert. Command the launch of ${product} to ${audience} via ${channel} channels. Cover the launch strategy and objectives, the launch timing and sequencing, the positioning and messaging for launch, the launch content and asset plan, the sales and channel readiness plan, the PR and media strategy, the launch event and activation design, the launch day operations plan, the post-launch monitoring and response, and how to orchestrate a product launch that creates maximum awareness, drives adoption, and sets the product up for long-term success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/customer-acquisition', requireAuth, async (req: AuthRequest, res) => {
+  const { company, channel, cac } = req.body;
+  const prompt = `You are a customer acquisition and paid growth expert. Design the customer acquisition engine for ${company} via ${channel} targeting ${cac} CAC. Cover the customer acquisition strategy framework, the channel mix and attribution design, the paid acquisition channel design, the organic acquisition channel design, the landing page and conversion optimization, the customer acquisition funnel design, the CAC payback period analysis, the acquisition creative and messaging strategy, the acquisition experiment framework, and how to build a customer acquisition engine that is efficient, scalable, and diversified across channels.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/global-expansion', requireAuth, async (req: AuthRequest, res) => {
+  const { company, market, model } = req.body;
+  const prompt = `You are a global expansion and international go-to-market expert. Design the expansion of ${company} into ${market} using ${model} entry model. Cover the market entry strategy framework, the market prioritization criteria, the regulatory and compliance landscape, the localization strategy design, the entry mode selection, the local partnership strategy, the international pricing and packaging, the international team and org design, the cross-border operational challenges, and how to expand internationally in a way that captures the market opportunity while managing the complexity and risk of operating across borders.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/review', requireAuth, async (req: AuthRequest, res) => {
+  const { product, metrics, decision } = req.body;
+  const prompt = `You are a product review and strategic product decision expert. Conduct the product review for ${product} using ${metrics} to inform ${decision} decision. Cover the product review framework and cadence, the product health metrics assessment, the user feedback and satisfaction analysis, the feature performance and adoption analysis, the competitive positioning assessment, the product vision alignment check, the technical health and debt assessment, the team and process health review, the investment and prioritization decision framework, and how to run product reviews that lead to clear decisions and improve product quality over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/innovation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, horizon, method } = req.body;
+  const prompt = `You are an innovation strategy and corporate innovation expert. Build the innovation framework for ${company} across ${horizon} horizons using ${method} methodology. Cover the innovation strategy and portfolio design, the horizon 1, 2, and 3 innovation allocation, the innovation process and stage-gate design, the innovation culture and psychological safety, the idea generation and challenge design, the innovation pipeline management, the build vs. buy vs. partner decision framework, the innovation metrics and governance, the venture studio and intrapreneurship design, and how to build a sustainable innovation capability that generates breakthrough growth while protecting the core business.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/revenue/retention', requireAuth, async (req: AuthRequest, res) => {
+  const { company, cohort, playbook } = req.body;
+  const prompt = `You are a revenue retention and net revenue retention expert. Design the retention program for ${company} targeting ${cohort} cohort with ${playbook} playbook. Cover the revenue retention metrics and NRR design, the customer health scoring for retention, the expansion revenue strategy, the renewal process and timeline design, the at-risk account intervention playbook, the QBR and executive sponsor program, the product adoption and value realization program, the contract structure and auto-renewal design, the retention analytics and early warning, and how to build a revenue retention engine that drives NRR above 120% through systematic expansion and churn prevention.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/lead-nurture', requireAuth, async (req: AuthRequest, res) => {
+  const { segment, stage, content } = req.body;
+  const prompt = `You are a lead nurturing and demand generation expert. Design the lead nurture program for ${segment} at ${stage} stage using ${content} content strategy. Cover the lead nurture strategy and objectives, the buyer journey mapping and stage definition, the lead scoring and segmentation design, the nurture track design by persona and stage, the content mapping to buyer journey stages, the email nurture sequence design, the multi-channel nurture orchestration, the lead handoff and MQL definition, the nurture performance metrics, and how to build a lead nurture program that accelerates pipeline velocity and improves conversion rates from lead to opportunity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/cost-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, baseline, target } = req.body;
+  const prompt = `You are a cost transformation and operational efficiency expert. Design the cost transformation for ${company} from ${baseline} baseline to ${target} target. Cover the cost structure analysis and zero-based budgeting, the cost reduction opportunity identification, the cost reduction vs. cost avoidance distinction, the structural cost reduction design, the procurement and vendor optimization, the workforce and span of control optimization, the shared services and outsourcing design, the technology-driven cost reduction, the cost transformation governance and tracking, and how to execute cost transformation in a way that creates sustainable savings without undermining the capabilities needed for future growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/pmf-search', requireAuth, async (req: AuthRequest, res) => {
+  const { startup, hypothesis, signal } = req.body;
+  const prompt = `You are a product-market fit and early-stage product expert. Guide ${startup} through PMF search testing ${hypothesis} hypothesis watching for ${signal} signals. Cover the product-market fit definition and framework, the PMF hypothesis design, the customer segment selection and focus, the discovery interview methodology, the minimum viable product design for PMF, the quantitative PMF measurement, the qualitative PMF signal recognition, the pivot vs. persevere framework, the PMF iteration methodology, and how to find product-market fit efficiently by staying close to customers, moving fast, and having the discipline to change direction when the evidence demands it.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
