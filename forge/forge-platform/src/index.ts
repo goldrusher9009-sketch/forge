@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v551.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v552.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -197297,6 +197297,66 @@ app.post('/api/strategy/platform', requireAuth, async (req: AuthRequest, res) =>
 app.post('/api/data/governance', requireAuth, async (req: AuthRequest, res) => {
   const { company, dataAssets, regulations } = req.body;
   const prompt = `You are a data governance expert. Build a data governance framework for ${company} managing data assets: ${dataAssets} under regulations: ${regulations}. Cover data ownership model, quality standards, access controls, lineage tracking, metadata management, and stewardship responsibilities across business and technical teams.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/customer-segmentation', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customerData, goal } = req.body;
+  const prompt = `You are a customer analytics expert. Build a customer segmentation framework for ${product} using ${customerData} data to achieve ${goal}. Define segmentation dimensions, RFM analysis, behavioral clustering approach, segment personas, activation strategy per segment, and how to operationalize segments in CRM and marketing tools.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/readiness', requireAuth, async (req: AuthRequest, res) => {
+  const { company, processes, dataMaturity } = req.body;
+  const prompt = `You are an enterprise AI strategy expert. Assess AI readiness for ${company} targeting processes: ${processes} with data maturity: ${dataMaturity}. Cover organizational readiness, data infrastructure gaps, talent requirements, build vs buy decisions, pilot project selection, governance needs, and 12-month AI adoption roadmap.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/pilot', requireAuth, async (req: AuthRequest, res) => {
+  const { product, pilotCustomers, successMetrics } = req.body;
+  const prompt = `You are a product launch expert. Design a product pilot program for ${product} with ${pilotCustomers} pilot customers measuring ${successMetrics}. Cover pilot selection criteria, onboarding plan, success metrics, feedback loops, escalation process, rollout decision criteria, and how to convert pilots to full customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/ops', requireAuth, async (req: AuthRequest, res) => {
+  const { team, contentTypes, volume } = req.body;
+  const prompt = `You are a content operations expert. Build a content ops workflow for ${team} team producing ${contentTypes} at ${volume} volume. Cover editorial calendar, briefing templates, review and approval workflows, brand consistency checks, distribution automation, performance tracking, and tooling recommendations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/accounting', requireAuth, async (req: AuthRequest, res) => {
+  const { product, growthData, period } = req.body;
+  const prompt = `You are a growth analytics expert. Build a growth accounting model for ${product} using ${growthData} over ${period}. Decompose growth into new users, retained users, resurrected users, and churned users. Calculate quick ratio, DAU/MAU ratios, identify growth efficiency, and surface the highest-leverage retention lever.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/social', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, platforms, goals } = req.body;
+  const prompt = `You are a social media strategy expert. Build a social media presence strategy for ${brand} on platforms: ${platforms} targeting goals: ${goals}. Cover platform-specific content formats, posting cadence, community management approach, paid amplification strategy, influencer collaboration, and analytics framework for measuring ROI.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/risk-register', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, scale } = req.body;
+  const prompt = `You are an enterprise risk management expert. Build a risk register for ${company} operating in ${industry} at ${scale}. Identify strategic, operational, financial, compliance, and reputational risks. Rate each by likelihood and impact, define risk owners, mitigation strategies, residual risk thresholds, and quarterly review cadence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/investor-crm', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, fundingGoal, investors } = req.body;
+  const prompt = `You are a fundraising operations expert. Design an investor pipeline CRM for a ${stage} startup raising ${fundingGoal} targeting ${investors}. Cover pipeline stages, tracking fields, warm intro strategy, follow-up cadence, data room checklist, investor update template, and how to maintain momentum across a 3-6 month fundraise.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/accessibility', requireAuth, async (req: AuthRequest, res) => {
+  const { product, userNeeds, standard } = req.body;
+  const prompt = `You are an accessibility expert. Build an accessibility implementation plan for ${product} addressing user needs: ${userNeeds} to meet ${standard} standard. Cover WCAG 2.1 AA requirements, keyboard navigation, screen reader compatibility, color contrast, focus management, ARIA patterns, automated testing integration, and accessibility audit process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/ops-dashboard', requireAuth, async (req: AuthRequest, res) => {
+  const { team, metrics, cadence } = req.body;
+  const prompt = `You are a sales operations expert. Design a sales operations dashboard for a ${team} team tracking ${metrics} on a ${cadence} review cadence. Define metric hierarchy, leading vs lagging indicators, pipeline health views, rep-level performance breakdowns, and how to use the dashboard to run effective pipeline reviews.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
