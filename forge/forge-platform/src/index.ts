@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v574.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v575.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198677,6 +198677,66 @@ app.post('/api/hr/workforce-plan', requireAuth, async (req: AuthRequest, res) =>
 app.post('/api/product/design-thinking', requireAuth, async (req: AuthRequest, res) => {
   const { problem, team, timeline } = req.body;
   const prompt = `You are a design thinking and innovation workshop expert. Design a design thinking workshop for ${problem} with ${team} team over ${timeline}. Structure: Empathize (user interviews, empathy map, journey map), Define (problem statement, HMW questions, user needs), Ideate (brainstorming techniques, idea generation, concept development), Prototype (rapid prototyping methods, fidelity decisions), Test (usability testing plan, feedback synthesis). Include facilitator guide with timing, materials needed, virtual vs. in-person adaptations, how to synthesize outputs into actionable next steps, and how to sustain design thinking beyond the workshop.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/learning-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, roles, goals } = req.body;
+  const prompt = `You are a learning and development and enablement expert. Design a learning operations system for ${company} for ${roles} to achieve ${goals}. Cover the L&D strategy (what to build vs. buy vs. curate), the learning management system selection and setup, onboarding program design (role-specific, manager-assisted), ongoing skill development programs (functional skills, leadership skills, technical skills), the learning measurement framework (Kirkpatrick model), how to build a culture of learning, manager enablement program, and how to prioritize L&D investments when budget is constrained.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/tech-stack', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, useCase } = req.body;
+  const prompt = `You are a technical architecture and technology selection expert. Advise on the tech stack for ${company} at ${stage} stage for ${useCase} use case. Cover frontend framework selection with trade-offs, backend language and framework options, database selection (relational vs. NoSQL vs. vector), infrastructure and cloud provider decision, observability stack (logging, metrics, tracing), CI/CD pipeline design, security toolchain, how to think about build vs. buy decisions, the total cost of ownership for each major component, and how to plan for scaling the stack without a rewrite.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/blue-ocean', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, competitors } = req.body;
+  const prompt = `You are a blue ocean strategy and market creation expert. Build a blue ocean strategy for ${company} in ${industry} differentiating from ${competitors}. Apply the Blue Ocean Strategy framework: Strategy Canvas (current industry factors and your position), the Four Actions Framework (eliminate, reduce, raise, create), the Six Paths Framework for looking beyond existing industry boundaries, the buyer utility map to find uncontested value, how to reach non-customers, how to get the pricing right for mass adoption, the tipping point leadership needed to execute, and how to monitor whether you are slipping back into red ocean competition.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/leadership-dev', requireAuth, async (req: AuthRequest, res) => {
+  const { company, level, gaps } = req.body;
+  const prompt = `You are a leadership development and executive coaching expert. Design a leadership development program for ${company} at ${level} leadership level addressing ${gaps}. Cover the leadership competency model for this level, the 70-20-10 learning design (70% experience, 20% coaching, 10% formal), the program arc (assessment → development → application → evaluation), key leadership experiences to create (stretch assignments, cross-functional projects, external exposure), the coaching and mentoring program design, how to build psychological safety and vulnerability in leadership cohorts, peer learning circles design, and how to measure leadership development ROI.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/anti-patterns', requireAuth, async (req: AuthRequest, res) => {
+  const { codebase, language, symptoms } = req.body;
+  const prompt = `You are a software architecture and code quality expert. Identify and fix anti-patterns in ${codebase} built in ${language} with ${symptoms} symptoms. Cover the most common anti-patterns for this language and codebase type (God Objects, spaghetti code, premature optimization, copy-paste programming, magic numbers, tight coupling, leaky abstractions), how each anti-pattern manifests in the observed symptoms, the refactoring approach for each anti-pattern, how to prioritize which anti-patterns to fix first (impact vs. effort), automated linting and analysis tools to catch anti-patterns, and how to prevent anti-patterns from re-emerging through code review and standards.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/kpi-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { company, department, goals } = req.body;
+  const prompt = `You are a performance measurement and OKR expert. Build a KPI framework for ${company} ${department} department to achieve ${goals}. Cover the KPI hierarchy (company → department → team → individual), how to select metrics that are leading vs. lagging indicators, the metric definition template (name, formula, data source, owner, cadence, target, threshold), how to build a metrics dashboard, the cadence for reviewing metrics (daily, weekly, monthly, quarterly), how to connect individual KPIs to company goals, how to handle conflicting metrics, and how to evolve the KPI framework as the company grows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/content-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, volume, channels } = req.body;
+  const prompt = `You are a content operations and content strategy expert. Build a content operations system for ${company} producing ${volume} content for ${channels} channels. Cover the content strategy framework (audience, topics, formats, channels), the editorial calendar and workflow, the content production process (brief → draft → review → publish → distribute), the content team structure and roles (strategist, writer, editor, designer, SEO), the tech stack (CMS, DAM, workflow tool, distribution), quality assurance and brand consistency process, content performance measurement, and how to scale content production without sacrificing quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/crm-implementation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, crm, stage } = req.body;
+  const prompt = `You are a CRM implementation and sales operations expert. Build a CRM implementation guide for ${company} implementing ${crm} at ${stage} stage. Cover the CRM implementation phases (discovery → configuration → data migration → training → go-live → optimization), data model design (objects, fields, relationships), process automation setup (lead routing, email sequences, task creation), data migration strategy and deduplication, user adoption strategy (change management, training, incentives), reporting and dashboard setup, integration requirements, admin governance and maintenance, and the first 90 days post-go-live optimization checklist.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/execution', requireAuth, async (req: AuthRequest, res) => {
+  const { company, strategy, team } = req.body;
+  const prompt = `You are a strategy execution and OKR expert. Build a strategy execution system for ${company} implementing ${strategy} with ${team}. Cover the strategy translation cascade (vision → mission → strategy → annual plan → OKRs → initiatives), the OKR design process (ambitious objectives, measurable key results, leading indicators), the rhythm of business (weekly check-ins, monthly reviews, quarterly planning, annual strategy refresh), accountability and ownership model, initiative portfolio management, how to handle conflicts between strategic priorities and urgent operational demands, leading vs. lagging indicator balance, and how to know when to pivot the strategy vs. stay the course.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/operating-model', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, goals } = req.body;
+  const prompt = `You are an operating model design and organizational effectiveness expert. Design the operating model for ${company} at ${stage} stage to achieve ${goals}. Cover the five dimensions of operating model design (strategy, structure, process, people, technology), how to align the operating model to the business strategy, the governance model (decision rights, escalation paths, forums), the process architecture (core processes, support processes, management processes), the management operating system (cadences, rituals, reviews), organizational design principles for this stage, how to identify and remove friction in the operating model, and how to evolve the operating model as the company scales.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
