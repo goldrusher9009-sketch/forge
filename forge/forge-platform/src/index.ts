@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v579.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v580.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198977,6 +198977,66 @@ app.post('/api/engineering/testing-framework', requireAuth, async (req: AuthRequ
 app.post('/api/growth/marketing-engine', requireAuth, async (req: AuthRequest, res) => {
   const { company, stage, channel } = req.body;
   const prompt = `You are a growth marketing and demand generation expert. Build the growth marketing engine for ${company} at ${stage} stage focused on ${channel} channel. Cover the growth marketing funnel (awareness → acquisition → activation → revenue → retention → referral), the demand generation strategy for this channel (ICP targeting, messaging, creative strategy), the paid media playbook (budget allocation, bidding strategy, creative testing methodology), the landing page and conversion optimization system, the lead nurturing and marketing automation strategy, the attribution model and analytics setup, the growth experiment framework (hypothesis → test → measure → learn → scale), and the team structure and skills needed to run this growth engine.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/fintech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, regulation } = req.body;
+  const prompt = `You are a fintech strategy and financial services expert. Build the strategy for ${company} in ${segment} fintech segment navigating ${regulation} regulatory environment. Cover the market opportunity and competitive landscape, the regulatory strategy (charter options, partnership model, sandbox approach), the technology architecture for regulated financial services (security, compliance, auditability), the distribution strategy for financial products (direct, embedded, B2B2C), the unit economics of financial services products (take rate, credit loss, NIM, interchange), how to build trust with skeptical financial consumers, the partnership strategy with incumbent financial institutions, and the roadmap from launch to scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/healthtech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are a healthtech strategy and digital health expert. Build the strategy for ${company} with ${product} in ${market} health market. Cover the regulatory pathway (FDA clearance, HIPAA compliance, state licensing), the clinical validation strategy (what evidence do you need, study design), the reimbursement and billing strategy (CPT codes, payer contracts, prior auth), the provider and health system sales motion, patient engagement and adherence design, the data strategy (PHI handling, real-world data value, longitudinal data), how to build credibility in a risk-averse market, the partnership strategy with health systems and payers, and how to demonstrate ROI to each stakeholder.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/edtech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are an edtech strategy and education market expert. Build the strategy for ${company} with ${product} in ${market} education market. Cover the market segmentation (K-12 vs. higher ed vs. corporate learning vs. consumer), the sales motion for each segment (district sales, institutional sales, individual subscription), the procurement and budget cycle in education, the efficacy evidence strategy (what research do you need to win procurement), curriculum alignment and standards compliance, teacher and administrator adoption strategy, the learning outcomes measurement framework, how to build a sustainable business in a price-sensitive market, and how to navigate the tension between pedagogy and engagement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/legal-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, issues, stage } = req.body;
+  const prompt = `You are a startup legal strategy and corporate counsel expert. Build the legal strategy for ${company} facing ${issues} at ${stage}. Cover entity structure optimization (C-corp vs. LLC, state of incorporation), founder equity structure and vesting, intellectual property strategy (patents, trademarks, copyrights, trade secrets), employment law compliance (classification, handbooks, NDAs, non-solicits), vendor and customer contract standards (MSA, SOW, SLA), data privacy compliance roadmap (GDPR, CCPA, industry-specific), regulatory risk assessment, board governance and fiduciary duties, the legal spend strategy (in-house vs. outside counsel vs. legal tech), and how to build legal processes that scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/marketing-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stack, goals } = req.body;
+  const prompt = `You are a marketing operations and MarTech strategy expert. Build the marketing operations system for ${company} with ${stack} targeting ${goals}. Cover the marketing tech stack audit and recommendations (MAP, CRM, attribution, analytics, CDP), the data architecture for marketing (lead data model, campaign tracking, attribution model), the marketing-to-sales handoff process (MQL definition, SLA, routing rules), the campaign operations process (planning, execution, reporting), marketing data quality management, the demand waterfall model (MQL → SQL → SQO → Closed Won), how to measure marketing ROI and contribution, email deliverability and compliance, and how to scale marketing operations without scaling the team headcount.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/cx-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, touchpoints, metric } = req.body;
+  const prompt = `You are a customer experience and service design expert. Design the customer experience for ${company} across ${touchpoints} to improve ${metric}. Apply the CX design process: voice of customer research, customer journey mapping, experience gap analysis, experience principles, service blueprint design, the moments of truth (the interactions that disproportionately impact perception), the recovery experience (how to handle when things go wrong), how to embed CX into product and service design, how to build a CX measurement system (NPS, CSAT, CES, and custom metrics), and how to build a culture where everyone in the company owns the customer experience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/migration', requireAuth, async (req: AuthRequest, res) => {
+  const { product, target, users } = req.body;
+  const prompt = `You are a product migration and data engineering expert. Plan the migration for ${product} migrating to ${target} with ${users} users affected. Cover the migration strategy (big bang vs. phased vs. parallel run), the risk assessment and rollback plan, the data migration approach (ETL design, data validation, reconciliation), user communication and change management plan, the feature parity assessment and gap plan, performance testing and capacity planning for the new system, the cutover plan (timeline, go/no-go criteria, war room setup), the post-migration monitoring plan, how to handle migration failures gracefully, and the lessons learned documentation for future migrations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/revenue-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, metrics } = req.body;
+  const prompt = `You are a revenue operations and SaaS metrics expert. Build the revenue operations dashboard for ${company} at ${stage} stage tracking ${metrics}. Define the key revenue metrics at this stage (ARR, MRR, NDR, GDR, ACV, CAC, LTV, payback period, magic number, burn multiple), the calculation methodology for each metric, the data sources and data pipeline needed, the dashboard design for different audiences (exec team, board, ops team), the operating cadence (daily/weekly/monthly metrics to review), how to build leading indicators that predict future revenue performance, the metrics benchmarks for your stage and sector, and how to use metrics to drive cross-functional alignment on revenue priorities.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/pricing-page', requireAuth, async (req: AuthRequest, res) => {
+  const { product, tiers, conversion } = req.body;
+  const prompt = `You are a pricing page design and conversion optimization expert. Optimize the pricing page for ${product} with ${tiers} pricing tiers to improve ${conversion}. Cover pricing page design principles (most popular badge, feature comparison table, FAQ section, social proof), psychological principles in pricing page design (decoy pricing, anchoring, loss aversion framing), the tier naming strategy (Starter, Pro, Enterprise vs. feature-based names), how to highlight value at each tier rather than features, the CTA design for each tier, monthly vs. annual toggle strategy, how to handle enterprise custom pricing on a pricing page, A/B testing strategy for pricing page elements, how to use the pricing page to qualify leads, and mobile optimization for pricing pages.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/vision', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, years } = req.body;
+  const prompt = `You are a product vision and product strategy expert. Create the product vision for ${product} in ${market} market looking ${years} years ahead. Deliver: the product vision statement (inspiring, directional, not a feature list), the market thesis (why this market is transforming now, what forces are driving change), the product strategy (how you win in this market, what makes you different), the capability roadmap (the three horizons of product development), the platform vision (what platform capabilities will you build that enable multiple solutions), how the product evolves as customers grow and succeed, the competitive moat that builds over time, the key assumptions and risks in the vision, and how to communicate the product vision to inspire engineers, customers, and investors.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
