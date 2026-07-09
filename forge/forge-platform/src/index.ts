@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v635.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v636.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202337,6 +202337,66 @@ app.post('/api/sales/complex-sales', requireAuth, async (req: AuthRequest, res) 
 app.post('/api/engineering/ai-agent', requireAuth, async (req: AuthRequest, res) => {
   const { agent, tasks, environment } = req.body;
   const prompt = `You are an AI agent design and agentic systems expert. Design the ${agent} AI agent to perform ${tasks} in ${environment}. Cover the AI agent architecture design, the agent goal and task specification, the planning and reasoning design, the tool use and action space design, the memory and context management, the multi-agent coordination design, the agent safety and alignment, the agent evaluation and testing, the agent deployment and monitoring, and how to design AI agents that reliably accomplish complex multi-step tasks, that handle edge cases and failure modes gracefully, that are safe and aligned with user intentions, and that can be evaluated and improved systematically as you learn where they succeed and where they fall short in real-world deployment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-extension', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, category, consumers } = req.body;
+  const prompt = `You are a brand extension and portfolio strategy expert. Design the brand extension for ${brand} into ${category} for ${consumers}. Cover the brand extension strategy framework, the brand equity assessment, the extension opportunity evaluation, the brand fit and stretch analysis, the consumer perception research, the extension positioning design, the launch strategy, the brand architecture integration, the cannibalization risk assessment, and how to evaluate and design brand extensions that leverage existing brand equity to enter new categories successfully, that strengthen rather than dilute the core brand, and that create sustainable competitive advantage in the new category rather than just riding brand awareness without building real product differentiation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/account-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { account, contacts, goals } = req.body;
+  const prompt = `You are a strategic account planning and enterprise growth expert. Build the account plan for ${account} with ${contacts} to achieve ${goals}. Cover the account planning framework, the account intelligence and research, the whitespace and expansion opportunity mapping, the stakeholder map and relationship assessment, the value creation and business case development, the account strategy and action plan, the executive sponsor strategy, the competitive positioning within the account, the account metrics and scorecard, and how to build account plans that go beyond opportunity tracking to genuine strategic partnership development, that identify expansion opportunities before they go to bid, that build broad and deep relationships across the account, and that align your organizational resources behind the accounts that offer the greatest growth potential.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/mlops', requireAuth, async (req: AuthRequest, res) => {
+  const { model, pipeline, scale } = req.body;
+  const prompt = `You are an MLOps and machine learning engineering expert. Design the MLOps architecture for ${model} with ${pipeline} at ${scale}. Cover the MLOps framework and maturity model, the model training infrastructure, the feature store design, the model registry and versioning, the model deployment patterns, the A/B testing and model rollout, the model monitoring and drift detection, the retraining pipeline design, the ML metadata and lineage tracking, and how to build MLOps infrastructure that takes machine learning from experimental notebooks to production systems that reliably deliver value, that enable teams to iterate quickly on models while maintaining production stability, and that build the operational discipline to detect and respond when model performance degrades in production.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/product-catalog', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, channels } = req.body;
+  const prompt = `You are a product catalog management and merchandising strategy expert. Design the product catalog for ${company} with ${products} across ${channels}. Cover the catalog strategy and architecture, the product taxonomy and categorization, the product data model and attribute design, the product content standards, the catalog governance and workflow, the cross-sell and upsell architecture, the catalog personalization strategy, the search and discovery optimization, the catalog measurement framework, and how to design product catalogs that make it easy for customers to find and evaluate products, that provide the rich product information that drives purchase confidence, that support effective merchandising and promotion, and that scale efficiently as the product range grows without requiring exponential increases in content management effort.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/price-elasticity', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, data } = req.body;
+  const prompt = `You are a pricing analytics and demand modeling expert. Analyze the price elasticity of ${product} for ${segment} using ${data}. Cover the price elasticity measurement methodology, the demand curve modeling, the own-price and cross-price elasticity, the price sensitivity by segment, the elasticity by channel and geography, the conjoint analysis design, the van Westendorp price sensitivity meter, the Gabor-Granger analysis, the dynamic pricing implications, and how to use price elasticity analysis to make pricing decisions that balance volume and margin, identify customer segments where price increases can be taken without significant volume loss, and design promotional strategies that use discounts efficiently to drive incremental volume rather than just subsidizing purchases that would have happened anyway.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/board-communications', requireAuth, async (req: AuthRequest, res) => {
+  const { company, metrics, issues } = req.body;
+  const prompt = `You are a board communications and governance expert. Design the board communications for ${company} reporting ${metrics} and addressing ${issues}. Cover the board communication strategy, the board package design, the executive summary framework, the financial reporting design, the strategic update structure, the risk and issue reporting, the board meeting agenda design, the board presentation delivery, the between-meeting communication, and how to design board communications that give directors the information they need to fulfill their governance responsibilities, that present the business honestly including problems and risks rather than only good news, that are concise and focused on what directors need to decide or know, and that build the board-management trust that is essential for an effective governance relationship.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/visualization', requireAuth, async (req: AuthRequest, res) => {
+  const { dataset, audience, insight } = req.body;
+  const prompt = `You are a data visualization and analytical communication expert. Visualize ${dataset} for ${audience} to communicate ${insight}. Cover the data visualization framework, the chart type selection methodology, the visual encoding principles, the dashboard design and layout, the color theory for data, the typography and label design, the annotation and storytelling with data, the interactive visualization design, the accessibility in data visualization, and how to design data visualizations that communicate the intended insight clearly and quickly, that are truthful and do not distort the underlying data, that are accessible to the intended audience regardless of their technical background, and that use the principles of visual design to guide attention to what matters most.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/retail', requireAuth, async (req: AuthRequest, res) => {
+  const { retailer, format, consumers } = req.body;
+  const prompt = `You are a retail strategy and omnichannel commerce expert. Design the retail strategy for ${retailer} with ${format} format serving ${consumers}. Cover the retail strategy framework, the store format and network strategy, the omnichannel integration design, the category management strategy, the merchandise planning and assortment, the pricing and promotion strategy, the customer experience design, the retail technology and innovation, the retail operations excellence, and how to design retail strategies that create compelling shopping experiences across physical and digital channels, that use data and technology to personalize the experience and improve efficiency, and that build the loyalty and convenience that keeps customers choosing your retail brand over the expanding array of alternatives.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/operations', requireAuth, async (req: AuthRequest, res) => {
+  const { product, teams, processes } = req.body;
+  const prompt = `You are a product operations and product management excellence expert. Build the product operations for ${product} across ${teams} through ${processes}. Cover the product operations strategy, the product management process design, the product analytics infrastructure, the OKR and goal alignment system, the product review cadence, the product experimentation program, the voice of customer integration, the product-engineering-design collaboration model, the product operations metrics, and how to build product operations capabilities that make product teams more effective by providing the processes, tools, and data infrastructure they need to make good decisions quickly, that create alignment across product, engineering, and design, and that build the organizational discipline to learn from what you ship and continuously improve both the product and the product development process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/virtual-events', requireAuth, async (req: AuthRequest, res) => {
+  const { event, audience, goals } = req.body;
+  const prompt = `You are a virtual events and digital experience expert. Design the virtual ${event} for ${audience} to achieve ${goals}. Cover the virtual event strategy framework, the platform selection and technology design, the content and programming design, the speaker and session format design, the attendee engagement and networking design, the production and technical design, the sponsor and partner integration, the pre-event and post-event experience, the virtual event measurement, and how to design virtual events that create genuine engagement and connection for attendees despite the inherent limitations of the digital medium, that use the unique advantages of virtual formats like global reach and content accessibility to extend impact beyond what physical events can achieve, and that generate the leads, relationships, and brand impact that justify the investment.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
