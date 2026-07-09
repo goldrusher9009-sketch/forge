@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v592.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v593.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199757,6 +199757,66 @@ app.post('/api/engineering/observability', requireAuth, async (req: AuthRequest,
 app.post('/api/hr/diversity-inclusion', requireAuth, async (req: AuthRequest, res) => {
   const { company, focus, stage } = req.body;
   const prompt = `You are a diversity, equity, inclusion, and belonging strategy expert. Build the D&I strategy for ${company} focused on ${focus} with ${stage} as the current maturity stage. Cover the DEIB assessment and baseline measurement, the systemic vs. programmatic approach distinction, the hiring equity design, the promotion and advancement equity audit, the pay equity analysis and remediation, the inclusive culture assessment and design, the ERG and community design, the supplier diversity program, the DEIB governance and accountability structure, and how to measure DEIB progress authentically and avoid performative vs. substantive change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/behavior-design', requireAuth, async (req: AuthRequest, res) => {
+  const { behavior, users, trigger } = req.body;
+  const prompt = `You are a behavioral design and habit formation expert. Design the behavior change system to create ${behavior} in ${users} using ${trigger} as the primary trigger. Cover the BJ Fogg behavior model applied, the motivation and ability analysis, the trigger design taxonomy, the habit loop design, the reward system design, the friction removal strategy, the social influence mechanisms, the progress and feedback design, the behavior measurement framework, and how to sustain behavior change beyond initial motivation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/tech-partnerships', requireAuth, async (req: AuthRequest, res) => {
+  const { company, partner, integration } = req.body;
+  const prompt = `You are a technology partnerships and business development expert. Build the technology partnership strategy for ${company} with ${partner} type partners via ${integration} integration depth. Cover the partnership value proposition design, the partner type taxonomy, the partner identification and qualification criteria, the partnership negotiation framework, the technical integration design, the go-to-market co-motion design, the partner success program, the joint product roadmap process, the partnership measurement framework, and how to manage partnership lifecycle from first contact to mature collaboration.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/pmf', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, signal } = req.body;
+  const prompt = `You are a product-market fit strategy and measurement expert. Find and accelerate product-market fit for ${product} in ${segment} segment using ${signal} as the primary PMF signal. Cover the PMF definition and why it matters, the Sean Ellis PMF survey methodology, the retention curve analysis for PMF signals, the cohort analysis for PMF evidence, the qualitative customer discovery for PMF understanding, the customer segment isolation strategy, the value proposition iteration framework, the PMF metrics dashboard, how to avoid premature scaling before PMF, and what to do differently after achieving PMF.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/global-payroll', requireAuth, async (req: AuthRequest, res) => {
+  const { company, countries, structure } = req.body;
+  const prompt = `You are a global payroll and international employment law expert. Design the global payroll strategy for ${company} employing people in ${countries} with ${structure} employment structure. Cover the employer of record vs. entity setup decision framework, the global payroll vendor selection criteria, the country-by-country compliance requirements overview, the multi-currency payroll management, the global benefits harmonization strategy, the global equity and stock option tax compliance, the payroll data privacy and security requirements, the global payroll audit and reconciliation process, the expat payroll and tax equalization approach, and how to build a scalable global payroll function.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/csat', requireAuth, async (req: AuthRequest, res) => {
+  const { touchpoint, metric, cadence } = req.body;
+  const prompt = `You are a customer satisfaction measurement and improvement expert. Design the customer satisfaction program for ${touchpoint} touchpoint measuring ${metric} at ${cadence} cadence. Cover the CSAT vs. NPS vs. CES methodology selection, the survey design principles, the touchpoint feedback trigger design, the response rate optimization, the verbatim text analytics approach, the closed-loop follow-up process, the satisfaction driver analysis, the satisfaction improvement initiative design, the satisfaction measurement governance, and how to connect satisfaction scores to business outcomes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/growth-levers', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, constraint } = req.body;
+  const prompt = `You are a growth strategy and growth levers expert. Identify and prioritize the growth levers for ${company} at ${stage} stage with ${constraint} as the binding constraint. Cover the growth lever taxonomy, the ICE scoring for growth initiatives, the growth accounting framework, the acquisition lever analysis, the activation lever analysis, the retention lever analysis, the monetization lever analysis, the referral lever analysis, the constraint identification methodology, and how to sequence growth lever investments for maximum compounding impact.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/complex-deals', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, stakeholders, obstacle } = req.body;
+  const prompt = `You are a complex deal strategy and large account sales expert. Close the ${deal} type deal with ${stakeholders} buying committee navigating ${obstacle} as the primary obstacle. Cover the complex deal anatomy, the buying committee mapping and influence analysis, the deal strategy design, the multi-threaded engagement plan, the evaluation criteria discovery and shaping, the proof of value design, the business case construction for the buyer, the competitive positioning and trap-setting strategy, the negotiation strategy for complex deals, and the close plan design with specific next steps at each stage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/network-design', requireAuth, async (req: AuthRequest, res) => {
+  const { org, users, security } = req.body;
+  const prompt = `You are a network architecture and enterprise networking expert. Design the network architecture for ${org} supporting ${users} users with ${security} security requirements. Cover the network topology design, the LAN and WLAN design, the WAN and SD-WAN strategy, the cloud network integration design, the network segmentation and VLAN design, the firewall and perimeter design, the network access control, the network redundancy and failover design, the network monitoring and management approach, and the network capacity planning methodology.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/buyer-persona', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, data } = req.body;
+  const prompt = `You are a buyer research and ideal customer profile design expert. Build the buyer persona framework for ${product} in ${market} based on ${data} data sources. Cover the buyer persona vs. ICP distinction, the research methodology for persona development, the demographic and firmographic profiling, the psychographic and behavioral profiling, the jobs-to-be-done mapping by persona, the buying journey mapping by persona, the objection and concern mapping by persona, the content and channel preference mapping, the persona validation methodology, and how to keep personas updated as market conditions evolve.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/engineering-culture', requireAuth, async (req: AuthRequest, res) => {
+  const { org, values, size } = req.body;
+  const prompt = `You are an engineering culture and technical leadership expert. Build the engineering culture for ${org} embodying ${values} values at ${size} organization size. Cover the engineering culture definition and why it matters for talent and outcomes, the engineering principles and values design, the psychological safety and blameless culture design, the technical excellence program, the code review culture design, the documentation culture, the engineering blog and knowledge sharing program, the technical career ladder design, the engineering recognition program, and how to evolve engineering culture deliberately as the organization grows.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
