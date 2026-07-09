@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v584.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v585.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199277,6 +199277,66 @@ app.post('/api/strategy/circular-economy', requireAuth, async (req: AuthRequest,
 app.post('/api/career/mindset', requireAuth, async (req: AuthRequest, res) => {
   const { challenge, pattern, goal } = req.body;
   const prompt = `You are a performance psychology and executive coaching expert. Coach through ${challenge} by addressing ${pattern} mental pattern to achieve ${goal}. Apply evidence-based approaches: cognitive behavioral coaching (identifying and reframing limiting beliefs), Carol Dweck's growth mindset framework, the imposter syndrome diagnostic and treatment, how to build mental toughness and resilience, how to manage performance anxiety and pressure, the pre-performance routine design, how to use failure as a learning accelerator, how to build confidence through progressive challenge, how to use visualization and mental rehearsal effectively, how to build the daily practices that sustain peak performance, and the specific mindset shifts that will unlock the next level of performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/growth-model', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, channel } = req.body;
+  const prompt = `You are a growth strategy and growth modeling expert. Build the growth model for ${company} at ${stage} with ${channel} as the primary growth channel. Cover the growth model anatomy (how each input drives the next), the acquisition model (CAC by channel, payback period, channel saturation curves), the activation model (what is the aha moment, how to get users there faster), the retention model (D1/D7/D30 benchmarks, churn drivers, retention levers), the monetization model (ARPU, LTV, expansion revenue), the referral model (viral coefficient, viral loop design), the unit economics cascade (from CAC to LTV to contribution margin), how to identify the one constraint currently limiting growth, and how to sequence growth investments as the company scales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/knowledge-graph', requireAuth, async (req: AuthRequest, res) => {
+  const { domain, entities, queries } = req.body;
+  const prompt = `You are a knowledge graph design and graph database expert. Design a knowledge graph for ${domain} with ${entities} as core entities to support ${queries} query types. Cover the ontology design (entity types, relationship types, attributes), the graph data model vs. relational data model tradeoffs, the graph database technology selection (Neo4j, Amazon Neptune, TigerGraph — tradeoffs), the schema design for the core entities and relationships, the data ingestion pipeline from structured and unstructured sources, the graph query language design (Cypher or SPARQL patterns for common queries), the graph algorithm applications (shortest path, community detection, centrality — which ones are relevant?), the graph embedding approaches for ML applications, how to handle schema evolution as the domain knowledge grows, and the performance tuning considerations for large-scale graphs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, model } = req.body;
+  const prompt = `You are a pricing strategy and monetization expert. Design the pricing strategy for ${product} in ${market} using ${model} pricing model. Cover the value-based pricing framework (what is the economic value delivered, how do customers measure value?), the competitive pricing analysis (where to price relative to alternatives and substitutes?), the price segmentation strategy (how to capture different willingness to pay across customer segments?), the pricing model selection rationale (per-seat, usage-based, outcome-based, freemium, tiered — which fits this business and why?), the anchoring and packaging strategy, the price communication and justification to buyers, how to handle price increases without losing customers, the price testing methodology, and the pricing governance process (who owns pricing decisions and how are they made?).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/talent-density', requireAuth, async (req: AuthRequest, res) => {
+  const { company, role, culture } = req.body;
+  const prompt = `You are a talent strategy and high-performance culture expert. Build the talent density strategy for ${company} focusing on ${role} to create ${culture} culture. Cover the talent density philosophy (why average performers pull down excellent performers — the Netflix model), how to define excellence clearly for each role (what does a 10x performer look like vs. an adequate performer?), the hiring bar calibration process, the keeper test and how to use it responsibly, how to build a high-feedback culture where performance issues surface quickly, the compensation strategy for talent density (top of market vs. performance-based), how to design a generous severance policy that enables proactive performance management, the internal mobility strategy (move talent to where it creates most value), how to maintain talent density as the company scales, and how to balance culture of excellence with psychological safety and inclusion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/regulatory-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, jurisdiction } = req.body;
+  const prompt = `You are a regulatory strategy and government relations expert. Build the regulatory strategy for ${company} in ${industry} operating in ${jurisdiction}. Cover the regulatory landscape mapping (which regulations apply, which are emerging, which could be existential threats?), the regulatory risk categorization (probability × impact), the proactive engagement strategy (how to shape regulations before they are finalized), the compliance program design (policies, controls, monitoring, reporting), the regulatory relationship building strategy (government affairs, trade associations, coalition building), how to handle regulatory investigations and inquiries, the regulatory arbitrage opportunities (jurisdictions where regulation is more favorable), the regulatory change monitoring system, how to build regulatory compliance as a competitive advantage, and how to communicate regulatory risk to board and investors.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/partnership', requireAuth, async (req: AuthRequest, res) => {
+  const { company, partner, type } = req.body;
+  const prompt = `You are a business partnership and commercial contracts expert. Structure the partnership agreement between ${company} and ${partner} for ${type} partnership. Cover the partnership structure options (joint venture, strategic alliance, distribution agreement, licensing, OEM, reseller — which fits?), the key commercial terms (revenue sharing, exclusivity, territory, term and termination), the IP ownership and licensing framework, the governance structure (who makes what decisions, how are disputes resolved?), the data sharing and privacy provisions, the liability allocation and indemnification, the representations and warranties appropriate for this partnership type, the exit and wind-down provisions, the competitive restrictions (non-competes, non-solicits, most-favored-nation clauses), and the integration and co-branding standards.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/enterprise', requireAuth, async (req: AuthRequest, res) => {
+  const { product, icp, deal } = req.body;
+  const prompt = `You are an enterprise sales strategy and execution expert. Build the enterprise sales playbook for ${product} targeting ${icp} with ${deal} size deals. Cover the enterprise buying process anatomy (who is involved, what are their motivations, what does the evaluation process look like?), the account entry strategy (how to get into an enterprise account in the first place), the champion identification and development (what makes a great champion, how to develop and protect one), the multi-threaded account strategy (how many stakeholders to engage and at what level), the business case development framework (how to quantify ROI for the buyer), the procurement and legal navigation playbook, the competitive displacement strategy (how to win against an incumbent), the pricing and negotiation strategy for enterprise deals, the implementation and success plan that makes the deal easier to say yes to, and the account expansion playbook post-close.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-governance', requireAuth, async (req: AuthRequest, res) => {
+  const { company, useCase, risk } = req.body;
+  const prompt = `You are an AI governance and responsible AI expert. Design the AI governance framework for ${company} with ${useCase} AI use cases at ${risk} risk level. Cover the AI governance structure (who owns AI governance — board, executive, operational?), the AI risk taxonomy (how to categorize AI systems by risk level and impact), the AI ethics principles and how to operationalize them, the AI risk assessment process (what questions must be answered before deploying an AI system?), the model monitoring and performance standards (what does ongoing AI system health look like?), the AI incident response playbook, the data governance requirements for AI systems (training data, bias audits, data lineage), the AI transparency and explainability standards by use case, how to engage regulators on emerging AI regulation, and the AI governance maturity model (how to progress from ad-hoc to systematic AI governance).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/brand-extension', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, category, target } = req.body;
+  const prompt = `You are a brand strategy and brand extension expert. Evaluate the brand extension of ${brand} into ${category} targeting ${target} customers. Cover the brand extension rationale framework (fit vs. stretch — does the brand have the right to win in this category?), the brand equity inventory (what does the brand currently own in the minds of consumers?), the category entry barriers and success factors, the cannibalization risk assessment (does the extension risk the core business?), the brand architecture decision (endorsed brand, sub-brand, or new brand?), the positioning strategy for the extension (how to be credible and distinctive in the new category), the go-to-market strategy leveraging the existing brand, the success metrics and early indicators, the failure modes and risk mitigation, and the long-term brand portfolio implications of this extension.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/learning-culture', requireAuth, async (req: AuthRequest, res) => {
+  const { company, skill, cadence } = req.body;
+  const prompt = `You are a learning and development strategy and organizational capability building expert. Design the learning culture for ${company} focused on ${skill} capability building at ${cadence} cadence. Cover the learning culture diagnostic (where is the company now — does it value learning?), the learning architecture design (formal learning, social learning, experiential learning — what mix?), the skills taxonomy and future-readiness assessment, the learning content strategy (build vs. buy vs. partner), the learning technology stack (LMS, content platforms, coaching tools), the manager role in learning (how to make managers learn-enablers not blockers), the measurement framework (learning → behavior change → business impact), how to create psychological safety for learning from failure, the cohort learning and peer learning program design, and how to sustain a learning culture as the company grows and faces execution pressure.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
