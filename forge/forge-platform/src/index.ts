@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v454.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v455.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -192079,6 +192079,59 @@ app.post('/api/product/roadmap-communication', requireAuth, async (req: AuthRequ
 app.post('/api/sales/discovery-call', requireAuth, async (req: AuthRequest, res) => {
   const { prospect, industry, usecase } = req.body;
   const prompt = `Design a discovery call framework.\nProspect: ${prospect}\nIndustry: ${industry}\nUse case: ${usecase}\nInclude: discovery call structure (agenda/rapport/situation/problem/implication/need-payoff), SPIN selling question design for the use case, MEDDPICC qualification during discovery, pain quantification methodology (how much does this cost you?), business impact discovery (what happens if this isn't solved?), stakeholder map discovery questions, competitive landscape discovery (what else are you evaluating?), next step commitment at end of discovery, discovery call debrief checklist, and how to run a discovery call that makes the prospect feel heard while giving you everything you need to win.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 329+330 routes
+app.post('/api/dev/deprecation-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, users, timeline } = req.body;
+  const prompt = `Design a feature deprecation plan.\nFeature to deprecate: ${feature}\nAffected users: ${users}\nTimeline: ${timeline}\nInclude: deprecation decision framework (usage data analysis/migration path availability), sunset timeline design (announce→migration period→sunset date), user communication strategy (in-app warnings/email/changelog/docs), migration guide creation, backward compatibility maintenance strategy during transition, API versioning approach for deprecated endpoints, customer success support plan for migrating users, monitoring for deprecated feature usage, hard removal checklist, and how to handle users who refuse to migrate (exceptions/extended support/custom arrangements).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/account-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { account, goals, stakeholders } = req.body;
+  const prompt = `Build a strategic account plan.\nAccount: ${account}\nRevenue goals: ${goals}\nKey stakeholders: ${stakeholders}\nInclude: account overview (business model/strategy/challenges/priorities), stakeholder map with relationship strength and influence, current state of the relationship and revenue, whitespace analysis (untapped products/departments/geographies), 12-month revenue goal and expansion path, key initiatives to pursue this year, executive relationship building strategy, risk identification and mitigation, competitive threats within the account, success metrics for the account plan, and 90-day action plan with specific next steps.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/hard-tradeoffs', requireAuth, async (req: AuthRequest, res) => {
+  const { options, constraints, criteria } = req.body;
+  const prompt = `Navigate a difficult product trade-off.\nOptions: ${options}\nConstraints: ${constraints}\nDecision criteria: ${criteria}\nInclude: decision framework selection (ICE/RICE/opportunity scoring/job-to-be-done fit), how to make trade-offs explicit and transparent, reversible vs. irreversible decision framework (two-way vs. one-way doors), stakeholder alignment strategy for contested decisions, how to say no to good ideas to focus on great ones, risk assessment for each option, how to test the decision before fully committing, documenting the decision and rationale for future reference, how to revisit decisions when new information emerges, and how to build a culture of decisive yet humble product decision-making.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/marketing-analytics', requireAuth, async (req: AuthRequest, res) => {
+  const { channels, goals, stack } = req.body;
+  const prompt = `Design a marketing analytics framework.\nMarketing channels: ${channels}\nBusiness goals: ${goals}\nCurrent stack: ${stack}\nInclude: measurement framework design (goals→KPIs→metrics→data sources), attribution model selection (first-touch/last-touch/linear/data-driven) and trade-offs, UTM taxonomy and governance, marketing data warehouse design, dashboard hierarchy (channel level→campaign level→executive), incrementality testing methodology, marketing mix modeling basics, cohort analysis for customer acquisition quality, cost metrics hierarchy (CPM→CPC→CPL→CPA→CAC), and how to move from reporting to insights to decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/dei-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, gaps, goals } = req.body;
+  const prompt = `Design a DEI strategy.\nCompany context: ${company}\nCurrent gaps: ${gaps}\nDEI goals: ${goals}\nInclude: DEI audit methodology (representation/pay equity/inclusion/belonging), goal-setting framework (representation targets vs. process goals), hiring process equity design (structured interviews/blind resume review/diverse panels), inclusive workplace design (ERGs/allyship programs/psychological safety), pay equity analysis and remediation process, manager training on inclusive leadership, DEI metrics and reporting cadence, avoiding performative DEI pitfalls, embedding DEI into business processes vs. bolt-on programs, and how to build accountability without tokenism.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/pitch-deck', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, ask } = req.body;
+  const prompt = `Build a pitch deck narrative.\nCompany: ${company}\nStage: ${stage}\nFunding ask: ${ask}\nInclude: slide-by-slide structure (problem/solution/market/product/traction/team/business model/competition/financials/ask), problem slide storytelling technique, market size framing (TAM/SAM/SOM with bottom-up methodology), traction slide design (what metrics matter most at this stage), team slide positioning, financial projections credibility framework, the perfect ask slide (amount/use of funds/milestones it buys), common pitch deck mistakes to avoid, how to tailor the deck for different investor types, and how to tell a story that makes investors feel FOMO.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/open-source-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { project, goals, model } = req.body;
+  const prompt = `Design an open source strategy.\nProject: ${project}\nStrategic goals: ${goals}\nBusiness model: ${model}\nInclude: open source business model selection (open core/support/cloud/SaaS), license selection (MIT/Apache/GPL/AGPL/BSL/proprietary), what to open source vs. keep proprietary, community building strategy (contributor experience/documentation/governance), contributor acquisition and retention, issue and PR management at scale, commercial vs. community edition feature split, preventing competitive forks (dual licensing strategy), developer advocacy and evangelism, measuring open source health (star growth/contributor count/download velocity), and how to build a moat through open source.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/retargeting', requireAuth, async (req: AuthRequest, res) => {
+  const { audience, stages, budget } = req.body;
+  const prompt = `Design a retargeting strategy.\nTarget audience: ${audience}\nFunnel stages: ${stages}\nBudget: ${budget}\nInclude: retargeting audience segmentation (page visitors/cart abandoners/trial users/churned customers), pixel and tracking setup, audience size thresholds for effective retargeting, creative strategy by segment (awareness retargeting vs. conversion retargeting), frequency cap management, exclusion list management (existing customers/recent converters), cross-channel retargeting orchestration (display/social/email/connected TV), dynamic creative personalization, bid strategy for retargeting campaigns, attribution for retargeting (view-through vs. click-through), and how to measure retargeting lift vs. organic conversion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/pricing-test', requireAuth, async (req: AuthRequest, res) => {
+  const { current, hypothesis, segment } = req.body;
+  const prompt = `Design a pricing test.\nCurrent pricing: ${current}\nTest hypothesis: ${hypothesis}\nTarget segment: ${segment}\nInclude: pricing test design (price point test/packaging test/value metric test), A/B test methodology for pricing (randomization unit/sample size/duration), how to avoid customer fairness perception issues, cohort analysis to measure LTV impact vs. conversion impact, price sensitivity measurement (Van Westendorp/Gabor-Granger/conjoint), how to run pricing tests without alerting competitors, interpreting results (watch conversion AND LTV AND churn), legal considerations for price discrimination, how to roll out a price change post-test, and how to build a continuous pricing optimization process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/negotiation-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, issues, leverage } = req.body;
+  const prompt = `Build a negotiation strategy for a deal.\nDeal: ${deal}\nNegotiation issues: ${issues}\nLeverage points: ${leverage}\nInclude: negotiation preparation framework (BATNA/ZOPA/anchor strategy), issue priority matrix (must-have vs. nice-to-have), anchor setting strategy (who goes first and at what level), trading concessions vs. making unilateral concessions, time pressure and urgency management, handling procurement and legal in enterprise deals, multi-party negotiation dynamics, how to give concessions that feel significant but cost little, creating and claiming value simultaneously, closing techniques for enterprise negotiations, and how to protect the relationship while winning on the deal.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
