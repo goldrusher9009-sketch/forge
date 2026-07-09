@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v652.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v653.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203357,6 +203357,66 @@ app.post('/api/strategy/biz-model-validation', requireAuth, async (req: AuthRequ
 app.post('/api/operations/data-governance', requireAuth, async (req: AuthRequest, res) => {
   const { organization, data, goals } = req.body;
   const prompt = `You are a data governance strategy and data management expert. Design the data governance for ${organization} covering ${data} achieving ${goals}. Cover the data governance framework, the data ownership and stewardship model, the data quality standards and measurement, the data catalog and metadata management, the data access controls and security, the data privacy and compliance, the master data management, the data lifecycle management, the data governance operating model, and how to design data governance programs that make data more accessible and useful to the people who need it for decisions rather than creating bureaucratic processes that slow down data access in the name of governance, that address the actual data quality and consistency problems that erode trust in data and lead people to make decisions based on gut feel rather than evidence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-entry', requireAuth, async (req: AuthRequest, res) => {
+  const { company, market, approach } = req.body;
+  const prompt = `You are a market entry strategy and international expansion expert. Design the market entry for ${company} into ${market} using ${approach}. Cover the market entry framework, the market attractiveness assessment, the entry mode selection, the timing and sequencing, the localization strategy, the partnership and distribution approach, the regulatory and compliance requirements, the competitive dynamics in the new market, the go-to-market adaptation, and how to design market entry strategies that give you the best chance of building sustainable market position rather than making costly mistakes that could have been anticipated, that leverage your existing advantages in ways that translate to the new market context, and that build the local relationships and capabilities needed to compete effectively rather than assuming what worked in your home market will transfer directly.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/employee-experience', requireAuth, async (req: AuthRequest, res) => {
+  const { company, workforce, priorities } = req.body;
+  const prompt = `You are an employee experience design and people operations expert. Design the employee experience for ${company} for ${workforce} focused on ${priorities}. Cover the employee experience framework, the employee journey mapping, the onboarding experience design, the day-to-day experience and environment, the learning and development experience, the performance and recognition experience, the flexibility and wellbeing programs, the community and belonging, the offboarding and alumni experience, and how to design employee experiences that attract and retain the best people by making work genuinely meaningful, that reduce the friction and frustration that sap energy and engagement, and that create the psychological safety and belonging that allow people to do their best work and advocate for the company to others in their network.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/tech-debt-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { system, debt, constraints } = req.body;
+  const prompt = `You are a technical debt management and engineering excellence expert. Design the tech debt strategy for ${system} addressing ${debt} within ${constraints}. Cover the tech debt framework, the tech debt assessment and categorization, the tech debt quantification and business impact, the debt prioritization methodology, the pay-down strategy and roadmap, the preventing new debt accumulation, the refactoring approach and patterns, the tech debt communication to stakeholders, the tech debt metrics and tracking, and how to manage technical debt in ways that balance the speed of new feature development with the investment in code quality and architectural health needed for sustainable velocity, that communicate the business impact of tech debt in terms that non-technical stakeholders can understand and support investment to address, and that prevent the accumulation of new debt through engineering practices and cultural norms.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/innovation-program', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, type, resources } = req.body;
+  const prompt = `You are an innovation program design and corporate innovation expert. Design the innovation program for ${organization} of type ${type} with ${resources}. Cover the innovation program framework, the innovation strategy and thesis, the innovation portfolio management, the idea generation and sourcing, the innovation stage-gate process, the intrapreneurship and internal ventures, the external innovation and open innovation, the innovation metrics and measurement, the innovation culture and environment, and how to design innovation programs that generate real business value rather than creating the appearance of innovation through hackathons and innovation labs that produce prototypes but rarely result in commercially successful products, that give promising ideas the resources and protection they need to develop without being killed by the immune system of the core business.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/sales-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, team, challenges } = req.body;
+  const prompt = `You are a sales operations and revenue operations expert. Design the sales operations for ${company} with ${team} addressing ${challenges}. Cover the sales operations framework, the sales process design and optimization, the CRM and technology stack, the sales forecasting and pipeline management, the quota setting and territory design, the sales analytics and reporting, the sales enablement and training, the compensation plan design, the sales hiring and onboarding, and how to design sales operations that give salespeople the tools, data, and support they need to spend more time selling and less time on administrative tasks, that give sales leaders the visibility and analytics to coach effectively and forecast accurately, and that align the sales process with the buying journey of your customers rather than forcing prospects through an internally-convenient process that creates unnecessary friction.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/enterprise-sales', requireAuth, async (req: AuthRequest, res) => {
+  const { product, buyer, dealsize } = req.body;
+  const prompt = `You are an enterprise sales strategy and complex deal management expert. Design the enterprise sales approach for ${product} to ${buyer} at ${dealsize}. Cover the enterprise sales framework, the enterprise buying process and stakeholders, the champion identification and development, the executive engagement strategy, the proof of concept and pilot design, the business case development, the procurement and legal navigation, the competitive displacement strategy, the enterprise deal negotiation, and how to navigate the complex, multi-stakeholder, long-cycle enterprise buying process by building the right relationships at the right levels, developing the internal champion who advocates for your solution when you are not in the room, and creating the business case and ROI analysis that allows your champion to justify the investment to their finance and procurement organizations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-positioning', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, market, audience } = req.body;
+  const prompt = `You are a brand positioning strategy and brand architecture expert. Design the brand positioning for ${brand} in ${market} for ${audience}. Cover the brand positioning framework, the positioning statement development, the category design and creation, the competitive differentiation strategy, the brand promise and value proposition, the brand personality and voice, the brand architecture and portfolio, the brand expression and visual identity, the brand positioning validation, and how to develop brand positioning that stakes out a distinctive and credible position in the mind of your target customer, that your entire organization can rally around and bring to life consistently across every touchpoint, and that is defensible against competitive imitation because it reflects genuine capabilities and values that are difficult to copy rather than positioning claims anyone can make.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/rev-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, friction } = req.body;
+  const prompt = `You are a revenue operations and go-to-market alignment expert. Design the RevOps function for ${company} at ${stage} removing ${friction}. Cover the RevOps framework, the RevOps organizational model, the marketing and sales alignment, the sales and customer success alignment, the revenue technology stack, the revenue data and analytics, the revenue process standardization, the pipeline and forecast management, the revenue metrics and reporting, and how to design RevOps functions that align marketing, sales, and customer success around shared revenue goals and the complete customer revenue journey, that eliminate the handoff failures and communication gaps between teams that cause deals to fall through and customers to churn, and that provide the leadership team with the revenue intelligence needed to make good decisions about where to invest to accelerate growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/startup-board', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, composition } = req.body;
+  const prompt = `You are a startup board management and governance expert. Design the board structure for ${company} at ${stage} with ${composition}. Cover the board framework, the board composition and director selection, the board vs. management roles, the board meeting structure and cadence, the information and reporting to the board, the board committee structure, the independent director recruitment, the board dynamics and conflict management, the board evolution with company stage, and how to build boards that function as genuine strategic assets rather than obstacles to overcome, that recruit directors who bring the specific expertise, relationships, and pattern recognition most valuable at your current stage, and that create the governance structures that protect all stakeholders while giving the management team the clarity and support needed to execute.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/personal-productivity', requireAuth, async (req: AuthRequest, res) => {
+  const { professional, role, challenges } = req.body;
+  const prompt = `You are a personal productivity and high-performance work design expert. Design the productivity system for ${professional} in ${role} addressing ${challenges}. Cover the personal productivity framework, the priority management and focus system, the energy management and performance rhythms, the task and project capture system, the calendar design and meeting management, the deep work and concentration practices, the communication and inbox management, the weekly review and planning ritual, the productivity tools and systems, and how to design personal productivity systems that help you spend more of your time on the highest-impact work that only you can do rather than on reactive tasks and communication that feel busy but do not create the results that matter most for your career and organization, that respect the biological rhythms that determine when you do your best thinking and protect those times for your most important work.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
