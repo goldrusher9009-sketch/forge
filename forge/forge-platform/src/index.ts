@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v672.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v673.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204557,6 +204557,66 @@ app.post('/api/strategy/sales-playbook', requireAuth, async (req: AuthRequest, r
 app.post('/api/strategy/cx-metrics', requireAuth, async (req: AuthRequest, res) => {
   const { company, experiences, goals } = req.body;
   const prompt = `You are a customer experience measurement and CX analytics expert. Design CX metrics for ${company} measuring ${experiences} toward ${goals}. Cover CX measurement framework, NPS and CSAT and CES metrics, operational vs perception metrics, journey-level measurement, real-time experience monitoring, text analytics and sentiment analysis, CX metric governance and accountability, linking CX to financial outcomes, CX reporting and dashboards, and how to build customer experience measurement systems that give organizations a clear and actionable view of how well they are delivering on their customer experience promise and where the highest-priority opportunities for improvement exist.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-governance', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, data_domains, maturity } = req.body;
+  const prompt = `You are a data governance strategy and data management expert. Design data governance for ${organization} across ${data_domains} at ${maturity}. Cover data governance framework, data ownership and stewardship, data quality standards and measurement, master data management, metadata management and data catalog, data access and security policies, regulatory compliance for data, data lineage and provenance, data governance operating model, and how to build data governance programs that make data more valuable and trustworthy rather than data governance bureaucracies that add overhead and slow data access without improving data quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/talent-management', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, talent_segments, strategy } = req.body;
+  const prompt = `You are a talent management strategy and human capital expert. Design talent management for ${organization} across ${talent_segments} executing ${strategy}. Cover talent management framework, talent strategy and workforce planning, performance management and differentiation, talent identification and acceleration, succession planning and bench depth, retention programs for key talent, talent mobility and career development, talent analytics and insights, talent culture and employee experience, and how to build talent management systems that identify and develop and retain the people who are most critical to organizational success while creating the differentiated opportunities that high-potential employees need to grow.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/financial-modeling', requireAuth, async (req: AuthRequest, res) => {
+  const { company, purpose, assumptions } = req.body;
+  const prompt = `You are a financial modeling strategy and corporate finance expert. Build financial model for ${company} for ${purpose} with ${assumptions}. Cover financial modeling framework, income statement and balance sheet and cash flow integration, driver-based modeling approach, scenario and sensitivity analysis, valuation methodologies DCF and multiples, model audit and error checking, model documentation and communication, revenue and cost modeling best practices, working capital and capex modeling, and how to build financial models that produce reliable outputs that inform decisions by combining rigorous accounting logic with realistic assumptions tested through scenario analysis.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/saas-metrics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, investors } = req.body;
+  const prompt = `You are a SaaS metrics strategy and subscription business analytics expert. Design SaaS metrics for ${company} at ${stage} for ${investors}. Cover SaaS metrics framework, ARR and MRR and expansion revenue, CAC and LTV and payback period, net revenue retention and gross revenue retention, churn rate and cohort analysis, rule of 40 and burn multiple, magic number and sales efficiency, pipeline metrics and sales velocity, product usage and engagement metrics, and how to build SaaS metrics frameworks that give leadership and investors a clear and accurate picture of the business health and growth trajectory and the levers that drive sustainable unit economics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/rebrand', requireAuth, async (req: AuthRequest, res) => {
+  const { company, reason, audiences } = req.body;
+  const prompt = `You are a rebranding strategy and brand transformation expert. Design rebrand strategy for ${company} driven by ${reason} for ${audiences}. Cover rebrand strategy framework, rebrand rationale and business case, brand audit and current perception, new brand positioning and architecture, naming strategy and trademark, visual identity design brief, messaging and copy framework, rebrand rollout and launch plan, employee and internal communication, and how to execute rebrands that successfully evolve how the company is perceived by customers and employees while managing the transition carefully to avoid losing brand equity that has been built over years.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/growth-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, channels, stage } = req.body;
+  const prompt = `You are a growth operations and growth infrastructure expert. Design growth operations for ${company} across ${channels} at ${stage}. Cover growth operations framework, growth stack and technology selection, data pipeline and attribution modeling, experimentation infrastructure and velocity, growth team structure and operating rhythm, growth accounting and metrics, channel operations and automation, customer data platform, growth operations playbooks, and how to build growth operations capabilities that allow growth teams to run experiments faster and analyze results more accurately and scale winning channels more efficiently by investing in the infrastructure and processes that compound growth team productivity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/tech-startup', requireAuth, async (req: AuthRequest, res) => {
+  const { startup, problem, stage } = req.body;
+  const prompt = `You are a technology startup strategy and early-stage company expert. Design startup strategy for ${startup} solving ${problem} at ${stage}. Cover startup strategy framework, problem and market validation, business model design and unit economics, go-to-market and customer acquisition, product-market fit signals and measurement, fundraising strategy and investor narrative, team and talent strategy, competitive positioning and moat, startup metrics and milestones, and how to build technology startups that find genuine product-market fit by staying close to customers and iterating rapidly on the product and business model based on real evidence rather than assumptions about what customers want.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/entrepreneurship', requireAuth, async (req: AuthRequest, res) => {
+  const { entrepreneur, opportunity, resources } = req.body;
+  const prompt = `You are an entrepreneurship strategy and venture creation expert. Advise ${entrepreneur} pursuing ${opportunity} with ${resources}. Cover entrepreneurship framework, opportunity identification and validation, business model design, customer discovery and development, lean startup methodology, venture financing options, bootstrapping and capital efficiency, co-founder and team building, go-to-market execution, and how to approach entrepreneurship with the combination of conviction about the opportunity and humility about your current understanding of customers and the market that characterizes the entrepreneurs who build enduring companies rather than the ones who build and pivot repeatedly without ever finding genuine traction.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/gen-ai-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, use_cases, capabilities } = req.body;
+  const prompt = `You are a generative AI strategy and AI transformation expert. Design generative AI strategy for ${company} with ${use_cases} building ${capabilities}. Cover generative AI framework, AI opportunity landscape and prioritization, build vs buy vs partner for AI, AI infrastructure and platform, data strategy for AI, AI talent and capability building, AI governance and responsible use, AI change management and adoption, AI value measurement, and how to develop generative AI strategies that capture real business value from AI rather than deploying AI because it is new and exciting, by focusing on the use cases where AI can genuinely improve outcomes and investing in the data and infrastructure and change management needed to make AI work.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/corporate-transparency', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stakeholders, topics } = req.body;
+  const prompt = `You are a corporate transparency strategy and stakeholder communication expert. Design corporate transparency for ${company} with ${stakeholders} on ${topics}. Cover transparency framework, materiality of information, disclosure principles and standards, narrative reporting and storytelling, financial and non-financial reporting, proactive vs reactive disclosure, digital transparency and data access, social media and real-time transparency, transparency governance, and how to design transparency programs that build stakeholder trust by communicating genuinely and completely about what matters rather than selective disclosure that highlights the positive while obscuring the negative.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
