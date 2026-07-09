@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v671.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v672.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204497,6 +204497,66 @@ app.post('/api/strategy/venture-building', requireAuth, async (req: AuthRequest,
 app.post('/api/strategy/government-affairs', requireAuth, async (req: AuthRequest, res) => {
   const { company, issues, jurisdictions } = req.body;
   const prompt = `You are a government affairs strategy and public policy expert. Design government affairs for ${company} on ${issues} across ${jurisdictions}. Cover government affairs framework, policy landscape and regulatory environment, stakeholder mapping in government, coalition building and advocacy, legislative and regulatory monitoring, comment and testimony strategy, political risk management, grassroots and grasstops advocacy, government contracting strategy, and how to develop government affairs programs that advance the organization agenda in policy and regulatory environments through legitimate advocacy that demonstrates how the company position aligns with the public interest rather than narrow commercial benefit.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/deep-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, technology, application } = req.body;
+  const prompt = `You are a deep technology strategy and hard tech commercialization expert. Design the deep tech strategy for ${company} with ${technology} for ${application}. Cover deep tech framework, technology readiness and maturity levels, IP strategy and patent portfolio, regulatory pathway for new technologies, long-term capital and patient investor strategy, research and development roadmap, technology licensing vs product company decision, government and defense market entry, commercialization sequencing, and how to build deep tech companies that bridge the gap between breakthrough scientific discoveries and commercially viable products by navigating the long development cycles and capital requirements that characterize hard tech.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/account-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { account, stakeholders, goals } = req.body;
+  const prompt = `You are an enterprise account planning and strategic account management expert. Design account plan for ${account} with ${stakeholders} toward ${goals}. Cover account planning framework, account research and intelligence, stakeholder map and power structure, account strategy and positioning, whitespace and expansion opportunity, relationship development plan, account business reviews, multi-threaded outreach strategy, competitive position within account, and how to develop account plans that systematically grow revenue and deepen relationships with strategic accounts by understanding the account business deeply and aligning your capabilities with their most important priorities.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/biz-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, problem, scope } = req.body;
+  const prompt = `You are a business analysis and requirements definition expert. Define the business analysis for ${organization} addressing ${problem} within ${scope}. Cover business analysis framework, stakeholder identification and elicitation, current state analysis and process mapping, gap analysis and root cause, requirements gathering and documentation, functional and non-functional requirements, use case and user story development, requirements prioritization, solution options analysis, and how to perform business analysis that clearly defines what the organization actually needs to solve the problem rather than jumping to solutions before the problem is fully understood or letting scope creep undermine the project budget and timeline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/program-management', requireAuth, async (req: AuthRequest, res) => {
+  const { program, projects, constraints } = req.body;
+  const prompt = `You are a program management and complex initiative delivery expert. Design program management for ${program} coordinating ${projects} within ${constraints}. Cover program management framework, program governance and steering committee, program roadmap and dependencies, resource allocation across projects, risk and issue management at program level, benefits realization tracking, change management and communications, program reporting and dashboards, program closure and lessons learned, and how to deliver complex programs that achieve their intended business outcomes by maintaining strategic focus and coordinating multiple workstreams while managing the inevitable complexity and ambiguity that large programs encounter.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/innovation-accounting', requireAuth, async (req: AuthRequest, res) => {
+  const { company, portfolio, stage } = req.body;
+  const prompt = `You are an innovation accounting and startup metrics expert. Design innovation accounting for ${company} managing ${portfolio} at ${stage}. Cover innovation accounting framework, leading vs lagging innovation metrics, build-measure-learn cycle measurement, pivot or persevere decision framework, innovation portfolio accounting, innovation investment and resource tracking, innovation stage gate metrics, customer discovery measurement, growth accounting and cohort analysis, and how to measure innovation investments with the right metrics for the stage of development rather than applying mature business metrics to early-stage experiments that kill promising ideas before they have the chance to demonstrate their potential.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/procurement-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, categories, maturity } = req.body;
+  const prompt = `You are a procurement operations and source-to-pay expert. Design procurement operations for ${organization} across ${categories} at ${maturity}. Cover procurement operations framework, purchase-to-pay process design, procurement technology and e-procurement, supplier onboarding and management, contract management and compliance, spend visibility and analytics, procurement controls and governance, procurement shared services, procurement performance metrics, and how to build procurement operations that efficiently execute the sourcing strategies developed by strategic procurement while providing the visibility and control needed to ensure compliance and manage spending within approved policies.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/revenue-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, segments } = req.body;
+  const prompt = `You are a revenue architecture and commercial design expert. Design revenue architecture for ${company} with ${products} across ${segments}. Cover revenue architecture framework, revenue model selection and design, pricing architecture and tiers, packaging and bundling design, customer segmentation and tiering, go-to-market model alignment, revenue motion design, revenue technology stack, revenue forecasting model, and how to design revenue architectures that efficiently match the right products to the right customers through the right channels at the right price to maximize the total revenue the business can generate from its product portfolio.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/personalization', requireAuth, async (req: AuthRequest, res) => {
+  const { company, touchpoints, data } = req.body;
+  const prompt = `You are a personalization strategy and customer experience customization expert. Design personalization for ${company} across ${touchpoints} using ${data}. Cover personalization framework, personalization maturity model, data foundation and customer profile, rules-based vs ML personalization, real-time vs batch personalization, content and offer personalization, product recommendation design, personalization measurement and testing, privacy and consent in personalization, and how to build personalization capabilities that deliver genuinely relevant experiences that customers appreciate rather than creepy or irrelevant personalization that wastes the data advantage through poor targeting.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/sales-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, stage } = req.body;
+  const prompt = `You are a sales playbook and sales methodology expert. Design the sales playbook for ${company} selling to ${segment} at ${stage}. Cover sales playbook framework, ideal customer profile and qualification criteria, discovery methodology and questions, value proposition by persona, demo and proof of concept design, objection handling guides, competitive positioning, proposal and commercial process, negotiation and closing tactics, and how to build sales playbooks that give sellers the knowledge and tools they need to consistently execute the sales process in a way that helps buyers make good decisions while moving opportunities through the pipeline efficiently.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cx-metrics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, experiences, goals } = req.body;
+  const prompt = `You are a customer experience measurement and CX analytics expert. Design CX metrics for ${company} measuring ${experiences} toward ${goals}. Cover CX measurement framework, NPS and CSAT and CES metrics, operational vs perception metrics, journey-level measurement, real-time experience monitoring, text analytics and sentiment analysis, CX metric governance and accountability, linking CX to financial outcomes, CX reporting and dashboards, and how to build customer experience measurement systems that give organizations a clear and actionable view of how well they are delivering on their customer experience promise and where the highest-priority opportunities for improvement exist.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
