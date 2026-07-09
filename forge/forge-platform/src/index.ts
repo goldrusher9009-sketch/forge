@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v692.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v693.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205757,6 +205757,66 @@ app.post('/api/strategy/space-commerce', requireAuth, async (req: AuthRequest, r
 app.post('/api/strategy/ai-ethics', requireAuth, async (req: AuthRequest, res) => {
   const { organization, ai_systems, stakeholders } = req.body;
   const prompt = `You are an AI ethics strategy and responsible AI governance expert. Design AI ethics for ${organization} deploying ${ai_systems} serving ${stakeholders}. Cover AI ethics framework, bias and fairness assessment in AI systems, AI transparency and explainability, privacy-preserving AI and data minimization, AI safety and robustness testing, algorithmic accountability and human oversight, AI impact assessment on affected communities, AI ethics governance and review process, regulatory compliance for AI, and how to build AI ethics programs that produce genuinely responsible AI deployment by integrating ethical considerations into the design and development process rather than reviewing for ethics after systems are built, and by going beyond technical fairness metrics to understand the real-world impacts on the people and communities the AI systems affect.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, offering, segment } = req.body;
+  const prompt = `You are a pricing strategy and monetization expert. Design pricing strategy for ${company} with ${offering} targeting ${segment}. Cover pricing strategy framework, value-based pricing and willingness-to-pay research, pricing architecture and good-better-best, freemium and free trial design, usage-based and consumption pricing, subscription and recurring revenue models, enterprise pricing and negotiation guardrails, pricing psychology and anchoring, price testing and experimentation, and how to design pricing strategies that maximize revenue by capturing the full value created for customers who receive high value while serving price-sensitive segments profitably through differentiated packaging and pricing rather than offering the same price to all customers regardless of the value they receive or their ability and willingness to pay.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-viz', requireAuth, async (req: AuthRequest, res) => {
+  const { dataset, audience, insight } = req.body;
+  const prompt = `You are a data visualization strategy and information design expert. Design data visualization for ${dataset} targeting ${audience} to reveal ${insight}. Cover data visualization framework, chart type selection for different data relationships, visual encoding and perceptual principles, color theory and accessibility in data visualization, dashboard layout and information hierarchy, interactive visualization and filtering, storytelling with data and narrative flow, data-ink ratio and decluttering, tool selection across Tableau, Power BI, and code libraries, and how to design data visualizations that genuinely communicate insight by choosing chart types that accurately represent data relationships, using visual encoding that humans can perceive accurately rather than decoration that looks impressive without aiding comprehension, and telling a clear story about what the data shows rather than presenting data without guiding the audience toward the key insight.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ma-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { acquirer, target, rationale } = req.body;
+  const prompt = `You are an M and A strategy and transaction execution expert. Design M and A strategy for ${acquirer} acquiring ${target} with ${rationale}. Cover M and A strategy framework, strategic rationale and synergy identification, deal screening and target prioritization, due diligence methodology across financial, operational, and strategic, valuation and deal structuring, negotiation strategy and deal terms, financing and capital structure, regulatory approval and antitrust strategy, integration planning and Day 1 readiness, and how to execute M and A transactions that deliver the anticipated strategic value by investing in rigorous due diligence that validates the assumptions underlying the synergy case, planning integration before the deal closes so execution begins immediately after, and maintaining focus on capturing the synergies that justified the acquisition rather than getting distracted by the operational challenges of combining two organizations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cybersecurity', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, threat_profile, maturity } = req.body;
+  const prompt = `You are a cybersecurity strategy and information security expert. Design cybersecurity strategy for ${organization} with ${threat_profile} at ${maturity}. Cover cybersecurity strategy framework, threat landscape and risk assessment, security architecture and zero trust, identity and access management, endpoint and network security, cloud security and CSPM, vulnerability management and patching, security operations and incident response, third-party and supply chain risk, and how to build cybersecurity programs that provide genuine protection against the threats most likely to cause material harm by prioritizing security controls based on risk rather than compliance checklists, investing in detection and response capabilities alongside prevention since determined adversaries will eventually get in, and making security usable enough that employees and developers do not work around controls in ways that create larger vulnerabilities than the controls were designed to prevent.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/agri-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, farmers } = req.body;
+  const prompt = `You are an agricultural technology strategy and precision agriculture expert. Design AgriTech strategy for ${company} with ${product} serving ${farmers}. Cover AgriTech strategy framework, precision agriculture and variable rate application, agricultural data management and farm management software, remote sensing and drone applications in agriculture, soil health and crop monitoring, agricultural IoT and connected equipment, supply chain traceability and food safety technology, climate-smart agriculture and carbon markets, distribution through cooperatives and ag dealers, and how to build agricultural technology businesses that achieve genuine adoption by farmers by solving real productivity and profitability problems in ways that are compatible with how farmers actually work, demonstrating ROI in farmer terms, and building distribution relationships through the trusted advisors and dealers that farmers rely on rather than trying to sell directly to an atomized customer base with limited digital adoption.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/public-relations', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, objectives, audiences } = req.body;
+  const prompt = `You are a public relations strategy and media relations expert. Design public relations for ${organization} pursuing ${objectives} with ${audiences}. Cover public relations framework, stakeholder mapping and audience analysis, narrative and message platform development, media relations and journalist engagement, thought leadership and executive visibility, event and speaking strategy, crisis communications preparedness, measurement and reputation tracking, social media and digital PR, and how to build public relations programs that build genuine organizational reputation and stakeholder trust by earning media coverage through newsworthy stories and authentic expert perspectives rather than press release broadcasting that generates coverage without changing perceptions, and by maintaining consistent engagement with journalists and stakeholders rather than only activating PR during launches and crises.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/web-analytics', requireAuth, async (req: AuthRequest, res) => {
+  const { website, goals, tools } = req.body;
+  const prompt = `You are a web analytics strategy and digital measurement expert. Design web analytics for ${website} with ${goals} using ${tools}. Cover web analytics framework, measurement planning and KPI definition, tagging strategy and implementation, conversion funnel analysis, user behavior and session analysis, acquisition channel attribution, A/B testing and experimentation, audience segmentation and cohort analysis, reporting and dashboard design, and how to build web analytics programs that generate insights that actually improve website performance by defining success metrics that connect to business outcomes before collecting data, implementing tracking that captures the user behaviors that matter, and building a culture of data-informed decision-making where hypotheses are tested and learnings are acted upon rather than generating analytics reports that are reviewed in meetings without driving the changes that would improve the metrics being measured.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/legal-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { firm, practice, clients } = req.body;
+  const prompt = `You are a legal technology strategy and law firm innovation expert. Design legal technology for ${firm} in ${practice} serving ${clients}. Cover legal technology framework, document management and matter management systems, contract lifecycle management and AI contract review, e-discovery and litigation support technology, legal research and knowledge management AI, billing and time tracking optimization, client portal and collaboration tools, process automation and workflow tools, legal analytics and matter pricing, and how to implement legal technology that genuinely improves lawyer productivity and client service by selecting tools that fit how lawyers actually work, investing in the change management and training that drives adoption, and measuring success in terms of the time savings and quality improvements that technology produces rather than the number of technology platforms deployed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/environmental', requireAuth, async (req: AuthRequest, res) => {
+  const { company, operations, targets } = req.body;
+  const prompt = `You are an environmental strategy and sustainability management expert. Design environmental strategy for ${company} with ${operations} pursuing ${targets}. Cover environmental strategy framework, greenhouse gas inventory and scope 1 2 3 emissions, science-based targets and net zero pathway, renewable energy procurement and power purchase agreements, circular economy and waste reduction, water stewardship and management, biodiversity and land use impacts, environmental management systems and ISO 14001, regulatory compliance and environmental risk, and how to build environmental strategies that deliver genuine sustainability progress rather than greenwashing by setting targets grounded in science, investing in the operational changes and capital expenditure that actually reduce emissions and environmental impact, and reporting transparently on progress including where targets are being missed and why, rather than communicating only the sustainability achievements that make the organization look good.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/venture-capital', requireAuth, async (req: AuthRequest, res) => {
+  const { fund, thesis, stage } = req.body;
+  const prompt = `You are a venture capital strategy and early stage investment expert. Design venture capital for ${fund} with ${thesis} investing at ${stage}. Cover venture capital framework, fund strategy and portfolio construction, deal sourcing and network development, term sheet and deal structuring, founder assessment and team evaluation, market sizing and venture scale analysis, board management and portfolio company support, follow-on investment and reserve management, fund economics and LP reporting, and how to build venture capital investment practices that generate strong returns by developing genuine pattern recognition about what makes companies succeed in specific sectors, building the founder network that generates access to the best deals before they are widely marketed, and adding value to portfolio companies through the network connections, recruiting help, and strategic guidance that justify the board seat and justify founders choosing one investor over another when the terms are similar.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
