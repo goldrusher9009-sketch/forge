@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v673.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v674.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204617,6 +204617,66 @@ app.post('/api/strategy/gen-ai-strategy', requireAuth, async (req: AuthRequest, 
 app.post('/api/strategy/corporate-transparency', requireAuth, async (req: AuthRequest, res) => {
   const { company, stakeholders, topics } = req.body;
   const prompt = `You are a corporate transparency strategy and stakeholder communication expert. Design corporate transparency for ${company} with ${stakeholders} on ${topics}. Cover transparency framework, materiality of information, disclosure principles and standards, narrative reporting and storytelling, financial and non-financial reporting, proactive vs reactive disclosure, digital transparency and data access, social media and real-time transparency, transparency governance, and how to design transparency programs that build stakeholder trust by communicating genuinely and completely about what matters rather than selective disclosure that highlights the positive while obscuring the negative.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/brand-extension', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, extension, market } = req.body;
+  const prompt = `You are a brand extension strategy and portfolio growth expert. Design brand extension for ${brand} launching ${extension} in ${market}. Cover brand extension framework, brand stretch assessment and fit, parent brand equity transfer, new category entry strategy, cannibalization risk analysis, brand architecture implications, launch positioning and differentiation, retail and distribution strategy, extension measurement and success criteria, and how to design brand extensions that successfully transfer parent brand equity to new categories while remaining close enough to the core brand that the extension makes sense to consumers and far enough to access genuine incremental market opportunity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/social-impact', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, issue, approach } = req.body;
+  const prompt = `You are a social impact strategy and systems change expert. Design social impact for ${organization} addressing ${issue} through ${approach}. Cover social impact framework, theory of change design, impact measurement and evaluation, systems thinking and leverage points, stakeholder ecosystem design, advocacy and policy change, collective impact and collaboration, scaling impact models, impact communication and reporting, and how to design social impact strategies that create genuine and lasting change by addressing root causes rather than symptoms and by building the coalitions and systems changes needed for impact to persist beyond any single program or intervention.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/clinical-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, trials, goals } = req.body;
+  const prompt = `You are a clinical operations strategy and clinical development expert. Design clinical operations for ${organization} running ${trials} toward ${goals}. Cover clinical operations framework, clinical trial design and protocol, site selection and activation, patient recruitment and retention, data management and quality, regulatory submissions and compliance, CRO selection and management, clinical supply chain, risk-based monitoring, and how to design clinical operations that efficiently generate the evidence needed to support regulatory approval while maintaining the data quality and patient safety standards that regulators require.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-access', requireAuth, async (req: AuthRequest, res) => {
+  const { product, markets, payers } = req.body;
+  const prompt = `You are a market access strategy and health technology assessment expert. Design market access for ${product} in ${markets} with ${payers}. Cover market access framework, health technology assessment process, value dossier development, comparative effectiveness evidence, budget impact modeling, payer segmentation and negotiation, pricing strategy for reimbursement, outcomes-based contracting, patient access programs, and how to develop market access strategies that demonstrate the value of new healthcare products to payers in terms they find compelling by generating the evidence on outcomes and cost-effectiveness that drives formulary access and reimbursement decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/demand-sensing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, channels } = req.body;
+  const prompt = `You are a demand sensing and supply chain intelligence expert. Design demand sensing for ${company} tracking ${products} across ${channels}. Cover demand sensing framework, real-time demand signal capture, sell-through and point-of-sale data, inventory position monitoring, demand signal processing and cleansing, short-cycle forecasting, demand sensing technology and AI, integration with supply planning, demand sensing governance, and how to build demand sensing capabilities that allow companies to see actual demand signals in near real-time rather than relying on lagging order data that reflects what distributors ordered weeks ago rather than what consumers are actually buying today.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/green-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, operations, targets } = req.body;
+  const prompt = `You are a green operations strategy and environmental sustainability expert. Design green operations for ${company} in ${operations} toward ${targets}. Cover green operations framework, carbon footprint measurement and reduction, energy efficiency and renewable energy, sustainable supply chain, circular economy and waste reduction, green logistics and transportation, water and resource management, environmental compliance and reporting, sustainability innovation and green products, and how to design green operations strategies that reduce environmental impact while improving operational efficiency and reducing costs, making the business case that sustainability and business performance are complementary rather than in conflict.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/tax-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, structure, jurisdictions } = req.body;
+  const prompt = `You are a corporate tax strategy and tax planning expert. Design tax strategy for ${company} with ${structure} across ${jurisdictions}. Cover corporate tax strategy framework, effective tax rate management, international tax planning and structure, R and D tax credits and incentives, tax risk management and compliance, uncertain tax positions and reserves, deferred tax accounting, tax controversy and dispute resolution, tax governance and reporting, and how to develop tax strategies that minimize the effective tax rate through legitimate tax planning while managing tax risk and maintaining the reputational standards that all stakeholders increasingly expect on tax behavior.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/distribution-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, regions } = req.body;
+  const prompt = `You are a physical distribution design and logistics network expert. Design distribution network for ${company} moving ${products} across ${regions}. Cover distribution network design framework, network modeling and optimization, warehouse location and design, transportation mode selection, last-mile delivery strategy, inventory positioning and safety stock, distribution center operations, cross-docking and flow-through, distribution technology and automation, and how to design distribution networks that deliver the customer service levels the business requires at the lowest total cost by optimizing the entire network rather than individual components in isolation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/marketing-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, volume, channels } = req.body;
+  const prompt = `You are a marketing operations and marketing technology expert. Design marketing operations for ${organization} at ${volume} across ${channels}. Cover marketing operations framework, marketing technology stack and martech selection, campaign operations and workflow, marketing data and analytics infrastructure, lead management and routing, marketing automation and nurture, marketing attribution and ROI measurement, marketing compliance and governance, marketing operations team structure, and how to build marketing operations capabilities that allow marketing teams to execute at scale with consistency and speed while providing the measurement and accountability that justifies marketing investment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/brand-voice', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, audience, channels } = req.body;
+  const prompt = `You are a brand voice and content strategy expert. Design brand voice for ${brand} speaking to ${audience} across ${channels}. Cover brand voice framework, brand personality and character, tone spectrum and situational adaptation, language and vocabulary choices, writing style and grammar approach, visual language alignment, channel-specific voice adaptation, voice governance and training, voice measurement and consistency, and how to develop brand voices that are distinctive and consistent across every touchpoint because they are rooted in genuine brand character rather than style guide rules that are difficult to apply consistently without the underlying understanding of who the brand is and what it stands for.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
