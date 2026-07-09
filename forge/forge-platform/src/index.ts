@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v603.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v604.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200417,6 +200417,66 @@ app.post('/api/strategy/organic-growth', requireAuth, async (req: AuthRequest, r
 app.post('/api/product/mvp-design', requireAuth, async (req: AuthRequest, res) => {
   const { product, customer, hypothesis } = req.body;
   const prompt = `You are an MVP design and lean product development expert. Design the MVP for ${product} serving ${customer} to test ${hypothesis}. Cover the MVP philosophy and principles, the riskiest assumption identification, the MVP scope decision framework, the build vs. buy vs. mock decision, the MVP success criteria and metrics, the learning velocity optimization, the MVP feedback collection design, the pivot trigger definition, the MVP to v1 evolution path, and how to avoid the common MVP traps of building too much or too little.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/field-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, region, pipeline } = req.body;
+  const prompt = `You are a field marketing and regional demand generation expert. Build the field marketing plan for ${company} in ${region} to generate ${pipeline} pipeline. Cover the field marketing role and mandate, the regional event strategy, the executive and roundtable program design, the partner co-marketing design, the trade show and conference strategy, the local PR and thought leadership, the field marketing and sales alignment, the field marketing budget allocation, the field marketing measurement and attribution, and how to build a field marketing function that is a trusted pipeline generator.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-team', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, team } = req.body;
+  const prompt = `You are a pricing organization design and capability building expert. Design the pricing function for ${company} at ${stage} stage for ${team} team size. Cover the pricing function models and organizational placement, the pricing roles and responsibilities, the pricing capability maturity model, the pricing analyst and strategist skills, the pricing tools and technology, the pricing and sales collaboration model, the pricing and finance alignment, the pricing governance and decision rights, the pricing performance measurement, and how to build a world-class pricing function.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/saas-unit-economics', requireAuth, async (req: AuthRequest, res) => {
+  const { product, arr, cohort } = req.body;
+  const prompt = `You are a SaaS unit economics and financial modeling expert. Model the unit economics for ${product} at ${arr} ARR for ${cohort} cohort. Cover the SaaS unit economics framework, the CAC and payback period calculation, the LTV calculation methodology, the gross margin by customer segment, the contribution margin by cohort, the magic number and efficiency score, the burn multiple and capital efficiency, the net revenue retention and its impact on unit economics, the unit economics improvement roadmap, and how to use unit economics to make better investment decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/voice-of-customer', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, method } = req.body;
+  const prompt = `You are a voice of customer and customer insight expert. Build the VoC program for ${company} targeting ${segment} using ${method} methods. Cover the VoC program design and governance, the customer feedback collection strategy, the NPS and CSAT program design, the customer interview and ethnography program, the win-loss interview process, the community and advisory board design, the VoC data integration and analysis, the insight-to-action loop design, the VoC ROI measurement, and how to build an organization that genuinely listens to customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/tech-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { org, horizon, constraint } = req.body;
+  const prompt = `You are a technology strategy and enterprise architecture expert. Build the technology strategy for ${org} over ${horizon} horizon with ${constraint} as the primary constraint. Cover the technology vision and guiding principles, the technology portfolio assessment, the build vs. buy vs. partner framework, the platform and infrastructure strategy, the data and AI strategy, the technology debt remediation program, the technology talent and capability strategy, the vendor and ecosystem management, the technology governance and architecture review, and how to align technology investment to business strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/press-release', requireAuth, async (req: AuthRequest, res) => {
+  const { company, news, audience } = req.body;
+  const prompt = `You are a press release writing and media relations expert. Write the press release strategy for ${company} announcing ${news} to ${audience}. Cover the press release structure and format, the headline writing for maximum pickup, the lead paragraph design, the quote strategy and attribution, the supporting evidence and data selection, the boilerplate writing, the media distribution strategy, the embargo and exclusivity decisions, the follow-up pitch strategy, and how to turn a press release into a full media campaign.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/sales-compensation', requireAuth, async (req: AuthRequest, res) => {
+  const { team, model, goal } = req.body;
+  const prompt = `You are a sales compensation design and incentive strategy expert. Design the sales compensation plan for ${team} using ${model} model to achieve ${goal}. Cover the sales compensation philosophy, the base and variable ratio design, the quota setting methodology, the accelerator and decelerator design, the SPIFs and short-term incentives, the team and individual comp balance, the sales comp for different roles, the comp plan rollout and communication, the comp plan governance, and how to design sales compensation that motivates the right behaviors and drives the right outcomes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/management', requireAuth, async (req: AuthRequest, res) => {
+  const { pm, product, challenge } = req.body;
+  const prompt = `You are a product management craft and career expert. Coach ${pm} managing ${product} through ${challenge}. Cover the product manager skills and competencies, the product discovery vs. delivery balance, the stakeholder management and influence, the prioritization frameworks, the product roadmap communication, the working with engineering and design, the data-driven product decisions, the customer empathy and research integration, the product strategy development, and how to grow from junior PM to CPO.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/category-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, category, poi } = req.body;
+  const prompt = `You are a category design and market leadership strategy expert. Design the category for ${company} creating ${category} category with ${poi} as the point of impact. Cover the category design philosophy, the category maturity assessment, the category name and framing, the category creation vs. category entry decision, the category evangelist strategy, the category ecosystem design, the lightning strike strategy, the category king positioning, the category metrics and market share, and how to own a category and make competitors irrelevant.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/ltv-expansion', requireAuth, async (req: AuthRequest, res) => {
+  const { customer, product, trigger } = req.body;
+  const prompt = `You are a customer expansion revenue and upsell strategy expert. Design the LTV expansion strategy for ${customer} segment using ${product} expansion across ${trigger} triggers. Cover the expansion revenue framework, the land and expand motion design, the expansion trigger identification, the upsell and cross-sell playbook, the usage-based expansion design, the customer success to expansion handoff, the expansion deal qualification, the executive sponsor expansion strategy, the expansion pricing and packaging, and how to build a customer success organization that reliably grows revenue from existing customers.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
