@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v553.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v554.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -197417,6 +197417,66 @@ app.post('/api/product/price-test', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/product/xfn-roadmap', requireAuth, async (req: AuthRequest, res) => {
   const { initiative, teams, timeline } = req.body;
   const prompt = `You are a product roadmap and cross-functional alignment expert. Create a cross-functional roadmap for initiative: ${initiative} involving teams: ${teams} with ${timeline} timeline. Define workstreams, dependencies, milestones, RACI, risk flags, escalation paths, and the communication cadence to keep all teams synchronized.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/retention', requireAuth, async (req: AuthRequest, res) => {
+  const { product, churnReasons, segments } = req.body;
+  const prompt = `You are a product retention expert. Build a retention playbook for ${product} addressing churn reasons: ${churnReasons} across segments: ${segments}. Cover early warning signals, intervention triggers, save plays by segment, in-product retention mechanics, CS escalation paths, and win-back programs for churned users.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/eng/api-principles', requireAuth, async (req: AuthRequest, res) => {
+  const { apiType, consumers, scale } = req.body;
+  const prompt = `You are an API architect. Write comprehensive API design principles for a ${apiType} API serving ${consumers} at ${scale} scale. Cover URL structure, HTTP methods, request/response formats, error handling, versioning, authentication, rate limiting, pagination, webhooks, and backward compatibility strategies.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/discovery', requireAuth, async (req: AuthRequest, res) => {
+  const { product, targetBuyer, painPoints } = req.body;
+  const prompt = `You are a consultative selling expert. Create a sales discovery call guide for ${product} targeting ${targetBuyer} with known pain points: ${painPoints}. Cover opening frameworks, situational questions, implication questions, pain mapping, budget discovery, decision process mapping, and how to transition from discovery to demo.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/eng/data-arch', requireAuth, async (req: AuthRequest, res) => {
+  const { useCase, dataVolume, latency } = req.body;
+  const prompt = `You are a data engineering architect. Design a data engineering architecture for ${useCase} handling ${dataVolume} data with ${latency} latency requirements. Cover ingestion patterns, streaming vs batch processing, storage layers, transformation frameworks, data quality monitoring, schema evolution, and cost optimization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/ip-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, innovations, competitors } = req.body;
+  const prompt = `You are an IP strategy expert. Build an intellectual property protection strategy for ${product} with innovations: ${innovations} against competitors: ${competitors}. Cover patent landscape analysis, trade secret protection, copyright registration, trademark strategy, open source licensing decisions, and defensive publication considerations. Consult a lawyer before filing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/pricing-experiments', requireAuth, async (req: AuthRequest, res) => {
+  const { currentModel, hypothesis, metrics } = req.body;
+  const prompt = `You are a pricing strategy and experimentation expert. Build a pricing experiment playbook for ${currentModel} model testing hypothesis: ${hypothesis} measuring ${metrics}. Cover experiment design, customer segment selection, statistical power, guardrail metrics, analysis cadence, and how to make the go/no-go decision with confidence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/thought-leadership', requireAuth, async (req: AuthRequest, res) => {
+  const { expert, topic, platform } = req.body;
+  const prompt = `You are a thought leadership and personal brand expert. Build a thought leadership strategy for ${expert} covering ${topic} on ${platform}. Define unique point of view, content pillars, content cadence, distribution strategy, community engagement, speaking opportunities, book/podcast opportunities, and metrics for measuring authority growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/eng/production', requireAuth, async (req: AuthRequest, res) => {
+  const { service, slos, oncallTeam } = req.body;
+  const prompt = `You are a production engineering expert. Create a production engineering runbook for ${service} with SLOs: ${slos} and ${oncallTeam} on-call team. Cover incident response procedures, runbook for common failure modes, escalation matrix, post-incident review process, error budget policy, and reliability improvement prioritization framework.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/agency-partner', requireAuth, async (req: AuthRequest, res) => {
+  const { product, agencyTypes, market } = req.body;
+  const prompt = `You are an agency partnership expert. Design an agency partner program for ${product} targeting ${agencyTypes} in ${market}. Cover partner tiers, referral commissions, white-label options, co-selling motions, agency training and certification, deal registration, and how to make your product the preferred recommendation for agency clients.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/ops-flywheel', requireAuth, async (req: AuthRequest, res) => {
+  const { company, currentProcess, bottleneck } = req.body;
+  const prompt = `You are a product operations expert. Design a product ops flywheel for ${company} improving current process: ${currentProcess} to eliminate bottleneck: ${bottleneck}. Map the current state, identify leverage points, design the flywheel mechanism, define operating cadences, and build the measurement system to prove the flywheel is accelerating.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
