@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v589.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v590.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199577,6 +199577,66 @@ app.post('/api/strategy/api-economics', requireAuth, async (req: AuthRequest, re
 app.post('/api/hr/learning-design', requireAuth, async (req: AuthRequest, res) => {
   const { topic, learners, outcome } = req.body;
   const prompt = `You are a learning experience design and instructional design expert. Design the learning experience for ${topic} for ${learners} to achieve ${outcome}. Cover the learning objectives design using Bloom taxonomy, the learning needs analysis methodology, the learning modality selection, the spaced repetition and retrieval practice principles, the scenario-based learning design, the assessment design aligned to objectives, the social and peer learning integration, the microlearning and just-in-time learning design, the learning technology selection, and how to measure learning transfer from training to on-the-job performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/zero-trust', requireAuth, async (req: AuthRequest, res) => {
+  const { org, assets, users } = req.body;
+  const prompt = `You are a zero trust security architecture expert. Design the zero trust architecture for ${org} protecting ${assets} for ${users} user types. Cover the zero trust principles, the identity and access management foundation, the device trust and endpoint security design, the network microsegmentation strategy, the application access control design, the data classification and protection layer, the continuous verification model, the zero trust maturity model progression, the implementation roadmap and quick wins, and how to measure zero trust security posture improvement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/event-driven', requireAuth, async (req: AuthRequest, res) => {
+  const { system, events, scale } = req.body;
+  const prompt = `You are an event-driven architecture and distributed systems expert. Design the event-driven system for ${system} handling ${events} event types at ${scale}. Cover the event-driven vs. request-response tradeoffs, the event schema design and evolution strategy, the message broker selection, the event sourcing vs. traditional state patterns, the CQRS pattern application, the saga pattern for distributed transactions, the event replay and auditing design, the dead letter queue and error handling strategy, the consumer group design for event processing, and the observability and debugging approach for event-driven systems.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/account-expansion', requireAuth, async (req: AuthRequest, res) => {
+  const { account, product, contact } = req.body;
+  const prompt = `You are a customer success and account expansion strategy expert. Build the account expansion playbook for ${account} type accounts using ${product} expansion levers through ${contact} key contacts. Cover the expansion signal identification, the land-and-expand strategy design, the multi-threading within accounts, the executive sponsor development program, the business review cadence design, the upsell and cross-sell motion design, the renewal and expansion conversation framework, the success milestone and ROI documentation strategy, the competitive expansion defense playbook, and how to measure and forecast expansion revenue.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/data-platform', requireAuth, async (req: AuthRequest, res) => {
+  const { org, sources, consumers } = req.body;
+  const prompt = `You are a modern data platform architecture expert. Design the data platform for ${org} ingesting from ${sources} to serve ${consumers}. Cover the data platform architecture patterns, the data ingestion layer design, the data lake vs. data warehouse vs. lakehouse tradeoffs, the data transformation and ELT pipeline design, the data catalog and metadata management, the data quality and observability framework, the semantic layer design for self-service analytics, the data access control and governance model, the cost optimization strategy for cloud data platforms, and the data platform roadmap from MVP to full capability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/incentives', requireAuth, async (req: AuthRequest, res) => {
+  const { team, behavior, budget } = req.body;
+  const prompt = `You are a behavioral economics and incentive design expert. Design the incentive system for ${team} to drive ${behavior} with ${budget} budget. Cover the incentive design principles from behavioral economics, the intrinsic vs. extrinsic motivation balance, the goal-setting design for incentive alignment, the measurement and attribution design, the incentive timing and frequency optimization, the team vs. individual incentive balance, the recognition and non-monetary incentive program, the unintended consequences prevention framework, the incentive system fairness and transparency design, and how to iterate on incentive design based on behavioral data.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/cx-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, moment } = req.body;
+  const prompt = `You are a customer experience strategy and design expert. Build the CX strategy for ${company} for ${segment} customer segment focusing on ${moment} moment of truth. Cover the CX vision and principles, the customer journey audit methodology, the moment of truth prioritization framework, the service design methodology, the voice of customer program design, the CX metric hierarchy, the CX governance model, the CX technology stack, the employee experience connection to customer experience, and how to build a customer-centric culture throughout the organization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/tech-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, horizon, constraint } = req.body;
+  const prompt = `You are a technology strategy and enterprise architecture expert. Build the technology strategy for ${company} over ${horizon} horizon with ${constraint} constraint. Cover the technology vision and principles, the current state architecture assessment, the target state architecture design, the technology radar for emerging capabilities, the build vs. buy vs. partner decision framework, the cloud strategy and migration roadmap, the data and AI strategy integration, the technology governance model, the engineering excellence program, and the technology investment prioritization framework.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-creation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, category, buyers } = req.body;
+  const prompt = `You are a category creation and market design strategy expert. Build the market creation strategy for ${company} creating the ${category} category for ${buyers} buyers. Cover the category design vs. category creation distinction, the problem framing strategy, the category narrative development, the category ecosystem building, the analyst and media relations strategy for category creation, the customer success story strategy for category proof, the event and community strategy for category gathering, the competitive response to category creation, and how to measure category creation success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/flywheel', requireAuth, async (req: AuthRequest, res) => {
+  const { company, loop, accelerant } = req.body;
+  const prompt = `You are a business flywheel design and compounding growth strategy expert. Design the growth flywheel for ${company} with ${loop} as the core loop and ${accelerant} as the primary accelerant. Cover the flywheel vs. funnel mental model distinction, the core loop identification methodology, the flywheel component design, the friction reduction strategy at each stage, the network effect integration into the flywheel, the data flywheel design, the ecosystem flywheel design, the financial flywheel reinforcement, how to identify and remove the flywheel bottleneck, and how to measure flywheel momentum over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/meta/forge-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { tool, problem, users } = req.body;
+  const prompt = `You are a product and platform strategy expert specializing in AI-powered tool platforms. Design the strategy for building ${tool} tool in Forge to solve ${problem} for ${users} users. Cover the tool design principles for AI-powered tools, the prompt engineering strategy for expert-level output, the user input design to minimize friction, the output format optimization, the tool differentiation strategy, the use case mapping and persona design, the monetization approach for individual tools, the viral and sharing mechanics for tool outputs, how to measure tool adoption and value delivery, and the long-term platform strategy for building a library of expert-grade AI tools that make professionals dramatically more productive.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
