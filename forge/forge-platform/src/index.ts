@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v677.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v678.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204857,6 +204857,66 @@ app.post('/api/strategy/regional-growth', requireAuth, async (req: AuthRequest, 
 app.post('/api/strategy/engagement-design', requireAuth, async (req: AuthRequest, res) => {
   const { product, users, metrics } = req.body;
   const prompt = `You are a product engagement design and user retention strategy expert. Design engagement for ${product} with ${users} measured by ${metrics}. Cover engagement design framework, core loop design and optimization, onboarding and activation funnel, feature adoption and discovery, notification and re-engagement strategy, content and social engagement mechanics, engagement segmentation and personalization, engagement measurement and health scoring, ethical engagement design principles, and how to design product engagement systems that build genuine habit and loyalty by delivering real value to users on a regular basis rather than relying on compulsive or addictive mechanics that generate surface engagement metrics while undermining the trust and wellbeing that determine whether users continue to engage over the long term.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/brand-storytelling', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, story, audience } = req.body;
+  const prompt = `You are a brand storytelling strategy and narrative design expert. Design brand storytelling for ${brand} around ${story} for ${audience}. Cover brand storytelling framework, brand origin and founding story, hero and transformation narrative, customer as hero story structure, values and mission in storytelling, conflict and resolution in brand narrative, multimedia storytelling channels, employee and culture stories, impact and purpose stories, and how to develop brand storytelling that creates genuine emotional connection with audiences by sharing authentic human experiences that illuminate the brand values and purpose in ways that are more memorable and persuasive than any rational argument or feature list ever could be.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/portfolio-optimization', requireAuth, async (req: AuthRequest, res) => {
+  const { company, portfolio, criteria } = req.body;
+  const prompt = `You are a business portfolio optimization and strategic portfolio management expert. Optimize portfolio for ${company} with ${portfolio} against ${criteria}. Cover portfolio optimization framework, portfolio assessment and performance analysis, portfolio strategy and categorization, growth and profitability matrix analysis, resource allocation optimization, portfolio rebalancing and divestiture, adjacency and expansion assessment, portfolio risk management, capital allocation framework, and how to manage the business portfolio to maximize overall performance by actively allocating resources to the highest-value opportunities, divesting businesses that no longer fit the strategy, and making bold choices about where to compete rather than trying to maintain every business at the expense of genuine focus and leadership in the most attractive positions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/quality-management', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, products, standards } = req.body;
+  const prompt = `You are a quality management strategy and operational excellence expert. Design quality management for ${organization} with ${products} to ${standards}. Cover quality management framework, quality culture and leadership commitment, quality planning and control, statistical process control, design for quality, supplier quality management, quality systems and certification, defect prevention and root cause analysis, continuous improvement and lean quality, and how to build quality management systems that prevent defects and failures from occurring in the first place by embedding quality into the design and process rather than relying on inspection and correction after the fact, while building a culture where every employee understands that quality is their responsibility.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/revenue-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, revenue, teams } = req.body;
+  const prompt = `You are a revenue operations strategy and GTM alignment expert. Design revenue operations for ${company} with ${revenue} across ${teams}. Cover revenue operations framework, sales and marketing and CS alignment, revenue technology stack and data infrastructure, pipeline management and forecasting, lead and account management process, revenue analytics and reporting, compensation and incentive alignment, customer journey orchestration, revenue operations governance, and how to build revenue operations capabilities that break down the silos between sales, marketing, and customer success by creating shared processes, data, and incentives that optimize the entire customer journey from first touch to expansion rather than optimizing each function independently.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/transformation-mgmt', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, transformation, timeline } = req.body;
+  const prompt = `You are a business transformation management and change leadership expert. Design transformation management for ${organization} pursuing ${transformation} over ${timeline}. Cover transformation management framework, transformation vision and case for change, transformation program design and governance, change management and stakeholder engagement, transformation office and PMO, initiative prioritization and sequencing, capability building and training, resistance management and cultural change, transformation measurement and tracking, and how to lead transformations that achieve lasting change by combining strong top-down leadership with genuine bottom-up engagement, managing the human side of change with as much rigor as the technical and process side, and maintaining momentum over the multi-year journey that real transformation requires.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cx-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, customers, touchpoints } = req.body;
+  const prompt = `You are a customer experience strategy and CX design expert. Design CX strategy for ${company} serving ${customers} across ${touchpoints}. Cover CX strategy framework, customer journey mapping, voice of customer and feedback systems, CX metrics and NPS management, experience design and service design, omnichannel experience integration, CX culture and employee experience, CX technology and personalization, CX governance and accountability, and how to design customer experience strategies that create distinctive experiences at the moments that matter most to customers by understanding what they value, where the current experience falls short, and how to build the organizational capabilities needed to deliver better experiences consistently across every touchpoint.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/saas-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, scale } = req.body;
+  const prompt = `You are a SaaS operations strategy and cloud service operations expert. Design SaaS operations for ${company} running ${product} at ${scale}. Cover SaaS operations framework, multi-tenant architecture and isolation, reliability engineering and SLAs, incident management and on-call, deployment and release management, infrastructure scaling and cost management, customer success operations, support operations, security and compliance operations, and how to build SaaS operations capabilities that deliver the reliability and performance customers expect from cloud software while managing the operational complexity of serving many customers from shared infrastructure in a way that is both cost-effective and secure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/price-elasticity', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, segments } = req.body;
+  const prompt = `You are a price elasticity analysis and pricing science expert. Analyze price elasticity for ${product} in ${market} across ${segments}. Cover price elasticity framework, demand curve estimation methods, own-price and cross-price elasticity, elasticity variation by segment and channel, conjoint analysis and willingness to pay, price sensitivity measurement, dynamic pricing and real-time optimization, elasticity-informed pricing strategy, testing and validation approaches, and how to use price elasticity analysis to inform pricing decisions by understanding how customers in different segments actually respond to price changes rather than relying on intuition or competitor-following, and using that understanding to capture more value where willingness to pay is high while protecting volume where price sensitivity is high.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/growth-acceleration', requireAuth, async (req: AuthRequest, res) => {
+  const { company, bottleneck, resources } = req.body;
+  const prompt = `You are a growth acceleration strategy and business scaling expert. Design growth acceleration for ${company} removing ${bottleneck} with ${resources}. Cover growth acceleration framework, growth constraint identification, acceleration lever prioritization, quick win identification and sequencing, capability acceleration programs, go-to-market acceleration, product velocity improvement, organizational pace and agility, growth investment ROI optimization, and how to accelerate growth by systematically identifying and removing the constraints that are limiting the rate at which the business can grow, rather than pursuing generic growth initiatives that consume resources without addressing the specific bottlenecks that are holding the business back.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/investor-thesis', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, investors } = req.body;
+  const prompt = `You are an investor thesis development and fundraising strategy expert. Design investor thesis for ${company} at ${stage} targeting ${investors}. Cover investor thesis framework, market opportunity articulation, competitive differentiation and moat, business model and unit economics, growth trajectory and milestones, team and execution capability, risk factors and mitigation, comparable transactions and valuation, use of funds and return profile, and how to develop investor theses that compel the specific investors being targeted by articulating the investment opportunity in terms of the market size, competitive dynamics, and business model characteristics that match those investors criteria, while being honest about the risks and the assumptions underlying the financial projections.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
