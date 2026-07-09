@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v694.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v695.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205877,6 +205877,66 @@ app.post('/api/strategy/community-building', requireAuth, async (req: AuthReques
 app.post('/api/strategy/automation', requireAuth, async (req: AuthRequest, res) => {
   const { company, processes, workforce } = req.body;
   const prompt = `You are an automation strategy and robotic process automation expert. Design automation strategy for ${company} automating ${processes} with ${workforce}. Cover automation strategy framework, process assessment and automation potential, RPA versus intelligent automation versus AI, build versus buy versus hyperscaler decision, automation ROI and business case development, process redesign before automation, change management and workforce transition, center of excellence and governance model, automation maintenance and lifecycle, and how to build automation strategies that deliver genuine productivity gains while managing the workforce impact responsibly by starting with the honest business case for automation including maintenance costs and exception handling, redesigning processes to be automation-friendly before automating, and investing in the workforce reskilling and transition support that allows employees whose work is automated to move to higher-value activities rather than simply using automation as a euphemism for workforce reduction.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/talent-acquisition', requireAuth, async (req: AuthRequest, res) => {
+  const { company, roles, market } = req.body;
+  const prompt = `You are a talent acquisition strategy and recruiting excellence expert. Design talent acquisition for ${company} hiring ${roles} in ${market}. Cover talent acquisition framework, employer brand and EVP development, sourcing strategy and talent pipeline, recruiter specialization and structure, interview process design and candidate experience, assessment and selection methodology, offer strategy and closing, recruiter performance metrics, diversity sourcing and inclusive hiring, and how to build talent acquisition functions that consistently attract and hire high-quality candidates by building genuine employer brand recognition in the talent markets that matter, reducing time-to-hire through process efficiency, and creating candidate experiences that leave every applicant with a positive impression of the company regardless of outcome since rejected candidates are often future customers or referrals.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/growth-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, channels } = req.body;
+  const prompt = `You are a growth marketing strategy and demand generation expert. Design growth marketing for ${company} at ${stage} through ${channels}. Cover growth marketing framework, acquisition funnel and channel strategy, content marketing and SEO, paid acquisition and performance marketing, email and lifecycle marketing, conversion rate optimization, referral and word-of-mouth programs, product-led growth mechanics, growth analytics and attribution, and how to build growth marketing engines that generate compounding customer acquisition by investing in channels with the best unit economics at each stage of company development, building content and brand assets that generate organic traffic over time, and continuously experimenting to find the acquisition channels and messages that resonate with target customers rather than scaling channels before validating that they can acquire customers profitably.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/payments-infra', requireAuth, async (req: AuthRequest, res) => {
+  const { company, payment_types, regions } = req.body;
+  const prompt = `You are a payments infrastructure strategy and fintech payments expert. Design payments infrastructure for ${company} processing ${payment_types} across ${regions}. Cover payments infrastructure framework, payment processor and gateway selection, acquiring bank and merchant account strategy, fraud detection and risk management, payment method coverage and local payment methods, PCI DSS compliance and security, payments reconciliation and reporting, cross-border payments and FX, payment optimization and decline management, and how to build payments infrastructure that maximizes authorization rates and minimizes fraud losses while controlling payment processing costs by selecting payment processors with strong network relationships for the payment types and geographies that matter, implementing fraud models that reduce fraud without declining legitimate transactions, and managing the operational complexity of payments reconciliation across multiple processors and payment methods.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/corporate-governance', requireAuth, async (req: AuthRequest, res) => {
+  const { company, board, stakeholders } = req.body;
+  const prompt = `You are a corporate governance strategy and board effectiveness expert. Design corporate governance for ${company} with ${board} serving ${stakeholders}. Cover corporate governance framework, board composition and independence, committee structure and charter design, board information and reporting, executive compensation and incentive design, shareholder rights and engagement, audit committee and financial oversight, risk oversight and enterprise risk management, ESG governance, and how to build corporate governance structures that serve the long-term interests of shareholders and stakeholders by creating board oversight that is genuinely independent and well-informed, aligning executive compensation with long-term value creation rather than short-term metric optimization, and building the governance processes that allow the board to engage constructively with management on strategy and risk without micromanaging operations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/microfinance', requireAuth, async (req: AuthRequest, res) => {
+  const { institution, clients, products } = req.body;
+  const prompt = `You are a microfinance strategy and financial inclusion expert. Design microfinance for ${institution} serving ${clients} with ${products}. Cover microfinance framework, target client identification and credit assessment, lending methodology including group and individual, loan product design for micro-enterprise, savings and insurance product development, digital financial services and mobile money, operational efficiency and outreach expansion, social performance management, double bottom line and impact measurement, and how to build microfinance institutions that achieve genuine financial inclusion by designing products and delivery mechanisms that reach clients who lack access to formal financial services, pricing loans responsibly at rates that cover costs without exploiting the captive nature of underserved borrowers, and measuring social impact alongside financial performance to ensure that scale does not come at the expense of the mission to serve clients responsibly.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/tax-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, structure, jurisdictions } = req.body;
+  const prompt = `You are a tax strategy and corporate tax planning expert. Design tax strategy for ${company} with ${structure} across ${jurisdictions}. Cover tax strategy framework, corporate structure and holding company design, transfer pricing and intercompany transactions, tax treaty optimization, R and D tax credits and incentives, capital gains planning, international tax reform and Pillar Two compliance, tax risk management and uncertain tax positions, relationship with tax authorities, and how to build tax strategies that minimize the legitimate tax burden through structures and transactions that have genuine business substance rather than pursuing aggressive tax positions that carry significant audit risk, reputational risk, and the risk of the anti-avoidance rules that tax authorities increasingly deploy against arrangements that lack economic substance even if technically compliant with the letter of tax law.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/climate-adaptation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, assets, risks } = req.body;
+  const prompt = `You are a climate adaptation strategy and physical risk management expert. Design climate adaptation for ${organization} with ${assets} facing ${risks}. Cover climate adaptation framework, physical climate risk assessment and scenario analysis, asset vulnerability mapping, adaptation options appraisal, infrastructure resilience upgrades, supply chain climate risk, insurance and risk transfer for climate risks, regulatory disclosure and TCFD reporting, green infrastructure and nature-based solutions, and how to build climate adaptation strategies that protect against physical climate risks in a cost-effective way by prioritizing adaptation investments based on rigorous assessment of climate risk exposure and vulnerability, selecting adaptation measures that address multiple risks, and integrating climate risk into capital planning and asset management decisions rather than treating adaptation as a separate sustainability initiative disconnected from core business risk management.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ethical-ai-systems', requireAuth, async (req: AuthRequest, res) => {
+  const { company, ai_models, use_cases } = req.body;
+  const prompt = `You are an ethical AI systems strategy and responsible machine learning expert. Design ethical AI systems for ${company} deploying ${ai_models} in ${use_cases}. Cover ethical AI systems framework, model fairness and bias detection across protected attributes, explainability and interpretability methods, robustness testing and adversarial inputs, privacy-preserving ML and differential privacy, model monitoring and drift detection, human-in-the-loop design patterns, AI audit and third-party assessment, documentation and model cards, and how to build AI systems that are genuinely ethical in operation by identifying and mitigating bias in training data and model outputs before deployment, designing AI-human interaction in ways that preserve meaningful human oversight for high-stakes decisions, and continuously monitoring deployed models for performance degradation and distributional shift rather than treating model deployment as a one-time event.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/mortgage-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { lender, products, market } = req.body;
+  const prompt = `You are a mortgage strategy and home lending expert. Design mortgage strategy for ${lender} offering ${products} in ${market}. Cover mortgage strategy framework, product design and pricing across fixed, adjustable, and jumbo, origination channel strategy including retail, wholesale, and correspondent, underwriting standards and credit policy, secondary market and loan sale strategy, servicing strategy and retention, mortgage technology and digital origination, regulatory compliance and fair lending, loss mitigation and default management, and how to build mortgage businesses that originate quality loans profitably by developing underwriting expertise that accurately assesses credit risk, building origination channels that attract purchase and refinance volume at acceptable cost per loan, and managing the interest rate and prepayment risk in the mortgage portfolio through appropriate hedging and secondary market execution.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/creator-economy', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, creators, monetization } = req.body;
+  const prompt = `You are a creator economy strategy and content platform expert. Design creator economy for ${platform} with ${creators} through ${monetization}. Cover creator economy framework, creator value proposition and acquisition, monetization model design across ads, subscriptions, tips, and commerce, creator fund and revenue sharing economics, creator tools and workflow enablement, audience development and discovery algorithms, creator retention and satisfaction, brand partnership and sponsorship marketplace, creator analytics and insights, and how to build creator economy platforms that attract and retain top creators by offering economics that allow creators to build sustainable businesses on the platform, providing tools that reduce the cost and complexity of content production, and designing discovery systems that help quality creators build audiences rather than optimizing purely for engagement metrics that favor viral content over sustainable creator careers.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
