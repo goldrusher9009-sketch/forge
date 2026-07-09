@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v653.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v654.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203417,6 +203417,66 @@ app.post('/api/strategy/startup-board', requireAuth, async (req: AuthRequest, re
 app.post('/api/career/personal-productivity', requireAuth, async (req: AuthRequest, res) => {
   const { professional, role, challenges } = req.body;
   const prompt = `You are a personal productivity and high-performance work design expert. Design the productivity system for ${professional} in ${role} addressing ${challenges}. Cover the personal productivity framework, the priority management and focus system, the energy management and performance rhythms, the task and project capture system, the calendar design and meeting management, the deep work and concentration practices, the communication and inbox management, the weekly review and planning ritual, the productivity tools and systems, and how to design personal productivity systems that help you spend more of your time on the highest-impact work that only you can do rather than on reactive tasks and communication that feel busy but do not create the results that matter most for your career and organization, that respect the biological rhythms that determine when you do your best thinking and protect those times for your most important work.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-ethics', requireAuth, async (req: AuthRequest, res) => {
+  const { system, usecase, stakeholders } = req.body;
+  const prompt = `You are an AI ethics and responsible AI strategy expert. Assess and design the ethical framework for ${system} in ${usecase} for ${stakeholders}. Cover the AI ethics framework, the fairness and bias assessment, the transparency and explainability requirements, the privacy and data rights, the accountability and governance, the safety and harm prevention, the human oversight and control, the AI impact assessment, the AI ethics policy development, and how to build responsible AI systems that are fair, transparent, and accountable, that actively identify and mitigate the biases and harms that can arise from training data and model design, and that earn the trust of the people they affect through genuine transparency about how decisions are made and meaningful mechanisms for human oversight and appeal.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, stage, priorities } = req.body;
+  const prompt = `You are a digital transformation strategy and change management expert. Design the digital transformation for ${organization} at ${stage} focused on ${priorities}. Cover the digital transformation framework, the current state assessment and digital maturity, the transformation vision and roadmap, the technology architecture and platform strategy, the data and analytics transformation, the process digitization and automation, the culture and talent transformation, the customer experience digitization, the transformation governance and program management, and how to design digital transformations that create real business value by improving customer experience, reducing operational costs, and enabling new business models rather than expensive technology projects that modernize the infrastructure without changing how the organization works or the value it delivers to customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/sales-force', requireAuth, async (req: AuthRequest, res) => {
+  const { company, market, model } = req.body;
+  const prompt = `You are a sales force design and sales team architecture expert. Design the sales force for ${company} in ${market} using ${model}. Cover the sales force design framework, the sales model selection, the sales team structure and specialization, the territory design and coverage model, the capacity planning and headcount, the inside vs. field sales ratio, the SDR and AE ratio and structure, the customer success integration, the sales force effectiveness metrics, and how to design sales forces that efficiently cover your addressable market with the right sales model for your product, price point, and customer profile, that scale revenue without proportional increases in sales headcount through territory optimization and sales process efficiency, and that give salespeople clear ownership and accountability for specific accounts and territories.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/partnerships', requireAuth, async (req: AuthRequest, res) => {
+  const { company, partner, goals } = req.body;
+  const prompt = `You are a strategic partnership development and alliance management expert. Design the partnership strategy for ${company} with ${partner} achieving ${goals}. Cover the partnership framework, the partnership type and structure selection, the partner selection criteria and evaluation, the value proposition for each party, the partnership agreement design, the integration and co-selling model, the joint go-to-market planning, the partnership management and success metrics, the partnership governance and escalation, and how to design partnerships that create genuine mutual value and grow over time rather than strategic partnerships that launch with press releases and executive dinners but produce little commercial activity because neither side has the incentive or operational integration needed to actively prioritize the relationship in their day-to-day sales and marketing activities.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/demand-gen', requireAuth, async (req: AuthRequest, res) => {
+  const { company, icp, channels } = req.body;
+  const prompt = `You are a demand generation strategy and pipeline creation expert. Design the demand gen program for ${company} targeting ${icp} through ${channels}. Cover the demand gen framework, the demand gen strategy and model, the target account selection, the content and inbound strategy, the paid acquisition and performance marketing, the events and field marketing, the SDR and outbound strategy, the account-based marketing approach, the demand gen metrics and attribution, and how to design demand generation programs that create predictable, scalable pipeline at efficient CAC rather than creating fragmented marketing activities that generate leads but do not reliably convert to pipeline and revenue, that build the brand awareness and content assets that make prospects pre-educated and pre-sold before they ever talk to sales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/fundraising', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, amount } = req.body;
+  const prompt = `You are a startup fundraising strategy and investor relations expert. Design the fundraising strategy for ${company} at ${stage} raising ${amount}. Cover the fundraising framework, the fundraising timing and preparation, the investor targeting and outreach strategy, the pitch narrative and story arc, the fundraising materials and data room, the investor meeting cadence and process management, the term sheet negotiation, the due diligence preparation, the cap table management, the post-close investor relations, and how to run fundraising processes that create the competition and urgency that leads to better terms, that target the investors most likely to lead your round based on their portfolio, investment thesis, and check size rather than pitching everyone indiscriminately, and that build investor relationships over time so when you are ready to raise they already know and believe in your story.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/market-research', requireAuth, async (req: AuthRequest, res) => {
+  const { market, questions, methods } = req.body;
+  const prompt = `You are a market research methodology and customer insight expert. Design the market research for ${market} answering ${questions} using ${methods}. Cover the market research framework, the research question formulation, the primary vs. secondary research design, the qualitative and quantitative methods, the customer interview methodology, the survey design and analysis, the market sizing methodology, the competitive landscape research, the insight synthesis and business implications, and how to design market research programs that produce actionable insights that change how you think about your market, customers, and product rather than confirming what you already believed, that use the right research methods for the specific questions you are trying to answer, and that translate raw data and customer quotes into strategic implications and product decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/proptech', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, challenge } = req.body;
+  const prompt = `You are a proptech strategy and real estate technology expert. Advise on the proptech strategy for ${product} in ${segment} addressing ${challenge}. Cover the proptech framework, the proptech market landscape, the real estate technology adoption dynamics, the buyer and decision-maker in proptech, the data and network advantages in real estate, the proptech regulatory environment, the proptech go-to-market considerations, the proptech business model options, the proptech competitive landscape, and how to build proptech businesses that overcome the notoriously slow technology adoption rates in real estate by focusing on the specific pain points where the ROI of technology adoption is clear and immediate enough that buyers will change their behavior, that navigate the complex regulatory and compliance requirements of real estate transactions and ownership.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/fintech', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, challenge } = req.body;
+  const prompt = `You are a fintech strategy and financial services technology expert. Advise on the fintech strategy for ${product} in ${segment} addressing ${challenge}. Cover the fintech strategy framework, the fintech regulatory landscape, the financial services distribution and embedded finance, the fintech business model evolution, the unit economics in fintech, the risk management and compliance in fintech, the fintech competitive dynamics and incumbents, the fintech customer trust and acquisition, the fintech data and underwriting advantages, and how to build fintech businesses that navigate the complex regulatory requirements of financial services, that earn the trust of customers with their money and financial data, and that find the distribution channels and partnerships that allow them to reach customers at the moment of financial need rather than fighting for customer attention in a crowded market with high customer acquisition costs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/healthtech', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, challenge } = req.body;
+  const prompt = `You are a healthtech strategy and digital health expert. Advise on the healthtech strategy for ${product} in ${segment} addressing ${challenge}. Cover the healthtech strategy framework, the healthcare regulatory landscape and FDA pathways, the healthcare buyer and purchasing dynamics, the clinical validation requirements, the EMR integration and interoperability, the value-based care alignment, the healthcare data and HIPAA compliance, the healthtech go-to-market via health systems vs. employers vs. payers, the reimbursement strategy, and how to build healthtech products that achieve clinical adoption by solving real clinical workflow problems rather than adding more burden to already-overloaded healthcare providers, that navigate the complex regulatory and compliance requirements of healthcare, and that build the clinical evidence and outcome data that are required to get reimbursement and justify procurement decisions in a system that rightly demands proof of clinical efficacy.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
