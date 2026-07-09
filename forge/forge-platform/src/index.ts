@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v619.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v620.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201377,6 +201377,66 @@ app.post('/api/career/business-writing', requireAuth, async (req: AuthRequest, r
 app.post('/api/design/ux-research', requireAuth, async (req: AuthRequest, res) => {
   const { product, question, method } = req.body;
   const prompt = `You are a UX research and user insights expert. Design the UX research plan for ${product} to answer ${question} using ${method} method. Cover the UX research strategy and question formulation, the research method selection and trade-offs, the participant recruitment and screening, the discussion guide and interview design, the usability test design and task creation, the survey design and quantitative methods, the synthesis and analysis methodology, the insight communication and storytelling, the research repository design, and how to run UX research that generates actionable insights that improve product decisions rather than research reports that get filed and forgotten.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customer/success-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, outcome } = req.body;
+  const prompt = `You are a customer success and value realization expert. Design the customer success motion for ${company} targeting ${segment} to deliver ${outcome}. Cover the customer success strategy and charter, the customer segmentation and coverage model, the onboarding program design, the adoption and value realization playbook, the customer health score design, the proactive and reactive playbook design, the QBR and executive alignment cadence, the escalation and at-risk account protocol, the customer success metrics and targets, and how to build a customer success function that drives expansion revenue and reduces churn through systematic value delivery.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-positioning', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, market, differentiation } = req.body;
+  const prompt = `You are a brand positioning and strategic marketing expert. Position ${brand} in ${market} around ${differentiation} differentiation. Cover the brand positioning framework and methodology, the competitive landscape mapping, the customer insight and jobs-to-be-done analysis, the positioning statement design, the category creation vs. category capture trade-off, the positioning differentiation and proof points, the positioning testing and validation, the positioning translation to messaging, the positioning governance and consistency, and how to create brand positioning that is distinctive, credible, defensible, and resonant with your ideal customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/transparency', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stakeholders, format } = req.body;
+  const prompt = `You are a radical transparency and open communication expert. Design the transparency strategy for ${company} with ${stakeholders} using ${format} formats. Cover the transparency philosophy and business case, the information disclosure framework, the internal transparency design, the external transparency and public communication, the employee transparency and communication design, the customer transparency and trust building, the investor transparency design, the mistake and failure communication, the data and metrics transparency, and how to use radical transparency as a competitive advantage that attracts talent, builds customer trust, and creates accountability throughout the organization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/lean-operations', requireAuth, async (req: AuthRequest, res) => {
+  const { company, process, waste } = req.body;
+  const prompt = `You are a lean operations and continuous improvement expert. Apply lean principles to ${company} improving ${process} eliminating ${waste} waste. Cover the lean methodology and philosophy, the value stream mapping methodology, the waste identification and elimination framework, the 5S and workplace organization, the standardized work design, the pull and kanban system design, the kaizen and continuous improvement culture, the lean metrics and performance management, the lean change management, and how to implement lean operations in a service or knowledge work environment where waste is invisible but equally damaging to efficiency and quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/data-driven-culture', requireAuth, async (req: AuthRequest, res) => {
+  const { company, maturity, enablers } = req.body;
+  const prompt = `You are a data-driven culture and organizational analytics expert. Build the data-driven culture at ${company} from ${maturity} maturity using ${enablers}. Cover the data-driven culture definition and vision, the leadership modeling and sponsorship, the data democratization strategy, the data literacy program design, the decision-making process redesign around data, the metrics and KPI culture building, the experimentation culture design, the data access and self-service design, the data storytelling and communication, and how to transform an organization from gut-feel decision-making to data-informed decision-making without creating data bureaucracy or paralysis.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/proposal-writing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, prospect, value } = req.body;
+  const prompt = `You are a proposal writing and sales document design expert. Write the proposal for ${company} to win ${prospect} around ${value} value proposition. Cover the proposal strategy and win theme, the executive summary design, the problem and situation diagnosis, the proposed solution and approach, the implementation and timeline design, the team and credentials section, the pricing and commercial terms design, the risk mitigation and guarantees, the social proof and references section, and how to write proposals that are client-centric, differentiated, and persuasive rather than generic templates that fail to address what the buyer actually cares about.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/pricing-testing', requireAuth, async (req: AuthRequest, res) => {
+  const { product, hypothesis, segment } = req.body;
+  const prompt = `You are a pricing experimentation and willingness-to-pay research expert. Design the pricing test for ${product} testing ${hypothesis} with ${segment}. Cover the pricing research methodology, the van Westendorp price sensitivity model, the Gabor-Granger pricing research, the conjoint analysis design, the A/B pricing test design, the pricing page test methodology, the packaging test design, the cohort analysis for pricing changes, the pricing test statistical validity, and how to run pricing experiments that generate reliable insights about customer willingness to pay and the revenue-maximizing price point without damaging customer relationships or brand perception.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/process-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, deal, velocity } = req.body;
+  const prompt = `You are a sales process design and revenue operations expert. Design the sales process for ${company} handling ${deal} deal type to improve ${velocity} velocity. Cover the sales process framework and stages, the entry and exit criteria for each stage, the buyer journey alignment design, the qualification gate design, the discovery-to-demo process, the evaluation and proof process, the negotiation and close process, the sales activity and task design, the sales process governance and adoption, and how to design a sales process that creates predictable pipeline movement, reduces stall risk, and gives both reps and managers clear signals about deal health and next steps.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/competitive-intel', requireAuth, async (req: AuthRequest, res) => {
+  const { company, competitors, dimensions } = req.body;
+  const prompt = `You are a competitive intelligence and market strategy expert. Build the competitive intelligence program for ${company} tracking ${competitors} across ${dimensions}. Cover the competitive intelligence strategy and scope, the competitor information sources and collection, the competitor product and feature tracking, the competitor pricing and packaging intelligence, the competitor go-to-market and sales intelligence, the win/loss analysis program, the competitive battlecard design, the competitive positioning response playbook, the competitive intelligence distribution and activation, and how to build a competitive intelligence capability that keeps your team informed and equipped to win competitive deals consistently.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/team-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, mission, size } = req.body;
+  const prompt = `You are a team design and organizational structure expert. Design the team for ${company} with ${mission} mission at ${size} headcount. Cover the team design principles and trade-offs, the team topology selection, the team charter and purpose design, the roles and responsibilities design, the team size and span of control, the cross-functional interface design, the team governance and decision-making, the team performance management, the team health and psychological safety design, and how to design teams that are the right size and structure to execute their mission effectively while maintaining the speed, quality, and collaboration needed to succeed.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
