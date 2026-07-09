@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v567.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v568.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198257,6 +198257,66 @@ app.post('/api/engineering/scale-infra', requireAuth, async (req: AuthRequest, r
 app.post('/api/leadership/c-suite-coaching', requireAuth, async (req: AuthRequest, res) => {
   const { role, challenge, context } = req.body;
   const prompt = `You are an executive coach for C-suite leaders. Coach a ${role} executive facing challenge: ${challenge} in context: ${context}. Apply executive coaching frameworks: stakeholder alignment, managing up and sideways, decision-making under uncertainty, building executive presence, navigating board dynamics, leading through ambiguity, organizational change leadership, building and developing a senior leadership team, and personal resilience and effectiveness. Provide both tactical advice for the immediate challenge and developmental focus for long-term executive growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/saas-company-building', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, vertical, model } = req.body;
+  const prompt = `You are a SaaS company building and venture-backed startup expert. Create a SaaS company building playbook for ${stage} stage company in ${vertical} vertical with ${model} business model. Cover the stage-specific priorities (0→1 PMF, 1→10 GTM, 10→100 scaling), key hires and org build sequence, the metrics that matter at each stage (ARR, NRR, CAC payback, magic number), common failure modes and how to avoid them, fundraising timing and narrative, and the inflection points that signal readiness to accelerate.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/category-creation', requireAuth, async (req: AuthRequest, res) => {
+  const { product, problem, buyers } = req.body;
+  const prompt = `You are a market category creation and positioning expert. Design a market category creation strategy for ${product} solving ${problem} for ${buyers}. Cover whether to create a new category vs. compete in existing ones (category creation cost-benefit), how to name and define the category, the category creation playbook (educate the market, define the problem, position as the leader), analyst and analyst relations strategy, thought leadership content plan, and how to know if the category is taking hold.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/ops-maturity', requireAuth, async (req: AuthRequest, res) => {
+  const { company, current, target } = req.body;
+  const prompt = `You are a product operations expert. Conduct a product operations maturity assessment for ${company} at ${current} current state targeting ${target} maturity level. Assess maturity across: product strategy and planning, roadmap management, data and analytics, cross-functional alignment, development process, customer feedback loops, and team effectiveness. Score each dimension, identify the highest-impact improvement areas, and build a 90-day product ops improvement roadmap.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/saas-metrics-dashboard', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stakeholders, cadence } = req.body;
+  const prompt = `You are a SaaS metrics and financial reporting expert. Design a SaaS metrics dashboard for ${company} for ${stakeholders} on ${cadence} reporting cadence. Define the metric hierarchy (north star → primary → secondary), dashboard layout for executive vs. board vs. investor audiences, chart types for each metric, leading vs. lagging indicator balance, anomaly detection and alerting, how to calculate each SaaS metric correctly (MRR, ARR, churn, NRR, CAC, LTV, magic number), and how to tell the story behind the numbers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ux/accessibility-program', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, standard } = req.body;
+  const prompt = `You are an accessibility and inclusive design program expert. Build a company-wide accessibility program for ${company} across ${products} products targeting ${standard} standard. Cover accessibility governance structure, inventory and audit process, developer training program, design system accessibility requirements, automated and manual testing integration in CI/CD, user research with disabled users, legal risk management (ADA, EAA), how to communicate accessibility commitment externally, and how to sustain accessibility as a continuous practice rather than a one-time fix.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ux/mobile-experience', requireAuth, async (req: AuthRequest, res) => {
+  const { product, platform, users } = req.body;
+  const prompt = `You are a mobile UX and product design expert. Design a mobile experience for ${product} on ${platform} for ${users} users. Cover mobile-first design principles, gesture and touch interaction design, navigation pattern selection (tab bar, hamburger, bottom sheet), performance and perceived performance optimization, offline and poor-connectivity experience, push notification strategy, app store optimization, mobile analytics and crash reporting setup, and how to balance mobile and web parity vs. mobile-specific differentiation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cs/value-calculator', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customer, metrics } = req.body;
+  const prompt = `You are a business value quantification and ROI expert. Build a customer value calculator for ${product} with ${customer} customer profile measuring ${metrics}. Cover value driver identification (time saved, cost reduced, revenue increased, risk mitigated), baseline measurement approach, value calculation methodology with formulas, how to present ROI to economic buyers, how to validate value claims with real customer data, the business case template for renewal and expansion conversations, and how to use value data in pricing and packaging decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/innovation-culture', requireAuth, async (req: AuthRequest, res) => {
+  const { company, barriers, goals } = req.body;
+  const prompt = `You are an innovation culture and organizational transformation expert. Build an innovation culture program for ${company} removing barriers: ${barriers} toward ${goals}. Cover psychological safety assessment and building, innovation rituals (hackathons, 20% time, innovation days), idea management system, failure celebration and learning program, leadership modeling of innovation behaviors, cross-functional collaboration design, metrics for innovation culture health, and how to sustain innovation culture through growth and acquisition.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/analytics-stack', requireAuth, async (req: AuthRequest, res) => {
+  const { company, useCases, scale } = req.body;
+  const prompt = `You are a data and analytics engineering expert. Design an analytics stack for ${company} supporting ${useCases} use cases at ${scale} scale. Cover data collection layer (event tracking, server-side, CDC), data warehouse selection and architecture, data transformation layer (dbt), BI and visualization tool selection, self-serve analytics enablement, real-time analytics needs, data quality and testing framework, total cost of ownership comparison, and the migration path from current state to the target stack.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/model', requireAuth, async (req: AuthRequest, res) => {
+  const { product, channels, unit } = req.body;
+  const prompt = `You are a growth modeling and strategy expert. Build a growth model for ${product} with ${channels} acquisition channels and ${unit} unit economics. Design the full growth model: top-of-funnel (awareness, traffic, leads), conversion funnel (activation, engagement, monetization), retention model (cohort analysis, churn), expansion model (NRR, upsell), and viral coefficient. Connect each lever to revenue, identify the highest-leverage growth opportunities, and build scenarios showing what 2x/5x growth requires across each lever.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
