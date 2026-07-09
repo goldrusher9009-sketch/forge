@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v678.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v679.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204917,6 +204917,66 @@ app.post('/api/strategy/growth-acceleration', requireAuth, async (req: AuthReque
 app.post('/api/finance/investor-thesis', requireAuth, async (req: AuthRequest, res) => {
   const { company, stage, investors } = req.body;
   const prompt = `You are an investor thesis development and fundraising strategy expert. Design investor thesis for ${company} at ${stage} targeting ${investors}. Cover investor thesis framework, market opportunity articulation, competitive differentiation and moat, business model and unit economics, growth trajectory and milestones, team and execution capability, risk factors and mitigation, comparable transactions and valuation, use of funds and return profile, and how to develop investor theses that compel the specific investors being targeted by articulating the investment opportunity in terms of the market size, competitive dynamics, and business model characteristics that match those investors criteria, while being honest about the risks and the assumptions underlying the financial projections.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/contract-negotiation', requireAuth, async (req: AuthRequest, res) => {
+  const { party, contract, objectives } = req.body;
+  const prompt = `You are a contract negotiation strategy and commercial deal structuring expert. Design contract negotiation for ${party} on ${contract} toward ${objectives}. Cover contract negotiation framework, negotiation position development and BATNA, key terms prioritization and trade-offs, negotiation tactics and counter-tactics, risk allocation and liability management, payment and commercial terms negotiation, governance and dispute resolution, negotiation team and authority structure, deal closing and execution, and how to approach complex contract negotiations in a way that achieves the commercial and risk objectives while maintaining the business relationship and reaching agreements that both parties will actually be able to and want to perform over the life of the contract.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-residency', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, data, jurisdictions } = req.body;
+  const prompt = `You are a data residency strategy and cross-border data management expert. Design data residency for ${organization} managing ${data} across ${jurisdictions}. Cover data residency framework, jurisdictional data sovereignty requirements, data classification and residency mapping, technical architecture for data localization, cross-border transfer mechanisms, operational implications of data residency, vendor and cloud provider selection for residency, compliance monitoring and audit, data residency cost-benefit analysis, and how to navigate the complex and often conflicting data residency requirements across different jurisdictions in a way that maintains compliance while avoiding the performance, cost, and complexity penalties that come from over-implementing data localization beyond what regulations actually require.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-governance', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, systems, stakeholders } = req.body;
+  const prompt = `You are an AI governance strategy and responsible AI framework expert. Design AI governance for ${organization} with ${systems} serving ${stakeholders}. Cover AI governance framework, AI ethics principles and values, AI risk assessment and classification, model accountability and audit, bias detection and mitigation, AI transparency and explainability requirements, AI incident management, regulatory compliance for AI, AI governance operating model, and how to build AI governance frameworks that allow organizations to deploy AI at scale and speed while maintaining the ethical standards, legal compliance, and stakeholder trust that determine whether AI deployment creates lasting value or creates legal and reputational risks that eventually outweigh the benefits.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/workplace-innovation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, work, goals } = req.body;
+  const prompt = `You are a workplace innovation strategy and future of work expert. Design workplace innovation for ${organization} around ${work} toward ${goals}. Cover workplace innovation framework, hybrid and flexible work design, physical workspace design and office strategy, digital workplace and collaboration tools, employee experience design, workplace wellness and productivity, innovation spaces and creative environments, workplace analytics and measurement, change management for new ways of working, and how to design workplaces and work models that attract the talent the organization needs, support the collaboration and focus work that different roles require, and create the culture and experience that makes people want to be part of the organization rather than working somewhere else.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/content-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, content, channels } = req.body;
+  const prompt = `You are a content operations strategy and content supply chain expert. Design content operations for ${organization} producing ${content} across ${channels}. Cover content operations framework, content strategy and editorial planning, content production workflow and governance, content asset management and DAM, content localization and translation operations, content distribution and publishing automation, content performance measurement, content technology and MarTech stack, content team structure and roles, and how to build content operations capabilities that allow organizations to produce the volume and quality of content that modern multichannel marketing requires without sacrificing consistency, brand standards, or the creative quality that makes content worth consuming in the first place.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/revenue-accounting', requireAuth, async (req: AuthRequest, res) => {
+  const { company, contracts, standard } = req.body;
+  const prompt = `You are a revenue accounting strategy and ASC 606 compliance expert. Design revenue accounting for ${company} with ${contracts} under ${standard}. Cover revenue accounting framework, five-step revenue recognition model, performance obligation identification, transaction price determination and allocation, variable consideration and constraint, contract modifications and options, principal vs agent determination, contract costs and commissions, revenue accounting systems and controls, and how to implement revenue recognition standards in a way that accurately reflects the economics of complex contracts while maintaining the internal controls and audit trail that auditors require and producing the disclosures that investors need to understand the quality and predictability of reported revenue.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/procurement-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, spend, goals } = req.body;
+  const prompt = `You are a procurement transformation strategy and sourcing excellence expert. Design procurement transformation for ${organization} with ${spend} toward ${goals}. Cover procurement transformation framework, spend analysis and category management, strategic sourcing and supplier selection, procurement operating model design, procurement technology and digital tools, supplier relationship management, should-cost modeling and negotiation, procurement talent and capability, procurement governance and compliance, and how to design procurement transformations that build genuine sourcing capability and strategic supplier relationships rather than simply implementing cost reduction programs that extract short-term savings at the cost of supplier quality and the long-term relationships that are needed for supply security, innovation, and resilience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/talent-acquisition', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, roles, market } = req.body;
+  const prompt = `You are a talent acquisition strategy and recruiting excellence expert. Design talent acquisition for ${organization} hiring for ${roles} in ${market}. Cover talent acquisition framework, employer brand and EVP development, sourcing strategy and talent pipeline, candidate experience and recruitment marketing, interview process design and assessment, offer strategy and negotiation, diversity and inclusion in hiring, recruiter enablement and productivity, recruiting analytics and metrics, and how to build talent acquisition capabilities that attract and hire the talent the organization needs by competing effectively for the best candidates through a distinctive employer brand, a compelling candidate experience, and a recruiting process that moves quickly and makes good decisions rather than moving slowly and losing candidates to competitors who are more decisive.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/digital-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, processes, tools } = req.body;
+  const prompt = `You are a digital operations strategy and process automation expert. Design digital operations for ${organization} in ${processes} using ${tools}. Cover digital operations framework, process automation and RPA, workflow orchestration and BPM, digital worker and human-in-the-loop design, intelligent document processing, decision automation and rules engines, integration architecture for digital operations, operational analytics and monitoring, change management for digital operations, and how to design digital operations programs that automate the right processes at the right level while keeping humans in control of the decisions that require judgment, context, and accountability in ways that algorithms cannot yet provide.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/fintech-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, model } = req.body;
+  const prompt = `You are a fintech strategy and financial services innovation expert. Design fintech strategy for ${company} in ${segment} via ${model}. Cover fintech strategy framework, financial services market disruption analysis, regulatory landscape for fintech, product innovation and financial product design, banking and payment infrastructure, financial data and open banking, distribution and customer acquisition for fintech, unit economics and scaling for financial products, partnership and embedded finance strategy, and how to develop fintech strategies that identify genuine opportunities to deliver better financial services to underserved segments or to solve persistent pain points in existing financial services by combining technology innovation with the regulatory compliance and risk management that financial services require.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
