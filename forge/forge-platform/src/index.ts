@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v550.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v551.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -197237,6 +197237,66 @@ app.post('/api/hr/dei-plan', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/ai/achievement-analysis', requireAuth, async (req: AuthRequest, res) => {
   const { goal, industry, timeframe } = req.body;
   const prompt = `You are a strategic achievement analyst. Provide a comprehensive analysis of reaching the milestone goal: ${goal} in ${industry} within ${timeframe}. Break down the achievement into key success factors, lessons learned, competitive advantages gained, next horizon to pursue, and how to leverage this milestone for future growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/business/productized-service', requireAuth, async (req: AuthRequest, res) => {
+  const { expertise, targetClient, deliverable } = req.body;
+  const prompt = `You are a productized service expert. Design a productized service offering based on ${expertise} for ${targetClient} clients delivering ${deliverable}. Cover service packaging, fixed pricing, scope definition, delivery process, onboarding flow, and how to systematize delivery to scale without trading time for money.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { product, salesMotion, teamSize } = req.body;
+  const prompt = `You are a sales enablement expert. Build a comprehensive sales playbook for ${product} with ${salesMotion} sales motion and ${teamSize} team. Cover ICP definition, discovery framework, demo flow, objection handling, negotiation tactics, champion development, closing checklist, and win/loss analysis process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/eng-ladder', requireAuth, async (req: AuthRequest, res) => {
+  const { company, levels, disciplines } = req.body;
+  const prompt = `You are an engineering org design expert. Create an engineering career ladder for ${company} with ${levels} levels across ${disciplines}. Define level expectations (scope, impact, technical skills, leadership), promotion criteria, compensation bands guidance, and how to avoid common career ladder anti-patterns.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/hub', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, topics, audience } = req.body;
+  const prompt = `You are a content hub and SEO expert. Build a content hub strategy for ${brand} covering topics: ${topics} for audience: ${audience}. Design pillar-cluster architecture, topic authority building, internal linking strategy, content formats for each stage, editorial calendar cadence, and distribution amplification plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/unit-economics', requireAuth, async (req: AuthRequest, res) => {
+  const { businessModel, cac, ltv } = req.body;
+  const prompt = `You are a startup finance expert. Build a unit economics model for ${businessModel} with CAC: ${cac} and LTV: ${ltv}. Calculate LTV:CAC ratio, payback period, contribution margin, break-even analysis, and identify the key levers to improve unit economics across acquisition, monetization, and retention.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/eng/iac', requireAuth, async (req: AuthRequest, res) => {
+  const { provider, workloads, team } = req.body;
+  const prompt = `You are a DevOps infrastructure expert. Create an Infrastructure as Code guide for ${provider} managing ${workloads} with ${team} team. Cover Terraform/Pulumi/CDK selection, module structure, state management, secrets handling, CI/CD integration, drift detection, and IaC testing strategies.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/newsletter', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, currentSubscribers, goal } = req.body;
+  const prompt = `You are a newsletter growth expert. Build a growth plan for a ${topic} newsletter with ${currentSubscribers} subscribers targeting ${goal}. Cover content positioning, distribution channels, referral programs, sponsorship monetization, subscriber retention tactics, and metrics to track weekly growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/pitch-deck', requireAuth, async (req: AuthRequest, res) => {
+  const { company, problem, fundingAsk } = req.body;
+  const prompt = `You are a venture pitch expert. Build a compelling pitch deck narrative for ${company} solving ${problem} raising ${fundingAsk}. Craft slide-by-slide story: problem, solution, market size, product, business model, traction, team, financials, and ask. Include what makes investors lean in vs check out.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/platform', requireAuth, async (req: AuthRequest, res) => {
+  const { product, ecosystem, network } = req.body;
+  const prompt = `You are a platform business strategy expert. Architect a platform strategy for ${product} building ${ecosystem} ecosystem and ${network} network effects. Cover platform design, supply/demand balance, monetization layer, governance model, openness vs control tradeoffs, and flywheel acceleration tactics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/governance', requireAuth, async (req: AuthRequest, res) => {
+  const { company, dataAssets, regulations } = req.body;
+  const prompt = `You are a data governance expert. Build a data governance framework for ${company} managing data assets: ${dataAssets} under regulations: ${regulations}. Cover data ownership model, quality standards, access controls, lineage tracking, metadata management, and stewardship responsibilities across business and technical teams.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
