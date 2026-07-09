@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v665.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v666.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204137,6 +204137,66 @@ app.post('/api/finance/investor-relations', requireAuth, async (req: AuthRequest
 app.post('/api/hr/workforce-analytics', requireAuth, async (req: AuthRequest, res) => {
   const { organization, questions, data } = req.body;
   const prompt = `You are a workforce analytics and people data expert. Design workforce analytics for ${organization} answering ${questions} using ${data}. Cover workforce analytics framework, people data architecture and integration, headcount and workforce planning analytics, talent acquisition analytics, engagement and retention analytics, performance and productivity analytics, diversity and inclusion analytics, workforce planning and scenario modeling, people analytics governance and ethics, and how to build people analytics capabilities that provide leaders with evidence-based insights about their workforce that enable better decisions about talent while maintaining the trust and privacy of employees whose data powers the analysis.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/biz-model-design', requireAuth, async (req: AuthRequest, res) => {
+  const { venture, customers, value } = req.body;
+  const prompt = `You are a business model design and innovation expert. Design the business model for ${venture} serving ${customers} delivering ${value}. Cover business model canvas and framework, customer segments and jobs to be done, value propositions and differentiation, revenue streams and pricing models, key resources and capabilities, key activities and processes, key partnerships and ecosystem, cost structure and unit economics, business model scalability, and how to design business models that create genuine value for customers in ways that generate sustainable economics for the business and are defensible against competitive imitation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/agile-enterprise', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, size, goals } = req.body;
+  const prompt = `You are an agile enterprise transformation and scaled agile expert. Design agile transformation for ${organization} at ${size} toward ${goals}. Cover agile enterprise framework, agile values and principles at scale, SAFe and LeSS and other scaling frameworks, agile portfolio management, agile budgeting and funding, value stream identification and design, agile leadership behaviors, agile culture and organizational change, agile metrics and OKRs, and how to scale agile practices to large organizations in ways that preserve the customer responsiveness and learning velocity that makes agile valuable while addressing the coordination and governance needs of complex organizations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/price-increase', requireAuth, async (req: AuthRequest, res) => {
+  const { company, increase, customers } = req.body;
+  const prompt = `You are a pricing strategy and price increase management expert. Design price increase strategy for ${company} with ${increase} for ${customers}. Cover price increase framework, business case for price increase, customer segmentation by price sensitivity, price increase timing and sequencing, communication strategy and messaging, customer value reinforcement, exception and negotiation management, revenue impact modeling, competitive response management, and how to implement price increases that customers accept because they understand the value they receive justifies the higher price, rather than price increases that trigger churn or adversarial relationships.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/content-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, volume, channels } = req.body;
+  const prompt = `You are a content operations and content supply chain expert. Design content operations for ${organization} at ${volume} across ${channels}. Cover content operations framework, content strategy and governance, content production workflow and process, content technology and tools, content team structure and roles, content performance measurement, content repurposing and distribution, content localization and adaptation, content quality and brand compliance, and how to build content operations capabilities that produce high-quality content at the scale and speed the organization needs without the chaos and inconsistency that typically comes from decentralized content creation without clear processes and standards.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/revenue-leakage', requireAuth, async (req: AuthRequest, res) => {
+  const { company, amount, sources } = req.body;
+  const prompt = `You are a revenue leakage identification and prevention expert. Identify and fix revenue leakage for ${company} totaling ${amount} from ${sources}. Cover revenue leakage framework, billing accuracy and invoice error analysis, contract and entitlement compliance, discounting and approval compliance, revenue recognition accuracy, collections and accounts receivable, subscription and renewal management, upsell and expansion capture, revenue leakage root cause analysis, and how to identify and eliminate the revenue leakage that most companies experience from billing errors and contract non-compliance and discounting outside policy that silently destroys significant revenue.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/service-design', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, service, users } = req.body;
+  const prompt = `You are a service design and human-centered design expert. Design the service for ${organization} delivering ${service} to ${users}. Cover service design framework, user research and insight development, service concept design, service blueprint and backstage design, front-stage and backstage alignment, touchpoint design across channels, service prototyping and testing, service implementation and launch, service performance measurement, and how to design services that work from the outside in by deeply understanding what users are trying to accomplish and designing the entire service system around delivering that outcome rather than around the internal organizational structure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/wealth-management', requireAuth, async (req: AuthRequest, res) => {
+  const { client, portfolio, goals } = req.body;
+  const prompt = `You are a wealth management strategy and financial planning expert. Design wealth management for ${client} with ${portfolio} toward ${goals}. Cover wealth management framework, financial goal setting and prioritization, asset allocation and investment policy, tax optimization and efficiency, estate planning and wealth transfer, risk management and insurance, liquidity management, alternative investments, family wealth governance, and how to develop wealth management strategies that coordinate all aspects of a financial life to achieve the goals that matter most rather than optimizing each account or investment in isolation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/revenue-cycle', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, issues, goals } = req.body;
+  const prompt = `You are a revenue cycle management and financial operations expert. Design revenue cycle for ${organization} addressing ${issues} toward ${goals}. Cover revenue cycle framework, patient or customer access and eligibility, charge capture and coding accuracy, claims submission and management, payment posting and reconciliation, denial management and appeals, accounts receivable management, collections strategy, revenue cycle technology and automation, revenue cycle performance metrics, and how to design revenue cycle processes that maximize the capture of revenue that the organization has earned while minimizing the cost of the collection process and the time from service delivery to cash collection.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/procurement-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, spend, goals } = req.body;
+  const prompt = `You are a procurement strategy and strategic sourcing expert. Design procurement strategy for ${organization} managing ${spend} toward ${goals}. Cover procurement strategy framework, spend analysis and category management, strategic sourcing methodology, supplier market analysis, total cost of ownership, make vs buy decisions, procurement organization design, procurement technology and e-sourcing, supplier relationship management, and how to develop procurement strategies that go beyond cost reduction to create sustainable competitive advantage through supplier relationships that provide access to innovation and capabilities.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/capability-building', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, capabilities, gaps } = req.body;
+  const prompt = `You are a organizational capability building and strategic capability development expert. Design capability building for ${organization} developing ${capabilities} closing ${gaps}. Cover capability building framework, capability assessment and gap analysis, build vs buy vs partner capability decisions, learning and development programs, on-the-job capability development, capability centers of excellence, capability measurement and tracking, capability governance, capability roadmap and sequencing, and how to build the organizational capabilities needed to execute strategy by deliberately developing the skills and processes and systems that the strategy requires rather than hoping existing capabilities are sufficient.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
