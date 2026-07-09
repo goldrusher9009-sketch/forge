@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v573.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v574.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198617,6 +198617,66 @@ app.post('/api/ai/prompt-library', requireAuth, async (req: AuthRequest, res) =>
 app.post('/api/strategy/digital-transform', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, goals } = req.body;
   const prompt = `You are a digital transformation and change management expert. Design a digital transformation program for ${company} in ${industry} to achieve ${goals}. Cover the transformation vision and case for change, stakeholder mapping and change readiness assessment, the transformation architecture (processes, technology, data, culture), workstream design and governance structure, technology roadmap and vendor selection approach, change management and communication plan, capability building and training program, quick wins to build momentum in the first 90 days, how to measure transformation progress, and how to sustain the transformation after the initial program ends.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/scaleup', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, bottleneck } = req.body;
+  const prompt = `You are a scale-up operations and hypergrowth expert. Build a scale-up blueprint for ${company} at ${stage} transitioning through ${bottleneck}. Cover the three main scale-up transitions (product-market fit → go-to-market fit → growth and efficiency), what breaks at each stage, the organizational design needed at each stage, how to build repeatable and scalable processes, the metrics that matter at each stage, how to preserve culture while scaling fast, the leadership team evolution, and how to avoid the top five scale-up traps (premature scaling, hiring ahead of revenue, losing product focus, founder bottlenecks, culture drift).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/gtm-sequence', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, resources } = req.body;
+  const prompt = `You are a go-to-market sequencing and market entry expert. Design the GTM sequencing strategy for ${product} entering ${market} with ${resources}. Cover market segmentation and the beachhead segment selection, the ideal customer profile for the first 10 customers vs. the first 100, the sales motion for each stage (founder-led → sales-assisted → full sales team), how to sequence geographic expansion, how to sequence product expansion (land → expand → platform), resource allocation across acquisition channels over time, and when to pour fuel on the fire vs. when to stay focused.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/revenue-arch', requireAuth, async (req: AuthRequest, res) => {
+  const { company, model, target } = req.body;
+  const prompt = `You are a revenue strategy and business model expert. Design the revenue architecture for ${company} with ${model} business model targeting ${target}. Cover the primary revenue stream design, secondary and complementary revenue streams, the pricing architecture that enables expansion revenue, the revenue recognition model and implications, how to build predictable and recurring revenue, the unit economics model (CAC, LTV, payback, gross margin), revenue retention mechanics, and the 3-year revenue model with assumptions, scenarios, and the key drivers that will make or break the revenue plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/crisis-comm', requireAuth, async (req: AuthRequest, res) => {
+  const { company, scenario, stakeholders } = req.body;
+  const prompt = `You are a crisis communications and reputation management expert. Build a crisis communications plan for ${company} for ${scenario} scenario impacting ${stakeholders}. Cover the crisis response team and decision-making authority, the first 24 hours playbook (internal notification, external holding statement, media response), stakeholder-specific communication templates (customers, employees, investors, media, regulators), social media monitoring and response protocol, how to communicate when you dont have all the facts yet, the post-crisis reputation recovery strategy, and how to use this crisis to strengthen trust long-term. Include a tabletop exercise guide to practice this plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ma-integration', requireAuth, async (req: AuthRequest, res) => {
+  const { acquirer, target, goals } = req.body;
+  const prompt = `You are an M&A integration and corporate development expert. Build an M&A integration playbook for ${acquirer} acquiring ${target} to achieve ${goals}. Cover the integration thesis and success definition, Day 1 readiness (employee communications, customer communications, vendor notifications), the integration management office setup, workstream planning (people, culture, technology, customers, finance, legal), the first 100 days priorities, how to retain key talent during integration uncertainty, customer retention during the transition, technology and systems integration sequencing, and how to measure integration success at 6 months and 12 months.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/growth-model', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, horizon } = req.body;
+  const prompt = `You are a financial modeling and SaaS metrics expert. Build a financial growth model for ${company} at ${stage} stage for a ${horizon} horizon. Cover the revenue model (new bookings, expansion, churn), headcount plan by department, COGS and gross margin build, operating expense model (S&M, R&D, G&A), EBITDA and cash flow projections, unit economics deep dive (CAC, LTV, payback period, cohort analysis), scenario modeling (base, bull, bear), the key assumptions and sensitivities, and how to present this model to investors vs. to the board vs. to the operating team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cs/support-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, volume, goals } = req.body;
+  const prompt = `You are a customer support operations and service design expert. Build a support operations system for ${company} handling ${volume} tickets to achieve ${goals}. Cover tier structure (T1 self-service, T2 human, T3 engineering escalation), support channel strategy (chat, email, phone, community), SLA design by tier and customer segment, the knowledge base architecture and content strategy, ticket routing and assignment logic, quality assurance and CSAT measurement, deflection strategy (AI, docs, community), support team hiring and training, and how to evolve from reactive support to proactive success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/process', requireAuth, async (req: AuthRequest, res) => {
+  const { product, cycle, team } = req.body;
+  const prompt = `You are a sales process design and methodology expert. Architect the complete sales process for ${product} with ${cycle} sales cycle for ${team} team size. Cover the stage definitions with entry/exit criteria, the buyer journey mapped to each stage, required activities at each stage (discovery questions, demo outline, business case template, procurement navigation), opportunity scoring and prioritization, the CRM workflow and required fields, deal desk and approval process, win/loss analysis framework, sales methodology selection (MEDDIC, SPIN, Challenger, Command of the Message), and how to onboard new reps to this process in 30 days.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/workforce-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { company, growth, departments } = req.body;
+  const prompt = `You are a workforce planning and organizational design expert. Build a workforce plan for ${company} growing ${growth} across ${departments}. Cover the headcount planning methodology (top-down vs. bottoms-up), hiring plan by department and quarter, the recruiting capacity and sourcing strategy, time-to-hire and ramp time assumptions, span of control principles by role type, the org chart evolution at each stage, total compensation budget model (base, bonus, equity), facilities and real estate implications, and how to manage hiring velocity when growth accelerates or slows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/design-thinking', requireAuth, async (req: AuthRequest, res) => {
+  const { problem, team, timeline } = req.body;
+  const prompt = `You are a design thinking and innovation workshop expert. Design a design thinking workshop for ${problem} with ${team} team over ${timeline}. Structure: Empathize (user interviews, empathy map, journey map), Define (problem statement, HMW questions, user needs), Ideate (brainstorming techniques, idea generation, concept development), Prototype (rapid prototyping methods, fidelity decisions), Test (usability testing plan, feedback synthesis). Include facilitator guide with timing, materials needed, virtual vs. in-person adaptations, how to synthesize outputs into actionable next steps, and how to sustain design thinking beyond the workshop.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
