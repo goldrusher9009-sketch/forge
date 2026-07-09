@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v444.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v445.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191549,6 +191549,59 @@ app.post('/api/product/feedback-system', requireAuth, async (req: AuthRequest, r
 app.post('/api/sales/customer-story', requireAuth, async (req: AuthRequest, res) => {
   const { customer, useCase, results } = req.body;
   const prompt = `Craft a compelling customer story for sales.\nCustomer: ${customer}\nUse case: ${useCase}\nResults achieved: ${results}\nInclude: elevator version (2-3 sentences), full story narrative (situation/challenge/solution/results), quantified business impact, customer quote crafting guide, visuals and data to include, objection pre-emption embedded in the story, how to use this story in different contexts (email/call/deck/website), competitive differentiation angles, and follow-up proof point requests to gather from the customer.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 309+310 routes
+app.post('/api/dev/api-docs-design', requireAuth, async (req: AuthRequest, res) => {
+  const { apiType, audience, style } = req.body;
+  const prompt = `Design API documentation.\nAPI type: ${apiType}\nAudience: ${audience}\nDocumentation style: ${style}\nInclude: documentation structure (quickstart/authentication/endpoints/SDKs/changelog), OpenAPI/Swagger spec design best practices, code example strategy (multiple languages), interactive API explorer setup, error code documentation format, versioning documentation approach, webhook documentation template, SDK documentation alignment, getting started tutorial design, and how to keep API docs in sync with code.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/qbr-prep', requireAuth, async (req: AuthRequest, res) => {
+  const { account, period, goals } = req.body;
+  const prompt = `Prepare a Quarterly Business Review.\nAccount: ${account}\nReview period: ${period}\nBusiness goals: ${goals}\nInclude: QBR agenda and timing, executive summary structure, metrics review (usage/adoption/ROI achieved), wins and success stories, challenges addressed and outstanding, roadmap preview relevant to their needs, strategic discussion topics, renewal/expansion framing, action items and owner assignments, and how to run a QBR that results in expansion rather than just retention.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/moat-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { product, competitors, advantages } = req.body;
+  const prompt = `Analyze and strengthen product moat.\nProduct: ${product}\nCompetitors: ${competitors}\nCurrent advantages: ${advantages}\nInclude: moat type classification (network effects/switching costs/data/brand/economies of scale/regulatory), moat strength assessment (weak/developing/strong), competitor attack vectors analysis, moat deepening investments prioritized by ROI, time to moat replication estimate, moat communication for investors and customers, and roadmap items that specifically strengthen the moat.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/conversion-optimize', requireAuth, async (req: AuthRequest, res) => {
+  const { page, traffic, currentRate } = req.body;
+  const prompt = `Optimize conversion rate for a page.\nPage type: ${page}\nMonthly traffic: ${traffic}\nCurrent conversion rate: ${currentRate}\nInclude: CRO audit framework (value proposition clarity/friction removal/trust signals), above-the-fold optimization, social proof placement strategy, CTA optimization (copy/placement/design), form length optimization, page speed impact on conversion, mobile conversion differences, heatmap interpretation guide, A/B test roadmap ordered by impact, and realistic conversion rate improvement targets.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/offboarding-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { role, notice, knowledge } = req.body;
+  const prompt = `Design a comprehensive offboarding plan.\nRole departing: ${role}\nNotice period: ${notice}\nKnowledge to transfer: ${knowledge}\nInclude: offboarding checklist (IT/HR/legal/finance), knowledge transfer documentation plan, transition meeting structure, client/stakeholder handoff communications, access revocation sequence (day-1 vs. last-day), exit interview design, equipment return process, reference policy, alumni network strategy, and how to maintain the relationship for potential boomerang hire.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/fund-model', requireAuth, async (req: AuthRequest, res) => {
+  const { size, strategy, stage } = req.body;
+  const prompt = `Build a venture fund financial model.\nFund size: ${size}\nInvestment strategy: ${strategy}\nTarget stage: ${stage}\nInclude: fee and carry structure modeling, management company budget, deployment timeline, portfolio construction (number of companies/check sizes/reserves), power law return assumptions, fund IRR and TVPI targets, recycling mechanics, GP commitment calculation, waterfall distribution model, fundraising timeline and LP target mix, and how to present the fund economics to prospective LPs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/load-testing', requireAuth, async (req: AuthRequest, res) => {
+  const { endpoints, users, sla } = req.body;
+  const prompt = `Design a load testing strategy.\nEndpoints to test: ${endpoints}\nExpected concurrent users: ${users}\nSLA targets: ${sla}\nInclude: load test type selection (load/stress/spike/soak/volume), tool recommendation (k6/Locust/JMeter/Gatling), realistic user journey scripting, data parameterization for realistic load, ramp-up profile design, baseline establishment methodology, bottleneck identification during test, SLA breach alerting, results analysis and reporting, and how to integrate load tests into CI/CD as a quality gate.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/content-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { domain, goals, volume } = req.body;
+  const prompt = `Conduct a content audit.\nDomain/site: ${domain}\nMarketing goals: ${goals}\nContent volume: ${volume}\nInclude: content inventory methodology, performance scoring by page (traffic/engagement/conversions/backlinks), content classification (keep/update/consolidate/remove), content gap identification vs. competitors, topic cluster completeness analysis, internal linking audit, content ROI calculation, refresh priority matrix, cannibalization issues, and 90-day content optimization roadmap based on audit findings.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/launch-readiness', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, date, teams } = req.body;
+  const prompt = `Assess feature launch readiness.\nFeature: ${feature}\nTarget launch date: ${date}\nTeams involved: ${teams}\nInclude: launch readiness checklist by function (eng/product/marketing/sales/CS/legal), go/no-go criteria definition, rollback plan requirements, feature flag strategy, monitoring and alerting setup, support team preparation (docs/training/runbooks), sales enablement completion criteria, comms plan (internal then external), post-launch monitoring cadence (1hr/24hr/7day/30day), and retrospective plan for launch learnings.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/customer-advisory-board', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, goals, members } = req.body;
+  const prompt = `Design a Customer Advisory Board.\nCompany stage: ${stage}\nCAB goals: ${goals}\nTarget member profile: ${members}\nInclude: CAB charter and purpose, member selection criteria and composition (10-15 ideal members), recruitment and commitment ask, meeting cadence and format (in-person/virtual), agenda design for maximum value, how to use CAB input in product decisions, member benefits and recognition, confidentiality framework, CAB lifecycle management (rotation policy), and how to leverage CAB members as references and advocates.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
