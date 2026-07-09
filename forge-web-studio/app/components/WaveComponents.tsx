@@ -16502,3 +16502,113 @@ export function ForgeTab_salesdiscoveryprocess378() {
   const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/sales/discovery-process', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({product, buyer, dealsize})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
   return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🕵️ Discovery Process</h2><div style={{display:'grid',gap:'1rem'}}><input value={product} onChange={e=>setProduct(e.target.value)} placeholder="Product" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={buyer} onChange={e=>setBuyer(e.target.value)} placeholder="Buyer" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={dealsize} onChange={e=>setDealsize(e.target.value)} placeholder="Dealsize" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!product||!buyer||!dealsize} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
 }
+
+export function ForgeTab_devdatabaseoptimization379() {
+  const [database, setDatabase] = React.useState('');
+  const [queries, setQueries] = React.useState('');
+  const [scale, setScale] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/dev/database-optimization', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({database, queries, scale})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>⚡ Database Optimization</h2><div style={{display:'grid',gap:'1rem'}}><input value={database} onChange={e=>setDatabase(e.target.value)} placeholder="Database" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={queries} onChange={e=>setQueries(e.target.value)} placeholder="Queries" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={scale} onChange={e=>setScale(e.target.value)} placeholder="Scale" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!database||!queries||!scale} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
+}
+
+export function ForgeTab_saleschurnprevention379() {
+  const [product, setProduct] = React.useState('');
+  const [signals, setSignals] = React.useState('');
+  const [segment, setSegment] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/sales/churn-prevention', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({product, signals, segment})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🛡️ Churn Prevention</h2><div style={{display:'grid',gap:'1rem'}}><input value={product} onChange={e=>setProduct(e.target.value)} placeholder="Product" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={signals} onChange={e=>setSignals(e.target.value)} placeholder="Signals" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={segment} onChange={e=>setSegment(e.target.value)} placeholder="Segment" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!product||!signals||!segment} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
+}
+
+export function ForgeTab_productpriceoptimization379() {
+  const [product, setProduct] = React.useState('');
+  const [tiers, setTiers] = React.useState('');
+  const [data, setData] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/product/price-optimization', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({product, tiers, data})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>💡 Price Optimization</h2><div style={{display:'grid',gap:'1rem'}}><input value={product} onChange={e=>setProduct(e.target.value)} placeholder="Product" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={tiers} onChange={e=>setTiers(e.target.value)} placeholder="Tiers" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={data} onChange={e=>setData(e.target.value)} placeholder="Data" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!product||!tiers||!data} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
+}
+
+export function ForgeTab_marketinginfluencer379() {
+  const [brand, setBrand] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [budget, setBudget] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/marketing/influencer-strategy', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({brand, audience, budget})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🌟 Influencer Strategy</h2><div style={{display:'grid',gap:'1rem'}}><input value={brand} onChange={e=>setBrand(e.target.value)} placeholder="Brand" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={audience} onChange={e=>setAudience(e.target.value)} placeholder="Audience" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={budget} onChange={e=>setBudget(e.target.value)} placeholder="Budget" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!brand||!audience||!budget} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
+}
+
+export function ForgeTab_finrevenuerecognition379() {
+  const [model, setModel] = React.useState('');
+  const [contracts, setContracts] = React.useState('');
+  const [standard, setStandard] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/finance/revenue-recognition', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({model, contracts, standard})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>📑 Revenue Recognition</h2><div style={{display:'grid',gap:'1rem'}}><input value={model} onChange={e=>setModel(e.target.value)} placeholder="Model" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={contracts} onChange={e=>setContracts(e.target.value)} placeholder="Contracts" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={standard} onChange={e=>setStandard(e.target.value)} placeholder="Standard" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!model||!contracts||!standard} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
+}
+
+export function ForgeTab_investorportstrategy380() {
+  const [stage, setStage] = React.useState('');
+  const [sectors, setSectors] = React.useState('');
+  const [thesis, setThesis] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/investor/portfolio-strategy', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({stage, sectors, thesis})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🏦 Portfolio Strategy</h2><div style={{display:'grid',gap:'1rem'}}><input value={stage} onChange={e=>setStage(e.target.value)} placeholder="Stage" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={sectors} onChange={e=>setSectors(e.target.value)} placeholder="Sectors" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={thesis} onChange={e=>setThesis(e.target.value)} placeholder="Thesis" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!stage||!sectors||!thesis} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
+}
+
+export function ForgeTab_devobservabilitystack380() {
+  const [app, setApp] = React.useState('');
+  const [infra, setInfra] = React.useState('');
+  const [team, setTeam] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/dev/observability-stack', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({app, infra, team})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>📡 Observability Stack</h2><div style={{display:'grid',gap:'1rem'}}><input value={app} onChange={e=>setApp(e.target.value)} placeholder="App" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={infra} onChange={e=>setInfra(e.target.value)} placeholder="Infra" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={team} onChange={e=>setTeam(e.target.value)} placeholder="Team" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!app||!infra||!team} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
+}
+
+export function ForgeTab_hronboarding380() {
+  const [role, setRole] = React.useState('');
+  const [team, setTeam] = React.useState('');
+  const [remote, setRemote] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/hr/onboarding-program', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({role, team, remote})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🎉 Onboarding Program</h2><div style={{display:'grid',gap:'1rem'}}><input value={role} onChange={e=>setRole(e.target.value)} placeholder="Role" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={team} onChange={e=>setTeam(e.target.value)} placeholder="Team" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={remote} onChange={e=>setRemote(e.target.value)} placeholder="Remote" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!role||!team||!remote} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
+}
+
+export function ForgeTab_marketingcommunityled380() {
+  const [product, setProduct] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [stage, setStage] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/marketing/community-led-growth', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({product, audience, stage})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>👥 Community-Led Growth</h2><div style={{display:'grid',gap:'1rem'}}><input value={product} onChange={e=>setProduct(e.target.value)} placeholder="Product" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={audience} onChange={e=>setAudience(e.target.value)} placeholder="Audience" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={stage} onChange={e=>setStage(e.target.value)} placeholder="Stage" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!product||!audience||!stage} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
+}
+
+export function ForgeTab_salesnegotiation380() {
+  const [deal, setDeal] = React.useState('');
+  const [buyer, setBuyer] = React.useState('');
+  const [objections, setObjections] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/sales/negotiation-playbook', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({deal, buyer, objections})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🤜 Negotiation Playbook</h2><div style={{display:'grid',gap:'1rem'}}><input value={deal} onChange={e=>setDeal(e.target.value)} placeholder="Deal" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={buyer} onChange={e=>setBuyer(e.target.value)} placeholder="Buyer" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={objections} onChange={e=>setObjections(e.target.value)} placeholder="Objections" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!deal||!buyer||!objections} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
+}
