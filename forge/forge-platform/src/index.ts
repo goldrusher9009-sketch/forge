@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v428.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v429.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190701,6 +190701,59 @@ app.post('/api/product/deprecation-plan', requireAuth, async (req: AuthRequest, 
 app.post('/api/sales/competitive-displacement', requireAuth, async (req: AuthRequest, res) => {
   const { competitor, account, wedge } = req.body;
   const prompt = `Build a competitive displacement strategy.\nIncumbent competitor: ${competitor}\nTarget account: ${account}\nWedge opportunity: ${wedge}\nInclude: incumbent weakness identification, switching cost analysis, land-and-expand entry point, ROI of switching argument, risk reversal offer, proof points needed, timeline to full displacement, and how to protect the account once won.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 277+278 routes
+app.post('/api/dev/open-source-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, components, goal } = req.body;
+  const prompt = `Design an open source strategy.\nProduct: ${product}\nComponents to open source: ${components}\nGoal: ${goal}\nInclude: what to open source vs. keep proprietary, license selection, community governance model, contributor onboarding, documentation requirements, security policy, and how open source drives commercial value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/proof-of-value', requireAuth, async (req: AuthRequest, res) => {
+  const { useCase, metrics, duration } = req.body;
+  const prompt = `Design a Proof of Value (POV) program.\nUse case: ${useCase}\nSuccess metrics: ${metrics}\nDuration: ${duration}\nInclude: POV scope definition, mutual success plan template, weekly checkpoint agenda, data collection plan, executive readout format, go/no-go criteria, and how to convert POV to paid contract.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/growth-model', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, channels, levers } = req.body;
+  const prompt = `Build a product growth model.\nCompany stage: ${stage}\nAcquisition channels: ${channels}\nGrowth levers: ${levers}\nInclude: growth accounting (new/retained/resurrected/churned), acquisition funnel with conversion rates, activation milestone definition, retention curve analysis, referral coefficient, and 90-day growth experiment roadmap.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/retargeting-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { audience, platform, offer } = req.body;
+  const prompt = `Design a retargeting campaign strategy.\nAudience segments: ${audience}\nPlatform: ${platform}\nOffer: ${offer}\nInclude: audience segmentation by behavior (page views, cart abandon, trial), ad sequence design, frequency caps, creative fatigue management, exclusion lists, bid strategy by segment, and measurement/attribution approach.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/climate-survey', requireAuth, async (req: AuthRequest, res) => {
+  const { size, issues, cadence } = req.body;
+  const prompt = `Design an employee climate survey program.\nTeam size: ${size}\nKnown concerns: ${issues}\nCadence: ${cadence}\nInclude: survey design (pulse vs. annual), question bank by dimension (engagement/inclusion/manager/growth), anonymity approach, communication plan pre/post survey, manager reporting design, action planning framework, and how to close the loop with employees.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/portfolio-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { portfolio, resources, focus } = req.body;
+  const prompt = `Build a portfolio operations program.\nPortfolio: ${portfolio}\nAvailable resources: ${resources}\nFocus area: ${focus}\nInclude: talent network activation playbook, vendor/discount program, cross-portfolio knowledge sharing, CEO peer group design, operational benchmarking framework, and quarterly portfolio-wide initiatives.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/feature-flags-system', requireAuth, async (req: AuthRequest, res) => {
+  const { stack, scale, requirements } = req.body;
+  const prompt = `Design a feature flag system.\nTech stack: ${stack}\nScale: ${scale}\nRequirements: ${requirements}\nInclude: build vs. buy recommendation (LaunchDarkly/Unleash/custom), flag taxonomy, targeting rules design, kill switch implementation, flag lifecycle management, technical debt cleanup policy, and SDK integration patterns.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/launch-pr', requireAuth, async (req: AuthRequest, res) => {
+  const { product, angle, outlets } = req.body;
+  const prompt = `Write a product launch PR strategy.\nProduct: ${product}\nNews angle: ${angle}\nTarget outlets: ${outlets}\nInclude: press release (full draft), pitch email for tech journalists, embargo strategy, spokesperson Q&A prep, social media amplification plan, analyst briefing approach, and timeline from embargo lift to coverage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/onboarding-flow', requireAuth, async (req: AuthRequest, res) => {
+  const { persona, goal, friction } = req.body;
+  const prompt = `Design a product onboarding flow.\nUser persona: ${persona}\nOnboarding goal (aha moment): ${goal}\nCurrent friction points: ${friction}\nInclude: step-by-step flow map, time-to-value optimization, progressive disclosure strategy, empty state design, tooltip/checklist approach, email drip sequence, and how to measure onboarding success (activation rate, day-7 retention).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/customer-success-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { account, goals, risks } = req.body;
+  const prompt = `Build a customer success plan.\nAccount: ${account}\nCustomer goals: ${goals}\nChurn risks: ${risks}\nInclude: success milestone map, health score definition, EBR cadence and agenda, adoption playbook, at-risk intervention triggers, renewal strategy, expansion signals to watch, and how to build executive relationships.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
