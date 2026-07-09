@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v686.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v687.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205397,6 +205397,66 @@ app.post('/api/strategy/virtual-assistant', requireAuth, async (req: AuthRequest
 app.post('/api/strategy/procurement-strategy', requireAuth, async (req: AuthRequest, res) => {
   const { organization, spend, priorities } = req.body;
   const prompt = `You are a procurement strategy and strategic sourcing expert. Design procurement strategy for ${organization} with ${spend} across ${priorities}. Cover procurement strategy framework, spend categorization and category strategy, supply market analysis and supplier landscape, total cost of ownership approach, strategic vs tactical sourcing, preferred supplier program, innovation and value creation in procurement, sustainability in supply chain, procurement KPIs and performance management, and how to develop procurement strategies that create genuine competitive advantage by sourcing more effectively than competitors through superior market intelligence, stronger supplier relationships, and more sophisticated approaches to specification, total cost, and risk management rather than simply negotiating harder on unit price.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/certification', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, certification, market } = req.body;
+  const prompt = `You are a certification strategy and standards compliance expert. Design certification strategy for ${organization} pursuing ${certification} in ${market}. Cover certification strategy framework, certification landscape and standard selection, gap analysis and readiness assessment, implementation roadmap and project management, documentation and evidence preparation, auditor management and audit readiness, corrective action and non-conformance management, certification maintenance and surveillance, multi-standard integration, and how to pursue certifications efficiently by understanding what auditors actually look for and building management systems that are genuinely effective at achieving the quality and compliance outcomes the certification is meant to ensure rather than creating documentation systems that satisfy auditors without actually changing how the organization operates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/transport-logistics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, freight, network } = req.body;
+  const prompt = `You are a transportation and logistics strategy and freight management expert. Design transport logistics for ${company} moving ${freight} across ${network}. Cover transportation logistics framework, mode selection and optimization, carrier selection and management, freight rate negotiation, customs and trade compliance, carrier performance management, freight audit and payment, transportation management system selection, sustainability in transport, and how to design transportation logistics networks that deliver the service levels customers require at the lowest total cost by optimizing across mode, carrier, routing, and consolidation decisions rather than optimizing each shipment individually without visibility into the overall network patterns that create systemic inefficiency.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ngo-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, mission, resources } = req.body;
+  const prompt = `You are an NGO operations strategy and nonprofit management expert. Design NGO operations for ${organization} pursuing ${mission} with ${resources}. Cover NGO operations framework, theory of change and impact measurement, program design and evaluation, fundraising strategy and donor relations, grant management and compliance, volunteer and human resources management, financial management and overhead ratio, advocacy and policy engagement, partnership and network strategy, and how to build NGO operations that maximize mission impact per dollar of resources by applying rigorous evidence about what interventions work, managing overhead efficiently without cutting the organizational capacity that mission delivery requires, and building the donor relationships and institutional funding that allow the organization to plan for the long term.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/portfolio-mgmt', requireAuth, async (req: AuthRequest, res) => {
+  const { manager, assets, objectives } = req.body;
+  const prompt = `You are a portfolio management strategy and asset allocation expert. Design portfolio management for ${manager} with ${assets} toward ${objectives}. Cover portfolio management framework, asset allocation and strategic asset mix, factor exposure and risk premia, portfolio construction and diversification, rebalancing strategy and frequency, tax-aware portfolio management, liability-driven investment, performance attribution and benchmarking, manager selection and due diligence, and how to manage investment portfolios that achieve the objectives of capital preservation, income generation, or long-term growth that different investors require by making disciplined asset allocation decisions grounded in long-term expected returns and risk rather than reacting to short-term market movements that are impossible to predict consistently.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/operations-research', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, problem, constraints } = req.body;
+  const prompt = `You are an operations research strategy and mathematical optimization expert. Design operations research solution for ${organization} solving ${problem} within ${constraints}. Cover operations research framework, linear and integer programming formulation, network optimization and graph algorithms, simulation modeling and Monte Carlo, queuing theory and capacity modeling, scheduling and sequencing optimization, stochastic optimization under uncertainty, heuristics and metaheuristics for complex problems, implementation and operationalization, and how to apply operations research methods to business problems in ways that actually get implemented and used by decision makers by combining mathematical rigor with practical understanding of the constraints and preferences that determine whether an optimal solution is feasible in the real operating environment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/growth-systems', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, levers } = req.body;
+  const prompt = `You are a growth systems strategy and scalable growth architecture expert. Design growth systems for ${company} at ${stage} using ${levers}. Cover growth systems framework, growth model and driver identification, acquisition and activation optimization, retention and resurrection loop design, referral and virality mechanics, monetization and expansion revenue, growth analytics and instrumentation, growth team structure and process, experimentation culture and velocity, and how to build growth systems that compound over time by designing acquisition, activation, retention, and monetization mechanics that reinforce each other in a flywheel rather than relying on individual campaigns or initiatives that generate episodic growth without building the systemic capabilities that sustain growth as the company scales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/clinical-trials', requireAuth, async (req: AuthRequest, res) => {
+  const { sponsor, indication, endpoint } = req.body;
+  const prompt = `You are a clinical trials strategy and drug development expert. Design clinical trial for ${sponsor} in ${indication} with ${endpoint}. Cover clinical trials framework, trial design and phase strategy, primary and secondary endpoint selection, patient population and inclusion exclusion criteria, sample size and statistical power, site selection and activation, patient recruitment and retention, adaptive trial design, data monitoring and safety, and how to design clinical trials that generate the evidence needed to support regulatory approval and market access decisions as efficiently as possible by making the right choices about trial design, endpoint selection, patient population, and sample size that balance the need for definitive evidence with the time and cost pressures of drug development.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/agile-innovation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, domain, resources } = req.body;
+  const prompt = `You are an agile innovation strategy and rapid experimentation expert. Design agile innovation for ${organization} in ${domain} with ${resources}. Cover agile innovation framework, lean startup and build-measure-learn, hypothesis-driven development, minimum viable product and experiment design, pivot vs persevere decision framework, sprint-based innovation cadence, innovation portfolio and stage-gate integration, cross-functional innovation teams, innovation metrics and learning velocity, and how to build agile innovation capabilities that generate insights and validated innovations faster by reducing the cost and time of experiments, running more experiments in parallel, and making faster and better decisions about which experiments to scale based on what the data actually shows rather than what teams hoped to find.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/global-supply-chain', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, regions } = req.body;
+  const prompt = `You are a global supply chain strategy and international operations expert. Design global supply chain for ${company} with ${products} across ${regions}. Cover global supply chain framework, supply chain network design for global operations, nearshoring and reshoring strategy, multi-tier supplier mapping and risk, international logistics and trade compliance, currency and financial risk in global supply chains, supply chain resilience and disruption response, carbon footprint of global supply chains, digital supply chain visibility and control tower, and how to design global supply chains that balance the cost efficiency of global sourcing with the resilience, responsiveness, and sustainability that supply chain disruptions and shifting stakeholder expectations have made increasingly important considerations alongside unit cost.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/content-monetization', requireAuth, async (req: AuthRequest, res) => {
+  const { creator, content, audience } = req.body;
+  const prompt = `You are a content monetization strategy and creator economy expert. Design content monetization for ${creator} with ${content} and ${audience}. Cover content monetization framework, advertising and sponsorship models, subscription and membership models, digital products and courses, live events and experiences, affiliate and commerce integration, licensing and syndication, brand partnerships and collaborations, community and social commerce, and how to design content monetization strategies that generate sustainable income by building genuine audience relationships and delivering content that audiences value enough to pay for in some form, rather than relying entirely on advertising revenue that requires massive scale and creates incentives to optimize for engagement metrics rather than genuine audience value.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
