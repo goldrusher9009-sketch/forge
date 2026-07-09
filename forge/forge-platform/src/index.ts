@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v650.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v651.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203237,6 +203237,66 @@ app.post('/api/marketing/product-launch', requireAuth, async (req: AuthRequest, 
 app.post('/api/operations/ops-dashboard', requireAuth, async (req: AuthRequest, res) => {
   const { organization, audience, metrics } = req.body;
   const prompt = `You are an operational dashboard design and business intelligence expert. Design the operations dashboard for ${organization} for ${audience} showing ${metrics}. Cover the dashboard design framework, the metric selection and hierarchy, the executive vs. operational vs. tactical dashboards, the leading vs. lagging indicators, the anomaly detection and alerting, the dashboard layout and information hierarchy, the data refresh and latency requirements, the dashboard adoption and usage, the dashboard governance and maintenance, and how to design operational dashboards that give decision-makers the right information at the right level of detail to take action rather than overwhelming them with data that does not connect clearly to decisions they need to make, that highlight anomalies and exceptions that require attention rather than requiring users to hunt for problems in large tables of data.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/churn-prevention', requireAuth, async (req: AuthRequest, res) => {
+  const { product, churnsegment, stage } = req.body;
+  const prompt = `You are a customer churn prevention and retention strategy expert. Design the churn prevention system for ${product} targeting ${churnsegment} at ${stage}. Cover the churn prevention framework, the churn prediction and early warning signals, the churn risk scoring model, the intervention playbooks by risk tier, the customer health scoring, the customer success escalation, the win-back program design, the product experience improvements for at-risk users, the churn analysis and root cause investigation, and how to build churn prevention systems that identify at-risk customers early enough to intervene effectively, that deliver the right intervention for each customer situation rather than one-size-fits-all retention tactics, and that address the root causes of churn through product and experience improvements rather than just buying more time with at-risk customers through discounts and manual outreach.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/ab-testing', requireAuth, async (req: AuthRequest, res) => {
+  const { product, hypothesis, metric } = req.body;
+  const prompt = `You are an A/B testing methodology and experimentation platform expert. Design the A/B test for ${product} testing "${hypothesis}" measuring ${metric}. Cover the A/B testing framework, the experiment design and hypothesis formulation, the sample size and statistical power calculation, the control and treatment setup, the randomization and assignment methodology, the guardrail metrics, the test duration and stopping rules, the results analysis and interpretation, the experiment velocity and culture, and how to design A/B tests that produce statistically valid and practically meaningful results rather than tests that run for too short a time, have insufficient sample sizes, or measure the wrong metrics, and how to build an experimentation culture that learns fast from many small tests rather than making big bets on untested assumptions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/customer-journey', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customer, stage } = req.body;
+  const prompt = `You are a customer journey mapping and experience design expert. Map the customer journey for ${product} for ${customer} at ${stage}. Cover the journey mapping framework, the journey stages and touchpoints, the customer goals and jobs-to-be-done, the pain points and friction identification, the moments of truth, the emotional journey mapping, the cross-channel journey integration, the journey metrics and measurement, the journey optimization prioritization, and how to use customer journey maps to align the organization around the customer experience, identify the highest-impact improvements to make, and design the end-to-end experience that makes customers successful and generates the word-of-mouth advocacy that drives organic growth better than any marketing campaign.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/growth-model', requireAuth, async (req: AuthRequest, res) => {
+  const { business, channels, horizon } = req.body;
+  const prompt = `You are a growth modeling and financial projection expert. Build the growth model for ${business} across ${channels} over ${horizon}. Cover the growth model framework, the acquisition funnel model, the cohort retention model, the revenue expansion model, the unit economics model, the channel attribution model, the growth loop identification, the model sensitivity analysis, the model assumptions and validation, and how to build growth models that provide useful guidance for resource allocation and strategy decisions rather than false precision about an inherently uncertain future, that identify the key assumptions that most affect the outcome so you can test them with real data rather than continuing to refine the model spreadsheet, and that are simple enough for the whole team to understand and align around rather than complex enough that only the analyst who built it understands what the inputs mean.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/supply-chain', requireAuth, async (req: AuthRequest, res) => {
+  const { business, product, challenge } = req.body;
+  const prompt = `You are a supply chain strategy and operations management expert. Optimize the supply chain for ${business} with ${product} addressing ${challenge}. Cover the supply chain framework, the supply chain mapping and visibility, the supplier selection and management, the demand forecasting and inventory, the logistics and fulfillment optimization, the supply chain resilience and risk management, the nearshoring and reshoring strategy, the technology and automation in supply chain, the sustainability and ESG in supply chain, and how to build supply chains that balance efficiency with resilience, that provide the visibility and flexibility to respond to disruption without accumulating excessive inventory costs, and that create the supplier relationships that give you preferential treatment and early warning about supply constraints that could affect your business.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/pricing-psychology', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customers, goal } = req.body;
+  const prompt = `You are a pricing psychology and behavioral economics expert. Apply pricing psychology to ${product} for ${customers} toward ${goal}. Cover the pricing psychology framework, the anchoring and reference price effects, the decoy pricing strategy, the charm pricing and price ending effects, the price bundling and unbundling, the loss aversion and framing effects, the scarcity and urgency cues, the social proof in pricing, the payment timing and pain of paying, and how to apply pricing psychology principles that help customers make better buying decisions by presenting price information in the most clear and value-contextualized way, while avoiding manipulative tactics that create short-term conversions at the cost of customer trust and long-term relationship quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/content-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, goals, team } = req.body;
+  const prompt = `You are a content operations and content marketing excellence expert. Design the content operations for ${organization} with ${goals} for ${team}. Cover the content ops framework, the content strategy and pillar planning, the editorial calendar and workflow, the content creation process and templates, the content distribution and syndication, the content performance measurement, the content technology stack, the content team structure and roles, the content repurposing and amplification, and how to build content operations that produce high-quality content consistently at the pace your audience expects, that measure content performance against business outcomes rather than vanity metrics, and that create the distribution and amplification systems that ensure your content reaches the right people rather than publishing to an empty room.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/champion-building', requireAuth, async (req: AuthRequest, res) => {
+  const { company, customers, program } = req.body;
+  const prompt = `You are a customer champion and advocacy program design expert. Build the customer champion program for ${company} with ${customers} as ${program}. Cover the champion program framework, the champion identification and qualification, the champion development journey, the executive champion vs. user champion strategies, the champion enablement and resources, the advocacy and reference program, the champion community building, the champion recognition and rewards, the champion measurement and ROI, and how to build customer champion programs that convert satisfied customers into active advocates who drive referrals, participate in case studies, speak at events, and provide references for prospects — creating the social proof and peer influence that is far more effective at driving new customer acquisition than any marketing content your company produces about itself.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/scale-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, bottleneck } = req.body;
+  const prompt = `You are a scaling operations and organizational scale expert. Design the scaling operations for ${company} at ${stage} removing ${bottleneck}. Cover the scaling operations framework, the process documentation and systematization, the delegation and management leverage, the organizational structure for scale, the hiring and onboarding at scale, the culture preservation at scale, the technology and automation for scale, the financial controls at scale, the metrics and accountability at scale, and how to design the operational systems, processes, and organizational structures that allow companies to grow revenue and headcount significantly without the quality and speed degradation, cultural drift, and decision-making dysfunction that derail many companies at the growth inflection point where what worked at smaller scale actively creates problems at larger scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/financial-model', requireAuth, async (req: AuthRequest, res) => {
+  const { company, purpose, horizon } = req.body;
+  const prompt = `You are a financial modeling and business finance expert. Build the financial model for ${company} for ${purpose} over ${horizon}. Cover the financial model framework, the revenue model and drivers, the cost structure and unit economics, the P&L model, the balance sheet model, the cash flow model, the working capital requirements, the scenario and sensitivity analysis, the valuation model, and how to build financial models that illuminate the key business drivers and financial dynamics of your business rather than creating false precision through complex spreadsheets with many inputs that are all guesses, that are structured around the key questions you need to answer rather than completeness for its own sake, and that provide the scenario analysis to understand how the business performs under different assumptions about the key variables that most affect your financial outcomes.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
