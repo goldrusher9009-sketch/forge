@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v646.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v647.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202997,6 +202997,66 @@ app.post('/api/marketing/creative-brief', requireAuth, async (req: AuthRequest, 
 app.post('/api/strategy/market-sizing', requireAuth, async (req: AuthRequest, res) => {
   const { market, segment, approach } = req.body;
   const prompt = `You are a market sizing and TAM/SAM/SOM analysis expert. Size the market for ${market} in ${segment} using ${approach}. Cover the market sizing framework, the top-down market sizing approach, the bottom-up market sizing approach, the TAM total addressable market, the SAM serviceable addressable market, the SOM serviceable obtainable market, the market sizing data sources, the market sizing assumptions and sensitivities, the market sizing validation and triangulation, and how to build market sizing analyses that are credible and defensible to investors and boards rather than arriving at unrealistically large numbers by making heroic assumptions about market share, that triangulate estimates from multiple approaches and data sources to bound the uncertainty, and that clearly document the assumptions and methodology so that the analysis can be updated as new data becomes available and stakeholders can evaluate the quality of the reasoning behind the numbers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/human-resources/talent-branding', requireAuth, async (req: AuthRequest, res) => {
+  const { company, audience, differentiators } = req.body;
+  const prompt = `You are a talent brand and employer value proposition expert. Build the talent brand for ${company} targeting ${audience} with ${differentiators}. Cover the talent branding framework, the EVP development, the candidate persona and journey, the employer brand content strategy, the careers page and digital presence, the social media for talent acquisition, the employee advocacy program, the Glassdoor and employer review strategy, the talent brand measurement, and how to build employer brands that attract the specific talent profiles your company needs by authentically communicating what makes working at your company distinctive and valuable, that leverage employee stories and authentic content rather than generic claims about culture and values that every company makes, and that create the candidate experience from first touchpoint through offer acceptance that reinforces your employer brand at every step.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/key-account-management', requireAuth, async (req: AuthRequest, res) => {
+  const { company, accounts, goals } = req.body;
+  const prompt = `You are a key account management strategy and enterprise relationship expert. Design the KAM program for ${company} managing ${accounts} toward ${goals}. Cover the KAM strategy framework, the account tier definition and qualification, the account planning methodology, the stakeholder mapping and relationship development, the executive sponsor program, the account health scoring, the expansion and cross-sell strategy, the QBR and executive engagement, the KAM team structure and enablement, and how to design key account management programs that systematically grow revenue and deepen relationships with your most important customers, that give key account managers the tools and executive support to operate as strategic advisors to their accounts rather than just reactive order takers, and that create the long-term partnership-level relationships with key accounts that make switching costs so high that your retention is near-certain even when competitors make aggressive attempts to displace you.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/contract-management', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, contracts, goals } = req.body;
+  const prompt = `You are a contract management strategy and legal operations expert. Design the contract management for ${organization} across ${contracts} toward ${goals}. Cover the contract management framework, the contract repository and organization, the contract template library, the contract workflow and approval process, the contract negotiation playbook, the contract risk assessment, the contract obligation tracking, the contract renewal and expiration management, the CLM technology selection, and how to design contract management systems that reduce the time and cost of contracting while improving consistency and risk management, that give legal and business stakeholders visibility into contract status and obligations across the full portfolio, and that automate the routine contracting work that does not require attorney review so that legal resources can focus on the complex, high-stakes contracts where their expertise adds the most value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/retention-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, goals } = req.body;
+  const prompt = `You are a customer retention marketing and lifecycle management expert. Design the retention marketing for ${product} for ${segment} toward ${goals}. Cover the retention marketing framework, the customer lifecycle stage mapping, the engagement and activity tracking, the retention communication strategy, the win-back campaign design, the loyalty and rewards program, the personalization and relevance strategy, the churn prediction and intervention, the retention metrics and measurement, and how to design retention marketing programs that keep customers engaged and growing rather than allowing them to quietly disengage before they formally churn, that use behavioral signals and engagement data to identify at-risk customers early enough to intervene before they have already made their churn decision, and that create the personalized, timely communications that make customers feel understood and valued rather than just another name on a broadcast email list.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/patent-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, innovations, goals } = req.body;
+  const prompt = `You are a patent strategy and intellectual property management expert. Design the patent strategy for ${company} protecting ${innovations} toward ${goals}. Cover the patent strategy framework, the IP landscape analysis, the invention disclosure process, the patent portfolio prioritization, the patent filing strategy, the patent prosecution management, the freedom to operate analysis, the defensive publication strategy, the patent licensing and monetization, and how to design patent strategies that build valuable IP portfolios aligned with business strategy rather than filing patents reactively or for vanity metrics, that identify the innovations that are worth the cost of patent protection versus those that are better protected through trade secrets or speed-to-market advantages, and that use IP as a strategic business tool for competitive differentiation, licensing revenue, and freedom to operate rather than just a legal compliance exercise.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/experimentation', requireAuth, async (req: AuthRequest, res) => {
+  const { team, metric, hypotheses } = req.body;
+  const prompt = `You are a growth experimentation and A/B testing expert. Design the experimentation program for ${team} improving ${metric} testing ${hypotheses}. Cover the experimentation framework, the hypothesis generation and prioritization, the experiment design and statistical methodology, the sample size and power calculation, the A/B and multivariate testing design, the experiment instrumentation, the results analysis and interpretation, the experiment velocity and cadence, the experimentation culture and process, and how to build growth experimentation programs that generate learnings fast enough to compound into meaningful metric improvements, that design experiments with sufficient statistical rigor to distinguish signal from noise, and that build the experimentation infrastructure and culture that makes testing the default approach to product and marketing decisions rather than relying on intuition or HiPPO decisions that cannot be validated or improved through systematic learning.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/revenue-leakage', requireAuth, async (req: AuthRequest, res) => {
+  const { company, revenue, areas } = req.body;
+  const prompt = `You are a revenue leakage identification and prevention expert. Find and fix revenue leakage for ${company} in ${revenue} process across ${areas}. Cover the revenue leakage framework, the billing and invoicing accuracy, the contract-to-invoice reconciliation, the pricing compliance and discount management, the revenue recognition accuracy, the collections and AR management, the subscription and renewal management, the usage and consumption billing accuracy, the revenue leakage measurement, and how to systematically identify and eliminate the revenue that is earned but not collected due to billing errors, pricing non-compliance, collection failures, and process gaps that allow value to flow to customers or be left uncollected when it should be captured as revenue, building the financial controls and process discipline that ensure the revenue your go-to-market teams generate is fully and accurately converted into cash collected.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/partner-program', requireAuth, async (req: AuthRequest, res) => {
+  const { company, partners, model } = req.body;
+  const prompt = `You are a partner program strategy and indirect channel expert. Design the partner program for ${company} with ${partners} using ${model}. Cover the partner program framework, the partner type and tier design, the partner value proposition and economics, the partner recruitment and onboarding, the partner training and certification, the partner marketing and co-marketing, the deal registration and protection, the partner portal and tools, the partner performance management, and how to design partner programs that create genuine mutual value for both your company and your partners rather than one-sided arrangements that partners participate in only because they have no better alternative, that give partners the economics, tools, and support to profitably sell and implement your product, and that attract the highest-quality partners in each tier who bring the customer relationships, technical expertise, and market credibility that meaningfully extend your commercial reach and capabilities.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/tech-moat', requireAuth, async (req: AuthRequest, res) => {
+  const { company, technology, competitors } = req.body;
+  const prompt = `You are a technology competitive moat and defensibility strategy expert. Build the technology moat for ${company} with ${technology} against ${competitors}. Cover the technology moat framework, the proprietary data advantage, the technical complexity and switching costs, the developer ecosystem and platform lock-in, the technology pace and R&D investment, the talent moat and technical expertise, the regulatory and compliance moat, the integration and infrastructure depth, the technology moat measurement, and how to build technology moats that create genuine, lasting competitive advantages that are difficult for competitors to replicate even with significant resource investment, that compound over time as your data, algorithms, and infrastructure become more capable with each customer interaction, and that create the switching costs and ecosystem dependencies that make customers loyal not just because they prefer your product today but because switching would require significant effort, risk, and cost that they rationally choose to avoid.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pitch-deck', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, investors } = req.body;
+  const prompt = `You are a startup pitch deck and investor storytelling expert. Build the pitch deck for ${company} at ${stage} for ${investors}. Cover the pitch deck framework, the problem and opportunity framing, the solution and product story, the market size and opportunity, the business model and unit economics, the traction and validation, the team and credentials, the competitive positioning, the financial projections and ask, and how to build pitch decks that tell a compelling investment story that helps investors quickly understand why your opportunity is large, why your solution is differentiated, why your team is uniquely positioned to win, and why now is the right time to invest, that present traction and unit economics in ways that build confidence in your ability to scale efficiently, and that anticipate and preemptively address the most common investor objections so that questions lead to deeper engagement rather than raising doubts that kill the deal.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
