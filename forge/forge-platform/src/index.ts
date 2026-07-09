@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v618.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v619.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201317,6 +201317,66 @@ app.post('/api/sales/account-planning', requireAuth, async (req: AuthRequest, re
 app.post('/api/strategy/measurement-framework', requireAuth, async (req: AuthRequest, res) => {
   const { initiative, outcomes, leading } = req.body;
   const prompt = `You are a measurement framework and strategic measurement expert. Build the measurement framework for ${initiative} tracking ${outcomes} using ${leading} leading indicators. Cover the measurement framework design principles, the outcome and impact definition, the leading vs. lagging indicator selection, the KPI and metric hierarchy design, the data collection and source mapping, the measurement cadence and review rhythm, the dashboard and visualization design, the target and benchmark setting, the measurement governance, and how to build measurement frameworks that create accountability, surface insights early, and help teams make better decisions faster.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/product-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, capability, differentiation } = req.body;
+  const prompt = `You are an AI product strategy and machine learning product expert. Design the AI product strategy for ${company} building ${capability} as ${differentiation}. Cover the AI product strategy framework, the AI capability assessment and build roadmap, the AI vs. human judgment design, the AI data strategy and flywheel, the AI product experience design, the AI ethics and safety design, the AI model selection and build vs. buy, the AI product metrics and success definition, the competitive moat via AI design, and how to build AI products that create genuine value for users while building compounding data and model advantages that are hard for competitors to replicate.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/influencer', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, category, tier } = req.body;
+  const prompt = `You are an influencer marketing and creator economy expert. Design the influencer program for ${brand} in ${category} targeting ${tier} influencer tier. Cover the influencer marketing strategy and objectives, the influencer tier selection, the influencer discovery and vetting process, the influencer brief and creative direction, the compensation model design, the content approval and compliance process, the influencer relationship management, the campaign performance measurement, the long-term ambassador program design, and how to build an influencer program that creates authentic content, reaches new audiences, and drives measurable business outcomes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/skills-matrix', requireAuth, async (req: AuthRequest, res) => {
+  const { team, skills, gaps } = req.body;
+  const prompt = `You are a skills management and workforce planning expert. Design the skills matrix for ${team} mapping ${skills} to close ${gaps}. Cover the skills framework design and taxonomy, the skills assessment methodology, the skills matrix structure and visualization, the skills gap analysis, the learning and development prioritization, the skills-based hiring design, the internal mobility and skills deployment, the skills development tracking, the future skills anticipation, and how to build a skills matrix that becomes an operational tool for talent decisions rather than a one-time HR exercise that lives in a spreadsheet and collects dust.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/monetization', requireAuth, async (req: AuthRequest, res) => {
+  const { product, users, model } = req.body;
+  const prompt = `You are a product monetization and revenue model expert. Design the monetization for ${product} with ${users} users using ${model} model. Cover the monetization strategy framework, the value metrics and monetization unit selection, the pricing model selection, the freemium and free trial design, the upgrade and conversion funnel design, the pricing page design and psychology, the expansion revenue design, the enterprise and custom pricing, the monetization experiment framework, and how to design a monetization model that captures fair value from users while aligning incentives in a way that drives long-term retention and customer success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/prototyping', requireAuth, async (req: AuthRequest, res) => {
+  const { concept, fidelity, users } = req.body;
+  const prompt = `You are a rapid prototyping and design thinking expert. Prototype ${concept} at ${fidelity} fidelity to validate with ${users}. Cover the prototyping strategy and fidelity selection, the paper and sketch prototyping methodology, the wireframe and lo-fi prototyping design, the interactive prototype design, the prototype testing methodology, the assumption identification and testing priority, the prototype iteration process, the prototype-to-spec handoff design, the usability testing during prototyping, and how to use prototyping to learn fast, fail early, and build shared understanding before committing to expensive development.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/pitch-deck', requireAuth, async (req: AuthRequest, res) => {
+  const { startup, stage, investor } = req.body;
+  const prompt = `You are a pitch deck and investor storytelling expert. Build the pitch deck for ${startup} at ${stage} stage for ${investor} investor type. Cover the pitch deck structure and narrative arc, the problem and market opportunity slide, the solution and product demo design, the business model and economics slide, the traction and validation slide, the go-to-market strategy slide, the team and unfair advantage slide, the financials and projections slide, the ask and use of funds slide, and how to build a pitch deck that tells a compelling, credible story that gets investors excited about the opportunity and confident in the team to execute.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/business-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { company, domain, users } = req.body;
+  const prompt = `You are a business intelligence and data analytics expert. Build the BI capability for ${company} in ${domain} domain for ${users} user types. Cover the BI strategy and use case prioritization, the data warehouse and data model design, the ETL and data pipeline design, the BI tool selection and evaluation, the self-service BI design, the executive dashboard design, the operational reporting design, the data literacy and training program, the BI governance and data quality, and how to build a BI capability that democratizes data access and empowers people throughout the organization to make better decisions faster.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/sustainability', requireAuth, async (req: AuthRequest, res) => {
+  const { company, emissions, timeline } = req.body;
+  const prompt = `You are a corporate sustainability and ESG strategy expert. Design the sustainability strategy for ${company} reducing ${emissions} over ${timeline}. Cover the sustainability strategy framework, the materiality assessment and priority setting, the emissions baseline and measurement, the Scope 1, 2, and 3 reduction strategy, the renewable energy and energy efficiency strategy, the circular economy and waste reduction, the sustainable supply chain strategy, the sustainability reporting and disclosure, the stakeholder communication, and how to build a sustainability strategy that creates genuine environmental impact while building business resilience and meeting stakeholder expectations for responsible business practices.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/business-writing', requireAuth, async (req: AuthRequest, res) => {
+  const { writer, document, audience } = req.body;
+  const prompt = `You are a business writing and executive communication expert. Coach ${writer} to improve ${document} for ${audience}. Cover the business writing principles and clarity framework, the executive summary and BLUF writing, the email writing for impact and action, the presentation narrative and storytelling, the data-driven document design, the persuasive writing framework, the editing and revision methodology, the voice and tone guidance, the avoiding jargon and complexity, and how to develop business writing skills that communicate ideas clearly, drive action, and build your professional reputation as a crisp, effective communicator.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/ux-research', requireAuth, async (req: AuthRequest, res) => {
+  const { product, question, method } = req.body;
+  const prompt = `You are a UX research and user insights expert. Design the UX research plan for ${product} to answer ${question} using ${method} method. Cover the UX research strategy and question formulation, the research method selection and trade-offs, the participant recruitment and screening, the discussion guide and interview design, the usability test design and task creation, the survey design and quantitative methods, the synthesis and analysis methodology, the insight communication and storytelling, the research repository design, and how to run UX research that generates actionable insights that improve product decisions rather than research reports that get filed and forgotten.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
