@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v760.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v761.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -209837,6 +209837,66 @@ app.post('/api/nonprofit/volunteer', requireAuth, async (req: AuthRequest, res) 
 app.post('/api/nonprofit/advocacy', requireAuth, async (req: AuthRequest, res) => {
   const { organization, issue, targets } = req.body;
   const prompt = `You are an advocacy strategy and policy change expert. Design advocacy strategy for ${organization} advancing ${issue} influencing ${targets}. Cover advocacy strategy framework, theory of change for policy advocacy, coalition building and power mapping, grassroots organizing and base building, media strategy and earned media, legislative advocacy and lobbying compliance, regulatory comment and administrative advocacy, litigation strategy and legal advocacy, electoral engagement and voter mobilization, and how to build advocacy programs that achieve the policy change and the power building and the narrative shift that the social and political change requires by mapping the power with the stakeholder analysis that identifies the decision makers and the influencers and the allies and the opponents that shape the policy decision, building the coalition with the organizations and the constituencies that bring the political power and the credibility and the diverse voices that move the decision maker.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/wellness/psychology', requireAuth, async (req: AuthRequest, res) => {
+  const { practitioner, approach, clients } = req.body;
+  const prompt = `You are a psychology coaching strategy and mental wellness expert. Design psychology coaching strategy for ${practitioner} using ${approach} with ${clients}. Cover psychology coaching framework, cognitive behavioral techniques, positive psychology and strengths, mindfulness and acceptance approaches, motivational interviewing, trauma-informed coaching, resilience building and stress management, behavior change and habit formation, emotional regulation and self-awareness, and how to build psychology coaching practices that achieve the client wellbeing and the behavior change and the insight development that mental wellness requires by establishing the therapeutic alliance with the empathy and the unconditional positive regard and the authenticity that creates the safety for the client to explore the difficult thoughts and the unhelpful patterns that maintain the mental health challenges.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/wellness/lifecoaching', requireAuth, async (req: AuthRequest, res) => {
+  const { coach, methodology, clients } = req.body;
+  const prompt = `You are a life coaching strategy and personal development expert. Design life coaching strategy for ${coach} using ${methodology} with ${clients}. Cover life coaching framework, values clarification and purpose alignment, goal setting and achievement methodology, limiting beliefs and mindset work, accountability structures and progress tracking, wheel of life and life balance assessment, communication and relationship coaching, career transition and purpose finding, work-life integration, and how to build life coaching practices that achieve the client transformation and the goal attainment and the sustainable change that impactful coaching requires by beginning with the values and the purpose exploration that ensures the goals the client pursues are intrinsically motivated and aligned with the deeper aspirations rather than the externally imposed expectations that produce the achievement without the fulfillment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/wellness/nutrition', requireAuth, async (req: AuthRequest, res) => {
+  const { coach, approach, clients } = req.body;
+  const prompt = `You are a nutrition coaching strategy and dietary wellness expert. Design nutrition coaching strategy for ${coach} using ${approach} with ${clients}. Cover nutrition coaching framework, macronutrient and micronutrient fundamentals, evidence-based dietary patterns, behavior change for sustainable eating, intuitive eating and food relationship, sports nutrition and performance, weight management and metabolic health, gut health and the microbiome, meal planning and practical application, and how to build nutrition coaching practices that achieve the dietary behavior change and the health outcome and the sustainable relationship with food that lasting nutrition wellness requires by moving beyond the restrictive diet prescriptions to the flexible eating framework that builds the nutritional literacy and the practical skills that allow the client to make the health-promoting food choices without the external rules that create the diet-binge cycle.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/wellness/fitness', requireAuth, async (req: AuthRequest, res) => {
+  const { trainer, methodology, clients } = req.body;
+  const prompt = `You are a fitness coaching strategy and exercise science expert. Design fitness coaching strategy for ${trainer} using ${methodology} with ${clients}. Cover fitness coaching framework, exercise prescription and periodization, strength training and progressive overload, cardiovascular conditioning and energy systems, mobility and flexibility training, movement screening and corrective exercise, body composition and performance goals, recovery and sleep optimization, behavior change and adherence, and how to build fitness coaching practices that achieve the client performance improvement and the injury prevention and the long-term adherence that sustainable fitness requires by designing the program with the individualization and the progressive overload and the recovery integration that matches the training stimulus to the client adaptation capacity and the lifestyle constraints that determine the training frequency and the intensity that the client can consistently execute.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/wellness/practice', requireAuth, async (req: AuthRequest, res) => {
+  const { practitioner, modalities, clients } = req.body;
+  const prompt = `You are a wellness practice strategy and holistic health expert. Design wellness practice strategy for ${practitioner} offering ${modalities} serving ${clients}. Cover wellness practice framework, integrative health and functional medicine, mind-body practices and stress reduction, sleep optimization and circadian health, social connection and community wellness, environmental health and toxin reduction, spiritual wellness and meaning, preventive health and screening, wellness program design for organizations, and how to build wellness practices that achieve the comprehensive wellbeing and the preventive health and the lifestyle transformation that holistic wellness requires by assessing the client with the comprehensive intake that identifies the multiple dimensions of wellness across the physical and the mental and the social and the spiritual domains that contribute to the overall wellbeing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { institution, approach, students } = req.body;
+  const prompt = `You are an education strategy and learning design expert. Design education strategy for ${institution} using ${approach} serving ${students}. Cover education strategy framework, curriculum design and learning outcomes, instructional design and pedagogy, differentiated instruction and UDL, assessment design and feedback, student engagement and motivation, social-emotional learning, professional development for educators, education technology integration, and how to build education programs that achieve the learning outcomes and the student engagement and the equity that excellent education requires by designing the curriculum with the backward design that starts with the clear learning outcomes and the assessment evidence and then builds the instructional sequence that develops the knowledge and the skills that the assessments measure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/highered', requireAuth, async (req: AuthRequest, res) => {
+  const { institution, strategy, students } = req.body;
+  const prompt = `You are a higher education strategy and university management expert. Design higher education strategy for ${institution} pursuing ${strategy} serving ${students}. Cover higher education strategy framework, enrollment management and student success, academic program portfolio and curriculum, research and scholarship strategy, student affairs and campus life, athletics and extracurricular, internationalization and global engagement, diversity equity and inclusion, university finances and resource allocation, and how to build higher education institutions that achieve the academic excellence and the student success and the institutional sustainability that universities require in the competitive and financially constrained higher education environment by developing the value proposition with the distinctive programs and the student outcomes and the community connections that differentiate the institution from the peer competitors.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/k12', requireAuth, async (req: AuthRequest, res) => {
+  const { district, initiative, students } = req.body;
+  const prompt = `You are a K-12 education strategy and school improvement expert. Design K-12 education strategy for ${district} implementing ${initiative} serving ${students}. Cover K-12 education strategy framework, instructional leadership and teacher development, data-driven instruction and assessment, multi-tiered system of support, family and community engagement, school culture and climate, special education and inclusion, English language learner programs, school choice and charter management, and how to build K-12 education programs that achieve the student learning and the equity and the college and career readiness that public education requires by developing the instructional leadership with the principal who coaches the teachers with the observation and the feedback cycle that improves the instructional practice rather than the compliance-oriented supervision that does not change the teaching.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/vocational', requireAuth, async (req: AuthRequest, res) => {
+  const { program, skills, learners } = req.body;
+  const prompt = `You are a vocational training strategy and workforce development expert. Design vocational training strategy for ${program} teaching ${skills} to ${learners}. Cover vocational training framework, competency-based education, employer partnership and work-based learning, industry certification and credentialing, career pathways and stackable credentials, prior learning assessment, apprenticeship and earn and learn models, job placement and career services, program quality and outcomes measurement, and how to build vocational training programs that achieve the employment outcome and the skill development and the wage gain that workforce development requires by designing the curriculum with the employer partnership and the competency mapping and the hands-on learning that develops the specific technical skills that employers value and are willing to pay for in the target occupation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/online', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, courses, learners } = req.body;
+  const prompt = `You are an online education strategy and digital learning expert. Design online education strategy for ${platform} delivering ${courses} to ${learners}. Cover online education framework, synchronous versus asynchronous design, video production and multimedia learning, discussion and social learning design, learner support and academic integrity, accessibility and universal design, completion rate optimization, learning community and cohort design, micro-credentials and badges, and how to build online education programs that achieve the learning outcomes and the learner engagement and the completion rates that effective online education requires by designing the course with the chunked content and the active learning and the social connection that combat the isolation and the distraction that reduce the online learning completion to the low rates that poorly designed online courses produce.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
