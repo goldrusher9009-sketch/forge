@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v662.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v663.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203957,6 +203957,66 @@ app.post('/api/strategy/pricing-strategy', requireAuth, async (req: AuthRequest,
 app.post('/api/strategy/operational-excellence', requireAuth, async (req: AuthRequest, res) => {
   const { organization, process, goals } = req.body;
   const prompt = `You are an operational excellence and process improvement expert. Design operational excellence for ${organization} improving ${process} toward ${goals}. Cover operational excellence framework, process mapping and waste identification, lean and six sigma methodologies, continuous improvement culture and systems, standard work and process documentation, visual management and performance boards, problem-solving methodologies, operational metrics and balanced scorecard, operational excellence governance, and how to build organizations that continuously improve operations by embedding the mindset and tools of operational excellence into daily management rather than treating improvement as a series of projects.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/jobs-to-be-done', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, context } = req.body;
+  const prompt = `You are a Jobs To Be Done framework and innovation strategy expert. Apply JTBD for ${product} serving ${segment} in ${context}. Cover the JTBD framework and theory, functional and emotional and social jobs, job mapping and job step analysis, desired outcome statements, opportunity scoring and prioritization, underserved jobs identification, solution design from the job perspective, competitive analysis through JTBD lens, innovation roadmap from jobs, and how to use Jobs To Be Done to design products and marketing that connect with the fundamental progress customers are trying to make in their lives rather than focusing on product features or customer demographics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/stakeholder-mgmt', requireAuth, async (req: AuthRequest, res) => {
+  const { project, stakeholders, challenges } = req.body;
+  const prompt = `You are a stakeholder management and organizational influence expert. Design stakeholder management for ${project} with ${stakeholders} facing ${challenges}. Cover stakeholder mapping and power-interest matrix, stakeholder needs and concerns analysis, influence strategy by stakeholder type, communication planning and cadence, coalition building and sponsor development, resistance management and objection handling, stakeholder engagement escalation, feedback loops and two-way communication, stakeholder management measurement, and how to manage complex stakeholder environments where success depends on navigating competing interests and building sufficient support to move initiatives forward.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/talent-acquisition', requireAuth, async (req: AuthRequest, res) => {
+  const { company, roles, market } = req.body;
+  const prompt = `You are a talent acquisition strategy and recruiting excellence expert. Design talent acquisition for ${company} hiring ${roles} in ${market}. Cover talent acquisition strategy and employer brand, candidate sourcing and pipeline building, job description and requirements design, interview process design and candidate experience, assessment and selection methodology, offer design and closing strategy, diversity and inclusion in hiring, recruiter capability and metrics, candidate relationship management, and how to build talent acquisition capabilities that attract and convert the best talent in competitive markets by creating genuine employer value propositions and candidate experiences that stand out.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/learning-development', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, skills, format } = req.body;
+  const prompt = `You are a learning and development strategy and capability building expert. Design learning development for ${organization} building ${skills} using ${format}. Cover learning strategy and needs analysis, 70-20-10 learning framework, formal learning and curriculum design, on-the-job learning and stretch assignments, social and peer learning, digital learning and e-learning design, learning measurement and ROI, learning culture and continuous development mindset, learning technology and LMS, and how to design learning experiences that build the capabilities organizations actually need rather than delivering training programs that employees attend but do not apply to change their actual performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/innovation-culture', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, barriers, goals } = req.body;
+  const prompt = `You are an innovation culture and organizational creativity expert. Design innovation culture for ${organization} removing ${barriers} toward ${goals}. Cover innovation culture framework, psychological safety and permission to fail, innovation time and resource allocation, idea generation and evaluation systems, innovation leadership behaviors, cross-functional collaboration for innovation, external innovation and open innovation, innovation metrics and recognition, innovation portfolio management, and how to build organizational cultures where innovation is a capability embedded in how people work every day rather than a program or initiative that lives in a separate innovation team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/customer-journey', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, stage } = req.body;
+  const prompt = `You are a customer journey mapping and experience design expert. Map the customer journey for ${company} with ${segment} through ${stage}. Cover customer journey mapping methodology, customer research and insight gathering, touchpoint inventory and analysis, emotional journey mapping, pain point and opportunity identification, moments of truth identification, cross-channel journey orchestration, journey metrics and measurement, journey improvement prioritization, and how to use customer journey mapping to understand the complete customer experience across all touchpoints and design improvements that reduce friction and create the memorable moments that build loyalty.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/profitability', requireAuth, async (req: AuthRequest, res) => {
+  const { business, segments, period } = req.body;
+  const prompt = `You are a profitability analysis and margin improvement expert. Analyze profitability for ${business} across ${segments} over ${period}. Cover profitability framework and P and L structure, revenue mix and pricing analysis, cost structure decomposition, contribution margin by product and customer and channel, overhead allocation and activity-based costing, profitability drivers and levers, benchmarking and competitive comparison, profitability improvement roadmap, profitability governance and reporting, and how to develop clear profitability understanding that enables management to make better decisions about where to invest and where to cut and how to design the business model for sustainable profitability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/operating-model', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, strategy, constraints } = req.body;
+  const prompt = `You are an operating model design and organizational effectiveness expert. Design the operating model for ${organization} executing ${strategy} within ${constraints}. Cover operating model framework, organizational structure and reporting lines, decision rights and governance, process design and workflow, technology and systems enablement, people and capability requirements, performance management and metrics, culture and ways of working, operating model implementation, and how to design operating models that translate strategy into daily execution by aligning how the organization is structured and governed and how work actually gets done with what the strategy requires to succeed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/brand-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, positioning, audience } = req.body;
+  const prompt = `You are a brand strategy and brand building expert. Design the brand strategy for ${company} with ${positioning} for ${audience}. Cover brand strategy framework, brand purpose and why, brand positioning and differentiation, brand promise and value proposition, brand personality and tone of voice, brand architecture and visual identity, brand experience design, brand measurement and equity tracking, brand evolution and refreshing, and how to build brands that create genuine emotional connections with customers that transcend product features and create preference and loyalty that competitors find difficult to replicate because great brands live in the minds of customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/growth-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { product, channel, stage } = req.body;
+  const prompt = `You are a growth marketing strategy and customer acquisition expert. Design growth marketing for ${product} using ${channel} at ${stage}. Cover growth marketing framework, acquisition channel identification and testing, customer acquisition cost and payback period, channel attribution and measurement, content marketing and SEO, paid acquisition and performance marketing, viral and referral mechanics, retention marketing and lifecycle campaigns, growth marketing team and capability, and how to build growth marketing engines that find and scale the most efficient customer acquisition channels through systematic experimentation and data-driven optimization rather than brand intuition alone.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
