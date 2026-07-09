@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v675.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v676.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204737,6 +204737,66 @@ app.post('/api/strategy/leadership-dev', requireAuth, async (req: AuthRequest, r
 app.post('/api/strategy/growth-marketing', requireAuth, async (req: AuthRequest, res) => {
   const { company, stage, channels } = req.body;
   const prompt = `You are a growth marketing strategy and acquisition funnel expert. Design growth marketing for ${company} at ${stage} across ${channels}. Cover growth marketing framework, acquisition funnel design and optimization, growth loop identification and design, product-led growth and viral mechanics, paid acquisition strategy and unit economics, content and SEO for organic growth, referral and word-of-mouth programs, retention and reactivation as growth drivers, growth experimentation and testing, and how to build growth marketing capabilities that generate sustainable customer acquisition at scale by combining analytical rigor in measuring what works with creative excellence in building campaigns and experiences that resonate with the target audience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/enterprise-sales', requireAuth, async (req: AuthRequest, res) => {
+  const { company, deal, stakeholders } = req.body;
+  const prompt = `You are an enterprise sales strategy and complex deal management expert. Design enterprise sales approach for ${company} pursuing ${deal} with ${stakeholders}. Cover enterprise sales framework, account qualification and prioritization, executive sponsorship and champion development, multi-threaded sales process, discovery and needs assessment, value proposition customization, proof of concept and pilot design, procurement and legal navigation, competitive displacement strategy, and how to win complex enterprise deals by building the internal consensus and business justification that large organizations require to make significant technology or service purchases, while managing the extended sales cycle without losing momentum.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/revenue-leakage', requireAuth, async (req: AuthRequest, res) => {
+  const { company, revenue, processes } = req.body;
+  const prompt = `You are a revenue leakage detection and revenue assurance expert. Identify revenue leakage for ${company} with ${revenue} across ${processes}. Cover revenue leakage framework, billing accuracy and completeness, contract-to-invoice reconciliation, pricing exception and discount analysis, unbilled revenue identification, revenue recognition compliance, refund and credit analysis, revenue assurance controls, leakage quantification and prioritization, and how to systematically identify and close all the gaps in the revenue cycle where value that should be captured is instead lost through billing errors, pricing exceptions, unbilled work, or process failures that allow revenue to slip through without being recognized.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/supplier-dev', requireAuth, async (req: AuthRequest, res) => {
+  const { company, suppliers, categories } = req.body;
+  const prompt = `You are a supplier development strategy and supply chain partnership expert. Design supplier development for ${company} with ${suppliers} in ${categories}. Cover supplier development framework, supplier segmentation and tiering, supplier assessment and scorecard, development program design, capacity building and training, joint innovation and co-development, supplier financial support programs, sustainability and ESG development, supplier diversity programs, and how to build supplier development capabilities that improve the performance of critical suppliers by investing in their capabilities and building collaborative relationships that create mutual value and make the supply chain more resilient, innovative, and sustainable over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/workforce-analytics', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, workforce, objectives } = req.body;
+  const prompt = `You are a workforce analytics strategy and people data expert. Design workforce analytics for ${organization} with ${workforce} toward ${objectives}. Cover workforce analytics framework, HR data infrastructure and governance, workforce metrics and KPI design, predictive analytics and modeling, talent acquisition analytics, performance and engagement analytics, retention risk modeling, workforce planning and scenario analysis, analytics ethics and bias prevention, and how to build workforce analytics capabilities that give HR and business leaders the insights they need to make better talent decisions while maintaining the privacy and ethical standards that employees expect and that protect the organization from legal and reputational risk.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/operating-model', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, strategy, constraints } = req.body;
+  const prompt = `You are an operating model design and organizational effectiveness expert. Design operating model for ${organization} aligned to ${strategy} within ${constraints}. Cover operating model framework, organizational structure design, governance and decision rights, process and workflow design, technology and information systems, performance management and incentives, talent and capability model, culture and ways of working, operating model transformation, and how to design operating models that translate strategy into the specific organizational choices about structure, process, people, and technology that determine whether the organization can actually execute on its strategic intentions at scale and with consistency.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/acquisition-integration', requireAuth, async (req: AuthRequest, res) => {
+  const { acquirer, target, timeline } = req.body;
+  const prompt = `You are an M and A integration strategy and post-merger integration expert. Design acquisition integration for ${acquirer} acquiring ${target} over ${timeline}. Cover integration framework, integration thesis and value driver identification, integration management office setup, Day 1 readiness planning, functional integration workstreams, culture and people integration, customer and revenue protection, synergy tracking and realization, integration risk management, and how to design integration programs that capture the value that justified the acquisition by combining the two organizations in a way that is fast enough to preserve momentum and careful enough to protect the customer relationships and employee talent that were the source of that value in the first place.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/global-expansion', requireAuth, async (req: AuthRequest, res) => {
+  const { company, markets, model } = req.body;
+  const prompt = `You are a global expansion strategy and international market entry expert. Design global expansion for ${company} entering ${markets} via ${model}. Cover global expansion framework, market prioritization and sequencing, market entry mode selection, localization and adaptation strategy, regulatory and compliance requirements, go-to-market and channel strategy, organizational model for international, financial model and capital requirements, operational readiness and risk management, and how to design global expansion strategies that balance the need to move fast enough to establish market position with the need to adapt the business model and operations sufficiently to succeed in markets that may differ significantly from the home market in customer behavior, competitive dynamics, and regulatory environment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/debt-management', requireAuth, async (req: AuthRequest, res) => {
+  const { company, debt, objectives } = req.body;
+  const prompt = `You are a corporate debt management and capital structure expert. Design debt management for ${company} with ${debt} toward ${objectives}. Cover debt management framework, capital structure optimization, debt capacity assessment, debt instrument selection, maturity profile and refinancing risk, covenant management and compliance, interest rate risk management, credit rating management, debt restructuring options, and how to manage the corporate debt portfolio in a way that maintains financial flexibility and optimizes the cost of capital while avoiding the covenant breaches, rating downgrades, and refinancing crises that can severely constrain the business and destroy shareholder value when debt management is not proactively managed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/channel-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, segments } = req.body;
+  const prompt = `You are a distribution channel strategy and go-to-market architecture expert. Design channel strategy for ${company} with ${products} serving ${segments}. Cover channel strategy framework, direct vs indirect channel economics, channel partner selection and tiering, channel conflict management, omnichannel integration, channel incentive and compensation design, channel enablement and training, channel performance measurement, channel evolution and digital transformation, and how to design channel strategies that reach target customers cost-effectively and provide the buying experience they prefer while maintaining the margins and control needed to make the business model work as the channel mix evolves over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/product-line-extension', requireAuth, async (req: AuthRequest, res) => {
+  const { company, core, extension } = req.body;
+  const prompt = `You are a product line extension strategy and portfolio management expert. Design product line extension for ${company} from ${core} to ${extension}. Cover product line extension framework, adjacent space analysis, customer needs gap identification, product architecture and platform thinking, cannibalization assessment and management, pricing strategy for the extended line, channel and go-to-market for new segments, portfolio complexity and SKU rationalization, extension launch sequencing, and how to extend product lines in ways that capture incremental market opportunity and increase share of wallet with existing customers without creating product proliferation and complexity that erodes margins and confuses customers about what the brand actually stands for.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
