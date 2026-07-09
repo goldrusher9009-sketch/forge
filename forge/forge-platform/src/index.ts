@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v771.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v772.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210497,6 +210497,66 @@ app.post('/api/healthcare/biotech', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/healthcare/healthtech', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, market } = req.body;
   const prompt = `You are a health technology strategy and digital health expert. Design health technology strategy for ${company} with ${product} in ${market}. Cover health technology strategy framework, digital health regulatory and FDA software, health data standards and interoperability, EHR integration and HL7 FHIR, health AI and clinical decision support, value-based care enablement, health consumer technology, payer and provider sales strategy, clinical validation and evidence, and how to build health technology programs that achieve the clinical adoption and the evidence base and the reimbursement pathway that sustainable health technology requires by designing the clinical validation study that generates the outcomes evidence and the workflow integration that demonstrates the clinical utility and the economic value to the health system and the payer buyer.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { counsel, organization, matters } = req.body;
+  const prompt = `You are a legal strategy and general counsel advisory expert. Design legal strategy for ${counsel} at ${organization} managing ${matters}. Cover legal strategy framework, legal department structure and resourcing, outside counsel management and alternative fee arrangements, legal technology and efficiency, litigation strategy and risk management, corporate governance and compliance, M and A legal support, employment and labor law management, intellectual property strategy, and how to build legal strategy programs that achieve the risk management and the cost efficiency and the business enablement that strategic in-house legal requires by positioning the legal function as the business partner that provides the proactive legal advice and the risk assessment that enables the business decision rather than simply the reactive legal support that reviews the decision after it is made.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/litigation', requireAuth, async (req: AuthRequest, res) => {
+  const { counsel, case, parties } = req.body;
+  const prompt = `You are a litigation strategy and dispute resolution expert. Design litigation strategy for ${counsel} in ${case} involving ${parties}. Cover litigation strategy framework, case theory and theme development, discovery strategy and evidence gathering, witness development and deposition strategy, expert witness selection and preparation, dispositive motion strategy, trial preparation and presentation, settlement evaluation and negotiation, appellate strategy, and how to build litigation strategy programs that achieve the favorable outcome and the cost management and the risk containment that effective litigation requires by developing the case theory early with the factual investigation and the legal research and the damages analysis that provides the assessment of the case value and the litigation risk that informs the settlement and the trial strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/contracts', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, contracts, risks } = req.body;
+  const prompt = `You are a contract management strategy and commercial law expert. Design contract management strategy for ${organization} managing ${contracts} mitigating ${risks}. Cover contract management framework, contract lifecycle management, standard form contracts and playbook, contract negotiation and redlining, contract database and repository, obligation management and compliance, contract risk assessment, renewal and expiration management, contract analytics and technology, and how to build contract management programs that achieve the risk management and the commercial efficiency and the obligation compliance that effective contract management requires by implementing the contract lifecycle management system with the automated obligation extraction and the renewal calendar and the performance tracking that ensures the contract commitments are monitored and the contract value is captured.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/ip', requireAuth, async (req: AuthRequest, res) => {
+  const { company, innovations, markets } = req.body;
+  const prompt = `You are an intellectual property strategy and patent portfolio expert. Design IP strategy for ${company} protecting ${innovations} in ${markets}. Cover IP strategy framework, patent portfolio development and management, trademark strategy and brand protection, copyright and trade secret protection, freedom to operate and clearance, IP licensing and monetization, defensive publication and prior art, IP due diligence and M and A, international IP protection, and how to build IP strategy programs that achieve the competitive protection and the licensing revenue and the freedom to operate that strategic IP management requires by aligning the patent filing strategy with the product roadmap and the competitor landscape and the commercial market to identify the innovations that are worth protecting and the claim scope that provides the broadest protection for the business value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/governance', requireAuth, async (req: AuthRequest, res) => {
+  const { company, board, challenges } = req.body;
+  const prompt = `You are a corporate governance strategy and board effectiveness expert. Design corporate governance strategy for ${company} with ${board} addressing ${challenges}. Cover corporate governance framework, board composition and director recruitment, board committee structure and charters, board meeting effectiveness, CEO succession and executive talent oversight, executive compensation governance, shareholder engagement and activism defense, ESG governance and reporting, governance best practices and trends, and how to build corporate governance programs that achieve the board effectiveness and the shareholder trust and the risk oversight that strong governance requires by assessing the board composition against the strategic skill requirements and the independence criteria and the diversity aspiration that determines the board recruitment priority and the director development need.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/regulatory', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, jurisdictions } = req.body;
+  const prompt = `You are a regulatory strategy and government affairs expert. Design regulatory strategy for ${company} with ${product} in ${jurisdictions}. Cover regulatory strategy framework, regulatory pathway and agency engagement, regulatory submission and approval, post-approval compliance and surveillance, regulatory intelligence and landscape, government affairs and lobbying, industry association and coalition, international regulatory harmonization, regulatory affairs organization, and how to build regulatory strategy programs that achieve the regulatory approval and the ongoing compliance and the regulatory intelligence that effective regulatory affairs requires by developing the regulatory submission with the early agency engagement and the pre-submission meeting and the integrated evidence package that addresses the regulatory question and demonstrates the benefit-risk profile that supports the approval.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/employlaw', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, workforce, risks } = req.body;
+  const prompt = `You are an employment law strategy and HR legal compliance expert. Design employment law strategy for ${organization} managing ${workforce} addressing ${risks}. Cover employment law framework, employment contracts and offer letters, wage and hour compliance, discrimination and harassment prevention, accommodation and leave management, employee termination and separation, non-compete and restrictive covenants, labor relations and union avoidance, employment litigation defense, and how to build employment law programs that achieve the legal compliance and the risk management and the fair employment that effective employment law requires by implementing the HR legal compliance program with the manager training and the policy handbook and the investigation process that addresses the employment complaint with the consistent and thorough investigation that protects the employee and the organization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/privacylaw', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, data, jurisdictions } = req.body;
+  const prompt = `You are a privacy law strategy and data protection counsel expert. Design privacy law strategy for ${organization} processing ${data} in ${jurisdictions}. Cover privacy law framework, GDPR and EU data protection, CCPA and US state privacy, consent and lawful basis, data subject rights and response, cross-border transfer mechanisms, data breach notification and response, privacy by design and DPIAs, data processor agreements, and how to build privacy law programs that achieve the regulatory compliance and the individual rights protection and the data governance that global privacy law requires by mapping the personal data processing activities with the lawful basis and the transfer mechanism and the retention schedule that provides the legal foundation for the privacy program and the evidence of compliance for the supervisory authority.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/antitrust', requireAuth, async (req: AuthRequest, res) => {
+  const { company, market, activities } = req.body;
+  const prompt = `You are an antitrust strategy and competition law expert. Design antitrust strategy for ${company} in ${market} for ${activities}. Cover antitrust strategy framework, merger control and M and A antitrust, cartel risk and compliance, abuse of dominance and monopolization, vertical restraints and distribution, joint venture and collaboration, government investigation defense, antitrust damages and litigation, international competition law, and how to build antitrust strategy programs that achieve the competition law compliance and the M and A approval and the business protection that effective antitrust strategy requires by developing the antitrust compliance program with the risk assessment and the employee training and the dawn raid response protocol that prepares the organization for the competition authority investigation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/complexlit', requireAuth, async (req: AuthRequest, res) => {
+  const { firm, case, complexity } = req.body;
+  const prompt = `You are a complex litigation strategy and case management expert. Design complex litigation strategy for ${firm} handling ${case} with ${complexity}. Cover complex litigation framework, multi-party coordination and defense strategy, electronic discovery and technology-assisted review, expert witness strategy and Daubert challenges, class action defense and certification, MDL and mass tort management, jury research and trial technology, settlement mediation strategy, post-trial and appellate strategy, and how to build complex litigation programs that achieve the case outcome and the cost management and the client communication that effective complex case handling requires by implementing the litigation management system with the document review workflow and the cost tracking and the reporting that provides the client with the budget transparency and the case status that enables the informed litigation decision.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
