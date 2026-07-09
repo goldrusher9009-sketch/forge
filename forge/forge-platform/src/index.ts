@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v783.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v784.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211217,6 +211217,66 @@ app.post('/api/education/early', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/education/special', requireAuth, async (req: AuthRequest, res) => {
   const { educator, student, needs } = req.body;
   const prompt = `You are a special education strategy and inclusive learning expert. Design special education strategy for ${educator} supporting ${student} with ${needs}. Cover special education framework, disability law and IDEA, IEP development and implementation, differentiated instruction and Universal Design for Learning, assistive technology and accommodation, behavioral support and positive behavior intervention, co-teaching and inclusion model, related services coordination, parent partnership and rights, and how to build special education programs that achieve the academic progress and the functional independence and the inclusion that successful special education requires by developing the IEP with the present level and the measurable goal and the specialized instruction and the accommodation and the related service that addresses the unique learning need and removes the barrier to the curriculum access and the social participation in the least restrictive environment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { executive, organization, market } = req.body;
+  const prompt = `You are a healthcare strategy and health system management expert. Design healthcare strategy for ${executive} leading ${organization} in ${market}. Cover healthcare strategy framework, health system and hospital strategy, physician alignment and medical staff, service line development, payer contracting and value-based care, population health management, healthcare finance and cost reduction, mergers and affiliations, digital health and technology, and how to build healthcare strategy programs that achieve the quality outcome and the financial performance and the market position that successful health systems require by developing the strategic plan with the service line strategy and the physician alignment and the payer strategy and the operational excellence that positions the organization to thrive in the value-based care environment and the competitive market.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/clinical', requireAuth, async (req: AuthRequest, res) => {
+  const { director, service, facility } = req.body;
+  const prompt = `You are a clinical operations strategy and patient care management expert. Design clinical operations strategy for ${director} managing ${service} at ${facility}. Cover clinical operations framework, patient flow and throughput, staffing and scheduling, clinical quality and safety, infection prevention and control, patient experience and satisfaction, clinical documentation and coding, utilization management and length of stay, clinical technology and EMR, and how to build clinical operations programs that achieve the patient safety and the care quality and the operational efficiency that successful clinical management requires by implementing the process improvement with the patient flow analysis and the staffing model and the quality metric and the clinical protocol that reduces the variation and the waste and the preventable harm and improves the patient outcome and the staff satisfaction and the financial performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/finance', requireAuth, async (req: AuthRequest, res) => {
+  const { CFO, system, challenge } = req.body;
+  const prompt = `You are a healthcare finance strategy and health system financial management expert. Design healthcare finance strategy for ${CFO} at ${system} addressing ${challenge}. Cover healthcare finance framework, revenue cycle management, payer contracting and managed care, cost accounting and service line profitability, budgeting and financial planning, value-based payment and risk, capital planning and bond financing, supply chain and purchased services, physician compensation and alignment, and how to build healthcare finance programs that achieve the operating margin and the revenue cycle performance and the cost efficiency that financial sustainability requires by implementing the revenue integrity and the denials management and the contract optimization and the cost reduction that improves the net patient revenue and the operating cost and the cash position to fund the clinical and capital investment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/admin', requireAuth, async (req: AuthRequest, res) => {
+  const { administrator, hospital, priority } = req.body;
+  const prompt = `You are a hospital administration strategy and healthcare management expert. Design hospital administration strategy for ${administrator} leading ${hospital} focusing on ${priority}. Cover hospital administration framework, governing board and leadership, medical staff credentialing and relations, regulatory compliance and accreditation, human resources and labor relations, facilities and environment of care, emergency management and preparedness, community benefit and mission, patient relations and grievance, and how to build hospital administration programs that achieve the organizational performance and the regulatory compliance and the community mission that successful hospital management requires by aligning the clinical and the operational and the financial and the strategic leadership to deliver the safe and the effective and the patient-centered and the efficient care that serves the community and satisfies the regulatory requirement and produces the financial result.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/telehealth', requireAuth, async (req: AuthRequest, res) => {
+  const { director, program, population } = req.body;
+  const prompt = `You are a telehealth strategy and virtual care management expert. Design telehealth strategy for ${director} building ${program} serving ${population}. Cover telehealth strategy framework, virtual care platform selection, clinical workflow and care model, licensure and credentialing, payer reimbursement and billing, patient digital access and equity, provider training and adoption, quality and outcomes measurement, regulatory and compliance, and how to build telehealth programs that achieve the access and the care quality and the patient satisfaction that successful virtual care requires by designing the care model with the appropriate visit type and the technology platform and the workflow integration and the reimbursement strategy that extends the care access to the underserved population and reduces the unnecessary ED visit and the hospital readmission while maintaining the clinical quality and the patient experience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/pharma', requireAuth, async (req: AuthRequest, res) => {
+  const { executive, product, market } = req.body;
+  const prompt = `You are a pharmaceutical strategy and drug commercialization expert. Design pharmaceutical strategy for ${executive} commercializing ${product} in ${market}. Cover pharmaceutical strategy framework, market access and payer strategy, pricing and reimbursement, medical affairs and evidence generation, commercial launch and sales force, patient support and adherence, competitive intelligence, life cycle management, global regulatory, and how to build pharmaceutical strategy programs that achieve the market access and the revenue and the patient outcome that successful drug commercialization requires by developing the launch strategy with the value story and the payer contract and the physician education and the patient support program that overcomes the access barrier and the prescriber hesitancy and the patient adherence challenge to achieve the formulary position and the market share and the revenue target.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/mental', requireAuth, async (req: AuthRequest, res) => {
+  const { director, program, population } = req.body;
+  const prompt = `You are a mental health services strategy and behavioral health management expert. Design mental health services strategy for ${director} building ${program} for ${population}. Cover mental health services framework, integrated behavioral health, crisis services and stabilization, outpatient and community mental health, substance use disorder treatment, psychiatric inpatient and partial hospitalization, peer support and recovery, workforce and provider supply, funding and reimbursement, and how to build mental health programs that achieve the access and the clinical outcome and the recovery that successful behavioral health services require by developing the service array with the screening and brief intervention and the evidence-based treatment and the care coordination and the recovery support that meets the person where they are in their recovery journey and provides the right level of care at the right time with the right support.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/public', requireAuth, async (req: AuthRequest, res) => {
+  const { director, department, priority } = req.body;
+  const prompt = `You are a public health strategy and community health management expert. Design public health strategy for ${director} leading ${department} addressing ${priority}. Cover public health strategy framework, epidemiology and surveillance, communicable disease control, chronic disease prevention, maternal and child health, environmental health, health equity and social determinants, emergency preparedness, public health policy and advocacy, and how to build public health programs that achieve the population health outcome and the health equity and the community resilience that successful public health requires by developing the program with the epidemiologic evidence and the community partnership and the evidence-based intervention and the policy advocacy and the data surveillance that addresses the root cause of the health disparity and the social determinant and the behavioral risk factor that drive the preventable death and the disability in the community.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/insurance', requireAuth, async (req: AuthRequest, res) => {
+  const { executive, plan, market } = req.body;
+  const prompt = `You are a health insurance strategy and managed care expert. Design health insurance strategy for ${executive} managing ${plan} in ${market}. Cover health insurance strategy framework, actuarial and underwriting, network development and contracting, utilization management and care management, quality and HEDIS, member experience and retention, individual and group market strategy, Medicare Advantage and Medicaid managed care, regulatory and compliance, and how to build health insurance programs that achieve the medical loss ratio and the member growth and the quality rating that successful health plans require by developing the benefit design and the network strategy and the care management and the provider partnership that controls the cost and improves the quality and the member experience to grow the membership and the revenue and the profit in the competitive managed care market.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/device', requireAuth, async (req: AuthRequest, res) => {
+  const { executive, device, market } = req.body;
+  const prompt = `You are a medical device strategy and commercial excellence expert. Design medical device strategy for ${executive} commercializing ${device} in ${market}. Cover medical device strategy framework, regulatory clearance and approval pathway, clinical evidence and health economics, market development and clinical adoption, hospital and IDN selling, physician training and proctoring, reimbursement and coding, competitive differentiation, post-market surveillance, and how to build medical device strategy programs that achieve the market penetration and the clinical adoption and the revenue that successful device commercialization requires by developing the commercial strategy with the clinical evidence and the economic value story and the KOL development and the sales training and the reimbursement support that overcomes the clinical inertia and the hospital value analysis committee and the budget constraint to achieve the adoption and the utilization and the outcome that drives the repeat purchase.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
