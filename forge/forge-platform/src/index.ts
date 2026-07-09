@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v631.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v632.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202097,6 +202097,66 @@ app.post('/api/strategy/business-development', requireAuth, async (req: AuthRequ
 app.post('/api/growth/product-led', requireAuth, async (req: AuthRequest, res) => {
   const { product, segment, metrics } = req.body;
   const prompt = `You are a product-led growth and PLG strategy expert. Design the PLG strategy for ${product} targeting ${segment} tracking ${metrics}. Cover the PLG strategy framework, the freemium vs. free trial design, the product activation and time-to-value optimization, the viral and network effect mechanisms, the in-product upgrade path design, the product qualified lead identification, the PQL-to-sales handoff design, the expansion revenue in-product design, the PLG metrics and funnel, and how to design product-led growth strategies that use the product itself as the primary acquisition, activation, and expansion engine, that create viral loops that reduce CAC while increasing LTV, and that build the product analytics infrastructure needed to systematically optimize the PLG funnel.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/rebranding', requireAuth, async (req: AuthRequest, res) => {
+  const { company, reason, audience } = req.body;
+  const prompt = `You are a rebranding strategy and brand transformation expert. Design the rebranding of ${company} driven by ${reason} for ${audience}. Cover the rebranding strategy framework, the rebrand diagnosis and case for change, the brand architecture decision, the naming and identity strategy, the messaging and positioning evolution, the stakeholder communication strategy, the phased rollout design, the brand transition management, the rebrand measurement, and how to manage rebranding processes that honor brand equity earned over time while successfully evolving the brand to meet new strategic requirements, that bring customers and employees along on the journey, and that execute the transition consistently across all touchpoints without the confusion and dilution that poorly managed rebrands create.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/venture-building', requireAuth, async (req: AuthRequest, res) => {
+  const { corporation, opportunity, model } = req.body;
+  const prompt = `You are a corporate venture building and new business creation expert. Design the venture building approach for ${corporation} pursuing ${opportunity} using ${model}. Cover the venture building strategy framework, the opportunity identification and validation, the venture building model selection, the team and talent strategy, the governance and decision rights, the funding and stage-gate design, the venture portfolio management, the venture-to-core integration strategy, the venture building KPIs, and how to build corporate venture building capabilities that successfully create new businesses at the pace and scale required to offset core business disruption, that give ventures the autonomy to move fast while connecting them appropriately to corporate resources, and that build organizational learning about innovation that improves over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/employer-brand', requireAuth, async (req: AuthRequest, res) => {
+  const { company, talent, differentiators } = req.body;
+  const prompt = `You are an employer brand and talent attraction expert. Build the employer brand for ${company} attracting ${talent} using ${differentiators}. Cover the employer brand strategy framework, the employer value proposition design, the employee insight and research, the competitive employer brand positioning, the employee brand story and narrative, the employer brand channel mix, the employee advocacy program, the candidate experience design, the employer brand measurement, and how to build employer brands that authentically represent the employee experience, that attract the specific talent profiles the business needs, that reduce time-to-hire and cost-per-hire, and that create genuine employee pride that drives retention and makes every employee an ambassador who recruits their network.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/lean-startup', requireAuth, async (req: AuthRequest, res) => {
+  const { startup, hypothesis, resources } = req.body;
+  const prompt = `You are a lean startup methodology and rapid validation expert. Apply lean startup methodology to ${startup} testing ${hypothesis} with ${resources}. Cover the lean startup framework and principles, the build-measure-learn loop design, the minimum viable product design, the hypothesis articulation and testing, the validated learning methodology, the pivot vs. persevere decision framework, the customer development methodology, the metric design for learning, the runway and resource management, and how to apply lean startup principles to systematically test the riskiest assumptions about your business model as quickly and cheaply as possible, to make pivot vs. persevere decisions based on evidence rather than emotion, and to find product-market fit before running out of runway.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/health-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, pathway } = req.body;
+  const prompt = `You are a healthcare technology and digital health strategy expert. Design the go-to-market strategy for ${product} in ${market} via ${pathway}. Cover the healthcare market analysis, the regulatory pathway strategy, the clinical evidence generation plan, the payer and reimbursement strategy, the provider adoption strategy, the patient engagement design, the healthcare IT integration strategy, the health system partnership model, the healthcare sales cycle design, and how to navigate the uniquely complex healthcare market where clinical effectiveness, regulatory approval, payer reimbursement, provider adoption, and patient engagement must all be simultaneously addressed to achieve commercial success with digital health solutions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/adoption-enablement', requireAuth, async (req: AuthRequest, res) => {
+  const { product, reps, buyers } = req.body;
+  const prompt = `You are a sales enablement and product adoption expert. Enable ${reps} to sell ${product} to ${buyers}. Cover the sales enablement strategy framework, the sales playbook design, the buyer journey and sales stage alignment, the competitive battle card design, the objection handling guide, the demo and proof-of-concept design, the ROI and business case toolkit, the sales training and certification program, the sales content management, and how to build sales enablement programs that measurably improve rep productivity and win rates by giving sales teams the knowledge, content, and tools they need to have more effective conversations with buyers at every stage of the purchase decision process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/customer-journey', requireAuth, async (req: AuthRequest, res) => {
+  const { product, persona, stages } = req.body;
+  const prompt = `You are a customer journey mapping and experience design expert. Map the customer journey for ${product} for ${persona} across ${stages}. Cover the journey mapping methodology, the customer persona development, the journey stage identification, the customer action mapping, the customer thought and emotion mapping, the touchpoint mapping and gap identification, the moments of truth identification, the pain point prioritization, the opportunity mapping, and how to create customer journey maps that generate genuine insight into the customer experience from the customers perspective rather than the inside-out view companies naturally default to, that reveal the emotional highs and lows of the experience, and that create a shared understanding across teams of where to focus improvement efforts.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/events', requireAuth, async (req: AuthRequest, res) => {
+  const { company, event_type, goals } = req.body;
+  const prompt = `You are an event marketing and experiential marketing expert. Design the events marketing strategy for ${company} using ${event_type} events to achieve ${goals}. Cover the events strategy framework, the event format and experience design, the event production and logistics design, the speaker and content program, the sponsorship and partner integration, the attendee acquisition and marketing, the on-site experience design, the post-event follow-up strategy, the event measurement and ROI, and how to design event marketing programs that create memorable experiences that advance business relationships and pipeline, that position your brand as a thought leader in your category, and that generate the content and connections that continue to deliver value long after the event itself is over.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/franchise', requireAuth, async (req: AuthRequest, res) => {
+  const { business, model, markets } = req.body;
+  const prompt = `You are a franchising strategy and franchise system design expert. Design the franchise strategy for ${business} with ${model} business model across ${markets}. Cover the franchise strategy framework, the franchise readiness assessment, the franchise model design, the franchisee qualification and selection, the franchise agreement design, the franchisor support model, the brand standards and quality control, the franchise training program, the technology and systems for franchisees, and how to design franchise systems that successfully replicate a proven business model through a network of franchisee operators, that maintain brand consistency and quality standards at scale, and that create genuine mutual value for both the franchisor and franchisees through aligned incentives and systematic support.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/ethical-leadership', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, dilemmas, values } = req.body;
+  const prompt = `You are an ethical leadership and values-based management expert. Develop the ethical leadership of ${leader} navigating ${dilemmas} grounded in ${values}. Cover the ethical leadership framework, the ethical decision-making methodology, the values clarification and articulation, the ethical culture creation, the ethical dilemma navigation frameworks, the stakeholder ethics balancing, the integrity and trust building, the ethical communication practices, the ethical accountability structures, and how to develop leaders who make decisions that are not just legal and profitable but genuinely right, who create organizational cultures where ethical behavior is the norm rather than the exception, and who build the kind of trust with employees, customers, and communities that creates sustainable business success.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
