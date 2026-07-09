@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v770.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v771.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210437,6 +210437,66 @@ app.post('/api/healthcare/clinops', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/healthcare/finance', requireAuth, async (req: AuthRequest, res) => {
   const { organization, model, challenges } = req.body;
   const prompt = `You are a healthcare finance strategy and revenue cycle expert. Design healthcare finance strategy for ${organization} with ${model} addressing ${challenges}. Cover healthcare finance framework, revenue cycle management and optimization, payer contracting and managed care, cost accounting and service line profitability, capital planning and facility investment, value-based payment and risk-based contracting, healthcare financial reporting, cost reduction and operational efficiency, healthcare CFO strategy, and how to build healthcare finance programs that achieve the revenue capture and the cost efficiency and the financial sustainability that healthcare financial management requires by optimizing the revenue cycle with the denial management and the coding accuracy and the prior authorization process that reduces the claim denial rate and the days in accounts receivable.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/policy', requireAuth, async (req: AuthRequest, res) => {
+  const { policymaker, issue, population } = req.body;
+  const prompt = `You are a health policy strategy and public health expert. Design health policy strategy for ${policymaker} addressing ${issue} for ${population}. Cover health policy framework, health systems and universal coverage, social determinants of health, health equity and disparity reduction, preventive health and wellness, pharmaceutical policy and drug pricing, mental health policy, health workforce policy, global health governance, and how to build health policy programs that achieve the population health improvement and the health equity and the system sustainability that effective health policy requires by analyzing the health determinants with the epidemiological data and the social determinants analysis and the economic burden assessment that identifies the highest-impact intervention points for the policy investment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/pharma', requireAuth, async (req: AuthRequest, res) => {
+  const { company, drug, indication } = req.body;
+  const prompt = `You are a pharmaceutical strategy and drug commercialization expert. Design pharma strategy for ${company} commercializing ${drug} for ${indication}. Cover pharmaceutical strategy framework, drug development and clinical trial design, regulatory strategy and FDA pathway, market access and reimbursement, launch planning and commercial excellence, medical affairs and health economics, managed care and formulary strategy, pharmaceutical marketing and promotion, lifecycle management, and how to build pharmaceutical strategy programs that achieve the regulatory approval and the market access and the commercial success that drug commercialization requires by developing the integrated evidence plan with the clinical development and the health economics and the real-world evidence that supports the value proposition for the payer and the prescriber and the patient.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/meddevice', requireAuth, async (req: AuthRequest, res) => {
+  const { company, device, market } = req.body;
+  const prompt = `You are a medical device strategy and commercialization expert. Design medical device strategy for ${company} commercializing ${device} in ${market}. Cover medical device strategy framework, regulatory pathway and 510k versus PMA, quality management and ISO 13485, clinical evidence and post-market surveillance, market access and reimbursement coding, physician adoption and clinical education, hospital contracting and GPO strategy, medical device marketing, international market access, and how to build medical device strategy programs that achieve the regulatory clearance and the hospital adoption and the reimbursement coverage that medical device commercialization requires by mapping the evidence requirements to the regulatory pathway and the payer coverage criteria and the physician adoption barrier that must be addressed in the clinical and commercial development plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/telehealth', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, services, patients } = req.body;
+  const prompt = `You are a telehealth strategy and virtual care design expert. Design telehealth strategy for ${organization} delivering ${services} to ${patients}. Cover telehealth strategy framework, virtual care model and service line design, telehealth technology platform selection, regulatory and licensure requirements, reimbursement and coding, patient engagement and digital health literacy, clinical workflow integration, quality and outcomes measurement, telehealth security and privacy, and how to build telehealth programs that achieve the access improvement and the patient satisfaction and the clinical quality that sustainable telehealth requires by designing the virtual care model with the appropriate modality selection and the clinical protocol and the technology integration that delivers the same clinical quality as in-person care while improving the convenience and the access for the patient.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/hospital', requireAuth, async (req: AuthRequest, res) => {
+  const { executive, hospital, priorities } = req.body;
+  const prompt = `You are a hospital management strategy and health system leadership expert. Design hospital management strategy for ${executive} at ${hospital} focusing on ${priorities}. Cover hospital management framework, service line strategy and growth, patient safety and quality improvement, physician engagement and alignment, nursing excellence and workforce, hospital operations and throughput, financial performance and margin, regulatory compliance and accreditation, community benefit and population health, and how to build hospital management programs that achieve the clinical excellence and the operational efficiency and the financial sustainability that high-performing hospitals require by establishing the management operating system with the daily management and the performance transparency and the rapid problem solving that drives continuous improvement in quality and efficiency.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/globalhealth', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, region, issue } = req.body;
+  const prompt = `You are a global health strategy and international development expert. Design global health strategy for ${organization} working in ${region} addressing ${issue}. Cover global health framework, global disease burden and epidemiology, health system strengthening, global health financing and aid, maternal and child health, infectious disease and pandemic preparedness, global health equity and SDOH, global health partnerships and multilaterals, health workforce in low-resource settings, and how to build global health programs that achieve the health outcome improvement and the system sustainability and the community ownership that effective global health development requires by designing the intervention with the health systems strengthening approach that builds the local capacity and the government ownership that ensures the sustainability after the external funding ends.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/mentalhealth', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, population, services } = req.body;
+  const prompt = `You are a mental health strategy and behavioral health expert. Design mental health strategy for ${organization} serving ${population} with ${services}. Cover mental health strategy framework, mental health system design and integration, access and capacity expansion, integrated behavioral health in primary care, crisis services and diversion, psychiatric medication management, psychotherapy and evidence-based treatment, recovery-oriented care, mental health stigma reduction, and how to build mental health programs that achieve the access improvement and the treatment engagement and the recovery outcome that effective mental health services require by integrating the behavioral health into the primary care setting with the collaborative care model that provides the stepped care approach from the brief intervention to the specialty referral.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/publichealth', requireAuth, async (req: AuthRequest, res) => {
+  const { agency, community, priority } = req.body;
+  const prompt = `You are a public health strategy and community health expert. Design public health strategy for ${agency} serving ${community} addressing ${priority}. Cover public health framework, epidemiology and disease surveillance, health promotion and prevention, community health needs assessment, public health emergency preparedness, environmental health and safety, health equity and social determinants, immunization and communicable disease, public health informatics and data, and how to build public health programs that achieve the community health improvement and the disease prevention and the health equity that effective public health requires by conducting the community health needs assessment with the epidemiological data and the community input and the health disparity analysis that identifies the highest-burden health issues and the root causes that the public health intervention can address.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/biotech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, platform, pipeline } = req.body;
+  const prompt = `You are a biotech strategy and life sciences business expert. Design biotech strategy for ${company} with ${platform} and ${pipeline}. Cover biotech strategy framework, drug discovery and platform strategy, pipeline prioritization and portfolio management, clinical development strategy, partnership and licensing strategy, biotech financing and capital allocation, intellectual property and freedom to operate, biotech organization and talent, regulatory strategy and FDA engagement, and how to build biotech strategy programs that achieve the pipeline advancement and the platform value and the partnership deal that biotech success requires by prioritizing the pipeline with the probability of technical success and the commercial opportunity and the capital efficiency that determines the highest-value investment within the capital constraint.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/healthtech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are a health technology strategy and digital health expert. Design health technology strategy for ${company} with ${product} in ${market}. Cover health technology strategy framework, digital health regulatory and FDA software, health data standards and interoperability, EHR integration and HL7 FHIR, health AI and clinical decision support, value-based care enablement, health consumer technology, payer and provider sales strategy, clinical validation and evidence, and how to build health technology programs that achieve the clinical adoption and the evidence base and the reimbursement pathway that sustainable health technology requires by designing the clinical validation study that generates the outcomes evidence and the workflow integration that demonstrates the clinical utility and the economic value to the health system and the payer buyer.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
