@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v453.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v454.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -192026,6 +192026,59 @@ app.post('/api/product/metrics-tree', requireAuth, async (req: AuthRequest, res)
 app.post('/api/sales/sales-enablement', requireAuth, async (req: AuthRequest, res) => {
   const { team, gaps, stage } = req.body;
   const prompt = `Design a sales enablement program.\nSales team: ${team}\nPerformance gaps: ${gaps}\nCompany stage: ${stage}\nInclude: enablement needs assessment methodology, content library structure (by persona/stage/use case), sales playbook design, onboarding program for new reps (ramp timeline/milestones/buddy system), ongoing training cadence (product updates/competitive intel/skills coaching), sales certification program, content management system selection, enablement metrics (ramp time/win rate/quota attainment/content usage), manager-as-coach enablement, and how to measure enablement ROI with A/B comparison.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 327+328 routes
+app.post('/api/dev/api-testing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { apis, stack, coverage } = req.body;
+  const prompt = `Design an API testing strategy.\nAPIs to test: ${apis}\nTech stack: ${stack}\nCoverage goals: ${coverage}\nInclude: testing pyramid for APIs (unit/integration/contract/e2e), contract testing with Pact or similar, test data management strategy, authentication handling in tests, environment strategy (local/CI/staging), performance testing approach (load/stress/soak), mutation testing for API schemas, test coverage metrics, mocking strategy for external dependencies, CI integration for API tests, regression testing automation, and how to test API breaking changes before release.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/customer-expansion', requireAuth, async (req: AuthRequest, res) => {
+  const { account, products, timing } = req.body;
+  const prompt = `Build a customer expansion strategy.\nAccount: ${account}\nExpansion products: ${products}\nTimeline: ${timing}\nInclude: expansion motion types (upsell/cross-sell/seat expansion/usage expansion), expansion trigger identification (usage thresholds/hiring signals/new use cases), expansion discovery conversation framework, timing strategy (best moments to introduce expansion), expansion proposal design, multi-stakeholder expansion navigation, CS to sales handoff for expansion, pricing model impact on expansion (per-seat vs. usage-based expansion dynamics), objection handling for expansion, NRR optimization framework, and how to make expansion a predictable revenue stream.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/spec-writing', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, stakeholders, scope } = req.body;
+  const prompt = `Write a product specification.\nFeature: ${feature}\nStakeholders: ${stakeholders}\nScope: ${scope}\nInclude: spec structure (problem statement/goals/non-goals/user stories/requirements/design/metrics/open questions), how to write clear acceptance criteria, technical requirements vs. product requirements distinction, edge case documentation methodology, how to get spec sign-off without endless meetings, dependency identification, rollout and migration considerations in spec, how to write for different audiences (eng/design/CS/exec), spec versioning and change log, and how to make specs concise enough that people actually read them.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/case-study', requireAuth, async (req: AuthRequest, res) => {
+  const { customer, problem, results } = req.body;
+  const prompt = `Write a compelling customer case study.\nCustomer: ${customer}\nProblem solved: ${problem}\nResults achieved: ${results}\nInclude: case study structure (customer overview/challenge/solution/results/quote), headline writing formula (customer achieved X result with product), quantified result extraction and presentation, compelling narrative arc design, customer quote coaching (what makes a great vs. mediocre quote), visual design recommendations (metrics callouts/before-after), distribution strategy (website/sales deck/LinkedIn/PR), gating vs. ungating decision, case study interview question guide, and how to build a case study library that covers every segment, use case, and competitor displacement scenario.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/offboarding-process', requireAuth, async (req: AuthRequest, res) => {
+  const { role, tenure, reason } = req.body;
+  const prompt = `Design a comprehensive offboarding process.\nRole: ${role}\nTenure: ${tenure}\nDeparture reason: ${reason}\nInclude: offboarding checklist by timeline (day 1 notice → last day), knowledge transfer protocol (documentation/shadowing/handoff meetings), system access revocation checklist, equipment return process, exit interview design (questions/facilitation/anonymization), legal requirements (final pay/benefits continuation/NDA reminder), announcing departure to the team, client/customer transition for client-facing roles, alumni relationship maintenance strategy, offboarding feedback loop to HR and hiring, and how to make offboarding a positive experience even when circumstances are difficult.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/investor-update', requireAuth, async (req: AuthRequest, res) => {
+  const { period, metrics, needs } = req.body;
+  const prompt = `Write an investor update.\nPeriod: ${period}\nKey metrics: ${metrics}\nCurrent needs: ${needs}\nInclude: investor update structure (headline/metrics/highlights/lowlights/asks), metrics dashboard design (MRR/ARR/growth rate/burn/runway/churn), how to present bad news honestly without losing investor confidence, highlight vs. lowlight balance, making the ask specific and actionable, key decisions and context, what investors actually want to know (vs. what founders want to share), cadence recommendation (monthly for early stage/quarterly for growth), how to use investor updates to build relationships and get help, and template with fill-in sections.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/platform-engineering', requireAuth, async (req: AuthRequest, res) => {
+  const { teams, pain, scale } = req.body;
+  const prompt = `Design a platform engineering function.\nDevelopment teams: ${teams}\nDeveloper pain points: ${pain}\nScale: ${scale}\nInclude: platform engineering vs. DevOps vs. SRE distinction, internal developer platform (IDP) design, golden path definition (blessed way to build/deploy/monitor), self-service infrastructure design, developer portal (Backstage or custom), paved road adoption strategy vs. mandating, platform team sizing and structure, platform product management (treat devs as customers), developer experience metrics (DORA/deployment frequency/onboarding time), platform roadmap prioritization, and how to build a platform that makes developers 10x more productive.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/gtm-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, channels } = req.body;
+  const prompt = `Build a go-to-market plan.\nProduct: ${product}\nTarget segment: ${segment}\nDistribution channels: ${channels}\nInclude: GTM motion selection (product-led/sales-led/channel-led/community-led), ICP definition and validation, market segmentation and prioritization, pricing and packaging for the motion, demand generation engine design, sales coverage model, success metrics and milestones, competitive positioning and differentiation, launch sequence design (pre-launch/launch/post-launch), budget allocation across channels, 30-60-90 day GTM plan, and how to iterate the GTM motion based on early signals.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/roadmap-communication', requireAuth, async (req: AuthRequest, res) => {
+  const { audience, roadmap, constraints } = req.body;
+  const prompt = `Design a roadmap communication strategy.\nAudience: ${audience}\nRoadmap items: ${roadmap}\nConstraints to manage: ${constraints}\nInclude: roadmap format selection by audience (now/next/later for customers/milestone roadmap for execs/sprint roadmap for eng), how to communicate uncertainty without losing confidence, saying no to feature requests gracefully, managing expectations when timelines shift, customer roadmap communication (public roadmap vs. private preview vs. NDA sharing), internal alignment meetings vs. async updates, handling "when will X be done?" questions, roadmap versioning and changelog, and how to make the roadmap a strategic communication tool rather than a commitment list.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/discovery-call', requireAuth, async (req: AuthRequest, res) => {
+  const { prospect, industry, usecase } = req.body;
+  const prompt = `Design a discovery call framework.\nProspect: ${prospect}\nIndustry: ${industry}\nUse case: ${usecase}\nInclude: discovery call structure (agenda/rapport/situation/problem/implication/need-payoff), SPIN selling question design for the use case, MEDDPICC qualification during discovery, pain quantification methodology (how much does this cost you?), business impact discovery (what happens if this isn't solved?), stakeholder map discovery questions, competitive landscape discovery (what else are you evaluating?), next step commitment at end of discovery, discovery call debrief checklist, and how to run a discovery call that makes the prospect feel heard while giving you everything you need to win.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
