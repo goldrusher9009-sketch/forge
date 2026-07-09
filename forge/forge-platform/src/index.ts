@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v617.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v618.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201257,6 +201257,66 @@ app.post('/api/ai/chatbot-design', requireAuth, async (req: AuthRequest, res) =>
 app.post('/api/strategy/social-impact', requireAuth, async (req: AuthRequest, res) => {
   const { company, cause, stakeholders } = req.body;
   const prompt = `You are a corporate social responsibility and social impact expert. Design the social impact strategy for ${company} focused on ${cause} engaging ${stakeholders}. Cover the social impact strategy framework, the materiality assessment and issue prioritization, the theory of change design, the social impact program design, the employee volunteering and giving program, the supplier diversity and ESG supply chain, the community investment and partnerships, the social impact measurement and reporting, the stakeholder communication and transparency, and how to build a social impact strategy that creates genuine positive change while strengthening the business through talent attraction, customer loyalty, and regulatory goodwill.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/crisis-communications', requireAuth, async (req: AuthRequest, res) => {
+  const { company, crisis, audience } = req.body;
+  const prompt = `You are a crisis communications and reputation management expert. Manage the crisis communications for ${company} facing ${crisis} with ${audience} key audiences. Cover the crisis communications framework and protocols, the crisis classification and severity assessment, the first 24-hour response design, the holding statement and initial communication, the spokesperson preparation and media training, the stakeholder-specific message design, the social media crisis response, the employee communications during crisis, the post-crisis recovery communications, and how to manage a crisis in a way that protects reputation, maintains stakeholder trust, and emerges with the brand intact or stronger.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/executive/communications', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, audience, objective } = req.body;
+  const prompt = `You are an executive communications and leadership presence expert. Design the executive communications for ${leader} with ${audience} to achieve ${objective}. Cover the executive communications strategy, the leadership narrative and point of view, the internal all-hands and town hall design, the external speaking and thought leadership, the media interview preparation, the investor and board communications, the written communications voice and tone, the social media executive presence, the crisis communications preparation, and how to help executives communicate with authenticity, clarity, and impact that inspires action and builds trust with all their key audiences.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/personalization', requireAuth, async (req: AuthRequest, res) => {
+  const { product, signals, moments } = req.body;
+  const prompt = `You are a product personalization and machine learning product expert. Design the personalization engine for ${product} using ${signals} to create ${moments} key personalized moments. Cover the personalization strategy and objectives, the user signal collection and data model, the segmentation and cohort design, the personalization algorithm selection, the content and recommendation personalization, the timing and trigger personalization, the personalization measurement framework, the A/B testing for personalization, the privacy and consent design for personalization, and how to build a personalization system that creates genuinely relevant experiences rather than creepy surveillance-based targeting.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/entrepreneurship', requireAuth, async (req: AuthRequest, res) => {
+  const { founder, idea, stage } = req.body;
+  const prompt = `You are an entrepreneurship coach and startup advisor. Coach ${founder} to build ${idea} from ${stage} stage to successful business. Cover the entrepreneurial mindset and resilience, the idea validation methodology, the problem-founder fit assessment, the early customer discovery, the business model design and validation, the funding strategy selection, the team building and co-founder dynamics, the early product and MVP design, the go-to-market for early-stage startups, and how to navigate the unique challenges of building a company from nothing with limited resources and maximum uncertainty.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/close-process', requireAuth, async (req: AuthRequest, res) => {
+  const { company, timeline, bottleneck } = req.body;
+  const prompt = `You are a financial close and accounting operations expert. Optimize the financial close for ${company} to ${timeline} timeline eliminating ${bottleneck} bottlenecks. Cover the financial close process design and mapping, the close calendar and task sequencing, the journal entry and accrual automation, the reconciliation process design, the intercompany and consolidation process, the close technology and ERP optimization, the close reporting and dashboard design, the close governance and review process, the continuous close strategy, and how to transform your financial close from a chaotic month-end sprint into a predictable, efficient process that produces accurate results faster.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/behavior-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, behavior, users } = req.body;
+  const prompt = `You are a behavior design and habit formation expert. Design ${product} to drive ${behavior} behavior change in ${users}. Cover the behavior design framework and ethics, the motivation and ability analysis, the habit loop design, the trigger and cue design, the reward and reinforcement design, the progress and achievement mechanics, the social proof and norm design, the friction removal design, the behavior measurement, and how to design products that help users achieve their goals through behavioral science principles without crossing into manipulation or exploitation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/stakeholder-mapping', requireAuth, async (req: AuthRequest, res) => {
+  const { project, stakeholders, influence } = req.body;
+  const prompt = `You are a stakeholder management and political mapping expert. Map the stakeholders for ${project} identifying ${stakeholders} key players and ${influence} influence dynamics. Cover the stakeholder identification and categorization, the power and interest mapping, the stakeholder needs and motivation analysis, the coalition and opposition mapping, the stakeholder engagement strategy by segment, the communication and update cadence design, the resistance anticipation and mitigation, the executive sponsor and champion development, the ongoing stakeholder pulse monitoring, and how to manage stakeholders proactively in a way that builds support, reduces resistance, and keeps complex initiatives moving forward.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-expansion', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, adjacency } = req.body;
+  const prompt = `You are a market expansion and adjacent market strategy expert. Design the expansion for ${company} into ${segment} segment via ${adjacency} adjacency. Cover the adjacent market opportunity assessment, the market attractiveness and fit scoring, the expansion readiness assessment, the expansion strategy design, the product extension and adaptation, the go-to-market design for new segments, the pricing and packaging for new markets, the sales motion adaptation, the expansion resource and investment plan, and how to expand into adjacent markets in a way that leverages your core strengths while managing the risk of distraction and resource dilution.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/account-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { account, revenue, relationships } = req.body;
+  const prompt = `You are an account planning and strategic account management expert. Build the account plan for ${account} to grow ${revenue} revenue through ${relationships} key relationships. Cover the account planning framework and process, the account landscape and org chart analysis, the whitespace and expansion opportunity identification, the relationship map and power analysis, the account strategy and win themes, the account-specific value proposition, the executive engagement plan, the QBR and cadence design, the account success metrics and tracking, and how to build account plans that drive systematic expansion within your largest accounts through deeper relationships and demonstrated customer value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/measurement-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { initiative, outcomes, leading } = req.body;
+  const prompt = `You are a measurement framework and strategic measurement expert. Build the measurement framework for ${initiative} tracking ${outcomes} using ${leading} leading indicators. Cover the measurement framework design principles, the outcome and impact definition, the leading vs. lagging indicator selection, the KPI and metric hierarchy design, the data collection and source mapping, the measurement cadence and review rhythm, the dashboard and visualization design, the target and benchmark setting, the measurement governance, and how to build measurement frameworks that create accountability, surface insights early, and help teams make better decisions faster.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
