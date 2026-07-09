@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v625.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v626.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201737,6 +201737,66 @@ app.post('/api/strategy/negotiation', requireAuth, async (req: AuthRequest, res)
 app.post('/api/strategy/innovation-culture', requireAuth, async (req: AuthRequest, res) => {
   const { organization, barriers, goals } = req.body;
   const prompt = `You are an innovation culture and organizational creativity expert. Build the innovation culture in ${organization} overcoming ${barriers} to achieve ${goals}. Cover the innovation culture diagnosis, the innovation framework and methodology, the psychological safety building, the experimentation and learning culture, the idea generation and management systems, the innovation governance and portfolio management, the innovation metrics and measurement, the innovation labs and structures, the leadership behaviors for innovation, and how to build an innovation culture that is systematic and sustainable rather than dependent on individual heroes, that scales with the organization, and that produces the continuous stream of improvements and breakthroughs needed to maintain competitive advantage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/team-design', requireAuth, async (req: AuthRequest, res) => {
+  const { team, mission, size } = req.body;
+  const prompt = `You are a team design and organizational structure expert. Design the optimal team structure for ${team} with mission ${mission} at ${size} size. Cover the team design principles and trade-offs, the team topology selection, the role design and job architecture, the team size and span of control, the team interfaces and dependencies, the team charter and operating model, the skills and capability model, the team performance framework, the team evolution and scaling plan, and how to design teams that have clear purpose, appropriate autonomy, minimal dependencies, and the skills and structure to execute their mission effectively as the organization scales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/database-performance', requireAuth, async (req: AuthRequest, res) => {
+  const { database, queries, scale } = req.body;
+  const prompt = `You are a database performance optimization and scaling expert. Optimize ${database} for ${queries} query patterns at ${scale} scale. Cover the performance diagnosis and profiling methodology, the query optimization techniques, the index design and optimization, the query plan analysis, the connection pooling and management, the read replica and caching strategy, the partitioning and sharding design, the database hardware and configuration tuning, the performance monitoring and alerting, and how to systematically diagnose and fix database performance problems using measurement and evidence rather than guesswork, and how to design databases that remain performant as data volumes and query complexity grow.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-positioning', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, category, audience } = req.body;
+  const prompt = `You are a brand positioning and competitive differentiation expert. Position ${brand} in the ${category} category for ${audience} audience. Cover the brand positioning framework, the category design and definition, the competitive landscape mapping, the positioning white space identification, the positioning statement development, the points of difference and parity, the brand essence and promise, the positioning validation and testing, the positioning activation strategy, and how to develop brand positioning that claims a distinctive and defensible place in the market that resonates emotionally with target customers and creates preference over competitive alternatives.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/churn-reduction', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, drivers } = req.body;
+  const prompt = `You are a customer retention and churn reduction expert. Reduce churn in ${product} for ${segment} segment driven by ${drivers}. Cover the churn analysis and root cause diagnosis, the churn prediction and early warning system, the customer health scoring design, the at-risk customer intervention playbook, the customer success program design, the product engagement and stickiness improvements, the pricing and contract restructuring, the win-back program design, the retention metrics and measurement, and how to build a systematic retention program that addresses both the symptoms of churn and the underlying product, pricing, and service factors that cause customers to leave.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/workflow-automation', requireAuth, async (req: AuthRequest, res) => {
+  const { process, team, tools } = req.body;
+  const prompt = `You are a workflow automation and process optimization expert. Automate the ${process} workflow for ${team} using ${tools}. Cover the workflow analysis and documentation, the automation opportunity identification, the automation ROI and prioritization, the workflow automation design, the integration architecture, the automation testing strategy, the change management approach, the automation monitoring and maintenance, the automation governance, and how to design workflow automation that reliably saves time and reduces errors while remaining maintainable as processes evolve and the underlying tools change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/api-design', requireAuth, async (req: AuthRequest, res) => {
+  const { service, consumers, operations } = req.body;
+  const prompt = `You are an API design and developer experience expert. Design the API for ${service} serving ${consumers} supporting ${operations}. Cover the API design philosophy and principles, the REST vs. GraphQL vs. gRPC selection, the resource modeling and URL design, the request and response design, the authentication and authorization design, the error handling and status codes, the versioning and change management strategy, the documentation and SDK design, the rate limiting and quota design, and how to design APIs that are intuitive and easy to use, consistent and predictable, well-documented, and designed to evolve without breaking existing integrations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-mapping', requireAuth, async (req: AuthRequest, res) => {
+  const { industry, segments, trends } = req.body;
+  const prompt = `You are a market mapping and competitive landscape expert. Map the ${industry} market across ${segments} segments tracking ${trends}. Cover the market definition and scoping, the market size and growth analysis, the market segmentation framework, the competitive landscape mapping, the value chain analysis, the buyer journey and decision process, the technology and disruption landscape, the regulatory and policy landscape, the market dynamics and forces, and how to build a market map that gives leadership a clear, current picture of where the market is heading and what it means for your competitive strategy and investment priorities.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/talent-acquisition', requireAuth, async (req: AuthRequest, res) => {
+  const { company, roles, market } = req.body;
+  const prompt = `You are a talent acquisition and employer brand expert. Build the talent acquisition strategy for ${company} hiring for ${roles} in ${market} market. Cover the talent acquisition strategy framework, the employer value proposition design, the employer brand building, the sourcing channel mix and strategy, the candidate experience design, the recruitment process redesign, the assessment and selection methodology, the diversity and inclusion recruiting strategy, the talent acquisition metrics, and how to build a talent acquisition capability that attracts the best candidates, converts them efficiently through the funnel, selects accurately for performance, and creates a candidate experience that builds your employer brand regardless of whether candidates receive offers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/scale-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, functions } = req.body;
+  const prompt = `You are an operational scaling and organizational design expert. Design the operational scaling plan for ${company} at ${stage} across ${functions}. Cover the scaling diagnosis and readiness assessment, the operational leverage and capacity model, the process standardization and documentation, the tooling and technology scaling, the organizational design for scale, the management layer design, the performance management at scale, the culture preservation during scaling, the scaling metrics and early warning system, and how to scale operations in ways that maintain speed and agility, preserve culture and quality, and create the operational foundation that supports the next phase of company growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/business-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, decisions, sources } = req.body;
+  const prompt = `You are a business intelligence and analytics strategy expert. Build the BI capability for ${organization} supporting ${decisions} from ${sources}. Cover the BI strategy and vision, the data architecture for BI, the KPI framework and metric design, the dashboard and reporting design, the self-service analytics design, the data storytelling and communication, the BI tool selection and implementation, the data literacy and training program, the BI governance model, and how to build a business intelligence capability that moves beyond reporting to genuine insight generation, that enables data-driven decisions at every level of the organization, and that creates competitive advantage through better information.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
