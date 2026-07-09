@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v419.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v420.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190224,6 +190224,59 @@ app.post('/api/product/north-star', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/sales/outbound-sequence', requireAuth, async (req: AuthRequest, res) => {
   const { persona, product, channel } = req.body;
   const prompt = `Write a 7-touch outbound sales sequence.\nBuyer persona: ${persona}\nProduct: ${product}\nChannel: ${channel}\nInclude: Touch 1 (day 1), Touch 2 (day 3), Touch 3 (day 7), Touch 4 (day 10), Touch 5 (day 14), Touch 6 (day 21), Touch 7 (day 30 - breakup). Write full copy for each touch with subject lines.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 259+260 routes
+app.post('/api/dev/ci-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  const { language, tests, deployTarget } = req.body;
+  const prompt = `Design a CI/CD pipeline configuration.\nLanguage: ${language}\nTest suite: ${tests}\nDeploy target: ${deployTarget}\nInclude: pipeline stages, YAML configuration skeleton, parallelization strategy, caching approach, secrets management, and environment promotion workflow.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/stakeholder-map', requireAuth, async (req: AuthRequest, res) => {
+  const { company, contacts, deal } = req.body;
+  const prompt = `Build a stakeholder map for a complex sale.\nCompany: ${company}\nKnown contacts: ${contacts}\nDeal: ${deal}\nInclude: decision-making unit (DMU) roles, influence map, economic buyer identification, champion vs blocker analysis, and engagement strategy for each stakeholder.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/retention-loop-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, churn, topUsers } = req.body;
+  const prompt = `Design a retention loop for the product.\nProduct: ${product}\nChurn rate: ${churn}\nTop user behaviors: ${topUsers}\nIdentify: habit-forming moments, notification strategy, re-engagement triggers, social proof loops, and progress/achievement mechanics that drive daily/weekly return.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/category-king', requireAuth, async (req: AuthRequest, res) => {
+  const { product, category, competitors } = req.body;
+  const prompt = `Develop a category design and dominance strategy.\nProduct: ${product}\nCategory: ${category}\nCompetitors: ${competitors}\nInclude: category definition, POV (point of view) statement, category creation vs invasion decision, thought leadership plan, and how to make competitors irrelevant.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/skills-matrix', requireAuth, async (req: AuthRequest, res) => {
+  const { team, roles, goals } = req.body;
+  const prompt = `Create a team skills matrix and development plan.\nTeam: ${team}\nRoles: ${roles}\nGoals: ${goals}\nInclude: skill taxonomy, current vs required proficiency levels, gap analysis, individual development plans, and hiring vs training recommendations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/growth-narrative-v2', requireAuth, async (req: AuthRequest, res) => {
+  const { metrics, story, future } = req.body;
+  const prompt = `Build a compelling growth narrative for investors.\nMetrics: ${metrics}\nCompany story: ${story}\nFuture vision: ${future}\nInclude: the 'why now' moment, market timing argument, inflection point story, metrics narrative (not just numbers), and the inevitable future state that makes this a must-fund.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/api-mocking', requireAuth, async (req: AuthRequest, res) => {
+  const { endpoints, useCase, stack } = req.body;
+  const prompt = `Design an API mocking strategy for development and testing.\nEndpoints: ${endpoints}\nUse case: ${useCase}\nStack: ${stack}\nInclude: tool selection (MSW, WireMock, etc.), mock data strategy, contract testing approach, and how to keep mocks in sync with real APIs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/channel-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, budget, icp } = req.body;
+  const prompt = `Design a marketing channel strategy.\nCompany stage: ${stage}\nBudget: ${budget}\nICP: ${icp}\nInclude: channel prioritization matrix, budget allocation by channel, expected CAC per channel, content requirements, and 90-day channel ramp plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/pricing-model', requireAuth, async (req: AuthRequest, res) => {
+  const { product, costs, competitors } = req.body;
+  const prompt = `Design a pricing model from scratch.\nProduct: ${product}\nCost structure: ${costs}\nCompetitors: ${competitors}\nInclude: pricing model type (per-seat, usage, tiered, flat), value metric selection, price point recommendation, discount policy, and competitive positioning.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/pipeline-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { target, channels, teamSize } = req.body;
+  const prompt = `Build a sales pipeline generation strategy.\nRevenue target: ${target}\nChannels: ${channels}\nTeam size: ${teamSize}\nInclude: pipeline coverage requirements (3x-5x), activity model (calls/emails/demos needed), channel mix, SDR vs AE ratio, and weekly cadence to hit the number.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
