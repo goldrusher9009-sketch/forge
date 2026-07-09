@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v776.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v777.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210797,6 +210797,66 @@ app.post('/api/sports/hospitality', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/sports/travel', requireAuth, async (req: AuthRequest, res) => {
   const { company, segment, market } = req.body;
   const prompt = `You are a travel industry strategy and tourism expert. Design travel industry strategy for ${company} serving ${segment} in ${market}. Cover travel industry framework, destination marketing and tourism development, online travel and distribution, travel product design and packaging, pricing and revenue management, traveler experience and personalization, sustainable tourism and responsibility, travel technology and booking, corporate travel management, and how to build travel industry programs that achieve the traveler satisfaction and the revenue per booking and the market share that successful travel companies require by developing the travel product with the destination insight and the traveler persona and the experience design that differentiates the offering in the commoditized distribution environment and creates the traveler preference and the loyalty that reduces the acquisition cost.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/finance', requireAuth, async (req: AuthRequest, res) => {
+  const { person, income, goals } = req.body;
+  const prompt = `You are a personal finance strategy and financial planning expert. Design personal finance strategy for ${person} earning ${income} achieving ${goals}. Cover personal finance framework, budgeting and cash flow management, emergency fund and savings, debt management and elimination, investment and wealth building, tax planning and optimization, insurance and risk management, retirement planning, estate planning basics, and how to build personal finance programs that achieve the financial security and the wealth accumulation and the goal achievement that sound personal finance requires by building the financial foundation with the emergency fund and the debt elimination and the automated savings that establishes the financial discipline before the investment optimization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/development', requireAuth, async (req: AuthRequest, res) => {
+  const { person, area, goals } = req.body;
+  const prompt = `You are a personal development strategy and self-improvement expert. Design personal development strategy for ${person} improving ${area} to achieve ${goals}. Cover personal development framework, self-awareness and strengths assessment, goal setting and planning, habit formation and behavior change, mindset and growth psychology, skill development and learning, productivity and time management, relationships and social skills, resilience and stress management, and how to build personal development programs that achieve the capability growth and the behavior change and the goal attainment that meaningful personal development requires by grounding the development plan in the honest self-assessment and the specific behavioral goal and the environmental design that makes the desired behavior the default choice.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { coach, client, area } = req.body;
+  const prompt = `You are a life coaching strategy and personal transformation expert. Design coaching strategy for ${coach} working with ${client} on ${area}. Cover life coaching framework, coaching model and methodology, goal clarification and visioning, awareness and insight creation, action planning and accountability, obstacle identification and reframing, strengths and values alignment, progress measurement and celebration, coaching relationship and boundaries, and how to build coaching programs that achieve the client breakthrough and the sustained behavior change and the goal attainment that effective coaching requires by using the powerful question and the deep listening and the challenge and support balance that expands the client awareness and the possibility thinking and the self-directed action that leads to the lasting change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/wellness', requireAuth, async (req: AuthRequest, res) => {
+  const { person, challenges, goals } = req.body;
+  const prompt = `You are a mental wellness strategy and psychological wellbeing expert. Design mental wellness strategy for ${person} addressing ${challenges} achieving ${goals}. Cover mental wellness framework, stress management and resilience, anxiety and worry management, mood regulation and emotional intelligence, mindfulness and present-moment awareness, cognitive restructuring and thought patterns, social connection and relationships, purpose and meaning, sleep and lifestyle factors, and how to build mental wellness programs that achieve the emotional regulation and the stress resilience and the psychological flourishing that good mental health requires by developing the wellness practice with the mindfulness meditation and the cognitive behavioral skills and the social support that builds the psychological resilience against the stressor and the emotional challenge.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/relationships', requireAuth, async (req: AuthRequest, res) => {
+  const { person, relationship, goals } = req.body;
+  const prompt = `You are a relationship strategy and interpersonal dynamics expert. Design relationship strategy for ${person} in ${relationship} achieving ${goals}. Cover relationship strategy framework, communication and active listening, conflict resolution and repair, emotional intimacy and vulnerability, attachment styles and patterns, boundaries and self-respect, trust building and maintenance, relationship enrichment and connection, couples and family dynamics, and how to build relationship strategy programs that achieve the connection deepening and the conflict reduction and the mutual flourishing that healthy relationships require by developing the communication practice with the nonviolent communication and the empathic listening and the assertive expression that creates the psychological safety for the authentic connection.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/careercoach', requireAuth, async (req: AuthRequest, res) => {
+  const { coach, professional, transition } = req.body;
+  const prompt = `You are a career coaching strategy and professional development expert. Design career coaching strategy for ${coach} helping ${professional} through ${transition}. Cover career coaching framework, career assessment and strengths identification, career vision and values alignment, job search strategy and networking, resume and LinkedIn optimization, interview preparation and practice, offer negotiation, career advancement and promotion, executive presence and leadership, and how to build career coaching programs that achieve the career clarity and the job market success and the professional advancement that effective career coaching requires by grounding the career strategy in the authentic strengths and the values and the market reality that identifies the career direction where the professional can compete with confidence and build the meaningful career.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/leadership', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, context, gaps } = req.body;
+  const prompt = `You are a leadership development strategy and executive coaching expert. Design leadership development strategy for ${leader} in ${context} addressing ${gaps}. Cover leadership development framework, leadership assessment and 360 feedback, leadership presence and communication, strategic thinking and decision making, team leadership and empowerment, change leadership and influence, emotional intelligence and self-awareness, executive coaching and reflection, leadership authenticity, and how to build leadership development programs that achieve the leadership effectiveness and the team performance and the organizational impact that strong leadership requires by developing the self-awareness with the 360 feedback and the leadership assessment and the coaching reflection that identifies the leadership blind spot and the growth edge that when addressed most increases the leader effectiveness.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/entrepreneurcoach', requireAuth, async (req: AuthRequest, res) => {
+  const { coach, founder, stage } = req.body;
+  const prompt = `You are an entrepreneurship coaching strategy and founder development expert. Design entrepreneurship coaching strategy for ${coach} supporting ${founder} at ${stage}. Cover entrepreneurship coaching framework, founder mindset and resilience, business model and value proposition, customer discovery and validation, fundraising and investor relations, team building and leadership, scaling and growth strategy, founder wellbeing and sustainability, pivot decision and strategic choice, and how to build entrepreneurship coaching programs that achieve the founder capability and the venture progress and the founder-market fit that successful entrepreneurship requires by developing the founder with the customer discovery discipline and the hypothesis testing and the data-informed pivot that avoids the solution-in-search-of-a-problem trap and finds the genuine market need.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/spirituality', requireAuth, async (req: AuthRequest, res) => {
+  const { person, tradition, goals } = req.body;
+  const prompt = `You are a spiritual development strategy and contemplative practice expert. Design spiritual development strategy for ${person} exploring ${tradition} achieving ${goals}. Cover spiritual development framework, contemplative practice and meditation, meaning and purpose exploration, spiritual community and belonging, ethics and values development, sacred text and wisdom tradition, spiritual direction and mentoring, mystical experience and integration, service and contribution, and how to build spiritual development programs that achieve the inner peace and the meaning and purpose and the transcendent connection that spiritual flourishing requires by developing the contemplative practice with the meditation and the prayer and the reflection that cultivates the inner stillness and the awareness that opens the spiritual perception and the encounter with the sacred.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/retirement', requireAuth, async (req: AuthRequest, res) => {
+  const { person, timeline, lifestyle } = req.body;
+  const prompt = `You are a retirement planning strategy and financial security expert. Design retirement planning strategy for ${person} retiring in ${timeline} with ${lifestyle}. Cover retirement planning framework, retirement income needs and analysis, Social Security optimization, retirement account strategy and distribution, Medicare and healthcare planning, portfolio construction for retirement, sequence of returns risk, tax-efficient withdrawal strategy, estate planning and legacy, and how to build retirement planning programs that achieve the retirement security and the lifestyle maintenance and the legacy planning that effective retirement requires by calculating the retirement income need with the inflation-adjusted expense projection and the longevity scenario and the Monte Carlo simulation that tests the portfolio sustainability across the range of market and longevity outcomes.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
