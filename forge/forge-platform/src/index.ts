@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v687.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v688.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205457,6 +205457,66 @@ app.post('/api/operations/global-supply-chain', requireAuth, async (req: AuthReq
 app.post('/api/strategy/content-monetization', requireAuth, async (req: AuthRequest, res) => {
   const { creator, content, audience } = req.body;
   const prompt = `You are a content monetization strategy and creator economy expert. Design content monetization for ${creator} with ${content} and ${audience}. Cover content monetization framework, advertising and sponsorship models, subscription and membership models, digital products and courses, live events and experiences, affiliate and commerce integration, licensing and syndication, brand partnerships and collaborations, community and social commerce, and how to design content monetization strategies that generate sustainable income by building genuine audience relationships and delivering content that audiences value enough to pay for in some form, rather than relying entirely on advertising revenue that requires massive scale and creates incentives to optimize for engagement metrics rather than genuine audience value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/labor-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, workforce, technology } = req.body;
+  const prompt = `You are a labor technology strategy and workforce tech expert. Design labor technology for ${company} with ${workforce} using ${technology}. Cover labor technology framework, workforce management systems, scheduling and shift optimization, time and attendance, payroll and HR information systems, performance management technology, learning and development platforms, employee experience platforms, workforce analytics and planning, and how to implement labor technology that genuinely improves workforce productivity and employee experience by selecting systems that managers and workers actually adopt and use rather than implementing technology that creates compliance requirements and data collection without meaningfully improving how work gets done or the conditions under which people work.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/knowledge-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, domain, teams } = req.body;
+  const prompt = `You are a knowledge operations strategy and organizational learning expert. Design knowledge operations for ${organization} in ${domain} across ${teams}. Cover knowledge operations framework, knowledge audit and gap analysis, knowledge capture and documentation, knowledge architecture and taxonomy, search and discovery systems, communities of practice, expert directories and knowledge networks, knowledge transfer and succession planning, knowledge quality and currency management, and how to build knowledge operations that make organizational knowledge genuinely accessible and useful by investing in the systems and incentives that encourage people to share what they know rather than creating knowledge repositories that no one maintains or searches because the real knowledge stays in peoples heads.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/price-optimization', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, customers } = req.body;
+  const prompt = `You are a price optimization strategy and revenue management expert. Design price optimization for ${company} with ${products} serving ${customers}. Cover price optimization framework, demand elasticity and price sensitivity, value-based pricing and willingness to pay, competitive pricing intelligence, dynamic and algorithmic pricing, price segmentation and personalization, promotional pricing and discounting strategy, price increase management and communication, price architecture and packaging, and how to design price optimization approaches that maximize revenue and profit over the long term by setting prices that reflect the genuine value delivered to different customer segments rather than optimizing for short-term revenue extraction that erodes customer trust and creates churn.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/corporate-culture', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, current, desired } = req.body;
+  const prompt = `You are a corporate culture strategy and organizational transformation expert. Design corporate culture for ${organization} moving from ${current} to ${desired}. Cover corporate culture framework, culture diagnostic and assessment, values definition and operationalization, leadership modeling and culture carrier identification, hiring and onboarding for culture fit, recognition and reinforcement systems, culture measurement and tracking, subculture management in large organizations, culture in M and A integration, and how to build corporate cultures that are genuine drivers of performance and employee fulfillment rather than aspirational values statements that are disconnected from the actual behaviors the organization rewards, the decisions leaders make, and the experience of people who work there.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-integration', requireAuth, async (req: AuthRequest, res) => {
+  const { company, processes, systems } = req.body;
+  const prompt = `You are an AI integration strategy and enterprise AI adoption expert. Design AI integration for ${company} across ${processes} and ${systems}. Cover AI integration framework, AI use case identification and prioritization, build vs buy vs partner decision, data readiness and infrastructure, AI governance and risk management, change management for AI adoption, human-AI collaboration design, AI performance measurement, responsible AI and bias management, and how to integrate AI into business processes in ways that generate genuine productivity and quality improvements by starting with use cases where AI can reliably improve on current approaches, investing in the data and process work that makes AI effective, and managing the human factors that determine whether AI tools actually get adopted.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/customer-retention', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, churn } = req.body;
+  const prompt = `You are a customer retention strategy and churn prevention expert. Design customer retention for ${company} targeting ${segment} with ${churn} issues. Cover customer retention framework, churn prediction and early warning signals, customer health scoring, proactive intervention and save programs, customer success and adoption, loyalty and rewards program design, win-back and reactivation, pricing and packaging for retention, customer feedback and satisfaction loops, and how to build customer retention programs that keep customers because they receive genuine ongoing value rather than because they are locked in by contracts or switching costs, since customers who stay because they want to are far more profitable and easier to expand than customers who stay because they are trapped.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/real-estate', requireAuth, async (req: AuthRequest, res) => {
+  const { investor, market, strategy } = req.body;
+  const prompt = `You are a real estate investment strategy and property market expert. Design real estate strategy for ${investor} in ${market} using ${strategy}. Cover real estate strategy framework, market analysis and opportunity identification, asset class selection across residential, commercial, industrial, and alternatives, acquisition and underwriting, financing and capital structure, value-add and development, property management and operations, portfolio diversification, exit strategy and liquidity, and how to build real estate investment strategies that generate attractive risk-adjusted returns by making disciplined underwriting decisions grounded in realistic assumptions about income growth, vacancy, and capital expenditure rather than optimistic projections that make every deal look attractive without accounting for the full cost of ownership and management.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, industry, stage } = req.body;
+  const prompt = `You are a digital transformation strategy and enterprise change expert. Design digital transformation for ${organization} in ${industry} at ${stage}. Cover digital transformation framework, digital maturity assessment, transformation vision and roadmap, technology architecture and platform strategy, data strategy and analytics capability, digital customer experience, digital operations and automation, talent and organizational capability, change management and adoption, and how to execute digital transformation programs that deliver sustained business value by focusing on the business outcomes the technology enables rather than the technology itself, and building the organizational capabilities needed to continue evolving digitally rather than treating transformation as a one-time program with a defined end state.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/supply-resilience', requireAuth, async (req: AuthRequest, res) => {
+  const { company, supply_chain, risks } = req.body;
+  const prompt = `You are a supply chain resilience strategy and risk management expert. Design supply resilience for ${company} with ${supply_chain} facing ${risks}. Cover supply resilience framework, supply chain risk mapping and vulnerability assessment, supplier diversification and multi-sourcing, inventory buffering and strategic stockpiling, nearshoring and regionalization, supply chain visibility and early warning systems, business continuity planning, crisis response and recovery, supply chain insurance and financial risk, and how to build supply chain resilience that provides genuine protection against disruption without creating so much redundancy and buffer inventory that the cost of resilience exceeds the cost of the disruptions it prevents, which requires making explicit probability-weighted risk assessments rather than simply adding buffers everywhere after every disruption.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/brand-equity', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, category, audience } = req.body;
+  const prompt = `You are a brand equity strategy and brand management expert. Design brand equity for ${brand} in ${category} with ${audience}. Cover brand equity framework, brand positioning and differentiation, brand architecture for portfolio management, brand identity and visual system, brand voice and personality, brand experience across touchpoints, brand tracking and measurement, brand extension and licensing, brand crisis management, and how to build brand equity that creates genuine economic value by building the awareness, quality associations, loyalty, and proprietary assets that allow the brand to command premium pricing and generate customer preference that competitors cannot easily copy even when they match product features and price points.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
