@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v655.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v656.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203537,6 +203537,66 @@ app.post('/api/strategy/greenfield-product', requireAuth, async (req: AuthReques
 app.post('/api/strategy/data-product', requireAuth, async (req: AuthRequest, res) => {
   const { organization, data, customers } = req.body;
   const prompt = `You are a data product strategy and data monetization expert. Design the data product for ${organization} leveraging ${data} for ${customers}. Cover the data product framework, the data product types and models, the data asset identification and valuation, the data product-market fit, the data product privacy and compliance, the data licensing and API models, the data product packaging and pricing, the data product go-to-market, the data product competitive advantages, and how to build data products that create genuine value for customers by providing the insights and capabilities they cannot easily build themselves, that maintain the privacy and compliance standards required to build trust with the customers and data subjects whose data underlies the product, and that develop the data network effects and data flywheel that make the product more valuable over time as more data is generated and more customers use it.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/growth-mindset', requireAuth, async (req: AuthRequest, res) => {
+  const { professional, challenge, goal } = req.body;
+  const prompt = `You are a growth mindset and psychological performance expert. Design the mindset development for ${professional} facing ${challenge} toward ${goal}. Cover the mindset framework, the fixed vs. growth mindset patterns, the self-limiting beliefs identification, the reframing and cognitive restructuring, the failure and setback processing, the learning from feedback, the challenge-seeking behaviors, the resilience building practices, the mindset habits and rituals, and how to develop the growth mindset and psychological resilience that allows professionals to continuously improve through deliberate practice and honest self-assessment, to use challenges and failures as learning opportunities rather than evidence of fixed limitations, and to maintain the long-term orientation needed to build genuine expertise and impact over a career.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/workplace-wellbeing', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, workforce, issues } = req.body;
+  const prompt = `You are a workplace wellbeing and employee mental health expert. Design the wellbeing program for ${organization} for ${workforce} addressing ${issues}. Cover the wellbeing framework, the mental health and psychological safety, the physical health and ergonomics, the work-life balance and boundaries, the financial wellbeing programs, the social connection and belonging, the workload and stress management, the manager mental health support, the wellbeing measurement and ROI, and how to design workplace wellbeing programs that address the actual root causes of employee stress and burnout rather than offering meditation apps and yoga classes while maintaining the work practices and management behaviors that are causing the problems in the first place, that create the psychological safety where employees can discuss mental health challenges without career risk.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/diversity-inclusion', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, stage, gaps } = req.body;
+  const prompt = `You are a diversity, equity, and inclusion strategy and organizational change expert. Design the DEI strategy for ${organization} at ${stage} addressing ${gaps}. Cover the DEI framework, the inclusion and belonging culture, the representation and pipeline programs, the pay equity and compensation fairness, the bias mitigation in hiring and promotion, the inclusive leadership development, the ERG and community building, the DEI metrics and accountability, the systemic change vs. individual training, and how to design DEI programs that create genuine inclusion and belonging rather than checking boxes, that address the systemic processes and policies that produce inequitable outcomes rather than focusing exclusively on individual bias training that research shows has limited effectiveness, and that create the accountability mechanisms and measurement systems that allow organizations to track progress honestly.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/negotiation-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { negotiation, counterparty, stakes } = req.body;
+  const prompt = `You are a negotiation strategy and influence expert. Design the negotiation strategy for ${negotiation} with ${counterparty} at ${stakes}. Cover the negotiation strategy framework, the BATNA and reservation price analysis, the interests vs. positions distinction, the value creation and expansion strategy, the anchoring and framing tactics, the concession strategy and sequencing, the relationship dynamics management, the information asymmetry and discovery, the cultural and contextual factors, and how to negotiate in ways that create the most value for all parties by identifying trades that are high value to one party at low cost to the other, that maintain the relationship quality needed for the long-term partnership that is more valuable than winning any single negotiation point, and that achieve your core interests while helping the other party achieve their core interests.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/intellectual-property', requireAuth, async (req: AuthRequest, res) => {
+  const { innovation, business, strategy } = req.body;
+  const prompt = `You are an intellectual property strategy and IP portfolio management expert. Design the IP strategy for ${innovation} in ${business} using ${strategy}. Cover the IP strategy framework, the patent strategy and prosecution, the trade secret protection, the trademark strategy and brand protection, the copyright and content protection, the IP ownership and assignment, the IP licensing and monetization, the open source strategy and compliance, the IP due diligence and M&A, and how to build IP portfolios that create genuine competitive advantages and commercial value rather than expensive collections of patents that do not protect the business, that align the IP strategy with the business model and competitive dynamics of your industry, and that use the right IP protections for the specific innovations that create value in your business.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/regtech', requireAuth, async (req: AuthRequest, res) => {
+  const { product, regulation, customers } = req.body;
+  const prompt = `You are a regulatory technology strategy and compliance automation expert. Advise on the regtech strategy for ${product} addressing ${regulation} for ${customers}. Cover the regtech framework, the compliance pain point identification, the regtech market landscape, the regulatory change management, the compliance automation and workflow, the reporting and audit trail, the regulatory data management, the regtech implementation and integration, the regtech competitive dynamics, and how to build regtech businesses that genuinely reduce the compliance burden on customers in regulated industries by automating the most time-consuming and error-prone compliance processes, that stay current with the regulatory changes that affect the compliance requirements the product addresses, and that build the trust and reliability standards required by customers who face significant penalties for compliance failures.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/creator-economy', requireAuth, async (req: AuthRequest, res) => {
+  const { creator, platform, model } = req.body;
+  const prompt = `You are a creator economy strategy and content monetization expert. Design the creator strategy for ${creator} on ${platform} using ${model}. Cover the creator economy framework, the audience building and community strategy, the content strategy and differentiation, the monetization model selection, the platform diversification, the creator business operations, the brand partnership and sponsorship strategy, the product and merchandise strategy, the creator IP and content licensing, and how to build sustainable creator businesses that are not dependent on any single platform or revenue stream, that build genuine relationships with an audience rather than chasing algorithm-driven reach, and that create the content and community assets that generate recurring revenue and compound value over time rather than the content hamster wheel that burns out creators who optimize for engagement metrics rather than business sustainability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/platform-business', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, sides, stage } = req.body;
+  const prompt = `You are a platform business strategy and marketplace economics expert. Design the platform strategy for ${platform} serving ${sides} at ${stage}. Cover the platform strategy framework, the multi-sided market design, the chicken-and-egg problem solution, the platform governance and rules, the trust and safety mechanisms, the take rate and monetization design, the platform competitive moat, the platform metrics and health indicators, the network effects and tipping point, and how to design platform businesses that solve the fundamental challenge of getting the supply and demand sides to the platform simultaneously, that design the governance and incentive structures that align platform participants toward value creation rather than value extraction, and that build the network effects and switching costs that create durable competitive advantages once the platform achieves critical mass.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/acquisition-integration', requireAuth, async (req: AuthRequest, res) => {
+  const { acquirer, target, synergies } = req.body;
+  const prompt = `You are an M&A integration strategy and post-merger management expert. Design the integration plan for ${acquirer} acquiring ${target} capturing ${synergies}. Cover the integration framework, the integration strategy and thesis, the Day 1 readiness planning, the organization and people integration, the systems and technology integration, the customer and revenue integration, the culture integration and change management, the synergy realization tracking, the integration governance and PMO, and how to design integration plans that capture the value that justified the acquisition price rather than destroying value through poor integration execution, that move fast enough to capture synergies and prevent talent attrition while being deliberate enough to avoid mistakes that are expensive to reverse, and that maintain business continuity and customer relationships throughout the integration period.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/ops-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, operations, goals } = req.body;
+  const prompt = `You are an operational intelligence and business process insights expert. Design the ops intelligence system for ${organization} covering ${operations} toward ${goals}. Cover the ops intelligence framework, the key operational metrics and KPIs, the operational data sources and integration, the process mining and discovery, the operational anomaly detection, the predictive operations and forecasting, the operational benchmarking, the continuous improvement feedback loops, the ops intelligence reporting, and how to build operational intelligence systems that give decision-makers real-time visibility into operational performance, that automatically surface the anomalies and bottlenecks that require attention before they become crises, and that connect operational metrics to business outcomes so teams can understand which operational improvements have the highest impact on the business results that matter.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
