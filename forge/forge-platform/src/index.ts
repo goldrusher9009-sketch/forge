@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v702.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v703.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -206357,6 +206357,66 @@ app.post('/api/finance/family-office', requireAuth, async (req: AuthRequest, res
 app.post('/api/strategy/narrow-ai', requireAuth, async (req: AuthRequest, res) => {
   const { company, problem, data } = req.body;
   const prompt = `You are a narrow AI applications strategy and machine learning deployment expert. Design narrow AI for ${company} solving ${problem} with ${data}. Cover narrow AI framework, problem framing and ML suitability assessment, data requirements and data engineering, model selection and architecture, training and validation methodology, production deployment and MLOps, model monitoring and drift detection, human-in-the-loop design, continuous improvement pipeline, and how to deploy narrow AI applications that deliver reliable business value by rigorously assessing whether the problem has the data characteristics and stability that make ML appropriate rather than building ML solutions to problems that simpler rule-based approaches solve better, designing the human oversight and escalation that catches model failures before they cause harm, and building the MLOps infrastructure that maintains model performance after deployment as data distributions shift.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/gig-economy', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, workers, market } = req.body;
+  const prompt = `You are a gig economy strategy and marketplace design expert. Design gig economy strategy for ${platform} with ${workers} in ${market}. Cover gig economy framework, supply and demand balancing, worker classification and compliance, dynamic pricing and surge mechanics, quality control and rating systems, worker onboarding and earnings optimization, benefits and worker protections, geographic expansion strategy, retention and churn reduction, and how to build gig economy platforms that generate sustainable value for both workers and customers by designing the marketplace mechanics that balance supply and demand efficiently, providing workers with the transparency and earning predictability that makes the platform a viable income source, and building the quality systems that maintain consistent service quality as the worker base scales beyond what direct management can control.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/agribusiness', requireAuth, async (req: AuthRequest, res) => {
+  const { company, crops, market } = req.body;
+  const prompt = `You are an agribusiness strategy and agricultural value chain expert. Design agribusiness strategy for ${company} with ${crops} in ${market}. Cover agribusiness strategy framework, crop selection and portfolio optimization, input cost management and precision agriculture, supply chain integration and vertical integration, commodity risk management and hedging, sustainability and regenerative agriculture, export market development, agricultural technology adoption, cooperative and contract farming models, and how to build agribusiness strategies that generate sustainable profitability by managing the price volatility and input cost inflation that compress margins in commodity agriculture, adopting the precision agriculture technologies that reduce input waste and increase yield, and developing the market relationships and value-added processing capabilities that capture more margin than commodity sale alone.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/edtech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, learners, outcomes } = req.body;
+  const prompt = `You are an EdTech strategy and learning outcomes expert. Design EdTech strategy for ${company} serving ${learners} targeting ${outcomes}. Cover EdTech strategy framework, learning science and pedagogy integration, content production and quality, learning outcomes measurement, institutional versus consumer go-to-market, accreditation and credentialing, employer and workforce partnerships, adaptive learning and personalization, engagement and completion optimization, and how to build EdTech businesses that deliver genuine learning outcomes by grounding product design in learning science rather than engagement metrics that optimize for time-in-app at the expense of actual learning, measuring whether learners achieve the skill outcomes and career advances that justified their investment rather than just course completion rates, and building the employer and institutional relationships that make credentials from the platform meaningful in the labor market.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/innovation-culture', requireAuth, async (req: AuthRequest, res) => {
+  const { company, barriers, goals } = req.body;
+  const prompt = `You are an innovation culture strategy and organizational change expert. Design innovation culture for ${company} overcoming ${barriers} targeting ${goals}. Cover innovation culture framework, psychological safety and risk tolerance, innovation time and resource allocation, idea management and selection processes, cross-functional collaboration, failure normalization and learning from experiments, innovation leadership behaviors, measurement and recognition systems, external inspiration and horizon scanning, and how to build innovation cultures that generate sustained competitive renewal by creating the genuine psychological safety that lets people share half-formed ideas without fear of judgment, allocating the dedicated time and resources that signal innovation is a real priority rather than an aspirational value, and designing the selection and development processes that take promising ideas from concept to market test without the organizational antibodies that kill innovation in most large companies.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/personal-development', requireAuth, async (req: AuthRequest, res) => {
+  const { person, goal, constraints } = req.body;
+  const prompt = `You are a personal development strategy and growth expert. Design personal development plan for ${person} targeting ${goal} given ${constraints}. Cover personal development framework, self-assessment and strengths identification, limiting belief identification and reframing, habit design and behavior change, skill acquisition strategy and deliberate practice, network development and relationship building, mentorship and sponsorship, accountability systems, progress measurement and milestone setting, and how to design personal development plans that create genuine growth by starting with an honest assessment of current capabilities and the specific gaps that need to close to achieve the goal, designing the deliberate practice and learning experiences that build skills efficiently rather than passive information consumption, and building the accountability structures and environment design that make the desired behaviors the default rather than requiring constant willpower.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/brand-identity', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, values, audience } = req.body;
+  const prompt = `You are a brand identity strategy and visual identity design expert. Design brand identity for ${brand} expressing ${values} for ${audience}. Cover brand identity framework, brand essence and personality definition, visual identity system design, logo and wordmark strategy, color palette and typography, brand voice and tone, brand application and touchpoint guidelines, brand architecture for portfolios, brand refresh versus rebrand decision, and how to build brand identities that create genuine recognition and emotional connection by grounding the visual and verbal identity in authentic brand truths rather than aspirational positioning, designing a system that works consistently across every touchpoint from business cards to billboards to digital experiences, and providing the governance and guidelines that maintain identity consistency as the brand scales and the number of people creating branded materials grows beyond what centralized approval can manage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/real-estate-investment', requireAuth, async (req: AuthRequest, res) => {
+  const { investor, strategy, market } = req.body;
+  const prompt = `You are a real estate investment strategy and portfolio management expert. Design real estate investment strategy for ${investor} pursuing ${strategy} in ${market}. Cover real estate investment framework, market analysis and opportunity identification, asset class selection across residential, commercial, and industrial, deal underwriting and valuation, capital structure and financing optimization, value-add and development strategy, property management and operations, portfolio construction and diversification, exit strategy and disposition, and how to build real estate investment strategies that generate superior risk-adjusted returns by conducting rigorous market analysis that identifies demand and supply dynamics before committing capital, underwriting conservatively against realistic operating assumptions rather than optimistic projections, and building the operational capabilities to execute value-add business plans rather than relying on market appreciation to generate returns.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/agency-business', requireAuth, async (req: AuthRequest, res) => {
+  const { agency, services, clients } = req.body;
+  const prompt = `You are an agency business strategy and professional services expert. Design agency strategy for ${agency} offering ${services} to ${clients}. Cover agency business framework, service line definition and specialization, pricing model design from time and materials to retainer to value-based, talent acquisition and utilization management, client acquisition and business development, account growth and scope expansion, delivery quality and project management, agency culture and retention, productization and scalability, and how to build agency businesses that generate sustainable profitability by developing the specialization that commands premium pricing rather than competing as a generalist on price, designing the delivery model that maintains quality as the agency scales beyond the founding team, and building the recurring revenue through retainer relationships that provide the revenue predictability to invest in the team and capabilities that differentiate the agency.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/medical-device', requireAuth, async (req: AuthRequest, res) => {
+  const { company, device, indication } = req.body;
+  const prompt = `You are a medical device strategy and regulatory pathway expert. Design medical device strategy for ${company} developing ${device} for ${indication}. Cover medical device strategy framework, regulatory classification and pathway selection, clinical evidence requirements, FDA submission strategy, CE marking and international regulatory, manufacturing quality systems and ISO 13485, reimbursement and coding strategy, sales channel and clinical champion development, post-market surveillance, and how to build medical device commercialization strategies that achieve regulatory approval and clinical adoption by designing the clinical evidence program that demonstrates the safety and efficacy evidence regulators require at the level that supports the regulatory pathway, building the reimbursement strategy that creates the economic case for hospitals and payers to cover the device, and developing the clinical champion network that generates the physician adoption that drives commercial success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/crisis-communications', requireAuth, async (req: AuthRequest, res) => {
+  const { company, crisis, stakeholders } = req.body;
+  const prompt = `You are a crisis communications strategy and reputation management expert. Design crisis communications for ${company} facing ${crisis} with ${stakeholders}. Cover crisis communications framework, crisis assessment and severity classification, immediate response and holding statement, spokesperson selection and media training, stakeholder communication prioritization, social media monitoring and response, investigation and facts gathering, narrative development and message discipline, recovery and reputation rebuilding, and how to manage crisis communications that preserve organizational trust by responding rapidly with the facts known at the time rather than waiting for complete information, taking genuine accountability for what went wrong rather than issuing the non-apology that signals the organization is managing image rather than addressing harm, and demonstrating through concrete actions the changes made to prevent recurrence rather than promising to do better without visible follow-through.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
