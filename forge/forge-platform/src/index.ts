@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v596.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v597.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199997,6 +199997,66 @@ app.post('/api/engineering/infosec', requireAuth, async (req: AuthRequest, res) 
 app.post('/api/career/executive-coach', requireAuth, async (req: AuthRequest, res) => {
   const { leader, challenge, goal } = req.body;
   const prompt = `You are an executive coaching and leadership development expert. Coach ${leader} through ${challenge} leadership challenge to achieve ${goal}. Cover the executive assessment and self-awareness tools, the leadership presence and executive communication development, the strategic thinking development, the executive relationship management, the board and stakeholder management skills, the enterprise leadership vs. functional leadership transition, the imposter syndrome and confidence at the executive level, the work-life integration for senior leaders, the leadership team dynamics, and how to build a personal board of advisors for ongoing development.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/procurement-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { category, spend, goal } = req.body;
+  const prompt = `You are a procurement and strategic sourcing expert. Build the procurement strategy for ${category} with ${spend} spend to achieve ${goal}. Cover the spend analysis and category segmentation, the make vs. buy decision framework, the supplier market analysis, the sourcing strategy selection, the RFP and negotiation strategy, the supplier relationship management approach, the contract management design, the procurement risk management, the procurement technology enablement, and how to measure procurement value beyond cost savings.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/workforce-skills', requireAuth, async (req: AuthRequest, res) => {
+  const { org, industry, horizon } = req.body;
+  const prompt = `You are a workforce planning and skills strategy expert. Build the workforce skills plan for ${org} in ${industry} over a ${horizon} horizon. Cover the skills taxonomy design, the skills gap assessment methodology, the critical role and skill identification, the build vs. buy vs. borrow skills strategy, the reskilling and upskilling program design, the internal mobility and talent marketplace, the learning content strategy, the skills-based hiring approach, the AI and automation impact on workforce, and how to create a skills-based organization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/revops-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, revenue, bottleneck } = req.body;
+  const prompt = `You are a revenue operations and go-to-market efficiency expert. Design the RevOps strategy for ${company} at ${revenue} revenue to solve ${bottleneck}. Cover the RevOps function charter and organizational model, the revenue tech stack audit and design, the lead-to-cash process design, the data and reporting infrastructure, the sales and marketing alignment mechanisms, the customer success handoff design, the pipeline management and forecasting, the RevOps metrics and SLA design, the RevOps roadmap prioritization, and how to build a RevOps function that accelerates growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/media-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, budget, objective } = req.body;
+  const prompt = `You are a media planning and integrated marketing communications expert. Build the media plan for ${brand} with ${budget} budget to achieve ${objective}. Cover the media objective setting, the target audience and media consumption analysis, the channel selection framework, the reach and frequency goal setting, the media mix optimization, the programmatic and digital media strategy, the traditional media integration, the media scheduling and flighting, the media measurement and attribution, and how to optimize the media plan in-flight based on performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/partner-program', requireAuth, async (req: AuthRequest, res) => {
+  const { company, type, target } = req.body;
+  const prompt = `You are a partner program and ecosystem strategy expert. Design the partner program for ${company} with ${type} partner type targeting ${target} revenue. Cover the partner program vision and value proposition, the partner tier and certification design, the partner economics and margin structure, the partner enablement and training program, the co-selling and co-marketing motion, the partner deal registration and protection, the partner portal and tool design, the partner recruitment and onboarding, the partner performance management, and how to build a thriving partner ecosystem.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/price-book', requireAuth, async (req: AuthRequest, res) => {
+  const { product, model, market } = req.body;
+  const prompt = `You are a pricing architecture and price book design expert. Build the price book architecture for ${product} with ${model} pricing model for ${market} market. Cover the price book structure and hierarchy, the pricing metric selection, the price book segmentation by customer type, the discounting framework and approval authority, the list vs. net pricing strategy, the price book governance and approval process, the CPQ integration design, the promotional and bundle pricing, the price book communication to sales, and how to maintain and evolve the price book over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/growth-loop', requireAuth, async (req: AuthRequest, res) => {
+  const { product, user, action } = req.body;
+  const prompt = `You are a growth engineering and product-led growth expert. Design the growth loops for ${product} where ${user} takes ${action}. Cover the growth loop taxonomy, the acquisition loop design, the engagement and retention loop design, the monetization loop design, the referral and virality loop design, the data flywheel design, the growth loop instrumentation, the growth loop prioritization, the experiment design for each loop, and how to compound growth loops over time to create a self-reinforcing growth system.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/creator-economy', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, creator, model } = req.body;
+  const prompt = `You are a creator economy and platform strategy expert. Build the creator economy strategy for ${platform} targeting ${creator} creators with ${model} monetization. Cover the creator value proposition design, the creator onboarding and success program, the creator monetization tool design, the creator discovery and recommendation algorithm, the creator-audience engagement mechanics, the creator exclusivity and platform lock-in strategy, the creator fund and advance program, the creator analytics and insights tools, the creator community design, and how to build a thriving creator economy that benefits creators and the platform.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/b2b-plg', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, stage } = req.body;
+  const prompt = `You are a product-led growth and B2B SaaS strategy expert. Design the PLG motion for ${product} targeting ${segment} at ${stage} stage. Cover the free tier and freemium model design, the product activation sequence, the time-to-value optimization, the product qualified lead definition, the expansion trigger design, the team and viral adoption mechanics, the sales-assist trigger and handoff, the PLG metrics and instrumentation, the conversion optimization, and how to blend PLG with sales-led motion as the company scales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/enablement', requireAuth, async (req: AuthRequest, res) => {
+  const { team, challenge, stage } = req.body;
+  const prompt = `You are a sales enablement and revenue readiness expert. Build the enablement program for ${team} sales team addressing ${challenge} at ${stage} deal stage. Cover the sales enablement charter and scope, the content strategy for each deal stage, the playbook design, the onboarding and ramp program, the ongoing training and coaching design, the competitive intelligence program, the win-loss analysis process, the technology and CRM enablement, the enablement measurement and ROI, and how to build a world-class sales enablement function.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
