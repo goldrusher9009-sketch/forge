@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v416.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v417.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190065,6 +190065,59 @@ app.post('/api/product/user-research', requireAuth, async (req: AuthRequest, res
 app.post('/api/sales/story-board', requireAuth, async (req: AuthRequest, res) => {
   const { product, persona, outcome } = req.body;
   const prompt = `Build a sales story using the hero's journey framework.\nProduct: ${product}\nBuyer persona: ${persona}\nDesired outcome: ${outcome}\nInclude: before state, inciting incident, guide introduction, plan, action, transformation, and proof. Write it as a narrative the sales rep can tell.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 253+254 routes
+app.post('/api/dev/kubernetes-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { currentSetup, scale, goals } = req.body;
+  const prompt = `Design a Kubernetes strategy and migration plan.\nCurrent setup: ${currentSetup}\nScale requirements: ${scale}\nGoals: ${goals}\nInclude: cluster architecture, namespace strategy, resource limits, HPA configuration, secrets management, and monitoring setup.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/revops-review', requireAuth, async (req: AuthRequest, res) => {
+  const { team, metrics, tools } = req.body;
+  const prompt = `Conduct a RevOps review and optimization plan.\nTeam: ${team}\nCurrent metrics: ${metrics}\nTools: ${tools}\nInclude: funnel analysis, pipeline health, CRM hygiene, forecast accuracy improvements, and 90-day action plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/growth-model-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { product, stage, channels } = req.body;
+  const prompt = `Build a quantitative growth model.\nProduct: ${product}\nStage: ${stage}\nChannels: ${channels}\nInclude: key growth drivers, funnel metrics, compounding loops, scenario modeling (base/bull/bear), and leading indicators to track weekly.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/event-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { event, audience, goal } = req.body;
+  const prompt = `Create an event marketing plan.\nEvent: ${event}\nTarget audience: ${audience}\nGoal: ${goal}\nInclude: pre-event promotion (6-week plan), email sequences, social strategy, on-site engagement ideas, and post-event follow-up sequence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/leadership-development', requireAuth, async (req: AuthRequest, res) => {
+  const { role, gaps, timeline } = req.body;
+  const prompt = `Design a leadership development program.\nRole: ${role}\nSkill gaps: ${gaps}\nTimeline: ${timeline}\nInclude: competency framework, learning experiences (formal, social, experiential), stretch assignments, mentoring structure, and 90-180-365 day milestones.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/board-update', requireAuth, async (req: AuthRequest, res) => {
+  const { quarter, metrics, decisions } = req.body;
+  const prompt = `Write a board update for the quarter.\nQuarter: ${quarter}\nKey metrics: ${metrics}\nDecisions needed: ${decisions}\nInclude: executive summary, KPI dashboard narrative, strategic progress, risks and mitigations, asks from the board, and next quarter outlook.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/security-incident', requireAuth, async (req: AuthRequest, res) => {
+  const { incident, impact, timeline } = req.body;
+  const prompt = `Create a security incident response plan.\nIncident: ${incident}\nImpact: ${impact}\nTimeline: ${timeline}\nInclude: immediate containment steps, investigation checklist, communication templates (internal, customer, regulatory), post-incident review structure, and preventive measures.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/product-led', requireAuth, async (req: AuthRequest, res) => {
+  const { product, userBase, conversionRate } = req.body;
+  const prompt = `Design a product-led growth marketing strategy.\nProduct: ${product}\nUser base: ${userBase}\nCurrent conversion rate: ${conversionRate}\nInclude: in-product growth loops, expansion revenue triggers, viral coefficient improvements, and PQL (Product Qualified Lead) definition and handoff.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/feature-team', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, teamSize, timeline } = req.body;
+  const prompt = `Design a feature team structure and execution plan.\nFeature: ${feature}\nTeam size: ${teamSize}\nTimeline: ${timeline}\nInclude: team roles, sprint structure, decision rights, cross-functional dependencies, demo cadence, and success metrics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/deal-accelerate', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, blockers, timeline } = req.body;
+  const prompt = `Create a deal acceleration strategy.\nDeal context: ${deal}\nBlockers: ${blockers}\nNeeded by: ${timeline}\nInclude: blocker removal tactics, executive sponsor outreach plan, economic buyer strategy, urgency creation (mutual action plan), and specific next steps with owners and dates.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
