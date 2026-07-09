@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v446.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v447.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191655,6 +191655,59 @@ app.post('/api/product/risk-matrix', requireAuth, async (req: AuthRequest, res) 
 app.post('/api/sales/sales-transition-plan', requireAuth, async (req: AuthRequest, res) => {
   const { account, rep, timeline } = req.body;
   const prompt = `Design a sales account transition plan.\nAccount: ${account}\nRep transition: ${rep}\nTimeline: ${timeline}\nInclude: account handoff documentation (history/contacts/open opportunities/key relationships), customer communication strategy for rep change, introduction meeting format (outgoing + incoming rep + customer), relationship mapping transfer, open deal status and next steps, risk assessment for churn during transition, first 30-day plan for incoming rep, and how to turn a transition into an expansion opportunity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 313+314 routes
+app.post('/api/dev/docker-compose-design', requireAuth, async (req: AuthRequest, res) => {
+  const { services, envs, networking } = req.body;
+  const prompt = `Design a Docker Compose architecture.\nServices: ${services}\nEnvironments: ${envs}\nNetworking needs: ${networking}\nInclude: service definition best practices, health check configuration, volume management strategy, network segmentation, environment variable management (secrets vs. config), development vs. production compose file structure, multi-stage Dockerfile design, startup dependency ordering, resource limits, and how to use Docker Compose for local development while preparing for Kubernetes production.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/multi-threading', requireAuth, async (req: AuthRequest, res) => {
+  const { account, contacts, risk } = req.body;
+  const prompt = `Build a multi-threading strategy for a deal.\nAccount: ${account}\nCurrent contacts: ${contacts}\nRisk level: ${risk}\nInclude: stakeholder map by function and level, gap identification (who we don't know yet), introduction request strategy from current contacts, cold outreach to missing stakeholders, executive alignment strategy, why multi-threading protects the deal (champion change/ghosting/budget reallocation), how to multi-thread without annoying the champion, and multi-thread health scoring.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/competitive-map', requireAuth, async (req: AuthRequest, res) => {
+  const { category, dimensions, players } = req.body;
+  const prompt = `Create a competitive landscape map.\nProduct category: ${category}\nDifferentiation dimensions: ${dimensions}\nKey players: ${players}\nInclude: 2x2 competitive positioning framework, player positioning rationale, white space identification (underserved segments), competitive movement prediction, feature comparison matrix, pricing positioning map, customer segment overlap analysis, competitive moat comparison, and how to use the competitive map in sales conversations and product strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/blog-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { domain, audience, goals } = req.body;
+  const prompt = `Build a blog content strategy.\nDomain/brand: ${domain}\nTarget audience: ${audience}\nBusiness goals: ${goals}\nInclude: content pillar framework (3-5 pillars), topic cluster SEO architecture, editorial calendar structure, content format mix (thought leadership/educational/product/data-driven), author and voice strategy, content velocity recommendation, distribution amplification plan (email/social/syndication), link building integration, content repurposing workflow, and 90-day editorial calendar outline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/leadership-development', requireAuth, async (req: AuthRequest, res) => {
+  const { level, gaps, format } = req.body;
+  const prompt = `Design a leadership development program.\nTarget level: ${level}\nCapability gaps: ${gaps}\nPreferred format: ${format}\nInclude: leadership competency model for the level, 70-20-10 development plan (experience/exposure/education), stretch assignment design, executive coaching structure, 360 feedback methodology, peer learning group design, external program selection criteria, internal mentoring matching, leadership pipeline health metrics, and how to measure leadership development ROI.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/recap-round', requireAuth, async (req: AuthRequest, res) => {
+  const { company, situation, amount } = req.body;
+  const prompt = `Navigate a recapitalization round.\nCompany situation: ${company}\nContext: ${situation}\nAmount needed: ${amount}\nInclude: recap vs. down round vs. bridge distinction, when a recap is the right tool, structuring the recap (liquidation preference reset/anti-dilution reset/option pool refresh), existing investor dynamics in a recap, new investor terms in a recap context, founder and employee option repricing, communication strategy with all stakeholders, legal process and timeline, and post-recap positioning for the next financing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/containerization-guide', requireAuth, async (req: AuthRequest, res) => {
+  const { app, language, deploy } = req.body;
+  const prompt = `Create a containerization guide.\nApplication type: ${app}\nLanguage/framework: ${language}\nDeployment target: ${deploy}\nInclude: Dockerfile best practices for the stack (multi-stage builds, layer caching, minimal base images), .dockerignore configuration, container security hardening (non-root user/read-only filesystem/minimal capabilities), image tagging strategy, container registry setup, local development workflow with containers, environment configuration management, health check implementation, and migration path from VM/bare-metal to containers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/marketing-retention', requireAuth, async (req: AuthRequest, res) => {
+  const { product, churn, channels } = req.body;
+  const prompt = `Design a marketing-driven retention strategy.\nProduct: ${product}\nChurn profile: ${churn}\nMarketing channels: ${channels}\nInclude: retention marketing calendar, lifecycle email sequence design, win-back campaign architecture, in-app messaging strategy, loyalty program design, usage milestone celebrations, proactive churn prevention campaigns, re-engagement sequence for at-risk users, NPS driver → action mapping, and how to coordinate marketing retention with CS and product retention efforts.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/product-telemetry', requireAuth, async (req: AuthRequest, res) => {
+  const { events, stack, goals } = req.body;
+  const prompt = `Design a product telemetry system.\nKey events to track: ${events}\nTech stack: ${stack}\nAnalytics goals: ${goals}\nInclude: event taxonomy design (noun-verb pattern), event schema standards, identity resolution strategy (anonymous→identified), session definition, instrumentation architecture (client/server/hybrid), analytics tool selection, data pipeline to warehouse, property naming conventions, governance and ownership model, backfilling historical data, and how to use telemetry to make better product decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/deal-profitability', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, costs, margin } = req.body;
+  const prompt = `Analyze deal profitability.\nDeal details: ${deal}\nDeal costs: ${costs}\nTarget margin: ${margin}\nInclude: deal P&L structure (revenue/COGS/gross margin/S&M allocation/G&A allocation), customer-level profitability calculation, CAC payback period for this deal, LTV projection, implementation cost absorption analysis, professional services margin, discount impact modeling, minimum viable deal size recommendation, and how to improve deal economics through packaging, pricing, or implementation efficiency.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
