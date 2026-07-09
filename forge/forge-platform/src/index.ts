@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v782.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v783.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211157,6 +211157,66 @@ app.post('/api/media/news', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/media/vr', requireAuth, async (req: AuthRequest, res) => {
   const { developer, experience, application } = req.body;
   const prompt = `You are a virtual reality strategy and immersive media expert. Design virtual reality strategy for ${developer} creating ${experience} for ${application}. Cover virtual reality framework, VR content design and UX, headset and platform selection, 3D modeling and environment, spatial audio and haptics, performance optimization and comfort, multiplayer and social VR, enterprise and training VR, distribution and go to market, and how to build virtual reality programs that achieve the immersion and the user adoption and the business impact that successful VR requires by designing the experience with the comfort and the interaction model and the visual fidelity and the performance that delivers the presence and the engagement without the motion sickness and the friction that prevents the user from completing the experience and returning for the repeat use.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, institution, goals } = req.body;
+  const prompt = `You are an education strategy and institutional development expert. Design education strategy for ${leader} leading ${institution} achieving ${goals}. Cover education strategy framework, academic program development, curriculum design and learning outcomes, faculty development and hiring, student recruitment and retention, institutional accreditation, online and hybrid learning, research and scholarship, community partnerships and workforce development, and how to build education strategy programs that achieve the student success and the academic quality and the institutional sustainability that successful educational institutions require by developing the strategic plan with the mission and the vision and the enrollment goal and the academic priority and the financial model that aligns the academic program and the faculty and the student service and the infrastructure to deliver the education quality and the student outcome that justifies the institutional investment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/online', requireAuth, async (req: AuthRequest, res) => {
+  const { designer, course, learner } = req.body;
+  const prompt = `You are an online learning strategy and instructional design expert. Design online learning strategy for ${designer} creating ${course} for ${learner}. Cover online learning framework, instructional design and learning theory, video and multimedia production, interactive and adaptive learning, LMS and technology platform, synchronous and asynchronous design, assessment and competency, learner engagement and completion, analytics and learning measurement, and how to build online learning programs that achieve the learning outcome and the learner engagement and the completion rate that successful online education requires by designing the course with the learning objective and the content module and the activity and the assessment that builds the knowledge and the skill progressively with the feedback and the community and the support that keeps the learner motivated and progressing through the curriculum to the demonstrated competency.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/edtech', requireAuth, async (req: AuthRequest, res) => {
+  const { founder, product, market } = req.body;
+  const prompt = `You are an education technology strategy and edtech product expert. Design education technology strategy for ${founder} building ${product} for ${market}. Cover edtech strategy framework, learning science and pedagogy, product design and UX for education, B2B and B2C go to market, school and district sales, student data privacy and COPPA, curriculum alignment and standards, teacher adoption and professional development, outcomes measurement and efficacy research, and how to build education technology programs that achieve the learning outcome and the institutional adoption and the business growth that successful edtech requires by developing the product with the learning science foundation and the teacher workflow integration and the administrator reporting and the student engagement that demonstrates the learning efficacy and drives the institutional procurement and the renewal.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/higher', requireAuth, async (req: AuthRequest, res) => {
+  const { administrator, university, challenge } = req.body;
+  const prompt = `You are a higher education strategy and university management expert. Design higher education strategy for ${administrator} at ${university} addressing ${challenge}. Cover higher education framework, enrollment management and financial aid, academic affairs and curriculum, student affairs and success, research enterprise and grants, alumni relations and fundraising, campus operations and facilities, online and continuing education, shared governance and faculty relations, and how to build higher education programs that achieve the enrollment and the graduation rate and the research impact and the financial sustainability that successful universities require by developing the academic and operational strategy that balances the faculty governance and the student success and the research mission and the financial model to deliver the educational quality and the institutional reputation that attracts the student and the faculty and the donor.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/vocational', requireAuth, async (req: AuthRequest, res) => {
+  const { director, program, industry } = req.body;
+  const prompt = `You are a vocational training strategy and workforce development expert. Design vocational training strategy for ${director} building ${program} for ${industry}. Cover vocational training framework, competency-based curriculum design, industry partnership and advisory, hands-on and lab-based learning, credential and certification alignment, job placement and employer connection, apprenticeship and work-based learning, stackable credentials and career pathways, funding and financial aid, and how to build vocational training programs that achieve the employment rate and the wage gain and the employer satisfaction that successful workforce development requires by designing the curriculum with the industry competency standard and the hands-on equipment and the industry partner and the job placement support that prepares the learner with the technical skill and the professional readiness and the credential that employers recognize and value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { coach, student, goal } = req.body;
+  const prompt = `You are a student success coaching and academic achievement expert. Design student success coaching strategy for ${coach} supporting ${student} achieving ${goal}. Cover student success framework, academic planning and advising, learning strategies and study skills, time management and organization, goal setting and motivation, mental health and wellness support, financial literacy and aid navigation, career exploration and readiness, persistence and retention intervention, and how to build student success programs that achieve the academic progress and the graduation and the career readiness that successful student support requires by developing the coaching relationship with the early alert and the proactive outreach and the individualized plan and the campus resource connection that identifies the at-risk student and provides the academic and personal support before the academic difficulty becomes the academic failure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/corporate', requireAuth, async (req: AuthRequest, res) => {
+  const { director, program, workforce } = req.body;
+  const prompt = `You are a corporate training strategy and learning and development expert. Design corporate training strategy for ${director} building ${program} for ${workforce}. Cover corporate training framework, training needs analysis, instructional design and curriculum, leadership and management development, technical and skills training, onboarding and orientation, compliance and regulatory training, learning management systems, training ROI and measurement, and how to build corporate training programs that achieve the performance improvement and the skill development and the employee engagement that successful organizational learning requires by designing the training with the performance gap analysis and the competency model and the blended learning design and the manager reinforcement that transfers the learning to the job and measures the behavior change and the business impact that demonstrates the training investment is producing the performance improvement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/assessment', requireAuth, async (req: AuthRequest, res) => {
+  const { specialist, assessment, purpose } = req.body;
+  const prompt = `You are an educational assessment strategy and measurement expert. Design educational assessment strategy for ${specialist} designing ${assessment} for ${purpose}. Cover educational assessment framework, formative and summative assessment, validity and reliability, standards-based grading, performance and portfolio assessment, adaptive and computerized testing, rubric design and scoring, data analysis and use, equity and bias in assessment, and how to build educational assessment programs that achieve the measurement accuracy and the learning insight and the instructional decision-making that successful assessment requires by designing the assessment with the learning standard and the assessment task and the scoring rubric and the data report that provides the teacher and the administrator with the timely and actionable information about the student learning and the instructional effectiveness to guide the intervention and the curriculum adjustment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/early', requireAuth, async (req: AuthRequest, res) => {
+  const { educator, program, children } = req.body;
+  const prompt = `You are an early childhood development strategy and preschool education expert. Design early childhood development strategy for ${educator} building ${program} for ${children}. Cover early childhood development framework, child development theory and milestones, play-based and inquiry learning, social emotional learning, language and literacy development, STEM and mathematical thinking, family engagement and partnership, inclusive education and special needs, program quality and accreditation, and how to build early childhood programs that achieve the school readiness and the developmental progress and the family engagement that successful early education requires by designing the environment and the curriculum and the teacher-child interaction with the developmentally appropriate practice and the intentional teaching and the observation and documentation that supports the whole child development across the cognitive and social emotional and physical and language domain.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/special', requireAuth, async (req: AuthRequest, res) => {
+  const { educator, student, needs } = req.body;
+  const prompt = `You are a special education strategy and inclusive learning expert. Design special education strategy for ${educator} supporting ${student} with ${needs}. Cover special education framework, disability law and IDEA, IEP development and implementation, differentiated instruction and Universal Design for Learning, assistive technology and accommodation, behavioral support and positive behavior intervention, co-teaching and inclusion model, related services coordination, parent partnership and rights, and how to build special education programs that achieve the academic progress and the functional independence and the inclusion that successful special education requires by developing the IEP with the present level and the measurable goal and the specialized instruction and the accommodation and the related service that addresses the unique learning need and removes the barrier to the curriculum access and the social participation in the least restrictive environment.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
