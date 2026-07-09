@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v431.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v432.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190860,6 +190860,59 @@ app.post('/api/product/user-segmentation', requireAuth, async (req: AuthRequest,
 app.post('/api/sales/churn-prevention', requireAuth, async (req: AuthRequest, res) => {
   const { signals, account, playbook } = req.body;
   const prompt = `Build a churn prevention playbook.\nChurn signals: ${signals}\nAt-risk account context: ${account}\nExisting playbook: ${playbook}\nInclude: health score model design, early warning system, tiered intervention protocols by risk level, save conversation guide, executive escalation path, win-back program for churned accounts, and root cause analysis framework.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 283+284 routes
+app.post('/api/dev/cache-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { workload, size, patterns } = req.body;
+  const prompt = `Design a caching architecture.\nWorkload type: ${workload}\nData size: ${size}\nAccess patterns: ${patterns}\nInclude: cache layer strategy (L1/L2/L3), tool selection (Redis/Memcached/CDN), cache invalidation strategies, cache warming, stampede protection, cache-aside vs. write-through vs. write-behind, and monitoring/hit-rate targets.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/renewal-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { account, arr, timeline } = req.body;
+  const prompt = `Build a renewal playbook.\nAccount: ${account}\nARR at risk: ${arr}\nRenewal timeline: ${timeline}\nInclude: 120/90/60/30-day renewal milestones, health assessment at each stage, stakeholder re-engagement plan, value recap template, expansion opportunity identification, objection handling, and escalation path for at-risk renewals.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/mvp-scope', requireAuth, async (req: AuthRequest, res) => {
+  const { vision, constraints, users } = req.body;
+  const prompt = `Define MVP scope.\nProduct vision: ${vision}\nConstraints: ${constraints}\nTarget users: ${users}\nInclude: core jobs to be done (top 3), feature inclusion/exclusion rationale, success metrics for MVP, what you're NOT building (and why), technical architecture minimum, user testing plan, and go/no-go criteria.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/churn-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { segment, reason, offer } = req.body;
+  const prompt = `Create a churn reduction marketing strategy.\nChurned segment: ${segment}\nChurn reason: ${reason}\nOffer available: ${offer}\nInclude: win-back email sequence (5 emails), in-product save flow design, exit survey design, segmented offer strategy (discount vs. feature vs. support), timing optimization, and reactivation metrics to track.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/competency-map', requireAuth, async (req: AuthRequest, res) => {
+  const { role, level, skills } = req.body;
+  const prompt = `Build a competency map for a role.\nRole: ${role}\nLevel: ${level}\nCore skills needed: ${skills}\nInclude: competency dimensions (technical/leadership/domain), behavioral indicators per level, assessment methods, development resources for each gap, calibration guide for managers, and how to use it in hiring, reviews, and promotions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/board-pack', requireAuth, async (req: AuthRequest, res) => {
+  const { company, quarter, metrics } = req.body;
+  const prompt = `Create a board pack structure.\nCompany: ${company}\nQuarter: ${quarter}\nKey metrics: ${metrics}\nInclude: executive summary (one-pager), financial dashboard template, KPI scorecard, OKR progress review, key decisions needed, risk register, competitive update, and guidance for how to present vs. pre-read material.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/data-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  const { source, destination, volume } = req.body;
+  const prompt = `Design a data pipeline architecture.\nData source: ${source}\nDestination: ${destination}\nVolume: ${volume}\nInclude: ingestion pattern (batch/streaming/micro-batch), transformation strategy, tool selection (Kafka/Flink/dbt/Airflow), schema evolution handling, data quality checks, lineage tracking, and failure recovery approach.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/webinar-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, audience, goal } = req.body;
+  const prompt = `Build a webinar marketing pipeline.\nTopic: ${topic}\nTarget audience: ${audience}\nGoal: ${goal}\nInclude: promotional timeline (4-week plan), registration page copy, email nurture sequence (pre/during/post), speaker preparation guide, live engagement tactics, replay strategy, MQL conversion approach, and metrics to measure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/tech-debt-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { system, debt, roadmap } = req.body;
+  const prompt = `Create a tech debt management strategy.\nSystem: ${system}\nDebt description: ${debt}\nProduct roadmap: ${roadmap}\nInclude: debt categorization (reckless/prudent/deliberate/inadvertent), impact/effort scoring, 20% time allocation model, communication framework for stakeholders, metrics (deploy frequency, MTTR, test coverage), and how to prevent new debt accumulation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/closer-tactics', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, stage, objection } = req.body;
+  const prompt = `Provide advanced closing tactics.\nDeal context: ${deal}\nCurrent stage: ${stage}\nPrimary objection: ${objection}\nInclude: objection handling with reframes, assumptive close techniques, creating urgency without being pushy, trial close questions, next step commitment language, contract acceleration strategies, and how to handle "we need more time" responses.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
