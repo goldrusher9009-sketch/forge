@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v688.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v689.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205517,6 +205517,66 @@ app.post('/api/operations/supply-resilience', requireAuth, async (req: AuthReque
 app.post('/api/strategy/brand-equity', requireAuth, async (req: AuthRequest, res) => {
   const { brand, category, audience } = req.body;
   const prompt = `You are a brand equity strategy and brand management expert. Design brand equity for ${brand} in ${category} with ${audience}. Cover brand equity framework, brand positioning and differentiation, brand architecture for portfolio management, brand identity and visual system, brand voice and personality, brand experience across touchpoints, brand tracking and measurement, brand extension and licensing, brand crisis management, and how to build brand equity that creates genuine economic value by building the awareness, quality associations, loyalty, and proprietary assets that allow the brand to command premium pricing and generate customer preference that competitors cannot easily copy even when they match product features and price points.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cloud-migration', requireAuth, async (req: AuthRequest, res) => {
+  const { company, workloads, target } = req.body;
+  const prompt = `You are a cloud migration strategy and enterprise cloud transformation expert. Design cloud migration for ${company} migrating ${workloads} to ${target}. Cover cloud migration framework, migration assessment and workload classification, lift and shift versus modernization decision, target architecture and landing zone, migration wave planning and sequencing, data migration and synchronization, application refactoring and rearchitecting, cost optimization and FinOps, security and compliance in cloud, and how to execute cloud migrations that deliver the promised cost, agility, and scalability benefits by making realistic assessments of workload cloud-readiness, planning carefully for the network connectivity and data transfer challenges that are often underestimated, and governing cloud spend from day one rather than discovering cloud cost surprises after migration.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-sizing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are a market sizing strategy and TAM SAM SOM analysis expert. Design market sizing for ${company} with ${product} in ${market}. Cover market sizing framework, top-down versus bottom-up methodology, total addressable market calculation, serviceable addressable market scoping, serviceable obtainable market estimation, market segmentation and customer counts, average revenue per user estimation, market sizing assumptions and sensitivity, competitive share benchmarking, and how to build market sizing analyses that are credible to investors and strategy teams by grounding every assumption in observable data and logic rather than extrapolating from optimistic industry reports that make every market look huge and every company look positioned to capture a large share.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-privacy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, data_types, regulations } = req.body;
+  const prompt = `You are a data privacy strategy and regulatory compliance expert. Design data privacy for ${company} handling ${data_types} under ${regulations}. Cover data privacy framework, privacy-by-design principles, data mapping and inventory, lawful basis for processing, consent management and preference centers, data subject rights implementation, data retention and deletion, vendor and third-party data sharing, privacy impact assessments, and how to build data privacy programs that genuinely protect individuals and build customer trust by going beyond technical compliance to design data practices that collect only what is needed, use it only for legitimate purposes, and give people meaningful transparency and control rather than obscuring data practices behind lengthy privacy policies that no one reads.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/investor-relations', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, investors } = req.body;
+  const prompt = `You are an investor relations strategy and capital markets communication expert. Design investor relations for ${company} at ${stage} with ${investors}. Cover investor relations framework, equity story and investment thesis development, financial guidance and expectations management, earnings communication and call preparation, investor targeting and non-deal roadshows, sell-side analyst relations, activist investor preparedness, ESG and sustainability reporting, IR digital and social media strategy, and how to build investor relations programs that build long-term investor trust and shareholder value by communicating transparently about business performance, strategy, and risk rather than managing quarterly expectations through guidance games that prioritize short-term stock performance over the genuine business outcomes that create lasting value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/healthcare', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, population, model } = req.body;
+  const prompt = `You are a healthcare strategy and health system management expert. Design healthcare strategy for ${organization} serving ${population} with ${model}. Cover healthcare strategy framework, value-based care and population health, clinical service line strategy, payer mix and reimbursement strategy, physician alignment and employment models, ambulatory and outpatient strategy, digital health and telehealth integration, healthcare workforce strategy, merger and acquisition in healthcare, and how to design healthcare strategies that improve patient outcomes and organizational financial sustainability by shifting care to the right setting at the right time, managing population health proactively, and building the primary care and care coordination capabilities that reduce avoidable acute care utilization rather than simply expanding high-margin service lines.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/meeting-cadence', requireAuth, async (req: AuthRequest, res) => {
+  const { team, size, goals } = req.body;
+  const prompt = `You are a meeting cadence strategy and organizational communication expert. Design meeting cadence for ${team} of ${size} pursuing ${goals}. Cover meeting cadence framework, meeting audit and effectiveness assessment, strategic versus operational meeting separation, decision-making and information-sharing meeting design, asynchronous communication alternatives, meeting facilitation best practices, follow-up and accountability systems, meeting metrics and time ROI, meeting culture and norms, and how to design meeting cadences that enable the coordination and decision-making teams need without creating so much meeting overhead that people have no time for focused work, which requires being explicit about what meetings are actually trying to achieve and ruthlessly eliminating the meetings that could be replaced by a well-written document or async update.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/network-effects', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, users } = req.body;
+  const prompt = `You are a network effects strategy and platform defensibility expert. Design network effects for ${company} with ${product} growing ${users}. Cover network effects framework, direct versus indirect network effects, local versus global network effects, network effects measurement and modeling, cold start problem and market seeding, geographic and segment expansion sequencing, network effects defensibility and moat analysis, multi-homing and network effects erosion, winner-take-all versus winner-take-most dynamics, and how to build and sustain network effects by understanding which type of network effect your product can actually generate, designing the product and go-to-market specifically to accelerate the network density that activates the network effect, and defending the network against competitors who will inevitably try to replicate it.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/learning-development', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, workforce, skills } = req.body;
+  const prompt = `You are a learning and development strategy and workforce capability expert. Design learning development for ${organization} with ${workforce} building ${skills}. Cover learning and development framework, skills gap analysis and capability mapping, learning needs assessment, learning modality selection across formal, informal, and experiential, learning management systems and digital learning, cohort-based and social learning, on-the-job development and stretch assignments, manager as coach, learning measurement and ROI, and how to build learning and development programs that genuinely improve workforce capability and organizational performance by focusing investment on the skills that most constrain performance, designing learning experiences that change behavior rather than just completing courses, and creating the conditions where continuous learning is part of how work gets done rather than a separate activity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/agency-relations', requireAuth, async (req: AuthRequest, res) => {
+  const { company, agencies, scope } = req.body;
+  const prompt = `You are an agency relations strategy and marketing services management expert. Design agency relations for ${company} working with ${agencies} on ${scope}. Cover agency relations framework, agency roster design and consolidation, agency selection and pitch process, scope of work and contract negotiation, agency compensation models including fees and performance, briefing and feedback quality, relationship management and account team alignment, agency performance evaluation, in-housing versus agency sourcing decision, and how to manage agency relationships that produce outstanding creative and strategic work by investing in the quality of briefs and feedback, building genuine partnership relationships rather than purely transactional ones, and aligning financial incentives so agencies are rewarded for outcomes rather than inputs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/legal-operations', requireAuth, async (req: AuthRequest, res) => {
+  const { company, legal_team, focus } = req.body;
+  const prompt = `You are a legal operations strategy and in-house legal efficiency expert. Design legal operations for ${company} with ${legal_team} focusing on ${focus}. Cover legal operations framework, legal technology stack and matter management, outside counsel management and preferred provider programs, legal spend analytics and budgeting, contract lifecycle management and self-service, legal intake and triage, legal KPIs and performance measurement, alternative legal service providers, legal process improvement, and how to build legal operations capabilities that allow the legal function to deliver more value at lower cost by systematically managing outside counsel relationships and spend, implementing technology that reduces manual work, and building the self-service and process capabilities that allow business teams to get answers faster without always requiring attorney involvement.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
