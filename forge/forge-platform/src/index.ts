@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v689.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v690.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205577,6 +205577,66 @@ app.post('/api/strategy/agency-relations', requireAuth, async (req: AuthRequest,
 app.post('/api/strategy/legal-operations', requireAuth, async (req: AuthRequest, res) => {
   const { company, legal_team, focus } = req.body;
   const prompt = `You are a legal operations strategy and in-house legal efficiency expert. Design legal operations for ${company} with ${legal_team} focusing on ${focus}. Cover legal operations framework, legal technology stack and matter management, outside counsel management and preferred provider programs, legal spend analytics and budgeting, contract lifecycle management and self-service, legal intake and triage, legal KPIs and performance measurement, alternative legal service providers, legal process improvement, and how to build legal operations capabilities that allow the legal function to deliver more value at lower cost by systematically managing outside counsel relationships and spend, implementing technology that reduces manual work, and building the self-service and process capabilities that allow business teams to get answers faster without always requiring attorney involvement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/customer-journey', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, stage } = req.body;
+  const prompt = `You are a customer journey strategy and experience mapping expert. Design customer journey for ${company} targeting ${segment} at ${stage}. Cover customer journey framework, journey mapping methodology and stakeholder workshops, touchpoint inventory and channel mapping, moments of truth and emotional journey, pain point identification and prioritization, customer effort and friction reduction, journey orchestration and personalization, cross-functional journey ownership, journey analytics and measurement, and how to use customer journey mapping to drive genuine experience improvement by ensuring the journey map reflects the actual customer experience rather than the internal view of what the experience should be, and by treating the map as a living tool that drives prioritization and accountability rather than a presentation artifact that lives on a wall.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/cost-control', requireAuth, async (req: AuthRequest, res) => {
+  const { company, cost_base, targets } = req.body;
+  const prompt = `You are a cost control strategy and operational efficiency expert. Design cost control for ${company} with ${cost_base} toward ${targets}. Cover cost control framework, cost baseline and benchmarking, zero-based budgeting principles, cost category analysis across fixed, variable, and semi-variable, spend analytics and supplier consolidation, indirect spend management, headcount and productivity management, should-cost modeling, cost governance and accountability, and how to implement cost control programs that reduce costs sustainably by eliminating genuine waste and improving efficiency rather than making cuts that reduce cost in the short term but impair the organizational capabilities that generate revenue and competitive advantage over the long term.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/platform', requireAuth, async (req: AuthRequest, res) => {
+  const { company, ecosystem, participants } = req.body;
+  const prompt = `You are a platform strategy and ecosystem design expert. Design platform strategy for ${company} building ${ecosystem} with ${participants}. Cover platform strategy framework, platform business model and value creation, multi-sided market design and chicken-and-egg problem, platform governance and rules, openness versus control decision, platform monetization models, developer and partner ecosystem management, data flywheel and learning advantages, platform competition and anti-tipping strategies, and how to build platform strategies that create durable competitive positions by designing ecosystems where participants generate enough value from participating that they have strong incentives to contribute rather than free-ride, and where the platform owner can capture enough value to invest in continuous improvement without extracting so much that participants defect.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/crisis-comms', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, crisis, stakeholders } = req.body;
+  const prompt = `You are a crisis communications strategy and reputation management expert. Design crisis communications for ${organization} facing ${crisis} with ${stakeholders}. Cover crisis communications framework, crisis assessment and severity classification, communications command structure and spokesperson designation, initial response and holding statement, media relations and press conference management, social media monitoring and response, employee and internal communications, stakeholder-specific communications, post-crisis reputation recovery, and how to manage crisis communications in ways that preserve organizational trust and reputation by responding promptly with accurate information, acknowledging the harm done to affected parties, and demonstrating genuine accountability and corrective action rather than minimizing the crisis or managing perceptions without addressing the underlying problem.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/sales-coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { manager, team, challenges } = req.body;
+  const prompt = `You are a sales coaching strategy and revenue team development expert. Design sales coaching for ${manager} leading ${team} facing ${challenges}. Cover sales coaching framework, individual rep assessment and development planning, call review and deal coaching methodology, pipeline and forecast coaching, skill gap identification and targeted development, performance improvement plans and at-risk rep management, coaching cadence and time allocation, peer coaching and team learning, coaching measurement and impact tracking, and how to build sales coaching practices that systematically improve rep performance by shifting from inspection and advice-giving to the structured development conversations that help reps build the specific skills and judgment they need to be more effective, with managers spending time on the coaching activities that have the highest correlation with rep improvement rather than the ones that feel most productive.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/fintech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are a FinTech strategy and financial innovation expert. Design FinTech strategy for ${company} with ${product} in ${market}. Cover FinTech strategy framework, financial services disruption landscape, regulatory environment and licensing strategy, banking-as-a-service and embedded finance, payments and money movement architecture, lending and underwriting innovation, wealth and investment technology, financial inclusion and underserved markets, data and AI in financial services, and how to build FinTech strategies that succeed by finding genuine friction in financial services that can be reduced through technology and business model innovation, navigating the regulatory requirements that protect consumers and financial system stability, and building the trust that financial services customers require before they will adopt new providers for money management.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/workforce-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, horizon, scenarios } = req.body;
+  const prompt = `You are a workforce planning strategy and human capital forecasting expert. Design workforce planning for ${organization} over ${horizon} across ${scenarios}. Cover workforce planning framework, current workforce supply analysis, future workforce demand forecasting, skills gap and surplus identification, build buy borrow retire workforce decisions, scenario planning for workforce uncertainty, workforce segmentation and critical role identification, external talent market analysis, workforce planning analytics and dashboards, and how to build workforce planning capabilities that help organizations make better decisions about hiring, development, and structure by systematically connecting business strategy to workforce implications and making deliberate choices about talent investments rather than managing headcount reactively in response to immediate business pressures.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-entry', requireAuth, async (req: AuthRequest, res) => {
+  const { company, target_market, advantage } = req.body;
+  const prompt = `You are a market entry strategy and international expansion expert. Design market entry for ${company} entering ${target_market} with ${advantage}. Cover market entry framework, market attractiveness and sizing analysis, competitive landscape assessment, entry mode selection across organic, partnership, and acquisition, regulatory and legal market requirements, go-to-market strategy for new markets, product localization and adaptation, pricing and distribution for new markets, market entry sequencing and footprint expansion, and how to design market entry strategies that succeed by doing the rigorous upfront work to understand what customers in the target market actually value and what competitive position the entering company can realistically establish, rather than assuming success in one market translates automatically to another.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/executive-coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { executive, role, goals } = req.body;
+  const prompt = `You are an executive coaching strategy and leadership development expert. Design executive coaching for ${executive} in ${role} pursuing ${goals}. Cover executive coaching framework, executive assessment and 360 feedback, leadership identity and presence, strategic thinking and systems perspective, executive communication and influence, managing the board and stakeholder network, leading through uncertainty and change, executive team effectiveness, personal sustainability and resilience, and how to design executive coaching engagements that produce genuine leadership growth by establishing clear development goals grounded in honest assessment, building the coaching relationship where the executive can think out loud without judgment, and focusing on the behavioral and mindset shifts that have the highest leverage on executive effectiveness rather than addressing every development area simultaneously.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/green-building', requireAuth, async (req: AuthRequest, res) => {
+  const { developer, project, certif } = req.body;
+  const prompt = `You are a green building strategy and sustainable construction expert. Design green building for ${developer} with ${project} pursuing ${certif}. Cover green building framework, sustainability certification systems including LEED, BREEAM, and WELL, energy modeling and efficiency, water efficiency and management, materials selection and embodied carbon, indoor environmental quality and occupant health, renewable energy integration, green building cost premium and ROI, operational performance versus design performance gap, and how to develop green building projects that deliver genuine environmental and occupant benefits rather than achieving certification points through design choices that satisfy rating criteria without meaningfully improving sustainability performance, by focusing on the building systems and envelope decisions that have the highest impact on energy use and occupant experience.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
