@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v641.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v642.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202697,6 +202697,66 @@ app.post('/api/marketing/website-conversion', requireAuth, async (req: AuthReque
 app.post('/api/marketing/social-ads', requireAuth, async (req: AuthRequest, res) => {
   const { brand, platform, audience } = req.body;
   const prompt = `You are a social media advertising strategy and performance marketing expert. Design the social media ads for ${brand} on ${platform} targeting ${audience}. Cover the social media ads strategy framework, the audience targeting and segmentation, the creative strategy and ad formats, the campaign structure and budget allocation, the bid strategy and optimization, the creative testing methodology, the retargeting strategy, the lookalike audience strategy, the social ads measurement and attribution, and how to build social media advertising programs that generate measurable returns rather than just impressions and engagement, that develop the creative testing velocity to find winning creative before exhausting budgets on underperforming ads, and that build the audience and measurement infrastructure that improves advertising efficiency over time as you accumulate data about what resonates with your target customers on each platform.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/human-resources/workforce-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, horizon, priorities } = req.body;
+  const prompt = `You are a workforce strategy and future of work expert. Design the workforce strategy for ${organization} over ${horizon} horizon focusing on ${priorities}. Cover the workforce strategy framework, the workforce demand forecasting, the skills gap analysis, the workforce supply strategy, the make vs. buy vs. borrow talent decision, the reskilling and upskilling strategy, the workforce flexibility and contingent labor, the workforce diversity and inclusion strategy, the workforce analytics and measurement, and how to design workforce strategies that ensure your organization has the capabilities it needs for the future rather than just managing the workforce you have today, that balance the immediate cost and productivity pressures with the longer-term talent investments that create sustainable competitive advantage, and that build the organizational learning and development infrastructure that keeps your workforce relevant as the skills the business needs continue to evolve.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/video-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, audience, platform } = req.body;
+  const prompt = `You are a video content strategy and production expert. Design the video strategy for ${brand} reaching ${audience} on ${platform}. Cover the video strategy framework, the video content pillar development, the format and length strategy by platform, the production quality and style, the scripting and storytelling approach, the on-screen talent and presenter strategy, the video SEO and discoverability, the video distribution and amplification, the video analytics and performance optimization, and how to build video content strategies that grow audiences and drive business outcomes rather than just producing content that gets views, that develop the distinctive style and point of view that makes your video content recognizable and eagerly anticipated by your audience, and that build the production systems that allow you to produce consistent, quality video content without requiring a professional film crew for every piece.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/sustainability', requireAuth, async (req: AuthRequest, res) => {
+  const { company, goals, stakeholders } = req.body;
+  const prompt = `You are a corporate sustainability strategy and ESG expert. Design the sustainability strategy for ${company} achieving ${goals} for ${stakeholders}. Cover the sustainability strategy framework, the materiality assessment, the scope 1/2/3 emissions measurement, the net zero pathway design, the circular economy strategy, the supply chain sustainability, the social impact and community strategy, the sustainability governance and reporting, the green product and service innovation, and how to design sustainability strategies that create genuine environmental and social impact rather than greenwashing, that align sustainability investments with business value creation through cost reduction, risk management, and market opportunity, and that build the measurement and reporting infrastructure to credibly communicate sustainability performance to investors, customers, employees, and regulators who are increasingly demanding transparency and accountability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-monetization', requireAuth, async (req: AuthRequest, res) => {
+  const { company, data, model } = req.body;
+  const prompt = `You are a data monetization strategy and data product expert. Design the data monetization for ${company} using ${data} via ${model}. Cover the data monetization framework, the data asset inventory and valuation, the data product design, the data as a service strategy, the embedded analytics and insights products, the data marketplace strategy, the data privacy and compliance framework, the data licensing and pricing, the data partnership strategy, and how to design data monetization strategies that turn your data assets into revenue streams and competitive advantages, that identify the external parties who would pay for access to insights derived from your data, and that build the data products and partnerships that create new revenue without compromising the customer trust and regulatory compliance that are essential to sustained data business success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/growth-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { product, stage, channel } = req.body;
+  const prompt = `You are a growth marketing strategy and experimentation expert. Design the growth marketing for ${product} at ${stage} through ${channel}. Cover the growth marketing framework, the growth model and levers identification, the AARRR funnel analysis, the growth experiment design, the channel testing and prioritization, the viral and referral growth mechanics, the retention and reactivation marketing, the growth team structure and culture, the growth measurement and north star metric, and how to build growth marketing programs that systematically experiment across the full customer lifecycle to identify and double down on the highest-leverage growth opportunities, that move faster than traditional marketing through hypothesis-driven experimentation and rapid learning cycles, and that build the growth infrastructure of measurement, tooling, and cross-functional collaboration that enables sustained, compounding growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/product-market-fit', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, signals } = req.body;
+  const prompt = `You are a product-market fit assessment and achievement expert. Evaluate and improve the product-market fit for ${product} in ${segment} using ${signals}. Cover the product-market fit framework, the Sean Ellis PMF survey methodology, the retention curve analysis, the engagement and usage pattern analysis, the NPS and customer love signals, the word of mouth and organic growth signals, the ICP and use case refinement, the PMF improvement strategy, the PMF communication and positioning, and how to accurately assess whether you have achieved product-market fit rather than confusing early enthusiast interest with broad market demand, how to identify the specific customer segment and use case where fit is strongest so you can focus your resources on expanding from that beachhead, and how to methodically improve fit through rapid product iteration guided by customer feedback rather than building features based on internal assumptions about what customers want.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/startup-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { startup, stage, constraints } = req.body;
+  const prompt = `You are a startup operations and scaling expert. Design the operations for ${startup} at ${stage} with ${constraints}. Cover the startup operations framework, the founding team roles and responsibilities, the early hiring and team building, the startup tool stack and infrastructure, the process design for small fast teams, the financial controls and cash management, the vendor and contractor management, the workspace and remote work strategy, the operational metrics and reporting, and how to build startup operations that move fast without breaking things by putting the right controls and processes in place at each stage of growth, that scale operational infrastructure just ahead of where the business is going rather than over-engineering for a future that may not materialize or under-engineering in ways that create crises when growth accelerates, and that free founders to focus on product and customers rather than getting buried in operational details.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/cost-savings', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, spend, target } = req.body;
+  const prompt = `You are a cost optimization and efficiency improvement expert. Design the cost savings program for ${organization} across ${spend} to hit ${target}. Cover the cost optimization framework, the spend analysis and baseline, the cost categorization and priority, the zero-based budgeting approach, the vendor negotiation strategy, the process efficiency improvements, the overhead and headcount optimization, the make vs. buy analysis, the cost reduction governance and tracking, and how to design cost reduction programs that achieve sustainable savings rather than one-time cuts that bounce back, that maintain the investments in capabilities and infrastructure that are essential to future revenue growth, and that create the cost management discipline and culture that makes your organization more efficient on an ongoing basis rather than lurching between periods of cost growth and painful cost reduction.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/price-testing', requireAuth, async (req: AuthRequest, res) => {
+  const { product, range, segment } = req.body;
+  const prompt = `You are a pricing experimentation and price sensitivity testing expert. Design the price tests for ${product} across ${range} for ${segment}. Cover the price testing framework, the conjoint analysis methodology, the van Westendorp price sensitivity meter, the Gabor-Granger method, the price A/B testing design, the willingness to pay research, the price elasticity measurement, the competitive price monitoring, the price test analysis and interpretation, and how to design pricing research that gives you accurate data about how customers respond to different price points rather than relying on intuition or just matching competitors, that measures price sensitivity across different customer segments so you can implement differential pricing where appropriate, and that generates the confidence needed to make price changes that optimize revenue without risking customer relationship damage or competitive vulnerability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/scenario-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, horizon, uncertainties } = req.body;
+  const prompt = `You are a scenario planning and strategic foresight expert. Build the future scenarios for ${organization} over ${horizon} horizon facing ${uncertainties}. Cover the scenario planning framework, the driving forces and uncertainty identification, the scenario axis selection, the scenario narrative development, the scenario plausibility assessment, the strategic implications analysis, the early warning indicator identification, the strategic option development, the robust strategy identification, and how to use scenario planning to make better strategic decisions under deep uncertainty by developing and testing strategies against multiple possible futures rather than planning against a single forecast that is guaranteed to be wrong, that identify the strategic options that are robust across scenarios and the bets that only pay off in specific futures, and that create the organizational awareness and monitoring systems that allow you to detect which scenario is emerging early enough to adjust your strategy before competitors do.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
