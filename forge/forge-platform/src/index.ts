@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v455.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v456.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -192132,6 +192132,59 @@ app.post('/api/product/pricing-test', requireAuth, async (req: AuthRequest, res)
 app.post('/api/sales/negotiation-strategy', requireAuth, async (req: AuthRequest, res) => {
   const { deal, issues, leverage } = req.body;
   const prompt = `Build a negotiation strategy for a deal.\nDeal: ${deal}\nNegotiation issues: ${issues}\nLeverage points: ${leverage}\nInclude: negotiation preparation framework (BATNA/ZOPA/anchor strategy), issue priority matrix (must-have vs. nice-to-have), anchor setting strategy (who goes first and at what level), trading concessions vs. making unilateral concessions, time pressure and urgency management, handling procurement and legal in enterprise deals, multi-party negotiation dynamics, how to give concessions that feel significant but cost little, creating and claiming value simultaneously, closing techniques for enterprise negotiations, and how to protect the relationship while winning on the deal.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 331+332 routes
+app.post('/api/dev/code-review-culture', requireAuth, async (req: AuthRequest, res) => {
+  const { team, pain, goals } = req.body;
+  const prompt = `Design a healthy code review culture.\nTeam context: ${team}\nCurrent pain points: ${pain}\nGoals: ${goals}\nInclude: code review purpose framework (knowledge sharing vs. quality gate vs. mentorship), author responsibilities (PR size/description/self-review), reviewer responsibilities (turnaround SLA/constructive feedback/what to focus on), PR size norms (when to split), review checklist design (correctness/readability/security/tests/performance), feedback language guide (request vs. demand/explain why/separate opinion from fact), automated checks to offload from humans (linting/formatting/tests/security scanning), async vs. synchronous review decisions, and how to measure and improve code review health.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/closing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, stage, blockers } = req.body;
+  const prompt = `Design a deal closing strategy.\nDeal: ${deal}\nCurrent stage: ${stage}\nBlockers: ${blockers}\nInclude: blocker diagnosis framework (technical/economic/political/timing), mutual close plan design (shared timeline with customer accountability), executive escalation strategy, procurement acceleration techniques, legal review acceleration, discount strategy and governance (when/how much/quid pro quo), urgency creation without being pushy (end of quarter/price increase/implementation capacity), last-mile objection handling, competitive displacement at close, and the 7 fatal mistakes that kill deals at the close stage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/ux-writing', requireAuth, async (req: AuthRequest, res) => {
+  const { screen, action, tone } = req.body;
+  const prompt = `Write UX copy for a product screen.\nScreen/context: ${screen}\nUser action: ${action}\nBrand tone: ${tone}\nInclude: button and CTA copy options (action-oriented/outcome-focused), error message design (what happened/why/how to fix), empty state copy (no data yet vs. error state vs. first-time user), onboarding tooltip copy, confirmation dialog design (destructive vs. non-destructive action copy), success state messaging, loading state copy (active vs. passive voice), help text and placeholder copy, microcopy for form fields, and UX writing principles (clear/concise/useful/human/consistent) applied to each element.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/growth-loops', requireAuth, async (req: AuthRequest, res) => {
+  const { product, users, channels } = req.body;
+  const prompt = `Design growth loops for a product.\nProduct: ${product}\nUser types: ${users}\nAvailable channels: ${channels}\nInclude: growth loop vs. funnel distinction (compounding vs. linear), viral loop design (content virality/product virality/word-of-mouth), network effect loop design, content loop design (user-generated content → SEO → new users), paid loop design (revenue → acquisition → revenue), engagement loop design (habit formation → retention → referral), loop strength measurement (K-factor/virality coefficient), compound growth projection, loop bottleneck identification, and how to design a product that grows itself rather than relying entirely on paid acquisition.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/learning-development', requireAuth, async (req: AuthRequest, res) => {
+  const { skills, format, budget } = req.body;
+  const prompt = `Design a Learning & Development program.\nSkills to develop: ${skills}\nPreferred formats: ${format}\nBudget: ${budget}\nInclude: skills gap assessment methodology, learning modality selection (self-paced/instructor-led/cohort/coaching/mentoring), build vs. buy vs. curate decision for content, learning management system selection, manager development as multiplier, individual development plan design, mandatory vs. elective learning framework, external conference and education reimbursement policy, learning measurement (completion/assessment/behavior change/business impact), career pathing integration, and how to build a learning culture where people want to develop rather than just checking compliance boxes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/cap-table-management', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, rounds, employees } = req.body;
+  const prompt = `Design a cap table management strategy.\nCompany stage: ${stage}\nRound history: ${rounds}\nEmployee count: ${employees}\nInclude: cap table structure (common/preferred/options/warrants/SAFEs/convertible notes), option pool management (sizing/refresh/409A timing), dilution waterfall modeling for future rounds, pro-rata rights management, secondary transaction management (founder liquidity/tender offers), cap table hygiene (electronic vs. paper/escrow/certificate management), 409A valuation timing and management, employee equity communication strategy, cap table scenario modeling for future financing, and when to bring in a dedicated cap table management tool.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/data-privacy-design', requireAuth, async (req: AuthRequest, res) => {
+  const { data, regions, compliance } = req.body;
+  const prompt = `Design a data privacy architecture.\nData types: ${data}\nOperating regions: ${regions}\nCompliance requirements: ${compliance}\nInclude: data classification framework (public/internal/confidential/restricted), privacy by design principles implementation, data minimization strategy, consent management design (cookie consent/marketing consent/data processing), data subject rights implementation (GDPR DSAR/CCPA deletion/portability), data retention and deletion policies, cross-border data transfer mechanisms (SCCs/adequacy decisions), third-party vendor data processing agreements, privacy impact assessment process, breach notification workflow, and how to build privacy compliance into engineering culture rather than bolting it on.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/personalization-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { channels, segments, data } = req.body;
+  const prompt = `Build a marketing personalization strategy.\nMarketing channels: ${channels}\nKey segments: ${segments}\nAvailable data: ${data}\nInclude: personalization maturity model (static→rule-based→ML-driven→real-time), 1:1 vs. segment-level vs. cohort personalization trade-offs, email personalization beyond [first name] (behavioral/preference/lifecycle), website personalization design (CMS requirements/testing/measurement), ad personalization strategy (dynamic creative/audience-based/contextual), personalization data requirements and CDP design, measurement framework (personalized vs. control group), privacy-safe personalization (first-party data focus), and how to avoid the "creepy" line while being genuinely helpful.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/accessibility-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, standards, audit } = req.body;
+  const prompt = `Design an accessibility strategy for a product.\nProduct: ${product}\nTarget standards: ${standards}\nCurrent audit: ${audit}\nInclude: WCAG 2.1/2.2 AA compliance requirements summary, accessible design principles (perceivable/operable/understandable/robust), color contrast and visual design requirements, keyboard navigation design, screen reader compatibility (ARIA labels/roles/live regions), form accessibility design, focus management for SPAs and modals, accessible data visualization design, motion and animation accessibility (prefers-reduced-motion), accessibility testing methodology (automated tools/manual testing/user testing with disabled users), and how to integrate accessibility into the product development workflow from design to QA.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/sales-storytelling', requireAuth, async (req: AuthRequest, res) => {
+  const { product, persona, outcome } = req.body;
+  const prompt = `Build a sales storytelling framework.\nProduct: ${product}\nBuyer persona: ${persona}\nDesired outcome: ${outcome}\nInclude: the hero's journey structure applied to B2B sales (prospect as hero/vendor as guide), before/after/bridge narrative framework, customer story selection criteria, quantified result integration, villain identification (the status quo/the competitor/the risk), emotional resonance techniques for B2B, opening hook design (pattern interrupt/bold statement/challenging question), evidence hierarchy (data→story→analogy), story length calibration by channel (30s elevator vs. 3min demo vs. full case study), and how to practice and refine sales stories until they become automatic.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
