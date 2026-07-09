@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v450.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v451.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191867,6 +191867,59 @@ app.post('/api/product/experiment-design', requireAuth, async (req: AuthRequest,
 app.post('/api/sales/revops-design', requireAuth, async (req: AuthRequest, res) => {
   const { stage, teams, systems } = req.body;
   const prompt = `Design a Revenue Operations function.\nCompany stage: ${stage}\nGTM teams: ${teams}\nCurrent systems: ${systems}\nInclude: RevOps org structure and reporting model, CRM as system of record design, tech stack rationalization (sales/marketing/CS tools), data and attribution model design, funnel definition and stage agreement across teams, territory and quota design process, compensation plan governance, forecasting process ownership, pipeline hygiene enforcement, revenue reporting and dashboard design, and how to build a RevOps function that enables revenue predictability and GTM efficiency.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 321+322 routes — 1000 tools milestone
+app.post('/api/dev/websocket-design', requireAuth, async (req: AuthRequest, res) => {
+  const { usecase, scale, protocol } = req.body;
+  const prompt = `Design a WebSocket architecture.\nUse case: ${usecase}\nScale requirements: ${scale}\nProtocol preferences: ${protocol}\nInclude: WebSocket vs. SSE vs. long-polling decision framework, connection lifecycle management (connect/authenticate/heartbeat/reconnect), pub/sub pattern design, room/channel architecture, state synchronization strategy, horizontal scaling with sticky sessions or Redis pub/sub, authentication and authorization over WebSocket, rate limiting and abuse prevention, graceful degradation for environments that block WebSocket, message serialization (JSON vs. binary/msgpack), and observability for persistent connections.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/partner-channel', requireAuth, async (req: AuthRequest, res) => {
+  const { model, partners, enablement } = req.body;
+  const prompt = `Build a partner channel strategy.\nChannel model: ${model}\nTarget partner types: ${partners}\nEnablement resources: ${enablement}\nInclude: channel model design (reseller/referral/integration/OEM/SI), partner ICP and selection criteria, partner tiering and incentive structure, deal registration and conflict management, partner enablement program (training/certification/sales tools), co-selling vs. channel-only motion, partner portal design, MDF (market development funds) strategy, partner health scoring and management, metrics for channel success (partner-sourced pipeline/revenue/co-sell ratio), and how to build a thriving partner ecosystem.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/journey-mapping', requireAuth, async (req: AuthRequest, res) => {
+  const { persona, stages, touchpoints } = req.body;
+  const prompt = `Create a customer journey map.\nPersona: ${persona}\nJourney stages: ${stages}\nKey touchpoints: ${touchpoints}\nInclude: journey stage definition (awareness→consideration→decision→onboarding→adoption→expansion→advocacy), emotional state mapping by stage, touchpoint inventory across channels, moment of truth identification, pain point and friction mapping, opportunity identification at each stage, cross-functional ownership mapping (marketing/sales/product/CS), data and measurement instrumentation per touchpoint, quick win vs. strategic improvement categorization, and how to use journey maps to align the organization around customer experience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/seo-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { domain, niche, competitors } = req.body;
+  const prompt = `Build a comprehensive SEO strategy.\nDomain: ${domain}\nNiche: ${niche}\nCompetitors: ${competitors}\nInclude: keyword research methodology (seed keywords/clustering/intent mapping), content architecture design (pillar pages/cluster content), technical SEO audit checklist (Core Web Vitals/crawlability/indexation/schema), link building strategy (digital PR/partnerships/broken link building), competitive gap analysis approach, on-page optimization checklist, local SEO strategy if applicable, international SEO considerations, content freshness and update strategy, rank tracking and reporting setup, and 12-month SEO roadmap with expected timeline to results.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/engagement-survey', requireAuth, async (req: AuthRequest, res) => {
+  const { company, issues, goals } = req.body;
+  const prompt = `Design an employee engagement survey program.\nCompany context: ${company}\nKnown issues: ${issues}\nGoals: ${goals}\nInclude: survey design principles (question types/scale choices/length), engagement dimension framework (purpose/autonomy/growth/connection/recognition/wellbeing), pulse vs. annual survey strategy, anonymity and psychological safety design, manager-level reporting design, action planning process post-survey, communication strategy before/during/after survey, benchmarking approach (industry/size/stage), avoiding survey fatigue, closing the loop with employees, and how to show that survey results drive real change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/due-diligence', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, focus } = req.body;
+  const prompt = `Design a due diligence process.\nCompany: ${company}\nStage: ${stage}\nDD focus areas: ${focus}\nInclude: DD checklist by category (business/financial/legal/technical/market/team), financial model review framework, customer reference methodology and questions, technical/code architecture review, legal red flag checklist (IP ownership/pending litigation/regulatory/option plan), team assessment framework, market size validation approach, competitive moat evaluation, data room organization best practices, red flags that kill deals vs. manageable risks, and how to synthesize DD findings into an investment memo.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/serverless-design', requireAuth, async (req: AuthRequest, res) => {
+  const { workload, cloud, scale } = req.body;
+  const prompt = `Design a serverless architecture.\nWorkload type: ${workload}\nCloud provider: ${cloud}\nScale requirements: ${scale}\nInclude: serverless use case fit analysis (when not to use serverless), function design principles (single responsibility/stateless/idempotent), cold start mitigation strategies, event-driven architecture patterns (triggers/queues/event buses), state management (DynamoDB/Step Functions/external state), timeout and retry strategy, error handling and dead letter queues, cost modeling and optimization (memory vs. duration trade-offs), local development and testing approach, observability (distributed tracing across functions), and migration path from containers/VMs to serverless.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/paid-social', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, audience, budget } = req.body;
+  const prompt = `Build a paid social advertising strategy.\nPlatform: ${platform}\nTarget audience: ${audience}\nBudget: ${budget}\nInclude: campaign structure (awareness/consideration/conversion funnel), audience targeting strategy (interest/behavioral/lookalike/retargeting), creative strategy (format mix/messaging by stage/creative testing cadence), bidding strategy and budget allocation, landing page alignment and conversion optimization, pixel and tracking setup, A/B testing framework for creative and copy, campaign optimization workflow (when to scale vs. pause vs. kill), cost per result benchmarks for the platform, attribution model selection, and how to scale winning campaigns efficiently.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/nps-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { score, verbatims, segment } = req.body;
+  const prompt = `Analyze NPS data and design an action plan.\nNPS score: ${score}\nKey verbatims: ${verbatims}\nSegments: ${segment}\nInclude: NPS score interpretation by industry benchmark, promoter/passive/detractor breakdown analysis, verbatim coding and theme extraction methodology, driver analysis (what most influences the score), segment-level NPS comparison, correlation between NPS and retention/expansion, closing the loop workflows (promoter conversion to reference/detractor rescue), operational NPS vs. relational NPS design, NPS improvement roadmap by theme, and how to make NPS a reliable leading indicator of business health rather than a vanity metric.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/territory-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { region, accounts, quota } = req.body;
+  const prompt = `Build a sales territory plan.\nRegion: ${region}\nAccount universe: ${accounts}\nQuota: ${quota}\nInclude: territory segmentation methodology (geography/industry/account size/named accounts), total addressable account calculation, account tiering and coverage model (1:1 for enterprise/1:many for mid-market), prospecting prioritization framework, account planning for top accounts, pipeline coverage requirement (3-4x quota), activity plan and outreach cadence, partner and channel integration in territory, territory health metrics, quarterly territory review process, and how to build a territory business plan that gives you confidence in hitting quota.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
