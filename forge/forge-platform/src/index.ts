@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v623.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v624.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201617,6 +201617,66 @@ app.post('/api/customer/voice-of-customer', requireAuth, async (req: AuthRequest
 app.post('/api/engineering/enterprise-architecture', requireAuth, async (req: AuthRequest, res) => {
   const { company, domains, principles } = req.body;
   const prompt = `You are an enterprise architecture and systems integration expert. Design the enterprise architecture for ${company} across ${domains} domains with ${principles} guiding principles. Cover the enterprise architecture framework selection, the business architecture design, the application architecture design, the data architecture design, the technology architecture design, the integration architecture and API design, the security architecture, the EA governance and decision-making, the EA roadmap and transition plan, and how to build enterprise architecture that enables business agility and innovation rather than becoming a layer of bureaucracy that slows down technology change and frustrates developers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/revenue-model', requireAuth, async (req: AuthRequest, res) => {
+  const { company, streams, drivers } = req.body;
+  const prompt = `You are a revenue model design and business model innovation expert. Design the revenue model for ${company} with ${streams} revenue streams driven by ${drivers}. Cover the revenue model canvas design, the revenue stream identification and prioritization, the pricing mechanism for each stream, the revenue mix and diversification strategy, the recurring vs. transactional revenue balance, the revenue model testing and validation, the revenue model evolution over time, the revenue model unit economics, the revenue model competitive benchmarking, and how to design a revenue model that is durable, scalable, and creates appropriate incentive alignment between your business success and customer value creation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/auth-system', requireAuth, async (req: AuthRequest, res) => {
+  const { product, users, security } = req.body;
+  const prompt = `You are an authentication and authorization systems expert. Design the auth system for ${product} serving ${users} with ${security} security requirements. Cover the authentication strategy and method selection, the OAuth and OIDC implementation, the session management design, the multi-factor authentication design, the passwordless authentication options, the SSO and enterprise identity integration, the authorization model design, the RBAC and ABAC design, the auth security hardening, and how to build authentication systems that are secure against modern attacks while providing the smooth login experience that users expect and that supports the enterprise requirements of large customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/growth', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, constraint } = req.body;
+  const prompt = `You are a growth strategy and company scaling expert. Design the growth strategy for ${company} at ${stage} overcoming ${constraint}. Cover the growth strategy framework and diagnosis, the growth opportunity prioritization, the product-led vs. sales-led vs. marketing-led growth decision, the market expansion strategy, the product expansion strategy, the geographic expansion strategy, the M&A growth strategy, the partnership and ecosystem growth, the growth investment and resource allocation, and how to design a growth strategy that identifies the highest-leverage opportunities and creates a focused plan to pursue them systematically rather than chasing every opportunity and succeeding at none.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/content-calendar', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, channels, cadence } = req.body;
+  const prompt = `You are a content calendar and editorial planning expert. Build the content calendar for ${brand} across ${channels} at ${cadence} publishing cadence. Cover the content calendar strategy and objectives, the content theme and pillar design, the seasonal and campaign planning, the channel-specific content mix, the content format and type planning, the content production timeline and workflow, the evergreen vs. timely content balance, the content repurposing strategy, the content calendar tooling, and how to build a content calendar that creates publishing consistency, reduces last-minute scrambling, ensures strategic alignment across all content, and makes it easy to track what is working.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/data-model', requireAuth, async (req: AuthRequest, res) => {
+  const { system, entities, queries } = req.body;
+  const prompt = `You are a data modeling and database design expert. Design the data model for ${system} with ${entities} core entities optimized for ${queries}. Cover the data modeling methodology and approach, the entity relationship design, the normalization vs. denormalization trade-offs, the relational vs. document vs. graph model selection, the primary and foreign key design, the indexing strategy for query optimization, the temporal and historical data design, the multi-tenancy data model, the data migration and evolution strategy, and how to design data models that are clean and maintainable while supporting the query patterns the application requires without creating performance problems at scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/emotional-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, context, skills } = req.body;
+  const prompt = `You are an emotional intelligence and leadership effectiveness coach. Develop the EQ of ${leader} in ${context} focusing on ${skills}. Cover the EQ framework and competency model, the self-awareness development, the self-regulation and emotional management, the motivation and intrinsic drive, the empathy and social awareness development, the relationship management and influence, the EQ assessment and feedback, the EQ development practices and exercises, the EQ application in leadership situations, and how to develop emotional intelligence as a leadership capability that improves relationships, communication, conflict resolution, and the ability to inspire and motivate people to do their best work.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { market, signals, decisions } = req.body;
+  const prompt = `You are a market intelligence and strategic foresight expert. Build the market intelligence capability for ${market} tracking ${signals} to inform ${decisions}. Cover the market intelligence strategy and scope, the primary and secondary research programs, the competitor intelligence program, the customer intelligence program, the technology and innovation scanning, the regulatory and political intelligence, the market intelligence synthesis and distribution, the market intelligence technology stack, the intelligence-to-strategy connection, and how to build a market intelligence capability that gives your leadership team a genuine information advantage over competitors and enables faster, better-informed strategic decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/communications', requireAuth, async (req: AuthRequest, res) => {
+  const { company, audiences, objective } = req.body;
+  const prompt = `You are a communications strategy and organizational communication expert. Design the communications strategy for ${company} reaching ${audiences} to achieve ${objective}. Cover the communications strategy framework, the audience segmentation and mapping, the message architecture and narrative design, the channel mix and media selection, the content and creative strategy, the spokesperson and voice design, the communications calendar and cadence, the measurement and feedback design, the crisis communications integration, and how to build a communications strategy that creates consistent, compelling messages across all channels that build understanding, trust, and action among all key audiences.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cognitive-debiasing', requireAuth, async (req: AuthRequest, res) => {
+  const { decision, biases, stakes } = req.body;
+  const prompt = `You are a decision quality and cognitive bias expert. Improve the ${decision} by identifying ${biases} cognitive biases given ${stakes}. Cover the cognitive bias taxonomy and recognition, the confirmation bias mitigation, the overconfidence debiasing, the availability and recency bias correction, the anchoring bias identification and removal, the sunk cost fallacy recognition, the groupthink prevention, the pre-mortem and red team techniques, the structured decision process design, and how to build decision-making processes that systematically reduce the impact of cognitive biases and produce better decisions through greater intellectual rigor and diverse perspective.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/transition', requireAuth, async (req: AuthRequest, res) => {
+  const { professional, from, to } = req.body;
+  const prompt = `You are a career transition and professional reinvention expert. Guide ${professional} transitioning from ${from} to ${to}. Cover the career transition framework and assessment, the transferable skills identification, the gap analysis and development plan, the network mapping and activation, the narrative and positioning design, the target role and company research, the application and interview strategy, the offer evaluation framework, the transition timeline and milestones, and how to execute a career transition that leverages existing strengths while credibly repositioning for a new role or industry without taking unnecessary financial or career risk.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
