@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v608.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v609.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200717,6 +200717,66 @@ app.post('/api/strategy/pricing-trends', requireAuth, async (req: AuthRequest, r
 app.post('/api/hr/people-leader', requireAuth, async (req: AuthRequest, res) => {
   const { leader, team, transition } = req.body;
   const prompt = `You are a people leadership and management development expert. Coach ${leader} leading ${team} through ${transition}. Cover the people leadership principles, the 1-on-1 mastery and coaching skills, the feedback and performance conversation design, the team motivation and engagement, the conflict resolution and difficult conversation, the inclusive leadership practices, the hiring and building the team, the team culture setting, the managing up and cross-functionally, and how to grow as a people leader from manager to executive over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/channel-conflict', requireAuth, async (req: AuthRequest, res) => {
+  const { company, channels, conflict } = req.body;
+  const prompt = `You are a channel conflict management and multi-channel strategy expert. Resolve the channel conflict for ${company} between ${channels} channels caused by ${conflict}. Cover the channel conflict types and causes, the channel conflict prevention design, the pricing and deal registration conflict resolution, the territory and account ownership design, the partner vs. direct conflict resolution, the conflict escalation and governance process, the channel partner communication during conflict, the data and transparency as conflict prevention, the long-term channel conflict reduction strategy, and how to build a channel ecosystem where conflict is managed rather than eliminated.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/competitor-mapping', requireAuth, async (req: AuthRequest, res) => {
+  const { company, market, dimensions } = req.body;
+  const prompt = `You are a competitive mapping and strategic positioning expert. Map the competitive landscape for ${company} in ${market} across ${dimensions}. Cover the competitor identification and scoping, the positioning map design, the value proposition comparison, the feature and capability matrix, the pricing position mapping, the target customer overlap analysis, the go-to-market motion comparison, the competitive moat assessment, the white space identification, and how to use competitive mapping to inform strategy, positioning, and product decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/price-optimization', requireAuth, async (req: AuthRequest, res) => {
+  const { product, data, objective } = req.body;
+  const prompt = `You are a price optimization and revenue management expert. Build the price optimization engine for ${product} using ${data} to optimize ${objective}. Cover the price optimization framework, the demand modeling and elasticity estimation, the optimization objective function design, the price constraint and guardrail setting, the segment-level optimization, the real-time vs. batch optimization, the optimization model validation, the optimization result interpretation, the A/B test integration with optimization, and how to deploy price optimization at scale while maintaining business control.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/stakeholder-mapping', requireAuth, async (req: AuthRequest, res) => {
+  const { project, stakeholders, goal } = req.body;
+  const prompt = `You are a stakeholder management and organizational influence expert. Map the stakeholders for ${project} involving ${stakeholders} to achieve ${goal}. Cover the stakeholder identification methodology, the stakeholder analysis dimensions, the power and interest matrix, the stakeholder relationship assessment, the stakeholder engagement strategy by type, the coalition and influence network building, the resistance identification and management, the stakeholder communication plan, the stakeholder agreement and commitment design, and how to navigate complex stakeholder environments to achieve organizational outcomes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-mix', requireAuth, async (req: AuthRequest, res) => {
+  const { portfolio, revenue, margin } = req.body;
+  const prompt = `You are a pricing mix and portfolio economics expert. Optimize the pricing mix for ${portfolio} to grow ${revenue} revenue while maintaining ${margin} margin. Cover the portfolio pricing architecture, the product line pricing strategy, the revenue mix and margin analysis, the pricing waterfall by product, the cannibalization analysis, the upsell and cross-sell pricing design, the portfolio pricing rationalization, the pricing mix scenario modeling, the pricing mix governance, and how to manage a product portfolio pricing strategy that maximizes total enterprise profitability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/measurement-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { org, goal, metrics } = req.body;
+  const prompt = `You are a measurement framework and KPI design expert. Build the measurement framework for ${org} to achieve ${goal} using ${metrics}. Cover the measurement framework design principles, the metric taxonomy and hierarchy, the leading and lagging indicator balance, the metric definition and documentation, the data source and calculation methodology, the metric governance and ownership, the metric visualization and reporting, the metric review cadence, the metric evolution and retirement, and how to build a measurement framework that drives accountability and learning.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/organic-acquisition', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, channel, keyword } = req.body;
+  const prompt = `You are an organic acquisition and SEO-driven growth expert. Build the organic acquisition strategy for ${brand} through ${channel} channel targeting ${keyword} intent. Cover the organic acquisition channel selection, the content strategy for organic acquisition, the SEO and keyword strategy, the thought leadership for organic, the community and forum strategy, the PR and link building, the product-led organic acquisition, the email and owned channel organic growth, the organic acquisition measurement, and how to build organic acquisition that compounds over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-model-innovation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, current, innovation } = req.body;
+  const prompt = `You are a pricing model innovation and business model transformation expert. Innovate the pricing model for ${company} from ${current} model to ${innovation}. Cover the pricing model innovation types and examples, the value metric innovation, the subscription model design, the usage-based model design, the outcome-based pricing design, the platform pricing model, the freemium model innovation, the pricing model migration strategy, the customer change management for new models, and how to test pricing model innovations without disrupting the core business.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/operations', requireAuth, async (req: AuthRequest, res) => {
+  const { team, process, technology } = req.body;
+  const prompt = `You are a sales operations and revenue operations expert. Design the sales operations function for ${team} to optimize ${process} using ${technology}. Cover the sales operations charter and scope, the sales process design and enforcement, the CRM administration and governance, the territory and quota management, the compensation plan administration, the sales analytics and reporting, the sales tools and technology management, the sales enablement content operations, the sales ops and sales partnership, and how to build a sales operations function that multiplies the productivity of every seller.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/revenue-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { company, signals, actions } = req.body;
+  const prompt = `You are a revenue intelligence and conversation analytics expert. Build the revenue intelligence program for ${company} using ${signals} to drive ${actions}. Cover the revenue intelligence data sources, the call and email intelligence design, the CRM signal integration, the buyer intent signal collection, the pipeline risk and opportunity signal detection, the rep performance intelligence, the competitive intelligence signals, the revenue intelligence dashboard design, the revenue intelligence to action workflow, and how to operationalize revenue intelligence so insights consistently drive better selling.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
