@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v449.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v450.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191814,6 +191814,59 @@ app.post('/api/product/feature-flag-strategy', requireAuth, async (req: AuthRequ
 app.post('/api/sales/sales-presentation', requireAuth, async (req: AuthRequest, res) => {
   const { audience, product, pain } = req.body;
   const prompt = `Design a high-converting sales presentation.\nAudience: ${audience}\nProduct: ${product}\nKey pain points: ${pain}\nInclude: presentation structure (why change→why now→why us), opening hook design, pain amplification before solution reveal, demo narrative arc, ROI story construction, social proof placement strategy, competitive differentiation without naming competitors, objection pre-handling within the deck, call to action design, deck length and visual design principles, customization strategy by persona/industry, and how to adapt the presentation for discovery vs. demo vs. executive review meetings.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 319+320 routes
+app.post('/api/dev/db-optimization', requireAuth, async (req: AuthRequest, res) => {
+  const { schema, queries, scale } = req.body;
+  const prompt = `Design a database optimization strategy.\nSchema: ${schema}\nProblem queries: ${queries}\nScale target: ${scale}\nInclude: indexing strategy (composite indexes/partial indexes/covering indexes), query optimization techniques (EXPLAIN ANALYZE/join order/subquery elimination), connection pooling configuration, read replica strategy, caching layer design (Redis/application-level), partitioning and sharding decision framework, N+1 query identification and elimination, slow query monitoring setup, vacuum and maintenance scheduling (PostgreSQL), and when to consider NoSQL alternatives or data warehouse offload.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/qbr-preparation', requireAuth, async (req: AuthRequest, res) => {
+  const { account, metrics, goals } = req.body;
+  const prompt = `Prepare a Quarterly Business Review for a customer.\nAccount: ${account}\nKey metrics: ${metrics}\nMutual goals: ${goals}\nInclude: QBR agenda structure (value delivered/metrics review/roadmap preview/next quarter planning), executive sponsorship strategy, success story and ROI narrative, metrics dashboard design, benchmark comparison (industry/cohort), expansion opportunity identification, risk surfacing and mitigation plan, customer input collection during QBR, next quarter goal-setting framework, and how to use the QBR to deepen the relationship and identify upsell opportunities.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/retention-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { cohort, churn, signals } = req.body;
+  const prompt = `Perform a product retention analysis.\nCohort data: ${cohort}\nChurn profile: ${churn}\nLeading signals: ${signals}\nInclude: retention curve analysis and benchmarking, cohort comparison methodology, leading vs. lagging indicator framework, churn reason taxonomy, early warning system design (health score components/thresholds), usage-based churn prediction model, segment-level retention breakdown, feature correlation to retention analysis, intervention playbook by risk segment, and how to build a retention-focused product culture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/linkedin-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, audience, content } = req.body;
+  const prompt = `Build a LinkedIn marketing strategy.\nBrand/author: ${brand}\nTarget audience: ${audience}\nContent themes: ${content}\nInclude: personal brand vs. company page strategy, content format mix (text posts/carousels/articles/polls/video), posting cadence and timing, hook writing formula for LinkedIn, engagement strategy (comments/connections/DMs), LinkedIn algorithm optimization, thought leadership positioning, employee advocacy program design, LinkedIn ads integration for organic-to-paid, measurement framework (impressions/engagement/follower growth/inbound leads), and 90-day LinkedIn content plan outline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/remote-work-policy', requireAuth, async (req: AuthRequest, res) => {
+  const { team, roles, culture } = req.body;
+  const prompt = `Design a remote work policy.\nTeam: ${team}\nRole types: ${roles}\nDesired culture: ${culture}\nInclude: work location policy (fully remote/hybrid/office-first decision framework), core hours vs. async-first design, home office stipend and equipment policy, meeting culture guidelines for distributed teams, communication norms by channel (Slack vs. email vs. video), performance management in remote context, onboarding remote employees effectively, in-person gathering cadence (offsites/team weeks), timezone management for global teams, and how to maintain culture and connection when distributed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/exit-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, options, timeline } = req.body;
+  const prompt = `Plan an exit strategy.\nCompany profile: ${company}\nExit options: ${options}\nTimeline: ${timeline}\nInclude: exit path comparison (IPO/strategic acquisition/PE buyout/secondary/SPAC), valuation drivers for each exit type, buyer universe analysis (strategic acquirers/financial buyers), business preparation checklist (financials/legal/team/IP), banker selection and M&A process overview, dual-track strategy (IPO + M&A simultaneously), employee equity considerations in each exit, founder liquidity options before full exit, how to run a competitive sale process, and post-exit obligations and earnout structure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/infrastructure-security', requireAuth, async (req: AuthRequest, res) => {
+  const { stack, threats, compliance } = req.body;
+  const prompt = `Design an infrastructure security architecture.\nStack: ${stack}\nThreat model: ${threats}\nCompliance requirements: ${compliance}\nInclude: defense-in-depth strategy, network segmentation and zero-trust architecture, IAM design (least privilege/role-based/temporary credentials), secrets management system, vulnerability scanning and patch management, intrusion detection and SIEM integration, DDoS protection layers, data encryption at rest and in transit, security incident response playbook, penetration testing program, compliance control mapping (SOC2/HIPAA/GDPR), and security as code (policy-as-code/infrastructure-as-code security scanning).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/event-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { event, audience, goals } = req.body;
+  const prompt = `Build an event marketing strategy.\nEvent type: ${event}\nTarget audience: ${audience}\nGoals: ${goals}\nInclude: event format selection (in-person/virtual/hybrid), promotion timeline and channel mix, speaker and agenda strategy, registration and attendance optimization, pre-event engagement sequence, day-of experience design, post-event follow-up campaign (24hr/1wk/1mo), content repurposing from event (clips/recap/blog), sponsorship strategy if applicable, measurement framework (registrations/attendance rate/pipeline generated/cost per attendee), and how to build an event series that compounds over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/experiment-design', requireAuth, async (req: AuthRequest, res) => {
+  const { hypothesis, metric, users } = req.body;
+  const prompt = `Design a product experiment.\nHypothesis: ${hypothesis}\nPrimary metric: ${metric}\nUser population: ${users}\nInclude: experiment hypothesis structure (if we do X then Y will change by Z because W), primary and guardrail metric selection, sample size calculation and statistical power, experiment duration and novelty effect management, randomization unit selection (user/session/account/feature), control and treatment design, pre-experiment analysis (AA test/novelty check), experiment instrumentation requirements, analysis plan (statistical significance/practical significance), Bayesian vs. frequentist approach trade-offs, and how to build an experimentation culture that ships better products.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/revops-design', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, teams, systems } = req.body;
+  const prompt = `Design a Revenue Operations function.\nCompany stage: ${stage}\nGTM teams: ${teams}\nCurrent systems: ${systems}\nInclude: RevOps org structure and reporting model, CRM as system of record design, tech stack rationalization (sales/marketing/CS tools), data and attribution model design, funnel definition and stage agreement across teams, territory and quota design process, compensation plan governance, forecasting process ownership, pipeline hygiene enforcement, revenue reporting and dashboard design, and how to build a RevOps function that enables revenue predictability and GTM efficiency.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
