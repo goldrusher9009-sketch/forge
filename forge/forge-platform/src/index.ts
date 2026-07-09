@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v587.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v588.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199457,6 +199457,66 @@ app.post('/api/product/customer-journey', requireAuth, async (req: AuthRequest, 
 app.post('/api/ops/resilience', requireAuth, async (req: AuthRequest, res) => {
   const { company, threats, recovery } = req.body;
   const prompt = `You are a business continuity planning and organizational resilience expert. Build the resilience plan for ${company} against ${threats} with ${recovery} recovery requirements. Cover the business impact analysis (what are the critical business functions, what is the impact of their disruption over time?), the risk assessment (what threats are most likely and most severe for this specific business?), the resilience strategy design (avoid, transfer, mitigate, accept — which risks get which treatment?), the business continuity plan for critical functions (how do you keep operating during disruption?), the disaster recovery plan for IT systems (RTO and RPO targets by system criticality), the crisis management team structure and activation criteria, the communication plan for employees, customers, and partners during a disruption, the supply chain resilience strategy (single vs. multi-source, safety stock, geographic diversification), the exercise and testing program (how to validate the plan works before you need it), and the resilience governance program (who owns resilience, how is it funded and measured?).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/revops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, friction } = req.body;
+  const prompt = `You are a revenue operations expert. Build the RevOps architecture for ${company} at ${stage} addressing ${friction} GTM friction. Cover the RevOps charter, revenue tech stack design, lead-to-revenue process, data model design, reporting architecture, territory and quota design, compensation plan review, and how to build RevOps as a strategic GTM partner.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/plg', requireAuth, async (req: AuthRequest, res) => {
+  const { product, viral, conversion } = req.body;
+  const prompt = `You are a product-led growth strategy expert. Design the PLG motion for ${product} with ${viral} viral mechanism and ${conversion} conversion strategy. Cover the PLG fundamentals, free tier design, activation design, viral loop design, product-qualified lead definition and scoring, sales assist motion, expansion revenue design, PLG metrics, and the organizational changes required for PLG success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/international', requireAuth, async (req: AuthRequest, res) => {
+  const { company, market, model } = req.body;
+  const prompt = `You are an international business strategy expert. Lead the international expansion of ${company} into ${market} with ${model} entry model. Cover the market selection framework, market entry mode selection, localization strategy, regulatory and compliance landscape, go-to-market model for the new market, talent and organizational model, financial model for international expansion, and how to measure international expansion success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/data-security', requireAuth, async (req: AuthRequest, res) => {
+  const { system, data, threat } = req.body;
+  const prompt = `You are a data security architecture expert. Design the data security architecture for ${system} protecting ${data} against ${threat} threat model. Cover the data classification framework, encryption strategy, access control architecture, secrets management design, network security architecture, application security design, security monitoring and SIEM design, vulnerability management program, penetration testing program, and how to build security as a shared responsibility.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/innovation-lab', requireAuth, async (req: AuthRequest, res) => {
+  const { company, domain, horizon } = req.body;
+  const prompt = `You are a corporate innovation strategy expert. Build the innovation lab for ${company} focused on ${domain} domain at ${horizon} time horizon. Cover the innovation lab mandate design, funding and governance model, team design, idea generation process, innovation methodology, portfolio management approach, path to scale for successful innovations, metrics for innovation success, and how to protect the lab from the immune system of the core business.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/pricing-analytics', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, decision } = req.body;
+  const prompt = `You are a pricing analytics and revenue optimization expert. Build the pricing analytics system for ${product} targeting ${segment} segment to optimize ${decision} pricing decision. Cover the pricing data requirements, willingness-to-pay research methodology, price elasticity modeling, competitive price monitoring, customer segmentation for pricing, pricing experiment design, dynamic pricing model design, discount optimization model, price waterfall analysis, and the pricing governance dashboard.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/devrel', requireAuth, async (req: AuthRequest, res) => {
+  const { product, developers, goal } = req.body;
+  const prompt = `You are a developer relations strategy expert. Build the developer relations program for ${product} targeting ${developers} developer segment to achieve ${goal}. Cover the DevRel strategy framework, developer experience audit, documentation strategy, sample code and SDK strategy, developer community platform design, content strategy for developer audiences, developer advocate profile, open source strategy, hackathon program design, and how to measure DevRel impact.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/supply-chain', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, risk } = req.body;
+  const prompt = `You are a supply chain strategy and operations expert. Build the supply chain resilience strategy for ${company} manufacturing ${product} managing ${risk} risk. Cover the supply chain risk mapping, supplier concentration risk assessment, geographic risk assessment, supply chain resilience levers, demand sensing and supply planning model, supplier relationship management program, inventory optimization model, logistics network design, supply chain technology stack, and how to build supply chain resilience as a competitive advantage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/cost-optimize', requireAuth, async (req: AuthRequest, res) => {
+  const { company, area, target } = req.body;
+  const prompt = `You are a cost structure optimization expert. Optimize the cost structure for ${company} in ${area} with ${target} reduction target. Cover the cost structure analysis framework, zero-based budgeting methodology, activity-based costing approach, benchmarking methodology, cost driver analysis, cost reduction opportunity categorization, cost reduction implementation approach, cost governance model, and how to balance cost reduction with investment in growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/future-of-work', requireAuth, async (req: AuthRequest, res) => {
+  const { company, workforce, horizon } = req.body;
+  const prompt = `You are a future of work strategy expert. Design the future of work strategy for ${company} with ${workforce} workforce over ${horizon} horizon. Cover the future of work forces analysis, skills taxonomy and future-readiness assessment, human-AI collaboration model design, talent strategy for the future, work design principles, hybrid work model design, workforce transition plan, and how to build organizational agility to adapt as the future of work continues to evolve.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
