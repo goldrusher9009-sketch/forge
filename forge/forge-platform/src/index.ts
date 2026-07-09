@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v565.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v566.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198137,6 +198137,66 @@ app.post('/api/sales/acceleration', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/product/platform-strategy', requireAuth, async (req: AuthRequest, res) => {
   const { product, ecosystem, participants } = req.body;
   const prompt = `You are a platform strategy and ecosystem design expert. Design a platform strategy for ${product} building an ecosystem with ${ecosystem} partners involving ${participants}. Cover the platform architecture (interaction, infrastructure, or aggregation platform), network effect design (same-side vs. cross-side), chicken-and-egg problem solution, platform governance and rules, pricing structure across participant types, curation vs. openness trade-offs, how to attract and retain the most critical participants, and how to measure platform health and ecosystem vitality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/sales-team', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, targetSize } = req.body;
+  const prompt = `You are a sales leadership and team building expert. Design a sales team for ${company} selling to ${segment} targeting ${targetSize} team size. Cover the ideal sales org structure (AE, SDR, SE, CSM ratios), territory and quota design, compensation plan (base, OTE, accelerators), hiring profile for each role, ramp plan and milestones, enablement program, performance management framework, and how to build a high-performance sales culture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/defensibility', requireAuth, async (req: AuthRequest, res) => {
+  const { product, threats, timeHorizon } = req.body;
+  const prompt = `You are a product strategy and competitive defense expert. Audit product defensibility for ${product} facing ${threats} over ${timeHorizon} time horizon. Assess each defensibility lever: proprietary data, network effects, switching costs, brand, regulatory, economies of scale, and unique capabilities. Score current strength, identify gaps, design initiatives to strengthen each moat, and create a defensibility roadmap prioritized by threat timeline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/market-research', requireAuth, async (req: AuthRequest, res) => {
+  const { market, question, sources } = req.body;
+  const prompt = `You are a market research and competitive intelligence expert. Synthesize market research for ${market} market answering question: ${question} from ${sources}. Structure the research synthesis: market definition and size, customer segmentation and needs, competitive landscape map, market dynamics and trends, unmet needs and whitespace, adoption barriers, regulatory environment, and the strategic implications for product and go-to-market decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/procurement', requireAuth, async (req: AuthRequest, res) => {
+  const { company, vendorType, dealSize } = req.body;
+  const prompt = `You are an enterprise procurement and vendor management expert. Guide ${company} through enterprise procurement for ${vendorType} vendor at ${dealSize} deal size. Cover procurement process stages (RFI, RFP, evaluation, negotiation, contract, vendor onboarding), evaluation criteria and scoring, infosec and legal review requirements, typical timelines and delays, negotiation levers (price, terms, SLAs, payment terms), how to accelerate approval, and how to manage the vendor relationship post-contract.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/competitive-intel', requireAuth, async (req: AuthRequest, res) => {
+  const { company, competitors, signals } = req.body;
+  const prompt = `You are a competitive intelligence expert. Design a competitive intelligence system for ${company} tracking ${competitors} using ${signals} signal sources. Cover the CI data collection framework (product releases, pricing changes, hiring signals, press, customer reviews, patent filings), analysis cadence and report format, win/loss analysis program, how to distribute CI to sales/product/marketing, how to act on CI to inform roadmap decisions, and how to build CI as an organizational capability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/agent-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { task, tools, constraints } = req.body;
+  const prompt = `You are an AI agent systems architect. Design an AI agent architecture for ${task} with access to ${tools} within ${constraints}. Cover agent type selection (ReAct, Plan-and-Execute, multi-agent), tool design and function calling schema, memory system (short-term, long-term, episodic), orchestration layer, human-in-the-loop checkpoints, error handling and retry logic, evaluation and testing methodology, observability and monitoring, and how to scale the agent system.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cs/support-excellence', requireAuth, async (req: AuthRequest, res) => {
+  const { company, channels, metrics } = req.body;
+  const prompt = `You are a customer support operations expert. Design a support excellence program for ${company} across ${channels} targeting ${metrics}. Cover support tier model (L1/L2/L3), triage and routing logic, first contact resolution improvement tactics, SLA design and adherence, quality assurance program (call scoring, ticket sampling), knowledge base management, escalation policy, agent training curriculum, Voice of Customer integration, and how to measure support impact on retention and expansion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/packaging-pricing', requireAuth, async (req: AuthRequest, res) => {
+  const { product, icp, competitors } = req.body;
+  const prompt = `You are a SaaS packaging and pricing expert. Design the packaging and pricing architecture for ${product} for ${icp} ICP competing against ${competitors}. Define the packaging tiers (names, feature gates, support levels), pricing metric selection (seat, usage, value unit), price point derivation (competitor anchoring, willingness-to-pay research, cost-plus validation), discounting and volume pricing structure, free trial vs. freemium decision, and how to test pricing with real prospects.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/ecosystem', requireAuth, async (req: AuthRequest, res) => {
+  const { product, partners, integrations } = req.body;
+  const prompt = `You are a product ecosystem and partnership expert. Map the product ecosystem for ${product} with ${partners} partners and ${integrations} integrations. Cover the ecosystem architecture (which integrations are table stakes vs. differentiating), partner program design (tech partners, ISVs, resellers), integration marketplace strategy, co-selling motion with key partners, ecosystem data and insights strategy, how to build a flywheel where integrations drive adoption and vice versa, and ecosystem health metrics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/visioning', requireAuth, async (req: AuthRequest, res) => {
+  const { product, timeHorizon, team } = req.body;
+  const prompt = `You are a product vision and strategy expert. Facilitate a product visioning workshop for ${product} with ${timeHorizon} horizon for ${team} team. Structure the workshop: current state assessment (product, market, customers), future customer problem framing, emerging technology trends that enable new solutions, long-term vision articulation, strategic pillars that bridge vision to roadmap, the north star metric, how to communicate the vision to inspire the team and attract customers and investors, and how to keep the vision alive as the team executes.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
