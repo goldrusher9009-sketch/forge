@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v420.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v421.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190277,6 +190277,59 @@ app.post('/api/product/pricing-model', requireAuth, async (req: AuthRequest, res
 app.post('/api/sales/pipeline-builder', requireAuth, async (req: AuthRequest, res) => {
   const { target, channels, teamSize } = req.body;
   const prompt = `Build a sales pipeline generation strategy.\nRevenue target: ${target}\nChannels: ${channels}\nTeam size: ${teamSize}\nInclude: pipeline coverage requirements (3x-5x), activity model (calls/emails/demos needed), channel mix, SDR vs AE ratio, and weekly cadence to hit the number.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 261+262 routes
+app.post('/api/dev/db-migration', requireAuth, async (req: AuthRequest, res) => {
+  const { fromSchema, toSchema, risk } = req.body;
+  const prompt = `Design a database migration plan.\nFrom schema: ${fromSchema}\nTo schema: ${toSchema}\nRisk level: ${risk}\nInclude: migration steps, zero-downtime strategy, rollback plan, data validation approach, and production execution checklist.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/closing-strategy-v2', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, objections, timeline } = req.body;
+  const prompt = `Develop a deal closing strategy.\nDeal: ${deal}\nRemaining objections: ${objections}\nTimeline: ${timeline}\nInclude: objection resolution scripts, mutual action plan, executive sponsor play, urgency creation, and specific closes to use in the final negotiation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/habit-loop', requireAuth, async (req: AuthRequest, res) => {
+  const { product, triggerEvent, reward } = req.body;
+  const prompt = `Design a habit loop for the product using Hooked model.\nProduct: ${product}\nTrigger event: ${triggerEvent}\nReward: ${reward}\nInclude: external/internal triggers, action design, variable reward types, investment mechanics, and ethical considerations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/press-kit', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, milestone } = req.body;
+  const prompt = `Create press kit content.\nCompany: ${company}\nProduct: ${product}\nMilestone: ${milestone}\nInclude: company boilerplate, product description, founder bios, key stats and proof points, FAQ for journalists, and 3 pitch angles for different media types.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/compensation-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { role, market, budget } = req.body;
+  const prompt = `Design a compensation plan for a role.\nRole: ${role}\nMarket: ${market}\nBudget: ${budget}\nInclude: base salary range, equity design, bonus structure, benefits package, total compensation framing, and negotiation guidance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/market-entry', requireAuth, async (req: AuthRequest, res) => {
+  const { market, gtm, competition } = req.body;
+  const prompt = `Build a market entry strategy for investors.\nMarket: ${market}\nGTM approach: ${gtm}\nCompetition: ${competition}\nInclude: market sizing (TAM/SAM/SOM), beachhead strategy, expansion sequence, competitive moat, and 18-month milestones.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/react-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { appType, scale, team } = req.body;
+  const prompt = `Design a React application architecture.\nApp type: ${appType}\nScale: ${scale}\nTeam: ${team}\nInclude: folder structure, state management approach, component hierarchy, data fetching strategy, performance optimization plan, and testing architecture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/influencer-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { product, budget, niche } = req.body;
+  const prompt = `Create an influencer marketing plan.\nProduct: ${product}\nBudget: ${budget}\nNiche: ${niche}\nInclude: influencer tier strategy (nano/micro/macro), outreach templates, brief template, compensation structure, content guidelines, and measurement framework.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/integration-strategy-v2', requireAuth, async (req: AuthRequest, res) => {
+  const { product, ecosystem, userNeed } = req.body;
+  const prompt = `Design a product integration strategy.\nProduct: ${product}\nEcosystem: ${ecosystem}\nUser need: ${userNeed}\nInclude: integration prioritization framework, build vs partner vs buy analysis, API design principles, partner program structure, and integration GTM motion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/channel-sales', requireAuth, async (req: AuthRequest, res) => {
+  const { product, partnerType, margins } = req.body;
+  const prompt = `Design a channel sales program.\nProduct: ${product}\nPartner type: ${partnerType}\nMargin structure: ${margins}\nInclude: partner tiers and benefits, enablement program, deal registration process, co-selling motions, partner portal requirements, and recruitment strategy.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
