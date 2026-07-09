@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v557.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v558.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -197657,6 +197657,66 @@ app.post('/api/product/quality', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/hr/recruitment-marketing', requireAuth, async (req: AuthRequest, res) => {
   const { company, roles, targetCandidates } = req.body;
   const prompt = `You are a talent acquisition and employer branding expert. Create a recruitment marketing strategy for ${company} hiring ${roles} targeting ${targetCandidates}. Cover employer value proposition development, job post optimization, sourcing channel mix (LinkedIn, communities, events, referrals), content strategy for talent attraction, candidate experience design, offer conversion optimization, and how to measure recruitment marketing ROI.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/plg', requireAuth, async (req: AuthRequest, res) => {
+  const { product, freeModel, conversionGoal } = req.body;
+  const prompt = `You are a product-led growth expert. Design a PLG motion for ${product} with ${freeModel} free tier aiming for ${conversionGoal} conversion goal. Cover freemium feature gating strategy, viral and network effect loops, in-product upgrade prompts, usage-based pricing triggers, self-serve onboarding design, PQL (product qualified lead) definition and scoring, and the sales assist motion for enterprise conversion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/performance-system', requireAuth, async (req: AuthRequest, res) => {
+  const { team, reviewCycle, competencies } = req.body;
+  const prompt = `You are an organizational psychology and performance management expert. Design a team performance review system for ${team} on ${reviewCycle} cycle evaluating ${competencies}. Cover calibration process, rating scale design, avoiding bias, manager effectiveness scores, upward feedback mechanisms, how to deliver difficult performance conversations, linking performance to compensation, and building a high-performance culture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ux/accessibility', requireAuth, async (req: AuthRequest, res) => {
+  const { product, wcagLevel, userGroups } = req.body;
+  const prompt = `You are an accessibility and inclusive design expert. Conduct a product accessibility audit for ${product} targeting ${wcagLevel} compliance for ${userGroups} user groups. Assess visual accessibility (contrast, font size, color), keyboard navigation, screen reader compatibility, cognitive load, motor accessibility, ARIA implementation, and produce a prioritized remediation roadmap with WCAG success criterion references.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/forecast', requireAuth, async (req: AuthRequest, res) => {
+  const { company, timeHorizon, assumptions } = req.body;
+  const prompt = `You are a financial planning and analysis expert. Build a financial forecast model for ${company} over ${timeHorizon} based on assumptions: ${assumptions}. Structure the revenue model (top-down and bottom-up), operating expense forecast by department, headcount plan, cash flow projection, scenario analysis (base/bull/bear), key financial metrics (ARR, MRR, burn rate, runway), and sensitivity analysis on key drivers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/retention', requireAuth, async (req: AuthRequest, res) => {
+  const { product, churnRate, segment } = req.body;
+  const prompt = `You are a SaaS retention and customer success expert. Design a retention strategy for ${product} with ${churnRate} current churn rate for ${segment} segment. Cover churn root cause analysis, health score model design, proactive intervention playbooks, in-app engagement campaigns, customer lifecycle email sequences, expansion revenue triggers, win-back campaigns, and how to build a retention-first culture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ux/research-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { team, scale, tools } = req.body;
+  const prompt = `You are a research operations expert. Build a Research Ops framework for ${team} at ${scale} scale using ${tools}. Cover research repository design, participant recruiting process, consent and privacy compliance, insight tagging taxonomy, democratizing research access across product teams, vendor and tool management, how to measure research impact, and scaling qual and quant research programs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cs/enterprise-onboarding', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customerType, timeline } = req.body;
+  const prompt = `You are an enterprise customer onboarding expert. Design an enterprise onboarding program for ${product} for ${customerType} customers over ${timeline}. Cover pre-sales-to-CS handoff, kickoff meeting agenda, implementation project plan template, change management support, stakeholder training program, integration and configuration guide, go-live checklist, hypercare period, and how to measure onboarding success and time-to-value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brand/identity', requireAuth, async (req: AuthRequest, res) => {
+  const { company, values, audience } = req.body;
+  const prompt = `You are a brand identity and design strategy expert. Build a brand identity system for ${company} with values: ${values} for ${audience}. Define brand personality, visual identity framework (logo principles, color palette rationale, typography system), voice and tone guidelines, do-and-dont brand examples, application across touchpoints, brand governance model, and how to maintain brand consistency as the team scales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/churn-model', requireAuth, async (req: AuthRequest, res) => {
+  const { product, dataSignals, intervention } = req.body;
+  const prompt = `You are a data science and customer analytics expert. Design a churn prediction model for ${product} using signals: ${dataSignals} to trigger ${intervention}. Cover feature engineering from product usage data, model selection (logistic regression vs. gradient boosting vs. neural net), training and validation approach, threshold optimization for precision/recall tradeoff, how to deploy predictions to CS tools, and the feedback loop to retrain the model.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ux/journey-map', requireAuth, async (req: AuthRequest, res) => {
+  const { product, persona, goal } = req.body;
+  const prompt = `You are a UX and customer experience expert. Create a comprehensive user journey map for ${product} for ${persona} persona trying to achieve ${goal}. Map all touchpoints across awareness, consideration, activation, engagement, and advocacy stages. For each stage: user actions, thoughts, emotions, pain points, opportunities, and moments of delight. Identify the highest-impact improvements and how to instrument journey analytics.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
