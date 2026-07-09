@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v669.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v670.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204377,6 +204377,66 @@ app.post('/api/strategy/legal-ops', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/strategy/exit-planning', requireAuth, async (req: AuthRequest, res) => {
   const { company, timeline, goals } = req.body;
   const prompt = `You are an exit planning strategy and transaction execution expert. Design exit planning for ${company} with ${timeline} toward ${goals}. Cover exit planning framework, exit readiness assessment, value creation levers before exit, buyer universe mapping, deal structure options, transaction preparation and data room, M and A process management, tax optimization and structure, management retention and incentives, and how to plan and execute business exits that maximize value for owners by preparing the business well in advance of the transaction to present the business at its best to the buyers most likely to pay premium value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-governance', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, ai_uses, risks } = req.body;
+  const prompt = `You are an AI governance strategy and responsible AI expert. Design AI governance for ${organization} with ${ai_uses} managing ${risks}. Cover AI governance framework, AI risk taxonomy and assessment, AI ethics principles and guidelines, model documentation and transparency, bias detection and mitigation, AI accountability and oversight, regulatory compliance for AI, AI incident management, AI governance committee and processes, and how to develop AI governance programs that allow organizations to capture the benefits of AI while managing the ethical and legal and reputational risks that come from deploying AI in ways that can harm customers or employees or society.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/general-counsel', requireAuth, async (req: AuthRequest, res) => {
+  const { company, legal_issues, stage } = req.body;
+  const prompt = `You are a general counsel strategy and in-house legal leadership expert. Design the legal function for ${company} addressing ${legal_issues} at ${stage}. Cover general counsel framework, legal function build vs buy strategy, legal risk prioritization, outside counsel management, legal holds and litigation strategy, contracts and commercial legal, employment and HR legal, IP strategy and protection, regulatory compliance program, and how to build and lead legal functions that are genuine business partners that help the organization move fast and take smart risks rather than legal functions that are seen as obstacles that slow the business without adding proportionate value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/ops-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, operations, technology } = req.body;
+  const prompt = `You are an operations technology strategy and industrial digitization expert. Design operations technology for ${organization} in ${operations} with ${technology}. Cover OT strategy framework, IT and OT convergence, industrial IoT and sensors, manufacturing execution systems, SCADA and control systems, predictive maintenance and condition monitoring, digital twin design, OT cybersecurity, operational analytics and AI, and how to develop operations technology strategies that use digital technologies to improve the efficiency and reliability and quality of physical operations while managing the unique security and reliability requirements of operational technology environments.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/creator-economy', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, creators, model } = req.body;
+  const prompt = `You are a creator economy strategy and creator monetization expert. Design creator economy strategy for ${platform} supporting ${creators} with ${model}. Cover creator economy framework, creator value proposition and tools, monetization mechanics and revenue share, creator discovery and algorithmic amplification, creator community and education, brand partnership facilitation, subscription and tipping mechanics, creator data and analytics, platform governance for creators, and how to build creator economies that attract and retain the most valuable creators by providing the best combination of audience access and monetization tools and community support while aligning platform incentives with creator success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/loyalty-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, customers, behaviors } = req.body;
+  const prompt = `You are a loyalty program strategy and customer engagement expert. Design loyalty strategy for ${brand} with ${customers} driving ${behaviors}. Cover loyalty strategy framework, loyalty program design and mechanics, points and miles and tiered benefits, emotional vs transactional loyalty, data and personalization engine, partner and coalition opportunities, loyalty program economics and funding, digital and app experience, loyalty measurement and ROI, and how to design loyalty programs that genuinely increase customer retention and spending by rewarding the behaviors that matter most and creating emotional connections with the brand rather than points programs that are easily replicated by competitors and attract discount-seeking customers rather than genuinely loyal ones.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/affiliate-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, affiliates, products } = req.body;
+  const prompt = `You are an affiliate marketing strategy and partner channel expert. Design affiliate strategy for ${company} with ${affiliates} promoting ${products}. Cover affiliate strategy framework, affiliate program structure and commission design, affiliate recruitment and onboarding, affiliate quality and fraud management, content and coupon affiliate segmentation, affiliate tools and tracking technology, affiliate relationship management, affiliate compliance and disclosure, affiliate performance optimization, and how to build affiliate programs that drive incremental revenue by recruiting the right affiliates and giving them the tools and incentives to promote effectively rather than paying commissions for sales that would have happened anyway through other channels.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/revenue-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { company, signals, team } = req.body;
+  const prompt = `You are a revenue intelligence and sales AI expert. Design revenue intelligence for ${company} using ${signals} for ${team}. Cover revenue intelligence framework, conversation and email intelligence, deal risk and health scoring, pipeline analytics and forecasting, buyer intent signals, coaching recommendations and next best actions, competitive intelligence in deals, customer engagement tracking, CRM data quality and enrichment, and how to build revenue intelligence programs that make individual sellers and sales leaders more effective by giving them timely and relevant information about their deals and coaching opportunities rather than adding analytical burden to an already complex selling motion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/org-learning', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, challenges, goals } = req.body;
+  const prompt = `You are an organizational learning and knowledge management expert. Design organizational learning for ${organization} overcoming ${challenges} toward ${goals}. Cover organizational learning framework, single and double loop learning, after action review and retrospective practices, knowledge capture and documentation, communities of practice, mentoring and knowledge transfer, learning from failure and near misses, organizational memory and institutional knowledge, learning measurement and effectiveness, and how to build learning organizations that continuously improve performance by systematically capturing and applying lessons from both successes and failures at every level.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/agency-model', requireAuth, async (req: AuthRequest, res) => {
+  const { agency, clients, services } = req.body;
+  const prompt = `You are an agency business model strategy and agency transformation expert. Design the agency model for ${agency} serving ${clients} with ${services}. Cover agency model framework, agency positioning and specialization, service packaging and pricing, retainer vs project vs performance models, talent model and staffing, technology leverage and productization, new business development and sales, client service and retention, agency financial model and margins, and how to design agency business models that are profitable and scalable by finding the right combination of specialization and pricing and talent that creates distinctive value for a specific type of client rather than competing as a generalist agency on price.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/hospital-biz', requireAuth, async (req: AuthRequest, res) => {
+  const { hospital, services, community } = req.body;
+  const prompt = `You are a hospital business strategy and health system management expert. Design hospital business strategy for ${hospital} with ${services} serving ${community}. Cover hospital business framework, clinical program portfolio design, patient access and throughput, physician alignment and medical staff strategy, payor contracting and revenue cycle, hospital operations and cost management, capital allocation and facilities strategy, quality and safety program, community health and population health, and how to develop hospital business strategies that achieve the financial sustainability needed to invest in clinical excellence and access while fulfilling the mission to serve the health needs of the community.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
