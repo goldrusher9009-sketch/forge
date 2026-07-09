@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v556.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v557.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -197597,6 +197597,66 @@ app.post('/api/ai/moderation', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/marketing/launch-kit', requireAuth, async (req: AuthRequest, res) => {
   const { product, launchType, channels } = req.body;
   const prompt = `You are a product marketing expert. Build a product marketing launch kit for ${product} doing a ${launchType} launch across ${channels}. Include positioning statement, messaging hierarchy, press release template, sales one-pager, social media copy pack, email announcement, FAQ, competitive battlecard, and post-launch measurement plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/funding/pitch', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, problem } = req.body;
+  const prompt = `You are a venture capital pitch expert. Build an investor pitch deck outline for ${company} at ${stage} stage solving ${problem}. Structure the narrative: problem, solution, market size (TAM/SAM/SOM), product demo cues, business model, traction and metrics, team, financials and projections, competitive moat, use of funds, and the ask. Include speaker notes and anticipated investor questions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cs/success-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { customer, goals, timeline } = req.body;
+  const prompt = `You are a customer success expert. Create a detailed customer success plan for ${customer} with goals: ${goals} over ${timeline}. Cover onboarding milestones, adoption metrics, QBR agenda template, expansion opportunities, risk flags and early warning indicators, escalation paths, and how to measure and report on value delivered.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/techdebt', requireAuth, async (req: AuthRequest, res) => {
+  const { system, symptoms, team } = req.body;
+  const prompt = `You are a software engineering expert. Conduct a tech debt audit framework for ${system} experiencing ${symptoms} with ${team} team. Categorize technical debt types (code debt, architecture debt, test debt, documentation debt), prioritize by business impact and remediation cost, create a paydown roadmap, and define how to track tech debt as an ongoing engineering metric.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/content-calendar', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, channels, cadence } = req.body;
+  const prompt = `You are a content strategy expert. Design a content calendar architecture for ${brand} across ${channels} at ${cadence} publishing cadence. Define content pillars and themes, editorial workflow (ideation → draft → review → publish), seasonal content hooks, evergreen vs. timely content mix, repurposing strategy across channels, and how to measure content performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/pricing-experiment', requireAuth, async (req: AuthRequest, res) => {
+  const { product, hypothesis, segments } = req.body;
+  const prompt = `You are a pricing strategy and experimentation expert. Design a pricing experiment for ${product} testing hypothesis: ${hypothesis} across ${segments} customer segments. Cover experiment design (A/B vs. holdout), pricing variables to test, statistical power and sample size, guard rails and revenue protection, success metrics, and how to interpret results and decide whether to roll out.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/enterprise-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { product, dealSize, industry } = req.body;
+  const prompt = `You are an enterprise sales expert. Build an enterprise sales playbook for ${product} with ${dealSize} deal size in ${industry}. Cover ICP definition, prospecting and territory planning, multi-threading the buying committee, discovery call framework, champion building, proof-of-concept process, security and legal review navigation, pricing and negotiation, and how to run an enterprise close process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ux/usability', requireAuth, async (req: AuthRequest, res) => {
+  const { product, userTask, audience } = req.body;
+  const prompt = `You are a UX research and usability expert. Evaluate product usability for ${product} focusing on ${userTask} task for ${audience} audience. Apply Nielsen heuristics, identify cognitive load issues, map the user journey with friction points, assess information architecture, evaluate error prevention and recovery, and produce a prioritized list of usability improvements with expected impact.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-culture', requireAuth, async (req: AuthRequest, res) => {
+  const { company, maturityLevel, goals } = req.body;
+  const prompt = `You are an analytics and data strategy expert. Build a data-driven culture transformation plan for ${company} at ${maturityLevel} maturity aiming for ${goals}. Cover data literacy training program, self-serve analytics enablement, data governance framework, KPI alignment across teams, data storytelling practices, how to incentivize data-driven decision making, and the organizational changes needed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/quality', requireAuth, async (req: AuthRequest, res) => {
+  const { product, qualityDimensions, team } = req.body;
+  const prompt = `You are a product quality and engineering excellence expert. Design a product quality framework for ${product} across dimensions: ${qualityDimensions} for ${team} team. Define quality gates at each stage of development, testing strategy (unit, integration, E2E, performance), quality metrics and dashboards, bug severity taxonomy, how to balance speed vs. quality, and a continuous quality improvement process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/recruitment-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, roles, targetCandidates } = req.body;
+  const prompt = `You are a talent acquisition and employer branding expert. Create a recruitment marketing strategy for ${company} hiring ${roles} targeting ${targetCandidates}. Cover employer value proposition development, job post optimization, sourcing channel mix (LinkedIn, communities, events, referrals), content strategy for talent attraction, candidate experience design, offer conversion optimization, and how to measure recruitment marketing ROI.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
