@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v586.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v587.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199397,6 +199397,66 @@ app.post('/api/legal/data-ethics', requireAuth, async (req: AuthRequest, res) =>
 app.post('/api/strategy/narrative', requireAuth, async (req: AuthRequest, res) => {
   const { company, audience, moment } = req.body;
   const prompt = `You are a strategic narrative and corporate storytelling expert. Craft the strategic narrative for ${company} for ${audience} at this ${moment} inflection point. Cover the strategic narrative architecture (why now → what we believe → what we are building → why we will win → what we need), the market framing strategy (how to define the category so you win), the villain and urgency creation (what is the enemy — the old way, the broken system, the missing solution), the hero positioning (who is the customer, what is their transformation?), the proof architecture (what evidence makes the narrative credible?), the narrative differentiation from competitor stories, how to embed the narrative across all communications (investor deck, sales pitch, recruiting, PR, all-hands), the narrative evolution strategy (how to update the story as the company grows), and how to test whether the narrative is landing with the target audience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/pr/crisis-comms', requireAuth, async (req: AuthRequest, res) => {
+  const { crisis, stakeholders, timeline } = req.body;
+  const prompt = `You are a crisis communications and reputation management expert. Build the crisis communications plan for ${crisis} situation affecting ${stakeholders} on ${timeline} timeline. Cover the crisis categorization framework (operational crisis, reputational crisis, safety crisis, financial crisis — different playbooks for different types), the first hour checklist (what to do in the first 60 minutes of a crisis), the crisis communication principles (lead with facts, acknowledge impact, show action), the stakeholder communication sequence (internal first, then external; who hears what and in what order), the spokesperson selection and preparation, the statement drafting guidelines (what to say vs. what not to say), the media engagement strategy (proactive vs. reactive), the social media monitoring and response protocols, the post-crisis reputation recovery strategy, and the crisis preparedness exercises to run before the next crisis hits.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/objections', requireAuth, async (req: AuthRequest, res) => {
+  const { product, objection, persona } = req.body;
+  const prompt = `You are a sales psychology and objection handling expert. Master handling ${objection} objections for ${product} from ${persona} buyer. Cover the objection psychology (objections are often requests for more information or signs of interest), the objection categorization (price, timing, competition, authority, need — each requires a different approach), the LAER framework (Listen → Acknowledge → Explore → Respond), the specific objection handling script with multiple variations, the pre-emptive objection handling (how to address objections before they are raised), how to use social proof strategically to overcome specific objections, the proof point and case study matching to specific objection types, how to handle the most dangerous objection (no objection — silent disengagement), the objection handling for different buyer personas, and how to practice and improve objection handling as a team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/team-rituals', requireAuth, async (req: AuthRequest, res) => {
+  const { team, problem, frequency } = req.body;
+  const prompt = `You are an organizational culture and team effectiveness expert. Design team rituals for ${team} to solve ${problem} problem meeting ${frequency}. Cover the ritual design principles (rituals must serve a clear purpose, have defined formats, create consistent experiences), the ritual taxonomy (cadence rituals: daily standups, weekly reviews, monthly retros; milestone rituals: launches, offboarding, promotions; signal rituals: recognizing values-aligned behavior), the weekly team meeting redesign (how to make it worth attending), the retrospective format options (start-stop-continue, 4Ls, sailboat — when to use each), the recognition ritual design (how to make recognition specific, timely, and meaningful), the async ritual design for remote teams (how to create connection without meetings), the new joiner onboarding ritual, the offsite and team building ritual design, how to kill rituals that no longer serve their purpose, and how to measure whether rituals are achieving their intended outcomes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/platform-economics', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, sides, chicken } = req.body;
+  const prompt = `You are a platform economics and multi-sided market strategy expert. Design the platform strategy for ${platform} connecting ${sides} sides solving ${chicken} chicken-and-egg problem. Cover the platform business model fundamentals (how value is created by connecting multiple sides), the chicken-and-egg problem solutions (which side to subsidize, how to create standalone value, the penguin strategy), the network effects taxonomy (direct vs. indirect, local vs. global, same-side vs. cross-side) and how to architect for them, the platform pricing strategy (who pays, who is subsidized, how pricing affects each side), the trust and safety architecture (matching, reviews, escrow, identity verification), the governance model (what rules govern participant behavior, how are disputes resolved), the platform openness strategy (what to keep proprietary vs. open), how to manage platform envelopment threats from large players, and the platform flywheel design (how growth on one side drives growth on the other).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/biotech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, platform, indication } = req.body;
+  const prompt = `You are a biotech strategy and life sciences business development expert. Build the strategic plan for ${company} with ${platform} technology platform targeting ${indication}. Cover the platform vs. product strategy (build a platform that generates multiple products vs. focus on one program?), the indication prioritization framework (unmet need, competitive landscape, regulatory pathway, commercial opportunity), the clinical development strategy (proof-of-concept design, biomarker strategy, patient population selection), the regulatory strategy (FDA breakthrough designation, accelerated approval, orphan drug designation opportunities), the IP strategy (composition of matter, method of use, formulation — layers of protection), the business development strategy (partnerships, licensing, co-development — when and with whom?), the financing strategy (venture, crossover, IPO, royalty financing — sequencing for biotech), the key scientific and clinical milestones that drive value, and how to communicate the scientific story to investors.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/stakeholder-mgmt', requireAuth, async (req: AuthRequest, res) => {
+  const { project, stakeholders, resistance } = req.body;
+  const prompt = `You are a stakeholder management and organizational change expert. Build the stakeholder management plan for ${project} with ${stakeholders} as key stakeholders managing ${resistance} type resistance. Cover the stakeholder analysis framework (power-interest matrix — who are the key players, blockers, supporters, and bystanders?), the stakeholder communication plan (who gets what information, in what format, how often, from whom), the resistance management typology (rational resistance: facts and logic; emotional resistance: addressing fears and concerns; political resistance: navigating power dynamics), the coalition building strategy (how to build and sustain a coalition of support), the early win identification (what can you do in the first 90 days to build momentum and credibility?), the executive sponsor management (how to keep executives engaged and aligned), the feedback loop design (how to listen to stakeholders and adapt), and how to convert resistant stakeholders into advocates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/web-perf', requireAuth, async (req: AuthRequest, res) => {
+  const { site, metric, budget } = req.body;
+  const prompt = `You are a web performance engineering and Core Web Vitals expert. Optimize ${site} for ${metric} performance metric within ${budget} performance budget. Cover the Core Web Vitals explained (LCP, INP, CLS — what they measure and why they matter for SEO and UX), the performance measurement methodology (lab vs. field data, RUM vs. synthetic testing), the LCP optimization techniques (image optimization, preloading, server response time, render-blocking resources), the INP optimization techniques (long task decomposition, input handler optimization, scheduler API usage), the CLS optimization techniques (image and media dimension reservation, font loading, dynamic content handling), the JavaScript optimization strategy (code splitting, tree shaking, lazy loading, bundle analysis), the caching strategy (browser cache, CDN cache, service worker cache), the third-party script management, how to set and enforce performance budgets, and the continuous performance monitoring setup.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/m-and-a', requireAuth, async (req: AuthRequest, res) => {
+  const { acquirer, target, rationale } = req.body;
+  const prompt = `You are a mergers and acquisitions strategy and deal execution expert. Build the M&A strategy for ${acquirer} acquiring ${target} with ${rationale} strategic rationale. Cover the M&A strategy framework (buy vs. build vs. partner decision tree), the target identification and screening criteria, the strategic fit assessment (capabilities, customers, technology, team — what are you actually buying?), the financial valuation methodology (DCF, comparable transactions, precedent comps — how to triangulate value), the synergy identification and quantification (revenue synergies, cost synergies, capital synergies — which are most reliable?), the due diligence process design (financial, legal, technical, commercial, cultural), the deal structure options (asset vs. stock purchase, earn-outs, representations and warranties insurance), the negotiation strategy and common deal breakers, the integration planning (Day 1 through Year 2), and the common reasons M&A fails and how to avoid them.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/customer-journey', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, friction } = req.body;
+  const prompt = `You are a customer experience design and customer journey optimization expert. Optimize the customer journey for ${product} for ${segment} customer segment reducing ${friction} friction. Cover the customer journey mapping methodology (stages → touchpoints → emotions → pain points → opportunities), the jobs-to-be-done framework applied to the journey (what is the customer trying to accomplish at each stage?), the moment of truth identification (which touchpoints have the highest impact on satisfaction and retention?), the friction audit (systematic identification of every point where customers struggle or drop off), the delight design (how to create unexpected positive moments at key touchpoints), the omnichannel journey design (how touchpoints across web, mobile, in-store, support need to connect), the personalization strategy by segment, the journey measurement system (how to track experience quality at each touchpoint), and how to organize the company around the customer journey rather than internal functions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/resilience', requireAuth, async (req: AuthRequest, res) => {
+  const { company, threats, recovery } = req.body;
+  const prompt = `You are a business continuity planning and organizational resilience expert. Build the resilience plan for ${company} against ${threats} with ${recovery} recovery requirements. Cover the business impact analysis (what are the critical business functions, what is the impact of their disruption over time?), the risk assessment (what threats are most likely and most severe for this specific business?), the resilience strategy design (avoid, transfer, mitigate, accept — which risks get which treatment?), the business continuity plan for critical functions (how do you keep operating during disruption?), the disaster recovery plan for IT systems (RTO and RPO targets by system criticality), the crisis management team structure and activation criteria, the communication plan for employees, customers, and partners during a disruption, the supply chain resilience strategy (single vs. multi-source, safety stock, geographic diversification), the exercise and testing program (how to validate the plan works before you need it), and the resilience governance program (who owns resilience, how is it funded and measured?).`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
