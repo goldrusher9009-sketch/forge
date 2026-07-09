@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v700.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v701.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -206237,6 +206237,66 @@ app.post('/api/strategy/learning-dev', requireAuth, async (req: AuthRequest, res
 app.post('/api/strategy/cofounder-fit', requireAuth, async (req: AuthRequest, res) => {
   const { founder, role, stage } = req.body;
   const prompt = `You are a co-founder relationship strategy and founding team design expert. Design co-founder approach for ${founder} seeking ${role} at ${stage}. Cover co-founder fit framework, complementary skill mapping and gap analysis, values and mission alignment assessment, communication style and conflict resolution, equity split and vesting structure, role clarity and decision rights, co-founder agreement design, red flag identification, trial project and evaluation period, and how to build founding team relationships that survive the inevitable stress of building a company by selecting co-founders based on complementary capabilities and values alignment rather than convenience or existing friendship, structuring the relationship with explicit agreements about decision rights and equity that prevent disputes from becoming existential, and investing in the communication and conflict resolution practices that keep the founding team functional when the company faces its most difficult moments.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/revenue-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, teams, bottleneck } = req.body;
+  const prompt = `You are a revenue operations strategy and go-to-market alignment expert. Design RevOps for ${company} aligning ${teams} to fix ${bottleneck}. Cover revenue operations framework, go-to-market alignment across marketing, sales, and customer success, funnel visibility and revenue reporting, CRM architecture and data governance, lead routing and territory management, revenue forecasting and pipeline inspection, tech stack integration, compensation alignment, revenue process standardization, and how to build revenue operations functions that accelerate revenue growth by eliminating the hand-off failures and data gaps that lose deals between marketing, sales, and customer success, creating the single source of truth for revenue performance that enables leadership to identify what is working and what is not, and designing the processes that make every revenue team member more effective through better tools, cleaner data, and clearer playbooks.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/brand-extension', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, category, customers } = req.body;
+  const prompt = `You are a brand extension strategy and portfolio management expert. Design brand extension for ${brand} into ${category} targeting ${customers}. Cover brand extension framework, brand permission and stretch assessment, fit and relevance evaluation, category entry strategy, cannibalization risk analysis, brand architecture implications, new versus existing customer targeting, execution and launch strategy, portfolio management and brand health tracking, and how to develop brand extension strategies that successfully leverage existing brand equity in adjacent categories by rigorously assessing whether the brand has genuine permission to play in the new category from the customer perspective, designing the extension to reinforce rather than dilute the core brand associations, and setting realistic expectations for the time and investment required to build meaningful scale in categories where the brand is new and unproven.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/procurement', requireAuth, async (req: AuthRequest, res) => {
+  const { company, spend, categories } = req.body;
+  const prompt = `You are a procurement strategy and strategic sourcing expert. Design procurement strategy for ${company} managing ${spend} across ${categories}. Cover procurement strategy framework, spend analysis and category segmentation, strategic sourcing methodology, supplier selection and evaluation, negotiation strategy and contract terms, supplier relationship management, total cost of ownership analysis, procurement technology and automation, procurement governance and policy, and how to build procurement functions that deliver competitive advantage through supply chain relationships and cost management by segmenting spend into categories with distinct sourcing strategies, developing the supplier relationships that provide preferential access to supply, innovation, and pricing, and building the procurement capabilities that reduce total cost of ownership rather than just achieving the lowest unit price that creates hidden costs elsewhere in the supply chain.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/consumer-insights', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, question, consumers } = req.body;
+  const prompt = `You are a consumer insights strategy and market research expert. Design consumer insights for ${brand} addressing ${question} about ${consumers}. Cover consumer insights framework, research methodology selection, qualitative versus quantitative research design, ethnographic and observational methods, survey design and sampling, data analysis and synthesis, insight generation and storytelling, persona development, insight activation and business impact, and how to build consumer insights capabilities that generate genuine competitive advantage by developing deep understanding of consumer motivations, behaviors, and unmet needs that competitors miss because they rely on surface-level survey data, investing in the research methods that reveal what consumers do rather than just what they say they do, and building the organizational capabilities to translate raw consumer data into actionable insights that change product development, marketing, and business strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/regtech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, regulations, processes } = req.body;
+  const prompt = `You are a regulatory technology strategy and compliance automation expert. Design RegTech for ${company} addressing ${regulations} in ${processes}. Cover RegTech framework, regulatory change management, compliance monitoring and surveillance, transaction monitoring and AML, KYC and identity verification automation, reporting and regulatory filing automation, risk assessment and stress testing, audit trail and documentation management, RegTech vendor selection, and how to build RegTech programs that reduce compliance cost while improving effectiveness by automating the routine compliance tasks that consume expensive compliance staff time without adding analytical value, deploying the monitoring systems that detect regulatory violations before they become enforcement actions, and maintaining the complete audit trails that demonstrate compliance credibly when regulators examine the firm.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/healthtech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are a health technology strategy and digital health expert. Design health tech strategy for ${company} with ${product} in ${market}. Cover health tech strategy framework, clinical validation and evidence generation, regulatory pathway and FDA strategy, payer coverage and reimbursement, provider adoption and workflow integration, patient engagement and behavior change, health data and interoperability, value-based care alignment, partnership and channel strategy, and how to build health technology businesses that achieve sustainable adoption by generating the clinical evidence that convinces skeptical providers and payers that the technology delivers genuine health outcomes, designing for the clinical workflow integration that makes adoption frictionless for care teams, and structuring the reimbursement model around the demonstrated health outcomes rather than the technology features.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/community-led', requireAuth, async (req: AuthRequest, res) => {
+  const { company, community, product } = req.body;
+  const prompt = `You are a community-led growth strategy and developer relations expert. Design community-led growth for ${company} with ${community} around ${product}. Cover community-led growth framework, community type and format selection, community platform and infrastructure, content and programming strategy, community manager and moderator design, ambassador and champion programs, community to product feedback loops, community metrics and health measurement, monetization and community business models, and how to build communities that drive sustainable product growth by creating genuine value for community members through the connections, knowledge, and resources they access through participation rather than through marketing-driven engagement that burns trust when the company agenda becomes apparent, designing the governance and moderation that maintains quality and psychological safety as the community scales, and building the flywheel where community engagement drives product adoption which attracts more community members.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cloud-migration', requireAuth, async (req: AuthRequest, res) => {
+  const { company, systems, cloud } = req.body;
+  const prompt = `You are a cloud migration strategy and modernization expert. Design cloud migration for ${company} moving ${systems} to ${cloud}. Cover cloud migration framework, application portfolio assessment and migration factory, lift and shift versus replatform versus refactor decisions, migration wave planning and sequencing, dependency mapping and migration testing, cost modeling and TCO analysis, security and compliance in the cloud, performance baseline and optimization, cutover strategy and rollback planning, and how to build cloud migration programs that realize the business value of cloud adoption by making disciplined decisions about which applications to migrate as-is versus modernize, sequencing migrations to build capability and reduce risk progressively, and investing in the cloud operating model transformation that captures the full cost efficiency and agility benefits that justify the migration investment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cx-leadership', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, organization, metrics } = req.body;
+  const prompt = `You are a customer experience leadership strategy and CX program expert. Design CX leadership for ${leader} at ${organization} improving ${metrics}. Cover CX leadership framework, CX vision and strategy development, customer listening and voice of customer programs, journey mapping and experience design, CX governance and cross-functional coordination, CX culture and employee engagement, CX technology and analytics, closed-loop feedback and action systems, CX business case and ROI measurement, and how to build CX leadership approaches that create genuine customer-centricity in organizations by establishing the governance structures that give CX leaders the authority and resources to drive change across functional boundaries, building the measurement systems that connect customer experience to business outcomes in terms that executives understand, and creating the culture of customer empathy that makes every employee see delivering great experiences as part of their job.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/workforce-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { company, horizon, risks } = req.body;
+  const prompt = `You are a workforce planning strategy and talent supply chain expert. Design workforce plan for ${company} over ${horizon} addressing ${risks}. Cover workforce planning framework, demand forecasting and headcount modeling, skills inventory and gap analysis, build versus buy versus borrow decisions, talent pipeline development, succession planning and critical role coverage, workforce flexibility and contingent labor strategy, automation and workforce transformation, workforce analytics, and how to build workforce planning capabilities that ensure the organization has the talent needed to execute its strategy by modeling the talent demand implications of the business plan, assessing the current workforce against future requirements to identify gaps, and making the systematic investments in internal development, external hiring, and alternative labor models that close those gaps before they constrain business performance.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
