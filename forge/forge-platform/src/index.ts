@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v614.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v615.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201077,6 +201077,66 @@ app.post('/api/finance/cost-transformation', requireAuth, async (req: AuthReques
 app.post('/api/product/pmf-search', requireAuth, async (req: AuthRequest, res) => {
   const { startup, hypothesis, signal } = req.body;
   const prompt = `You are a product-market fit and early-stage product expert. Guide ${startup} through PMF search testing ${hypothesis} hypothesis watching for ${signal} signals. Cover the product-market fit definition and framework, the PMF hypothesis design, the customer segment selection and focus, the discovery interview methodology, the minimum viable product design for PMF, the quantitative PMF measurement, the qualitative PMF signal recognition, the pivot vs. persevere framework, the PMF iteration methodology, and how to find product-market fit efficiently by staying close to customers, moving fast, and having the discipline to change direction when the evidence demands it.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/content-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, volume, team } = req.body;
+  const prompt = `You are a content operations and content strategy expert. Design the content operations system for ${company} producing ${volume} content with ${team} team. Cover the content operations strategy and goals, the content governance and editorial standards, the content planning and calendar process, the content production workflow design, the content quality assurance process, the content distribution and amplification workflow, the content performance measurement, the content technology stack design, the content team structure and roles, and how to build content operations that scale production while maintaining quality and driving measurable business results.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { rep, weakness, stage } = req.body;
+  const prompt = `You are a sales coaching and sales performance expert. Coach ${rep} to improve ${weakness} in the ${stage} stage of the sales process. Cover the sales coaching framework and methodology, the rep skill and competency assessment, the call recording and conversation analysis, the coaching conversation structure, the skill gap prioritization, the practice and role-play design, the coaching cadence and frequency, the rep accountability and goal-setting, the manager coaching skill development, and how to build a coaching culture that systematically improves sales rep performance and drives consistent quota attainment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/procurement', requireAuth, async (req: AuthRequest, res) => {
+  const { company, spend, category } = req.body;
+  const prompt = `You are a procurement strategy and strategic sourcing expert. Optimize the procurement for ${company} with ${spend} spend in ${category} category. Cover the procurement strategy and maturity model, the spend analysis and category management, the supplier market analysis, the sourcing strategy selection, the RFP and supplier evaluation design, the negotiation strategy and framework, the supplier relationship management design, the contract management design, the procurement technology and automation, and how to transform procurement from a cost-control function to a strategic business partner that drives competitive advantage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/developer-relations', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, devs, ecosystem } = req.body;
+  const prompt = `You are a developer relations and developer community expert. Build the DevRel program for ${platform} targeting ${devs} developers in ${ecosystem} ecosystem. Cover the DevRel strategy and objectives, the developer persona and journey mapping, the developer experience and DX audit, the documentation and learning resource design, the community platform and forum design, the developer advocacy and content strategy, the hackathon and event program, the developer feedback loop design, the DevRel metrics and ROI measurement, and how to build a DevRel program that creates developer love, drives platform adoption, and generates ecosystem growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/modeling', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, decisions } = req.body;
+  const prompt = `You are a financial modeling and strategic finance expert. Build the financial model for ${company} at ${stage} stage to inform ${decisions} decisions. Cover the financial model structure and design principles, the revenue model architecture, the cost model and driver design, the headcount and hiring model, the unit economics model, the cash flow and runway model, the scenario and sensitivity analysis design, the KPI and metric definition, the model governance and version control, and how to build financial models that are accurate, understandable, and useful for decision-making rather than impressive but unusable spreadsheets.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/experiments', requireAuth, async (req: AuthRequest, res) => {
+  const { metric, hypothesis, method } = req.body;
+  const prompt = `You are a growth experimentation and A/B testing expert. Design the growth experiment for ${metric} metric testing ${hypothesis} hypothesis using ${method} method. Cover the growth experimentation framework and culture, the hypothesis formation methodology, the experiment prioritization and ICE scoring, the experiment design and statistical validity, the A/B testing methodology, the multivariate testing design, the holdout group design, the experiment analysis and interpretation, the learning documentation and knowledge management, and how to build an experimentation capability that generates insights quickly and compounds growth over time through systematic learning.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/bizops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, function, metric } = req.body;
+  const prompt = `You are a business operations and strategic operations expert. Design the BizOps function for ${company} supporting ${function} with ${metric} success metrics. Cover the BizOps charter and organizational design, the operating cadence and rhythm design, the strategic planning process, the OKR and goal management process, the business performance reporting and dashboards, the cross-functional project management, the decision-making process design, the executive support and communication, the company-wide initiative management, and how to build a BizOps function that increases organizational effectiveness and helps the company execute strategy faster and more efficiently.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/enterprise', requireAuth, async (req: AuthRequest, res) => {
+  const { company, deal, champion } = req.body;
+  const prompt = `You are an enterprise sales and complex deal expert. Design the enterprise sales approach for ${company} winning ${deal} type deals through ${champion}. Cover the enterprise sales process design, the account-based selling methodology, the economic buyer vs. champion strategy, the executive engagement strategy, the multi-threaded relationship strategy, the procurement and legal navigation, the business case and ROI design, the proof of concept and pilot design, the enterprise negotiation strategy, and how to build an enterprise sales motion that wins large deals consistently through disciplined execution and relationship depth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/operations', requireAuth, async (req: AuthRequest, res) => {
+  const { company, scale, process } = req.body;
+  const prompt = `You are a product operations and product excellence expert. Build the product operations function for ${company} at ${scale} scale to improve ${process}. Cover the product operations charter and scope, the product development process design, the roadmap planning and prioritization process, the sprint and release management process, the customer feedback intake and synthesis process, the product analytics and insights infrastructure, the product-engineering-design collaboration model, the product communication and stakeholder management, the product metrics and health tracking, and how to build product operations that helps the product organization move faster with better quality and more customer impact.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/content-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, audience, funnel } = req.body;
+  const prompt = `You are a content marketing and inbound strategy expert. Build the content marketing engine for ${brand} reaching ${audience} across ${funnel} funnel stages. Cover the content marketing strategy and goals, the audience and persona research, the content pillar and topic cluster design, the SEO and keyword strategy integration, the content calendar and production process, the content format mix design, the content distribution and promotion strategy, the content-to-lead conversion design, the content performance analytics, and how to build a content marketing engine that attracts your ideal buyers, educates them through the funnel, and generates inbound pipeline at scale.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
