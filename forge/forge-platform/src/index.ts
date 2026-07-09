@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v658.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v659.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203717,6 +203717,66 @@ app.post('/api/operations/quality-mgmt', requireAuth, async (req: AuthRequest, r
 app.post('/api/marketing/story-branding', requireAuth, async (req: AuthRequest, res) => {
   const { brand, audience, transformation } = req.body;
   const prompt = `You are a StoryBrand framework and brand clarity expert. Apply story branding to ${brand} for ${audience} delivering ${transformation}. Cover the StoryBrand framework, the hero identification and empathy, the villain and external problem, the internal and philosophical problems, the guide positioning, the plan and call to action, the success and transformation vision, the failure stakes and urgency, the brand script development, and how to clarify your brand message using the StoryBrand framework so that customers clearly understand what you offer, how it solves their problem, and what they need to do to get it, positioning your brand as the guide rather than the hero of the customers story, which research shows is the most effective way to create the emotional connection that drives purchase decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/exit-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, horizon, goals } = req.body;
+  const prompt = `You are an exit strategy and business sale preparation expert. Design the exit strategy for ${company} over ${horizon} achieving ${goals}. Cover the exit strategy framework, the exit option analysis, the business valuation and value drivers, the business sale readiness assessment, the management team and key person risk, the customer concentration and revenue quality, the financial documentation and clean-up, the M&A process and buyer targeting, the deal structure and tax optimization, and how to design exit strategies that maximize the value you receive when you sell your business by starting preparation years before you want to exit, that identify and address the value gaps that would cause buyers to discount their offer or walk away, and that run a competitive M&A process that creates the leverage needed to achieve the best possible price and terms.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/company-culture', requireAuth, async (req: AuthRequest, res) => {
+  const { company, values, challenges } = req.body;
+  const prompt = `You are a company culture design and organizational health expert. Design the culture for ${company} around ${values} addressing ${challenges}. Cover the culture framework, the values definition and operationalization, the cultural norms and behaviors, the hiring for culture add, the onboarding and culture transmission, the leadership modeling and culture reinforcement, the performance management and culture alignment, the culture assessment and measurement, the culture change and evolution, and how to build company cultures that are not just aspirational values on the wall but the actual behaviors and norms that determine how decisions get made, how people treat each other, and what gets rewarded and punished, that attract and retain the people who will thrive in and strengthen the culture, and that evolve intentionally as the company scales rather than degrading into something the founders would not recognize.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/marketing-automation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, goals, tools } = req.body;
+  const prompt = `You are a marketing automation strategy and marketing operations expert. Design the marketing automation for ${company} toward ${goals} using ${tools}. Cover the marketing automation framework, the marketing funnel and lead lifecycle, the lead scoring and qualification, the nurture sequence design, the behavioral triggers and personalization, the CRM integration and data sync, the marketing automation governance, the testing and optimization approach, the marketing automation metrics, and how to design marketing automation systems that deliver the right message to the right person at the right time based on their behavior and stage in the buying journey rather than broadcasting the same message to everyone, that free up marketing time from manual tasks to focus on strategy and creative work, and that create the data and attribution infrastructure needed to understand which marketing investments are generating revenue.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/service-design', requireAuth, async (req: AuthRequest, res) => {
+  const { service, customers, goals } = req.body;
+  const prompt = `You are a service design and service innovation expert. Design the service for ${service} serving ${customers} toward ${goals}. Cover the service design framework, the service blueprinting, the frontstage and backstage mapping, the service touchpoint design, the service employee experience, the service recovery and failure points, the service scalability and standardization, the service technology enablement, the service metrics and performance, and how to design services that deliver consistently excellent experiences by designing both the customer-facing interactions and the behind-the-scenes processes and systems that enable those interactions, that identify and eliminate the failure points that cause service breakdowns before they affect customers, and that create the service culture and training that allow frontline employees to deliver the designed experience reliably.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/procurement', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, spend, priorities } = req.body;
+  const prompt = `You are a procurement excellence and strategic purchasing expert. Design the procurement program for ${organization} managing ${spend} with ${priorities}. Cover the procurement framework, the spend categorization and strategy, the supplier market intelligence, the total cost of ownership analysis, the supplier development programs, the contract management, the procurement technology and e-procurement, the procurement organization and operating model, the procurement metrics and value tracking, and how to build procurement functions that create genuine value beyond cost savings by managing supplier relationships that provide competitive advantages in quality, innovation, and supply security, that use technology to automate the transactional work and focus human expertise on the strategic supplier decisions that most affect business outcomes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/customer-research', requireAuth, async (req: AuthRequest, res) => {
+  const { company, questions, methods } = req.body;
+  const prompt = `You are a customer research methodology and customer insights expert. Design the customer research for ${company} answering ${questions} using ${methods}. Cover the customer research framework, the research question hierarchy, the qualitative and quantitative methods, the customer interview design, the ethnographic and observational research, the survey design and analysis, the usability testing methodology, the customer panel and longitudinal research, the insight synthesis and actionability, and how to design customer research programs that produce the deep understanding of customer psychology, motivations, and behaviors needed to make better product, marketing, and strategy decisions, that overcome the limitations of what customers say they want versus what they actually do, and that translate raw research data into actionable insights that change how the organization thinks and behaves.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/esg-sustainability', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stakeholders, priorities } = req.body;
+  const prompt = `You are an ESG strategy and corporate sustainability expert. Design the ESG strategy for ${company} for ${stakeholders} prioritizing ${priorities}. Cover the ESG strategy framework, the materiality assessment and priority setting, the environmental strategy and targets, the social impact and human rights, the governance and ethics programs, the ESG reporting and disclosure, the ESG investor relations, the supply chain sustainability, the ESG metrics and measurement, and how to develop ESG strategies that create genuine business value through sustainability rather than ESG washing that responds to pressure with impressive commitments that are not matched by substantive action, that identify the ESG issues most material to your business and stakeholders rather than trying to report on every possible metric, and that integrate sustainability into business strategy rather than treating it as a separate corporate responsibility function.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/op-excellence', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, processes, goals } = req.body;
+  const prompt = `You are an operational excellence and lean management expert. Design the operational excellence program for ${organization} improving ${processes} toward ${goals}. Cover the operational excellence framework, the lean and six sigma methodology, the value stream mapping, the waste elimination and flow optimization, the standard work and process documentation, the visual management and performance boards, the continuous improvement culture, the problem-solving methodology, the operational excellence deployment, and how to build operational excellence programs that create a culture of continuous improvement where every employee is empowered to identify problems and implement solutions rather than waiting for management to fix issues, that use structured problem-solving methodologies to get to root causes rather than symptoms, and that sustain the improvements over time through standard work and management systems that prevent regression.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/threat-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, threats, context } = req.body;
+  const prompt = `You are a competitive threat intelligence and strategic risk expert. Design the threat intelligence for ${organization} monitoring ${threats} in ${context}. Cover the threat intelligence framework, the threat landscape mapping, the early warning indicators, the competitive intelligence gathering, the threat assessment and impact analysis, the geopolitical and regulatory risk monitoring, the technology disruption monitoring, the threat response playbooks, the intelligence sharing and collaboration, and how to build threat intelligence programs that give organizations early warning of the competitive, regulatory, and operational threats that could disrupt the business, that distinguish signal from noise in a complex information environment, and that translate threat intelligence into strategic and operational decisions that reduce vulnerability and build resilience against the most significant threats.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/retail-transform', requireAuth, async (req: AuthRequest, res) => {
+  const { retailer, challenges, goals } = req.body;
+  const prompt = `You are a retail transformation strategy and omnichannel commerce expert. Design the retail transformation for ${retailer} addressing ${challenges} toward ${goals}. Cover the retail transformation framework, the omnichannel strategy and integration, the physical store reinvention, the digital and e-commerce acceleration, the supply chain transformation, the customer data and personalization, the retail technology and automation, the retail workforce transformation, the retail economics and margin management, and how to design retail transformations that create a genuinely differentiated and sustainable retail experience that customers cannot replicate online, that integrate physical and digital channels in ways that serve customers seamlessly regardless of how they choose to shop, and that build the data and personalization capabilities that allow retailers to serve customers with the relevance and convenience that drives loyalty in an era of abundant choice and low switching costs.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
