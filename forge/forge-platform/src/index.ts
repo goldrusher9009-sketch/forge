@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v545.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v546.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -196937,6 +196937,66 @@ app.post('/api/startup/exit-strategy', requireAuth, async (req: AuthRequest, res
 app.post('/api/product/ops-playbook', requireAuth, async (req: AuthRequest, res) => {
   const { company, stage, challenges } = req.body;
   const prompt = `You are a product operations expert. Build a product operations playbook for ${company} at ${stage} stage facing challenges: ${challenges}. Cover prioritization frameworks, roadmap process, cross-functional alignment, metrics reviews, release management, and customer feedback loops.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/journey-map', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customerSegment, touchpoints } = req.body;
+  const prompt = `You are a customer experience designer. Create a detailed customer journey map for ${product} serving ${customerSegment} across touchpoints: ${touchpoints}. Map awareness, consideration, purchase, onboarding, and retention stages with emotions, friction points, moments of delight, and improvement opportunities.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/lead-qualification', requireAuth, async (req: AuthRequest, res) => {
+  const { product, ICP, dealSize } = req.body;
+  const prompt = `You are a sales strategy expert. Build a lead qualification framework for ${product} targeting ICP: ${ICP} with average deal size ${dealSize}. Define BANT/MEDDIC criteria, scoring model, disqualification signals, handoff criteria from marketing to sales, and nurture tracks for not-yet-ready leads.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/eng/tech-writing', requireAuth, async (req: AuthRequest, res) => {
+  const { docType, audience, product } = req.body;
+  const prompt = `You are a technical writing expert. Create a technical writing guide for ${docType} targeting ${audience} for ${product}. Cover document structure, writing style, code sample standards, diagram guidelines, version control for docs, review process, and tools setup.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/subscription', requireAuth, async (req: AuthRequest, res) => {
+  const { product, currentMRR, churnRate } = req.body;
+  const prompt = `You are a subscription business growth expert. Build a subscription growth playbook for ${product} with ${currentMRR} MRR and ${churnRate} monthly churn. Cover acquisition optimization, activation improvements, retention programs, expansion revenue tactics, and win-back campaigns.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/enterprise-process', requireAuth, async (req: AuthRequest, res) => {
+  const { product, dealSize, buyingCommittee } = req.body;
+  const prompt = `You are an enterprise sales expert. Design an enterprise sales process for ${product} with ${dealSize} deal size sold to ${buyingCommittee}. Cover discovery framework, stakeholder mapping, champion development, procurement navigation, legal/security reviews, and closing strategies.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/acceptance-criteria', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, userStory, constraints } = req.body;
+  const prompt = `You are an agile product expert. Write comprehensive acceptance criteria for feature: ${feature} with user story: ${userStory} and constraints: ${constraints}. Use Given-When-Then format, cover happy paths and edge cases, define performance requirements, and specify testability criteria.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/research/market', requireAuth, async (req: AuthRequest, res) => {
+  const { question, budget, timeline } = req.body;
+  const prompt = `You are a market research expert. Design a market research plan to answer: ${question} with ${budget} budget and ${timeline} timeline. Cover primary vs secondary research methods, survey design, focus group facilitation, competitive analysis, and synthesis framework to turn insights into decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/culture-code', requireAuth, async (req: AuthRequest, res) => {
+  const { company, coreValues, stage } = req.body;
+  const prompt = `You are an organizational culture expert. Design a culture code for ${company} with core values: ${coreValues} at ${stage} stage. Cover values articulation, behavioral manifestations, rituals and symbols, hiring filters, performance norms, and how to maintain culture through hypergrowth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/api-monetization', requireAuth, async (req: AuthRequest, res) => {
+  const { apiProduct, consumers, competitors } = req.body;
+  const prompt = `You are an API product monetization expert. Design a monetization strategy for ${apiProduct} consumed by ${consumers} competing with ${competitors}. Cover pricing models (per-call, tiered, enterprise), freemium thresholds, developer experience optimization, and usage-based billing architecture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/talent-acquisition', requireAuth, async (req: AuthRequest, res) => {
+  const { roles, timeline, budget } = req.body;
+  const prompt = `You are a talent strategy expert. Build a talent acquisition strategy to hire ${roles} within ${timeline} with ${budget} budget. Cover employer branding, sourcing channels, employee referral programs, diversity hiring initiatives, assessment design, and offer competitiveness analysis.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
