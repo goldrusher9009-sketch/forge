@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v643.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v644.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202817,6 +202817,66 @@ app.post('/api/strategy/ecommerce', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/strategy/health-tech', requireAuth, async (req: AuthRequest, res) => {
   const { company, solution, market } = req.body;
   const prompt = `You are a health technology strategy and healthcare market expert. Design the health tech strategy for ${company} with ${solution} in ${market}. Cover the health tech strategy framework, the regulatory pathway analysis, the clinical evidence strategy, the healthcare buyer and payer dynamics, the reimbursement strategy, the provider and health system sales, the patient engagement strategy, the health data privacy and security, the clinical workflow integration, and how to navigate the uniquely complex healthcare market where clinical evidence, regulatory approval, reimbursement coverage, and stakeholder alignment across providers, payers, and patients are all required before you can achieve commercial scale, building the clinical and commercial strategy that allows your health technology to deliver its potential impact on patient outcomes while building a sustainable business.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/edtech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, learners, market } = req.body;
+  const prompt = `You are an education technology strategy and learning design expert. Design the EdTech strategy for ${company} serving ${learners} in ${market}. Cover the EdTech strategy framework, the learning outcome definition, the pedagogy and curriculum design, the engagement and retention mechanics, the assessment and credentialing strategy, the B2B education sales strategy, the consumer education marketing, the EdTech regulatory environment, the learning analytics and outcomes measurement, and how to build education technology products that produce genuine learning outcomes and behavior change rather than content consumption that feels like learning but does not transfer to real-world performance, that design the engagement mechanics that keep learners motivated through the inevitable difficult moments in learning, and that build the evidence base of learning outcomes that allows you to sell to schools, employers, and adult learners who are increasingly demanding proof of effectiveness before investing time and money.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/fintech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are a financial technology strategy and regulatory navigation expert. Design the FinTech strategy for ${company} with ${product} in ${market}. Cover the FinTech strategy framework, the financial services regulatory landscape, the licensing and compliance strategy, the banking and payment infrastructure access, the financial data and open banking strategy, the consumer trust and security design, the FinTech go-to-market strategy, the bank partnership vs. challenger bank strategy, the financial product unit economics, and how to navigate the uniquely regulated financial services market where the regulatory burden, capital requirements, and infrastructure dependencies create high barriers to entry but also durable competitive moats for those who navigate them successfully, building the compliance infrastructure and institutional relationships that allow you to deliver innovative financial products at scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/proptech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, solution, segment } = req.body;
+  const prompt = `You are a property technology strategy and real estate innovation expert. Design the PropTech strategy for ${company} with ${solution} for ${segment}. Cover the PropTech strategy framework, the real estate market segment analysis, the property data and analytics strategy, the platform and marketplace dynamics, the real estate agent and broker strategy, the institutional investor strategy, the regulatory environment navigation, the proptech go-to-market and partnerships, the proptech unit economics, and how to navigate the uniquely relationship-driven, locally fragmented, and regulation-heavy real estate market where technology adoption is slower than most industries but the scale of transactions creates enormous value creation opportunity for platforms that successfully aggregate demand, data, and workflow automation across the historically fragmented industry.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/retail', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, format, market } = req.body;
+  const prompt = `You are a retail strategy and omnichannel commerce expert. Design the retail strategy for ${brand} with ${format} in ${market}. Cover the retail strategy framework, the store format and concept design, the location strategy and site selection, the assortment and merchandising strategy, the pricing and promotions strategy, the omnichannel integration strategy, the store operations and labor model, the customer loyalty and CRM strategy, the retail technology and digital innovation, and how to design retail strategies that create compelling in-store experiences that cannot be replicated online, that integrate physical and digital touchpoints in ways that serve customers however they want to shop, and that build the operational capabilities and brand differentiation that allow you to compete on something other than price in a retail environment where online competitors have structural cost advantages that make pure price competition unsustainable for traditional retailers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/logistics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, network, constraints } = req.body;
+  const prompt = `You are a logistics strategy and supply chain optimization expert. Optimize the logistics for ${company} across ${network} with ${constraints}. Cover the logistics strategy framework, the network design and node optimization, the transportation mode selection, the last-mile delivery strategy, the warehouse operations design, the inventory positioning strategy, the carrier management and rate negotiation, the logistics technology and TMS, the sustainability in logistics, and how to design logistics networks that deliver the service levels customers expect at the lowest possible cost, that balance the trade-offs between inventory investment, facility costs, and transportation costs in ways that optimize total delivered cost rather than optimizing any single cost component in isolation, and that build the operational resilience to maintain service during the supply disruptions and demand volatility that have become persistent features of the modern logistics environment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/ai-product-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, capability, market } = req.body;
+  const prompt = `You are an AI product strategy and competitive positioning expert. Design the AI product strategy for ${company} with ${capability} in ${market}. Cover the AI product strategy framework, the AI use case identification and prioritization, the build vs. buy vs. API decision for AI, the AI product differentiation strategy, the data moat and competitive advantage, the AI product design and UX, the AI safety and responsible AI strategy, the AI product roadmap and sequencing, the AI product pricing and monetization, and how to design AI product strategies that create genuine competitive differentiation rather than wrapping a generic LLM API in a thin product layer that competitors can replicate in weeks, that identify the unique data, workflow integration, and domain expertise combinations that create defensible AI products, and that build the trust and reliability that enterprise customers require before integrating AI into mission-critical workflows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/web3', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, goals, approach } = req.body;
+  const prompt = `You are a Web3 and blockchain strategy expert. Design the Web3 strategy for ${organization} toward ${goals} using ${approach}. Cover the Web3 strategy framework, the blockchain technology selection, the tokenomics and token design, the community and DAO governance, the DeFi integration strategy, the NFT and digital ownership strategy, the Web3 regulatory compliance, the traditional business to Web3 transition, the Web3 infrastructure and development, and how to design Web3 strategies that use blockchain technology to solve real problems and create genuine value for users rather than applying blockchain for the sake of novelty, that navigate the regulatory uncertainty and technical complexity of the Web3 ecosystem, and that build the community ownership and decentralized governance mechanisms that create the network effects and participant alignment that make blockchain-native products competitive with their centralized alternatives.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/circular-economy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, goals } = req.body;
+  const prompt = `You are a circular economy strategy and sustainable business model expert. Design the circular economy strategy for ${company} with ${products} toward ${goals}. Cover the circular economy framework, the product life extension strategy, the take-back and reverse logistics program, the refurbishment and remanufacturing strategy, the material recycling and recovery, the circular design principles, the circular business model innovation, the circular economy communication, the circular economy measurement and reporting, and how to design circular economy strategies that reduce material consumption and waste while creating new revenue streams from refurbishment, rental, and material recovery, that design products for durability, repairability, and end-of-life recovery from the beginning rather than retrofitting circularity onto products designed for single use, and that build the customer relationships and business models that make circular consumption patterns convenient and economically attractive for customers rather than requiring sacrifice.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/coaching-business', requireAuth, async (req: AuthRequest, res) => {
+  const { coach, niche, goals } = req.body;
+  const prompt = `You are a coaching business strategy and practice building expert. Build the coaching business for ${coach} in ${niche} toward ${goals}. Cover the coaching business framework, the niche definition and positioning, the signature methodology development, the coaching program design, the pricing strategy for coaching, the lead generation and marketing strategy, the client acquisition and conversion, the client success and results, the group and digital product strategy, and how to build coaching businesses that consistently attract the right clients, deliver transformational results, and generate sustainable revenue rather than being dependent on referrals and one-off engagements, that develop the signature methodology and brand that makes you the obvious choice for your specific client avatar, and that scale impact and income beyond the limitations of one-on-one time by adding group programs, digital products, and community that serve more clients without proportionally more of your time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/media-company', requireAuth, async (req: AuthRequest, res) => {
+  const { company, content, audience } = req.body;
+  const prompt = `You are a media company strategy and audience monetization expert. Design the media strategy for ${company} with ${content} for ${audience}. Cover the media company strategy framework, the content strategy and editorial positioning, the audience development and growth, the media business model design, the advertising and sponsorship strategy, the subscription and membership revenue, the licensing and syndication strategy, the media technology and distribution, the media M&A and partnership strategy, and how to build media businesses that develop loyal audiences through consistent, distinctive content that serves a specific audience better than any alternative, that monetize those audiences through the right mix of advertising, subscriptions, events, and commerce that aligns with audience expectations and content positioning, and that build the editorial and production capabilities that maintain content quality and velocity as the organization scales.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
