@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v432.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v433.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190913,6 +190913,59 @@ app.post('/api/product/tech-debt-strategy', requireAuth, async (req: AuthRequest
 app.post('/api/sales/closer-tactics', requireAuth, async (req: AuthRequest, res) => {
   const { deal, stage, objection } = req.body;
   const prompt = `Provide advanced closing tactics.\nDeal context: ${deal}\nCurrent stage: ${stage}\nPrimary objection: ${objection}\nInclude: objection handling with reframes, assumptive close techniques, creating urgency without being pushy, trial close questions, next step commitment language, contract acceleration strategies, and how to handle "we need more time" responses.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 285+286 routes
+app.post('/api/dev/service-mesh', requireAuth, async (req: AuthRequest, res) => {
+  const { services, requirements, cloud } = req.body;
+  const prompt = `Design a service mesh architecture.\nServices: ${services}\nRequirements: ${requirements}\nCloud: ${cloud}\nInclude: mesh tool selection (Istio/Linkerd/Consul Connect), traffic management policies, mTLS configuration, observability integration, circuit breaker setup, canary deployment support, and operational complexity trade-offs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/price-increase-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { account, increase, value } = req.body;
+  const prompt = `Create a price increase communication playbook.\nAccount: ${account}\nPrice increase: ${increase}\nValue delivered: ${value}\nInclude: timing strategy, executive notification sequence, value recap framing, objection handling (why now? why this much?), negotiation room, contractual considerations, at-risk account mitigation, and how to turn the conversation into an expansion opportunity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/growth-loops', requireAuth, async (req: AuthRequest, res) => {
+  const { product, userAction, reward } = req.body;
+  const prompt = `Design product growth loops.\nProduct: ${product}\nCore user action: ${userAction}\nReward mechanism: ${reward}\nInclude: loop type identification (viral/content/paid/product), loop mechanics breakdown, reinforcement design, loop strength metrics, how to compound multiple loops, experiments to test each loop, and anti-patterns that kill loops.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/email-design-system', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, goals, segments } = req.body;
+  const prompt = `Design an email marketing system.\nBrand: ${brand}\nMarketing goals: ${goals}\nAudience segments: ${segments}\nInclude: template architecture (master/modular), design tokens (colors/typography/spacing), component library (header/hero/CTA/footer), personalization blocks, dark mode compatibility, accessibility requirements, and QA checklist.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/inclusion-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { gaps, size, budget } = req.body;
+  const prompt = `Create a DEI inclusion plan.\nCurrent gaps: ${gaps}\nCompany size: ${size}\nBudget: ${budget}\nInclude: representation goals (not quotas), inclusive hiring process audit, belonging program design, ERG structure, manager inclusion training, pay equity analysis process, measurement framework, and how to communicate progress authentically.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/sector-thesis', requireAuth, async (req: AuthRequest, res) => {
+  const { sector, trends, horizon } = req.body;
+  const prompt = `Develop a sector investment thesis.\nSector: ${sector}\nKey trends: ${trends}\nInvestment horizon: ${horizon}\nInclude: market size and growth drivers, technology enablement factors, regulatory tailwinds/headwinds, competitive dynamics, ideal company archetypes, anti-portfolio companies (what to avoid), and timing rationale (why now vs. too early/late).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/grpc-design', requireAuth, async (req: AuthRequest, res) => {
+  const { services, operations, streaming } = req.body;
+  const prompt = `Design a gRPC API.\nServices: ${services}\nOperations: ${operations}\nStreaming needs: ${streaming}\nInclude: proto file structure, service definition, message design best practices, streaming pattern selection (unary/server/client/bidirectional), error handling with status codes, authentication with interceptors, and versioning approach.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/social-media-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, platforms, goals } = req.body;
+  const prompt = `Build a social media strategy.\nBrand: ${brand}\nPlatforms: ${platforms}\nGoals: ${goals}\nInclude: platform-specific content strategy, posting cadence, content pillar framework (3-4 pillars), creator/brand voice guidelines, community management playbook, paid amplification strategy, and measurement framework (reach/engagement/conversion per platform).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/north-star-metric', requireAuth, async (req: AuthRequest, res) => {
+  const { product, value, behavior } = req.body;
+  const prompt = `Define the North Star Metric.\nProduct: ${product}\nCore value delivered: ${value}\nKey user behavior: ${behavior}\nInclude: NSM candidates with pros/cons, chosen NSM with definition and formula, leading indicators (input metrics), lagging indicators (output metrics), how it connects to revenue, common failure modes, and dashboard design recommendations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/opportunity-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, timeline, risks } = req.body;
+  const prompt = `Build a comprehensive opportunity plan.\nDeal: ${deal}\nClose timeline: ${timeline}\nRisks: ${risks}\nInclude: MEDDPICC scorecard, stakeholder map with influence ratings, decision criteria alignment, competitive position, mutual action plan with dates, risk mitigation actions, internal resource requirements, and weekly milestones to close.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
