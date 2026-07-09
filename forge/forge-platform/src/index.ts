@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v773.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v774.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210617,6 +210617,66 @@ app.post('/api/policy/urbanplanning', requireAuth, async (req: AuthRequest, res)
 app.post('/api/policy/publicfinance', requireAuth, async (req: AuthRequest, res) => {
   const { government, programs, constraints } = req.body;
   const prompt = `You are a public finance strategy and government budget expert. Design public finance strategy for ${government} funding ${programs} within ${constraints}. Cover public finance framework, government budgeting and appropriations, tax policy and revenue design, public debt and fiscal sustainability, intergovernmental finance and grants, public pension and long-term liability, infrastructure finance and public-private partnership, budget process reform, fiscal federalism, and how to build public finance programs that achieve the fiscal sustainability and the public investment and the service delivery that effective government finance requires by developing the budget framework with the medium-term fiscal projection and the expenditure review and the revenue estimate that provides the fiscal plan that balances the public service investment with the debt sustainability constraint.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/science/writing', requireAuth, async (req: AuthRequest, res) => {
+  const { researcher, study, journal } = req.body;
+  const prompt = `You are a scientific writing strategy and research communication expert. Design scientific writing strategy for ${researcher} reporting ${study} for ${journal}. Cover scientific writing framework, manuscript structure and IMRAD format, abstract writing and keywords, introduction and literature review, methods and reproducibility, results and statistical reporting, discussion and interpretation, figure and table design, journal selection and submission, and how to build scientific writing programs that achieve the publication success and the research impact and the peer review acceptance that effective scientific communication requires by structuring the manuscript with the clear research question and the rigorous methods description and the honest interpretation of the results that addresses the alternative explanations and the limitations that the peer reviewer will scrutinize.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/science/dataanalysis', requireAuth, async (req: AuthRequest, res) => {
+  const { researcher, dataset, question } = req.body;
+  const prompt = `You are a data analysis strategy and statistical methods expert. Design data analysis strategy for ${researcher} analyzing ${dataset} addressing ${question}. Cover data analysis framework, exploratory data analysis, statistical hypothesis testing, regression and predictive modeling, time series analysis, machine learning for research, data visualization and communication, reproducible analysis and coding, multiple testing and p-value, and how to build data analysis programs that achieve the valid inference and the reproducible result and the insightful finding that rigorous data analysis requires by planning the analysis before looking at the data with the pre-specified primary analysis and the sensitivity analyses that addresses the robustness of the conclusion to the analytic assumption.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/science/expdesign', requireAuth, async (req: AuthRequest, res) => {
+  const { researcher, hypothesis, constraints } = req.body;
+  const prompt = `You are an experimental design strategy and research methodology expert. Design experimental design for ${researcher} testing ${hypothesis} within ${constraints}. Cover experimental design framework, randomized controlled trial design, factorial and fractional factorial design, power calculation and sample size, control and confounding variable management, blinding and randomization, repeated measures and crossover design, observational study design, replication and reproducibility, and how to build experimental design programs that achieve the causal inference and the statistical power and the practical feasibility that rigorous experimentation requires by selecting the experimental design that controls the confounding with the randomization and the blinding and the control condition while achieving the minimum detectable effect with the available sample at the acceptable false positive rate.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/science/grant', requireAuth, async (req: AuthRequest, res) => {
+  const { researcher, agency, topic } = req.body;
+  const prompt = `You are a research grant strategy and funding proposal expert. Design research grant strategy for ${researcher} applying to ${agency} for ${topic}. Cover research grant framework, funding landscape and agency priorities, specific aims and research strategy, significance and innovation, approach and methodology, investigator qualifications and team, budget justification and period of performance, human subjects and compliance, resubmission strategy, and how to build research grant programs that achieve the funding success and the research portfolio and the career development that grant-funded research requires by aligning the specific aims with the funding opportunity announcement priorities and the review criteria with the clear significance statement and the innovative approach and the feasible and rigorous methodology that addresses the reviewers concern about the probability of success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/science/labmanagement', requireAuth, async (req: AuthRequest, res) => {
+  const { pi, lab, goals } = req.body;
+  const prompt = `You are a laboratory management strategy and research operations expert. Design laboratory management strategy for ${pi} running ${lab} achieving ${goals}. Cover laboratory management framework, lab safety and compliance, equipment management and maintenance, reagent and supply management, lab data management and electronic notebooks, personnel management and mentoring, laboratory budget and financial management, intellectual property and publication strategy, collaborations and partnerships, and how to build laboratory management programs that achieve the research productivity and the team development and the safety compliance that effective laboratory management requires by establishing the lab culture and the standard operating procedures and the data management practices that enable the reproducible and efficient research and the career development of the lab members.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/science/climatecomm', requireAuth, async (req: AuthRequest, res) => {
+  const { scientist, audience, message } = req.body;
+  const prompt = `You are a climate science communication strategy and science communication expert. Design climate science communication strategy for ${scientist} reaching ${audience} with ${message}. Cover science communication framework, climate science translation and simplification, narrative and storytelling for climate, risk communication and uncertainty, audience analysis and segmentation, media engagement and interviews, social media and digital communication, community engagement and dialogue, misinformation response, and how to build climate science communication programs that achieve the public understanding and the behavior change and the policy engagement that effective climate communication requires by framing the climate message with the local relevance and the solution focus and the values alignment that connects the scientific finding to the personal experience and the community concern of the specific audience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/science/airesearch', requireAuth, async (req: AuthRequest, res) => {
+  const { researcher, area, approach } = req.body;
+  const prompt = `You are an AI research strategy and machine learning research expert. Design AI research strategy for ${researcher} in ${area} using ${approach}. Cover AI research framework, research problem formulation, literature review and related work, dataset and benchmark design, model architecture and training, evaluation methodology and metrics, ablation study and analysis, reproducibility and code release, paper writing and submission, and how to build AI research programs that achieve the research contribution and the empirical rigor and the benchmark performance that impactful AI research requires by identifying the research gap and the clear contribution over the prior work with the rigorous experimental evaluation and the ablation study that isolates the proposed innovation and demonstrates its contribution to the performance improvement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/science/neuro', requireAuth, async (req: AuthRequest, res) => {
+  const { researcher, question, methods } = req.body;
+  const prompt = `You are a neuroscience research strategy and brain science expert. Design neuroscience research strategy for ${researcher} investigating ${question} using ${methods}. Cover neuroscience research framework, systems neuroscience and circuits, cellular and molecular neuroscience, cognitive neuroscience and behavior, neuroimaging and electrophysiology, optogenetics and chemogenetics, animal models and human studies, data analysis and computational neuroscience, neuroethics and responsible research, and how to build neuroscience research programs that achieve the mechanistic understanding and the translational relevance and the methodological rigor that impactful brain research requires by designing the experiment with the multiple levels of analysis from the molecule to the circuit to the behavior that provides the converging evidence for the neural mechanism.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/science/spacetech', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, mission, technology } = req.body;
+  const prompt = `You are a space technology strategy and aerospace engineering expert. Design space technology strategy for ${organization} executing ${mission} using ${technology}. Cover space technology framework, launch vehicle and propulsion, spacecraft systems and subsystems, mission design and trajectory, satellite communications and ground systems, space environment and radiation, cubesat and small satellite, commercial space and new space, space sustainability and debris, and how to build space technology programs that achieve the mission success and the cost efficiency and the technology innovation that competitive space development requires by defining the mission requirements with the systems engineering approach and the trade space analysis that optimizes the spacecraft design and the launch strategy against the performance and the cost and the schedule constraint.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/science/quantum', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, application, timeline } = req.body;
+  const prompt = `You are a quantum technology strategy and quantum computing expert. Design quantum technology strategy for ${organization} developing ${application} over ${timeline}. Cover quantum technology framework, quantum computing and qubits, quantum error correction and fault tolerance, quantum algorithms and advantage, quantum sensing and metrology, quantum communication and cryptography, quantum hardware platforms, hybrid classical-quantum computing, quantum software and programming, and how to build quantum technology programs that achieve the quantum advantage and the practical application and the technology readiness that quantum computing deployment requires by assessing the problem fit with the quantum algorithm analysis and the near-term noise limitations and the error correction overhead that determines the quantum hardware requirements for the application advantage over the classical alternative.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
