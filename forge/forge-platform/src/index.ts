@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v602.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v603.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200357,6 +200357,66 @@ app.post('/api/career/engineering-manager', requireAuth, async (req: AuthRequest
 app.post('/api/data/strategy', requireAuth, async (req: AuthRequest, res) => {
   const { org, maturity, priority } = req.body;
   const prompt = `You are a data strategy and enterprise analytics expert. Build the data strategy for ${org} at ${maturity} maturity level focusing on ${priority}. Cover the data strategy framework and roadmap, the data architecture vision, the data platform and infrastructure design, the data talent and team model, the data culture and literacy program, the data product design, the data monetization opportunities, the data security and privacy program, the data governance integration, and how to become a genuinely data-driven organization where decisions are routinely informed by data.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/revenue-model', requireAuth, async (req: AuthRequest, res) => {
+  const { business, streams, target } = req.body;
+  const prompt = `You are a revenue modeling and business model design expert. Build the revenue model for ${business} with ${streams} revenue streams targeting ${target}. Cover the revenue model taxonomy, the pricing model design for each stream, the revenue driver tree, the revenue forecasting approach, the revenue mix optimization, the customer cohort revenue modeling, the revenue recognition policy, the revenue quality and predictability scoring, the revenue operations infrastructure, and how to build a diversified revenue model that is resilient and scalable.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/debt-financing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, amount, purpose } = req.body;
+  const prompt = `You are a corporate debt financing and capital structure expert. Advise on debt financing for ${company} raising ${amount} for ${purpose}. Cover the debt vs. equity trade-off analysis, the debt instrument options, the covenant design and negotiation, the debt sizing and capacity analysis, the interest coverage and leverage ratio management, the lender selection and syndication, the due diligence preparation, the debt covenants and restrictions impact, the refinancing strategy, and how to optimize the capital structure using debt to maximize equity returns.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/platform-thinking', requireAuth, async (req: AuthRequest, res) => {
+  const { business, participants, exchange } = req.body;
+  const prompt = `You are a platform business model and platform strategy expert. Design the platform strategy for ${business} connecting ${participants} in ${exchange} exchange. Cover the platform vs. pipeline distinction, the platform design principles, the network effect mechanism design, the multi-sided market pricing, the platform governance and trust design, the platform launch and chicken-and-egg solution, the platform defensibility and moat, the platform monetization strategy, the platform expansion strategy, and how to build a platform that becomes the default in its category.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/direct-sales', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, cycle } = req.body;
+  const prompt = `You are a direct sales and enterprise selling expert. Build the direct sales playbook for ${product} targeting ${segment} with ${cycle} sales cycle. Cover the direct sales model design, the territory and quota design, the pipeline stage definition, the discovery and qualification framework, the demo and proof of value design, the proposal and business case creation, the negotiation and pricing strategy, the legal and procurement navigation, the close plan and mutual success plan, and how to build a direct sales team that consistently exceeds quota.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/emotional-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, emotion, moment } = req.body;
+  const prompt = `You are an emotional design and user psychology expert. Design the emotional experience for ${product} evoking ${emotion} at ${moment}. Cover the emotional design theory, the user emotional journey mapping, the delight and surprise design, the micro-interaction design for emotion, the copy and voice tone for emotional resonance, the visual design language for emotion, the sound and haptic design, the onboarding emotional design, the error and empty state emotional design, and how to measure emotional experience and iterate toward the desired emotional signature.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/negotiation', requireAuth, async (req: AuthRequest, res) => {
+  const { situation, parties, goal } = req.body;
+  const prompt = `You are a negotiation strategy and influence expert. Coach on the negotiation for ${situation} between ${parties} to achieve ${goal}. Cover the negotiation preparation framework, the BATNA analysis and strengthening, the zone of possible agreement analysis, the negotiation strategy selection, the anchoring and concession strategy, the multi-issue negotiation design, the relationship and trust management in negotiation, the difficult party and tactic management, the closing and agreement design, and how to build negotiation skill as a career-long competitive advantage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { portfolio, brands, goal } = req.body;
+  const prompt = `You are a brand architecture and portfolio strategy expert. Design the brand architecture for ${portfolio} with ${brands} brands to achieve ${goal}. Cover the brand architecture models, the branded house vs. house of brands decision, the master brand and sub-brand strategy, the brand migration and rationalization, the brand extension strategy, the naming architecture design, the visual identity system design, the brand portfolio governance, the customer decision journey impact, and how to manage a brand portfolio that maximizes total enterprise value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/capital-allocation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, capital, options } = req.body;
+  const prompt = `You are a capital allocation and corporate finance strategy expert. Build the capital allocation framework for ${company} with ${capital} to deploy across ${options}. Cover the capital allocation framework and principles, the investment hurdle rate design, the organic vs. inorganic investment trade-off, the R&D investment optimization, the capex vs. opex trade-off, the working capital optimization, the shareholder return program design, the strategic reserves and dry powder, the capital allocation governance, and how to build a capital allocation culture that consistently generates superior returns.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/organic-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { company, current, target } = req.body;
+  const prompt = `You are an organic growth and core business expansion expert. Build the organic growth strategy for ${company} from ${current} to ${target}. Cover the organic growth framework, the core business penetration deepening, the adjacent market expansion, the new customer segment development, the product innovation for growth, the pricing and packaging for growth, the channel expansion strategy, the geographic expansion plan, the operational capacity for growth, and how to sustain organic growth without destroying the core business model.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/mvp-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customer, hypothesis } = req.body;
+  const prompt = `You are an MVP design and lean product development expert. Design the MVP for ${product} serving ${customer} to test ${hypothesis}. Cover the MVP philosophy and principles, the riskiest assumption identification, the MVP scope decision framework, the build vs. buy vs. mock decision, the MVP success criteria and metrics, the learning velocity optimization, the MVP feedback collection design, the pivot trigger definition, the MVP to v1 evolution path, and how to avoid the common MVP traps of building too much or too little.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
