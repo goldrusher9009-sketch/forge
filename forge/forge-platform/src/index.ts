@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v570.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v571.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198437,6 +198437,66 @@ app.post('/api/strategy/innovation-kpi', requireAuth, async (req: AuthRequest, r
 app.post('/api/cs/enterprise-quickstart', requireAuth, async (req: AuthRequest, res) => {
   const { product, customer, timeToValue } = req.body;
   const prompt = `You are a customer success and enterprise onboarding expert. Design an enterprise quick start program for ${product} for ${customer} enterprise customer targeting ${timeToValue} time to value. Build the 30-day quick start: week 1 (discovery and configuration), week 2 (pilot with power users), week 3 (first value delivery), week 4 (expansion planning). Include executive sponsor engagement model, success criteria definition, early warning indicators that the customer is at risk, and how to celebrate early wins to build momentum for broader adoption.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/leadership-team', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, gaps } = req.body;
+  const prompt = `You are an executive team building and organizational design expert. Design a leadership team for ${company} at ${stage} stage with identified gaps: ${gaps}. Cover the optimal leadership team composition for the stage, role definitions and accountability (RACI for key decisions), how to sequence leadership hires, the leadership team operating rhythm (weekly, monthly, quarterly rituals), how to build trust and alignment on the leadership team, how to handle leadership team dysfunction, and the founder transition from doer to leader.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/messaging-house', requireAuth, async (req: AuthRequest, res) => {
+  const { company, audience, differentiation } = req.body;
+  const prompt = `You are a brand and messaging strategy expert. Build a messaging house for ${company} for ${audience} with ${differentiation}. Construct the full messaging architecture: brand promise (roof), core message pillars (walls), supporting proof points for each pillar (bricks), and the foundation (brand values). Write the complete messaging document with elevator pitch, one-paragraph overview, three key messages with proof points, objection handling messages, and guidelines for adapting the messaging across different channels and audiences.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/deck', requireAuth, async (req: AuthRequest, res) => {
+  const { product, prospect, stage } = req.body;
+  const prompt = `You are a sales presentation and storytelling expert. Build a sales deck for ${product} for ${prospect} prospect at ${stage} stage. Structure: agenda slide, personalized opening about the prospect, problem statement (make them feel the pain), market landscape, solution overview, product demo flow outline, differentiation vs. alternatives, proof (customers, metrics, logos), commercial model and ROI, implementation and success plan, call to action. Include speaker notes and objection handling inserts.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/champion', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, champion, stakeholders } = req.body;
+  const prompt = `You are an enterprise sales and deal management expert. Build a champion building playbook for ${deal} deal with ${champion} champion navigating ${stakeholders}. Cover champion qualification criteria, how to develop a champion from sponsor to advocate, the internal selling toolkit to give your champion (ROI model, business case template, objection responses), multi-threading strategy to protect against champion departure, how to coach your champion to sell internally, recognizing when your champion is losing influence, and how to find a new champion mid-deal.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/demo-mastery', requireAuth, async (req: AuthRequest, res) => {
+  const { product, persona, problem } = req.body;
+  const prompt = `You are a sales engineering and demo expert. Build a demo mastery playbook for ${product} for ${persona} persona addressing ${problem}. Cover discovery-first demo philosophy, tailoring the demo to the specific pain uncovered in discovery, the three-part demo structure (setup → show → confirm), handling unexpected questions, demo environment setup and backup plan, interactive demo techniques vs. recorded demos, how to leave them wanting more and create urgency, follow-up demo strategy, and how to practice and improve demo performance through peer review.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { company, channel, target } = req.body;
+  const prompt = `You are a growth and demand generation expert. Design a growth playbook for ${company} growing ${channel} channel toward ${target}. Cover channel-specific tactics and best practices, the experiment backlog for this channel (10 experiments ranked by ICE score), success metrics and measurement approach, budget and resource requirements, the team structure needed to run this channel, how to scale what works and kill what doesnt, integration with other growth channels, and the quarterly OKRs for this growth channel.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/engagement-loop', requireAuth, async (req: AuthRequest, res) => {
+  const { product, coreAction, retention } = req.body;
+  const prompt = `You are a product engagement and behavioral design expert. Design an engagement loop for ${product} centered on ${coreAction} to drive ${retention} retention. Apply the Hook Model (trigger, action, variable reward, investment), map the engagement funnel from first visit to habitual use, design the notification and re-engagement strategy, build the progress and achievement system, identify the aha moment and how to accelerate users to it, design the social and collaborative features that drive retention, and define the engagement metrics to track (DAU/MAU, session depth, feature frequency).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cs/revenue-retention', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, nrr } = req.body;
+  const prompt = `You are a SaaS revenue retention and expansion expert. Build a revenue retention engine for ${product} for ${segment} segment targeting ${nrr} NRR. Cover the retention model (gross retention + expansion = NRR), health score design with weighted signals, proactive intervention playbooks by risk level, executive business reviews (frequency, agenda, outcomes), expansion playbook (upsell triggers, cross-sell opportunities, price increases), win-back campaigns for recently churned customers, and how to build a culture where every team member understands their role in retention.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/influencer', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, audience, budget } = req.body;
+  const prompt = `You are an influencer marketing and creator economy expert. Build an influencer marketing strategy for ${brand} reaching ${audience} with ${budget} budget. Cover influencer tier selection (mega, macro, micro, nano), platform selection and content format strategy, influencer identification and vetting process, brief and creative guidelines, usage rights and FTC compliance, performance metrics (reach, engagement, conversions, brand lift), payment and gifting models, how to build long-term creator partnerships vs. one-off campaigns, and how to repurpose influencer content across owned channels.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-moat', requireAuth, async (req: AuthRequest, res) => {
+  const { company, dataAssets, advantage } = req.body;
+  const prompt = `You are a data strategy and competitive advantage expert. Build a data moat strategy for ${company} with ${dataAssets} data assets to create ${advantage} competitive advantage. Cover the data moat types (proprietary training data, network data, behavioral data, real-time signals), how to accelerate data accumulation, data flywheel design (more users → more data → better product → more users), how to use data to train proprietary models, how to protect the data moat legally and technically, and how to communicate the data advantage to customers and investors.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
