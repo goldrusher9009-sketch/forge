@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v549.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v550.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -197177,6 +197177,66 @@ app.post('/api/product/discovery-sprint', requireAuth, async (req: AuthRequest, 
 app.post('/api/sales/forecasting-model', requireAuth, async (req: AuthRequest, res) => {
   const { historicalData, growthDrivers, timeHorizon } = req.body;
   const prompt = `You are a sales analytics expert. Build a sales forecasting model using historical data: ${historicalData} with growth drivers: ${growthDrivers} over ${timeHorizon}. Cover bottom-up pipeline analysis, top-down market sizing, seasonality adjustments, leading indicators, and confidence intervals for each scenario.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/valuation', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, revenue, comparables } = req.body;
+  const prompt = `You are a startup valuation expert. Advise on valuation for a ${stage} startup with ${revenue} revenue benchmarked against comparables: ${comparables}. Cover valuation methods (DCF, revenue multiples, VC method), dilution modeling, cap table impact, and how to negotiate valuation with investors.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/infra/cloud-migration', requireAuth, async (req: AuthRequest, res) => {
+  const { currentStack, targetCloud, timeline } = req.body;
+  const prompt = `You are a cloud migration architect. Plan a cloud migration for ${currentStack} to ${targetCloud} over ${timeline}. Cover migration patterns (lift-and-shift vs refactor), workload assessment, dependency mapping, cutover strategy, rollback plan, cost projection, and team upskilling requirements.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/bundles', requireAuth, async (req: AuthRequest, res) => {
+  const { products, customers, goal } = req.body;
+  const prompt = `You are a product bundling expert. Design a product bundle strategy for ${products} serving ${customers} to achieve ${goal}. Cover bundle logic, pricing anchoring, cross-sell sequencing, bundle naming and positioning, upgrade path design, and metrics to measure bundle effectiveness.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/leadership-coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, challenges, goals } = req.body;
+  const prompt = `You are an executive coach. Create a leadership coaching plan for ${leader} facing challenges: ${challenges} working toward goals: ${goals}. Design 90-day development arc, key competencies to build, feedback mechanisms, accountability structures, and specific behavioral experiments to try.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/comparative', requireAuth, async (req: AuthRequest, res) => {
+  const { product, alternatives, evalCriteria } = req.body;
+  const prompt = `You are a product strategy analyst. Conduct a comparative analysis of ${product} versus alternatives: ${alternatives} across criteria: ${evalCriteria}. Build an objective comparison matrix, identify differentiated strengths, surface competitive gaps to address, and recommend positioning strategy based on findings.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/saas-metrics', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, businessModel, keyMetrics } = req.body;
+  const prompt = `You are a SaaS metrics expert. Design a metrics dashboard for a ${stage} SaaS company with ${businessModel} model tracking ${keyMetrics}. Define the metric hierarchy, calculation methodology, benchmarks by stage, alert thresholds, and narrative structure for weekly/monthly reporting.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/monetization', requireAuth, async (req: AuthRequest, res) => {
+  const { contentType, audience, channels } = req.body;
+  const prompt = `You are a content monetization expert. Build a monetization strategy for ${contentType} content targeting ${audience} distributed on ${channels}. Cover direct monetization (subscriptions, paywalls, digital products), indirect monetization (ads, sponsorships, affiliate), and diversification strategy for sustainable creator economics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/tech-deal', requireAuth, async (req: AuthRequest, res) => {
+  const { partner, value, dealType } = req.body;
+  const prompt = `You are a technology partnership expert. Structure a tech partnership deal with ${partner} creating ${value} value through ${dealType}. Cover deal terms, integration requirements, revenue sharing, joint marketing, exclusivity considerations, exit provisions, and governance model for the partnership.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/dei-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { company, currentState, goals } = req.body;
+  const prompt = `You are a Diversity, Equity and Inclusion expert. Build a DEI plan for ${company} starting from current state: ${currentState} targeting goals: ${goals}. Cover representation targets, inclusive hiring practices, pay equity analysis, psychological safety programs, ERG support, and accountability metrics with executive sponsorship.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/achievement-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { goal, industry, timeframe } = req.body;
+  const prompt = `You are a strategic achievement analyst. Provide a comprehensive analysis of reaching the milestone goal: ${goal} in ${industry} within ${timeframe}. Break down the achievement into key success factors, lessons learned, competitive advantages gained, next horizon to pursue, and how to leverage this milestone for future growth.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
