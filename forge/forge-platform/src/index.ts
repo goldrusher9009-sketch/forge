@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v546.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v547.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -196997,6 +196997,66 @@ app.post('/api/product/api-monetization', requireAuth, async (req: AuthRequest, 
 app.post('/api/hr/talent-acquisition', requireAuth, async (req: AuthRequest, res) => {
   const { roles, timeline, budget } = req.body;
   const prompt = `You are a talent strategy expert. Build a talent acquisition strategy to hire ${roles} within ${timeline} with ${budget} budget. Cover employer branding, sourcing channels, employee referral programs, diversity hiring initiatives, assessment design, and offer competitiveness analysis.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/copy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, audience, tone } = req.body;
+  const prompt = `You are a direct-response copywriting expert. Write high-converting sales copy for ${product} targeting ${audience} in ${tone} tone. Include headline, hook, problem agitation, solution reveal, social proof placement, objection handling, urgency mechanism, and clear CTA. Apply AIDA and PAS frameworks.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/vision', requireAuth, async (req: AuthRequest, res) => {
+  const { company, problem, timeHorizon } = req.body;
+  const prompt = `You are a visionary product strategist. Set a compelling product vision for ${company} solving ${problem} over a ${timeHorizon} horizon. Craft the vision statement, north star metric, product principles, 3-year ambitious goals, key strategic bets, and what success looks like at each milestone.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/privacy-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { company, dataTypes, jurisdictions } = req.body;
+  const prompt = `You are a data privacy expert. Conduct a data privacy audit for ${company} handling ${dataTypes} operating in ${jurisdictions}. Map data flows, identify compliance gaps against GDPR/CCPA/other regulations, prioritize remediation actions, and create a privacy-by-design implementation roadmap.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/pmf', requireAuth, async (req: AuthRequest, res) => {
+  const { product, retentionData, feedbackThemes } = req.body;
+  const prompt = `You are a PMF expert. Analyze product-market fit for ${product} with retention data: ${retentionData} and customer feedback themes: ${feedbackThemes}. Apply Sean Ellis test, Superhuman retention analysis, and qualitative signals to assess PMF strength and identify the highest-leverage improvement areas.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/commission', requireAuth, async (req: AuthRequest, res) => {
+  const { product, teamSize, quotaRange } = req.body;
+  const prompt = `You are a sales compensation expert. Design a sales commission plan for ${product} with a ${teamSize} person team and ${quotaRange} quota range. Cover base-to-variable ratio, accelerators, spiffs, territory fairness, clawback provisions, and how to structure for net-new vs renewal vs expansion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/heuristic', requireAuth, async (req: AuthRequest, res) => {
+  const { product, userGoals, criticalFlows } = req.body;
+  const prompt = `You are a UX expert. Conduct a heuristic evaluation of ${product} for users trying to achieve ${userGoals} through critical flows: ${criticalFlows}. Apply Nielsen Norman 10 usability heuristics, rate severity of each violation, prioritize fixes by impact, and recommend quick wins vs redesign candidates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/seo/content-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { domain, targetKeywords, competitors } = req.body;
+  const prompt = `You are an SEO content strategy expert. Create a comprehensive SEO content plan for ${domain} targeting keywords: ${targetKeywords} competing with ${competitors}. Prioritize by search volume and competition, design content clusters, recommend internal linking strategy, and project traffic impact by quarter.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/payments', requireAuth, async (req: AuthRequest, res) => {
+  const { currentConversionRate, market, paymentMethods } = req.body;
+  const prompt = `You are a payments optimization expert. Optimize payment conversion for ${currentConversionRate} baseline in ${market} market with payment methods: ${paymentMethods}. Cover checkout UX, payment method mix, fraud-conversion tradeoffs, localized payment experiences, decline recovery flows, and A/B testing roadmap.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/vendor-selection', requireAuth, async (req: AuthRequest, res) => {
+  const { requirement, vendors, budget } = req.body;
+  const prompt = `You are a vendor evaluation expert. Build a vendor selection matrix for ${requirement} evaluating ${vendors} with ${budget} budget. Define evaluation criteria, weights, scoring methodology, TCO analysis, risk assessment, implementation complexity, and recommendation with clear rationale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/cab', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, goals } = req.body;
+  const prompt = `You are a customer advisory board expert. Design a Customer Advisory Board program for ${company} at ${stage} stage with goals: ${goals}. Cover member selection criteria, meeting cadence and format, engagement mechanisms, feedback integration process, compensation/recognition, and how to make CAB members feel valued while extracting maximum strategic insight.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
