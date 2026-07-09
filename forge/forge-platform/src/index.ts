@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v436.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v437.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191125,6 +191125,59 @@ app.post('/api/product/user-retention', requireAuth, async (req: AuthRequest, re
 app.post('/api/sales/account-planning', requireAuth, async (req: AuthRequest, res) => {
   const { account, contacts, opportunities } = req.body;
   const prompt = `Build a strategic account plan.\nAccount: ${account}\nKey contacts: ${contacts}\nExpansion opportunities: ${opportunities}\nInclude: account health scorecard, stakeholder map with influence/interest matrix, white space analysis, competitive displacement opportunities, renewal risk assessment, executive sponsor engagement strategy, QBR agenda template, cross-sell/upsell playbook, and 90-day action plan with owner assignments.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 293+294 routes
+app.post('/api/dev/service-mesh', requireAuth, async (req: AuthRequest, res) => {
+  const { services, traffic, observability } = req.body;
+  const prompt = `Design a service mesh architecture.\nServices: ${services}\nTraffic patterns: ${traffic}\nObservability needs: ${observability}\nInclude: service mesh selection (Istio/Linkerd/Consul), sidecar proxy configuration, mTLS setup for service-to-service auth, traffic management policies (retries/circuit breaking/timeouts), canary deployment via mesh, distributed tracing integration, observability dashboard design, and performance overhead mitigation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/sales-sequence', requireAuth, async (req: AuthRequest, res) => {
+  const { persona, channel, goal } = req.body;
+  const prompt = `Design a high-converting sales sequence.\nTarget persona: ${persona}\nChannel mix: ${channel}\nGoal: ${goal}\nInclude: step-by-step sequence (email/call/LinkedIn/video), messaging for each touchpoint, timing and spacing rationale, personalization variables per step, subject line options, call scripts, voicemail scripts, breakup message template, A/B test plan for sequence optimization, and success metrics (reply rate, meeting rate, conversion rate).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/data-model', requireAuth, async (req: AuthRequest, res) => {
+  const { domain, entities, relationships } = req.body;
+  const prompt = `Design a product data model.\nDomain: ${domain}\nCore entities: ${entities}\nKey relationships: ${relationships}\nInclude: entity-relationship diagram description, attribute definitions with data types, primary and foreign key design, normalization decisions and trade-offs, soft delete vs. hard delete strategy, audit trail fields, multi-tenancy considerations, versioning approach for entity changes, and how the model supports the core product workflows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/brand-voice', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, audience, tone } = req.body;
+  const prompt = `Define brand voice and tone guidelines.\nBrand: ${brand}\nTarget audience: ${audience}\nDesired tone: ${tone}\nInclude: voice pillars (3-4 core attributes), tone spectrum (formal↔casual, serious↔playful), vocabulary to use and avoid, sentence structure guidelines, brand personality archetype, example copy before/after applying voice, social media tone variations, and how tone shifts across touchpoints (ads vs. support vs. legal).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/compensation-design', requireAuth, async (req: AuthRequest, res) => {
+  const { roles, market, budget } = req.body;
+  const prompt = `Design a compensation framework.\nRoles to cover: ${roles}\nMarket benchmarks: ${market}\nTotal budget: ${budget}\nInclude: compensation philosophy (lead/match/lag market), band structure per level, base/equity/bonus mix by role, merit cycle design, equity refresh program, geographic pay differential policy, pay equity audit approach, total compensation statement design, and how to communicate compensation to candidates and existing employees.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/portfolio-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, sectors, allocation } = req.body;
+  const prompt = `Build a venture portfolio strategy.\nInvestment stage: ${stage}\nTarget sectors: ${sectors}\nCapital allocation: ${allocation}\nInclude: portfolio construction (# companies, check size, reserve ratio), diversification strategy across sectors and stages, follow-on investment decision framework, portfolio company support model, fund recycling strategy, DPI vs. TVPI optimization, LP reporting cadence, and how to think about power law returns in portfolio construction.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/cicd-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  const { stack, team, environments } = req.body;
+  const prompt = `Design a CI/CD pipeline.\nTech stack: ${stack}\nTeam size: ${team}\nEnvironments: ${environments}\nInclude: pipeline stages (lint→test→build→security scan→deploy), branch strategy (trunk-based vs. gitflow), PR gate requirements, automated testing pyramid, security scanning integration (SAST/DAST/SCA), environment promotion strategy, deployment approvals, rollback automation, pipeline performance optimization, and infrastructure-as-code for the pipeline itself.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/content-repurpose', requireAuth, async (req: AuthRequest, res) => {
+  const { content, format, channels } = req.body;
+  const prompt = `Repurpose content across channels.\nOriginal content: ${content}\nOriginal format: ${format}\nTarget channels: ${channels}\nInclude: channel-specific adaptations (length, format, tone), native content principles per platform, how to extract 10+ content pieces from one asset, headline/hook variations for each channel, SEO snippet for blog, Twitter/LinkedIn thread structure, short-form video script, podcast talking points, email newsletter angle, and content calendar sequencing for the repurposed pieces.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/roadmap-comms', requireAuth, async (req: AuthRequest, res) => {
+  const { audience, quarter, themes } = req.body;
+  const prompt = `Design roadmap communications.\nAudience: ${audience}\nQuarter: ${quarter}\nStrategic themes: ${themes}\nInclude: communication format per audience (exec/eng/customers/sales), what to share vs. what to hold back, how to present uncertainty without losing confidence, customer-facing roadmap language that avoids commitments, internal roadmap review cadence, how to handle missed commitments, FAQ for sales team, and roadmap presentation narrative arc.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/cpq-design', requireAuth, async (req: AuthRequest, res) => {
+  const { products, complexity, volume } = req.body;
+  const prompt = `Design a Configure-Price-Quote system.\nProduct catalog: ${products}\nConfiguration complexity: ${complexity}\nQuote volume: ${volume}\nInclude: product catalog structure and bundling rules, pricing engine design (volume discounts/product bundles/regional pricing), approval workflow by discount threshold, quote template design, guided selling flow, electronic signature integration, CRM integration architecture, revenue recognition tagging for billing, and ROI calculation for CPQ implementation.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
