@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v778.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v779.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210917,6 +210917,66 @@ app.post('/api/retail/luxury', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/retail/fashion', requireAuth, async (req: AuthRequest, res) => {
   const { brand, category, customer } = req.body;
   const prompt = `You are a fashion strategy and apparel industry expert. Design fashion strategy for ${brand} in ${category} for ${customer}. Cover fashion strategy framework, brand identity and aesthetic, collection development and trend, sourcing and production, fashion distribution and wholesale, direct to consumer and digital, fashion marketing and influencer, sustainability and circularity, fashion retail and merchandising, and how to build fashion strategy programs that achieve the brand relevance and the distribution growth and the sell-through rate that successful fashion requires by developing the collection with the trend intelligence and the brand DNA and the commercial editing that balances the fashion-forward statement with the core commercial product that delivers the revenue.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ag/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { operation, crops, market } = req.body;
+  const prompt = `You are an agriculture strategy and agribusiness expert. Design agriculture strategy for ${operation} growing ${crops} in ${market}. Cover agriculture strategy framework, crop production and agronomy, precision agriculture and technology, supply chain and marketing, agricultural finance and risk management, farm labor and operations, regulatory and environmental compliance, sustainable agriculture and soil health, commodity markets and pricing, and how to build agriculture strategy programs that achieve the yield optimization and the cost efficiency and the market access that profitable farming requires by implementing the precision agriculture system with the soil sampling and the variable rate application and the yield mapping that identifies the within-field variability and the management zone opportunity that reduces input cost and improves yield performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ag/agritech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, technology, farmers } = req.body;
+  const prompt = `You are an agricultural technology strategy and precision farming expert. Design agritech strategy for ${company} with ${technology} serving ${farmers}. Cover agritech strategy framework, precision agriculture and IoT sensors, drone and aerial technology, soil health and monitoring, farm management software, satellite and remote sensing, agricultural AI and machine learning, supply chain and traceability technology, farmer adoption and change management, and how to build agritech strategy programs that achieve the farmer adoption and the yield improvement and the cost reduction that successful agricultural technology requires by designing the product with the farmer workflow and the data simplicity and the ROI transparency that demonstrates the value in the first season and builds the trust that drives the continued adoption.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/energy/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, portfolio, market } = req.body;
+  const prompt = `You are an energy strategy and power sector expert. Design energy strategy for ${company} with ${portfolio} in ${market}. Cover energy strategy framework, power generation and energy mix, renewable energy development, energy storage and grid integration, energy trading and markets, utility regulation and policy, energy transition and decarbonization, distributed energy and microgrids, energy finance and project development, and how to build energy strategy programs that achieve the portfolio optimization and the energy transition and the market competitiveness that energy sector transformation requires by developing the generation portfolio with the capacity factor and the dispatch cost and the carbon intensity analysis that determines the optimal asset mix under the carbon constraint and the renewable cost trajectory.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/energy/renewable', requireAuth, async (req: AuthRequest, res) => {
+  const { developer, technology, market } = req.body;
+  const prompt = `You are a renewable energy strategy and clean power development expert. Design renewable energy strategy for ${developer} deploying ${technology} in ${market}. Cover renewable energy framework, solar and wind resource assessment, project development and permitting, interconnection and grid integration, PPA and offtake strategy, renewable energy finance and tax equity, storage and firming, REC and green power markets, international renewable markets, and how to build renewable energy programs that achieve the project development pipeline and the financial close and the operating performance that successful renewable energy requires by developing the project with the resource assessment and the grid study and the offtake structure and the tax equity partnership that closes the financing and delivers the project on schedule and budget.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/energy/cleantech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, technology, market } = req.body;
+  const prompt = `You are a cleantech strategy and climate technology expert. Design cleantech strategy for ${company} with ${technology} in ${market}. Cover cleantech strategy framework, technology development and commercialization, climate impact and carbon measurement, cleantech business models and revenue, government incentives and policy, cleantech financing and venture, corporate partnership and customer acquisition, regulatory and certification, international market entry, and how to build cleantech strategy programs that achieve the technology scale and the commercial traction and the climate impact that successful cleantech requires by developing the go-to-market with the beachhead customer and the reference case and the channel strategy that moves the technology from the pilot to the commercial scale with the credible proof of performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/energy/oilgas', requireAuth, async (req: AuthRequest, res) => {
+  const { company, assets, strategy } = req.body;
+  const prompt = `You are an oil and gas strategy and energy sector expert. Design oil and gas strategy for ${company} with ${assets} executing ${strategy}. Cover oil and gas strategy framework, upstream exploration and production, midstream transportation and processing, downstream refining and marketing, energy transition and portfolio evolution, oil and gas finance and capital allocation, HSE and operations integrity, reservoir management and EOR, commodity risk management, and how to build oil and gas strategy programs that achieve the reserve replacement and the unit cost efficiency and the portfolio resilience that oil and gas sector leadership requires by prioritizing the capital allocation with the economic analysis and the risk-adjusted return and the portfolio diversification that balances the near-term cash generation with the longer-term energy transition positioning.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/energy/mining', requireAuth, async (req: AuthRequest, res) => {
+  const { company, commodity, operation } = req.body;
+  const prompt = `You are a mining and resources strategy and extractive industry expert. Design mining strategy for ${company} producing ${commodity} at ${operation}. Cover mining strategy framework, mine planning and resource development, ore processing and metallurgy, mining cost management and productivity, tailings and environmental management, mining safety and operational excellence, community and social license, commodity markets and pricing, mining finance and capital, and how to build mining strategy programs that achieve the ore reserve development and the unit cost performance and the environmental compliance that sustainable mining requires by implementing the mine plan with the resource model and the cut-off grade analysis and the mine schedule that optimizes the net present value within the processing capacity and the social license constraint.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/energy/utilities', requireAuth, async (req: AuthRequest, res) => {
+  const { utility, region, challenges } = req.body;
+  const prompt = `You are a utilities strategy and regulated energy expert. Design utilities strategy for ${utility} serving ${region} addressing ${challenges}. Cover utilities strategy framework, regulated utility rate case and regulation, grid modernization and smart grid, customer experience and engagement, energy efficiency and demand response, distributed energy resource management, utility workforce and operations, infrastructure investment and reliability, utility decarbonization and clean energy, and how to build utilities strategy programs that achieve the regulatory approval and the reliability standard and the clean energy transition that modern utility leadership requires by developing the integrated resource plan with the demand forecast and the generation portfolio and the grid investment that provides the regulatory commission with the long-term plan for the affordable and reliable and clean energy future.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/management', requireAuth, async (req: AuthRequest, res) => {
+  const { manager, team, projects } = req.body;
+  const prompt = `You are an engineering management strategy and technical leadership expert. Design engineering management strategy for ${manager} leading ${team} delivering ${projects}. Cover engineering management framework, engineering organization and team structure, technical roadmap and prioritization, engineering process and agile methodology, technical hiring and talent development, engineering metrics and performance, cross-functional collaboration, technical debt management, engineering culture and psychological safety, and how to build engineering management programs that achieve the delivery velocity and the technical quality and the team development that engineering leadership requires by establishing the engineering operating system with the sprint planning and the code review and the incident learning and the career development that creates the high-performing team with the technical excellence and the ownership culture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/civil', requireAuth, async (req: AuthRequest, res) => {
+  const { firm, project, constraints } = req.body;
+  const prompt = `You are a civil engineering strategy and infrastructure expert. Design civil engineering strategy for ${firm} delivering ${project} within ${constraints}. Cover civil engineering framework, structural design and analysis, geotechnical investigation and foundation, transportation and traffic engineering, water and wastewater engineering, environmental impact and permitting, construction management and delivery, BIM and digital engineering, infrastructure finance and procurement, and how to build civil engineering programs that achieve the structural integrity and the cost efficiency and the project schedule that successful infrastructure delivery requires by applying the design thinking with the value engineering and the constructability review and the risk register that identifies the design and construction risk early and develops the mitigation strategy before the project commitment.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
