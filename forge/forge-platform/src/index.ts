@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v451.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v452.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191920,6 +191920,59 @@ app.post('/api/product/nps-analysis', requireAuth, async (req: AuthRequest, res)
 app.post('/api/sales/territory-plan', requireAuth, async (req: AuthRequest, res) => {
   const { region, accounts, quota } = req.body;
   const prompt = `Build a sales territory plan.\nRegion: ${region}\nAccount universe: ${accounts}\nQuota: ${quota}\nInclude: territory segmentation methodology (geography/industry/account size/named accounts), total addressable account calculation, account tiering and coverage model (1:1 for enterprise/1:many for mid-market), prospecting prioritization framework, account planning for top accounts, pipeline coverage requirement (3-4x quota), activity plan and outreach cadence, partner and channel integration in territory, territory health metrics, quarterly territory review process, and how to build a territory business plan that gives you confidence in hitting quota.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 323+324 routes
+app.post('/api/dev/rate-limiting-design', requireAuth, async (req: AuthRequest, res) => {
+  const { endpoints, clients, sla } = req.body;
+  const prompt = `Design a rate limiting strategy.\nEndpoints: ${endpoints}\nClient types: ${clients}\nSLA requirements: ${sla}\nInclude: rate limiting algorithm selection (token bucket/leaky bucket/fixed window/sliding window), per-endpoint vs. global rate limit design, client tier differentiation (free/paid/enterprise limits), rate limit header design (X-RateLimit-Limit/Remaining/Reset), distributed rate limiting with Redis, burst allowance strategy, rate limit bypass for trusted clients, graceful degradation (queue vs. reject vs. throttle), monitoring and alerting for rate limit violations, API key management integration, and how to communicate rate limits clearly to API consumers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/demo-flow', requireAuth, async (req: AuthRequest, res) => {
+  const { product, persona, pain } = req.body;
+  const prompt = `Design a high-converting product demo flow.\nProduct: ${product}\nPersona: ${persona}\nKey pain points: ${pain}\nInclude: demo narrative arc (situation→complication→resolution), discovery questions to ask before demoing, demo environment setup and data strategy, problem-first demo structure (show the pain before the solution), feature sequencing by emotional impact, storytelling integration (before/after customer scenario), live demo vs. pre-recorded hybrid strategy, handling unexpected questions during demo, customization for executive vs. technical vs. user audiences, follow-up actions after the demo, and how to make the demo feel like a conversation rather than a presentation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/data-model-design', requireAuth, async (req: AuthRequest, res) => {
+  const { domain, entities, scale } = req.body;
+  const prompt = `Design a product data model.\nDomain: ${domain}\nCore entities: ${entities}\nScale targets: ${scale}\nInclude: entity relationship design, normalization vs. denormalization trade-offs for the use case, primary key strategy (UUID vs. auto-increment vs. composite), soft delete vs. hard delete decision, audit trail design (created_at/updated_at/deleted_at/created_by), multi-tenancy data isolation strategy, time-series data handling, versioning and history tracking approach, schema migration strategy (additive vs. destructive changes), indexing strategy for query patterns, and how the data model enables the product roadmap without requiring constant breaking migrations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/drip-campaign', requireAuth, async (req: AuthRequest, res) => {
+  const { trigger, audience, goal } = req.body;
+  const prompt = `Design a drip campaign.\nTrigger event: ${trigger}\nAudience: ${audience}\nCampaign goal: ${goal}\nInclude: drip sequence architecture (email count/timing/branching logic), email #1 design (timing/subject line formula/content/CTA), progressive value delivery across the sequence, behavioral branching (clicked/opened/converted → different path), re-engagement branch for non-openers, unsubscribe management and suppression, personalization variables by segment, mobile-first email design principles, A/B test plan for the sequence, performance benchmarks (open rate/CTR/conversion), and how to optimize the sequence over time with data.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/talent-brand', requireAuth, async (req: AuthRequest, res) => {
+  const { company, roles, culture } = req.body;
+  const prompt = `Build an employer brand strategy.\nCompany: ${company}\nPrimary hiring roles: ${roles}\nCulture: ${culture}\nInclude: employer value proposition (EVP) development framework, competitive differentiation from talent perspective, employee persona definition for key roles, channel strategy (LinkedIn/Glassdoor/Indeed/niche communities), content strategy (behind-the-scenes/employee stories/culture moments), interview experience design as brand touchpoint, offer experience optimization, Glassdoor and review management strategy, alumni network as brand amplifier, measurement framework (brand awareness/candidate quality/offer acceptance rate), and how to make every employee a talent brand ambassador.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/portfolio-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, sectors, thesis } = req.body;
+  const prompt = `Design an investment portfolio strategy.\nInvestment stage: ${stage}\nTarget sectors: ${sectors}\nInvestment thesis: ${thesis}\nInclude: portfolio construction principles (concentration vs. diversification/reserve strategy/check size), deal sourcing strategy (proprietary vs. competitive), investment thesis stress-testing, portfolio company support model (value-add beyond capital), reserve allocation framework (follow-on sizing by performance tier), portfolio reporting and monitoring cadence, conflict of interest management across portfolio, fund recycling strategy, LP reporting design, and how to build a portfolio that generates top-quartile returns.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/message-queue-design', requireAuth, async (req: AuthRequest, res) => {
+  const { workload, guarantees, scale } = req.body;
+  const prompt = `Design a message queue architecture.\nWorkload type: ${workload}\nDelivery guarantees needed: ${guarantees}\nScale requirements: ${scale}\nInclude: queue technology selection (SQS/RabbitMQ/Kafka/Redis Streams comparison), at-least-once vs. exactly-once delivery trade-offs, message schema and versioning, consumer group design, dead letter queue strategy, message ordering requirements and solutions, idempotency implementation in consumers, backpressure handling, message TTL and expiration strategy, monitoring (queue depth/consumer lag/error rate), fan-out patterns (one message→many consumers), and when to use a queue vs. an event bus vs. a stream processor.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/press-release', requireAuth, async (req: AuthRequest, res) => {
+  const { news, company, audience } = req.body;
+  const prompt = `Write a press release strategy and template.\nNews: ${news}\nCompany: ${company}\nTarget audience: ${audience}\nInclude: press release structure (headline/dateline/lead paragraph/body/boilerplate/contact), headline writing formula for maximum pickup, newsworthiness assessment framework, wire distribution strategy (PR Newswire/BusinessWire/GlobeNewswire), journalist targeting and personalized pitch strategy, embargo strategy for major announcements, quote design for executives and customers, multimedia asset package (images/video/infographic), follow-up cadence after distribution, measurement framework (pickup count/impressions/inbound inquiries), and how to maximize earned media from a single announcement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/product-vision', requireAuth, async (req: AuthRequest, res) => {
+  const { market, users, future } = req.body;
+  const prompt = `Craft a compelling product vision.\nMarket: ${market}\nTarget users: ${users}\nDesired future state: ${future}\nInclude: vision statement design (inspiring/timeless/user-centric), product mission vs. vision distinction, north star metric alignment to vision, strategy-to-vision connection framework, how to make the vision concrete enough to guide decisions, narrative storytelling format for the vision (press release from the future/user story from the future), how to communicate the vision internally to align teams, external vision communication for customers and investors, vision validation methodology, and how to evolve the vision as the market changes without losing direction.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/pipeline-generation', requireAuth, async (req: AuthRequest, res) => {
+  const { segment, channels, quota } = req.body;
+  const prompt = `Build a pipeline generation strategy.\nTarget segment: ${segment}\nAvailable channels: ${channels}\nQuota: ${quota}\nInclude: coverage ratio calculation (pipeline needed = 3-4x quota), channel mix design (outbound/inbound/partner/events), outbound sequence design (multi-touch/multi-channel/personalization), inbound lead qualification and routing, pipeline velocity optimization (increase deal size/conversion/speed), pipeline generation cadence and weekly targets, SDR/AE pipeline generation ownership model, pipeline health metrics (stage distribution/aging/source mix), pipeline generation campaign calendar, and how to build a pipeline engine that reliably generates 3-4x quota coverage every quarter.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
