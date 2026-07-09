@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v605.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v606.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200537,6 +200537,66 @@ app.post('/api/marketing/abm', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/strategy/growth-experimentation', requireAuth, async (req: AuthRequest, res) => {
   const { team, metric, cadence } = req.body;
   const prompt = `You are a growth experimentation and experimentation culture expert. Build the experimentation program for ${team} improving ${metric} at ${cadence} cadence. Cover the experimentation program design, the hypothesis generation and backlog management, the experiment prioritization framework, the experiment design and statistical rigor, the experiment platform and tooling, the experiment governance and decision rules, the failed experiment learning extraction, the winning experiment scaling playbook, the experimentation culture building, and how to reach high experiment velocity while maintaining quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/deal-desk', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, discount, approval } = req.body;
+  const prompt = `You are a deal desk and complex deal management expert. Structure the deal for ${deal} with ${discount} discount requiring ${approval} approval. Cover the deal desk function design, the deal structuring and packaging, the pricing exception management, the multi-year deal design, the usage commitment deal structure, the professional services bundling, the legal and compliance review process, the deal approval workflow, the deal desk and sales relationship, and how to close complex deals faster with a well-run deal desk.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-power', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, barrier } = req.body;
+  const prompt = `You are a pricing power and competitive moat strategy expert. Build pricing power for ${company} in ${product} by reducing ${barrier}. Cover the pricing power sources and taxonomy, the switching cost design, the network effect monetization, the brand premium development, the lock-in and sticky product design, the patent and IP pricing protection, the data and proprietary insight monetization, the ecosystem pricing power, the pricing power measurement, and how to build sustainable pricing power that persists through competitive attacks.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/roadmap-communication', requireAuth, async (req: AuthRequest, res) => {
+  const { audience, horizon, format } = req.body;
+  const prompt = `You are a product roadmap communication and stakeholder management expert. Design the roadmap communication for ${audience} audience over ${horizon} horizon in ${format} format. Cover the roadmap communication philosophy, the roadmap vs. commitment distinction, the now-next-later framework, the customer-facing vs. internal roadmap, the enterprise roadmap communication, the sales and CS roadmap enablement, the executive roadmap review design, the roadmap change communication protocol, the roadmap metrics and OKR linkage, and how to communicate roadmaps that build trust without overpromising.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/cycle-compression', requireAuth, async (req: AuthRequest, res) => {
+  const { product, cycle, blocker } = req.body;
+  const prompt = `You are a sales cycle compression and deal velocity expert. Compress the sales cycle for ${product} from ${cycle} by removing ${blocker} blocker. Cover the sales cycle diagnosis methodology, the buyer journey mapping, the internal champion development strategy, the proof of value design for speed, the business case template and mutual action plan, the decision committee mapping, the procurement and legal acceleration, the pricing and discount strategy for speed, the competitive differentiation for decision speed, and how to build a sales process that moves buyers to decision faster.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-valuation', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, method, purpose } = req.body;
+  const prompt = `You are a brand valuation and intangible asset expert. Value the ${brand} brand using ${method} methodology for ${purpose} purpose. Cover the brand valuation methodology options, the income-based brand valuation, the market-based comparables, the cost-based brand valuation, the relief-from-royalty method, the brand equity measurement, the brand contribution to enterprise value, the brand valuation for M&A, the brand tracking vs. valuation, and how to use brand valuation to make better investment and portfolio decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-psychology', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customer, bias } = req.body;
+  const prompt = `You are a pricing psychology and behavioral economics expert. Apply pricing psychology to ${product} for ${customer} leveraging ${bias} cognitive bias. Cover the anchoring and reference price design, the price ending strategy, the bundle design and mental accounting, the decoy pricing design, the charm pricing and price aesthetics, the scarcity and urgency pricing triggers, the social proof in pricing, the framing and loss aversion in pricing, the subscription vs. one-time psychology, and how to design pricing that works with human psychology to increase perceived value and drive conversion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/loyalty-design', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, segment, behavior } = req.body;
+  const prompt = `You are a customer loyalty program and retention design expert. Design the loyalty program for ${brand} targeting ${segment} to drive ${behavior}. Cover the loyalty program strategy and objectives, the program mechanic options, the points and rewards currency design, the tier and status design, the earn and burn rate economics, the partner and coalition loyalty, the emotional loyalty vs. transactional loyalty, the loyalty program technology stack, the loyalty program ROI measurement, and how to design a loyalty program that creates genuine behavioral change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/strategic-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { org, horizon, theme } = req.body;
+  const prompt = `You are a strategic planning and strategy execution expert. Facilitate the strategic planning for ${org} over ${horizon} horizon focused on ${theme}. Cover the strategic planning process design, the external environment analysis, the internal capability assessment, the strategic options generation, the strategy choice and prioritization, the strategic initiative design, the OKR and KPI cascade design, the strategy communication and activation, the strategy review and adaptation cadence, and how to run a strategic planning process that produces a strategy people believe in and act on.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/support-system', requireAuth, async (req: AuthRequest, res) => {
+  const { company, volume, channels } = req.body;
+  const prompt = `You are a customer support operations and technology expert. Design the support system for ${company} handling ${volume} tickets across ${channels} channels. Cover the support model design, the channel strategy for support, the ticketing system selection, the knowledge base design, the AI and automation in support, the escalation and routing design, the SLA design and measurement, the quality assurance for support, the support team structure and hiring, and how to build a support operation that delights customers while controlling costs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/modern-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, buyer, shift } = req.body;
+  const prompt = `You are a modern sales strategy and buyer-centric selling expert. Redesign the sales strategy for ${company} for ${buyer} buyer behavior addressing ${shift} market shift. Cover the modern buyer journey and self-service behavior, the consultative and challenger selling integration, the digital selling and social proof, the value selling methodology, the multi-stakeholder selling complexity, the AI-augmented sales motion, the community and peer selling, the near-term pipeline vs. long-term market development balance, the sales and marketing revenue team integration, and how to build a modern sales organization that buyers want to engage with.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
