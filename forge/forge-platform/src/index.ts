@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v630.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v631.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202037,6 +202037,66 @@ app.post('/api/career/presentation-coaching', requireAuth, async (req: AuthReque
 app.post('/api/operations/ops-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const { operations, metrics, decisions } = req.body;
   const prompt = `You are an operations analytics and continuous improvement expert. Build the operations intelligence capability for ${operations} tracking ${metrics} to drive ${decisions}. Cover the operational analytics strategy, the operations metric framework design, the data collection and instrumentation, the operational dashboard design, the anomaly detection and alerting, the root cause analysis methodology, the continuous improvement program, the benchmarking and best practice identification, the operations review cadence and governance, and how to build operations intelligence that goes beyond reporting on what happened to understanding why it happened, predicting what will happen, and prescribing what actions to take to continuously improve operational performance in ways that compound over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, maturity, priorities } = req.body;
+  const prompt = `You are a digital transformation and technology strategy expert. Design the digital transformation roadmap for ${organization} at ${maturity} maturity focusing on ${priorities}. Cover the digital transformation strategy framework, the current state assessment methodology, the digital maturity model, the transformation vision and objectives, the technology capability roadmap, the data and analytics transformation, the customer experience digitization, the operational digitization and automation, the organizational and culture transformation, and how to design digital transformation programs that deliver measurable business value at each stage rather than multi-year programs with no interim value delivery, and that build the organizational capability to sustain continuous digital evolution.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/procurement', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, spend, suppliers } = req.body;
+  const prompt = `You are a procurement strategy and strategic sourcing expert. Design the procurement strategy for ${organization} managing ${spend} across ${suppliers}. Cover the procurement strategy framework, the spend analysis and categorization, the category management design, the supplier segmentation and management, the strategic sourcing methodology, the supplier relationship management program, the supplier risk management, the procurement technology stack, the procurement operating model, and how to build procurement capabilities that move beyond tactical purchasing to strategic value creation through supplier partnerships, total cost optimization, supply chain risk reduction, and innovation access through the supply base.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/exit-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, options, timeline } = req.body;
+  const prompt = `You are an exit strategy and business transaction expert. Design the exit strategy for ${company} considering ${options} on ${timeline} timeline. Cover the exit strategy framework, the exit readiness assessment, the valuation methodology and value drivers, the buyer universe analysis, the strategic vs. financial buyer comparison, the IPO vs. M&A exit comparison, the exit preparation and value enhancement, the deal process design, the management incentive alignment, and how to plan and execute exit processes that maximize value for shareholders, that prepare the business appropriately so it presents compellingly to buyers, and that manage the inherent tension between running the business well and running a transaction process simultaneously.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/crm-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, processes, teams } = req.body;
+  const prompt = `You are a CRM strategy and sales technology expert. Design the CRM strategy for ${company} supporting ${processes} for ${teams}. Cover the CRM strategy framework, the CRM selection criteria and evaluation, the sales process design and mapping, the data model and object design, the workflow and automation design, the reporting and analytics design, the CRM adoption and change management, the integration architecture, the CRM governance model, and how to design CRM implementations that actually get adopted by sales teams because they make selling easier rather than adding administrative burden, that produce the data quality needed for accurate forecasting, and that evolve with your sales process as the business grows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/dei-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, gaps, goals } = req.body;
+  const prompt = `You are a diversity, equity, inclusion and belonging strategy expert. Design the DEI strategy for ${organization} addressing ${gaps} toward ${goals}. Cover the DEI strategy framework, the current state assessment, the intersectionality and equity lens, the representation goal setting, the inclusive hiring practices, the equitable pay and advancement, the inclusive culture design, the belonging program design, the DEI governance and accountability, and how to design DEI strategies that produce measurable improvements in representation and inclusion rather than performative programs, that address systemic barriers rather than just symptoms, and that create genuinely inclusive environments where people from all backgrounds can do their best work and advance based on merit and contribution.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/media-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, budget, objectives } = req.body;
+  const prompt = `You are a media strategy and media planning expert. Design the media strategy for ${brand} with ${budget} budget to achieve ${objectives}. Cover the media strategy framework, the audience media consumption analysis, the paid media mix modeling, the reach and frequency optimization, the channel allocation strategy, the programmatic and direct buy balance, the creative format strategy by channel, the media attribution model, the media measurement framework, and how to build media strategies that allocate budget to the channels and formats that actually drive business outcomes rather than vanity metrics, that balance broad awareness with targeted performance media, and that use measurement to continuously optimize toward the metrics that matter.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/compliance-program', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, regulations, risks } = req.body;
+  const prompt = `You are a compliance program design and regulatory management expert. Build the compliance program for ${organization} covering ${regulations} mitigating ${risks}. Cover the compliance program framework, the regulatory universe mapping, the compliance risk assessment, the control design and implementation, the policies and procedures design, the training and awareness program, the monitoring and testing program, the incident management design, the compliance governance structure, and how to build compliance programs that are proportionate to actual risk, that are embedded in business operations rather than bolted on, and that create a genuine culture of compliance rather than just checkbox completion, while avoiding the trap of over-compliance that creates bureaucratic friction without reducing risk.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/research-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, questions, resources } = req.body;
+  const prompt = `You are a research strategy and insights program design expert. Design the research strategy for ${organization} answering ${questions} with ${resources}. Cover the research strategy framework, the research question prioritization, the research methodology selection, the primary vs. secondary research balance, the quantitative vs. qualitative research design, the research vendor and partner selection, the research synthesis and insight generation, the research-to-decision connection, the research infrastructure and systems, and how to build research programs that generate genuine insights that change decisions rather than just producing reports that confirm existing beliefs, that use the right methodologies for each question, and that create institutional knowledge that compounds over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/business-development', requireAuth, async (req: AuthRequest, res) => {
+  const { company, opportunities, partners } = req.body;
+  const prompt = `You are a business development and strategic partnership expert. Design the business development strategy for ${company} pursuing ${opportunities} through ${partners}. Cover the business development strategy framework, the opportunity identification and evaluation, the partnership model design, the partner qualification and selection, the deal structure design, the partnership negotiation strategy, the partnership governance and management, the partnership performance measurement, the partnership portfolio management, and how to build business development capabilities that identify and capture partnership opportunities that create genuine strategic value, that negotiate deal structures that align incentives and are sustainable long-term, and that manage partner relationships to ensure both parties get the value they expected from the partnership.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/product-led', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, metrics } = req.body;
+  const prompt = `You are a product-led growth and PLG strategy expert. Design the PLG strategy for ${product} targeting ${segment} tracking ${metrics}. Cover the PLG strategy framework, the freemium vs. free trial design, the product activation and time-to-value optimization, the viral and network effect mechanisms, the in-product upgrade path design, the product qualified lead identification, the PQL-to-sales handoff design, the expansion revenue in-product design, the PLG metrics and funnel, and how to design product-led growth strategies that use the product itself as the primary acquisition, activation, and expansion engine, that create viral loops that reduce CAC while increasing LTV, and that build the product analytics infrastructure needed to systematically optimize the PLG funnel.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
