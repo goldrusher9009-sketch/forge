@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v758.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v759.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -209717,6 +209717,66 @@ app.post('/api/legaltech/strategy', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/fintech/strategy', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, market } = req.body;
   const prompt = `You are a fintech strategy and financial services innovation expert. Design fintech strategy for ${company} building ${product} in ${market}. Cover fintech strategy framework, payment processing and infrastructure, banking-as-a-service and embedded finance, lending technology and credit underwriting, wealth management and robo-advisory, insurance technology and underwriting, regulatory compliance and licensing, open banking and API integration, financial data and analytics, and how to build fintech companies that achieve the regulatory compliance and the unit economics and the network effects that financial services technology requires by navigating the regulatory framework with the bank partnership or the direct license that provides the legal authority to offer the financial product in the target market without the regulatory risk that can shut down the product at scale, designing the underwriting with the alternative data and the machine learning model that improves the credit access for the underserved segments while maintaining the risk management discipline that prevents the adverse selection.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, mission, technology } = req.body;
+  const prompt = `You are a space technology strategy and aerospace expert. Design space technology strategy for ${company} pursuing ${mission} using ${technology}. Cover space technology framework, launch vehicle and propulsion systems, satellite design and orbits, earth observation and remote sensing, space communication systems, in-space propulsion and maneuver, space debris mitigation, commercial space regulation, lunar and deep space missions, and how to build space technology companies that achieve the technical performance and the cost reduction and the commercial viability that the new space economy requires by designing the system with the reliability and the redundancy that the mission criticality of space demands while applying the commercial off-the-shelf components and the iterative development approach that reduces the development cost compared to the traditional aerospace procurement model.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatetech/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, solution, market } = req.body;
+  const prompt = `You are a climate technology strategy and clean energy expert. Design climate technology strategy for ${company} deploying ${solution} in ${market}. Cover climate technology framework, renewable energy and storage, carbon capture and removal, sustainable materials and circular economy, grid modernization and demand response, green hydrogen and fuel cells, electric vehicles and charging, climate finance and carbon markets, corporate net zero strategies, and how to build climate technology companies that achieve the emissions reduction and the commercial scale and the cost competitiveness that the energy transition requires by identifying the decarbonization pathway where the technology solution provides the emissions abatement at the cost per ton that is competitive with the alternative abatement options in the market, accessing the climate finance with the green bond and the sustainability-linked loan and the blended finance structures that reduce the cost of capital for the climate investment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/energytech/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, technology, market } = req.body;
+  const prompt = `You are an energy technology strategy and clean energy transition expert. Design energy technology strategy for ${company} with ${technology} entering ${market}. Cover energy technology framework, solar and wind generation economics, battery storage and grid services, virtual power plants and aggregation, energy management systems, utility partnership and interconnection, regulatory and policy landscape, power purchase agreements, renewable energy certificates, and how to build energy technology companies that navigate the utility regulatory framework and the interconnection queue and the power purchase agreement negotiation that define the commercial success of the energy technology deployment by engaging the utility early in the interconnection process with the technical studies and the grid impact analysis that identifies the upgrade requirements before the capital investment is committed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/transporttech/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, modality, market } = req.body;
+  const prompt = `You are a transportation technology strategy and mobility innovation expert. Design transportation technology strategy for ${company} in ${modality} serving ${market}. Cover transportation technology framework, electric vehicle technology, autonomous driving and ADAS, mobility-as-a-service and ride-sharing, fleet electrification and management, urban air mobility and drones, logistics and last-mile delivery, transit technology and smart infrastructure, transportation data and analytics, and how to build transportation technology companies that achieve the regulatory approval and the consumer adoption and the unit economics that mobility technology requires by demonstrating the safety case with the miles driven data and the disengagement rate and the simulation testing that satisfies the regulatory requirement for the autonomous system approval while building the public trust that consumer adoption requires.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/manufacturing/technology', requireAuth, async (req: AuthRequest, res) => {
+  const { company, process, product } = req.body;
+  const prompt = `You are a manufacturing technology strategy and Industry 4.0 expert. Design manufacturing technology strategy for ${company} optimizing ${process} producing ${product}. Cover manufacturing technology framework, Industry 4.0 and smart factory, computer numerical control and robotics, additive manufacturing and 3D printing, digital twin and simulation, quality management and statistical process control, supply chain visibility and traceability, predictive maintenance and asset monitoring, lean manufacturing and waste reduction, and how to build manufacturing technology programs that achieve the quality improvement and the throughput increase and the cost reduction that competitive manufacturing requires by implementing the sensor network and the data collection infrastructure that provides the real-time visibility into the production process parameters that deviate from the specification before the defect propagates through the production line.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retailtech/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { retailer, technology, customers } = req.body;
+  const prompt = `You are a retail technology strategy and commerce innovation expert. Design retail technology strategy for ${retailer} deploying ${technology} serving ${customers}. Cover retail technology framework, omnichannel commerce and inventory, point of sale and payment systems, customer data platform and personalization, store operations and labor management, supply chain and demand forecasting, customer loyalty and engagement, computer vision and checkout-free, AR and virtual try-on, and how to build retail technology programs that improve the conversion rate and the average order value and the customer retention that profitable retail requires by designing the personalization engine with the purchase history and the browsing behavior and the customer segment that recommends the product and the offer at the moment in the customer journey where the recommendation is most likely to drive the incremental purchase.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/gaming/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { studio, game, platform } = req.body;
+  const prompt = `You are a game development strategy and game design expert. Design game development strategy for ${studio} building ${game} on ${platform}. Cover game development strategy, game design and mechanics, monetization and live service, player acquisition and retention, game engine and technology stack, level design and content production, multiplayer and social features, esports and competitive play, community building and UGC, and how to build game development programs that achieve the player engagement and the monetization and the community growth that successful games require by designing the core loop with the compulsion loop and the progression system and the social mechanics that create the daily active user habit and the session length that the monetization model requires.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, content, audience } = req.body;
+  const prompt = `You are a media strategy and content distribution expert. Design media strategy for ${company} producing ${content} for ${audience}. Cover media strategy framework, content strategy and editorial calendar, distribution channel mix, subscription versus advertising models, audience development and SEO, social media and platform algorithms, podcast and audio strategy, video and streaming strategy, licensing and syndication, and how to build media companies that achieve the audience growth and the monetization and the content quality that sustainable media requires by developing the content strategy with the editorial positioning and the content pillars and the format mix that serves the target audience with the specific information and entertainment that they cannot easily find elsewhere, distributing the content with the platform-native formats and the algorithmic optimization and the community engagement that grows the organic reach without the paid distribution cost that erodes the media economics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, sport, goals } = req.body;
+  const prompt = `You are a sports strategy and athletic performance expert. Design sports strategy for ${organization} in ${sport} achieving ${goals}. Cover sports strategy framework, performance analytics and sports science, athlete recruitment and development, coaching systems and methodology, team culture and psychology, sports nutrition and recovery, injury prevention and sports medicine, fan engagement and brand building, sports technology and wearables, and how to build sports programs that achieve the competitive performance and the athlete development and the organizational excellence that championship sports requires by developing the coaching system with the practice design and the game planning and the in-game adjustments that translate the player talent and the strategic preparation into the competitive performance that the game situation demands.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/entertainment/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, property, audience } = req.body;
+  const prompt = `You are an entertainment strategy and IP development expert. Design entertainment strategy for ${company} building ${property} for ${audience}. Cover entertainment strategy framework, IP development and franchise building, film and television production, streaming and distribution strategy, talent acquisition and relationships, marketing and audience development, merchandise and licensing, live events and experiences, international expansion, and how to build entertainment companies that achieve the IP value and the audience connection and the revenue diversification that successful entertainment franchises require by developing the core IP with the character and the world-building and the thematic resonance that creates the emotional connection that audiences invest in beyond the single viewing experience, extending the IP across the media formats and the merchandise categories and the live experiences that multiply the revenue streams from the core audience.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
