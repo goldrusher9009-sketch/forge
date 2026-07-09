@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v591.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v592.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199697,6 +199697,66 @@ app.post('/api/engineering/tech-debt-registry', requireAuth, async (req: AuthReq
 app.post('/api/product/product-ops', requireAuth, async (req: AuthRequest, res) => {
   const { team, process, tools } = req.body;
   const prompt = `You are a product operations and product management excellence expert. Build the product operations function for ${team} team optimizing ${process} processes with ${tools} tooling. Cover the product operations charter, the product data and analytics infrastructure, the product process standardization, the roadmap management and communication system, the release management process, the customer feedback collection and routing system, the competitive intelligence program, the product team onboarding and enablement program, the product health dashboard design, and how to measure product operations impact on team velocity and product quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/aiops', requireAuth, async (req: AuthRequest, res) => {
+  const { systems, incidents, scale } = req.body;
+  const prompt = `You are an AIOps and intelligent IT operations expert. Build the AIOps platform for ${systems} infrastructure to reduce ${incidents} incident types at ${scale}. Cover the AIOps maturity model, the observability data foundation, the anomaly detection architecture, the event correlation and noise reduction design, the root cause analysis automation, the predictive failure detection approach, the auto-remediation framework, the topology and dependency mapping, the incident triage automation, and how to measure AIOps impact on MTTR and incident volume.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/capital-allocation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, options, constraint } = req.body;
+  const prompt = `You are a corporate finance and capital allocation strategy expert. Design the capital allocation framework for ${company} choosing between ${options} investment options with ${constraint} constraint. Cover the capital allocation principles, the investment evaluation framework, the hurdle rate design by risk category, the portfolio approach to capital allocation, the organic vs. inorganic investment balance, the return of capital policy, the capital allocation governance, the scenario planning for capital decisions, the capital efficiency metrics, and how to evolve capital allocation as the business matures.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/governance', requireAuth, async (req: AuthRequest, res) => {
+  const { org, domains, maturity } = req.body;
+  const prompt = `You are a data governance and data management expert. Build the data governance program for ${org} across ${domains} data domains at ${maturity} maturity level. Cover the data governance framework design, the data stewardship model, the data ownership and accountability model, the data quality program, the master data management strategy, the metadata management and data catalog, the data policy framework, the data privacy and compliance integration, the data governance council design, and how to measure and advance data governance maturity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/content-monetize', requireAuth, async (req: AuthRequest, res) => {
+  const { creator, audience, model } = req.body;
+  const prompt = `You are a content monetization and creator economy strategy expert. Build the content monetization strategy for ${creator} with ${audience} audience using ${model} monetization model. Cover the content monetization model taxonomy, the audience monetization readiness assessment, the subscription and membership model design, the sponsorship and brand deal strategy, the digital product and course design, the community monetization model, the live event and experience monetization, the content licensing and syndication strategy, the multiple revenue stream sequencing, and how to build a sustainable creator business that does not compromise content quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/guided-selling', requireAuth, async (req: AuthRequest, res) => {
+  const { product, complexity, buyer } = req.body;
+  const prompt = `You are a sales process design and guided selling expert. Design the guided selling experience for ${product} with ${complexity} product complexity for ${buyer} buyer type. Cover the buyer journey mapping for complex sales, the needs assessment design, the product configurator design, the recommendation engine logic, the comparison and evaluation tool design, the ROI calculator design, the proof of concept framework, the trial and pilot program design, the buying committee alignment tools, and how to measure guided selling conversion impact.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/community-led', requireAuth, async (req: AuthRequest, res) => {
+  const { product, community, flywheel } = req.body;
+  const prompt = `You are a community-led growth and community building strategy expert. Build the community-led growth strategy for ${product} around ${community} community using ${flywheel} growth flywheel. Cover the community-led growth model fundamentals, the community type selection, the community platform selection and design, the founding member program, the content and value creation strategy, the community event and ritual design, the community moderation model, the community-to-product feedback loop, the community ambassador program, and how to measure community health and business impact.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/data-mesh', requireAuth, async (req: AuthRequest, res) => {
+  const { org, teams, domains } = req.body;
+  const prompt = `You are a data mesh architecture and distributed data management expert. Design the data mesh for ${org} with ${teams} teams across ${domains} data domains. Cover the data mesh principles, the domain ownership model, the data product design and standards, the self-serve data infrastructure platform design, the federated computational governance model, the data product catalog and discovery, the data quality SLAs for data products, the data mesh migration strategy from centralized architecture, the organizational change required for data mesh adoption, and how to measure data mesh adoption and business impact.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/enablement', requireAuth, async (req: AuthRequest, res) => {
+  const { team, stage, gap } = req.body;
+  const prompt = `You are a sales enablement and revenue enablement strategy expert. Build the sales enablement program for ${team} at ${stage} stage closing ${gap} performance gap. Cover the enablement charter and strategy, the buyer journey-aligned content strategy, the sales playbook design and maintenance, the onboarding program design, the continuous learning program, the coaching program design, the technology stack for enablement, the content effectiveness measurement, the field feedback loop for content improvement, and how to measure enablement impact on ramp time and quota attainment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/observability', requireAuth, async (req: AuthRequest, res) => {
+  const { system, sla, team } = req.body;
+  const prompt = `You are an observability engineering and SRE expert. Build the observability stack for ${system} to meet ${sla} with ${team} team. Cover the three pillars of observability, the distributed tracing implementation, the metrics instrumentation strategy, the structured logging design, the alerting philosophy and alert fatigue prevention, the dashboard design for different audiences, the error budget and SLO tracking, the on-call rotation and runbook design, the incident review and learning program, and how to build a reliability culture where observability is owned by every engineer.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/diversity-inclusion', requireAuth, async (req: AuthRequest, res) => {
+  const { company, focus, stage } = req.body;
+  const prompt = `You are a diversity, equity, inclusion, and belonging strategy expert. Build the D&I strategy for ${company} focused on ${focus} with ${stage} as the current maturity stage. Cover the DEIB assessment and baseline measurement, the systemic vs. programmatic approach distinction, the hiring equity design, the promotion and advancement equity audit, the pay equity analysis and remediation, the inclusive culture assessment and design, the ERG and community design, the supplier diversity program, the DEIB governance and accountability structure, and how to measure DEIB progress authentically and avoid performative vs. substantive change.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
