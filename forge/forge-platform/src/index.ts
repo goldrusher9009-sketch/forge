@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v580.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v581.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199037,6 +199037,66 @@ app.post('/api/marketing/pricing-page', requireAuth, async (req: AuthRequest, re
 app.post('/api/product/vision', requireAuth, async (req: AuthRequest, res) => {
   const { product, market, years } = req.body;
   const prompt = `You are a product vision and product strategy expert. Create the product vision for ${product} in ${market} market looking ${years} years ahead. Deliver: the product vision statement (inspiring, directional, not a feature list), the market thesis (why this market is transforming now, what forces are driving change), the product strategy (how you win in this market, what makes you different), the capability roadmap (the three horizons of product development), the platform vision (what platform capabilities will you build that enable multiple solutions), how the product evolves as customers grow and succeed, the competitive moat that builds over time, the key assumptions and risks in the vision, and how to communicate the product vision to inspire engineers, customers, and investors.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/writing/ai-copy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, format, tone } = req.body;
+  const prompt = `You are an expert copywriter and brand voice specialist. Write high-converting copy for ${product} in ${format} format with ${tone} tone. Deliver multiple variations: a headline (attention-grabbing, benefit-forward), a subheadline (supporting the headline, expanding on the promise), body copy (problem → solution → proof → CTA), a short version for social ads, a medium version for landing pages, and a long version for email campaigns. Apply copywriting frameworks: AIDA, PAS, FAB, and the 4 Cs (clear, concise, compelling, credible). Include guidance on which variation to A/B test first.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/battlecard', requireAuth, async (req: AuthRequest, res) => {
+  const { competitor, product, persona } = req.body;
+  const prompt = `You are a competitive intelligence and sales enablement expert. Create a sales battlecard for competing against ${competitor} when selling ${product} to ${persona}. Cover: competitor overview (strengths, weaknesses, recent moves), head-to-head comparison (where you win, where you lose, where it depends), the landmine questions to ask early to disqualify them, how to reframe the evaluation criteria to favor your strengths, objection responses when the prospect says they prefer the competitor, the winning talk track for each common competitive scenario, customer proof points that resonate against this competitor, and the red flags that signal the prospect is leaning competitor.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/pipeline-review', requireAuth, async (req: AuthRequest, res) => {
+  const { deals, quarter, gap } = req.body;
+  const prompt = `You are a sales pipeline management and forecasting expert. Coach through a pipeline review for ${deals} deals in ${quarter} quarter with a ${gap} gap to quota. Run through the pipeline health assessment: deal by deal inspection (stage accuracy, next steps, champion quality, timeline risk), forecast categorization (commit vs. best case vs. pipeline), the coverage analysis (is there enough pipeline to hit the number), deals to accelerate (what can close this quarter with the right push), deals to push (realistic timing assessment), new pipeline needed to close the gap, and the action plan for the next two weeks to maximize quarter performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/hiring-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { company, budget, priorities } = req.body;
+  const prompt = `You are a talent strategy and workforce planning expert. Build the hiring plan for ${company} with ${budget} budget and ${priorities} priorities. Cover the headcount model (roles needed by department and quarter), prioritization framework (which hires have the highest leverage), the recruiting capacity needed to hit this hiring plan, make vs. buy vs. borrow decisions for key capabilities, the compensation budget allocation, how to sequence hires for maximum team effectiveness, the hiring plan assumptions and risks, how to handle the plan when revenue misses or exceeds forecast, and how to present the hiring plan to the board with clear linkage to revenue and product milestones.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/ab-test', requireAuth, async (req: AuthRequest, res) => {
+  const { hypothesis, metric, audience } = req.body;
+  const prompt = `You are an experimentation and A/B testing expert. Design an A/B test for ${hypothesis} measuring ${metric} for ${audience} audience. Cover the full test design: the null hypothesis and alternative hypothesis, treatment design (control vs. variant descriptions), sample size calculation (statistical power, significance level, MDE), test duration calculation, audience segmentation and assignment strategy, how to prevent test contamination, the analysis plan (primary metric, guardrail metrics, segment analysis), how to interpret ambiguous results, what to do when the test shows negative results, the rollout plan if the test wins, and how to document and share learnings across the team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/funnel-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { product, funnel, dropoff } = req.body;
+  const prompt = `You are a conversion optimization and growth analytics expert. Audit the conversion funnel for ${product} covering ${funnel} stages with ${dropoff} as the biggest drop-off. Deliver: a full funnel audit with conversion rates at each stage benchmarked against industry standards, the root cause analysis of the top 3 drop-off points (is it friction, confusion, lack of motivation, or wrong audience?), a prioritized list of hypotheses to test (ranked by impact × confidence ÷ effort), the CRO roadmap for the next 90 days, the analytics instrumentation needed to diagnose each stage, the UX changes and copy changes to test first, and how to set conversion rate targets for each funnel stage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/saas-metrics', requireAuth, async (req: AuthRequest, res) => {
+  const { mrr, churn, cac } = req.body;
+  const prompt = `You are a SaaS metrics and financial analysis expert. Analyze the health of a SaaS business with ${mrr} MRR, ${churn} monthly churn rate, and ${cac} CAC. Calculate and interpret: ARR growth rate and trajectory, the churn impact on ARR (monthly and annualized), LTV based on current churn, LTV:CAC ratio and what it means, CAC payback period at current gross margin, net dollar retention (estimate based on churn assumptions), magic number (sales efficiency), burn multiple, and the Rule of 40 score. Identify which metrics are concerning, which are healthy, and the top 2-3 levers to pull to improve overall SaaS health. Include benchmark comparisons for the stage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/culture', requireAuth, async (req: AuthRequest, res) => {
+  const { company, values, stage } = req.body;
+  const prompt = `You are a company culture and organizational design expert. Architect the company culture for ${company} with ${values} core values at ${stage} stage. Cover the culture definition framework (values → behaviors → rituals → artifacts), how to translate each value into observable behaviors and anti-behaviors, the rituals and ceremonies that reinforce culture (onboarding, all-hands, team events, recognition moments), how to hire for culture add (not culture fit), how to maintain culture through rapid scaling, how to course-correct when culture drifts, the culture measurement approach (culture surveys, behavioral observations, attrition analysis), and how to use culture as a competitive advantage for talent attraction and retention.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/ai-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, capability, users } = req.body;
+  const prompt = `You are an AI product strategy and machine learning product management expert. Build the AI product strategy for ${product} leveraging ${capability} AI capability for ${users}. Cover: the AI product vision (what does AI enable that was impossible before?), the build vs. buy vs. partner decision for each AI capability, the data strategy (what data do you need, how do you acquire and label it?), the model evaluation and quality assurance process, how to design AI features that build trust with users, the AI product roadmap (from feature to workflow to autonomous agent), how to handle AI failures gracefully in the product, the AI ethics and safety review process for product features, and how to measure the business impact of AI features.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productivity/deep-work', requireAuth, async (req: AuthRequest, res) => {
+  const { goals, schedule, distractions } = req.body;
+  const prompt = `You are a deep work methodology and productivity expert. Design a deep work system for ${goals} with ${schedule} available time and ${distractions} as primary distractions. Apply Cal Newport's Deep Work framework and related research: the four deep work philosophies (monastic, bimodal, rhythmic, journalistic) and which fits best, how to structure the ideal deep work day and week, the shutdown ritual design, the attention management system (how to handle interruptions, communications, and shallow work), how to train the ability to concentrate through progressive difficulty, the deep work environment design (physical and digital), how to measure deep work quality (hours, output quality, progress on goals), and how to sustain deep work practices long-term without burnout.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
