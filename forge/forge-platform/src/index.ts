@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v578.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v579.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198917,6 +198917,66 @@ app.post('/api/writing/grant', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/strategy/social-enterprise', requireAuth, async (req: AuthRequest, res) => {
   const { mission, model, impact } = req.body;
   const prompt = `You are a social enterprise strategy and impact measurement expert. Build the strategy for a social enterprise with ${mission} mission using ${model} business model to achieve ${impact}. Cover the theory of change (inputs → activities → outputs → outcomes → impact), the business model that funds the mission (earned revenue, hybrid model, B Corp considerations), impact measurement framework (leading indicators, lagging indicators, third-party validation), the dual bottom line management (financial sustainability AND mission fidelity), stakeholder management (beneficiaries, investors, partners, employees), the communications strategy for mission-driven brands, and how to navigate the tension between growth and mission integrity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/channel-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, resources } = req.body;
+  const prompt = `You are a sales channel strategy and revenue distribution expert. Design the channel strategy for ${product} in ${market} with ${resources}. Cover the channel mix decision (direct, inside sales, field sales, channel partners, self-serve), the channel economics for each option (margin, CAC, payback, scalability), how to build a partner channel from scratch (recruiting, enabling, incentivizing partners), the channel conflict management strategy, how to sequence channel development as the company scales, the technology stack to support multiple channels (partner portal, deal registration, MDF management), and how to measure channel contribution and health.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-psychology', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customer, decision } = req.body;
+  const prompt = `You are a pricing psychology and behavioral economics expert. Apply pricing psychology principles to ${product} for ${customer} making a ${decision}. Cover key pricing psychology principles: anchoring, charm pricing, price bundling, the decoy effect, framing effects, loss aversion in pricing, the compromise effect, payment timing psychology (annual vs. monthly), the psychology of free, how to present price increases, how to make price-value comparison easier for buyers, and the specific pricing presentation changes that will increase conversion for this product and customer segment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/regulatory', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, markets } = req.body;
+  const prompt = `You are a regulatory affairs and compliance strategy expert. Guide ${company} on regulatory requirements for ${product} in ${markets}. Cover the regulatory landscape mapping (which agencies, which regulations apply), the compliance roadmap and timeline, how to build relationships with regulators, the regulatory submission process (pre-submission meetings, submission requirements, review timelines), clinical or testing requirements, labeling and marketing claim restrictions, post-market surveillance requirements, how to manage regulatory changes, the team and expertise needed, and how to use regulatory compliance as a competitive advantage in the market.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/sales-comp', requireAuth, async (req: AuthRequest, res) => {
+  const { role, quota, model } = req.body;
+  const prompt = `You are a sales compensation design and incentive management expert. Design the sales compensation plan for ${role} with ${quota} quota using ${model} model. Cover the OTE philosophy and market benchmarking, the base vs. variable split by role, quota setting methodology (top-down vs. bottoms-up, territory-based), the commission rate and accelerator structure, SPIFs and short-term incentives, how to handle ramp periods for new reps, clawback provisions, plan change management (how to communicate mid-year changes), common sales comp mistakes and how to avoid them, and how to model the financial impact of the comp plan at different attainment levels.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-story', requireAuth, async (req: AuthRequest, res) => {
+  const { company, origin, mission } = req.body;
+  const prompt = `You are a brand storytelling and narrative strategy expert. Create the brand story for ${company} with ${origin} founding story and ${mission} mission. Craft: the founding story (why the company exists, the problem the founders experienced, the insight that led to the solution), the customer hero narrative (how the customer is the hero, and your brand is their guide), the company values story (how values show up in behavior, not just words), the enemy narrative (what are you fighting against, what is the status quo you are disrupting), the vision story (what the world looks like when you win), and how to adapt the brand story for different audiences (investors, customers, employees, press).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/recruiting-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, roles, timeline } = req.body;
+  const prompt = `You are a talent acquisition and recruiting strategy expert. Build a recruiting strategy for ${company} hiring ${roles} over ${timeline}. Cover the employer brand strategy (why would great people choose you), the sourcing strategy for each role type (engineering, sales, product, leadership), the recruiting capacity model (internal TA vs. agency vs. RPO), the interview process design by role (stages, assessments, calibration), how to reduce time-to-hire without sacrificing quality, offer strategy and close rates improvement, diversity recruiting strategy, the ATS and recruiting tech stack, recruiting metrics dashboard (funnel metrics, source quality, interview-to-offer, offer acceptance), and how to build a proactive talent pipeline before you have open roles.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/cfo-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, priorities } = req.body;
+  const prompt = `You are a startup CFO and finance leadership expert. Build the CFO playbook for ${company} at ${stage} stage with ${priorities}. Cover the finance function build-out roadmap (what to build when), the financial reporting cadence and package design (weekly flash, monthly close, board deck), the financial model and scenario planning approach, cash management and treasury operations, the fundraising readiness checklist, the metrics that matter for your stage (ARR, NDR, CAC payback, gross margin, burn multiple), financial controls and the audit-readiness checklist, how to build the finance team (when to hire a controller, FP&A analyst, VP Finance), and how the CFO partners with the CEO and board on strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/cyber-incident', requireAuth, async (req: AuthRequest, res) => {
+  const { company, incident, assets } = req.body;
+  const prompt = `You are a cybersecurity incident response and CISO expert. Build a cybersecurity incident response playbook for ${company} for ${incident} type incident involving ${assets}. Cover the incident classification matrix (severity levels and response triggers), the incident response team structure (CISO, security team, legal, comms, executive), the containment, eradication, and recovery playbook for this incident type, evidence preservation and chain of custody, the regulatory notification timeline (GDPR 72 hours, SEC disclosure, state breach laws), customer notification strategy, media and PR response, post-incident forensics and root cause analysis, the incident retrospective and lessons learned process, and how to test the playbook with tabletop exercises.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/testing-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { product, stack, coverage } = req.body;
+  const prompt = `You are a software testing strategy and quality engineering expert. Design the testing framework for ${product} built on ${stack} targeting ${coverage} coverage. Cover the testing pyramid design (unit, integration, E2E ratio), the testing strategy for each layer, test data management strategy, test environment strategy (dev, staging, production-mirror), continuous testing in CI/CD (what runs on every commit, on every PR, before deploy), contract testing for microservices or APIs, performance and load testing strategy, chaos engineering and resilience testing, the quality metrics dashboard (coverage, test reliability, flakiness rate, mean time to detect), and how to shift quality left in the engineering process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/marketing-engine', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, channel } = req.body;
+  const prompt = `You are a growth marketing and demand generation expert. Build the growth marketing engine for ${company} at ${stage} stage focused on ${channel} channel. Cover the growth marketing funnel (awareness → acquisition → activation → revenue → retention → referral), the demand generation strategy for this channel (ICP targeting, messaging, creative strategy), the paid media playbook (budget allocation, bidding strategy, creative testing methodology), the landing page and conversion optimization system, the lead nurturing and marketing automation strategy, the attribution model and analytics setup, the growth experiment framework (hypothesis → test → measure → learn → scale), and the team structure and skills needed to run this growth engine.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
