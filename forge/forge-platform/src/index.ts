@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v604.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v605.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200477,6 +200477,66 @@ app.post('/api/strategy/category-design', requireAuth, async (req: AuthRequest, 
 app.post('/api/sales/ltv-expansion', requireAuth, async (req: AuthRequest, res) => {
   const { customer, product, trigger } = req.body;
   const prompt = `You are a customer expansion revenue and upsell strategy expert. Design the LTV expansion strategy for ${customer} segment using ${product} expansion across ${trigger} triggers. Cover the expansion revenue framework, the land and expand motion design, the expansion trigger identification, the upsell and cross-sell playbook, the usage-based expansion design, the customer success to expansion handoff, the expansion deal qualification, the executive sponsor expansion strategy, the expansion pricing and packaging, and how to build a customer success organization that reliably grows revenue from existing customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/price-waterfall', requireAuth, async (req: AuthRequest, res) => {
+  const { product, list, net } = req.body;
+  const prompt = `You are a price waterfall and price realization expert. Analyze the price waterfall for ${product} from ${list} list price to ${net} net price. Cover the price waterfall structure and components, the on-invoice discount analysis, the off-invoice discount and rebate mapping, the freight and logistics cost allocation, the promotional spend impact, the leakage identification and quantification, the pocket price band analysis, the discount policy redesign, the sales behavior root cause for leakage, and how to improve price realization through systematic waterfall management.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/corporate-story', requireAuth, async (req: AuthRequest, res) => {
+  const { company, audience, goal } = req.body;
+  const prompt = `You are a corporate narrative and storytelling expert. Build the corporate story for ${company} for ${audience} audience to achieve ${goal}. Cover the corporate narrative architecture, the origin story and founder story design, the mission vision values integration, the customer hero story design, the product story framework, the why we win story, the team and culture story, the investor story vs. customer story, the crisis and turning point narrative, and how to embed the corporate story across all touchpoints so it becomes the organizing principle of the company.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-experiment', requireAuth, async (req: AuthRequest, res) => {
+  const { product, hypothesis, metric } = req.body;
+  const prompt = `You are a pricing experimentation and A/B testing expert. Design the pricing experiment for ${product} testing ${hypothesis} measuring ${metric}. Cover the pricing experiment methodology, the experiment design principles for pricing, the customer segmentation for experiments, the test vs. control design, the sample size and power calculation, the experiment duration design, the pricing page A/B test design, the checkout pricing test design, the long-term retention impact assessment, and how to build a rigorous pricing experimentation culture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/capex-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { project, investment, return } = req.body;
+  const prompt = `You are a capital expenditure planning and investment analysis expert. Build the CapEx plan for ${project} with ${investment} investment targeting ${return} return. Cover the CapEx classification and categorization, the CapEx vs. OpEx decision framework, the investment appraisal methodology, the NPV and IRR calculation, the payback period and profitability index, the sensitivity and scenario analysis, the CapEx prioritization and ranking, the CapEx approval and governance process, the CapEx tracking and variance management, and how to optimize CapEx allocation for maximum strategic return.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/pipeline-engineering', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stages, conversion } = req.body;
+  const prompt = `You are a sales pipeline design and revenue engineering expert. Engineer the sales pipeline for ${company} with ${stages} stages targeting ${conversion} stage conversion rates. Cover the pipeline stage definition and exit criteria, the pipeline conversion benchmarks, the pipeline velocity analysis, the pipeline coverage model, the pipeline health scoring, the deal inspection methodology, the pipeline management cadence, the pipeline generation vs. advancement activities, the pipeline forecasting accuracy improvement, and how to build a pipeline management discipline that makes revenue predictable.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/nps-action', requireAuth, async (req: AuthRequest, res) => {
+  const { company, score, segment } = req.body;
+  const prompt = `You are an NPS strategy and customer loyalty expert. Build the NPS action plan for ${company} with ${score} NPS targeting ${segment}. Cover the NPS methodology and limitations, the promoter growth strategy, the passive conversion program, the detractor recovery playbook, the NPS root cause analysis methodology, the closed-loop feedback program, the NPS by segment and cohort analysis, the NPS leading indicators and drivers, the NPS improvement roadmap, and how to use NPS as a genuine growth engine rather than a reporting metric.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/operations', requireAuth, async (req: AuthRequest, res) => {
+  const { team, bottleneck, scale } = req.body;
+  const prompt = `You are a product operations and product management efficiency expert. Design the product operations function for ${team} addressing ${bottleneck} to scale ${scale}. Cover the product operations charter and scope, the product development process design, the product analytics and instrumentation, the experimentation infrastructure, the product tooling and stack, the product data and insights program, the feature flag and release management, the product team rituals and cadence, the product-engineering collaboration model, and how to build a product operations function that multiplies the impact of every PM.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/executive-presence', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, context, gap } = req.body;
+  const prompt = `You are an executive presence and leadership communication expert. Coach ${leader} on executive presence in ${context} context addressing ${gap} gap. Cover the executive presence definition and components, the gravitas and authority development, the communication clarity and impact, the body language and non-verbal presence, the voice and delivery coaching, the listening and room-reading skills, the meeting and presentation presence, the virtual executive presence, the inclusive executive presence, and how to develop executive presence authentically without losing personal style.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/abm', requireAuth, async (req: AuthRequest, res) => {
+  const { company, accounts, tier } = req.body;
+  const prompt = `You are an account-based marketing and ABM strategy expert. Design the ABM program for ${company} targeting ${accounts} accounts at ${tier} tier. Cover the ABM program design and tier model, the target account selection criteria, the account intelligence and research process, the personalized content strategy for ABM, the ABM channel mix design, the sales and marketing alignment for ABM, the ABM measurement and attribution, the ABM technology stack design, the ABM pilot design, and how to scale ABM from a handful of accounts to a full enterprise go-to-market motion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/growth-experimentation', requireAuth, async (req: AuthRequest, res) => {
+  const { team, metric, cadence } = req.body;
+  const prompt = `You are a growth experimentation and experimentation culture expert. Build the experimentation program for ${team} improving ${metric} at ${cadence} cadence. Cover the experimentation program design, the hypothesis generation and backlog management, the experiment prioritization framework, the experiment design and statistical rigor, the experiment platform and tooling, the experiment governance and decision rules, the failed experiment learning extraction, the winning experiment scaling playbook, the experimentation culture building, and how to reach high experiment velocity while maintaining quality.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
