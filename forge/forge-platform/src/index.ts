@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v624.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v625.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201677,6 +201677,66 @@ app.post('/api/strategy/cognitive-debiasing', requireAuth, async (req: AuthReque
 app.post('/api/career/transition', requireAuth, async (req: AuthRequest, res) => {
   const { professional, from, to } = req.body;
   const prompt = `You are a career transition and professional reinvention expert. Guide ${professional} transitioning from ${from} to ${to}. Cover the career transition framework and assessment, the transferable skills identification, the gap analysis and development plan, the network mapping and activation, the narrative and positioning design, the target role and company research, the application and interview strategy, the offer evaluation framework, the transition timeline and milestones, and how to execute a career transition that leverages existing strengths while credibly repositioning for a new role or industry without taking unnecessary financial or career risk.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-story', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, origin, mission } = req.body;
+  const prompt = `You are a brand storytelling and narrative identity expert. Craft the brand story for ${brand} with origin ${origin} and mission ${mission}. Cover the brand story framework, the founder and origin story arc, the problem and purpose narrative, the hero journey structure, the customer as hero positioning, the brand values embodiment, the brand story differentiation, the brand story channel adaptation, the brand mythology and legend building, and how to craft a brand story that is emotionally resonant, authentically rooted in truth, and consistently communicated in ways that build lasting customer loyalty and brand equity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-expansion', requireAuth, async (req: AuthRequest, res) => {
+  const { company, market, model } = req.body;
+  const prompt = `You are a market expansion and international growth expert. Plan the expansion of ${company} into ${market} using ${model} expansion model. Cover the market entry strategy selection, the market attractiveness analysis, the market readiness assessment, the go-to-market strategy for new market entry, the local adaptation strategy, the partnership and distribution strategy, the regulatory and compliance navigation, the competitive positioning in new market, the expansion metrics and milestones, and how to sequence and execute market expansion in ways that build sustainable position without spreading resources too thin or moving faster than local market dynamics can support.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/governance', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, data, standards } = req.body;
+  const prompt = `You are a data governance and data management expert. Design the data governance framework for ${organization} managing ${data} assets to ${standards} standards. Cover the data governance strategy and objectives, the data ownership and stewardship model, the data policy and standards framework, the data quality management program, the data catalog and metadata management, the master data management design, the data privacy and security governance, the regulatory compliance framework, the data governance operating model, and how to build a data governance program that creates trust in your data assets, reduces data risk, and enables the organization to extract full value from data without creating bureaucratic bottlenecks.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/excellence-coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { rep, deal, challenge } = req.body;
+  const prompt = `You are a sales excellence and performance coaching expert. Coach ${rep} on winning ${deal} by addressing ${challenge}. Cover the sales situation diagnosis, the buyer journey mapping, the stakeholder mapping and influence strategy, the value proposition customization, the objection handling and reframing, the competitive differentiation strategy, the deal strategy and next steps, the negotiation approach, the closing strategy and timing, and how to coach sales professionals to develop the consultative selling skills, business acumen, and strategic thinking that consistently produce top performance and the ability to win complex enterprise deals.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/security-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { system, threats, controls } = req.body;
+  const prompt = `You are a security architecture and information security expert. Design the security architecture for ${system} protecting against ${threats} with ${controls}. Cover the security architecture framework and principles, the threat modeling methodology, the security domain design, the identity and access management architecture, the network security architecture, the data security architecture, the application security architecture, the security monitoring and detection design, the incident response architecture, and how to design security architectures that are defense-in-depth, proportionate to actual risk, operationally sustainable, and enable the business to move fast without taking unacceptable security risks.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/meeting-culture', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, problems, size } = req.body;
+  const prompt = `You are a meeting culture and organizational effectiveness expert. Transform the meeting culture of ${organization} fixing ${problems} at ${size} scale. Cover the meeting culture diagnosis and assessment, the meeting purpose and taxonomy design, the meeting cadence and structure redesign, the async-first working design, the meeting facilitation standards, the decision meeting redesign, the status meeting elimination strategy, the meeting technology and tooling, the culture change approach, and how to transform meeting culture in ways that free up significant time for deep work, improve decision quality, and create a working environment where people can do their best work without spending their days in unnecessary meetings.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/cx-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, touchpoints, moments } = req.body;
+  const prompt = `You are a customer experience design and CX strategy expert. Design the customer experience for ${brand} across ${touchpoints} touchpoints focusing on ${moments}. Cover the CX strategy and vision, the customer journey mapping, the moments of truth identification, the experience design principles, the touchpoint experience design, the service design and blueprinting, the CX measurement framework, the CX technology enablement, the CX culture and capability building, and how to design customer experiences that create genuine emotional connection, differentiate meaningfully from competitors, drive loyalty and advocacy, and translate great customer outcomes into sustainable business results.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-model', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segments, value } = req.body;
+  const prompt = `You are a pricing strategy and monetization expert. Design the pricing model for ${product} serving ${segments} delivering ${value}. Cover the pricing strategy framework, the value-based pricing methodology, the pricing model design and structure, the price point determination, the pricing segmentation strategy, the packaging and bundling design, the freemium and trial strategy, the pricing psychology and anchoring, the pricing testing and optimization, and how to design pricing models that capture appropriate value, create clear customer segmentation, support sales motion, and are designed to evolve as your product and market develop without requiring disruptive pricing changes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/negotiation', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, parties, stakes } = req.body;
+  const prompt = `You are a negotiation strategy and deal-making expert. Design the negotiation strategy for ${deal} with ${parties} at ${stakes} stakes. Cover the negotiation preparation framework, the BATNA analysis and development, the interests vs. positions analysis, the negotiation strategy design, the opening position and anchoring strategy, the concession strategy and trade matrix, the difficult negotiation tactics and counter-tactics, the relationship preservation in negotiation, the closing and agreement design, and how to approach negotiations in ways that consistently achieve strong outcomes while preserving relationships and reputation and building the kind of trust that leads to ongoing deal flow.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/innovation-culture', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, barriers, goals } = req.body;
+  const prompt = `You are an innovation culture and organizational creativity expert. Build the innovation culture in ${organization} overcoming ${barriers} to achieve ${goals}. Cover the innovation culture diagnosis, the innovation framework and methodology, the psychological safety building, the experimentation and learning culture, the idea generation and management systems, the innovation governance and portfolio management, the innovation metrics and measurement, the innovation labs and structures, the leadership behaviors for innovation, and how to build an innovation culture that is systematic and sustainable rather than dependent on individual heroes, that scales with the organization, and that produces the continuous stream of improvements and breakthroughs needed to maintain competitive advantage.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
