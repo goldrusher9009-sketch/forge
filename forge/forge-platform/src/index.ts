@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v423.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v424.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190436,6 +190436,59 @@ app.post('/api/product/roadmap-story', requireAuth, async (req: AuthRequest, res
 app.post('/api/sales/qbr-prep', requireAuth, async (req: AuthRequest, res) => {
   const { account, quarter, goals } = req.body;
   const prompt = `Prepare for a Quarterly Business Review.\nAccount: ${account}\nQuarter: ${quarter}\nCustomer goals: ${goals}\nInclude: agenda structure, health scorecard framework, win highlights, challenges to address, expansion opportunity framing, mutual success plan update, and executive talking points.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 267+268 routes
+app.post('/api/dev/cicd-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  const { stack, stages, targets } = req.body;
+  const prompt = `Design a CI/CD pipeline.\nTech stack: ${stack}\nPipeline stages: ${stages}\nDeploy targets: ${targets}\nInclude: pipeline architecture, stage definitions with gates, test strategy per stage, secrets management, rollback triggers, notification strategy, and tool recommendations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/champion-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { contact, goals, obstacles } = req.body;
+  const prompt = `Build a champion development plan.\nContact: ${contact}\nTheir internal goals: ${goals}\nObstacles they face: ${obstacles}\nInclude: champion enablement strategy, internal selling toolkit, how to help them build business case, executive sponsor path, risk if they leave, and nurture plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/feature-toggle-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, rollout, risks } = req.body;
+  const prompt = `Design a feature flag rollout strategy.\nFeature: ${feature}\nRollout plan: ${rollout}\nKnown risks: ${risks}\nInclude: flag architecture, rollout percentages and segments, kill switch criteria, monitoring plan, gradual ramp schedule, success metrics, and cleanup timeline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/affiliate-program', requireAuth, async (req: AuthRequest, res) => {
+  const { product, margins, audience } = req.body;
+  const prompt = `Design an affiliate marketing program.\nProduct: ${product}\nMargin structure: ${margins}\nTarget audience: ${audience}\nInclude: commission structure, affiliate tiers, recruitment strategy, creatives needed, tracking setup, payout schedule, compliance requirements, and top affiliate types to target.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/pip-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { role, issues, timeline } = req.body;
+  const prompt = `Create a Performance Improvement Plan framework.\nRole: ${role}\nPerformance issues: ${issues}\nTimeline: ${timeline}\nInclude: specific measurable goals, weekly check-in structure, support resources, documentation requirements, clear success/failure criteria, and manager communication guide. Focus on improvement, not termination.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/term-sheet-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { terms, stage, industry } = req.body;
+  const prompt = `Analyze venture capital term sheet terms.\nTerms: ${terms}\nCompany stage: ${stage}\nIndustry: ${industry}\nInclude: founder-friendly vs investor-friendly assessment, anti-dilution clause impact, liquidation preference analysis, pro-rata rights implications, board composition implications, and negotiation priorities ranked by importance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/microservices-design', requireAuth, async (req: AuthRequest, res) => {
+  const { domain, services, communication } = req.body;
+  const prompt = `Design a microservices architecture.\nDomain: ${domain}\nServices to decompose: ${services}\nCommunication preference: ${communication}\nInclude: service boundaries (DDD approach), API contracts between services, data ownership per service, event-driven patterns, service discovery, circuit breaker strategy, and observability plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/ab-test-design', requireAuth, async (req: AuthRequest, res) => {
+  const { hypothesis, metric, audience } = req.body;
+  const prompt = `Design a rigorous A/B test.\nHypothesis: ${hypothesis}\nPrimary metric: ${metric}\nAudience: ${audience}\nInclude: control and variant definitions, sample size calculation, test duration, statistical significance threshold, guardrail metrics, segmentation plan, and decision framework for when to ship/kill.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/beta-program', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, criteria, duration } = req.body;
+  const prompt = `Design a product beta program.\nFeature: ${feature}\nSelection criteria: ${criteria}\nDuration: ${duration}\nInclude: beta user profile, recruitment and onboarding flow, feedback cadence, success metrics, communication plan, exit criteria (go/no-go), and how to convert beta users to advocates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/negotiation-strategy-v2', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, leverage, walkaway } = req.body;
+  const prompt = `Build a sales negotiation strategy.\nDeal: ${deal}\nOur leverage points: ${leverage}\nWalkaway position: ${walkaway}\nInclude: BATNA analysis, opening position, concession ladder (what to give and in what order), anchoring strategy, common objection responses, time pressure tactics, and how to get to yes without leaving money on the table.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
