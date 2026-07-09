@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v424.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v425.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190489,6 +190489,59 @@ app.post('/api/product/beta-program', requireAuth, async (req: AuthRequest, res)
 app.post('/api/sales/negotiation-strategy-v2', requireAuth, async (req: AuthRequest, res) => {
   const { deal, leverage, walkaway } = req.body;
   const prompt = `Build a sales negotiation strategy.\nDeal: ${deal}\nOur leverage points: ${leverage}\nWalkaway position: ${walkaway}\nInclude: BATNA analysis, opening position, concession ladder (what to give and in what order), anchoring strategy, common objection responses, time pressure tactics, and how to get to yes without leaving money on the table.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 269+270 routes
+app.post('/api/dev/kubernetes-config', requireAuth, async (req: AuthRequest, res) => {
+  const { app, replicas, resources } = req.body;
+  const prompt = `Generate Kubernetes configuration files.\nApplication: ${app}\nReplica strategy: ${replicas}\nResource requirements: ${resources}\nInclude: Deployment manifest, Service, ConfigMap, HPA config, liveness/readiness probes, resource requests/limits, namespace setup, and deployment strategy (rolling update vs blue-green).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/storytelling', requireAuth, async (req: AuthRequest, res) => {
+  const { product, hero, outcome } = req.body;
+  const prompt = `Craft a compelling sales story.\nProduct: ${product}\nHero (customer): ${hero}\nDesired outcome: ${outcome}\nInclude: hook (problem-first opening), villain (the pain), guide (your product), transformation (how life changes), social proof moment, and a call to action that feels inevitable. Make it emotional and specific.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/discovery-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { problem, assumptions, methods } = req.body;
+  const prompt = `Create a product discovery plan.\nProblem to explore: ${problem}\nKey assumptions to test: ${assumptions}\nPreferred methods: ${methods}\nInclude: research questions, user interview guide, survey design, prototype fidelity recommendation, test plan, synthesis approach, and decision criteria for when to build vs. pivot.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/viral-loop', requireAuth, async (req: AuthRequest, res) => {
+  const { product, trigger, reward } = req.body;
+  const prompt = `Design a viral growth loop.\nProduct: ${product}\nSharing trigger: ${trigger}\nReward mechanism: ${reward}\nInclude: loop mechanics diagram (text), viral coefficient math, friction reduction points, notification strategy, referral program structure, A/B test ideas, and benchmark metrics to aim for.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/succession-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { role, candidates, timeline } = req.body;
+  const prompt = `Create a succession planning framework.\nRole: ${role}\nInternal candidates: ${candidates}\nTimeline: ${timeline}\nInclude: competency gap analysis per candidate, development plan for each, readiness rating (now/1yr/2yr), risk assessment if role is vacant, external search trigger criteria, and knowledge transfer plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/portfolio-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { companies, stage, sector } = req.body;
+  const prompt = `Analyze a venture portfolio.\nPortfolio companies: ${companies}\nStage: ${stage}\nSector: ${sector}\nInclude: portfolio construction assessment, concentration risk analysis, reserve allocation recommendations, follow-on strategy, power law distribution analysis, board support prioritization, and signals to watch across the portfolio.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/observability-stack', requireAuth, async (req: AuthRequest, res) => {
+  const { services, metrics, budget } = req.body;
+  const prompt = `Design an observability stack.\nServices to monitor: ${services}\nKey metrics: ${metrics}\nBudget: ${budget}\nInclude: tool selection (logs/metrics/traces), OpenTelemetry setup, alerting philosophy, dashboard design, SLO/SLA definitions, on-call runbook template, and cost optimization strategies.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/rebrand-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { reason, audience, timeline } = req.body;
+  const prompt = `Create a brand refresh strategy.\nReason for rebrand: ${reason}\nTarget audience: ${audience}\nTimeline: ${timeline}\nInclude: brand audit checklist, stakeholder alignment plan, naming/identity brief, rollout sequence (internal first), asset migration plan, customer communication strategy, and how to handle the old brand during transition.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/metrics-tree', requireAuth, async (req: AuthRequest, res) => {
+  const { goal, drivers, product } = req.body;
+  const prompt = `Build a product metrics tree.\nNorth star goal: ${goal}\nKey drivers: ${drivers}\nProduct: ${product}\nInclude: metric hierarchy (North Star → Level 1 → Level 2 → Leading indicators), ownership per metric, measurement methods, target-setting framework, and how each metric connects to business outcomes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/pipeline-hygiene', requireAuth, async (req: AuthRequest, res) => {
+  const { pipeline, stage, criteria } = req.body;
+  const prompt = `Create a sales pipeline hygiene framework.\nPipeline description: ${pipeline}\nCurrent stage breakdown: ${stage}\nQualification criteria: ${criteria}\nInclude: deal scoring rubric, stale deal triggers, MEDDPICC audit template, stage exit criteria, weekly hygiene checklist, CRM field requirements per stage, and coaching questions for each stuck deal.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
