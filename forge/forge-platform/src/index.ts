@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v443.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v444.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191496,6 +191496,59 @@ app.post('/api/product/user-personas', requireAuth, async (req: AuthRequest, res
 app.post('/api/sales/negotiation-playbook', requireAuth, async (req: AuthRequest, res) => {
   const { deal, leverage, redlines } = req.body;
   const prompt = `Build a negotiation playbook for this deal.\nDeal context: ${deal}\nLeverage position: ${leverage}\nRedline issues: ${redlines}\nInclude: BATNA (best alternative to negotiated agreement) analysis, opening position strategy, concession sequencing (what to give up and when), value exchange framework, anchoring tactics, how to handle procurement professionals, silence as a negotiation tool, multi-issue negotiation to create value, how to use time pressure, escalation to executive strategy, and closing the negotiation gracefully.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 307+308 routes
+app.post('/api/dev/testing-pyramid', requireAuth, async (req: AuthRequest, res) => {
+  const { stack, coverage, velocity } = req.body;
+  const prompt = `Design a testing strategy using the testing pyramid.\nTech stack: ${stack}\nCurrent coverage: ${coverage}\nVelocity goal: ${velocity}\nInclude: unit test strategy (what to test, mocking philosophy, test isolation), integration test design (API contracts, DB integration, external service mocking), E2E test coverage (critical paths only, flakiness prevention), contract testing for microservices, visual regression testing, performance testing baseline, test data management, CI pipeline test execution strategy, and how to improve test coverage without slowing delivery.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/sdr-motion', requireAuth, async (req: AuthRequest, res) => {
+  const { icp, channels, quota } = req.body;
+  const prompt = `Design an SDR outbound motion.\nIdeal customer profile: ${icp}\nOutreach channels: ${channels}\nQuota target: ${quota}\nInclude: daily/weekly activity metrics (calls/emails/LinkedIn touches), sequence design with timing, persona-specific messaging variants, account prioritization model, territory management, research workflow before outreach, voicemail strategy, LinkedIn connection strategy, objection handling scripts, meeting handoff to AE, and ramp plan for new SDRs to hit quota.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/okr-design', requireAuth, async (req: AuthRequest, res) => {
+  const { mission, quarter, team } = req.body;
+  const prompt = `Design OKRs for a product team.\nMission: ${mission}\nQuarter: ${quarter}\nTeam: ${team}\nInclude: OKR philosophy (aspirational vs. committed), objective quality criteria (inspirational/time-bound/qualitative), key result quality criteria (measurable/leading indicators), 3-5 OKR examples for the context, cascade from company to team OKRs, check-in cadence and scoring methodology, common OKR pitfalls to avoid (task-based KRs/too many OKRs/sandbagging), and how to connect OKRs to roadmap prioritization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/paid-media-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { budget, goals, audience } = req.body;
+  const prompt = `Build a paid media plan.\nBudget: ${budget}\nGoals: ${goals}\nTarget audience: ${audience}\nInclude: channel mix and budget allocation rationale (Search/Social/Display/Video/Programmatic), campaign structure by funnel stage, audience targeting layers, bid strategy selection, creative testing framework, landing page requirements per channel, attribution model setup, budget pacing and flight recommendations, performance thresholds for scaling vs. pausing, and weekly optimization cadence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/recruiting-engine', requireAuth, async (req: AuthRequest, res) => {
+  const { roles, timeline, sourcing } = req.body;
+  const prompt = `Build a high-performance recruiting engine.\nOpen roles: ${roles}\nTimeline: ${timeline}\nSourcing approach: ${sourcing}\nInclude: sourcing channel mix (inbound/outbound/referral/agency), job description optimization, interview process design per role level, structured interview scoring, recruiter and hiring manager SLAs, offer acceptance rate optimization, candidate experience design, diversity sourcing strategies, ATS configuration, recruiting metrics dashboard (time-to-fill/offer acceptance/quality of hire), and how to scale recruiting without sacrificing quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/portco-support', requireAuth, async (req: AuthRequest, res) => {
+  const { company, challenge, resources } = req.body;
+  const prompt = `Design portfolio company support.\nPortfolio company: ${company}\nChallenge they face: ${challenge}\nResources available: ${resources}\nInclude: value-add support model (strategic/operational/network), board meeting optimization, key hire introductions approach, customer introduction playbook, follow-on financing preparation, crisis intervention framework, co-investor coordination, benchmarking against portfolio peers, founder mental health support, and how to be a value-add investor without micromanaging.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/tech-debt-paydown', requireAuth, async (req: AuthRequest, res) => {
+  const { codebase, team, symptoms } = req.body;
+  const prompt = `Create a technical debt paydown strategy.\nCodebase context: ${codebase}\nTeam size: ${team}\nDebt symptoms: ${symptoms}\nInclude: tech debt classification (code/design/architecture/test/documentation debt), debt inventory and severity scoring, the 20% rule for ongoing debt reduction, strangler fig pattern for large refactors, boy scout rule for opportunistic cleanup, debt paydown OKRs, how to make the case to business stakeholders, tracking improvement via metrics (deployment frequency/lead time/MTTR), and when to do a full rewrite vs. incremental paydown.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/launch-calendar', requireAuth, async (req: AuthRequest, res) => {
+  const { product, quarter, channels } = req.body;
+  const prompt = `Build a product launch calendar.\nProduct: ${product}\nQuarter: ${quarter}\nMarketing channels: ${channels}\nInclude: launch type classification (tier 1/2/3 launch framework), 8-week countdown plan, internal readiness checklist (sales/CS/support/legal), external announcement sequence, press embargo management, launch day coordination plan, social media posting schedule, email campaign timing, community and partner activation, post-launch measurement plan (30/60/90 day), and how to sustain momentum beyond launch day.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/feedback-system', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, channels, team } = req.body;
+  const prompt = `Design a product feedback system.\nProduct stage: ${stage}\nFeedback channels: ${channels}\nTeam size: ${team}\nInclude: feedback capture points (in-app/NPS/CSAT/support/sales/interviews), centralized feedback repository design, tagging and categorization taxonomy, feedback routing workflow (to PM/eng/design/CS), volume vs. signal distinction, how to avoid survivorship bias in feedback, closed-loop communication with users who submitted feedback, feedback to roadmap decision process, and metrics to measure feedback system health.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/customer-story', requireAuth, async (req: AuthRequest, res) => {
+  const { customer, useCase, results } = req.body;
+  const prompt = `Craft a compelling customer story for sales.\nCustomer: ${customer}\nUse case: ${useCase}\nResults achieved: ${results}\nInclude: elevator version (2-3 sentences), full story narrative (situation/challenge/solution/results), quantified business impact, customer quote crafting guide, visuals and data to include, objection pre-emption embedded in the story, how to use this story in different contexts (email/call/deck/website), competitive differentiation angles, and follow-up proof point requests to gather from the customer.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
