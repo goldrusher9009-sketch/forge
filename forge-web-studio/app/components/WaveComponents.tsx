@@ -48972,3 +48972,283 @@ export function ForgeTab_productethicalleader1420() {
     </div>
   );
 }
+
+export function ForgeTab_productopsresilience1421() {
+  const [organization, setOrganization] = React.useState('');
+  const [risks, setRisks] = React.useState('');
+  const [recovery, setRecovery] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/operations/resilience', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({organization, risks, recovery})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>💪 Operational Resilience Pro</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="organization" value={organization} onChange={e=>setOrganization(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="risks" value={risks} onChange={e=>setRisks(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="recovery" value={recovery} onChange={e=>setRecovery(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productcloudmigrat1422() {
+  const [workloads, setWorkloads] = React.useState('');
+  const [provider, setProvider] = React.useState('');
+  const [strategy, setStrategy] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/engineering/cloud-migration', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({workloads, provider, strategy})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>☁ Cloud Migration Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="workloads" value={workloads} onChange={e=>setWorkloads(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="provider" value={provider} onChange={e=>setProvider(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="strategy" value={strategy} onChange={e=>setStrategy(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productemailmarket1423() {
+  const [brand, setBrand] = React.useState('');
+  const [list, setList] = React.useState('');
+  const [goals, setGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/marketing/email-marketing', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({brand, list, goals})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>📧 Email Marketing Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="brand" value={brand} onChange={e=>setBrand(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="list" value={list} onChange={e=>setList(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="goals" value={goals} onChange={e=>setGoals(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productglobalsales1424() {
+  const [company, setCompany] = React.useState('');
+  const [regions, setRegions] = React.useState('');
+  const [model, setModel] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/sales/global-strategy', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({company, regions, model})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>🌍 Global Sales Strategist</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="company" value={company} onChange={e=>setCompany(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="regions" value={regions} onChange={e=>setRegions(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="model" value={model} onChange={e=>setModel(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productproductmarketing1425() {
+  const [product, setProduct] = React.useState('');
+  const [segment, setSegment] = React.useState('');
+  const [launch, setLaunch] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/marketing/product-marketing', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({product, segment, launch})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>📢 Product Marketing Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="product" value={product} onChange={e=>setProduct(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="segment" value={segment} onChange={e=>setSegment(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="launch" value={launch} onChange={e=>setLaunch(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productservicedesign1426() {
+  const [service, setService] = React.useState('');
+  const [customers, setCustomers] = React.useState('');
+  const [channels, setChannels] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/operations/service-design', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({service, customers, channels})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>🎨 Service Design Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="service" value={service} onChange={e=>setService(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="customers" value={customers} onChange={e=>setCustomers(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="channels" value={channels} onChange={e=>setChannels(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productopenstrat1427() {
+  const [company, setCompany] = React.useState('');
+  const [project, setProject] = React.useState('');
+  const [goals, setGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/strategy/open-source', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({company, project, goals})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>🌐 Open Source Strategy Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="company" value={company} onChange={e=>setCompany(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="project" value={project} onChange={e=>setProject(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="goals" value={goals} onChange={e=>setGoals(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productfintechstrat1428() {
+  const [product, setProduct] = React.useState('');
+  const [market, setMarket] = React.useState('');
+  const [model, setModel] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/strategy/fintech', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({product, market, model})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>💳 FinTech Strategy Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="product" value={product} onChange={e=>setProduct(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="market" value={market} onChange={e=>setMarket(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="model" value={model} onChange={e=>setModel(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productleadmagnet1429() {
+  const [company, setCompany] = React.useState('');
+  const [icp, setIcp] = React.useState('');
+  const [channels, setChannels] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/marketing/lead-generation', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({company, icp, channels})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>🧲 Lead Generation Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="company" value={company} onChange={e=>setCompany(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="icp" value={icp} onChange={e=>setIcp(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="channels" value={channels} onChange={e=>setChannels(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productagilecoach1430() {
+  const [organization, setOrganization] = React.useState('');
+  const [maturity, setMaturity] = React.useState('');
+  const [goals, setGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/engineering/agile-transformation', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({organization, maturity, goals})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>🏃 Agile Transformation Coach</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="organization" value={organization} onChange={e=>setOrganization(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="maturity" value={maturity} onChange={e=>setMaturity(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="goals" value={goals} onChange={e=>setGoals(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}

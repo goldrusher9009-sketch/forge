@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v632.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v633.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202157,6 +202157,66 @@ app.post('/api/strategy/franchise', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/hr/ethical-leadership', requireAuth, async (req: AuthRequest, res) => {
   const { leader, dilemmas, values } = req.body;
   const prompt = `You are an ethical leadership and values-based management expert. Develop the ethical leadership of ${leader} navigating ${dilemmas} grounded in ${values}. Cover the ethical leadership framework, the ethical decision-making methodology, the values clarification and articulation, the ethical culture creation, the ethical dilemma navigation frameworks, the stakeholder ethics balancing, the integrity and trust building, the ethical communication practices, the ethical accountability structures, and how to develop leaders who make decisions that are not just legal and profitable but genuinely right, who create organizational cultures where ethical behavior is the norm rather than the exception, and who build the kind of trust with employees, customers, and communities that creates sustainable business success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/resilience', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, risks, recovery } = req.body;
+  const prompt = `You are an operational resilience and business continuity expert. Build operational resilience for ${organization} against ${risks} with ${recovery} recovery objectives. Cover the resilience strategy framework, the business impact analysis, the critical service and process mapping, the threat and vulnerability assessment, the resilience control design, the incident management framework, the business continuity plan design, the disaster recovery plan, the resilience testing and exercise program, and how to build operational resilience that is proportionate to actual risk, that has been tested and proven rather than just documented, that enables the organization to withstand and recover from disruptions quickly, and that satisfies regulatory requirements and customer contractual commitments for service availability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/cloud-migration', requireAuth, async (req: AuthRequest, res) => {
+  const { workloads, provider, strategy } = req.body;
+  const prompt = `You are a cloud migration strategy and cloud architecture expert. Design the cloud migration for ${workloads} to ${provider} using ${strategy} strategy. Cover the cloud migration framework, the workload discovery and assessment, the migration strategy selection for each workload, the landing zone and account structure design, the network and security architecture, the data migration strategy, the application refactoring approach, the migration sequencing and wave planning, the cutover and rollback planning, and how to execute cloud migrations that successfully move workloads to the cloud while improving security and reliability, that refactor applications appropriately to take advantage of cloud-native services, and that deliver the cost optimization and operational efficiency that justified the migration investment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/email-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, list, goals } = req.body;
+  const prompt = `You are an email marketing strategy and lifecycle marketing expert. Design the email marketing program for ${brand} with ${list} to achieve ${goals}. Cover the email marketing strategy framework, the list segmentation design, the email cadence and frequency optimization, the automated lifecycle email design, the transactional email optimization, the newsletter and broadcast strategy, the personalization and dynamic content strategy, the deliverability and inbox placement, the email testing and optimization program, and how to build email marketing programs that consistently generate revenue and engagement through relevant, personalized messages sent at the right frequency, that maintain strong deliverability, and that evolve beyond one-size-fits-all blasts to sophisticated behavioral triggers and lifecycle sequences that match messaging to customer journey stage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/global-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, regions, model } = req.body;
+  const prompt = `You are a global sales strategy and international go-to-market expert. Design the global sales strategy for ${company} expanding into ${regions} using ${model}. Cover the global sales strategy framework, the market prioritization methodology, the go-to-market model selection by market, the sales team structure for each region, the channel partner strategy, the local sales playbook adaptation, the international pricing strategy, the global sales operations design, the global sales metrics and governance, and how to design global sales strategies that successfully adapt the core value proposition and selling motion to local market dynamics, cultural norms, and buyer behavior while maintaining the consistency and efficiency of a well-run global sales organization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/product-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, launch } = req.body;
+  const prompt = `You are a product marketing strategy and go-to-market expert. Design the product marketing strategy for ${product} targeting ${segment} for ${launch}. Cover the product marketing strategy framework, the market segmentation and targeting, the buyer persona development, the competitive positioning, the messaging architecture and narrative, the product launch strategy and plan, the sales enablement content strategy, the analyst and influencer strategy, the win/loss analysis program, and how to build product marketing capabilities that deeply understand the buyer and market, that translate product capabilities into compelling customer value narratives, that enable sales to win more deals, and that orchestrate launches that build awareness and drive adoption among the target customer segments.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/service-design', requireAuth, async (req: AuthRequest, res) => {
+  const { service, customers, channels } = req.body;
+  const prompt = `You are a service design and service innovation expert. Design the ${service} service for ${customers} across ${channels}. Cover the service design methodology, the service blueprint development, the front stage and backstage design, the customer touchpoint design, the service employee experience design, the service recovery and failure design, the service consistency and standardization, the service technology enablement, the service measurement framework, and how to design services that create consistently excellent customer experiences across all touchpoints and channels, that enable frontline employees to deliver great service reliably, that build in graceful failure recovery, and that are efficient and scalable without sacrificing the quality and personalization that customers value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/open-source', requireAuth, async (req: AuthRequest, res) => {
+  const { company, project, goals } = req.body;
+  const prompt = `You are an open source strategy and developer relations expert. Design the open source strategy for ${company} around ${project} to achieve ${goals}. Cover the open source strategy framework, the open source business model design, the project governance and community design, the contributor acquisition and management, the open core and proprietary layer design, the developer community building, the documentation and developer experience, the open source licensing strategy, the open source sustainability model, and how to design open source strategies that build genuine developer communities around your project, that create sustainable business models that monetize the value created by open source adoption, and that contribute authentically to the open source ecosystem in ways that build developer trust and advocacy for your company and its commercial products.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/fintech', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, model } = req.body;
+  const prompt = `You are a financial technology strategy and FinTech business model expert. Design the FinTech strategy for ${product} in ${market} using ${model}. Cover the FinTech market analysis and opportunity, the regulatory and licensing strategy, the financial services partnership model, the bank and payment rail integration, the compliance and AML/KYC design, the unit economics and monetization model, the trust and security strategy, the FinTech go-to-market strategy, the FinTech scaling strategy, and how to build FinTech businesses that navigate the uniquely complex intersection of technology innovation, financial regulation, and incumbent partnership dynamics to deliver genuinely better financial services to customers while building sustainable and defensible business models.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/lead-generation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, icp, channels } = req.body;
+  const prompt = `You are a lead generation and demand creation expert. Design the lead generation strategy for ${company} targeting ${icp} through ${channels}. Cover the lead generation strategy framework, the ICP definition and targeting, the demand creation vs. demand capture strategy, the inbound lead generation program, the outbound prospecting program, the content marketing for lead generation, the paid media lead generation, the lead magnet and gated content strategy, the lead scoring and qualification, and how to build lead generation programs that create a consistent, predictable flow of qualified leads to the sales team, that balance short-term lead volume with long-term brand and relationship building, and that use the right mix of demand creation and demand capture activities to efficiently fill the top of funnel.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/agile-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, maturity, goals } = req.body;
+  const prompt = `You are an agile transformation and organizational agility expert. Design the agile transformation for ${organization} at ${maturity} maturity toward ${goals}. Cover the agile transformation strategy, the agile maturity assessment, the agile framework selection, the team structure and topology for agile, the agile ceremonies and cadence design, the product ownership model, the engineering practices for agile, the agile metrics and measurement, the leadership and culture change for agile, and how to design agile transformations that produce genuine improvements in delivery speed, quality, and responsiveness to change rather than cargo-cult agile adoptions that have the ceremonies without the mindset, and that build the organizational agility needed to compete in fast-moving markets.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
