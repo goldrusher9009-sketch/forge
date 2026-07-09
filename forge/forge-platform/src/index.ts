@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v562.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v563.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -197957,6 +197957,66 @@ app.post('/api/product/insights-dashboard', requireAuth, async (req: AuthRequest
 app.post('/api/ai/prompt-engineering', requireAuth, async (req: AuthRequest, res) => {
   const { useCase, model, outputFormat } = req.body;
   const prompt = `You are a prompt engineering expert. Create a prompt engineering masterclass for ${useCase} using ${model} targeting ${outputFormat} output format. Cover zero-shot vs. few-shot vs. chain-of-thought prompting, system prompt design, role assignment and persona prompting, structured output formats (JSON, XML, markdown), handling edge cases and failure modes, testing and evaluation methodology, prompt versioning and management, cost optimization techniques, and a prompt library template for the use case.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cs/product-led', requireAuth, async (req: AuthRequest, res) => {
+  const { product, csMotion, segment } = req.body;
+  const prompt = `You are a product-led customer success expert. Design a product-led CS strategy for ${product} with ${csMotion} CS motion for ${segment} segment. Cover digital-led vs. high-touch segmentation criteria, in-product health scoring, automated intervention triggers, tech-touch program design (automated emails, in-app messaging), CS manager focus on high-value accounts, expansion signals from product usage, and how to measure CS efficiency (revenue per CSM, NRR by segment).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/moat', requireAuth, async (req: AuthRequest, res) => {
+  const { company, strengths, threats } = req.body;
+  const prompt = `You are a competitive strategy expert. Design a competitive moat building strategy for ${company} with strengths: ${strengths} facing threats: ${threats}. Identify and prioritize moat types (network effects, switching costs, data moats, brand, regulatory, economies of scale), design reinforcing mechanisms for each moat, create a moat-building roadmap over 1/3/5 years, and how to communicate the moat to investors and customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/opportunity-sizing', requireAuth, async (req: AuthRequest, res) => {
+  const { opportunity, market, assumptions } = req.body;
+  const prompt = `You are a product strategy and market sizing expert. Size the opportunity for ${opportunity} in ${market} market with assumptions: ${assumptions}. Apply both top-down (TAM → SAM → SOM) and bottom-up (unit economics × addressable customers) approaches, sensitivity analysis on key assumptions, comparables from similar markets, what would need to be true for the bull/bear cases, and how to use the sizing to make a go/no-go decision.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/okr-system', requireAuth, async (req: AuthRequest, res) => {
+  const { company, teams, cadence } = req.body;
+  const prompt = `You are an OKR and goal-setting expert. Design a team OKR system for ${company} across ${teams} teams on ${cadence} cadence. Cover OKR writing best practices (inspiring objectives, measurable key results), OKR hierarchy (company → team → individual), the OKR setting process (top-down vs. bottom-up), grading methodology, check-in rhythm, how to handle OKR misalignment between teams, what to do with incomplete OKRs, and common OKR pitfalls to avoid.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/safety-policy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, aiUses, risks } = req.body;
+  const prompt = `You are an AI safety and responsible AI policy expert. Design an AI safety policy for ${organization} with ${aiUses} AI uses addressing ${risks}. Cover acceptable use policy for AI tools, prohibited AI use cases, data privacy requirements when using AI, model output review requirements, employee AI training program, AI incident response process, vendor AI risk assessment framework, and how to stay current as AI capabilities and risks evolve.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/bundling', requireAuth, async (req: AuthRequest, res) => {
+  const { products, segments, competitors } = req.body;
+  const prompt = `You are a product bundling and packaging expert. Design a product bundling strategy for ${products} targeting ${segments} customer segments competing against ${competitors}. Analyze bundle vs. unbundle trade-offs, design bundle configurations that maximize value perception, set bundle pricing using anchoring and price-pack architecture, design the cross-sell motion to upsell to higher bundles, and how to test bundle configurations and measure bundle attach rates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/enterprise-arch', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, systems, goals } = req.body;
+  const prompt = `You are an enterprise architecture expert. Develop an enterprise architecture strategy for ${organization} with systems: ${systems} pursuing ${goals}. Cover current state architecture assessment, target state architecture vision, transition architecture milestones, application rationalization (retire, replace, retain, re-platform), integration architecture pattern selection (ESB, API-led, event-driven), cloud migration strategy, architectural governance model, and how to measure architecture maturity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/feedback-system', requireAuth, async (req: AuthRequest, res) => {
+  const { product, channels, team } = req.body;
+  const prompt = `You are a product feedback and voice of customer expert. Design a product feedback system for ${product} across ${channels} for ${team} team to act on. Cover feedback collection channels (NPS, CSAT, in-app, support tickets, sales calls, reviews), feedback tagging and categorization taxonomy, feedback routing to product teams, synthesis methodology, feedback-to-roadmap influence process, closing the loop with customers, and how to measure how well the team acts on feedback.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-expansion', requireAuth, async (req: AuthRequest, res) => {
+  const { company, targetMarket, assets } = req.body;
+  const prompt = `You are a market expansion and international growth expert. Build a market expansion plan for ${company} entering ${targetMarket} using ${assets} existing assets. Cover market entry mode selection (direct vs. partner vs. acquisition), market sizing and TAM analysis, localization requirements (product, pricing, legal, cultural), go-to-market motion for the new market, resource requirements and timeline, success metrics and milestones, risk assessment and mitigation, and what would cause you to exit the market.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { product, vision, audience } = req.body;
+  const prompt = `You are a product storytelling and narrative expert. Craft a product narrative for ${product} with vision: ${vision} for ${audience} audience. Build the narrative using the Hero Journey (customer is the hero, product is the guide), define the customer struggle and stakes, articulate the product transformation, craft the future-state vision, create different narrative versions for different audiences (investor, customer, team, press), and design the narrative arc for a 20-minute keynote presentation.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
