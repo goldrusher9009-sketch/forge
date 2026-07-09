@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v577.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v578.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198857,6 +198857,66 @@ app.post('/api/strategy/platform', requireAuth, async (req: AuthRequest, res) =>
 app.post('/api/product/experience-design', requireAuth, async (req: AuthRequest, res) => {
   const { product, persona, emotion } = req.body;
   const prompt = `You are a user experience and human-centered design expert. Create an experience design blueprint for ${product} for ${persona} persona targeting ${emotion} emotional outcome. Cover the experience principles that guide design decisions, the experience map from first awareness to advocacy, the moments that matter (touchpoints that disproportionately impact perception), the emotional design framework (what users feel at each stage), the interaction design principles specific to this product, the visual design language (color psychology, typography, spacing, motion), accessibility and inclusive design requirements, how to test for emotional resonance in user research, and the experience quality metrics (task success, time on task, SUS, NPS, emotional satisfaction).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/innovation-lab', requireAuth, async (req: AuthRequest, res) => {
+  const { company, focus, resources } = req.body;
+  const prompt = `You are an innovation management and corporate venture expert. Design an innovation lab for ${company} focused on ${focus} with ${resources} resources. Cover the innovation lab charter and mandate (incremental vs. disruptive innovation), the portfolio model (explore vs. exploit balance), the innovation process (ideation → validation → incubation → scaling), governance and decision rights (who funds, who kills projects), how to staff the innovation lab (internal talent vs. external hires vs. startup partnerships), how to connect innovation lab outputs back to the core business, measuring innovation lab ROI, and how to prevent the innovation lab from becoming a museum.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/employee-experience', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, priorities } = req.body;
+  const prompt = `You are an employee experience and people operations expert. Design the employee experience for ${company} at ${stage} stage with ${priorities}. Map the employee lifecycle (attract → hire → onboard → develop → engage → retain → exit), and for each stage design: the key moments that matter, the experience principles, the touchpoints and rituals, the feedback mechanisms, and the metrics. Cover physical workspace and remote work design, the communication and information flow, manager effectiveness programs, recognition and rewards, career pathing and internal mobility, and how to measure employee experience (eNPS, engagement survey, pulse surveys, exit interviews).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/compensation-system', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, philosophy } = req.body;
+  const prompt = `You are a compensation strategy and total rewards expert. Build a compensation system for ${company} at ${stage} stage with ${philosophy} compensation philosophy. Cover the compensation philosophy statement, the benchmarking approach (which surveys, which percentile to target), pay band design by level and function, base pay administration (how to set starting salaries, merit increases, promotions), short-term incentive design (bonus targets, metrics, payout mechanics), equity compensation design (option pool, grant levels by band, vesting schedule), benefits philosophy and design, the pay equity process, and how to communicate compensation decisions to employees clearly and fairly.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/launch-readiness', requireAuth, async (req: AuthRequest, res) => {
+  const { product, date, risks } = req.body;
+  const prompt = `You are a product launch and go-to-market readiness expert. Assess and build launch readiness for ${product} launching on ${date} with ${risks} identified risks. Run through the complete launch readiness checklist: product completeness (features, bugs, performance), GTM readiness (sales trained, collateral ready, pricing confirmed), infrastructure readiness (capacity, monitoring, runbooks), legal and compliance readiness (terms, privacy, security review), support readiness (documentation, training, escalation paths), executive alignment (who approved the launch, what are success criteria), the launch day runbook (who does what when), and post-launch monitoring plan (metrics to watch, rollback criteria).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/agile-coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { team, methodology, challenges } = req.body;
+  const prompt = `You are an agile coaching and delivery excellence expert. Design an agile coaching program for ${team} using ${methodology} addressing ${challenges}. Cover the agile maturity assessment, the coaching roadmap from current state to target state, ceremony design (sprint planning, daily standup, review, retrospective — right length and format for this team), backlog management and prioritization frameworks, estimation approaches (story points vs. t-shirt sizing vs. no estimates), how to improve velocity and predictability, technical practices that enable agility (CI/CD, TDD, pairing), how to scale agile across multiple teams, and how to measure agile health (cycle time, lead time, deployment frequency, change failure rate).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/talent-density', requireAuth, async (req: AuthRequest, res) => {
+  const { company, roles, bar } = req.body;
+  const prompt = `You are a talent strategy and organizational excellence expert. Build a talent density strategy for ${company} in ${roles} critical roles to raise the talent ${bar}. Cover the talent density philosophy (fewer people, paid more, with more impact), how to define the talent bar for each role, the sourcing strategy to find exceptional people (referrals, communities, direct outreach, employer brand), the interview process to assess for excellence (not just competence), the keeper test and performance management for density, how to pay above market to attract and retain top talent, how to create an environment where top talent thrives, and how to manage the cultural shift from a head-count mindset to a talent density mindset.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/retail', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, category, channels } = req.body;
+  const prompt = `You are a retail strategy and consumer goods expert. Build a retail strategy for ${brand} in ${category} across ${channels}. Cover channel strategy (DTC, wholesale, marketplace, retail partnerships), retail partner selection and tier prioritization, the shopper marketing strategy (in-store activation, endcaps, sampling, digital shelf), pricing architecture across channels (MAP policy, channel pricing strategy), retail metrics (sell-through, velocity, market share, distribution points), the broker and distributor model, retail buyer presentation preparation, how to manage channel conflict, and how to balance DTC growth with retail partnership health.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/ethical-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { company, useCase, risks } = req.body;
+  const prompt = `You are an AI ethics and responsible AI expert. Build an ethical AI framework for ${company} deploying AI for ${useCase} with ${risks} risk areas. Cover the ethical principles for AI at your company (fairness, transparency, privacy, safety, accountability), bias detection and mitigation in training data and model outputs, explainability requirements for different use cases, human oversight and override mechanisms, the AI risk assessment process for new AI deployments, data governance for AI (consent, retention, deletion), the AI incident response plan, external AI audit and red-teaming program, how to communicate AI capabilities and limitations to users, and how to build an internal AI ethics review board.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/writing/grant', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, grant, project } = req.body;
+  const prompt = `You are a grant writing and nonprofit fundraising expert. Write a grant proposal for ${organization} applying to ${grant} for ${project}. Structure: executive summary (compelling one-paragraph overview), organization background and credibility, statement of need (problem, evidence, community impact), project description (activities, timeline, methodology), evaluation plan (how you will measure impact), organizational capacity (team, track record, partners), budget narrative (line items, justification, cost-effectiveness), sustainability plan (how the project continues after funding), and appendices guide. Make the writing compelling, evidence-based, and aligned with the funder's priorities.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/social-enterprise', requireAuth, async (req: AuthRequest, res) => {
+  const { mission, model, impact } = req.body;
+  const prompt = `You are a social enterprise strategy and impact measurement expert. Build the strategy for a social enterprise with ${mission} mission using ${model} business model to achieve ${impact}. Cover the theory of change (inputs → activities → outputs → outcomes → impact), the business model that funds the mission (earned revenue, hybrid model, B Corp considerations), impact measurement framework (leading indicators, lagging indicators, third-party validation), the dual bottom line management (financial sustainability AND mission fidelity), stakeholder management (beneficiaries, investors, partners, employees), the communications strategy for mission-driven brands, and how to navigate the tension between growth and mission integrity.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
