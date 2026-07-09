@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v626.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v627.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201797,6 +201797,66 @@ app.post('/api/operations/scale-ops', requireAuth, async (req: AuthRequest, res)
 app.post('/api/data/business-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const { organization, decisions, sources } = req.body;
   const prompt = `You are a business intelligence and analytics strategy expert. Build the BI capability for ${organization} supporting ${decisions} from ${sources}. Cover the BI strategy and vision, the data architecture for BI, the KPI framework and metric design, the dashboard and reporting design, the self-service analytics design, the data storytelling and communication, the BI tool selection and implementation, the data literacy and training program, the BI governance model, and how to build a business intelligence capability that moves beyond reporting to genuine insight generation, that enables data-driven decisions at every level of the organization, and that creates competitive advantage through better information.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/leadership-development', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, gaps, goals } = req.body;
+  const prompt = `You are a leadership development and executive coaching expert. Develop ${leader} addressing ${gaps} to achieve ${goals}. Cover the leadership assessment and feedback synthesis, the leadership competency model and gap analysis, the leadership development planning, the experiential learning design, the coaching and mentoring program, the executive presence development, the strategic leadership skills, the people leadership skills, the leadership resilience and wellbeing, and how to design leadership development that produces measurable behavior change rather than just knowledge acquisition and that accelerates the leaders readiness for greater scope and responsibility.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/recruiting-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, pipeline, timeline } = req.body;
+  const prompt = `You are a recruiting strategy and talent pipeline expert. Build the recruiting strategy for ${company} with ${pipeline} pipeline targets on ${timeline} timeline. Cover the recruiting strategy framework, the talent market analysis, the sourcing channel strategy, the pipeline building and nurturing, the passive candidate engagement, the employee referral program design, the campus and early talent strategy, the executive search strategy, the recruiting technology stack, and how to build a recruiting strategy that creates a consistent flow of high-quality candidates, reduces time-to-fill without sacrificing quality, and builds a talent pipeline that lets you fill critical roles quickly when business needs accelerate.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/crisis-simulation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, scenario, stakeholders } = req.body;
+  const prompt = `You are a crisis management and organizational resilience expert. Design the crisis simulation for ${organization} using ${scenario} involving ${stakeholders}. Cover the crisis simulation framework and objectives, the crisis scenario design and escalation arc, the decision checkpoint design, the stakeholder communication simulation, the media and public relations simulation, the cross-functional coordination simulation, the decision pressure and time constraint design, the debrief and learning extraction, the resilience improvement roadmap, and how to design crisis simulations that stress-test your organizations actual crisis management capabilities, reveal gaps in plans and processes, and build genuine crisis management muscle memory in leadership teams.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/creative-brief', requireAuth, async (req: AuthRequest, res) => {
+  const { campaign, audience, objective } = req.body;
+  const prompt = `You are a creative brief and campaign strategy expert. Write the creative brief for ${campaign} targeting ${audience} to achieve ${objective}. Cover the creative brief framework and structure, the campaign background and context, the creative challenge and opportunity, the target audience insight, the single-minded proposition, the tone and manner definition, the mandatories and constraints, the success metrics definition, the deliverables and timeline, and how to write creative briefs that unlock genuinely creative work by giving creative teams a clear and inspiring challenge to solve rather than a prescriptive solution to execute, resulting in work that is both strategically sound and creatively breakthrough.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/policy-design', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, issue, stakeholders } = req.body;
+  const prompt = `You are a policy design and organizational governance expert. Design the ${issue} policy for ${organization} balancing ${stakeholders} interests. Cover the policy design framework, the problem diagnosis and root cause analysis, the stakeholder mapping and impact analysis, the policy objective setting, the policy option generation and evaluation, the policy instrument selection, the implementation design, the compliance and enforcement design, the policy communication strategy, and how to design policies that solve real problems, are proportionate and fair, can be practically implemented and enforced, and that get buy-in from the stakeholders who need to follow them.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/microservices', requireAuth, async (req: AuthRequest, res) => {
+  const { system, services, patterns } = req.body;
+  const prompt = `You are a microservices architecture and distributed systems expert. Design the microservices architecture for ${system} decomposing into ${services} using ${patterns}. Cover the service decomposition strategy, the service boundary design using domain-driven design, the service communication patterns, the data management and database per service, the service discovery and load balancing, the distributed tracing and observability, the resilience patterns like circuit breakers and bulkheads, the deployment and orchestration strategy, the service mesh design, and how to design microservices architectures that provide genuine benefits of independent deployment and scaling without creating distributed systems complexity that overwhelms the teams ability to operate and debug the system.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/revenue-operations', requireAuth, async (req: AuthRequest, res) => {
+  const { company, revenue, teams } = req.body;
+  const prompt = `You are a revenue operations and go-to-market efficiency expert. Optimize the revenue operations for ${company} scaling ${revenue} across ${teams}. Cover the RevOps strategy and charter, the revenue process design and optimization, the go-to-market alignment model, the sales and marketing alignment, the customer success integration, the revenue technology stack design, the data and analytics strategy, the forecasting and pipeline management, the revenue velocity optimization, and how to build a revenue operations function that creates systematic, predictable revenue growth by aligning people, process, and technology across all customer-facing functions and eliminating the friction that slows revenue attainment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-ethics', requireAuth, async (req: AuthRequest, res) => {
+  const { system, use_case, stakeholders } = req.body;
+  const prompt = `You are an AI ethics and responsible AI expert. Evaluate ${system} for ${use_case} involving ${stakeholders}. Cover the AI ethics framework and principles, the bias and fairness analysis, the transparency and explainability requirements, the privacy and data rights, the accountability and governance model, the safety and reliability requirements, the impact assessment on affected communities, the regulatory and compliance landscape, the AI ethics review process, and how to build responsible AI systems and governance frameworks that enable your organization to move fast on AI adoption while managing the ethical risks and building trust with users, regulators, and the public.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/learning-organization', requireAuth, async (req: AuthRequest, res) => {
+  const { company, capability, culture } = req.body;
+  const prompt = `You are an organizational learning and capability building expert. Build the learning organization at ${company} developing ${capability} embedded in ${culture}. Cover the learning organization framework, the learning culture design, the formal learning architecture, the informal and social learning design, the knowledge management system, the communities of practice design, the learning technology and platform, the capability measurement framework, the learning ROI framework, and how to build an organization where continuous learning is embedded in how work gets done rather than being a separate activity, where knowledge flows freely across teams, and where developing capability is treated as a core strategic investment rather than an HR overhead.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/customer-success', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segments, outcomes } = req.body;
+  const prompt = `You are a customer success and expansion revenue expert. Design the customer success strategy for ${product} across ${segments} driving ${outcomes}. Cover the customer success strategy framework, the customer segmentation and success model, the onboarding and time-to-value design, the customer health scoring, the proactive success motion, the quarterly business review design, the expansion and upsell motion, the advocacy and reference program, the customer success metrics and compensation, and how to build a customer success function that drives net revenue retention above 120%, creates a systematic pipeline of expansion revenue, and turns customers into advocates who fuel new customer acquisition.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
