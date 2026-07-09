@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v612.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v613.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200957,6 +200957,66 @@ app.post('/api/customer/journey-mapping', requireAuth, async (req: AuthRequest, 
 app.post('/api/sales/discovery', requireAuth, async (req: AuthRequest, res) => {
   const { prospect, situation, solution } = req.body;
   const prompt = `You are a sales discovery and qualification expert. Design the discovery approach for ${prospect} in ${situation} to position ${solution}. Cover the discovery philosophy and mindset, the pre-call research and preparation, the discovery question framework design, the business pain and impact excavation, the decision process and stakeholder mapping, the budget and timeline qualification, the competitive situation mapping, the mutual success plan design, the discovery-to-proposal bridge, and how to run discovery calls that uncover the real problem, build trust, and create the foundation for a compelling and differentiated solution.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, legacy, horizon } = req.body;
+  const prompt = `You are a digital transformation and technology modernization expert. Design the digital transformation roadmap for ${company} with ${legacy} legacy systems over ${horizon} horizon. Cover the digital transformation strategy and vision, the current-state assessment and gap analysis, the technology architecture modernization, the data and analytics transformation, the digital customer experience transformation, the operational process digitization, the organizational and culture change management, the transformation governance and investment framework, the risk management and dependency mapping, and how to execute a digital transformation that delivers business value incrementally while managing complexity and risk.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customer/churn-reduction', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, signal } = req.body;
+  const prompt = `You are a churn reduction and customer retention expert. Design the churn reduction program for ${product} targeting ${segment} segment using ${signal} early warning signals. Cover the churn definition and measurement framework, the churn root cause analysis methodology, the customer health score design, the early warning system and trigger design, the proactive intervention playbook, the reactive save playbook, the product experience improvements for retention, the customer success capacity planning, the churn prediction model design, and how to systematically reduce churn by addressing both the symptoms and the root causes of customer attrition.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/channel-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are a channel strategy and go-to-market design expert. Design the channel strategy for ${company} with ${product} in ${market}. Cover the channel strategy framework and objectives, the direct vs. indirect channel trade-offs, the channel partner type selection, the channel partner economics and margin design, the channel conflict management, the channel enablement and training program, the channel performance management, the channel marketing co-op program, the channel technology and portal design, and how to build a channel strategy that multiplies your market coverage and revenue without sacrificing customer experience or margin.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/platform-business', requireAuth, async (req: AuthRequest, res) => {
+  const { company, sides, network } = req.body;
+  const prompt = `You are a platform business model and network effects expert. Design the platform business for ${company} connecting ${sides} sides with ${network} network effects. Cover the platform business model design, the multi-sided market architecture, the network effects identification and amplification, the chicken-and-egg problem solution, the platform governance design, the platform monetization architecture, the openness and control balance, the platform trust and safety design, the platform metrics and health indicators, and how to build a platform that creates compounding value and sustainable competitive advantage through network effects.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/operating-model', requireAuth, async (req: AuthRequest, res) => {
+  const { company, strategy, capability } = req.body;
+  const prompt = `You are an operating model design and organizational effectiveness expert. Design the operating model for ${company} to execute ${strategy} strategy building ${capability} capability. Cover the operating model design framework, the organizational structure options and trade-offs, the decision rights and governance design, the process architecture design, the technology and data architecture, the talent and capability model, the performance management and incentives design, the management cadence and operating rhythm, the culture and ways-of-working design, and how to design an operating model that aligns your organization behind the strategy and creates the capabilities needed to win.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/tech-recruiting', requireAuth, async (req: AuthRequest, res) => {
+  const { role, stack, culture } = req.body;
+  const prompt = `You are a technical recruiting and engineering talent expert. Design the recruiting process for ${role} with ${stack} stack fit to ${culture} culture. Cover the technical job description design, the sourcing strategy for technical talent, the technical screening and assessment design, the take-home project vs. live coding trade-offs, the technical interview panel design, the system design interview framework, the culture fit and values interview design, the offer and close strategy for technical candidates, the candidate experience design, and how to build a technical recruiting process that identifies great engineers efficiently without creating a dehumanizing gauntlet.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/venture-capital', requireAuth, async (req: AuthRequest, res) => {
+  const { startup, stage, metrics } = req.body;
+  const prompt = `You are a venture capital and startup fundraising expert. Analyze ${startup} at ${stage} stage with ${metrics} key metrics from a VC perspective. Cover the VC evaluation framework and decision criteria, the market size and timing assessment, the team and founder evaluation, the product and technology differentiation, the business model and unit economics analysis, the growth trajectory and scalability assessment, the competitive moat analysis, the cap table and dilution analysis, the deal terms and valuation framework, and how to position and present your startup to maximize your chances of raising venture capital at the best possible terms.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/culture-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, values, behaviors } = req.body;
+  const prompt = `You are an organizational culture and culture change expert. Design the culture for ${company} grounded in ${values} values expressed through ${behaviors} behaviors. Cover the culture design methodology, the core values identification and articulation, the behavioral norms and expectations design, the culture rituals and practices design, the hiring for culture fit vs. add, the onboarding culture immersion design, the manager culture-setting behaviors, the culture reinforcement mechanisms, the culture measurement and health tracking, and how to intentionally design and evolve a culture that attracts great people, drives performance, and creates belonging.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/deal-management', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, stage, blocker } = req.body;
+  const prompt = `You are a deal management and complex B2B sales expert. Manage the ${deal} deal at ${stage} stage to overcome ${blocker} blocker. Cover the deal qualification and scoring framework, the stakeholder map and influence strategy, the deal strategy and win themes, the multi-threading strategy, the champion development and coach strategy, the competitive displacement strategy, the procurement and legal navigation, the deal accelerator and urgency creation, the deal review and coaching cadence, and how to manage complex enterprise deals from qualification through close with discipline, rigor, and strategic thinking.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/supply-chain', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, region } = req.body;
+  const prompt = `You are a supply chain design and operations expert. Design the supply chain for ${company} with ${product} serving ${region}. Cover the supply chain network design and optimization, the supplier selection and qualification, the inventory optimization and safety stock design, the demand planning and forecasting, the procurement strategy and negotiation, the logistics and transportation design, the warehouse and distribution center design, the supply chain risk management and resilience, the supply chain technology and visibility, and how to build a supply chain that balances cost, speed, flexibility, and resilience to create competitive advantage.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
