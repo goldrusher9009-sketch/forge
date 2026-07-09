@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v458.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v459.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -192291,6 +192291,59 @@ app.post('/api/product/beta-program', requireAuth, async (req: AuthRequest, res)
 app.post('/api/sales/deal-review', requireAuth, async (req: AuthRequest, res) => {
   const { deal, stage, risks } = req.body;
   const prompt = `Conduct a deal inspection and review.\nDeal: ${deal}\nCurrent stage: ${stage}\nKnown risks: ${risks}\nInclude: deal health scorecard (MEDDPICC completeness/stakeholder coverage/competitive position/next steps/timeline), deal risk categorization (champion strength/economic buyer access/technical validation/legal risk/competitive threat/budget confirmed), deal coaching questions for each risk area, recommended next actions with owners and dates, probability adjustment recommendation with rationale, deal acceleration options, when to escalate for executive involvement, deal review cadence and format for the team, common deal inspection pitfalls (rationalizing vs. diagnosing), and how to use deal reviews to improve win rates over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 337+338 routes
+app.post('/api/dev/monorepo-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { repos, teams, tooling } = req.body;
+  const prompt = `Design a monorepo strategy.\nCurrent repos: ${repos}\nTeam structure: ${teams}\nTooling preferences: ${tooling}\nInclude: monorepo vs. polyrepo decision framework (when each is right), tooling selection (Nx/Turborepo/Bazel/Lerna comparison), workspace and package organization, selective builds and CI optimization (only build what changed), dependency management across packages, versioning strategy (independent vs. fixed), code ownership in a monorepo (CODEOWNERS), shared library governance, migration path from polyrepo to monorepo, developer experience optimization (local build speed/IDE support), and how to prevent the monorepo from becoming a monolith.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/customer-reference', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, advocates, use } = req.body;
+  const prompt = `Build a customer reference program.\nCompany stage: ${stage}\nCurrent advocates: ${advocates}\nReference use cases: ${use}\nInclude: reference program structure (tiers/incentives/obligations), reference candidate identification and vetting, reference cultivation process (relationship building before asking), reference request process (matching/briefing/follow-up), reference diversification (industry/size/use case/geography), how to protect references from overuse, analyst briefing and report participation, case study vs. reference call vs. logo use hierarchy, reference program governance and tracking, reference conversion to advisory board, and how to make customers WANT to be references rather than feeling obligated.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/innovation-process', requireAuth, async (req: AuthRequest, res) => {
+  const { company, constraints, goals } = req.body;
+  const prompt = `Design a product innovation process.\nCompany context: ${company}\nInnovation constraints: ${constraints}\nInnovation goals: ${goals}\nInclude: innovation horizons framework (core/adjacent/transformational), innovation time allocation (Google 20% / dedicated team / hackathons), idea generation mechanisms (customer research/internal ideation/market scanning), idea evaluation and selection criteria, rapid prototyping and validation process, innovation stage gates (idea→prototype→validated→scaled), kill criteria (when to stop pursuing an idea), innovation metrics (ideas generated/validated/shipped/impact), how to maintain innovation velocity while executing the core roadmap, and how to build an organizational culture that supports continuous innovation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/demand-gen-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  const { segment, channels, target } = req.body;
+  const prompt = `Design a demand generation pipeline.\nTarget segment: ${segment}\nMarketing channels: ${channels}\nPipeline target: ${target}\nInclude: demand gen vs. lead gen vs. brand marketing distinction, full-funnel demand gen architecture (awareness→demand→pipeline→revenue), channel mix design by buyer stage, lead definition and scoring framework (MQL/SQL/SAL criteria), MQL to SQL conversion optimization, SLA design between marketing and sales, pipeline attribution model, demand gen budget allocation by channel ROI, account-based demand gen for enterprise segment, measurement framework (pipeline generated/influenced/sourced/converted), and how to build a demand gen engine that creates predictable pipeline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/people-ops-design', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, headcount, priorities } = req.body;
+  const prompt = `Design a People Operations function.\nCompany stage: ${stage}\nHeadcount: ${headcount}\nTop priorities: ${priorities}\nInclude: People Ops function scope (HRBP/talent acquisition/total rewards/L&D/people analytics/culture/compliance), when to hire first HR person and what profile, HRIS system selection for the stage (Rippling/Workday/BambooHR/Gusto), compliance infrastructure (employment law/benefits/payroll), people analytics design (metrics/dashboards/data sources), HR business partner model for scaling teams, manager training and support, employee lifecycle management (onboarding through offboarding), people team structure evolution from 0 to 1000 employees, and how to build a people function that is strategic rather than just administrative.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/syndicate-building', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, lead, coInvestors } = req.body;
+  const prompt = `Build an investment syndicate.\nDeal stage: ${stage}\nLead investor: ${lead}\nCo-investors: ${coInvestors}\nInclude: syndicate composition strategy (lead/co-leads/strategic angels/institutional), investor role definition in the syndicate, pro-rata rights allocation, information rights and reporting design, how to manage competing interests within a syndicate, SPV (special purpose vehicle) structure for syndicates, syndicate communication and governance, co-investor value-add mapping (portfolio/network/expertise/geography), managing syndicate in future rounds, AngelList/Assure/Carta syndicate platform comparison, and how to build a syndicate that adds value beyond capital.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/typescript-setup', requireAuth, async (req: AuthRequest, res) => {
+  const { project, strictness, patterns } = req.body;
+  const prompt = `Design a TypeScript project setup.\nProject type: ${project}\nStrictness level: ${strictness}\nDesign patterns: ${patterns}\nInclude: tsconfig.json configuration best practices (strict mode/target/module/paths), strict type checking options and their benefits, utility types usage guide (Partial/Required/Pick/Omit/Record/Extract/Exclude), discriminated unions for state modeling, generic constraints and variance, type guard design, error handling with typed errors, module resolution configuration, path aliases setup, declaration file management (.d.ts), integration with ESLint and Prettier, monorepo TypeScript configuration with project references, and common TypeScript anti-patterns to avoid.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/brand-identity', requireAuth, async (req: AuthRequest, res) => {
+  const { company, audience, values } = req.body;
+  const prompt = `Design a brand identity system.\nCompany: ${company}\nTarget audience: ${audience}\nCore values: ${values}\nInclude: brand strategy foundation (purpose/vision/mission/values/personality), visual identity system (logo design principles/color palette with psychology/typography system/iconography/photography style), verbal identity (brand voice/tone by channel/messaging framework/tagline development), brand guidelines documentation structure, brand application across touchpoints (digital/print/product/social/presentations), brand governance and approval process, brand evolution strategy (how to refresh without alienating), measuring brand health (awareness/perception/preference/loyalty), and how to build brand consistency across a distributed team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/agile-process', requireAuth, async (req: AuthRequest, res) => {
+  const { team, cadence, pain } = req.body;
+  const prompt = `Design an agile development process.\nTeam structure: ${team}\nCurrent cadence: ${cadence}\nProcess pain points: ${pain}\nInclude: agile framework selection (Scrum/Kanban/Shape Up/dual-track agile), sprint or cycle length rationale, ceremony design (standup/planning/review/retro — when each adds vs. wastes value), backlog management and grooming process, estimation approach (story points vs. T-shirt vs. no estimates), definition of done vs. definition of ready, velocity measurement and capacity planning, technical debt allocation in sprints, cross-functional collaboration model (design/eng/PM), how to avoid agile theater (process that looks agile but isn't), and how to adapt the process as the team scales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/sdr-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { segment, channels, quota } = req.body;
+  const prompt = `Build an SDR outbound strategy.\nTarget segment: ${segment}\nOutreach channels: ${channels}\nMeeting quota: ${quota}\nInclude: SDR target account prioritization (ICP scoring/intent signals/trigger events), multi-channel sequence design (email/phone/LinkedIn/video/direct mail), email personalization framework (research→angle→relevance), cold call script and objection handling, LinkedIn outreach strategy (connection note/InMail/engagement), sequence timing and touchpoint cadence, research workflow (how long to spend researching before outreach), meeting qualification criteria (don't book bad meetings), pipeline handoff to AE, SDR metrics and performance management, coaching model for SDR managers, and how to build SDR productivity to 40+ meetings booked per month.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
