@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v561.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v562.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -197897,6 +197897,66 @@ app.post('/api/product/team-topology', requireAuth, async (req: AuthRequest, res
 app.post('/api/data/governance', requireAuth, async (req: AuthRequest, res) => {
   const { organization, dataAssets, regulations } = req.body;
   const prompt = `You are a data governance and data management expert. Build a data governance framework for ${organization} managing ${dataAssets} under ${regulations}. Cover data catalog and inventory, data ownership model (data stewards and owners), data quality standards and monitoring, data classification (public, internal, confidential, restricted), access control policies, data lineage tracking, privacy compliance (GDPR, CCPA), and the data governance committee charter.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/revenue-model', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, competitors } = req.body;
+  const prompt = `You are a revenue model and business strategy expert. Design the optimal revenue model for ${product} in ${market} market given ${competitors} competitive landscape. Evaluate revenue model options (subscription, usage-based, freemium, marketplace, licensing, services), size each model opportunity, analyze pricing power and willingness to pay, design a hybrid model if appropriate, model out 3-year revenue scenarios for each option, and recommend the optimal model with go-to-market pricing strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/assistant-design', requireAuth, async (req: AuthRequest, res) => {
+  const { domain, users, capabilities } = req.body;
+  const prompt = `You are an AI product design expert. Design an AI assistant for ${domain} domain for ${users} users with ${capabilities}. Cover the assistant persona design (name, personality, tone), conversation flow and dialogue management, context window and memory design, escalation to human agents, failure modes and graceful degradation, safety and guardrails, how to measure assistant quality (CSAT, containment rate, task completion), and how to continuously improve the assistant through user feedback.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/docs-system', requireAuth, async (req: AuthRequest, res) => {
+  const { product, audience, docTypes } = req.body;
+  const prompt = `You are a technical writing and documentation expert. Design a technical documentation system for ${product} for ${audience} audience covering ${docTypes} document types. Cover documentation architecture (docs-as-code vs. wiki), writing style guide, information architecture, API reference generation, tutorial vs. how-to vs. reference structure (Diátaxis framework), versioning strategy, search and discoverability, contribution workflow, and how to measure documentation quality and usage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/multi-channel', requireAuth, async (req: AuthRequest, res) => {
+  const { product, channels, customers } = req.body;
+  const prompt = `You are a product and channel strategy expert. Design a multi-channel product strategy for ${product} across ${channels} channels serving ${customers}. Cover channel-specific product adaptations, unified data and identity layer, channel conflict management, pricing consistency vs. differentiation across channels, omnichannel experience design, attribution modeling across channels, and how to prioritize channel investment based on unit economics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/scaling', requireAuth, async (req: AuthRequest, res) => {
+  const { operation, bottleneck, target } = req.body;
+  const prompt = `You are an operations and scaling expert. Build an operations scaling playbook for ${operation} with bottleneck: ${bottleneck} targeting ${target} scale. Diagnose the constraint (Theory of Constraints), design the scaled process (people, process, technology levers), build the SOPs and training materials, define the hiring plan needed to support scale, create the monitoring and alerting system, and design the feedback loop for continuous operational improvement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/attribution', requireAuth, async (req: AuthRequest, res) => {
+  const { company, channels, conversionPath } = req.body;
+  const prompt = `You are a marketing analytics and attribution expert. Design a marketing attribution model for ${company} across ${channels} with ${conversionPath} conversion path. Compare attribution models (last touch, first touch, linear, time decay, data-driven), recommend the right model for the business, design the data collection infrastructure, build the attribution reporting dashboard, explain how to use attribution data to reallocate budget, and how to handle attribution for long B2B sales cycles.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, competitive } = req.body;
+  const prompt = `You are a pricing strategy expert. Develop a pricing strategy for ${product} for ${segment} customer segment in ${competitive} competitive context. Cover value-based pricing methodology, willingness-to-pay research approach, price sensitivity analysis, packaging and tiering design, discounting policy, price anchoring psychology, how to communicate price increases, international pricing strategy, and the metrics to track to know if pricing is working.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/devrel', requireAuth, async (req: AuthRequest, res) => {
+  const { product, community, goals } = req.body;
+  const prompt = `You are a developer relations and community expert. Build a developer relations strategy for ${product} targeting ${community} developer community with ${goals}. Cover DevRel team charter and responsibilities, developer journey mapping (awareness → adoption → advocacy), documentation and sample code strategy, community platforms and events, technical content marketing (blogs, tutorials, video), developer advocate program, OSS strategy, measuring DevRel impact (developer NPS, SDK adoption, community growth), and the DevRel vs. marketing boundary.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/insights-dashboard', requireAuth, async (req: AuthRequest, res) => {
+  const { product, stakeholders, metrics } = req.body;
+  const prompt = `You are a product analytics and data visualization expert. Design a product insights dashboard for ${product} for ${stakeholders} stakeholders tracking ${metrics}. Define the dashboard information hierarchy (executive → product → engineering views), select the right chart types for each metric, design the alerting and anomaly detection layer, build the drill-down capability from summary to detail, define the data refresh cadence, and how to socialize the dashboard to build a data-driven culture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/prompt-engineering', requireAuth, async (req: AuthRequest, res) => {
+  const { useCase, model, outputFormat } = req.body;
+  const prompt = `You are a prompt engineering expert. Create a prompt engineering masterclass for ${useCase} using ${model} targeting ${outputFormat} output format. Cover zero-shot vs. few-shot vs. chain-of-thought prompting, system prompt design, role assignment and persona prompting, structured output formats (JSON, XML, markdown), handling edge cases and failure modes, testing and evaluation methodology, prompt versioning and management, cost optimization techniques, and a prompt library template for the use case.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
