@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v680.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v681.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205037,6 +205037,66 @@ app.post('/api/strategy/sustainable-tourism', requireAuth, async (req: AuthReque
 app.post('/api/strategy/global-hrm', requireAuth, async (req: AuthRequest, res) => {
   const { organization, countries, priorities } = req.body;
   const prompt = `You are a global human resources management strategy and international people expert. Design global HRM for ${organization} operating in ${countries} with ${priorities}. Cover global HRM framework, international compensation and benefits design, global mobility and expatriate management, local employment law compliance, global talent management and career paths, cross-cultural management and inclusion, global learning and development, international labor relations, global HRIS and data privacy, and how to manage a global workforce in a way that balances the need for global consistency in people practices with the necessity of local adaptation to employment law requirements, cultural norms, and labor market conditions that vary significantly across the countries where the organization operates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/corporate-ventures', requireAuth, async (req: AuthRequest, res) => {
+  const { corporation, focus, model } = req.body;
+  const prompt = `You are a corporate venture capital strategy and innovation portfolio expert. Design corporate ventures for ${corporation} in ${focus} via ${model}. Cover corporate ventures framework, strategic vs financial venture objectives, deal sourcing and screening for corporate, investment thesis and portfolio construction, corporate venture governance and decision rights, portfolio company support and value creation, managing the corporate-startup relationship, returns measurement and reporting, co-investment and syndication, and how to build corporate venture programs that deliver both the strategic intelligence and market access that justify the program to business leaders and the financial returns and entrepreneur reputation that attract the best deals, while avoiding the bureaucratic processes that make corporate venture unattractive to startups.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/supply-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, horizon } = req.body;
+  const prompt = `You are a supply planning strategy and production scheduling expert. Design supply planning for ${company} with ${products} over ${horizon}. Cover supply planning framework, production planning and scheduling, capacity planning and constraint management, material requirements planning, supply and demand balancing, safety stock and buffer management, make-to-order vs make-to-stock decisions, supply planning in uncertain environments, supply planning technology and APS systems, and how to design supply planning processes that reliably convert demand signals into production plans that meet customer service commitments while minimizing inventory investment and production costs by planning at the right level of detail across the appropriate planning horizon.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/revenue-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { company, current, target } = req.body;
+  const prompt = `You are a revenue growth strategy and commercial excellence expert. Design revenue growth for ${company} from ${current} to ${target}. Cover revenue growth framework, revenue growth management principles, growth through existing customers and NRR, growth through new customer acquisition, pricing and packaging for revenue growth, upsell and cross-sell motion design, geographic and segment expansion, product-led growth mechanics, revenue growth governance and accountability, and how to design revenue growth strategies that identify the most value-creating growth paths given the current business model and competitive position, and build the commercial capabilities and go-to-market execution needed to capture those opportunities systematically rather than hoping for organic growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/brand-management', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, portfolio, markets } = req.body;
+  const prompt = `You are a brand management strategy and brand equity expert. Design brand management for ${brand} with ${portfolio} in ${markets}. Cover brand management framework, brand equity measurement and tracking, brand positioning and competitive frame, brand health monitoring, brand investment optimization, brand extension and licensing governance, brand crisis management, brand relevance and evolution, brand governance and consistency standards, and how to manage brand equity as a long-term strategic asset by making consistent investments in brand building, protecting the brand from actions that would damage its meaning or associations, and evolving the brand over time in ways that keep it relevant to changing customer expectations without abandoning the distinctive positioning that makes it valuable.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/outsourcing', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, function, goals } = req.body;
+  const prompt = `You are an outsourcing strategy and managed services expert. Design outsourcing for ${organization} of ${function} toward ${goals}. Cover outsourcing strategy framework, make-vs-buy decision analysis, provider selection and RFP process, contract structure and SLA design, transition management and knowledge transfer, governance and performance management, retained organization design, risk management in outsourcing, insourcing and repatriation decisions, and how to design outsourcing arrangements that achieve the cost savings, capability access, or strategic focus that motivated the decision while managing the operational risks, loss of institutional knowledge, and loss of flexibility that outsourcing arrangements introduce when not properly structured and governed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/media-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, budget, audiences } = req.body;
+  const prompt = `You are a media strategy and paid media planning expert. Design media strategy for ${brand} with ${budget} reaching ${audiences}. Cover media strategy framework, audience analysis and media consumption, channel mix optimization and attribution, reach and frequency planning, programmatic and addressable media, video and streaming media strategy, digital vs traditional media balance, media measurement and effectiveness, media buying and negotiation, and how to develop media strategies that allocate budget to the channels and formats where target audiences can actually be reached efficiently, rather than following media habit or conventional wisdom about where to spend, and that measure media effectiveness in ways that accurately attribute business outcomes to specific media investments.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/operational-excellence', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, operations, metrics } = req.body;
+  const prompt = `You are an operational excellence strategy and continuous improvement expert. Design operational excellence for ${organization} in ${operations} measuring ${metrics}. Cover operational excellence framework, lean principles and waste elimination, Six Sigma and quality management, process standardization and documentation, visual management and daily management, problem-solving culture and root cause analysis, operational excellence deployment and governance, capability building and training, benchmarking and best practice adoption, and how to build operational excellence capabilities that drive sustained performance improvement by embedding continuous improvement into the daily work of every employee rather than relying on periodic improvement projects run by specialists that deliver short-term gains before reverting to previous performance levels.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-ethics', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, data, stakeholders } = req.body;
+  const prompt = `You are a data ethics strategy and responsible data use expert. Design data ethics for ${organization} using ${data} serving ${stakeholders}. Cover data ethics framework, data ethics principles and values, algorithmic fairness and bias, privacy and consent in data use, transparency and explainability, data stewardship and accountability, ethical review processes for data products, stakeholder engagement in data ethics, data ethics governance and training, and how to build data ethics capabilities that ensure the organization uses data in ways that are fair, transparent, and respectful of individual rights and societal values, while avoiding the ethical failures and reputational damage that result from deploying data-driven systems without adequate consideration of their impact on the people they affect.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-research', requireAuth, async (req: AuthRequest, res) => {
+  const { company, question, market } = req.body;
+  const prompt = `You are a market research strategy and consumer insights expert. Design market research for ${company} answering ${question} in ${market}. Cover market research framework, qualitative and quantitative research design, survey design and sampling methodology, in-depth interview and focus group design, ethnographic and observational research, conjoint and choice modeling, market sizing and segmentation research, customer journey research, research synthesis and insight generation, and how to design market research programs that generate the insights the business actually needs to make better decisions rather than producing data that confirms existing assumptions, by starting with the decision being made and working backward to the research design that would provide the most decision-relevant information.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/enterprise-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, strategy, current } = req.body;
+  const prompt = `You are an enterprise architecture strategy and technology landscape expert. Design enterprise architecture for ${organization} aligned to ${strategy} from ${current}. Cover enterprise architecture framework, business and application and data and technology architecture layers, architecture principles and decision governance, current state assessment and gap analysis, target state architecture design, architecture roadmap and transition planning, architecture patterns and reference models, architecture governance and compliance, and how to develop enterprise architectures that translate business strategy into technology landscape decisions in a way that reduces complexity and cost over time by standardizing where standardization adds value, integrating systems where integration enables business capabilities, and retiring technical debt that constrains the organization agility.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
