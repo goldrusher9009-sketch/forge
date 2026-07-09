@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v594.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v595.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199877,6 +199877,66 @@ app.post('/api/sales/lead-enrich', requireAuth, async (req: AuthRequest, res) =>
 app.post('/api/product/feature-adoption', requireAuth, async (req: AuthRequest, res) => {
   const { feature, users, baseline } = req.body;
   const prompt = `You are a product adoption and feature activation expert. Optimize adoption of ${feature} feature for ${users} user segment from ${baseline} baseline adoption. Cover the feature adoption funnel design, the awareness and discoverability strategy, the in-product education design, the onboarding flow for the feature, the adoption trigger and nudge design, the adoption measurement framework, the power user identification and amplification strategy, the adoption barrier research methodology, the cohort-based adoption tracking, and how to use adoption data to inform the product roadmap.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/cdp', requireAuth, async (req: AuthRequest, res) => {
+  const { company, sources, use_case } = req.body;
+  const prompt = `You are a customer data platform and identity resolution expert. Design the CDP strategy for ${company} unifying data from ${sources} to power ${use_case}. Cover the CDP vs. CRM vs. DMP distinction, the identity resolution architecture, the data ingestion pipeline design, the customer profile schema design, the segmentation and audience design, the activation and destination design, the real-time vs. batch processing tradeoffs, the CDP vendor selection criteria, the data privacy and consent management integration, and how to measure CDP impact on marketing effectiveness.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/interview-design', requireAuth, async (req: AuthRequest, res) => {
+  const { role, competencies, format } = req.body;
+  const prompt = `You are a structured interviewing and talent assessment expert. Design the interview process for ${role} assessing ${competencies} using ${format} format. Cover the structured vs. unstructured interview evidence, the competency framework for the role, the behavioral interview question design using STAR format, the case and work sample design, the interview scorecard design, the interviewer calibration process, the panel vs. serial interview design, the candidate experience design, the bias mitigation techniques for each interview stage, and how to make a hiring decision from multiple interviewers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/professional-services', requireAuth, async (req: AuthRequest, res) => {
+  const { company, service, margin } = req.body;
+  const prompt = `You are a professional services strategy and scaling expert. Scale the ${service} professional services business for ${company} targeting ${margin} margin. Cover the professional services business model design, the service productization strategy, the delivery methodology standardization, the utilization and capacity management, the pricing model for professional services, the talent pyramid design, the knowledge management and IP capture strategy, the partner and subcontractor model, the professional services metrics, and how to balance customization with standardization for scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/transformation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, goal, timeframe } = req.body;
+  const prompt = `You are a business transformation and organizational change expert. Lead the business transformation for ${company} toward ${goal} within ${timeframe}. Cover the transformation vision and case for change, the transformation architecture design, the burning platform vs. burning ambition motivation approaches, the transformation office design, the change management methodology, the transformation investment and ROI model, the organizational capability requirements, the transformation governance model, the quick wins strategy for credibility and momentum, and the transformation risk management and adaptation approach.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/virtual-teams', requireAuth, async (req: AuthRequest, res) => {
+  const { team, timezone, challenge } = req.body;
+  const prompt = `You are a virtual and distributed team management expert. Build the virtual team excellence framework for ${team} across ${timezone} timezones managing ${challenge} challenge. Cover the async-first work design principles, the communication protocol design for distributed teams, the documentation culture for remote teams, the virtual meeting design for engagement and productivity, the remote onboarding program, the virtual team building and connection program, the time zone fairness and scheduling design, the remote performance management, the home office setup support program, and how to build trust and culture in a team that has never met in person.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/presentation', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, audience, format } = req.body;
+  const prompt = `You are an executive presentation and public speaking coach. Coach through delivering a high-impact presentation on ${topic} for ${audience} in ${format} format. Cover the message architecture design, the storyboarding approach, the opening that commands attention, the data visualization best practices for presentations, the slide design principles, the storytelling techniques for presentations, the Q&A handling strategy, the nervousness management techniques, the delivery coaching for voice and body language, the virtual presentation adaptations, and how to practice and iterate on a presentation to reach peak performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/operating-model', requireAuth, async (req: AuthRequest, res) => {
+  const { company, strategy, stage } = req.body;
+  const prompt = `You are an operating model design and organizational effectiveness expert. Design the operating model for ${company} executing ${strategy} at ${stage} stage. Cover the operating model definition and components, the strategic choices that shape the operating model, the organizational structure options and tradeoffs, the governance model design, the decision rights framework, the management process design, the performance management model, the talent model alignment, the technology and data architecture alignment, and how to evolve the operating model as the strategy evolves.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/cohort-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { product, event, metric } = req.body;
+  const prompt = `You are a cohort analysis and product analytics expert. Build the cohort analysis framework for ${product} tracking ${event} cohort measuring ${metric}. Cover the cohort analysis fundamentals, the cohort definition design, the retention curve interpretation, the behavioral cohort analysis, the revenue cohort analysis, the engagement cohort segmentation, the cohort comparison across acquisition channels, the cohort analysis tooling and SQL patterns, how to identify inflection points in cohort data, and how to use cohort insights to drive product decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/ad-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { publisher, format, revenue } = req.body;
+  const prompt = `You are an advertising technology and programmatic ecosystem expert. Build the ad tech stack for ${publisher} running ${format} ad formats targeting ${revenue} revenue goal. Cover the programmatic advertising ecosystem map, the SSP and ad server selection, the header bidding implementation design, the audience data and DMP strategy, the ad quality and brand safety program, the viewability and fraud prevention stack, the first-party data monetization strategy, the privacy-first advertising adaptation, the ad revenue reporting and analytics design, and how to maximize yield while maintaining user experience quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/knowledge-transfer', requireAuth, async (req: AuthRequest, res) => {
+  const { expert, domain, recipient } = req.body;
+  const prompt = `You are a knowledge transfer and organizational learning expert. Design the knowledge transfer program from ${expert} to ${recipient} in ${domain} domain. Cover the knowledge taxonomy and what can vs. cannot be transferred, the tacit vs. explicit knowledge distinction and transfer approaches, the knowledge elicitation techniques, the documentation and externalization strategies, the mentoring and apprenticeship program design, the job shadowing and observation protocols, the community of practice design for knowledge sharing, the knowledge transfer measurement, the knowledge retention risk assessment, and how to build knowledge transfer as an organizational capability rather than a one-time event.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
