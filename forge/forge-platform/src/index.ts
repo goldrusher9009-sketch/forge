@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v654.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v655.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203477,6 +203477,66 @@ app.post('/api/strategy/fintech', requireAuth, async (req: AuthRequest, res) => 
 app.post('/api/strategy/healthtech', requireAuth, async (req: AuthRequest, res) => {
   const { product, segment, challenge } = req.body;
   const prompt = `You are a healthtech strategy and digital health expert. Advise on the healthtech strategy for ${product} in ${segment} addressing ${challenge}. Cover the healthtech strategy framework, the healthcare regulatory landscape and FDA pathways, the healthcare buyer and purchasing dynamics, the clinical validation requirements, the EMR integration and interoperability, the value-based care alignment, the healthcare data and HIPAA compliance, the healthtech go-to-market via health systems vs. employers vs. payers, the reimbursement strategy, and how to build healthtech products that achieve clinical adoption by solving real clinical workflow problems rather than adding more burden to already-overloaded healthcare providers, that navigate the complex regulatory and compliance requirements of healthcare, and that build the clinical evidence and outcome data that are required to get reimbursement and justify procurement decisions in a system that rightly demands proof of clinical efficacy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/edtech', requireAuth, async (req: AuthRequest, res) => {
+  const { product, learners, challenge } = req.body;
+  const prompt = `You are an edtech strategy and learning technology expert. Advise on the edtech strategy for ${product} serving ${learners} addressing ${challenge}. Cover the edtech framework, the learning science principles for product design, the edtech market dynamics and buyer, the learning outcomes measurement and proof, the engagement and completion in edtech, the B2B vs. B2C edtech models, the content and curriculum strategy, the edtech platform and LMS considerations, the edtech regulatory and accreditation landscape, and how to build edtech products that produce genuine learning outcomes rather than engagement metrics that do not predict whether learners are actually acquiring the knowledge and skills the product promises, that overcome the engagement cliff that causes most self-directed learning products to see completion rates below 10%, and that create the social and accountability mechanisms that support learners through the difficulty of acquiring new skills.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/climate-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { technology, sector, stage } = req.body;
+  const prompt = `You are a climate technology strategy and clean energy transition expert. Advise on the climate tech strategy for ${technology} in ${sector} at ${stage}. Cover the climate tech framework, the technology readiness and commercialization path, the climate impact quantification, the policy and regulatory environment, the climate tech financing landscape, the offtake and demand development, the supply chain and manufacturing scale-up, the climate tech competitive dynamics, the carbon markets and credit strategy, and how to build climate tech businesses that achieve both commercial success and genuine climate impact, that navigate the complex policy and regulatory environment that makes climate technology investment both risky and potentially very valuable, and that scale rapidly enough to matter for climate goals while maintaining the quality and performance standards required to compete with entrenched incumbents.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cybersecurity', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, threats, resources } = req.body;
+  const prompt = `You are a cybersecurity strategy and information security expert. Design the cybersecurity strategy for ${organization} addressing ${threats} with ${resources}. Cover the cybersecurity framework, the threat landscape and risk assessment, the security architecture and zero trust, the identity and access management, the endpoint and network security, the data security and encryption, the security monitoring and SIEM, the incident response planning, the security awareness and culture, and how to build cybersecurity programs that protect the most critical assets against the most likely threats given the resources available rather than trying to achieve perfect security across all possible attack surfaces, that build the detection and response capabilities to minimize the impact of breaches that do occur rather than spending all resources on prevention, and that create the security culture where employees are the first line of defense rather than the weakest link.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/transport-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, model } = req.body;
+  const prompt = `You are a transportation technology strategy and mobility innovation expert. Advise on the transport tech strategy for ${product} in ${market} using ${model}. Cover the transport tech framework, the mobility market dynamics and disruption, the regulatory environment for transport innovation, the fleet management and operations technology, the electric vehicle and charging infrastructure, the autonomous vehicle technology roadmap, the mobility-as-a-service business models, the transport data and platform strategy, the transport tech partnerships and integrations, and how to build transport technology businesses that work with the regulatory constraints of transportation rather than ignoring them, that solve the unit economics challenge that has plagued many mobility businesses, and that create the network and data advantages that make the platform more valuable over time as more vehicles, routes, and users are added.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/space-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, stage } = req.body;
+  const prompt = `You are a space technology strategy and commercial space expert. Advise on the space tech strategy for ${product} in ${market} at ${stage}. Cover the space tech framework, the commercial space market landscape, the launch vehicle and access to space economics, the satellite constellation and earth observation market, the space regulatory environment, the space tech financing and milestones, the government and commercial customer dynamics, the dual-use technology opportunities, the space manufacturing and in-space servicing, and how to build space technology businesses that bridge the gap between the high capital requirements and long development timelines of space technology and the need for commercial revenue and investor returns, that leverage the growing commercial space market and decreasing launch costs to build sustainable businesses, and that navigate the complex intersection of national security, government procurement, and commercial markets that characterizes the space technology industry.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/biotech', requireAuth, async (req: AuthRequest, res) => {
+  const { technology, indication, stage } = req.body;
+  const prompt = `You are a biotechnology strategy and life sciences business expert. Advise on the biotech strategy for ${technology} targeting ${indication} at ${stage}. Cover the biotech strategy framework, the drug development pathway and regulatory strategy, the intellectual property strategy in biotech, the biotech financing landscape and milestone-based funding, the clinical development strategy and trial design, the biotech partnership and licensing strategy, the biotech competitive landscape and market dynamics, the manufacturing and CMO strategy, the regulatory approval pathway strategy, and how to build biotech companies that maximize the probability of reaching patients with effective therapies while managing the extraordinary capital requirements and technical risk of drug development, that build the IP portfolio and clinical evidence that creates durable commercial value, and that make the partnership and financing decisions that provide the capital needed to reach key development milestones.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, usecase, stage } = req.body;
+  const prompt = `You are an artificial intelligence strategy and enterprise AI adoption expert. Design the AI strategy for ${organization} targeting ${usecase} at ${stage}. Cover the AI strategy framework, the AI opportunity identification and prioritization, the build vs. buy vs. partner AI decisions, the data strategy and AI data requirements, the AI talent and capability building, the AI infrastructure and platform decisions, the AI governance and risk management, the AI change management and adoption, the AI ROI measurement, and how to develop AI strategies that create real business value by focusing on the specific problems where AI can have the highest impact rather than AI initiatives that produce impressive demos but do not get deployed and adopted at scale, that build the data foundations and organizational capabilities needed to move from AI experiments to production AI systems that change how work gets done.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/community-led', requireAuth, async (req: AuthRequest, res) => {
+  const { product, community, stage } = req.body;
+  const prompt = `You are a community-led growth strategy and developer community expert. Design the community-led growth for ${product} in ${community} at ${stage}. Cover the community-led growth framework, the community type and purpose, the community platform selection, the community seeding and bootstrapping, the content and engagement strategy, the community moderation and health, the community-to-product feedback loop, the community monetization, the community metrics and health indicators, and how to build product communities that create genuine value for members through peer learning, networking, and shared resources rather than communities that are thinly veiled marketing channels that members eventually tune out, that generate product insights and advocacy that are valuable enough to justify the significant investment required to build and sustain an active community.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/greenfield-product', requireAuth, async (req: AuthRequest, res) => {
+  const { opportunity, constraints, team } = req.body;
+  const prompt = `You are a greenfield product strategy and zero-to-one product building expert. Design the greenfield product approach for ${opportunity} within ${constraints} with ${team}. Cover the greenfield product framework, the problem space definition and validation, the first principles product design, the minimum viable product scope, the early customer selection strategy, the product development methodology for new products, the technical architecture decisions for greenfield, the team structure and roles for early stage, the success metrics and learning plan, and how to approach building new products from scratch in ways that maximize the learning rate, that make clear what assumptions must be true for the product to succeed and design tests of those assumptions rather than building features based on unvalidated guesses, and that create the initial customer relationships that provide the honest feedback and use cases needed to find product-market fit.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-product', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, data, customers } = req.body;
+  const prompt = `You are a data product strategy and data monetization expert. Design the data product for ${organization} leveraging ${data} for ${customers}. Cover the data product framework, the data product types and models, the data asset identification and valuation, the data product-market fit, the data product privacy and compliance, the data licensing and API models, the data product packaging and pricing, the data product go-to-market, the data product competitive advantages, and how to build data products that create genuine value for customers by providing the insights and capabilities they cannot easily build themselves, that maintain the privacy and compliance standards required to build trust with the customers and data subjects whose data underlies the product, and that develop the data network effects and data flywheel that make the product more valuable over time as more data is generated and more customers use it.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
