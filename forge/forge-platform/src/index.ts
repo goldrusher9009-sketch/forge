@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v775.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v776.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210737,6 +210737,66 @@ app.post('/api/creative/gamedesign', requireAuth, async (req: AuthRequest, res) 
 app.post('/api/creative/animation', requireAuth, async (req: AuthRequest, res) => {
   const { studio, project, audience } = req.body;
   const prompt = `You are an animation strategy and visual storytelling expert. Design animation strategy for ${studio} producing ${project} for ${audience}. Cover animation strategy framework, animation style and visual development, character design and expression, storyboard and animatic, production pipeline and workflow, rigging and character setup, scene layout and staging, animation principles and timing, rendering and compositing, and how to build animation programs that achieve the visual quality and the character performance and the production efficiency that professional animation requires by establishing the production pipeline with the asset management and the shot tracking and the review process that ensures the quality control and the on-schedule delivery across the distributed production team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/management', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, sport, goals } = req.body;
+  const prompt = `You are a sports management strategy and athletic organization expert. Design sports management strategy for ${organization} in ${sport} achieving ${goals}. Cover sports management framework, team building and roster management, coaching staff and development, player development and performance, analytics and sports science, fan engagement and revenue, sports facility management, contract negotiation and salary cap, sponsorship and media rights, and how to build sports management programs that achieve the competitive performance and the fan experience and the financial sustainability that successful sports organizations require by integrating the sports analytics with the player acquisition strategy and the development pathway and the performance management system that optimizes the talent investment within the competitive structure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/performance', requireAuth, async (req: AuthRequest, res) => {
+  const { athlete, sport, goals } = req.body;
+  const prompt = `You are an athlete performance strategy and sports science expert. Design athlete performance strategy for ${athlete} competing in ${sport} achieving ${goals}. Cover athlete performance framework, physical preparation and periodization, strength and conditioning, speed and agility development, sport-specific skill development, nutrition and recovery, mental performance and sports psychology, injury prevention and rehabilitation, performance monitoring and data, and how to build athlete performance programs that achieve the competition readiness and the peak performance and the longevity that elite athletic development requires by periodizing the training with the preparatory and competitive and transition phases and the overload and recovery cycles that develop the physical capacity and the technical skill and the competitive readiness.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/analytics', requireAuth, async (req: AuthRequest, res) => {
+  const { team, sport, question } = req.body;
+  const prompt = `You are a sports analytics strategy and performance data expert. Design sports analytics strategy for ${team} in ${sport} answering ${question}. Cover sports analytics framework, tracking data and event data, player performance metrics, team performance analysis, opponent scouting and game preparation, draft and recruitment analytics, injury prediction and load management, video analysis and AI, analytics communication to coaches, and how to build sports analytics programs that achieve the competitive intelligence and the player evaluation and the in-game decision support that analytics-driven sports organizations require by building the analytics infrastructure with the data pipeline and the model library and the visualization dashboard that delivers the actionable insight to the coaching staff and the front office in the format and the timing that fits the decision workflow.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/business', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, sport, revenue } = req.body;
+  const prompt = `You are a sports business strategy and entertainment revenue expert. Design sports business strategy for ${organization} in ${sport} growing ${revenue}. Cover sports business framework, media rights and broadcasting, sponsorship and naming rights, ticketing and premium experiences, merchandise and licensing, digital and streaming revenue, venue and event revenue, sports betting and gaming, international expansion, and how to build sports business programs that achieve the revenue growth and the fan engagement and the brand value that successful sports commercial operations require by developing the media rights strategy with the distribution platform analysis and the rights valuation and the packaging approach that maximizes the media rights revenue while maintaining the broad fan access that sustains the fan base.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/youth', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, sport, age } = req.body;
+  const prompt = `You are a youth sports development strategy and athletic development expert. Design youth sports development strategy for ${organization} in ${sport} for ${age} athletes. Cover youth sports development framework, long-term athlete development model, age-appropriate training and competition, skill acquisition and motor learning, psychological development and positive coaching, parent engagement and education, talent identification and development, injury prevention in youth sport, elite pathway and transition, and how to build youth sports development programs that achieve the athlete development and the positive experience and the sport participation that sustainable youth sport requires by implementing the long-term athlete development model with the age-appropriate training load and the physical literacy emphasis and the game-based learning that builds the fundamental movement skills and the sport-specific technique in the developmentally appropriate sequence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/media', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, content, audience } = req.body;
+  const prompt = `You are a sports media strategy and content distribution expert. Design sports media strategy for ${organization} producing ${content} for ${audience}. Cover sports media framework, live sports broadcasting and production, sports journalism and storytelling, social media and digital content, behind-the-scenes and access content, fantasy sports and engagement, sports podcast and audio, international rights and localization, data journalism and analytics content, and how to build sports media programs that achieve the audience reach and the engagement and the monetization that successful sports media requires by developing the content strategy with the live rights anchor and the complementary content formats and the distribution platform mix that reaches the sports fan across the content journey from the live game to the pre-game analysis to the post-game reaction.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/negotiation', requireAuth, async (req: AuthRequest, res) => {
+  const { agent, athlete, team } = req.body;
+  const prompt = `You are a sports contract negotiation strategy and sports agent expert. Design sports contract negotiation strategy for ${agent} representing ${athlete} negotiating with ${team}. Cover sports contract negotiation framework, market value analysis and comparables, contract structure and guarantees, performance incentives and escalators, no-trade clauses and player options, leverage and timing, multi-team negotiation, endorsement and marketing rights, contract language and protection, and how to build sports contract negotiation programs that achieve the maximum compensation and the career protection and the player control that effective sports representation requires by establishing the market value with the comparable contract analysis and the player performance trajectory that sets the negotiating floor and the leverage strategy that maximizes the team competition for the player.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/events', requireAuth, async (req: AuthRequest, res) => {
+  const { organizer, event, scale } = req.body;
+  const prompt = `You are an event management strategy and live experience expert. Design event management strategy for ${organizer} producing ${event} at ${scale}. Cover event management framework, event concept and positioning, venue selection and logistics, attendee experience and journey, event technology and registration, vendor and supplier management, sponsorship and partnership, event marketing and promotion, event operations and day-of, and how to build event management programs that achieve the attendee satisfaction and the sponsor value and the operational excellence that successful events require by designing the attendee journey with the pre-event communication and the on-site experience flow and the post-event follow-up that creates the end-to-end experience and the community connection that makes the attendee want to return.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/hospitality', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, venue, guests } = req.body;
+  const prompt = `You are a hospitality management strategy and guest experience expert. Design hospitality management strategy for ${organization} at ${venue} serving ${guests}. Cover hospitality management framework, guest experience design and service standards, food and beverage operations, front of house and service training, revenue management and pricing, loyalty and membership programs, event and group hospitality, technology and guest personalization, staff development and service culture, and how to build hospitality management programs that achieve the guest satisfaction and the revenue per available room and the brand reputation that exceptional hospitality requires by designing the service standard with the moment of truth analysis and the service recovery protocol and the staff empowerment that ensures the consistent delivery of the service promise across every guest touchpoint.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/travel', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, market } = req.body;
+  const prompt = `You are a travel industry strategy and tourism expert. Design travel industry strategy for ${company} serving ${segment} in ${market}. Cover travel industry framework, destination marketing and tourism development, online travel and distribution, travel product design and packaging, pricing and revenue management, traveler experience and personalization, sustainable tourism and responsibility, travel technology and booking, corporate travel management, and how to build travel industry programs that achieve the traveler satisfaction and the revenue per booking and the market share that successful travel companies require by developing the travel product with the destination insight and the traveler persona and the experience design that differentiates the offering in the commoditized distribution environment and creates the traveler preference and the loyalty that reduces the acquisition cost.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
