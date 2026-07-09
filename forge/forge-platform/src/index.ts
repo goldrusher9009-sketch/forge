@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v670.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v671.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204437,6 +204437,66 @@ app.post('/api/strategy/agency-model', requireAuth, async (req: AuthRequest, res
 app.post('/api/strategy/hospital-biz', requireAuth, async (req: AuthRequest, res) => {
   const { hospital, services, community } = req.body;
   const prompt = `You are a hospital business strategy and health system management expert. Design hospital business strategy for ${hospital} with ${services} serving ${community}. Cover hospital business framework, clinical program portfolio design, patient access and throughput, physician alignment and medical staff strategy, payor contracting and revenue cycle, hospital operations and cost management, capital allocation and facilities strategy, quality and safety program, community health and population health, and how to develop hospital business strategies that achieve the financial sustainability needed to invest in clinical excellence and access while fulfilling the mission to serve the health needs of the community.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/cyber-threat-intel', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, sector, assets } = req.body;
+  const prompt = `You are a cyber threat intelligence and adversary analysis expert. Design threat intelligence for ${organization} in ${sector} protecting ${assets}. Cover threat intelligence framework, threat actor profiling and TTPs, intelligence collection and sources, OSINT and dark web monitoring, indicator of compromise management, threat intelligence sharing and ISACs, intelligence-driven security operations, threat hunting program, executive threat briefings, and how to build threat intelligence programs that give security teams the context and early warning they need to prioritize defenses against the most relevant threats rather than trying to defend against every possible attack.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-products', requireAuth, async (req: AuthRequest, res) => {
+  const { company, use_cases, users } = req.body;
+  const prompt = `You are an AI product strategy and AI-native product design expert. Design AI product strategy for ${company} with ${use_cases} for ${users}. Cover AI product strategy framework, AI value proposition design, AI user experience and interaction design, AI model selection and build vs buy, AI reliability and accuracy requirements, AI feedback loops and improvement, AI product trust and explainability, AI product metrics and evaluation, AI regulatory and ethical considerations, and how to design AI products that users genuinely trust and rely on by creating experiences that are helpful and reliable and transparent rather than impressive demos that fail in real-world use.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/network-effects', requireAuth, async (req: AuthRequest, res) => {
+  const { product, network_type, stage } = req.body;
+  const prompt = `You are a network effects strategy and viral growth expert. Design network effects for ${product} with ${network_type} at ${stage}. Cover network effects framework, direct and indirect and data network effects, cold start problem solutions, critical mass strategies, same-side vs cross-side network effects, network effect defensibility, network effect measurement and metrics, multi-homing risk management, network effect decay prevention, and how to design products and business strategies that harness network effects to create compounding competitive advantages where each new user makes the product more valuable for all existing users.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/real-estate', requireAuth, async (req: AuthRequest, res) => {
+  const { investor, asset_class, market } = req.body;
+  const prompt = `You are a real estate investment strategy and property market expert. Design real estate strategy for ${investor} in ${asset_class} in ${market}. Cover real estate investment framework, market analysis and cycle positioning, asset class selection and portfolio construction, acquisition criteria and underwriting, value-add and development strategies, financing and capital stack, property management and operations, exit strategy and disposition, real estate technology and proptech, and how to develop real estate investment strategies that generate superior risk-adjusted returns by combining rigorous market analysis with operational excellence and disciplined capital allocation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/franchise', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, market, model } = req.body;
+  const prompt = `You are a franchise strategy and franchise system design expert. Design franchise strategy for ${brand} in ${market} with ${model}. Cover franchise strategy framework, franchise vs company-owned economics, franchisee selection criteria and recruitment, franchise agreement and territory design, franchisee support and training systems, brand standards and compliance, franchise royalty and fee structure, multi-unit and area development, international franchise expansion, and how to design franchise systems that create genuine value for franchisees while protecting the brand integrity and customer experience standards that make the franchise valuable in the first place.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/nonprofit', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, mission, resources } = req.body;
+  const prompt = `You are a nonprofit strategy and social impact expert. Design nonprofit strategy for ${organization} advancing ${mission} with ${resources}. Cover nonprofit strategy framework, theory of change and impact logic, program portfolio design, revenue diversification and fundraising strategy, earned income and social enterprise, advocacy and systems change, board governance and oversight, nonprofit talent and culture, impact measurement and evaluation, and how to develop nonprofit strategies that maximize social impact within resource constraints by focusing on the programs and approaches where the organization can have distinctive impact rather than trying to do everything.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/game-design', requireAuth, async (req: AuthRequest, res) => {
+  const { game, genre, audience } = req.body;
+  const prompt = `You are a game design strategy and player engagement expert. Design the game strategy for ${game} in ${genre} for ${audience}. Cover game design framework, core loop and progression system, player motivation and psychology, monetization design and player value, social and multiplayer mechanics, live operations and content strategy, user acquisition and retention, community management, platform and distribution strategy, and how to design games that create genuine player value by building deep engagement through compelling gameplay rather than manipulative monetization that extracts money from players without delivering proportionate enjoyment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/sustainable-finance', requireAuth, async (req: AuthRequest, res) => {
+  const { institution, portfolio, goals } = req.body;
+  const prompt = `You are a sustainable finance strategy and impact investing expert. Design sustainable finance for ${institution} managing ${portfolio} toward ${goals}. Cover sustainable finance framework, ESG integration in investment process, climate risk and opportunity assessment, green and social bond frameworks, impact measurement and reporting, TCFD and regulatory disclosure, stewardship and engagement strategy, sustainable product development, sustainable finance governance, and how to develop sustainable finance strategies that genuinely integrate environmental and social considerations into investment decisions in ways that manage risk and capture opportunity rather than greenwashing that adds ESG labels to conventional investment approaches.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/venture-building', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, opportunity, resources } = req.body;
+  const prompt = `You are a venture building strategy and corporate innovation expert. Design venture building for ${organization} pursuing ${opportunity} with ${resources}. Cover venture building framework, opportunity identification and validation, venture studio vs accelerator vs incubator models, build vs buy vs partner decisions, venture team and talent, venture governance and autonomy, corporate venture capital, venture portfolio management, venture to core integration, and how to design venture building capabilities that allow established organizations to create new businesses rather than just innovating within existing ones, addressing the fundamental challenge that the systems and incentives of established organizations are optimized for efficiency rather than exploration.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/government-affairs', requireAuth, async (req: AuthRequest, res) => {
+  const { company, issues, jurisdictions } = req.body;
+  const prompt = `You are a government affairs strategy and public policy expert. Design government affairs for ${company} on ${issues} across ${jurisdictions}. Cover government affairs framework, policy landscape and regulatory environment, stakeholder mapping in government, coalition building and advocacy, legislative and regulatory monitoring, comment and testimony strategy, political risk management, grassroots and grasstops advocacy, government contracting strategy, and how to develop government affairs programs that advance the organization agenda in policy and regulatory environments through legitimate advocacy that demonstrates how the company position aligns with the public interest rather than narrow commercial benefit.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
