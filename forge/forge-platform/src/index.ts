@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v607.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v608.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200657,6 +200657,66 @@ app.post('/api/sales/b2c-strategy', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/strategy/circular-business', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, model } = req.body;
   const prompt = `You are a circular economy and sustainable business model expert. Design the circular business model for ${company} with ${product} using ${model} approach. Cover the circular economy principles and business case, the product design for circularity, the reverse logistics and take-back design, the refurbishment and remanufacturing model, the product-as-a-service design, the materials recovery and recycling, the circular supply chain design, the customer behavior change for circularity, the circular metrics and reporting, and how to build a circular business model that is both sustainable and profitable.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { company, team, scenario } = req.body;
+  const prompt = `You are a pricing playbook and sales pricing guidance expert. Build the pricing playbook for ${company} for ${team} handling ${scenario} scenarios. Cover the pricing playbook components and structure, the standard price and discount waterfall, the discount authority matrix, the competitive pricing response guide, the multi-year deal pricing guidance, the bundling and configuration pricing guide, the pricing for different buyer types, the price increase playbook, the pricing exception escalation process, and how to keep the pricing playbook current as markets and products evolve.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/win-loss', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, competitor } = req.body;
+  const prompt = `You are a win-loss analysis and competitive intelligence expert. Run the win-loss analysis for ${product} in ${segment} versus ${competitor}. Cover the win-loss program design, the win-loss interview methodology, the deal data analysis approach, the win rate by segment and use case, the loss reason taxonomy and classification, the competitive displacement patterns, the product gap vs. sales execution gap analysis, the pricing and value perception in wins and losses, the win-loss insight activation with product and sales, and how to build a systematic win-loss program that drives competitive improvement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/decision-making', requireAuth, async (req: AuthRequest, res) => {
+  const { decision, stakeholders, uncertainty } = req.body;
+  const prompt = `You are a strategic decision-making and decision quality expert. Coach on the decision for ${decision} with ${stakeholders} stakeholders under ${uncertainty} uncertainty. Cover the decision quality framework, the decision framing and reframing, the alternatives generation, the information and evidence assessment, the uncertainty quantification and scenario design, the cognitive bias identification in the decision, the stakeholder alignment process, the reversible vs. irreversible decision approach, the decision record and post-mortem design, and how to build a culture of high-quality decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/business-forecasting', requireAuth, async (req: AuthRequest, res) => {
+  const { metric, horizon, method } = req.body;
+  const prompt = `You are a business forecasting and predictive analytics expert. Build the forecast for ${metric} over ${horizon} horizon using ${method} methodology. Cover the forecasting methodology selection, the time series analysis and decomposition, the leading indicator identification, the causal model design, the forecast accuracy measurement, the forecast bias detection and correction, the scenario and probability-weighted forecasting, the forecast cadence and process design, the forecast vs. budget vs. actuals governance, and how to build forecasting capability that improves decision quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/benchmarking', requireAuth, async (req: AuthRequest, res) => {
+  const { company, peers, dimensions } = req.body;
+  const prompt = `You are a competitive benchmarking and performance comparison expert. Benchmark ${company} against ${peers} on ${dimensions}. Cover the benchmarking methodology design, the peer group selection criteria, the data collection and normalization, the metric selection and definition alignment, the qualitative vs. quantitative benchmarking, the inside-out vs. outside-in benchmarking, the benchmark gap analysis, the best practice identification, the benchmark action plan, and how to use benchmarking to motivate and inform organizational improvement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/price-review', requireAuth, async (req: AuthRequest, res) => {
+  const { company, cadence, scope } = req.body;
+  const prompt = `You are a pricing review and pricing governance expert. Design the price review process for ${company} at ${cadence} cadence across ${scope}. Cover the price review objectives and governance, the price review data and analytics requirements, the competitive price monitoring, the market condition triggers for price action, the internal stakeholder review design, the price change decision framework, the price change approval authority, the price change implementation and communication, the price review post-mortem, and how to make the price review a strategic capability rather than an administrative process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/distributed-team', requireAuth, async (req: AuthRequest, res) => {
+  const { team, timezone, challenge } = req.body;
+  const prompt = `You are a distributed team management and remote work expert. Coach on managing ${team} across ${timezone} timezones through ${challenge}. Cover the distributed team principles and trade-offs, the async-first communication design, the documentation and knowledge sharing culture, the distributed team meeting design, the timezone overlap optimization, the distributed team rituals and connection, the performance management for distributed teams, the distributed team hiring and onboarding, the distributed team culture building, and how to build a distributed team that outperforms co-located teams.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/referral-loop', requireAuth, async (req: AuthRequest, res) => {
+  const { product, incentive, trigger } = req.body;
+  const prompt = `You are a referral program and viral growth expert. Design the referral loop for ${product} using ${incentive} with ${trigger} as the activation trigger. Cover the referral program mechanics design, the double-sided vs. single-sided incentive design, the referral moment identification, the share mechanic and copy design, the referral tracking and attribution, the referral fraud prevention, the referral email and notification design, the referral program economics and unit economics, the referral program optimization, and how to build a referral program that compounds growth over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-trends', requireAuth, async (req: AuthRequest, res) => {
+  const { market, category, period } = req.body;
+  const prompt = `You are a pricing trend analysis and market intelligence expert. Analyze the pricing trends in ${market} for ${category} over ${period}. Cover the pricing trend identification methodology, the price index construction, the competitor pricing movement analysis, the inflation and cost pass-through trends, the value metric evolution trends, the pricing model innovation in the category, the customer willingness to pay trend analysis, the pricing technology adoption trends, the regulatory pricing trends, and how to use pricing trend analysis to make forward-looking pricing decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/people-leader', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, team, transition } = req.body;
+  const prompt = `You are a people leadership and management development expert. Coach ${leader} leading ${team} through ${transition}. Cover the people leadership principles, the 1-on-1 mastery and coaching skills, the feedback and performance conversation design, the team motivation and engagement, the conflict resolution and difficult conversation, the inclusive leadership practices, the hiring and building the team, the team culture setting, the managing up and cross-functionally, and how to grow as a people leader from manager to executive over time.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
