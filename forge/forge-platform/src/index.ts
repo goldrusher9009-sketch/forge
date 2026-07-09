@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v413.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v414.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -189899,5 +189899,67 @@ app.post('/api/writing/talking-points', requireAuth, async (req: AuthRequest, re
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 // === END AUTO-GENERATED ROUTES ===
+
+
+// Wave 247+248 routes
+app.post('/api/dev/cicd-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { pipeline, issues, stack } = req.body;
+  const prompt = `You are a DevOps expert. Audit the CI/CD pipeline and provide a prioritized improvement report.\n\nPipeline: ${pipeline}\nIssues: ${issues}\nStack: ${stack}\n\nAudit build steps, deployment stages, test coverage gates, rollback procedures, and environment configs. Provide specific fixes with priority order.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/competitive-diff', requireAuth, async (req: AuthRequest, res) => {
+  const { competitor, product, audience } = req.body;
+  const prompt = `You are a sales strategist. Create a competitive differentiation script for sales reps.\n\nCompetitor: ${competitor}\nOur product: ${product}\nTarget audience: ${audience}\n\nInclude: trap questions to ask, landmines to plant about the competitor, our proof points, and a reframe for when prospects bring up the competitor first.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/price-test', requireAuth, async (req: AuthRequest, res) => {
+  const { currentPrice, target, segment } = req.body;
+  const prompt = `You are a product growth expert. Design a pricing experiment.\n\nCurrent price: ${currentPrice}\nTarget: ${target}\nSegment: ${segment}\n\nInclude: hypothesis, test groups, metrics to track, duration, success criteria, and statistical significance guidance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/retention-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { product, churnRate, currentEmails } = req.body;
+  const prompt = `You are a growth expert specializing in retention. Audit user retention and provide a 30-day improvement plan.\n\nProduct: ${product}\nChurn rate: ${churnRate}\nCurrent emails: ${currentEmails}\n\nIdentify: drop-off points, email sequence gaps, lifecycle stage issues, and quick wins with expected impact.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/performance-cycle', requireAuth, async (req: AuthRequest, res) => {
+  const { companySize, currentProcess, goals } = req.body;
+  const prompt = `You are an HR expert. Design a complete employee performance review cycle.\n\nCompany size: ${companySize}\nCurrent process: ${currentProcess}\nGoals: ${goals}\n\nInclude: timeline, review rubrics, calibration session design, manager training, communication plan, and legal defensibility considerations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investor/pitch-sim', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, idea, metrics } = req.body;
+  const prompt = `You are a seasoned VC investor who has seen thousands of pitches. Simulate a tough Q&A session.\n\nStage: ${stage}\nIdea: ${idea}\nMetrics: ${metrics}\n\nGenerate 10 hard questions a serious investor would ask, ordered by difficulty. For each question include: why VCs ask this, what a weak answer looks like, and coaching notes for a strong answer. Be brutally honest.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dev/platform-migration', requireAuth, async (req: AuthRequest, res) => {
+  const { from: fromPlatform, to: toPlatform, constraints } = req.body;
+  const prompt = `You are a senior architect with deep migration experience. Create a comprehensive platform migration plan.\n\nMigrating from: ${fromPlatform}\nMigrating to: ${toPlatform}\nConstraints: ${constraints}\n\nInclude: phased migration steps, data migration strategy, risk matrix, rollback strategy, team responsibilities, timeline, and go-live checklist.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/launch-pr', requireAuth, async (req: AuthRequest, res) => {
+  const { product, audience, timeline } = req.body;
+  const prompt = `You are a PR strategist who has launched B2B and B2C products at scale. Build a PR launch plan.\n\nProduct: ${product}\nTarget audience: ${audience}\nTimeline: ${timeline}\n\nInclude: target media outlets, pitch angles for each, embargo strategy, spokesperson prep, sample pitch email, social amplification plan, and measurement framework.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/activation-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { product, currentActivation, targetMetric } = req.body;
+  const prompt = `You are a product growth expert specializing in activation. Design a user activation playbook.\n\nProduct: ${product}\nCurrent activation rate: ${currentActivation}\nTarget metric: ${targetMetric}\n\nInclude: key activation milestones (aha moments), friction removal opportunities, onboarding flow redesign, specific copy for each critical moment, and a/b test ideas.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/champion-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { contact, company, deal } = req.body;
+  const prompt = `You are an enterprise sales expert. Build a champion development plan for an internal buyer.\n\nContact: ${contact}\nCompany: ${company}\nDeal context: ${deal}\n\nInclude: how to identify if they are a true champion, content to arm them with, executive alignment strategy, internal objections they will face and how to help them answer, and weekly touchpoint plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
 
 app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));
