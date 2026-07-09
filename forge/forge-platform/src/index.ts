@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v452.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v453.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191973,6 +191973,59 @@ app.post('/api/product/product-vision', requireAuth, async (req: AuthRequest, re
 app.post('/api/sales/pipeline-generation', requireAuth, async (req: AuthRequest, res) => {
   const { segment, channels, quota } = req.body;
   const prompt = `Build a pipeline generation strategy.\nTarget segment: ${segment}\nAvailable channels: ${channels}\nQuota: ${quota}\nInclude: coverage ratio calculation (pipeline needed = 3-4x quota), channel mix design (outbound/inbound/partner/events), outbound sequence design (multi-touch/multi-channel/personalization), inbound lead qualification and routing, pipeline velocity optimization (increase deal size/conversion/speed), pipeline generation cadence and weekly targets, SDR/AE pipeline generation ownership model, pipeline health metrics (stage distribution/aging/source mix), pipeline generation campaign calendar, and how to build a pipeline engine that reliably generates 3-4x quota coverage every quarter.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 325+326 routes
+app.post('/api/dev/data-platform-design', requireAuth, async (req: AuthRequest, res) => {
+  const { sources, consumers, scale } = req.body;
+  const prompt = `Design a data platform architecture.\nData sources: ${sources}\nData consumers: ${consumers}\nScale requirements: ${scale}\nInclude: modern data stack component selection (ingestion/transformation/storage/serving), ELT vs. ETL paradigm decision, data warehouse vs. data lake vs. lakehouse, dbt for transformation layer, data catalog and lineage, real-time vs. batch processing decision, reverse ETL for operational use cases, data quality monitoring framework, access control and data governance, cost management for cloud data warehouses, and how to build a data platform that serves analytics/data science/ML/product teams without becoming a bottleneck.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/objection-bank', requireAuth, async (req: AuthRequest, res) => {
+  const { product, competitors, segment } = req.body;
+  const prompt = `Build a comprehensive objection handling bank.\nProduct: ${product}\nCompetitors: ${competitors}\nTarget segment: ${segment}\nInclude: top 10 objections ranked by frequency, response framework for each objection (acknowledge→explore→respond→confirm), price objection handling (ROI reframe/unbundling/payment terms), competitive objection handling (trap-setting/differentiator focus/reference strategy), timing objection handling (cost of delay/urgency creation), "build vs. buy" objection response, "we already have a solution" response, security/compliance objection playbook, procurement and legal objection strategies, and how to use objections as qualification signals.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/launch-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, audience, goals } = req.body;
+  const prompt = `Create a product launch playbook.\nFeature/product: ${feature}\nTarget audience: ${audience}\nLaunch goals: ${goals}\nInclude: launch tier classification (tier 1 major/tier 2 minor/tier 3 patch), pre-launch checklist (cross-functional alignment/documentation/support readiness), launch timing strategy (avoid Fridays/holidays/competing launches), announcement channel mix (in-app/email/social/PR/sales enablement), beta program design if applicable, success metrics and measurement plan, post-launch monitoring protocol, feedback collection plan, rollback trigger criteria, and 30-60-90 day post-launch review framework.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/webinar-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, audience, goal } = req.body;
+  const prompt = `Build a webinar strategy.\nTopic: ${topic}\nTarget audience: ${audience}\nBusiness goal: ${goal}\nInclude: webinar format selection (educational/panel/product demo/customer story), topic validation and keyword research, promotion timeline (4-week pre-webinar campaign), registration page optimization, email promotion sequence, speaker preparation guide, run-of-show design, engagement tactics during webinar (polls/Q&A/resources), follow-up sequence (attended/registered but missed/leads generated), content repurposing plan (recording/clips/blog/email), and how to build a webinar program that generates consistent pipeline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/talent-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  const { roles, timeline, sources } = req.body;
+  const prompt = `Build a proactive talent pipeline strategy.\nCritical roles: ${roles}\nHiring timeline: ${timeline}\nSourcing channels: ${sources}\nInclude: pipeline definition by role (warm/cold/future), talent mapping methodology, passive candidate nurture program, sourcing channel effectiveness analysis, recruiter outreach strategy for passive candidates, talent community design, university and early-career pipeline, internal mobility as pipeline source, referral program optimization, pipeline conversion metrics by stage, and how to reduce time-to-fill and hiring costs by having pipeline ready before roles open.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/investor-outreach', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, thesis, traction } = req.body;
+  const prompt = `Design an investor outreach strategy.\nFunding stage: ${stage}\nCompany thesis: ${thesis}\nKey traction: ${traction}\nInclude: investor targeting (thesis fit/stage fit/portfolio fit/value-add), warm introduction strategy vs. cold outreach, investor research methodology, CRM system for managing investor relationships, outreach email framework (concise/compelling/specific ask), deck teaser vs. full deck strategy, managing investor pipeline (tracking/follow-up/updates), creating FOMO through social proof and momentum, how to run a tight fundraising process, investor update cadence before and during the raise, and how to get to yes faster.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/kubernetes-design', requireAuth, async (req: AuthRequest, res) => {
+  const { services, scale, cloud } = req.body;
+  const prompt = `Design a Kubernetes architecture.\nServices: ${services}\nScale requirements: ${scale}\nCloud provider: ${cloud}\nInclude: cluster design (single vs. multi-cluster/namespace strategy), workload type selection (Deployment/StatefulSet/DaemonSet/Job), resource requests and limits strategy, horizontal pod autoscaling design, node pool design (general/spot/GPU), ingress controller selection, service mesh evaluation (Istio/Linkerd/Cilium), secrets management (Vault/External Secrets Operator), GitOps deployment model (ArgoCD/Flux), cluster upgrade strategy, multi-tenancy and RBAC design, and cost optimization (right-sizing/spot instances/cluster autoscaler).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/positioning-doc', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, competition } = req.body;
+  const prompt = `Write a positioning document.\nProduct: ${product}\nTarget segment: ${segment}\nCompetitive landscape: ${competition}\nInclude: April Dunford positioning framework (competitive alternatives/unique attributes/value/target customers/market category), positioning statement template and examples, differentiated value proposition construction, category design vs. category entry decision, messaging hierarchy (category claim/differentiator/proof points), how positioning differs from messaging, competitive moat mapping, positioning validation methodology, internal alignment process, and how to cascade positioning into sales/marketing/product decisions consistently.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/metrics-tree', requireAuth, async (req: AuthRequest, res) => {
+  const { northstar, drivers, levers } = req.body;
+  const prompt = `Build a product metrics tree.\nNorth star metric: ${northstar}\nKey drivers: ${drivers}\nProduct levers: ${levers}\nInclude: north star metric definition and validation (does it reflect value delivered?), input metric identification (what drives the north star), metric tree structure (north star→L1 drivers→L2 levers→L3 actions), leading vs. lagging indicator mapping, counter metric selection (guardrails to prevent gaming), ownership assignment by team/squad, instrumentation requirements for each metric, dashboard design, how to use the metrics tree for prioritization, and how to evolve the metrics tree as the product matures.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/sales-enablement', requireAuth, async (req: AuthRequest, res) => {
+  const { team, gaps, stage } = req.body;
+  const prompt = `Design a sales enablement program.\nSales team: ${team}\nPerformance gaps: ${gaps}\nCompany stage: ${stage}\nInclude: enablement needs assessment methodology, content library structure (by persona/stage/use case), sales playbook design, onboarding program for new reps (ramp timeline/milestones/buddy system), ongoing training cadence (product updates/competitive intel/skills coaching), sales certification program, content management system selection, enablement metrics (ramp time/win rate/quota attainment/content usage), manager-as-coach enablement, and how to measure enablement ROI with A/B comparison.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
