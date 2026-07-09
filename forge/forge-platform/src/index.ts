@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v697.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v698.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -206057,6 +206057,66 @@ app.post('/api/strategy/edtech', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/strategy/cross-border-commerce', requireAuth, async (req: AuthRequest, res) => {
   const { company, products, markets } = req.body;
   const prompt = `You are a cross-border commerce strategy and international e-commerce expert. Design cross-border commerce for ${company} selling ${products} in ${markets}. Cover cross-border commerce framework, market selection and prioritization, customs and import duties management, local payment method integration, localization and translation, local logistics and last-mile delivery, marketplace versus direct-to-consumer strategy, returns management across borders, local regulatory and product compliance, and how to build cross-border commerce operations that successfully penetrate international markets by investing in the localization and local payment infrastructure that converts international shoppers, partnering with local logistics providers that understand last-mile delivery challenges in each market, and managing customs and duties in ways that give customers predictable landed costs rather than surprising them with unexpected import fees at delivery.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/scaling-roadmap', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, bottlenecks } = req.body;
+  const prompt = `You are a business scaling strategy and growth architecture expert. Design scaling roadmap for ${company} at ${stage} facing ${bottlenecks}. Cover scaling roadmap framework, scaling readiness assessment, organizational design for scale, systems and process infrastructure, technology stack scalability, financial model at scale, talent strategy for rapid growth, culture preservation through scaling, international and geographic expansion sequencing, and how to build scaling roadmaps that enable rapid growth without the organizational breakdowns that derail scaling companies by identifying the specific bottlenecks that will constrain growth at each stage, investing in the infrastructure and systems ahead of the growth that will stress them, and making the organizational design decisions that build genuine management depth rather than creating founder dependency that becomes the single largest constraint on how fast the company can scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ethical-leadership', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, organization, dilemmas } = req.body;
+  const prompt = `You are an ethical leadership strategy and moral decision-making expert. Design ethical leadership for ${leader} in ${organization} facing ${dilemmas}. Cover ethical leadership framework, values-based leadership and integrity, ethical decision-making frameworks across consequentialist and deontological, moral courage and speaking up, stakeholder ethics and competing obligations, creating ethical culture and psychological safety, handling ethical gray areas and genuine dilemmas, ethical failures and accountability, leading through scandal and organizational wrongdoing, and how to develop ethical leadership that goes beyond rule compliance to build organizations where people do the right thing because it reflects genuine values, where leaders model the ethical courage to make hard decisions that sacrifice short-term advantage for long-term trust, and where the culture makes it safe to raise ethical concerns rather than punishing the messenger.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/hospitality', requireAuth, async (req: AuthRequest, res) => {
+  const { company, property, segment } = req.body;
+  const prompt = `You are a hospitality strategy and hotel management expert. Design hospitality strategy for ${company} with ${property} targeting ${segment}. Cover hospitality strategy framework, guest experience design and service standards, revenue management and dynamic pricing, distribution channel mix across OTA and direct, loyalty program and repeat guest strategy, food and beverage concept and profitability, group and events strategy, hotel technology and property management systems, brand standards and quality assurance, and how to build hospitality businesses that generate strong financial returns and loyal guests by designing the specific combination of product, service, and experience that the target guest segment genuinely values, investing in the staff training and culture that delivers consistent service quality, and managing the revenue and cost dynamics of hospitality operations that have high fixed costs and perishable inventory requiring active yield management.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/travel-tourism', requireAuth, async (req: AuthRequest, res) => {
+  const { destination, segment, experience } = req.body;
+  const prompt = `You are a travel and tourism strategy and destination management expert. Design travel tourism for ${destination} targeting ${segment} with ${experience}. Cover travel tourism framework, destination positioning and brand development, visitor experience design and itinerary, tourism infrastructure and capacity management, sustainable tourism and environmental carrying capacity, community benefit and local economic impact, marketing channels and visitor acquisition, partnerships with airlines, hotels, and operators, seasonality management and shoulder season development, and how to build tourism strategies that generate economic benefits for destinations and communities while preserving the natural and cultural assets that make destinations worth visiting, which requires managing visitor volume to maintain experience quality, distributing economic benefits broadly within local communities, and investing in the infrastructure and services that make the destination consistently excellent rather than allowing quality to degrade under the pressure of visitor volume.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/advanced-manufacturing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, technology } = req.body;
+  const prompt = `You are an advanced manufacturing strategy and Industry 4.0 expert. Design advanced manufacturing for ${company} producing ${products} using ${technology}. Cover advanced manufacturing framework, Industry 4.0 and smart factory architecture, additive manufacturing and 3D printing applications, robotics and collaborative robots, digital twin for manufacturing, computer vision and quality inspection, advanced materials and process technology, manufacturing execution systems, lean and agile manufacturing integration, and how to build advanced manufacturing capabilities that deliver the productivity, quality, and flexibility advantages that advanced technology promises by making technology investments that are grounded in specific manufacturing problems rather than adopting technology for its own sake, and investing in the workforce skills and process design that make technology work in the real manufacturing environment rather than in controlled demonstrations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/startup-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { startup, stage, team } = req.body;
+  const prompt = `You are a startup operations strategy and early-stage company building expert. Design startup operations for ${startup} at ${stage} with ${team}. Cover startup operations framework, foundational systems and tool stack, hiring and people operations for early stage, financial operations and cash management, legal and compliance foundation, customer operations and support at scale, product operations and sprint cadence, data and analytics foundation, remote and distributed team operations, and how to build startup operations that enable rapid growth without creating operational chaos by implementing the minimum viable processes and systems that maintain quality and accountability as the team grows, making the foundational hiring and systems decisions early that become expensive and disruptive to change later, and building the operational discipline that investors look for as evidence the founders can build a real company not just a product.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pharma-rd', requireAuth, async (req: AuthRequest, res) => {
+  const { company, pipeline, therapeutic } = req.body;
+  const prompt = `You are a pharmaceutical R and D strategy and drug development expert. Design pharma R and D strategy for ${company} with ${pipeline} in ${therapeutic}. Cover pharma R and D strategy framework, target identification and validation, drug discovery platform and modality selection, portfolio balance across risk and stage, clinical development strategy, translational biomarker development, regulatory strategy and FDA interactions, partnering and in-licensing to build pipeline, R and D productivity and cycle time, and how to build pharmaceutical R and D programs that generate a steady flow of successful drug approvals by making rigorous go and no-go decisions at each development stage, investing in the translational science that predicts clinical success from preclinical data, and building the regulatory expertise that gets to approval faster and with fewer surprises rather than discovering regulatory issues late in development when they are most expensive to address.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/gaming-industry', requireAuth, async (req: AuthRequest, res) => {
+  const { studio, game, market } = req.body;
+  const prompt = `You are a gaming industry strategy and game business expert. Design gaming strategy for ${studio} with ${game} in ${market}. Cover gaming industry strategy framework, game genre and market sizing, free-to-play versus premium business model, live service and game-as-a-service design, player acquisition and user acquisition economics, monetization design across IAP, battle pass, and cosmetics, community and esports strategy, platform strategy across mobile, PC, and console, IP development and transmedia, and how to build gaming businesses that generate sustainable revenue by designing monetization that players experience as fair value exchange rather than extraction, building the community and live service operations that retain players after launch, and managing the creative and commercial tensions that arise when game development must balance artistic vision with the commercial requirements of a live service that must generate sufficient revenue to fund ongoing development.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/procurement-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, spend, maturity } = req.body;
+  const prompt = `You are a procurement technology strategy and digital procurement expert. Design procurement technology for ${company} with ${spend} at ${maturity}. Cover procurement technology framework, source-to-pay technology landscape, e-procurement and purchase order automation, supplier onboarding and management platform, contract management and CLM, spend analytics and categorization, e-sourcing and reverse auction, procurement AI and cognitive spend management, integration with ERP and finance systems, and how to build procurement technology stacks that deliver measurable improvement in procurement efficiency and spend control by selecting technologies that actually get adopted by buyers and suppliers rather than platforms that have impressive capabilities in demos but create so much complexity in use that people work around them, and sequencing technology investments to solve the highest-value problems first.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/biotech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, platform, therapeutic } = req.body;
+  const prompt = `You are a biotech strategy and life sciences company building expert. Design biotech strategy for ${company} with ${platform} targeting ${therapeutic}. Cover biotech strategy framework, platform versus asset company decision, therapeutic area selection and competitive positioning, financing strategy across seed, Series A, B, and C, partnership and licensing strategy with large pharma, clinical development prioritization, manufacturing and CMO strategy, regulatory strategy and FDA pathway, IP strategy and freedom to operate, and how to build biotech companies that generate value by making disciplined decisions about which programs to advance based on the clinical and commercial probability of success, structuring partnerships that bring capital and development capabilities while preserving upside for the company, and building the scientific and regulatory expertise that gives investors and partners confidence in the development team ability to execute on the scientific promise of the platform.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
