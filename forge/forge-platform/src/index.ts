@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v425.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v426.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190542,6 +190542,59 @@ app.post('/api/product/metrics-tree', requireAuth, async (req: AuthRequest, res)
 app.post('/api/sales/pipeline-hygiene', requireAuth, async (req: AuthRequest, res) => {
   const { pipeline, stage, criteria } = req.body;
   const prompt = `Create a sales pipeline hygiene framework.\nPipeline description: ${pipeline}\nCurrent stage breakdown: ${stage}\nQualification criteria: ${criteria}\nInclude: deal scoring rubric, stale deal triggers, MEDDPICC audit template, stage exit criteria, weekly hygiene checklist, CRM field requirements per stage, and coaching questions for each stuck deal.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 271+272 routes
+app.post('/api/dev/redis-patterns', requireAuth, async (req: AuthRequest, res) => {
+  const { useCase, dataType, scale } = req.body;
+  const prompt = `Design Redis data patterns and strategies.\nUse case: ${useCase}\nData type: ${dataType}\nScale: ${scale}\nInclude: appropriate Redis data structures (string/hash/list/set/sorted set/stream), key naming conventions, TTL strategy, eviction policy, clustering vs sentinel, caching patterns (cache-aside, write-through, write-behind), and memory optimization tips.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/ideal-customer-profile', requireAuth, async (req: AuthRequest, res) => {
+  const { product, wins, losses } = req.body;
+  const prompt = `Define the Ideal Customer Profile (ICP).\nProduct: ${product}\nBest customer wins: ${wins}\nDeal losses: ${losses}\nInclude: firmographic criteria (size, industry, geography), technographic signals, trigger events, champion profile, economic buyer profile, disqualification criteria, and a 1-page ICP card.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/jobs-to-be-done', requireAuth, async (req: AuthRequest, res) => {
+  const { customer, situation, goal } = req.body;
+  const prompt = `Apply Jobs-to-be-Done framework.\nCustomer: ${customer}\nSituation: ${situation}\nDesired goal: ${goal}\nInclude: functional job definition, emotional jobs, social jobs, related jobs map, JTBD interview questions, opportunity scoring matrix, and how to use this to prioritize features vs. competitors.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/community-building', requireAuth, async (req: AuthRequest, res) => {
+  const { audience, platform, value } = req.body;
+  const prompt = `Build a community growth strategy.\nTarget audience: ${audience}\nPlatform: ${platform}\nValue proposition: ${value}\nInclude: community flywheel design, founding member recruitment, content programming calendar, engagement rituals, moderation playbook, metrics (DAU, content rate, NPS), and how to monetize without killing culture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/comp-structure', requireAuth, async (req: AuthRequest, res) => {
+  const { roles, market, budget } = req.body;
+  const prompt = `Design a compensation structure.\nRoles: ${roles}\nMarket: ${market}\nBudget: ${budget}\nInclude: band design (base salary ranges), equity refresh schedule, bonus plan mechanics, benefits philosophy, geographic pay policy, pay equity audit process, and how to communicate compensation to candidates and employees.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/portco-management', requireAuth, async (req: AuthRequest, res) => {
+  const { company, challenges, resources } = req.body;
+  const prompt = `Create a portfolio company management plan.\nCompany: ${company}\nCurrent challenges: ${challenges}\nAvailable resources: ${resources}\nInclude: board agenda design, KPI reporting template, intervention triggers, talent network activation, investor value-add playbook, and how to know when to push vs. give space.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/database-migration', requireAuth, async (req: AuthRequest, res) => {
+  const { fromDb, toDb, dataSize } = req.body;
+  const prompt = `Plan a database migration.\nFrom: ${fromDb}\nTo: ${toDb}\nData size: ${dataSize}\nInclude: migration strategy (big bang vs. strangler fig), schema mapping challenges, data transformation scripts outline, zero-downtime approach, rollback plan, validation queries, cutover checklist, and post-migration monitoring.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/review-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, platform, volume } = req.body;
+  const prompt = `Build a customer review acquisition strategy.\nProduct: ${product}\nTarget platform: ${platform}\nTarget volume: ${volume}\nInclude: in-product review triggers (timing, segment), email sequences, response templates for positive and negative reviews, escalation process for 1-star reviews, review velocity goals, and how to use reviews in sales materials.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/user-stories', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, persona, acceptance } = req.body;
+  const prompt = `Write production-ready user stories.\nFeature: ${feature}\nPersona: ${persona}\nAcceptance context: ${acceptance}\nInclude: epic definition, 5-8 user stories in "As a / I want / So that" format, acceptance criteria (Given/When/Then), edge cases, out-of-scope items, and story point estimates with reasoning.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/forecast-model', requireAuth, async (req: AuthRequest, res) => {
+  const { pipeline, history, target } = req.body;
+  const prompt = `Build a sales forecast model.\nCurrent pipeline: ${pipeline}\nHistorical win rates: ${history}\nRevenue target: ${target}\nInclude: weighted pipeline calculation, stage-based conversion assumptions, coverage ratio analysis, best/likely/worst case scenarios, commit vs upside breakdown, gap analysis with recommendations, and leading indicators to watch weekly.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
