@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v575.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v576.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198737,6 +198737,66 @@ app.post('/api/strategy/execution', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/strategy/operating-model', requireAuth, async (req: AuthRequest, res) => {
   const { company, stage, goals } = req.body;
   const prompt = `You are an operating model design and organizational effectiveness expert. Design the operating model for ${company} at ${stage} stage to achieve ${goals}. Cover the five dimensions of operating model design (strategy, structure, process, people, technology), how to align the operating model to the business strategy, the governance model (decision rights, escalation paths, forums), the process architecture (core processes, support processes, management processes), the management operating system (cadences, rituals, reviews), organizational design principles for this stage, how to identify and remove friction in the operating model, and how to evolve the operating model as the company scales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/price-negotiation', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, objection, budget } = req.body;
+  const prompt = `You are a price negotiation and value selling expert. Coach through a price negotiation for ${deal} deal with ${objection} price objection and ${budget} budget constraint. Cover the root cause analysis of the price objection (is it really about price?), how to sell value before defending price, the negotiation preparation (your BATNA, their BATNA, zone of possible agreement), the negotiation tactics (anchoring, bracketing, concession strategy), how to use silence and patience, what to give up vs. what to protect, how to close when price is agreed, and how to document the commercial terms to avoid renegotiation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/international', requireAuth, async (req: AuthRequest, res) => {
+  const { company, markets, model } = req.body;
+  const prompt = `You are an international expansion and global GTM expert. Build an international growth strategy for ${company} entering ${markets} markets with ${model} business model. Cover market selection criteria and prioritization, the entry mode decision (direct, partner, acquisition, JV), localization requirements (product, pricing, sales, marketing, legal), the international org structure and talent strategy, how to build local pipeline in a new market, currency and payment considerations, regulatory and compliance requirements by market, how to sequence the expansion (beachhead → adjacencies → international), and how to measure international expansion success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/okr-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, quarter, focus } = req.body;
+  const prompt = `You are an OKR design and strategy execution expert. Design the OKR framework for ${company} for ${quarter} with ${focus} as the strategic focus. Cover the OKR philosophy (why OKRs work and why they fail), the objective design process (inspiring, qualitative, time-bound), key result design (measurable, ambitious, not a task), common OKR mistakes and how to avoid them, the cascade from company OKRs to team OKRs to individual OKRs, the check-in cadence and scoring methodology, how to handle mid-quarter pivots, grading OKRs (why 0.7 is a success), and how to use OKR retrospectives to improve the next cycle.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-research', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, method } = req.body;
+  const prompt = `You are a pricing research and value assessment expert. Design a pricing research study for ${product} for ${segment} customer segment using ${method} methodology. Cover the research design (Van Westendorp Price Sensitivity Meter, Gabor-Granger, conjoint analysis, JTBD value interviews), how to recruit the right respondents, the survey design or interview guide, analysis methodology and output interpretation, how to translate research findings into pricing decisions, common research biases and how to control for them, how to present pricing research findings to leadership, and how often to repeat pricing research as market conditions change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/dei-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, goals } = req.body;
+  const prompt = `You are a diversity, equity, and inclusion strategy expert. Build a DEI strategy for ${company} at ${stage} stage to achieve ${goals}. Cover the DEI assessment and baseline measurement, inclusive hiring practices (job descriptions, sourcing, structured interviews, diverse panels), pay equity analysis and remediation, inclusive onboarding and belonging initiatives, psychological safety and bias awareness programs, leadership accountability for DEI outcomes, Employee Resource Group design and support, DEI metrics and reporting framework, how to embed DEI into performance management, and how to communicate DEI progress authentically to employees and stakeholders.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cs/customer-education', requireAuth, async (req: AuthRequest, res) => {
+  const { product, audience, goals } = req.body;
+  const prompt = `You are a customer education and learning experience expert. Build a customer education program for ${product} for ${audience} to achieve ${goals}. Cover the education strategy (what to teach and why), curriculum architecture (onboarding, certification, advanced use), content modalities (video, written, live training, hands-on labs), the customer education platform selection (LMS, in-app guides, knowledge base), how to gate content by plan tier to drive upgrades, measuring education effectiveness (completion rates, time-to-value, support ticket deflection, NPS correlation), instructor-led vs. self-paced strategy, and how to build a customer certification program that becomes a career credential.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/startup', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, mrr, burn } = req.body;
+  const prompt = `You are a startup finance and CFO advisor expert. Advise a ${stage} stage startup with ${mrr} MRR and ${burn} monthly burn. Cover the unit economics health check (CAC payback, LTV:CAC, gross margin), runway calculation and burn rate management, the financial model and key assumptions to stress test, when to raise and how much to raise, how to prepare for investor due diligence, financial controls and reporting cadence for your stage, the CFO hire decision (when to hire, what to look for), how to build a finance function that supports growth, and the warning signs of financial distress and how to course-correct early.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-map', requireAuth, async (req: AuthRequest, res) => {
+  const { market, segments, trends } = req.body;
+  const prompt = `You are a market analysis and competitive intelligence expert. Map the landscape of the ${market} market across ${segments} segments with ${trends} as key trends. Deliver: market size and growth rate (TAM/SAM/SOM), the market segmentation map with key players in each segment, how the market is evolving and what is disrupting incumbents, the value chain map, emerging players and technologies, white space analysis (underserved segments and needs), how to position in this market, the consolidation dynamics, and what a winning company needs to do in the next 12 months to capture market share.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/content-calendar', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, channels, frequency } = req.body;
+  const prompt = `You are a content marketing and editorial planning expert. Build a content calendar for ${brand} across ${channels} channels at ${frequency} publishing frequency. Cover the content mix strategy (educational, entertaining, promotional, community), platform-specific content formats and best practices, the content planning process (theme → brief → production → review → publish), how to batch content production for efficiency, the editorial calendar template with workflows, repurposing strategy (how to turn one piece into 10), how to plan content around product launches, events, and seasonal moments, the review and approval process, and how to measure content performance and use data to inform future planning.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/vc-fundraising', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, amount, focus } = req.body;
+  const prompt = `You are a venture capital fundraising and investor relations expert. Advise on a ${stage} raise of ${amount} with ${focus} as the investment thesis. Cover the fundraising preparation checklist (data room, pitch deck, financial model, reference customers), how to build and work a VC investor list, the outreach strategy (warm vs. cold intros, email templates), the pitch process (first meeting → deep dives → partner meeting → term sheet), how to run a competitive process to create urgency, term sheet negotiation (valuation, dilution, pro-rata, protective provisions, board composition), the closing process timeline, and how to manage investor relations post-close.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
