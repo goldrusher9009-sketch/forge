@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v566.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v567.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198197,6 +198197,66 @@ app.post('/api/product/ecosystem', requireAuth, async (req: AuthRequest, res) =>
 app.post('/api/product/visioning', requireAuth, async (req: AuthRequest, res) => {
   const { product, timeHorizon, team } = req.body;
   const prompt = `You are a product vision and strategy expert. Facilitate a product visioning workshop for ${product} with ${timeHorizon} horizon for ${team} team. Structure the workshop: current state assessment (product, market, customers), future customer problem framing, emerging technology trends that enable new solutions, long-term vision articulation, strategic pillars that bridge vision to roadmap, the north star metric, how to communicate the vision to inspire the team and attract customers and investors, and how to keep the vision alive as the team executes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/engineering-ladder', requireAuth, async (req: AuthRequest, res) => {
+  const { company, levels, values } = req.body;
+  const prompt = `You are an engineering leadership and career development expert. Design an engineering career ladder for ${company} with ${levels} levels embodying ${values} values. Define competencies at each level across technical skills, execution, collaboration, and leadership dimensions. Write detailed level descriptions with clear examples of behaviors, create promotion criteria and calibration guidance, design the individual contributor vs. management tracks, and how to use the ladder in performance reviews and compensation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/ai-workforce', requireAuth, async (req: AuthRequest, res) => {
+  const { company, functions, timeline } = req.body;
+  const prompt = `You are an AI transformation and workforce strategy expert. Build an AI workforce plan for ${company} across ${functions} functions over ${timeline}. Map current roles to AI augmentation potential (automate vs. augment vs. new roles needed), design the reskilling and upskilling program, plan the hiring of AI-native roles (AI engineers, prompt engineers, data scientists), create the change management approach, address workforce anxiety and communication strategy, and model the headcount and productivity impact scenarios.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/transparency', requireAuth, async (req: AuthRequest, res) => {
+  const { product, metrics, audience } = req.body;
+  const prompt = `You are a product communications and transparency expert. Write a product transparency report for ${product} covering ${metrics} for ${audience}. Structure: uptime and reliability (SLA performance, incident history), security (vulnerabilities found and fixed, penetration test results), privacy (data collected, how used, requests fulfilled), AI usage (what AI is used for, how decisions are made), accessibility (compliance level, improvements made), and environmental impact. Include how to communicate this authentically and build user trust.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/pricing-research', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segments, method } = req.body;
+  const prompt = `You are a pricing research and behavioral economics expert. Design a pricing research study for ${product} across ${segments} customer segments using ${method} methodology. Cover study design (Van Westendorp, Gabor-Granger, conjoint analysis), screener criteria, question design, sample size requirements, how to analyze results (price sensitivity curves, willingness-to-pay ranges, optimal price points), how to translate research into packaging decisions, and how to validate pricing with a small-scale market test.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/comms/podcast-prep', requireAuth, async (req: AuthRequest, res) => {
+  const { show, topic, goals } = req.body;
+  const prompt = `You are a media training and thought leadership expert. Prepare for a tech podcast appearance on ${show} discussing ${topic} with goals: ${goals}. Cover key messages to land (3 core talking points), memorable soundbites and stories, questions to anticipate (softball and hard), how to bridge from uncomfortable questions to your message, how to promote your book/company/project naturally, pre-interview research on the host and show, follow-up strategy, and how to repurpose the episode across your content channels.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/global', requireAuth, async (req: AuthRequest, res) => {
+  const { product, markets, localization } = req.body;
+  const prompt = `You are a global product strategy and internationalization expert. Build a global product strategy for ${product} entering ${markets} markets with ${localization} localization needs. Cover market prioritization framework, localization vs. internationalization distinction, cultural adaptation requirements (not just translation), local regulatory and compliance requirements, pricing strategy by market, go-to-market motion differences, local team vs. remote team model, how to build a global product organization, and how to measure global vs. local product health.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/agility', requireAuth, async (req: AuthRequest, res) => {
+  const { team, blocker, goal } = req.body;
+  const prompt = `You are an organizational agility and product team expert. Design a team agility acceleration program for ${team} overcoming ${blocker} to achieve ${goal}. Diagnose the agility anti-patterns (slow decisions, too many approvals, unclear ownership, poor prioritization), redesign the operating model for speed (autonomous teams, clear decision rights, async communication), streamline the planning and review cadence, and measure agility improvement (decision speed, cycle time, deployment frequency, CSAT from internal customers).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/competitive-diff', requireAuth, async (req: AuthRequest, res) => {
+  const { product, competitors, customers } = req.body;
+  const prompt = `You are a product strategy and competitive differentiation expert. Facilitate a competitive differentiation workshop for ${product} vs. ${competitors} for ${customers} target customers. Map the competitive landscape on key dimensions, identify where you win (and why), where you lose (and why), and the open whitespace no competitor owns. Design the differentiation strategy: what to emphasize, what to concede, how to position each differentiator, and how to communicate differentiation in sales and marketing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/scale-infra', requireAuth, async (req: AuthRequest, res) => {
+  const { system, growthTarget, constraints } = req.body;
+  const prompt = `You are a platform engineering and infrastructure scaling expert. Plan infrastructure scaling for ${system} targeting ${growthTarget} growth within ${constraints}. Cover current architecture bottlenecks and load patterns, horizontal vs. vertical scaling trade-offs, database scaling strategy (read replicas, sharding, caching), CDN and edge optimization, auto-scaling policies, cost modeling at scale, capacity planning methodology, the migration path from current to target architecture, and how to test scalability before you need it.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/leadership/c-suite-coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { role, challenge, context } = req.body;
+  const prompt = `You are an executive coach for C-suite leaders. Coach a ${role} executive facing challenge: ${challenge} in context: ${context}. Apply executive coaching frameworks: stakeholder alignment, managing up and sideways, decision-making under uncertainty, building executive presence, navigating board dynamics, leading through ambiguity, organizational change leadership, building and developing a senior leadership team, and personal resilience and effectiveness. Provide both tactical advice for the immediate challenge and developmental focus for long-term executive growth.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
