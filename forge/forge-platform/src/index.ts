@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v659.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v660.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203777,6 +203777,66 @@ app.post('/api/strategy/threat-intelligence', requireAuth, async (req: AuthReque
 app.post('/api/strategy/retail-transform', requireAuth, async (req: AuthRequest, res) => {
   const { retailer, challenges, goals } = req.body;
   const prompt = `You are a retail transformation strategy and omnichannel commerce expert. Design the retail transformation for ${retailer} addressing ${challenges} toward ${goals}. Cover the retail transformation framework, the omnichannel strategy and integration, the physical store reinvention, the digital and e-commerce acceleration, the supply chain transformation, the customer data and personalization, the retail technology and automation, the retail workforce transformation, the retail economics and margin management, and how to design retail transformations that create a genuinely differentiated and sustainable retail experience that customers cannot replicate online, that integrate physical and digital channels in ways that serve customers seamlessly regardless of how they choose to shop, and that build the data and personalization capabilities that allow retailers to serve customers with the relevance and convenience that drives loyalty in an era of abundant choice and low switching costs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/hospitality', requireAuth, async (req: AuthRequest, res) => {
+  const { property, market, goals } = req.body;
+  const prompt = `You are a hospitality strategy and hotel/restaurant management expert. Design the hospitality strategy for ${property} in ${market} toward ${goals}. Cover the hospitality strategy framework, the guest experience design, the revenue management and pricing, the distribution channel strategy, the loyalty program design, the food and beverage strategy, the staffing and service culture, the technology and digital experience, the sustainability in hospitality, and how to build hospitality businesses that create memorable guest experiences that generate the word-of-mouth and repeat visits that drive sustainable revenue, that optimize revenue through sophisticated pricing and channel management, and that build the service culture where staff are genuinely motivated to create exceptional guest experiences rather than just executing procedural service standards.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/logistics-opt', requireAuth, async (req: AuthRequest, res) => {
+  const { network, volumes, constraints } = req.body;
+  const prompt = `You are a logistics network optimization and supply chain efficiency expert. Optimize the logistics for ${network} handling ${volumes} within ${constraints}. Cover the logistics optimization framework, the network design and facility location, the transportation mode optimization, the route optimization and carrier management, the warehouse and fulfillment optimization, the inventory positioning strategy, the last-mile delivery solutions, the logistics technology and TMS, the logistics sustainability, and how to design logistics networks that minimize total delivered cost while meeting the service level requirements of customers, that build the flexibility to handle demand variability without excessive inventory or capacity costs, and that leverage technology and data to continuously optimize routing, carrier selection, and facility utilization as conditions change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/agency-model', requireAuth, async (req: AuthRequest, res) => {
+  const { agency, services, clients } = req.body;
+  const prompt = `You are an agency business model and professional services strategy expert. Design the agency model for ${agency} offering ${services} to ${clients}. Cover the agency model framework, the service offering and specialization, the positioning and differentiation, the pricing model and rates, the client acquisition strategy, the client retention and expansion, the talent strategy and utilization, the productization of services, the agency financials and profitability, and how to build agency businesses that are profitable and scalable by developing the positioning, processes, and talent that allow you to deliver exceptional results consistently rather than relying on heroic individual effort, that evolve from commoditized services to high-value strategic work that commands premium rates, and that build the systems and playbooks that reduce dependence on any single individual.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/media-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, audience, budget } = req.body;
+  const prompt = `You are a media strategy and paid media planning expert. Design the media strategy for ${brand} reaching ${audience} with ${budget}. Cover the media strategy framework, the audience insights and media consumption, the channel mix optimization, the reach and frequency planning, the paid search and SEO integration, the social media advertising, the programmatic and display, the video and connected TV, the media measurement and attribution, and how to design media strategies that reach your target audience efficiently and effectively, that allocate budget across channels based on their actual contribution to business outcomes rather than vanity metrics, and that build the measurement infrastructure needed to understand which media investments are generating the results that matter and continuously optimize the mix.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/insurtech', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, model } = req.body;
+  const prompt = `You are an insurance technology strategy and insurtech business model expert. Advise on the insurtech strategy for ${product} in ${segment} using ${model}. Cover the insurtech strategy framework, the insurance value chain and disruption points, the insurance distribution innovation, the underwriting and actuarial technology, the claims management technology, the embedded insurance opportunities, the insurtech regulatory environment, the reinsurance strategy for insurtechs, the insurtech unit economics, and how to build insurtech businesses that genuinely improve the economics and customer experience of insurance rather than just adding a digital interface to a legacy insurance model, that navigate the complex regulatory requirements of insurance across jurisdictions, and that build or access the actuarial capabilities needed to price and manage risk profitably.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/abm-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, accounts, approach } = req.body;
+  const prompt = `You are an account-based marketing strategy and ABM execution expert. Design the ABM program for ${company} targeting ${accounts} using ${approach}. Cover the ABM framework, the ABM strategy type selection, the target account list development, the account intelligence and research, the personalized content and messaging, the multi-channel account orchestration, the sales and marketing alignment in ABM, the ABM measurement and attribution, the ABM technology stack, and how to design ABM programs that focus marketing resources on the accounts with the highest probability of becoming significant customers rather than generating large volumes of unqualified leads, that create the personalized and relevant experiences for target accounts that differentiate you from competitors who are sending generic messages, and that align sales and marketing around shared account strategies and coordinated outreach.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/developer-relations', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, developers, goals } = req.body;
+  const prompt = `You are a developer relations strategy and developer community expert. Design the DevRel program for ${platform} for ${developers} toward ${goals}. Cover the DevRel framework, the developer persona and journey, the developer experience and DX design, the documentation and SDK strategy, the developer community building, the technical content and education, the developer events and advocacy, the developer feedback loops, the DevRel metrics and ROI, and how to build developer relations programs that make developers successful with your platform, that create the technical credibility and trust that makes developers recommend your platform to their colleagues, and that build the feedback loops between the developer community and product teams that drive platform improvements based on how developers actually want to use the API and SDK.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/learning-org', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, capabilities, approach } = req.body;
+  const prompt = `You are a learning organization design and organizational capability building expert. Design the learning organization for ${organization} building ${capabilities} using ${approach}. Cover the learning organization framework, the individual and team learning systems, the knowledge creation and sharing, the experimentation and learning from failure, the learning transfer and application, the learning technology and platforms, the learning culture and leadership, the capability building at scale, the learning measurement and ROI, and how to design learning organizations that build the organizational capabilities needed to succeed in a rapidly changing environment, that create the psychological safety and systems that allow teams to learn from both successes and failures rather than hiding mistakes, and that connect learning investments to business outcomes by focusing on the capabilities most critical for the strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-activation', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, audience, moment } = req.body;
+  const prompt = `You are a brand activation strategy and experiential marketing expert. Design the brand activation for ${brand} engaging ${audience} at ${moment}. Cover the brand activation framework, the activation strategy and objectives, the experiential and event marketing, the digital activation and social, the influencer and ambassador activation, the retail and point-of-sale activation, the partnership and co-marketing activation, the content-led activation, the activation measurement, and how to design brand activations that create memorable, shareable experiences that change how people feel about and engage with your brand, that are authentic to the brand identity rather than generic experiences that could be for any brand, and that generate the earned media and social amplification that extends the reach and impact far beyond the immediate participants.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/team-collaboration', requireAuth, async (req: AuthRequest, res) => {
+  const { team, context, challenges } = req.body;
+  const prompt = `You are a team collaboration design and organizational effectiveness expert. Design the collaboration system for ${team} in ${context} addressing ${challenges}. Cover the collaboration framework, the collaboration norms and agreements, the meeting culture and calendar design, the async collaboration tools and practices, the cross-functional collaboration design, the collaboration technology stack, the trust and psychological safety, the creative collaboration methods, the collaboration metrics and health, and how to design team collaboration systems that enable people to do their best work together without the meeting overload, communication fragmentation, and coordination overhead that makes collaboration feel like a burden rather than a force multiplier, that create the norms and structures that allow people to balance focused independent work with productive collaborative sessions.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
