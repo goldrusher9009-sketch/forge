@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v571.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v572.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -198497,6 +198497,66 @@ app.post('/api/marketing/influencer', requireAuth, async (req: AuthRequest, res)
 app.post('/api/strategy/data-moat', requireAuth, async (req: AuthRequest, res) => {
   const { company, dataAssets, advantage } = req.body;
   const prompt = `You are a data strategy and competitive advantage expert. Build a data moat strategy for ${company} with ${dataAssets} data assets to create ${advantage} competitive advantage. Cover the data moat types (proprietary training data, network data, behavioral data, real-time signals), how to accelerate data accumulation, data flywheel design (more users → more data → better product → more users), how to use data to train proprietary models, how to protect the data moat legally and technically, and how to communicate the data advantage to customers and investors.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/price-anchor', requireAuth, async (req: AuthRequest, res) => {
+  const { product, pricing, competitors } = req.body;
+  const prompt = `You are a pricing psychology and sales strategy expert. Design a price anchoring strategy for ${product} at ${pricing} with ${competitors} as competitive context. Cover anchoring effects in pricing decisions, how to present pricing options (good/better/best tiers), the decoy effect and how to use it ethically, packaging and bundling to shift value perception, how to handle "your competitor is cheaper" objections, discount and promotional strategy that doesnt train customers to wait for discounts, and how to increase perceived value without changing the actual price.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/webinar', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, audience, goal } = req.body;
+  const prompt = `You are a webinar marketing and lead generation expert. Design a webinar strategy for ${topic} targeting ${audience} to achieve ${goal}. Cover the webinar concept and positioning, promotional strategy (email, social, paid), registration page optimization, run-of-show and engagement techniques (polls, Q&A, breakout rooms), the ask at the end (how to convert attendees to opportunities), follow-up sequence for attendees vs. no-shows, how to repurpose the webinar into 5 different content assets, and how to measure success beyond registrations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cs/csm-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, goals } = req.body;
+  const prompt = `You are a customer success management and SaaS retention expert. Build a CSM playbook for ${product} for ${segment} customers with ${goals}. Cover the CSM charter and success definition, customer segmentation and coverage model (high-touch, tech-touch, digital), the onboarding playbook with milestones and checkpoints, ongoing cadence and QBR structure, health score monitoring and early warning system, escalation and save playbook for at-risk accounts, expansion playbook for growth opportunities, and how to measure CSM team performance (retention, NRR, customer outcomes, CSM capacity).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/landing-test', requireAuth, async (req: AuthRequest, res) => {
+  const { page, hypothesis, metric } = req.body;
+  const prompt = `You are a conversion rate optimization and A/B testing expert. Build a landing page testing plan for ${page} testing ${hypothesis} to improve ${metric}. Cover the testing hypothesis framework (if we change X for Y audience, we expect Z because W), prioritization using ICE scoring, the test design (control vs. variants, sample size calculation, test duration), what to measure and how (primary metric, guardrail metrics, statistical significance), how to analyze results and avoid common pitfalls (peeking, multiple testing), building a testing roadmap from this first test, and how to implement a culture of experimentation on the marketing team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/event', requireAuth, async (req: AuthRequest, res) => {
+  const { event, audience, budget } = req.body;
+  const prompt = `You are an event marketing and demand generation expert. Build an event marketing playbook for ${event} targeting ${audience} with ${budget}. Cover pre-event strategy (6 months out, 3 months, 1 month, 1 week), booth and presence strategy at third-party events, owned event planning (executive summit, user conference), speaker and agenda strategy, lead capture and qualification at events, post-event follow-up sequence (immediate, 1 week, 1 month), how to measure event ROI, and how to decide which events are worth attending vs. skipping.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/alliances', requireAuth, async (req: AuthRequest, res) => {
+  const { company, partner, goal } = req.body;
+  const prompt = `You are a strategic alliances and partnership expert. Build an alliance partner strategy for ${company} with ${partner} type of partners to achieve ${goal}. Cover partner ecosystem design (technology partners, channel partners, OEM/white-label, co-sell), partner selection criteria and fit scoring, the value proposition for each partner type (what they get, what you get), partner program tiers and benefits (Silver, Gold, Platinum), partner onboarding and enablement, co-marketing and co-selling motion, how to measure partner-influenced revenue, and how to build a partner advisory council.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/plg', requireAuth, async (req: AuthRequest, res) => {
+  const { product, freemium, conversion } = req.body;
+  const prompt = `You are a product-led growth and SaaS growth expert. Design a product-led growth engine for ${product} with ${freemium} model to achieve ${conversion} paid conversion. Cover the PLG flywheel (acquisition → activation → retention → revenue → referral), free tier design (what to include, what to gate), activation sequence (time to value, aha moment, success milestones), in-product upgrade triggers and moments of expansion, virality mechanics (collaboration features, sharing, invite loops), data to monitor (activation rate, time to value, PQL definition, free to paid conversion), and how to align sales with PLG (when to engage, PQL handoff process).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/journey-map', requireAuth, async (req: AuthRequest, res) => {
+  const { persona, product, touchpoints } = req.body;
+  const prompt = `You are a customer experience and journey mapping expert. Map the complete customer journey for ${persona} using ${product} across ${touchpoints}. Deliver: the pre-purchase journey (awareness → consideration → decision), the purchase experience, the onboarding and first 90 days, the ongoing usage and relationship phase, expansion and advocacy, and the churn/win-back scenario. For each stage: customer goals, emotions (feelings), pain points, touchpoints, and opportunities to improve CX. Recommend 3 high-impact improvements based on the journey analysis.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/ecommerce', requireAuth, async (req: AuthRequest, res) => {
+  const { store, category, target } = req.body;
+  const prompt = `You are an e-commerce growth and conversion optimization expert. Build a growth playbook for ${store} in ${category} targeting ${target}. Cover the traffic acquisition mix (SEO, paid search, paid social, email, influencer), product page optimization (images, copy, reviews, urgency), conversion rate optimization (cart abandonment, checkout optimization, trust signals), post-purchase experience (confirmation, upsell, review request), retention and LTV (email sequences, SMS, loyalty program), and the key metrics dashboard (traffic, CVR, AOV, CAC, LTV, payback period). Include a 90-day growth roadmap with prioritized actions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/board-deck', requireAuth, async (req: AuthRequest, res) => {
+  const { company, quarter, focus } = req.body;
+  const prompt = `You are a board presentation and investor relations expert. Build a board deck for ${company} for ${quarter} with ${focus} as the key focus area. Structure: executive summary (1 slide), company performance vs. plan (metrics dashboard), business highlights (wins and losses), financial deep dive (P&L, cash position, burn, runway), product and roadmap update, team and org update, key decisions needed from the board, and next quarter outlook. For each section, provide the key narrative, the key data to include, and the questions the board will likely ask. Include dos and donts for board presentations.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
