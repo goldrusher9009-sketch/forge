@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v772.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v773.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210557,6 +210557,66 @@ app.post('/api/legal/antitrust', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/legal/complexlit', requireAuth, async (req: AuthRequest, res) => {
   const { firm, case, complexity } = req.body;
   const prompt = `You are a complex litigation strategy and case management expert. Design complex litigation strategy for ${firm} handling ${case} with ${complexity}. Cover complex litigation framework, multi-party coordination and defense strategy, electronic discovery and technology-assisted review, expert witness strategy and Daubert challenges, class action defense and certification, MDL and mass tort management, jury research and trial technology, settlement mediation strategy, post-trial and appellate strategy, and how to build complex litigation programs that achieve the case outcome and the cost management and the client communication that effective complex case handling requires by implementing the litigation management system with the document review workflow and the cost tracking and the reporting that provides the client with the budget transparency and the case status that enables the informed litigation decision.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/policy/govaffairs', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, issues, stakeholders } = req.body;
+  const prompt = `You are a government affairs strategy and public policy expert. Design government affairs strategy for ${organization} on ${issues} engaging ${stakeholders}. Cover government affairs framework, legislative monitoring and analysis, regulatory advocacy and rulemaking, coalition building and grassroots advocacy, political action and campaign finance, government contracting and procurement, state and local government relations, international government affairs, crisis and rapid response, and how to build government affairs programs that achieve the policy outcome and the regulatory influence and the stakeholder trust that effective advocacy requires by developing the policy position with the technical analysis and the economic impact assessment and the stakeholder alignment that provides the credible and compelling case for the legislative or regulatory change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/policy/pubcomms', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, issue, audience } = req.body;
+  const prompt = `You are a public communications strategy and public affairs expert. Design public communications strategy for ${organization} on ${issue} reaching ${audience}. Cover public communications framework, public narrative and message development, media relations and press strategy, public affairs and community engagement, crisis communications, digital communications and social media, thought leadership and content, stakeholder mapping and engagement, communications measurement, and how to build public communications programs that achieve the narrative control and the audience engagement and the reputation management that strategic communications requires by developing the communications framework with the message architecture and the proof points and the audience segmentation that ensures the consistent and compelling narrative across all the channels and the stakeholder touchpoints.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/policy/nonprofit', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, mission, challenges } = req.body;
+  const prompt = `You are a nonprofit management strategy and social sector leadership expert. Design nonprofit management strategy for ${organization} pursuing ${mission} addressing ${challenges}. Cover nonprofit management framework, mission and strategy development, board governance and fiduciary duty, fundraising and development strategy, program design and impact measurement, nonprofit finance and sustainability, volunteer management, advocacy and policy engagement, nonprofit technology and operations, and how to build nonprofit management programs that achieve the mission impact and the organizational sustainability and the stakeholder trust that effective nonprofit management requires by aligning the program strategy with the theory of change and the impact measurement framework that demonstrates the outcomes and the cost-effectiveness of the nonprofit intervention to the funder and the beneficiary.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/policy/development', requireAuth, async (req: AuthRequest, res) => {
+  const { agency, issue, goals } = req.body;
+  const prompt = `You are a policy development strategy and public administration expert. Design policy development strategy for ${agency} addressing ${issue} achieving ${goals}. Cover policy development framework, problem identification and analysis, policy option analysis and evaluation, stakeholder consultation and engagement, regulatory impact assessment, policy implementation planning, policy monitoring and evaluation, evidence-based policy, interagency coordination, and how to build policy development programs that achieve the policy objective and the stakeholder buy-in and the implementation success that effective public policy requires by conducting the policy analysis with the problem definition and the option generation and the cost-benefit analysis and the implementation feasibility assessment that provides the decision-maker with the evidence base for the policy choice.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/policy/campaign', requireAuth, async (req: AuthRequest, res) => {
+  const { candidate, district, issues } = req.body;
+  const prompt = `You are a political campaign strategy and electoral expert. Design political campaign strategy for ${candidate} running in ${district} on ${issues}. Cover political campaign framework, campaign message and narrative, voter targeting and segmentation, field organizing and voter contact, fundraising and campaign finance, media strategy and advertising, digital and social media, debate preparation and earned media, get out the vote strategy, and how to build political campaign programs that achieve the vote total and the coalition building and the message penetration that winning campaigns require by developing the persuasion and mobilization strategy with the voter file analysis and the universe targeting and the contact plan that reaches the right voters with the right message through the right channel at the right time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/policy/diplomacy', requireAuth, async (req: AuthRequest, res) => {
+  const { country, partner, objective } = req.body;
+  const prompt = `You are a diplomacy and international relations strategy expert. Design diplomatic strategy for ${country} engaging ${partner} achieving ${objective}. Cover diplomacy strategy framework, bilateral and multilateral diplomacy, international negotiation and treaty-making, foreign policy and national interest, economic and trade diplomacy, security and defense diplomacy, cultural and public diplomacy, international organizations and multilateralism, crisis diplomacy and conflict resolution, and how to build diplomatic strategy programs that achieve the national interest and the bilateral relationship and the multilateral outcome that effective diplomacy requires by assessing the interests and the leverage and the alternatives of each party and designing the negotiation strategy with the opening position and the acceptable outcome and the walkaway alternative that achieves the diplomatic objective within the relationship constraint.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/policy/envpolicy', requireAuth, async (req: AuthRequest, res) => {
+  const { agency, issue, stakeholders } = req.body;
+  const prompt = `You are an environmental policy strategy and sustainability governance expert. Design environmental policy strategy for ${agency} addressing ${issue} engaging ${stakeholders}. Cover environmental policy framework, climate policy and carbon pricing, clean air and water regulation, environmental impact assessment, biodiversity and ecosystem protection, circular economy and waste policy, environmental justice and equity, international environmental agreements, environmental enforcement, and how to build environmental policy programs that achieve the environmental outcome and the economic efficiency and the stakeholder acceptance that effective environmental governance requires by designing the policy instrument with the market mechanism and the regulatory standard and the voluntary agreement that achieves the environmental target at the lowest economic cost while addressing the distributional impact on the vulnerable community.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/policy/socialpolicy', requireAuth, async (req: AuthRequest, res) => {
+  const { government, issue, population } = req.body;
+  const prompt = `You are a social policy strategy and welfare economics expert. Design social policy strategy for ${government} addressing ${issue} for ${population}. Cover social policy framework, poverty reduction and income support, social insurance and safety net, housing and homelessness policy, food security and nutrition, child welfare and family support, disability policy and inclusion, aging and elder care policy, community development, and how to build social policy programs that achieve the poverty reduction and the social mobility and the human dignity that effective social policy requires by designing the program with the eligibility criteria and the benefit design and the delivery mechanism that reaches the target population with the adequate support while maintaining the work incentive and the fiscal sustainability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/policy/urbanplanning', requireAuth, async (req: AuthRequest, res) => {
+  const { city, district, goals } = req.body;
+  const prompt = `You are an urban planning strategy and city development expert. Design urban planning strategy for ${city} developing ${district} achieving ${goals}. Cover urban planning framework, land use and zoning, transportation and mobility planning, housing and affordability, economic development and place-making, environmental sustainability and resilience, community engagement and participatory planning, urban infrastructure and services, historic preservation and redevelopment, and how to build urban planning programs that achieve the livability and the economic vitality and the sustainability that thriving cities require by developing the comprehensive plan with the community vision and the land use analysis and the transportation and infrastructure assessment that provides the policy framework for the land use decision and the capital investment that shapes the city development.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/policy/publicfinance', requireAuth, async (req: AuthRequest, res) => {
+  const { government, programs, constraints } = req.body;
+  const prompt = `You are a public finance strategy and government budget expert. Design public finance strategy for ${government} funding ${programs} within ${constraints}. Cover public finance framework, government budgeting and appropriations, tax policy and revenue design, public debt and fiscal sustainability, intergovernmental finance and grants, public pension and long-term liability, infrastructure finance and public-private partnership, budget process reform, fiscal federalism, and how to build public finance programs that achieve the fiscal sustainability and the public investment and the service delivery that effective government finance requires by developing the budget framework with the medium-term fiscal projection and the expenditure review and the revenue estimate that provides the fiscal plan that balances the public service investment with the debt sustainability constraint.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
