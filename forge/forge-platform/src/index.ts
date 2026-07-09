@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v676.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v677.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204797,6 +204797,66 @@ app.post('/api/strategy/channel-strategy', requireAuth, async (req: AuthRequest,
 app.post('/api/strategy/product-line-extension', requireAuth, async (req: AuthRequest, res) => {
   const { company, core, extension } = req.body;
   const prompt = `You are a product line extension strategy and portfolio management expert. Design product line extension for ${company} from ${core} to ${extension}. Cover product line extension framework, adjacent space analysis, customer needs gap identification, product architecture and platform thinking, cannibalization assessment and management, pricing strategy for the extended line, channel and go-to-market for new segments, portfolio complexity and SKU rationalization, extension launch sequencing, and how to extend product lines in ways that capture incremental market opportunity and increase share of wallet with existing customers without creating product proliferation and complexity that erodes margins and confuses customers about what the brand actually stands for.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/pricing-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, segments } = req.body;
+  const prompt = `You are a pricing operations and price management expert. Design pricing operations for ${company} with ${products} serving ${segments}. Cover pricing operations framework, price list management and maintenance, discount governance and approval workflows, price exception management, competitive price monitoring, price change management and communication, price realization tracking, CPQ configuration and pricing tools, pricing analytics and reporting, and how to build pricing operations capabilities that enforce pricing strategy consistently across all transactions while providing the flexibility to respond to competitive situations and customer needs without creating the pricing chaos and margin erosion that results when pricing decisions are made informally without governance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-cybersecurity', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, systems, threats } = req.body;
+  const prompt = `You are an AI cybersecurity strategy and intelligent threat defense expert. Design AI cybersecurity for ${organization} protecting ${systems} against ${threats}. Cover AI cybersecurity framework, AI-powered threat detection and response, behavioral analytics and anomaly detection, adversarial AI and model security, AI in identity and access management, automated threat hunting, AI-enabled security operations center, AI bias and explainability in security, AI governance in cybersecurity, and how to deploy AI in cybersecurity in ways that genuinely improve detection and response capabilities while managing the new risks that AI systems themselves introduce including adversarial attacks, model poisoning, and the over-reliance on automated decisions that can create dangerous blind spots.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/mobile-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, users, goals } = req.body;
+  const prompt = `You are a mobile strategy and mobile-first product expert. Design mobile strategy for ${company} with ${users} toward ${goals}. Cover mobile strategy framework, native vs cross-platform vs PWA decision, mobile UX and interaction design, performance optimization and app store optimization, push notifications and engagement, mobile monetization models, mobile analytics and measurement, mobile security and privacy, offline capability and mobile infrastructure, and how to design mobile strategies that deliver the experiences users expect on their most personal device by combining technical excellence in performance and reliability with design excellence in usability and delight.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ecosystem-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, partners, roles } = req.body;
+  const prompt = `You are an ecosystem strategy and platform ecosystem design expert. Design ecosystem strategy for ${company} with ${partners} across ${roles}. Cover ecosystem strategy framework, ecosystem mapping and role definition, orchestrator vs participant strategy, ecosystem governance and rules, value creation and capture in ecosystems, API and platform strategy for ecosystem, developer and partner economics, ecosystem health metrics, competitive moats through ecosystems, and how to build business ecosystems that create value for all participants in ways that are sufficiently distinctive and sticky that the ecosystem itself becomes a durable competitive advantage even as individual products and services within it can be replicated.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/knowledge-graph', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, domain, usecases } = req.body;
+  const prompt = `You are a knowledge graph strategy and semantic data architecture expert. Design knowledge graph for ${organization} in ${domain} for ${usecases}. Cover knowledge graph framework, ontology design and entity modeling, knowledge acquisition and curation, graph database selection and architecture, knowledge graph construction and enrichment, query and traversal design, knowledge graph applications and use cases, maintenance and quality management, knowledge graph governance, and how to build knowledge graphs that capture the structured knowledge in an organization or domain in a form that enables the automated reasoning, search, and recommendation applications that require not just data but an understanding of how entities relate to each other.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cloud-finops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, spend, goals } = req.body;
+  const prompt = `You are a cloud financial operations and cloud cost optimization expert. Design cloud FinOps for ${organization} with ${spend} toward ${goals}. Cover cloud FinOps framework, cloud cost visibility and allocation, unit economics and showback chargeback, committed use and reserved instance strategy, rightsizing and waste elimination, FinOps culture and cross-functional alignment, cloud cost anomaly detection, multi-cloud cost management, FinOps tooling and automation, and how to build cloud FinOps capabilities that bring engineering, finance, and business together to understand cloud costs at the unit level and make informed decisions about where to invest in cloud and where to optimize, rather than treating cloud bills as an unavoidable cost of doing business.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/dataops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, data, teams } = req.body;
+  const prompt = `You are a DataOps strategy and data engineering excellence expert. Design DataOps for ${organization} managing ${data} across ${teams}. Cover DataOps framework, data pipeline design and orchestration, data quality and testing automation, observability and monitoring for data, version control for data and pipelines, CI CD for data engineering, data catalog and documentation, metadata management, DataOps culture and collaboration, and how to build DataOps capabilities that bring the reliability, speed, and quality engineering practices of software development to data pipelines so that data teams can deliver trusted data products quickly and respond to changes in sources and requirements without lengthy manual processes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/behavioral-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, behaviors, users } = req.body;
+  const prompt = `You are a behavioral design strategy and applied behavioral science expert. Design behavioral interventions for ${product} targeting ${behaviors} with ${users}. Cover behavioral design framework, behavioral economics principles, nudge design and choice architecture, habit formation and behavior change loops, friction reduction and default setting, social proof and norm activation, commitment and consistency mechanisms, behavioral testing and experiment design, ethics of behavioral design, and how to apply behavioral science to product and service design in ways that help users achieve their own goals by making desired behaviors easier and more automatic, while respecting their autonomy and avoiding the manipulative dark patterns that exploit psychological biases to serve business interests at the expense of user wellbeing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/regional-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { company, region, strategy } = req.body;
+  const prompt = `You are a regional growth strategy and geographic market development expert. Design regional growth for ${company} expanding in ${region} via ${strategy}. Cover regional growth framework, regional market assessment and opportunity sizing, competitive landscape in region, customer segmentation for region, go-to-market model for regional specifics, distribution and channel for region, regional organizational design, regulatory and compliance for region, regional financial model and investment case, and how to develop regional growth strategies that account for the specific customer behaviors, competitive dynamics, regulatory environments, and cultural factors that make each region distinct rather than simply applying the core market strategy with superficial localization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/engagement-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, users, metrics } = req.body;
+  const prompt = `You are a product engagement design and user retention strategy expert. Design engagement for ${product} with ${users} measured by ${metrics}. Cover engagement design framework, core loop design and optimization, onboarding and activation funnel, feature adoption and discovery, notification and re-engagement strategy, content and social engagement mechanics, engagement segmentation and personalization, engagement measurement and health scoring, ethical engagement design principles, and how to design product engagement systems that build genuine habit and loyalty by delivering real value to users on a regular basis rather than relying on compulsive or addictive mechanics that generate surface engagement metrics while undermining the trust and wellbeing that determine whether users continue to engage over the long term.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
