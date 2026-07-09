@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v560.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v561.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -197837,6 +197837,66 @@ app.post('/api/growth/experiments', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/product/saas-migration', requireAuth, async (req: AuthRequest, res) => {
   const { fromSolution, toProduct, customers } = req.body;
   const prompt = `You are a SaaS migration and customer transition expert. Plan a customer migration from ${fromSolution} to ${toProduct} for ${customers} customer base. Cover migration readiness assessment, customer segmentation strategy (who migrates first), data migration approach, feature parity gap analysis, customer communication plan, training and enablement, white-glove migration support for strategic accounts, rollback plan, and success metrics for the migration program.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/ops-book', requireAuth, async (req: AuthRequest, res) => {
+  const { product, team, stage } = req.body;
+  const prompt = `You are a product operations expert. Build a Product Operations playbook for ${product} with ${team} team at ${stage} company stage. Cover the product ops role and responsibilities, planning and roadmap cadence, sprint and release processes, data and insights infrastructure, cross-functional alignment rituals, OKR setting and tracking, post-launch review process, and how product ops scales with the company.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/loop', requireAuth, async (req: AuthRequest, res) => {
+  const { product, userBehavior, virality } = req.body;
+  const prompt = `You are a growth strategy expert. Design growth loops for ${product} based on ${userBehavior} driving ${virality}. Map the core acquisition loop, engagement loops, and monetization loops. For each loop: the trigger, action, variable reward, and investment. Identify where to add viral mechanics (referral, content sharing, collaboration), how to measure loop strength (time-to-loop, loop coefficient), and how to optimize the highest-leverage loop.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/enterprise-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, goals } = req.body;
+  const prompt = `You are an enterprise AI strategy consultant. Develop an AI strategy for ${company} in ${industry} pursuing ${goals}. Cover AI maturity assessment, use case identification and prioritization (impact vs. feasibility matrix), build vs. buy vs. partner decisions, data strategy and infrastructure requirements, AI governance framework, change management and talent strategy, risk management, and a 3-year AI roadmap with milestones.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/launch-readiness', requireAuth, async (req: AuthRequest, res) => {
+  const { product, launchDate, team } = req.body;
+  const prompt = `You are a product launch expert. Create a comprehensive launch readiness checklist for ${product} launching on ${launchDate} with ${team} team. Cover engineering readiness (scalability, monitoring, rollback), product readiness (feature completeness, QA, docs), marketing readiness (assets, messaging, channels), sales readiness (training, collateral, pricing), support readiness (runbook, escalation paths, FAQ), and legal/compliance clearance. Include a launch day minute-by-minute timeline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/excellence-program', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, processes, metrics } = req.body;
+  const prompt = `You are an operational excellence expert. Design an operational excellence program for ${organization} covering ${processes} processes measuring ${metrics}. Apply lean, Six Sigma, and OKR principles to identify waste, define the improvement methodology (DMAIC cycle), build a continuous improvement culture, design kaizen events, create process ownership model, define operational KPIs and dashboards, and build the program governance and cadence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/adoption', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, targetUsers, adoptionGoal } = req.body;
+  const prompt = `You are a product adoption and user education expert. Design a feature adoption acceleration plan for ${feature} targeting ${targetUsers} with goal: ${adoptionGoal}. Cover in-app onboarding (tooltips, walkthroughs, empty states), email activation campaigns, documentation and video tutorial strategy, adoption metrics tracking (funnel from exposure to habitual use), user segmentation by adoption stage, and intervention playbooks for stuck users.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/pr-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, story, outlets } = req.body;
+  const prompt = `You are a PR and communications expert. Build a PR and media strategy for ${company} with story: ${story} targeting ${outlets}. Cover narrative development and press angles, media list building strategy, pitch email templates (cold outreach vs. warm intro), embargo and exclusive strategies, press kit contents, journalist relationship building, how to handle negative press, crisis communications playbook, and how to measure PR impact.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/sdlc-security', requireAuth, async (req: AuthRequest, res) => {
+  const { application, stack, threats } = req.body;
+  const prompt = `You are an application security expert. Conduct an SDLC security review framework for ${application} built on ${stack} with threat model: ${threats}. Cover security requirements gathering, threat modeling (STRIDE/DREAD), secure code review checklist, SAST and DAST integration in CI/CD, dependency vulnerability management, secrets management, authentication and authorization review, penetration testing approach, and how to measure security posture over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/team-topology', requireAuth, async (req: AuthRequest, res) => {
+  const { company, productAreas, constraints } = req.body;
+  const prompt = `You are an organizational design and product management expert. Design product team topologies for ${company} across ${productAreas} product areas within ${constraints} constraints. Apply Team Topologies principles (stream-aligned, platform, enabling, complicated-subsystem teams), define team cognitive load limits, design team charters, API contracts between teams, how to handle cross-team dependencies, and how to evolve the topology as the product and company scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/governance', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, dataAssets, regulations } = req.body;
+  const prompt = `You are a data governance and data management expert. Build a data governance framework for ${organization} managing ${dataAssets} under ${regulations}. Cover data catalog and inventory, data ownership model (data stewards and owners), data quality standards and monitoring, data classification (public, internal, confidential, restricted), access control policies, data lineage tracking, privacy compliance (GDPR, CCPA), and the data governance committee charter.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
