@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v414.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v415.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -189959,6 +189959,59 @@ app.post('/api/product/activation-playbook', requireAuth, async (req: AuthReques
 app.post('/api/sales/champion-builder', requireAuth, async (req: AuthRequest, res) => {
   const { contact, company, deal } = req.body;
   const prompt = `You are an enterprise sales expert. Build a champion development plan for an internal buyer.\n\nContact: ${contact}\nCompany: ${company}\nDeal context: ${deal}\n\nInclude: how to identify if they are a true champion, content to arm them with, executive alignment strategy, internal objections they will face and how to help them answer, and weekly touchpoint plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 249+250 routes
+app.post('/api/dev/data-warehouse', requireAuth, async (req: AuthRequest, res) => {
+  const { schema, useCase, scale } = req.body;
+  const prompt = `Design a data warehouse architecture.\nSchema: ${schema}\nUse case: ${useCase}\nScale: ${scale}\nInclude: dimensional model design, ETL pipeline, query optimization, partitioning strategy, and monitoring approach.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/pricing-war', requireAuth, async (req: AuthRequest, res) => {
+  const { competitor, ourPrice, segment } = req.body;
+  const prompt = `You are a pricing strategist. Develop a response to a competitor pricing war.\nCompetitor: ${competitor}\nOur price: ${ourPrice}\nSegment: ${segment}\nInclude: when to match, when to ignore, value reframe tactics, bundle strategies, and floor price guidance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, model, competition } = req.body;
+  const prompt = `Design a comprehensive pricing strategy.\nStage: ${stage}\nBusiness model: ${model}\nCompetition: ${competition}\nInclude: pricing model recommendation, tier design, freemium vs paid-only analysis, price anchoring, and packaging.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/growth-loop', requireAuth, async (req: AuthRequest, res) => {
+  const { product, currentLoop, goal } = req.body;
+  const prompt = `Design a compounding growth loop for the product.\nProduct: ${product}\nCurrent loop: ${currentLoop}\nGoal: ${goal}\nIdentify: virality levers, content loops, product loops, and paid loops. Show how each feeds the next and metrics to track.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/remote-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { teamSize, timezone, challenges } = req.body;
+  const prompt = `Create a remote work playbook for the team.\nTeam size: ${teamSize}\nTimezones: ${timezone}\nChallenges: ${challenges}\nInclude: async communication norms, meeting cadence, documentation culture, onboarding for remote, and team connection rituals.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/due-diligence-kit', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, metrics, risks } = req.body;
+  const prompt = `Prepare a due diligence kit for investors.\nStage: ${stage}\nKey metrics: ${metrics}\nKnown risks: ${risks}\nInclude: data room checklist, pre-emptive FAQ, financial model assumptions, legal docs checklist, and red flag mitigations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/api-rate-limiting', requireAuth, async (req: AuthRequest, res) => {
+  const { architecture, useCase, scale } = req.body;
+  const prompt = `Design an API rate limiting system.\nArchitecture: ${architecture}\nUse case: ${useCase}\nScale: ${scale}\nInclude: algorithm selection (token bucket vs sliding window), implementation approach, Redis patterns, per-tenant limits, and graceful degradation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/community-launch', requireAuth, async (req: AuthRequest, res) => {
+  const { product, audience, platform } = req.body;
+  const prompt = `Create a community launch strategy.\nProduct: ${product}\nAudience: ${audience}\nPlatform: ${platform}\nInclude: pre-launch seeding, founding member program, content calendar for launch week, moderation guidelines, and 90-day growth plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/onboarding-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, userType, currentDropoff } = req.body;
+  const prompt = `Design a world-class user onboarding experience.\nProduct: ${product}\nUser type: ${userType}\nCurrent dropoff: ${currentDropoff}\nInclude: onboarding flow map, key moments, empty state copy, progressive disclosure strategy, and success checkpoints.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/demo-optimizer', requireAuth, async (req: AuthRequest, res) => {
+  const { product, persona, currentDemo } = req.body;
+  const prompt = `Optimize the sales demo for maximum conversion.\nProduct: ${product}\nBuyer persona: ${persona}\nCurrent demo: ${currentDemo}\nInclude: demo flow redesign, discovery questions to ask first, objection pre-emption, proof points to include, and next step close.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
