@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v595.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v596.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199937,6 +199937,66 @@ app.post('/api/engineering/ad-tech', requireAuth, async (req: AuthRequest, res) 
 app.post('/api/hr/knowledge-transfer', requireAuth, async (req: AuthRequest, res) => {
   const { expert, domain, recipient } = req.body;
   const prompt = `You are a knowledge transfer and organizational learning expert. Design the knowledge transfer program from ${expert} to ${recipient} in ${domain} domain. Cover the knowledge taxonomy and what can vs. cannot be transferred, the tacit vs. explicit knowledge distinction and transfer approaches, the knowledge elicitation techniques, the documentation and externalization strategies, the mentoring and apprenticeship program design, the job shadowing and observation protocols, the community of practice design for knowledge sharing, the knowledge transfer measurement, the knowledge retention risk assessment, and how to build knowledge transfer as an organizational capability rather than a one-time event.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/agile-coach', requireAuth, async (req: AuthRequest, res) => {
+  const { team, maturity, challenge } = req.body;
+  const prompt = `You are an agile coaching and organizational agility expert. Coach ${team} at ${maturity} agile maturity to overcome ${challenge}. Cover the agile values and principles applied to this context, the ceremony design for this team, the backlog and story design, the definition of done and ready, the retrospective formats for breakthrough insights, the agile metrics that matter, the anti-pattern diagnosis and treatment, the scaling agile considerations, the agile culture and mindset change approach, and how to measure and advance agile maturity over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-position', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, category, competitors } = req.body;
+  const prompt = `You are a brand positioning and competitive strategy expert. Build the brand positioning for ${brand} in ${category} against ${competitors} competitors. Cover the positioning statement framework, the points of parity and points of differentiation analysis, the frame of reference selection, the category design vs. category entry choice, the positioning ladder design, the positioning validation methodology, the positioning expression across channels, the positioning evolution strategy, the internal activation of positioning, and how to protect and extend a strong brand position.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/algorithmic-pricing', requireAuth, async (req: AuthRequest, res) => {
+  const { product, variables, objective } = req.body;
+  const prompt = `You are an algorithmic pricing and revenue management expert. Design the algorithmic pricing system for ${product} using ${variables} as pricing inputs to optimize ${objective}. Cover the algorithmic pricing model types, the demand modeling approach, the price elasticity estimation, the competitor price signal integration, the inventory and capacity constraints incorporation, the pricing rule design and guardrails, the A/B testing for algorithmic pricing, the algorithmic pricing governance and override protocols, the model monitoring and retraining cadence, and how to communicate algorithmic pricing decisions to customers and sales teams.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/channel-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, partner } = req.body;
+  const prompt = `You are a channel strategy and indirect sales expert. Design the channel strategy for ${product} in ${market} through ${partner} partner type. Cover the direct vs. indirect channel decision framework, the channel type taxonomy, the channel economics design, the channel partner value proposition, the partner recruitment and onboarding strategy, the channel conflict management, the channel enablement program, the MDF and co-op fund design, the channel performance management, and how to evolve the channel mix as the market matures.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/consumer-insights', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, questions, cadence } = req.body;
+  const prompt = `You are a consumer insights and market research strategy expert. Build the consumer insights platform for ${brand} answering ${questions} at ${cadence} cadence. Cover the insights function charter and scope, the primary research capability design, the secondary research source portfolio, the social listening and digital intelligence program, the consumer panel design, the syndicated data integration strategy, the insights synthesis and communication design, the democratization of insights across the organization, the insights impact measurement, and how to build an insights-driven culture where data informs every decision.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/portfolio-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { org, initiatives, resources } = req.body;
+  const prompt = `You are a strategic portfolio management and investment governance expert. Design the portfolio planning process for ${org} managing ${initiatives} across ${resources} resource pools. Cover the portfolio management framework, the investment categorization and taxonomy, the project and initiative intake process, the portfolio prioritization methodology, the resource allocation and capacity planning model, the portfolio health monitoring, the portfolio rationalization and stop process, the portfolio reporting and governance cadence, the portfolio risk management, and how to align the portfolio to strategic priorities dynamically as priorities shift.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/crm-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, teams } = req.body;
+  const prompt = `You are a CRM strategy and customer relationship management expert. Build the CRM strategy for ${company} at ${stage} stage for ${teams} using teams. Cover the CRM vision and business case, the CRM vendor selection criteria, the data model design for accounts contacts and opportunities, the sales process mapping to CRM workflows, the marketing CRM integration design, the customer success CRM design, the CRM data quality program, the CRM adoption strategy, the CRM reporting and analytics design, and how to evolve the CRM as the business grows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/saas-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { product, arr, segment } = req.body;
+  const prompt = `You are a SaaS growth strategy and recurring revenue expert. Build the growth plan for ${product} from ${arr} ARR targeting ${segment}. Cover the SaaS growth metrics framework, the ARR growth decomposition, the new business vs. expansion vs. retention contribution, the go-to-market motion alignment to ARR target, the sales velocity formula and how to move each variable, the net revenue retention optimization, the SaaS unit economics and how to improve them, the growth rate benchmarks by stage, the capital efficiency metrics, and the SaaS growth playbook for the next 12 months.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/infosec', requireAuth, async (req: AuthRequest, res) => {
+  const { org, compliance, budget } = req.body;
+  const prompt = `You are an information security strategy and program management expert. Build the information security program for ${org} achieving ${compliance} compliance within ${budget} budget. Cover the security program framework, the risk assessment methodology, the security control framework selection, the security architecture review process, the security awareness training program, the vendor and third-party risk management, the security incident response program, the security metrics and KPI framework, the board and executive security reporting, and how to prioritize security investments for maximum risk reduction.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/executive-coach', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, challenge, goal } = req.body;
+  const prompt = `You are an executive coaching and leadership development expert. Coach ${leader} through ${challenge} leadership challenge to achieve ${goal}. Cover the executive assessment and self-awareness tools, the leadership presence and executive communication development, the strategic thinking development, the executive relationship management, the board and stakeholder management skills, the enterprise leadership vs. functional leadership transition, the imposter syndrome and confidence at the executive level, the work-life integration for senior leaders, the leadership team dynamics, and how to build a personal board of advisors for ongoing development.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
