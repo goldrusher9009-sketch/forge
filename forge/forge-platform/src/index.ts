@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v780.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v781.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211037,6 +211037,66 @@ app.post('/api/engineering/bioinformatics', requireAuth, async (req: AuthRequest
 app.post('/api/engineering/compscience', requireAuth, async (req: AuthRequest, res) => {
   const { researcher, problem, platform } = req.body;
   const prompt = `You are a computational science strategy and scientific computing expert. Design computational science strategy for ${researcher} solving ${problem} on ${platform}. Cover computational science framework, numerical methods and algorithms, high performance computing and parallel programming, simulation and modeling, scientific software development, data management and visualization, machine learning for science, cloud and HPC infrastructure, computational workflow and reproducibility, and how to build computational science programs that achieve the simulation accuracy and the computational efficiency and the scientific discovery that high-performance scientific computing requires by selecting the numerical method and the parallelization strategy and the HPC architecture that achieves the time to solution within the computational budget while maintaining the accuracy and the reproducibility of the scientific result.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/architecture/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { architect, building, requirements } = req.body;
+  const prompt = `You are an architecture strategy and building design expert. Design architecture strategy for ${architect} designing ${building} to ${requirements}. Cover architectural design framework, site analysis and urban context, space planning and program, structural systems and integration, building envelope and facade, mechanical electrical plumbing systems, sustainability and energy performance, building codes and accessibility, construction documentation, and how to build architecture programs that achieve the design vision and the functional performance and the construction budget that successful building projects require by developing the design with the schematic and the design development and the construction documents phase that coordinates the architecture and the structure and the systems and the specifications that guides the contractor to build the project to the intended quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/architecture/interior', requireAuth, async (req: AuthRequest, res) => {
+  const { designer, space, client } = req.body;
+  const prompt = `You are an interior design strategy and space planning expert. Design interior design strategy for ${designer} designing ${space} for ${client}. Cover interior design framework, space planning and circulation, lighting design and specification, material and finish selection, furniture and fixture specification, color and texture palette, acoustic design, custom millwork and built-ins, interior code compliance, and how to build interior design programs that achieve the aesthetic vision and the functional program and the budget that successful interior design projects require by developing the design through the concept and schematic and design development and the specification phase that documents every material and fixture and finish and furniture with the vendor and the model and the unit cost that enables the accurate bidding and procurement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/architecture/landscape', requireAuth, async (req: AuthRequest, res) => {
+  const { designer, site, program } = req.body;
+  const prompt = `You are a landscape architecture strategy and site design expert. Design landscape architecture strategy for ${designer} designing ${site} for ${program}. Cover landscape architecture framework, site analysis and ecology, grading and drainage, planting design and specification, hardscape and paving, water features and irrigation, landscape lighting, site furniture and amenities, stormwater management, and how to build landscape architecture programs that achieve the ecological performance and the user experience and the maintenance cost that successful landscape projects require by designing the site with the grading plan and the planting plan and the irrigation design and the construction details that guides the contractor and the landscape contractor to build the site to the intended quality and the plant health.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/architecture/urban', requireAuth, async (req: AuthRequest, res) => {
+  const { planner, district, goals } = req.body;
+  const prompt = `You are an urban planning strategy and city design expert. Design urban planning strategy for ${planner} planning ${district} achieving ${goals}. Cover urban planning framework, land use and zoning, transportation and mobility, housing and affordability, economic development, parks and open space, infrastructure and utilities, community engagement, environmental justice, and how to build urban planning programs that achieve the livability and the economic vitality and the sustainability that successful urban development requires by developing the plan with the community vision and the comprehensive plan and the zoning code and the capital improvement program that coordinates the public investment and the private development to build the district to the intended quality of life.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/architecture/construction', requireAuth, async (req: AuthRequest, res) => {
+  const { manager, project, scope } = req.body;
+  const prompt = `You are a construction management strategy and project delivery expert. Design construction management strategy for ${manager} delivering ${project} within ${scope}. Cover construction management framework, project scheduling and CPM, cost estimating and budget control, procurement and subcontractor management, quality control and inspection, safety management and OSHA, contract administration, risk management and claims, closeout and commissioning, and how to build construction management programs that achieve the schedule and the budget and the quality that successful construction projects require by implementing the project controls with the schedule update and the cost report and the quality inspection and the safety audit that tracks the project performance and identifies the variance early enough to take the corrective action.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/architecture/facilities', requireAuth, async (req: AuthRequest, res) => {
+  const { manager, facility, portfolio } = req.body;
+  const prompt = `You are a facilities management strategy and real estate operations expert. Design facilities management strategy for ${manager} managing ${facility} across ${portfolio}. Cover facilities management framework, preventive maintenance planning, space management and utilization, asset lifecycle management, energy management and sustainability, occupant services and experience, vendor and contractor management, capital planning, facilities technology and CMMS, and how to build facilities management programs that achieve the asset reliability and the energy efficiency and the occupant satisfaction that successful real estate operations require by implementing the preventive maintenance program with the equipment inventory and the maintenance schedule and the work order system and the key performance indicator that tracks the maintenance performance and the asset condition and the operating cost.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/architecture/realestate', requireAuth, async (req: AuthRequest, res) => {
+  const { investor, asset, market } = req.body;
+  const prompt = `You are a real estate investment strategy and asset management expert. Design real estate investment strategy for ${investor} investing in ${asset} in ${market}. Cover real estate investment framework, market analysis and due diligence, financial underwriting and modeling, acquisition and deal structuring, asset management and value creation, financing and capital stack, lease negotiation, property management, disposition and exit strategy, and how to build real estate investment programs that achieve the return on investment and the risk-adjusted performance and the portfolio diversification that successful real estate investing requires by underwriting the deal with the proforma and the sensitivity analysis and the market comparables and the physical inspection that validates the investment thesis and the business plan and the exit assumption before committing the capital.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/architecture/sustainable', requireAuth, async (req: AuthRequest, res) => {
+  const { designer, project, target } = req.body;
+  const prompt = `You are a sustainable design strategy and green building expert. Design sustainable design strategy for ${designer} designing ${project} achieving ${target}. Cover sustainable design framework, passive design and bioclimatic, energy modeling and optimization, renewable energy systems, water conservation and reuse, material selection and embodied carbon, indoor environment quality, LEED and living building certification, net zero and carbon neutral design, and how to build sustainable design programs that achieve the energy performance and the occupant wellness and the environmental impact that successful green building requires by integrating the passive strategy and the active system and the renewable energy in the early schematic design where the design decisions have the highest impact on the building energy and the carbon and the comfort at the lowest incremental cost.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/architecture/bim', requireAuth, async (req: AuthRequest, res) => {
+  const { manager, project, workflow } = req.body;
+  const prompt = `You are a BIM technology strategy and digital delivery expert. Design BIM technology strategy for ${manager} implementing BIM on ${project} for ${workflow}. Cover BIM technology framework, BIM execution plan development, Revit and modeling standards, clash detection and coordination, quantity takeoff and cost estimation from model, construction sequence simulation 4D BIM, facility management integration, BIM for fabrication and manufacturing, digital twin and facility lifecycle, and how to build BIM programs that achieve the coordination and the productivity and the data quality that successful digital delivery requires by developing the BIM execution plan with the model authoring responsibilities and the coordination workflow and the information delivery milestones and the model use cases that aligns all team members on the BIM process and the data exchange format and the quality control procedure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/architecture/projectfinance', requireAuth, async (req: AuthRequest, res) => {
+  const { developer, project, structure } = req.body;
+  const prompt = `You are a project finance strategy and capital structuring expert. Design project finance strategy for ${developer} financing ${project} with ${structure}. Cover project finance framework, financial modeling and cash flow analysis, debt structuring and lender requirements, equity structuring and investor returns, risk allocation and credit enhancement, government incentives and tax credits, construction financing and draw schedule, permanent financing and refinancing, project securitization, and how to build project finance programs that achieve the capital efficiency and the risk allocation and the investor return that successful project financing requires by structuring the capital stack with the senior debt and the mezzanine and the equity in the proportions that maximize the leverage while maintaining the debt service coverage ratio and the loan to value that lenders require for the project type and the market and the sponsor credit.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
