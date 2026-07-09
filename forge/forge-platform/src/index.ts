@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v779.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v780.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210977,6 +210977,66 @@ app.post('/api/engineering/management', requireAuth, async (req: AuthRequest, re
 app.post('/api/engineering/civil', requireAuth, async (req: AuthRequest, res) => {
   const { firm, project, constraints } = req.body;
   const prompt = `You are a civil engineering strategy and infrastructure expert. Design civil engineering strategy for ${firm} delivering ${project} within ${constraints}. Cover civil engineering framework, structural design and analysis, geotechnical investigation and foundation, transportation and traffic engineering, water and wastewater engineering, environmental impact and permitting, construction management and delivery, BIM and digital engineering, infrastructure finance and procurement, and how to build civil engineering programs that achieve the structural integrity and the cost efficiency and the project schedule that successful infrastructure delivery requires by applying the design thinking with the value engineering and the constructability review and the risk register that identifies the design and construction risk early and develops the mitigation strategy before the project commitment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/mechanical', requireAuth, async (req: AuthRequest, res) => {
+  const { engineer, system, requirements } = req.body;
+  const prompt = `You are a mechanical engineering strategy and product design expert. Design mechanical engineering strategy for ${engineer} developing ${system} meeting ${requirements}. Cover mechanical engineering framework, mechanical design and CAD, materials selection and engineering, thermodynamics and heat transfer, fluid mechanics and hydraulics, manufacturing process and DFM, structural analysis and FEA, reliability and failure analysis, mechanical testing and validation, and how to build mechanical engineering programs that achieve the performance specification and the manufacturing cost and the reliability target that successful product development requires by applying the design for manufacturing principles with the tolerance analysis and the supplier capability and the assembly process that optimizes the product design for the cost and the quality simultaneously.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/electrical', requireAuth, async (req: AuthRequest, res) => {
+  const { engineer, system, specifications } = req.body;
+  const prompt = `You are an electrical engineering strategy and electronics design expert. Design electrical engineering strategy for ${engineer} designing ${system} to ${specifications}. Cover electrical engineering framework, circuit design and PCB layout, power electronics and conversion, signal processing and filtering, embedded systems and firmware, electromagnetic compatibility, electrical safety and regulatory, test and measurement, electrical system integration, and how to build electrical engineering programs that achieve the performance specification and the power efficiency and the EMC compliance that electronic product development requires by designing the circuit with the simulation and the worst-case analysis and the component selection that ensures the design operates reliably across the full temperature and voltage and tolerance range.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/chemical', requireAuth, async (req: AuthRequest, res) => {
+  const { engineer, process, specifications } = req.body;
+  const prompt = `You are a chemical engineering strategy and process design expert. Design chemical engineering strategy for ${engineer} designing ${process} to ${specifications}. Cover chemical engineering framework, reaction engineering and kinetics, separation processes and distillation, heat and mass transfer, process design and P and ID, process safety and hazard analysis, scale-up from lab to plant, process optimization and control, environmental and waste management, and how to build chemical engineering programs that achieve the yield and selectivity and the process safety that industrial chemical processes require by designing the process with the material and energy balance and the equipment sizing and the HAZOP study that ensures the process operates safely and efficiently within the design envelope.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/aerospace', requireAuth, async (req: AuthRequest, res) => {
+  const { engineer, vehicle, mission } = req.body;
+  const prompt = `You are an aerospace engineering strategy and flight systems expert. Design aerospace engineering strategy for ${engineer} developing ${vehicle} for ${mission}. Cover aerospace engineering framework, aerodynamics and flight mechanics, propulsion systems, structures and materials, avionics and flight control, systems engineering and integration, flight test and certification, spacecraft design and orbital mechanics, aerospace manufacturing and quality, and how to build aerospace engineering programs that achieve the performance requirement and the safety certification and the mission success that aerospace development requires by applying the systems engineering process with the requirements decomposition and the design verification and the validation test that confirms the vehicle meets the mission requirement at the system and subsystem and component level.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/biomedical', requireAuth, async (req: AuthRequest, res) => {
+  const { engineer, device, application } = req.body;
+  const prompt = `You are a biomedical engineering strategy and medical device design expert. Design biomedical engineering strategy for ${engineer} developing ${device} for ${application}. Cover biomedical engineering framework, biocompatibility and materials, device design and human factors, sterilization and packaging, biomedical sensors and signal processing, implantable device design, regulatory design controls and FDA, bench and animal testing, clinical study design, and how to build biomedical engineering programs that achieve the clinical performance and the regulatory compliance and the manufacturing quality that successful medical device development requires by implementing the design control process with the design history file and the risk management file and the verification and validation protocol that demonstrates the device meets the user need and the safety and effectiveness requirement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/robotics', requireAuth, async (req: AuthRequest, res) => {
+  const { engineer, application, environment } = req.body;
+  const prompt = `You are a robotics and automation strategy and systems engineering expert. Design robotics and automation strategy for ${engineer} deploying ${application} in ${environment}. Cover robotics and automation framework, robot kinematics and dynamics, motion planning and control, computer vision and sensing, robot programming and software, human-robot interaction, industrial automation and PLC, autonomous navigation, robot system integration, and how to build robotics and automation programs that achieve the task performance and the cycle time and the reliability that industrial automation requires by designing the robot cell with the process analysis and the reachability simulation and the safety risk assessment and the integration test that validates the robot system meets the throughput and the quality and the safety requirement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/systems', requireAuth, async (req: AuthRequest, res) => {
+  const { engineer, system, complexity } = req.body;
+  const prompt = `You are a systems engineering strategy and complex systems expert. Design systems engineering strategy for ${engineer} developing ${system} managing ${complexity}. Cover systems engineering framework, requirements engineering and MBSE, functional and physical architecture, interface definition and management, systems integration and testing, verification and validation, reliability and availability, configuration management, risk management and mitigation, and how to build systems engineering programs that achieve the requirements compliance and the system integration and the program cost and schedule that complex system development requires by implementing the model-based systems engineering approach with the SysML model and the digital thread and the simulation that manages the complexity and the interface and the change across the system lifecycle.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/nano', requireAuth, async (req: AuthRequest, res) => {
+  const { researcher, material, application } = req.body;
+  const prompt = `You are a nanotechnology strategy and nanoscience expert. Design nanotechnology strategy for ${researcher} developing ${material} for ${application}. Cover nanotechnology framework, nanomaterial synthesis and characterization, surface chemistry and functionalization, quantum effects and nanoscale properties, nanofabrication and patterning, nanotechnology applications in medicine and energy, toxicology and safety, scale-up and manufacturing, nanoscale measurement and imaging, and how to build nanotechnology programs that achieve the material property and the functional performance and the application integration that successful nanotechnology requires by characterizing the nanomaterial with the electron microscopy and the spectroscopy and the functional testing that confirms the structure-property relationship and the application performance at the nanoscale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/bioinformatics', requireAuth, async (req: AuthRequest, res) => {
+  const { researcher, dataset, question } = req.body;
+  const prompt = `You are a bioinformatics strategy and computational biology expert. Design bioinformatics strategy for ${researcher} analyzing ${dataset} addressing ${question}. Cover bioinformatics framework, genomics and next generation sequencing analysis, transcriptomics and RNA-seq, proteomics and metabolomics, structural bioinformatics, biological network analysis, machine learning in biology, pipeline development and workflow, data visualization and interpretation, and how to build bioinformatics programs that achieve the biological insight and the statistical rigor and the reproducible analysis that computational biology requires by developing the analysis pipeline with the quality control and the normalization and the statistical model and the biological validation that moves from the sequencing data to the biological hypothesis with the appropriate computational and statistical rigor.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/compscience', requireAuth, async (req: AuthRequest, res) => {
+  const { researcher, problem, platform } = req.body;
+  const prompt = `You are a computational science strategy and scientific computing expert. Design computational science strategy for ${researcher} solving ${problem} on ${platform}. Cover computational science framework, numerical methods and algorithms, high performance computing and parallel programming, simulation and modeling, scientific software development, data management and visualization, machine learning for science, cloud and HPC infrastructure, computational workflow and reproducibility, and how to build computational science programs that achieve the simulation accuracy and the computational efficiency and the scientific discovery that high-performance scientific computing requires by selecting the numerical method and the parallelization strategy and the HPC architecture that achieves the time to solution within the computational budget while maintaining the accuracy and the reproducibility of the scientific result.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
