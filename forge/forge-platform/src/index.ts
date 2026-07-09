@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v448.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v449.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191761,6 +191761,59 @@ app.post('/api/product/onboarding-flow', requireAuth, async (req: AuthRequest, r
 app.post('/api/sales/technical-win', requireAuth, async (req: AuthRequest, res) => {
   const { product, competitor, objections } = req.body;
   const prompt = `Create a technical win strategy.\nProduct: ${product}\nCompetitor: ${competitor}\nTechnical objections: ${objections}\nInclude: technical evaluation stage management, SE/presales strategy and discovery questions, POC/pilot design (scope/success criteria/timeline), competitive differentiation on technical dimensions, handling the "we built it ourselves" objection, security review and compliance acceleration, integration capability proof strategy, technical champion identification and cultivation, reference architecture documentation, and how to turn a technical win into a commercial win.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 317+318 routes
+app.post('/api/dev/graphql-api-design', requireAuth, async (req: AuthRequest, res) => {
+  const { schema, resolvers, auth } = req.body;
+  const prompt = `Design a GraphQL API architecture.\nSchema scope: ${schema}\nResolver complexity: ${resolvers}\nAuth model: ${auth}\nInclude: schema design principles (types/queries/mutations/subscriptions), resolver structure and data loader pattern (N+1 prevention), authentication and authorization in GraphQL (directive-based/resolver-level), pagination pattern (cursor vs. offset), error handling and partial response, schema versioning strategy, federation vs. monolith decision, persisted queries for security, caching strategy (CDN/client/response), rate limiting and complexity analysis, and schema documentation best practices.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/forecast-accuracy', requireAuth, async (req: AuthRequest, res) => {
+  const { pipeline, history, method } = req.body;
+  const prompt = `Improve sales forecast accuracy.\nCurrent pipeline: ${pipeline}\nHistorical accuracy: ${history}\nCurrent method: ${method}\nInclude: forecast methodology comparison (rep-submitted/pipeline-weighted/stage-based/ML), data hygiene requirements for accurate forecasting, leading vs. lagging indicator identification, forecast cadence and process design, deal-level risk scoring, category-based forecasting (commit/best case/pipeline), CRM data quality audit process, bias identification and correction (sandbagging/overconfidence), rep-by-rep forecast calibration, and how to build a forecasting culture that improves accuracy over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { model, segment, competitors } = req.body;
+  const prompt = `Design a SaaS pricing strategy.\nCurrent model: ${model}\nTarget segment: ${segment}\nCompetitors: ${competitors}\nInclude: pricing model selection (per-seat/usage-based/outcome-based/freemium/platform), value metric identification and validation, packaging tier design (good/better/best), add-on and expansion revenue design, competitive positioning on price, price sensitivity analysis methodology, discount policy and governance, annual vs. monthly pricing incentives, enterprise pricing customization boundaries, price increase strategy, and how to test pricing changes without disrupting existing customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/community-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, members, platforms } = req.body;
+  const prompt = `Build a brand community strategy.\nBrand: ${brand}\nTarget members: ${members}\nPlatforms: ${platforms}\nInclude: community purpose and value proposition (why would people join?), platform selection rationale, community structure (subgroups/channels/events), content and programming calendar, community manager role and playbook, member lifecycle (discovery→join→engage→lead→advocate), moderation policy and guidelines, community-to-product feedback loop, measuring community health (DAU/content creation/sentiment/NPS), monetization or lead gen integration, and how to launch a community from zero.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/compensation-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, roles, markets } = req.body;
+  const prompt = `Design a compensation framework.\nCompany stage: ${stage}\nKey roles: ${roles}\nTarget markets: ${markets}\nInclude: total compensation philosophy (cash-heavy vs. equity-heavy vs. balanced), salary band design methodology, market data sources and benchmarking process, equity program design (option pool/refresh grants/cliff+vesting), variable compensation design (bonus/commission/profit-sharing), geographic pay differential policy, pay equity audit process, promotion and raise cycle design, compensation communication strategy, and how to evolve compensation as the company scales from startup to enterprise.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/term-sheet-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { terms, round, stage } = req.body;
+  const prompt = `Analyze and negotiate term sheet terms.\nKey terms: ${terms}\nRound type: ${round}\nStage: ${stage}\nInclude: explanation of each major term in plain English (valuation/option pool/liquidation preference/anti-dilution/pro-rata/board seats/protective provisions/drag-along/ROFR), founder-friendly vs. investor-friendly spectrum for each term, red flags to push back on, standard market terms for the stage, how terms compound across multiple rounds, negotiation priorities (which terms matter most), and what each term means for the founders in exit scenarios.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/microservices-design', requireAuth, async (req: AuthRequest, res) => {
+  const { domain, team, traffic } = req.body;
+  const prompt = `Design a microservices architecture.\nBusiness domain: ${domain}\nTeam structure: ${team}\nTraffic patterns: ${traffic}\nInclude: service boundary definition (domain-driven design/bounded contexts), data ownership model (database per service), inter-service communication (sync REST/gRPC vs. async events), API gateway design, service discovery and load balancing, distributed transaction handling (saga pattern/eventual consistency), shared libraries vs. code duplication, observability across services, deployment independence strategy, when NOT to use microservices (monolith-first approach), and migration path from monolith to microservices.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/influencer-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, category, budget } = req.body;
+  const prompt = `Build an influencer marketing strategy.\nBrand: ${brand}\nProduct category: ${category}\nBudget: ${budget}\nInclude: influencer tier selection (nano/micro/macro/mega), platform prioritization by audience, influencer vetting criteria (brand fit/engagement rate/audience quality/content quality), outreach and negotiation strategy, campaign brief design, content approval process, FTC disclosure compliance, performance tracking (reach/engagement/clicks/conversions/brand lift), long-term ambassador vs. one-off campaign trade-offs, B2B influencer strategy for thought leadership, and how to measure influencer ROI.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/feature-flag-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, rollout, risks } = req.body;
+  const prompt = `Design a feature flag rollout strategy.\nFeature: ${feature}\nRollout plan: ${rollout}\nKnown risks: ${risks}\nInclude: feature flag taxonomy (release flags/experiment flags/ops flags/permission flags), targeting rules design (percentage/user cohort/geography/plan), rollout stages (internal→beta→gradual→full), kill switch design for emergency rollback, flag lifecycle management and cleanup process, experimentation integration (A/B test with flags), flag governance and ownership model, performance impact of flag evaluation, logging and observability for flagged features, and how to sunset a flag safely after full rollout.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/sales-presentation', requireAuth, async (req: AuthRequest, res) => {
+  const { audience, product, pain } = req.body;
+  const prompt = `Design a high-converting sales presentation.\nAudience: ${audience}\nProduct: ${product}\nKey pain points: ${pain}\nInclude: presentation structure (why change→why now→why us), opening hook design, pain amplification before solution reveal, demo narrative arc, ROI story construction, social proof placement strategy, competitive differentiation without naming competitors, objection pre-handling within the deck, call to action design, deck length and visual design principles, customization strategy by persona/industry, and how to adapt the presentation for discovery vs. demo vs. executive review meetings.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
