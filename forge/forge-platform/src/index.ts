@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v766.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v767.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210197,6 +210197,66 @@ app.post('/api/finance/ma', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/finance/fpa', requireAuth, async (req: AuthRequest, res) => {
   const { team, company, processes } = req.body;
   const prompt = `You are an FP and A strategy and financial planning expert. Design FP and A strategy for ${team} supporting ${company} through ${processes}. Cover FP and A strategy framework, annual budget and planning process, rolling forecast and driver-based modeling, variance analysis and business partnering, scenario planning and sensitivity analysis, management reporting and dashboards, KPI framework and metric definition, zero-based budgeting, long-range planning, and how to build FP and A programs that achieve the forecast accuracy and the business insight and the decision support that effective financial planning requires by developing the driver-based model with the operating metrics and the financial ratios that connect the business activity to the financial outcome in a way that the business partner and the executive can interrogate to understand the financial implication of the operating decision.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/laborrelations', requireAuth, async (req: AuthRequest, res) => {
+  const { employer, workforce, issues } = req.body;
+  const prompt = `You are a labor relations strategy and workforce management expert. Design labor relations strategy for ${employer} managing ${workforce} addressing ${issues}. Cover labor relations framework, collective bargaining and union negotiation, grievance procedure and arbitration, NLRA compliance and unfair labor practices, labor contract administration, strike preparedness and response, works councils and co-determination, employee relations and positive culture, labor cost management, and how to build labor relations programs that achieve the productive workforce relationship and the contract compliance and the dispute resolution that effective labor relations requires by developing the bargaining strategy with the financial analysis and the comparability data and the interest-based bargaining approach that identifies the package that meets the union priorities within the employer cost constraint.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/compensation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, roles, market } = req.body;
+  const prompt = `You are a compensation design strategy and total rewards expert. Design compensation strategy for ${organization} covering ${roles} in ${market}. Cover compensation design framework, job architecture and leveling, market pricing and salary surveys, pay range design and structure, pay equity analysis and audit, incentive plan design, executive compensation and say-on-pay, pay transparency and communication, total rewards and benefits integration, and how to build compensation programs that achieve the talent attraction and the retention and the internal equity that effective total rewards requires by designing the job architecture with the career levels and the competency framework that provides the consistent job evaluation foundation for the market pricing and the pay range assignment that ensures the internal equity and the external competitiveness.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/talent', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, roles, timeline } = req.body;
+  const prompt = `You are a talent strategy and workforce planning expert. Design talent strategy for ${organization} filling ${roles} within ${timeline}. Cover talent strategy framework, workforce planning and headcount modeling, talent acquisition and employer brand, succession planning and pipeline, leadership development and high potentials, talent mobility and internal marketplace, skills-based organization, learning and development strategy, talent analytics and people data, and how to build talent strategy programs that achieve the workforce capability and the talent pipeline and the organizational agility that competitive organizations require by developing the workforce plan with the scenario analysis and the skills inventory and the build-buy-borrow decision framework that determines the optimal sourcing strategy for each critical role and capability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/dei', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, focus, goals } = req.body;
+  const prompt = `You are a diversity equity and inclusion strategy and organizational change expert. Design DEI strategy for ${organization} focused on ${focus} achieving ${goals}. Cover DEI strategy framework, equity audit and data analysis, inclusive hiring and pipeline, pay equity and advancement equity, inclusive leadership and allyship, psychological safety and belonging, ERGs and community, supplier diversity, DEI training and education, and how to build DEI programs that achieve the representation improvement and the inclusion culture and the equity outcomes that meaningful diversity work requires by grounding the strategy in the data with the disaggregated representation analysis and the pay equity study and the advancement and attrition analysis by demographic that identifies the specific equity gaps that the programmatic interventions must address.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/orgdesign', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, structure, strategy } = req.body;
+  const prompt = `You are an organizational design strategy and structure expert. Design organizational design strategy for ${organization} with ${structure} aligned to ${strategy}. Cover organizational design framework, functional versus divisional structure, matrix and agile organization, spans and layers optimization, centralization versus decentralization, shared services and centers of excellence, governance and decision rights, organizational effectiveness measurement, change management for redesign, and how to build organizational design programs that achieve the strategic alignment and the operational efficiency and the talent development that effective organizational structure requires by assessing the current design against the strategy requirements and the workflow friction and the decision-making quality that reveal the structural impediments to the organizational performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/hrmanagement', requireAuth, async (req: AuthRequest, res) => {
+  const { hrbp, organization, priorities } = req.body;
+  const prompt = `You are an HR general management strategy and business partnership expert. Design HR management strategy for ${hrbp} supporting ${organization} across ${priorities}. Cover HR general management framework, strategic HR business partnership, HR operating model and COE structure, employee lifecycle management, HR technology and HRIS, compliance and employment law, people analytics and reporting, change management and transformation, HR budget and resource management, and how to build HR programs that achieve the business impact and the employee experience and the organizational capability that strategic HR requires by positioning the HR business partner as the trusted advisor to the business leader with the analytical capability and the organizational effectiveness expertise that translates the people data into the business insight.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/it/management', requireAuth, async (req: AuthRequest, res) => {
+  const { cio, organization, priorities } = req.body;
+  const prompt = `You are an IT management strategy and technology leadership expert. Design IT management strategy for ${cio} leading ${organization} through ${priorities}. Cover IT management framework, IT strategy and alignment with business, IT governance and portfolio management, vendor management and contract negotiation, IT budget and cost management, cybersecurity and risk management, digital transformation leadership, IT operating model and sourcing, service management and ITIL, and how to build IT management programs that achieve the technology enablement and the operational reliability and the digital innovation that business technology leadership requires by aligning the IT strategy with the business strategy through the business capability model and the technology roadmap that connects the technology investment to the business outcome that the executive stakeholder values.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/it/itsm', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, services, users } = req.body;
+  const prompt = `You are an IT service management strategy and ITIL expert. Design IT service management strategy for ${organization} delivering ${services} to ${users}. Cover IT service management framework, incident and problem management, change and release management, service desk and support model, configuration management and CMDB, service level management and SLA, service catalog and request fulfillment, knowledge management, continual service improvement, and how to build IT service management programs that achieve the service availability and the user satisfaction and the incident resolution time that operational IT service delivery requires by implementing the ITIL process with the service desk ticketing and the escalation path and the SLA monitoring that ensures the service restoration within the agreed time and the root cause analysis that prevents the repeat incident.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/it/enterprisearch', requireAuth, async (req: AuthRequest, res) => {
+  const { architect, organization, transformation } = req.body;
+  const prompt = `You are an enterprise architecture strategy and digital transformation expert. Design enterprise architecture strategy for ${architect} at ${organization} driving ${transformation}. Cover enterprise architecture framework, TOGAF and architecture domains, business architecture and capability model, application portfolio rationalization, data architecture and master data, technology standards and governance, architecture review board, cloud and integration architecture, architecture-led transformation, and how to build enterprise architecture programs that achieve the technology simplification and the business agility and the digital capability that enterprise architecture requires by developing the target state architecture with the business capability model and the application rationalization analysis that identifies the redundant systems and the technical debt and the integration complexity that limit the organizational agility.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/it/softwareeng', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, platform, teams } = req.body;
+  const prompt = `You are a software engineering strategy and developer productivity expert. Design software engineering strategy for ${organization} building ${platform} with ${teams}. Cover software engineering strategy framework, software development lifecycle and methodology, microservices and API-first architecture, developer experience and platform engineering, technical debt management, code quality and testing strategy, CI/CD and DevOps maturity, engineering metrics and DORA, team topology and organization, and how to build software engineering programs that achieve the delivery velocity and the code quality and the system reliability that high-performing engineering organizations require by measuring the engineering effectiveness with the DORA metrics and the deployment frequency and the change failure rate and the lead time and the mean time to recovery that provide the objective baseline for the improvement investment.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
