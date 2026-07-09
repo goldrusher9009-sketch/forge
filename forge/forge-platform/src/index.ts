@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v555.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v556.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -197537,6 +197537,66 @@ app.post('/api/marketing/growth-plan', requireAuth, async (req: AuthRequest, res
 app.post('/api/product/experience-audit', requireAuth, async (req: AuthRequest, res) => {
   const { product, userFlows, metrics } = req.body;
   const prompt = `You are a product experience expert. Conduct a product experience audit for ${product} across user flows: ${userFlows} with metrics: ${metrics}. Evaluate onboarding, core feature discovery, task completion friction, error recovery, empty states, notification strategy, and identify the top 3 highest-impact experience improvements to prioritize.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/workflow', requireAuth, async (req: AuthRequest, res) => {
+  const { process, tools, team } = req.body;
+  const prompt = `You are an AI workflow automation expert. Design AI-powered workflow automation for ${process} using tools: ${tools} for ${team} team. Map the current manual steps, identify AI augmentation points, select appropriate AI capabilities (LLM, vision, prediction), design human-in-the-loop checkpoints, and measure time and quality improvements.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/demand', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, signals } = req.body;
+  const prompt = `You are a market sizing and demand estimation expert. Estimate product demand for ${product} in ${market} using signals: ${signals}. Apply top-down market sizing, bottom-up adoption modeling, keyword demand analysis, comparable product benchmarks, and confidence intervals to project 12-month demand scenarios.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/comms/internal', requireAuth, async (req: AuthRequest, res) => {
+  const { company, announcement, audience } = req.body;
+  const prompt = `You are an internal communications expert. Create an internal communication plan for ${company} announcing ${announcement} to ${audience}. Cover message architecture, timing and sequencing, channel selection, manager cascade guide, FAQ preparation, feedback mechanisms, and how to handle sensitive questions that arise.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/sla', requireAuth, async (req: AuthRequest, res) => {
+  const { service, customerTier, metrics } = req.body;
+  const prompt = `You are a service delivery expert. Design a Service Level Agreement for ${service} serving ${customerTier} customers measuring ${metrics}. Define SLA categories (availability, performance, support response), measurement methodology, credit calculation for breaches, exclusions and force majeure, and how to communicate SLA performance to customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brand/reposition', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, reason, target } = req.body;
+  const prompt = `You are a brand strategy expert. Create a brand repositioning plan for ${brand} repositioning because: ${reason} targeting ${target} positioning. Cover the repositioning rationale, new positioning statement, messaging transition, visual identity evolution, stakeholder communication plan, and how to manage the transition without alienating existing customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/product-copy', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, persona, stage } = req.body;
+  const prompt = `You are a product marketing expert. Write compelling product marketing copy for ${feature} targeting ${persona} at ${stage} stage of the buyer journey. Create headline options, subheadline, body copy, feature-to-benefit translations, proof points, and CTA variations for A/B testing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/technical-hiring', requireAuth, async (req: AuthRequest, res) => {
+  const { role, techStack, seniority } = req.body;
+  const prompt = `You are a technical hiring expert. Design a comprehensive technical hiring process for ${role} role with ${techStack} tech stack at ${seniority} level. Cover job spec writing, sourcing strategy, screening process, technical assessment design, system design interview rubric, culture fit evaluation, and how to make fair and calibrated offers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/positioning-workshop', requireAuth, async (req: AuthRequest, res) => {
+  const { product, differentiation, target } = req.body;
+  const prompt = `You are a product positioning expert. Facilitate a product positioning workshop for ${product} with differentiation: ${differentiation} targeting ${target} customer. Define the positioning statement format, complete competitive alternatives analysis, identify unique differentiators, draft category definition, test positioning with voice of customer, and create the positioning document.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/moderation', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, contentTypes, policies } = req.body;
+  const prompt = `You are an AI trust and safety expert. Design an AI content moderation framework for ${platform} handling ${contentTypes} under policies: ${policies}. Cover moderation pipeline (automated detection + human review), model selection, appeals process, policy enforcement tiers, transparency reporting, and how to balance safety with free expression.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/launch-kit', requireAuth, async (req: AuthRequest, res) => {
+  const { product, launchType, channels } = req.body;
+  const prompt = `You are a product marketing expert. Build a product marketing launch kit for ${product} doing a ${launchType} launch across ${channels}. Include positioning statement, messaging hierarchy, press release template, sales one-pager, social media copy pack, email announcement, FAQ, competitive battlecard, and post-launch measurement plan.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
