@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v769.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v770.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210377,6 +210377,66 @@ app.post('/api/realestate/commercial', requireAuth, async (req: AuthRequest, res
 app.post('/api/realestate/residential', requireAuth, async (req: AuthRequest, res) => {
   const { developer, units, market } = req.body;
   const prompt = `You are a residential real estate development and investment expert. Design residential real estate strategy for ${developer} developing ${units} in ${market}. Cover residential real estate framework, residential market analysis and demographics, residential development and entitlement, single family versus multifamily strategy, affordable housing and workforce housing, residential construction and delivery, residential sales and marketing, residential rental management, residential real estate financing, and how to build residential real estate programs that achieve the absorption pace and the profit margin and the community creation that successful residential development requires by analyzing the residential demand with the household formation data and the income demographics and the competitive supply pipeline that determines the product type and the price point and the amenity package that matches the market demand.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/edtech', requireAuth, async (req: AuthRequest, res) => {
+  const { institution, learners, goals } = req.body;
+  const prompt = `You are an educational technology strategy and learning innovation expert. Design edtech strategy for ${institution} serving ${learners} achieving ${goals}. Cover edtech strategy framework, learning management system selection, personalized learning and adaptive technology, digital content and curriculum design, online and hybrid learning models, learning analytics and outcomes measurement, faculty development and change management, accessibility and inclusive design, edtech vendor evaluation, and how to build edtech programs that achieve the learning outcome improvement and the student engagement and the operational efficiency that effective educational technology requires by aligning the technology selection with the pedagogical approach and the learning science evidence that supports the instructional design and the assessment strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/curriculum', requireAuth, async (req: AuthRequest, res) => {
+  const { institution, subject, learners } = req.body;
+  const prompt = `You are a curriculum design strategy and instructional design expert. Design curriculum for ${institution} covering ${subject} for ${learners}. Cover curriculum design framework, learning objectives and competency mapping, instructional design and learning activities, assessment and feedback design, curriculum alignment and coherence, differentiated instruction, inquiry-based and project-based learning, curriculum evaluation and revision, interdisciplinary connections, and how to build curriculum programs that achieve the learning mastery and the student engagement and the skill development that effective curriculum design requires by grounding the design in the backwards design approach with the desired learning outcomes and the assessment evidence and the learning experience sequence that ensures the curriculum coherence from the objective to the activity to the assessment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/research', requireAuth, async (req: AuthRequest, res) => {
+  const { researcher, field, question } = req.body;
+  const prompt = `You are an academic research strategy and methodology expert. Design research strategy for ${researcher} in ${field} investigating ${question}. Cover research strategy framework, research question and hypothesis formation, literature review methodology, research design and methodology selection, data collection and sampling, qualitative and quantitative analysis, research ethics and IRB, publication strategy and journal selection, grant funding and research proposal, and how to build research programs that achieve the knowledge contribution and the methodological rigor and the impact that academic research requires by grounding the research design in the paradigm and the ontological and epistemological position that determines the appropriate methodology and the data collection approach that can answer the research question with the appropriate validity and reliability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/schooladmin', requireAuth, async (req: AuthRequest, res) => {
+  const { principal, school, challenges } = req.body;
+  const prompt = `You are a school administration strategy and educational leadership expert. Design school administration strategy for ${principal} at ${school} addressing ${challenges}. Cover school administration framework, instructional leadership and teacher development, school culture and climate, student support and intervention, family and community engagement, data-driven decision making, school improvement planning, budget and resource management, safety and wellbeing, and how to build school administration programs that achieve the academic achievement and the school culture and the community trust that effective educational leadership requires by establishing the instructional leadership focus that positions the principal as the lead learner who models the growth mindset and the instructional coaching approach that develops teacher effectiveness.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/highered', requireAuth, async (req: AuthRequest, res) => {
+  const { institution, programs, challenges } = req.body;
+  const prompt = `You are a higher education strategy and academic administration expert. Design higher education strategy for ${institution} offering ${programs} addressing ${challenges}. Cover higher education strategy framework, enrollment management and student recruitment, retention and student success, academic program development and review, faculty recruitment and development, accreditation and quality assurance, revenue diversification and financial sustainability, campus experience and student life, research and scholarship, and how to build higher education strategy programs that achieve the enrollment growth and the student success outcome and the institutional mission that competitive higher education requires by differentiating the academic portfolio with the distinctive programs and the career outcome data and the employer partnership that demonstrates the return on investment for the prospective student.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/corplearning', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, workforce, skills } = req.body;
+  const prompt = `You are a corporate learning strategy and talent development expert. Design corporate learning strategy for ${organization} developing ${workforce} in ${skills}. Cover corporate learning strategy framework, learning needs analysis and skills gap, learning program design and delivery, leadership development and succession, compliance training and certification, digital learning and e-learning, learning measurement and ROI, learning technology and LXP, learning culture and self-directed learning, and how to build corporate learning programs that achieve the skills development and the performance improvement and the talent retention that strategic learning investment requires by conducting the learning needs analysis with the skills gap assessment and the performance data and the business strategy that identifies the critical capabilities required for the organizational success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/medialiteracy', requireAuth, async (req: AuthRequest, res) => {
+  const { audience, platform, goals } = req.body;
+  const prompt = `You are a media literacy strategy and digital citizenship expert. Design media literacy program for ${audience} on ${platform} achieving ${goals}. Cover media literacy framework, critical thinking and source evaluation, misinformation and disinformation detection, digital citizenship and online safety, social media literacy, news literacy and journalism, media production and creation, algorithm awareness and filter bubbles, privacy and data literacy, and how to build media literacy programs that achieve the critical evaluation capability and the digital citizenship behavior and the information resilience that media literate citizens require by developing the SIFT method with the Stop and the Investigate the source and the Find better coverage and the Trace claims that provides the practical framework for evaluating information encountered online.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, market, priorities } = req.body;
+  const prompt = `You are a healthcare strategy and health system leadership expert. Design healthcare strategy for ${organization} in ${market} focusing on ${priorities}. Cover healthcare strategy framework, value-based care and population health, service line strategy and growth, physician alignment and network development, digital health and virtual care, healthcare system integration, payer strategy and contracting, healthcare workforce and talent, operational efficiency and cost management, and how to build healthcare strategy programs that achieve the market position and the clinical excellence and the financial sustainability that health system strategy requires by aligning the strategic priorities with the community health need and the payer mix and the competitive position that determines the service line investment and the geographic expansion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/clinops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, services, goals } = req.body;
+  const prompt = `You are a clinical operations strategy and healthcare management expert. Design clinical operations strategy for ${organization} delivering ${services} achieving ${goals}. Cover clinical operations framework, patient flow and throughput optimization, capacity management and bed management, clinical staffing and scheduling, quality and patient safety, clinical documentation and coding, care coordination and transitions, clinical performance metrics, patient experience and satisfaction, and how to build clinical operations programs that achieve the access and the throughput and the quality outcome that high-performing clinical operations require by implementing the patient flow redesign with the demand and capacity modeling and the bottleneck analysis and the standard work that eliminates the variation in the care delivery process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthcare/finance', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, model, challenges } = req.body;
+  const prompt = `You are a healthcare finance strategy and revenue cycle expert. Design healthcare finance strategy for ${organization} with ${model} addressing ${challenges}. Cover healthcare finance framework, revenue cycle management and optimization, payer contracting and managed care, cost accounting and service line profitability, capital planning and facility investment, value-based payment and risk-based contracting, healthcare financial reporting, cost reduction and operational efficiency, healthcare CFO strategy, and how to build healthcare finance programs that achieve the revenue capture and the cost efficiency and the financial sustainability that healthcare financial management requires by optimizing the revenue cycle with the denial management and the coding accuracy and the prior authorization process that reduces the claim denial rate and the days in accounts receivable.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
