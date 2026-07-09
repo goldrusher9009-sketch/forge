@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v666.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v667.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204197,6 +204197,66 @@ app.post('/api/strategy/procurement-strategy', requireAuth, async (req: AuthRequ
 app.post('/api/strategy/capability-building', requireAuth, async (req: AuthRequest, res) => {
   const { organization, capabilities, gaps } = req.body;
   const prompt = `You are a organizational capability building and strategic capability development expert. Design capability building for ${organization} developing ${capabilities} closing ${gaps}. Cover capability building framework, capability assessment and gap analysis, build vs buy vs partner capability decisions, learning and development programs, on-the-job capability development, capability centers of excellence, capability measurement and tracking, capability governance, capability roadmap and sequencing, and how to build the organizational capabilities needed to execute strategy by deliberately developing the skills and processes and systems that the strategy requires rather than hoping existing capabilities are sufficient.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/platform-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, platform, participants } = req.body;
+  const prompt = `You are a platform strategy and marketplace design expert. Design platform strategy for ${company} building ${platform} for ${participants}. Cover platform strategy framework, network effects and flywheel design, multi-sided market economics, platform governance and rules, producer and consumer balance, trust and quality mechanisms, platform pricing and monetization, platform expansion and adjacencies, competitive moats in platform businesses, and how to design platform strategies that create defensible competitive positions by building network effects that make the platform more valuable as it grows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/operational-resilience', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, risks, tolerance } = req.body;
+  const prompt = `You are an operational resilience and business continuity expert. Design operational resilience for ${organization} against ${risks} with ${tolerance}. Cover operational resilience framework, critical business services identification, impact tolerance setting, scenario analysis and stress testing, recovery strategies and playbooks, third party and supply chain resilience, technology and cyber resilience, communications during disruption, resilience testing and exercising, and how to build operational resilience that allows organizations to absorb disruptions and adapt to new conditions rather than being severely impacted by events that should have been anticipated and prepared for.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/fintech-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, vertical, model } = req.body;
+  const prompt = `You are a fintech strategy and financial services innovation expert. Design fintech strategy for ${company} in ${vertical} with ${model}. Cover fintech strategy framework, financial services disruption landscape, regulatory environment and compliance, banking and payments infrastructure, customer acquisition and unit economics, partnership vs disruption approach, technology infrastructure and security, data and credit models, fintech scaling and geographic expansion, and how to build fintech businesses that create genuine value for customers by solving real financial pain points rather than using technology to create the appearance of innovation without changing the underlying customer experience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/sales-system', requireAuth, async (req: AuthRequest, res) => {
+  const { company, motion, market } = req.body;
+  const prompt = `You are a sales system design and revenue architecture expert. Design the sales system for ${company} with ${motion} in ${market}. Cover sales system framework, ideal customer profile and target market definition, sales process from lead to close, discovery and qualification methodology, demo and proof of concept design, proposal and commercial process, objection handling and negotiation, closing and contract execution, post-sale handoff, and how to design sales systems that are repeatable and scalable because they are built on a deep understanding of how customers make decisions and what they need to see and hear to move through each stage of the buying process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-privacy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, data, jurisdictions } = req.body;
+  const prompt = `You are a data privacy strategy and privacy engineering expert. Design data privacy for ${organization} handling ${data} across ${jurisdictions}. Cover data privacy framework, GDPR and CCPA and global privacy regulation, privacy by design principles, data mapping and inventory, consent management and legal basis, data subject rights fulfillment, privacy impact assessments, data breach response, vendor and third party privacy management, and how to build data privacy programs that genuinely protect the rights of data subjects rather than creating compliance theater that satisfies legal requirements on paper while doing little to protect actual privacy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cyber-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, threats, assets } = req.body;
+  const prompt = `You are a cybersecurity strategy and information security expert. Design cybersecurity strategy for ${organization} against ${threats} protecting ${assets}. Cover cybersecurity strategy framework, threat landscape and risk assessment, security architecture and controls, identity and access management, endpoint and network security, cloud security posture, security operations and incident response, third party risk management, security awareness and culture, and how to develop cybersecurity strategies that manage security risk to an acceptable level through a risk-based approach that allocates security investment where it will have the greatest impact on reducing the most significant threats.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-entry', requireAuth, async (req: AuthRequest, res) => {
+  const { company, market, resources } = req.body;
+  const prompt = `You are a market entry strategy and new market development expert. Design market entry for ${company} entering ${market} with ${resources}. Cover market entry framework, market attractiveness and sizing, competitive dynamics analysis, entry mode selection, minimum viable entry design, beachhead segment strategy, partnership and ecosystem, go-to-market for new market, investment and resource requirements, and how to design market entry strategies that establish a position in new markets efficiently by focusing initial resources on the highest-potential customer segments before expanding to adjacent segments as the position is established.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/customer-value', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, offering } = req.body;
+  const prompt = `You are a customer value proposition and value creation expert. Design customer value for ${company} serving ${segment} with ${offering}. Cover customer value framework, customer jobs and desired outcomes, customer pains and gains, value proposition design and canvas, quantified value creation, value communication and proof points, competitive value comparison, value delivery and realization, value measurement and ROI, and how to design value propositions that resonate with customers because they are built from deep understanding of what customers are trying to accomplish and how the offering creates measurable improvement in the outcomes that matter most to them.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/org-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, strategy, size } = req.body;
+  const prompt = `You are an organization design and structural effectiveness expert. Design the organization for ${company} executing ${strategy} at ${size}. Cover organization design framework, structural options and tradeoffs, functional vs divisional vs matrix structures, spans of control and layers, decision rights and accountability, coordination mechanisms, shared services design, organizational effectiveness metrics, redesign implementation, and how to design organizations that are structured to execute the strategy efficiently by aligning reporting lines and decision rights and coordination mechanisms with the activities that matter most for competitive success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/digital-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, channels, budget } = req.body;
+  const prompt = `You are a digital marketing strategy and performance marketing expert. Design digital marketing for ${brand} across ${channels} with ${budget}. Cover digital marketing framework, owned and earned and paid media strategy, search engine marketing and SEO, social media marketing and advertising, email marketing and automation, content marketing and distribution, display and programmatic advertising, influencer and partnership marketing, digital marketing measurement and attribution, and how to design digital marketing programs that efficiently convert marketing investment into business outcomes by combining the right mix of channels and tactics for the target audience and buying journey.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
