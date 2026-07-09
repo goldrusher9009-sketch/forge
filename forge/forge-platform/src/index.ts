@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v667.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v668.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204257,6 +204257,66 @@ app.post('/api/strategy/org-design', requireAuth, async (req: AuthRequest, res) 
 app.post('/api/strategy/digital-marketing', requireAuth, async (req: AuthRequest, res) => {
   const { brand, channels, budget } = req.body;
   const prompt = `You are a digital marketing strategy and performance marketing expert. Design digital marketing for ${brand} across ${channels} with ${budget}. Cover digital marketing framework, owned and earned and paid media strategy, search engine marketing and SEO, social media marketing and advertising, email marketing and automation, content marketing and distribution, display and programmatic advertising, influencer and partnership marketing, digital marketing measurement and attribution, and how to design digital marketing programs that efficiently convert marketing investment into business outcomes by combining the right mix of channels and tactics for the target audience and buying journey.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/regulatory-affairs', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, markets } = req.body;
+  const prompt = `You are a regulatory affairs strategy and regulatory compliance expert. Design regulatory strategy for ${company} with ${product} in ${markets}. Cover regulatory affairs framework, regulatory landscape mapping, regulatory pathway selection, pre-submission meeting and agency engagement, regulatory submission planning, clinical and technical evidence requirements, regulatory risk assessment, approval timeline and sequencing, post-approval compliance and pharmacovigilance, and how to develop regulatory strategies that navigate the complex and time-consuming regulatory approval processes as efficiently as possible while meeting the safety and efficacy standards that regulators require to protect public health.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/supply-chain-risk', requireAuth, async (req: AuthRequest, res) => {
+  const { company, supply_chain, risks } = req.body;
+  const prompt = `You are a supply chain risk management and resilience expert. Design supply chain risk strategy for ${company} with ${supply_chain} facing ${risks}. Cover supply chain risk framework, risk identification and mapping, supplier concentration and geographic risk, demand variability and forecasting, inventory buffer strategy, alternative supplier development, supply chain visibility and monitoring, risk mitigation and contingency planning, supply chain insurance and hedging, and how to build supply chain resilience that allows companies to absorb supply disruptions without major business impact through the right combination of redundancy and flexibility and visibility.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/change-management', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, change, resistance } = req.body;
+  const prompt = `You are a change management and organizational transformation expert. Design change management for ${organization} implementing ${change} overcoming ${resistance}. Cover change management framework, Kotter and ADKAR and Prosci models, change readiness assessment, stakeholder impact analysis, change vision and case for change, sponsorship and leadership alignment, communication planning and execution, training and capability building, resistance identification and management, and how to manage organizational change in ways that achieve the intended outcomes by addressing both the rational and emotional dimensions of change and building the commitment needed to sustain new behaviors.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/leadership-development', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, leaders, competencies } = req.body;
+  const prompt = `You are a leadership development strategy and executive development expert. Design leadership development for ${organization} developing ${leaders} in ${competencies}. Cover leadership development framework, leadership competency model, leadership pipeline and succession, assessment and development centers, executive coaching and mentoring, action learning and stretch assignments, formal leadership programs, peer learning and cohort development, leadership culture, and how to develop leaders who can execute todays strategy while building the organizational capability needed for tomorrow by combining formal learning with the on-the-job experiences that actually develop leadership capability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/strategic-narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { company, audience, goals } = req.body;
+  const prompt = `You are a strategic narrative and corporate storytelling expert. Design the strategic narrative for ${company} for ${audience} toward ${goals}. Cover strategic narrative framework, purpose and why articulation, the problem and opportunity framing, the unique insight and point of view, the solution and approach, the proof points and evidence, the call to action, narrative consistency across channels, narrative evolution over time, and how to develop strategic narratives that move people to act by combining the credibility of fact with the resonance of story in ways that make the strategy feel inevitable rather than just logical.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/revops-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, revenue, teams } = req.body;
+  const prompt = `You are a revenue operations strategy and GTM systems expert. Design RevOps for ${company} with ${revenue} across ${teams}. Cover RevOps framework, revenue team alignment and integration, GTM data strategy and single source of truth, funnel metrics and revenue analytics, territory and quota design, compensation modeling and plan design, technology stack rationalization, process standardization and playbooks, forecasting and revenue intelligence, and how to build RevOps functions that make revenue growth predictable and scalable by eliminating the inefficiencies that come from misaligned marketing and sales and customer success teams working with inconsistent data and processes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/product-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, products, scale } = req.body;
+  const prompt = `You are a product operations and product management excellence expert. Design product operations for ${organization} managing ${products} at ${scale}. Cover product operations framework, product process and methodology, product metrics and analytics infrastructure, customer feedback and insight systems, roadmap planning and prioritization processes, cross-functional coordination, product tools and systems, product team enablement and training, product experimentation infrastructure, and how to build product operations capabilities that allow product teams to move faster and make better decisions by removing the operational friction that slows product development and improving the quality of information that product teams use to make decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ecosystem-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, ecosystem, role } = req.body;
+  const prompt = `You are an ecosystem strategy and partner network expert. Design ecosystem strategy for ${company} building ${ecosystem} as ${role}. Cover ecosystem strategy framework, ecosystem mapping and role identification, orchestrator vs participant strategy, partner selection and onboarding, value exchange and incentive design, ecosystem governance and standards, co-innovation and co-creation, ecosystem health metrics, competitive positioning within ecosystem, and how to design ecosystem strategies that create value that no single company could create alone by bringing together the complementary capabilities of multiple partners around a platform or standard.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/rewards-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, workforce, goals } = req.body;
+  const prompt = `You are a total rewards strategy and compensation design expert. Design total rewards for ${company} with ${workforce} toward ${goals}. Cover total rewards framework, compensation philosophy and positioning, base pay and job architecture, variable pay and incentive design, equity and long-term incentive, benefits and perquisites, recognition and non-monetary rewards, total rewards communication, pay equity and transparency, and how to design total rewards programs that attract and retain the talent the business needs by offering the right combination of pay and benefits and growth opportunities for the specific workforce segments that are most critical to business success.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/corporate-dev', requireAuth, async (req: AuthRequest, res) => {
+  const { company, objective, budget } = req.body;
+  const prompt = `You are a corporate development strategy and deal execution expert. Design corporate development for ${company} pursuing ${objective} with ${budget}. Cover corporate development framework, strategic rationale and acquisition criteria, deal sourcing and pipeline management, valuation and deal structuring, diligence process and risk assessment, negotiation strategy and deal terms, integration planning and governance, partnership and JV alternatives, portfolio review and divestiture, and how to build corporate development capabilities that consistently execute transactions that deliver strategic value rather than destroying value through overpayment or failed integration.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
