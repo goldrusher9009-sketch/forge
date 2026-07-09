@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v426.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v427.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190595,6 +190595,59 @@ app.post('/api/product/user-stories', requireAuth, async (req: AuthRequest, res)
 app.post('/api/sales/forecast-model', requireAuth, async (req: AuthRequest, res) => {
   const { pipeline, history, target } = req.body;
   const prompt = `Build a sales forecast model.\nCurrent pipeline: ${pipeline}\nHistorical win rates: ${history}\nRevenue target: ${target}\nInclude: weighted pipeline calculation, stage-based conversion assumptions, coverage ratio analysis, best/likely/worst case scenarios, commit vs upside breakdown, gap analysis with recommendations, and leading indicators to watch weekly.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 273+274 routes
+app.post('/api/dev/rate-limiting', requireAuth, async (req: AuthRequest, res) => {
+  const { endpoints, limits, strategy } = req.body;
+  const prompt = `Design an API rate limiting strategy.\nEndpoints: ${endpoints}\nDesired limits: ${limits}\nStrategy preference: ${strategy}\nInclude: algorithm selection (token bucket/sliding window/fixed window), Redis implementation pattern, per-user vs per-IP vs per-API-key limits, burst allowance, 429 response format with Retry-After header, and client SDK guidance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/account-expansion', requireAuth, async (req: AuthRequest, res) => {
+  const { account, usage, whitespace } = req.body;
+  const prompt = `Create an account expansion strategy.\nAccount: ${account}\nCurrent usage/spend: ${usage}\nWhitespace opportunities: ${whitespace}\nInclude: expansion motion (land and expand vs. upsell vs. cross-sell), buyer map for new departments, EBR agenda, success metrics to highlight, timing triggers, and competitive risk assessment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/pricing-experiment', requireAuth, async (req: AuthRequest, res) => {
+  const { current, hypothesis, segment } = req.body;
+  const prompt = `Design a pricing experiment.\nCurrent pricing: ${current}\nHypothesis: ${hypothesis}\nTarget segment: ${segment}\nInclude: experiment design (holdout group, test variants), metrics to track (conversion, ARPU, churn delta), duration, statistical power calculation, pricing page variants, and decision criteria.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/demand-gen-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, channels, budget } = req.body;
+  const prompt = `Create a demand generation strategy.\nProduct: ${product}\nChannels: ${channels}\nBudget: ${budget}\nInclude: channel mix rationale, MQL/SQL definition, content funnel (TOFU/MOFU/BOFU), paid media allocation, SEO priority keywords, account-based marketing layer, pipeline velocity targets, and attribution model recommendation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/leadership-development', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, gaps, timeline } = req.body;
+  const prompt = `Create a leadership development plan.\nLeader profile: ${leader}\nIdentified gaps: ${gaps}\nTimeline: ${timeline}\nInclude: competency framework, stretch assignment ideas, executive coaching focus areas, 360 feedback design, peer learning group structure, board/exec exposure opportunities, and how to measure growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/exit-modeling', requireAuth, async (req: AuthRequest, res) => {
+  const { company, metrics, horizon } = req.body;
+  const prompt = `Build an exit scenario model.\nCompany: ${company}\nCurrent metrics: ${metrics}\nExit horizon: ${horizon}\nInclude: exit multiple ranges by scenario (bear/base/bull), strategic vs. financial buyer analysis, IPO readiness checklist, secondary sale considerations, return waterfall calculation framework, and value creation levers to pursue before exit.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/load-testing', requireAuth, async (req: AuthRequest, res) => {
+  const { endpoint, concurrency, target } = req.body;
+  const prompt = `Design a load testing strategy.\nEndpoint/service: ${endpoint}\nConcurrency target: ${concurrency}\nPerformance target: ${target}\nInclude: test types (smoke/load/stress/soak), k6 or Artillery script outline, ramp-up pattern, key metrics (p50/p95/p99 latency, error rate, throughput), bottleneck identification approach, and pass/fail criteria.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/local-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { location, audience, budget } = req.body;
+  const prompt = `Create a local marketing strategy.\nLocation: ${location}\nTarget audience: ${audience}\nBudget: ${budget}\nInclude: local SEO tactics (GMB optimization, local citations), geo-targeted paid ads, community partnerships, local event strategy, hyper-local content plan, and offline-to-online attribution approach.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/win-loss-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { deals, reasons, pattern } = req.body;
+  const prompt = `Conduct a win/loss analysis.\nDeals analyzed: ${deals}\nReported reasons: ${reasons}\nPatterns observed: ${pattern}\nInclude: categorized win/loss themes, competitive displacement patterns, pricing sensitivity signals, feature gap identification, sales process issues vs. product issues, and top 3 actionable recommendations for product and sales teams.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/multithreading', requireAuth, async (req: AuthRequest, res) => {
+  const { account, contacts, goal } = req.body;
+  const prompt = `Build a multithreading strategy for a sales deal.\nAccount: ${account}\nKnown contacts: ${contacts}\nDeal goal: ${goal}\nInclude: stakeholder map, engagement plan per persona, executive outreach sequence, how to get introductions laterally, neutralizing blockers, creating a coalition, and signals that you've achieved sufficient multi-threading.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
