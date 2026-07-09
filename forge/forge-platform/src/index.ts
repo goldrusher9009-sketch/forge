@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v548.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v549.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -197117,6 +197117,66 @@ app.post('/api/exec/board-onboarding', requireAuth, async (req: AuthRequest, res
 app.post('/api/eng/doc-strategy', requireAuth, async (req: AuthRequest, res) => {
   const { product, devAudience, currentState } = req.body;
   const prompt = `You are a developer documentation expert. Build a technical documentation strategy for ${product} targeting ${devAudience} developers with current state: ${currentState}. Cover docs architecture, content types (tutorials/how-tos/reference/explanations), tooling selection, contribution model, versioning, and doc quality metrics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/agent-prompt', requireAuth, async (req: AuthRequest, res) => {
+  const { agentGoal, tools, constraints } = req.body;
+  const prompt = `You are an AI prompt engineering expert. Design a robust system prompt for an AI agent with goal: ${agentGoal} using tools: ${tools} with constraints: ${constraints}. Cover role definition, task decomposition instructions, tool usage guidelines, output format specification, error handling behaviors, and anti-hallucination guardrails.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/pricing-page', requireAuth, async (req: AuthRequest, res) => {
+  const { product, tiers, targetCustomer } = req.body;
+  const prompt = `You are a SaaS pricing page expert. Write compelling pricing page copy for ${product} with tiers: ${tiers} targeting ${targetCustomer}. Cover tier names and positioning, feature matrix language, social proof placement, FAQ section, upgrade CTAs, and psychological pricing principles to maximize conversions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/api-partners', requireAuth, async (req: AuthRequest, res) => {
+  const { apiProduct, partnerTypes, revenue } = req.body;
+  const prompt = `You are an API ecosystem expert. Design an API partner program for ${apiProduct} targeting ${partnerTypes} generating ${revenue} revenue opportunity. Cover partner tiers, certification process, revenue sharing, co-marketing, technical integration support, and partner portal requirements.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/conflict-resolution', requireAuth, async (req: AuthRequest, res) => {
+  const { conflictType, parties, stakes } = req.body;
+  const prompt = `You are an organizational psychologist and conflict resolution expert. Build a conflict resolution playbook for ${conflictType} conflict between ${parties} with ${stakes} at stake. Cover conflict diagnosis, mediation approach, communication frameworks, escalation criteria, and preventive culture changes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/quality', requireAuth, async (req: AuthRequest, res) => {
+  const { product, riskAreas, releaseFrequency } = req.body;
+  const prompt = `You are a product quality expert. Create a product quality plan for ${product} with risk areas: ${riskAreas} and ${releaseFrequency} release cadence. Cover testing pyramid, QA process integration, bug severity classification, regression strategy, performance benchmarks, and quality gates for deployment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/recruitment-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, targetRoles, talentMarket } = req.body;
+  const prompt = `You are a recruitment marketing expert. Build a recruitment marketing strategy for ${company} hiring ${targetRoles} in ${talentMarket} talent market. Cover employer brand positioning, talent community building, job description optimization, paid job advertising, campus recruiting, and candidate experience design.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/ethics-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { company, aiUseCases, stakeholders } = req.body;
+  const prompt = `You are an AI ethics expert. Develop an AI ethics framework for ${company} implementing AI use cases: ${aiUseCases} serving stakeholders: ${stakeholders}. Cover principles (fairness, transparency, accountability), risk assessment process, governance structure, model audit procedures, and responsible AI deployment checklist.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/supply-chain', requireAuth, async (req: AuthRequest, res) => {
+  const { product, suppliers, challenges } = req.body;
+  const prompt = `You are a supply chain management expert. Optimize the supply chain for ${product} with suppliers: ${suppliers} facing challenges: ${challenges}. Cover supplier diversification, inventory optimization, demand forecasting, logistics efficiency, risk mitigation, and sustainability considerations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/discovery-sprint', requireAuth, async (req: AuthRequest, res) => {
+  const { problem, targetUsers, duration } = req.body;
+  const prompt = `You are a product discovery expert. Design a discovery sprint to explore ${problem} with ${targetUsers} users over ${duration}. Include research objectives, interview script, prototype concepts, usability test plan, synthesis framework, and decision criteria for building vs not building.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/forecasting-model', requireAuth, async (req: AuthRequest, res) => {
+  const { historicalData, growthDrivers, timeHorizon } = req.body;
+  const prompt = `You are a sales analytics expert. Build a sales forecasting model using historical data: ${historicalData} with growth drivers: ${growthDrivers} over ${timeHorizon}. Cover bottom-up pipeline analysis, top-down market sizing, seasonality adjustments, leading indicators, and confidence intervals for each scenario.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
