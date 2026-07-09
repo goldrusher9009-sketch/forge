@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v582.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v583.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199157,6 +199157,66 @@ app.post('/api/content/podcast', requireAuth, async (req: AuthRequest, res) => {
 app.post('/api/product/retro', requireAuth, async (req: AuthRequest, res) => {
   const { team, period, focus } = req.body;
   const prompt = `You are an agile facilitation and team effectiveness expert. Facilitate a retrospective for ${team} covering ${period} with ${focus} as the primary focus area. Design the full retrospective: the opening activity to set psychological safety, the data gathering phase (what happened this period — timeline or story format), the insight generation phase (why did these things happen — 5 Whys, fishbone, or PMI), the decision phase (what should we do differently — action item format with owners and due dates), how to close and energize the team, how to make retrospective outputs actually get implemented (tracking system, accountability), how to handle when the retrospective surfaces tension or conflict, and how to measure whether the retrospective led to actual team improvement over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/negotiation', requireAuth, async (req: AuthRequest, res) => {
+  const { situation, goal, leverage } = req.body;
+  const prompt = `You are a negotiation strategy and behavioral economics expert. Build the negotiation strategy for ${situation} with ${goal} as the target outcome and ${leverage} as your leverage. Apply negotiation frameworks: the BATNA analysis (yours and theirs), the zone of possible agreement (ZOPA), how to anchor first (or whether to let them anchor), the concession strategy (what to give up and in what order), how to use objective criteria (market data, precedents) to justify positions, how to handle hardball tactics (good cop/bad cop, exploding offers, lowball anchors), how to create value before claiming value (expanding the pie), and the closing strategy. Include scripts for the most important negotiation moments.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/research-synthesis', requireAuth, async (req: AuthRequest, res) => {
+  const { research, question, audience } = req.body;
+  const prompt = `You are a research synthesis and insights communication expert. Synthesize ${research} research to answer ${question} for ${audience} audience. Apply the research synthesis process: cross-source theme identification (what patterns emerge across multiple sources?), the hierarchy of evidence (which findings are most reliable and why), the insight generation process (moving from data to observations to insights to implications), how to handle conflicting findings, the confidence level framework (what do we know vs. what do we believe vs. what do we assume?), how to present research findings for different audiences (executive summary vs. detailed appendix), the action implications of each key insight, and the gaps in the research that should inform the next research cycle.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/writing/storytelling', requireAuth, async (req: AuthRequest, res) => {
+  const { story, audience, goal } = req.body;
+  const prompt = `You are a narrative strategy and professional storytelling expert. Coach the telling of ${story} for ${audience} to achieve ${goal}. Apply narrative structure frameworks: the Hero's Journey (the character, the call, the struggle, the transformation), the Story Spine (once upon a time → every day → until one day → because of that → until finally → and ever since then), Pixar's story structure, and the Before/After/Bridge framework. For the specific story: identify the core tension that creates interest, the moment of transformation that creates meaning, the specific sensory details that create immersion, how to open with a hook that creates curiosity, how to close in a way that creates action, and how to adapt this story for different contexts (a 30-second version, a 3-minute version, and a 10-minute version).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/operational-excellence', requireAuth, async (req: AuthRequest, res) => {
+  const { company, process, metric } = req.body;
+  const prompt = `You are an operational excellence and process improvement expert. Build an operational excellence program for ${company} improving ${process} to achieve ${metric}. Apply operational excellence frameworks: the current state map (value stream mapping, waste identification), the future state design (eliminating waste, reducing variability, improving flow), the improvement methodology (Lean, Six Sigma, or hybrid approach for this context), the kaizen event design (rapid improvement workshop), standard work documentation, error-proofing (poka-yoke) design, the visual management system, the problem-solving methodology (A3, 8D, PDCA), how to build a continuous improvement culture, and the governance and measurement system to sustain improvements.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/annual-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { company, goals, constraints } = req.body;
+  const prompt = `You are an annual planning and corporate strategy expert. Facilitate the annual planning process for ${company} setting ${goals} within ${constraints}. Design the full planning process: the pre-planning phase (data gathering, stakeholder interviews, prior year performance review), the strategic planning session (market analysis, strategic choices, priorities), the operational planning phase (departmental plans, headcount, budget), the integration and reconciliation phase (cross-functional dependencies, resource conflicts), the financial modeling and scenario analysis, the communication and cascade plan, the governance cadence (how to review plan performance throughout the year), how to build in agility (when and how to replan), and the common annual planning mistakes and how to avoid them.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/commercial-model', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customer, stage } = req.body;
+  const prompt = `You are a commercial strategy and business model design expert. Design the commercial model for ${product} selling to ${customer} at ${stage} stage. Cover the packaging and bundling strategy, the pricing metric selection (what unit of value to price on), the pricing architecture for different customer segments, the discounting and promotion strategy and governance, the contracting model (subscription terms, auto-renewal, price escalation clauses), the commercial motion (self-serve, assisted, enterprise — and when to use each), how to structure commercial terms to maximize net dollar retention, the free trial and freemium design, and the commercial model evolution roadmap as the business scales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/team-building', requireAuth, async (req: AuthRequest, res) => {
+  const { team, stage, challenge } = req.body;
+  const prompt = `You are a team dynamics and organizational psychology expert. Design team building for ${team} at ${stage} stage facing ${challenge} challenge. Apply team science frameworks: the five dysfunctions of a team (absence of trust, fear of conflict, lack of commitment, avoidance of accountability, inattention to results) and how to diagnose and address each, the Drexler/Sibbet team performance model, psychological safety measurement and building, team charter design (purpose, ways of working, decision rights, communication norms), the team kickoff or reset workshop design, conflict resolution approaches for this team type, how to build trust faster in remote and hybrid teams, and the team health metrics to monitor and improve over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/new-markets', requireAuth, async (req: AuthRequest, res) => {
+  const { company, capabilities, constraints } = req.body;
+  const prompt = `You are a market strategy and business development expert. Identify new market opportunities for ${company} with ${capabilities} core capabilities and ${constraints} constraints. Apply the market opportunity assessment framework: adjacency mapping (what markets are one or two steps from where you are today), the Jobs-to-be-Done lens (what unmet jobs could your capabilities solve in adjacent markets?), the market attractiveness scoring (size, growth, competition, fit), the entry barrier analysis, how to test market attractiveness before full commitment (lighthouse customer strategy, pilot programs), the sequencing of market entries (which to enter first and why), the resource requirements and build/buy/partner analysis, and how to avoid the diversification trap.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/design-sprint', requireAuth, async (req: AuthRequest, res) => {
+  const { problem, team, constraint } = req.body;
+  const prompt = `You are a Google Ventures Design Sprint and product design expert. Lead a design sprint for ${problem} with ${team} team under ${constraint} constraints. Deliver the complete 5-day sprint plan: Day 1 (Map — understand the problem space, create the long-term goal and sprint questions, map the customer journey, choose the target), Day 2 (Sketch — lightning demos, individual sketching, crazy 8s, solution sketches), Day 3 (Decide — art museum, heat map vote, speed critique, straw poll, decider vote, rumble or all-in-one), Day 4 (Prototype — build the minimum viable prototype that will answer the sprint questions), Day 5 (Test — interview script, 5-user testing protocol, note-taking framework, synthesis). Include remote adaptation for each day.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/competitive-intel', requireAuth, async (req: AuthRequest, res) => {
+  const { market, competitors, questions } = req.body;
+  const prompt = `You are a competitive intelligence and market strategy expert. Analyze the competitive landscape in ${market} focusing on ${competitors} to answer ${questions}. Deliver: the competitive landscape map (who are the players, how do they segment, what are their archetypes), for each competitor: business model, go-to-market strategy, product strategy, strengths and weaknesses, recent strategic moves and signals, the competitive dynamics (who is gaining share, who is losing, why), the white spaces competitors are not addressing, the competitive threats to your position in the next 12-24 months, the counter-moves available to you for each threat, and how to build a competitive intelligence system to maintain ongoing awareness.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
