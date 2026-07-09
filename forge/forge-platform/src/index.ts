@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v636.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v637.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202397,6 +202397,66 @@ app.post('/api/product/operations', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/marketing/virtual-events', requireAuth, async (req: AuthRequest, res) => {
   const { event, audience, goals } = req.body;
   const prompt = `You are a virtual events and digital experience expert. Design the virtual ${event} for ${audience} to achieve ${goals}. Cover the virtual event strategy framework, the platform selection and technology design, the content and programming design, the speaker and session format design, the attendee engagement and networking design, the production and technical design, the sponsor and partner integration, the pre-event and post-event experience, the virtual event measurement, and how to design virtual events that create genuine engagement and connection for attendees despite the inherent limitations of the digital medium, that use the unique advantages of virtual formats like global reach and content accessibility to extend impact beyond what physical events can achieve, and that generate the leads, relationships, and brand impact that justify the investment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/capex-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { company, investments, horizon } = req.body;
+  const prompt = `You are a capital expenditure planning and investment prioritization expert. Design the CapEx plan for ${company} evaluating ${investments} over ${horizon} horizon. Cover the CapEx planning framework, the investment needs assessment, the CapEx vs. OpEx trade-offs, the project financial modeling, the NPV and IRR analysis, the portfolio prioritization methodology, the capital allocation process, the CapEx governance and approval, the CapEx tracking and performance management, and how to build CapEx planning processes that allocate scarce capital to the investments with the highest risk-adjusted returns, that build robust financial cases that hold up under scrutiny, and that create accountability for delivering the returns that justified the original investment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/social-enterprise', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, mission, model } = req.body;
+  const prompt = `You are a social enterprise strategy and impact business model expert. Design the social enterprise strategy for ${organization} with ${mission} using ${model}. Cover the social enterprise framework, the theory of change design, the impact measurement methodology, the hybrid value proposition, the revenue model for mission alignment, the stakeholder ecosystem design, the impact investment strategy, the B Corp and certification strategy, the mission drift prevention, and how to build social enterprises that generate genuine social impact while achieving financial sustainability, that align commercial incentives with mission outcomes rather than treating them as trade-offs, and that build the measurement and reporting infrastructure to credibly demonstrate impact to investors, customers, and beneficiaries.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/real-estate', requireAuth, async (req: AuthRequest, res) => {
+  const { company, portfolio, market } = req.body;
+  const prompt = `You are a corporate real estate strategy and workplace expert. Design the real estate strategy for ${company} with ${portfolio} in ${market}. Cover the real estate strategy framework, the portfolio analysis and optimization, the space utilization analysis, the workplace strategy and design, the lease vs. own analysis, the geographic footprint strategy, the flexible and hybrid work accommodation, the real estate technology, the real estate cost optimization, and how to design corporate real estate strategies that support business objectives and workforce needs, that optimize occupancy costs in a world where hybrid work has fundamentally changed how much space companies need and how that space should be designed to support collaboration and focused work.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-penetration', requireAuth, async (req: AuthRequest, res) => {
+  const { company, market, share } = req.body;
+  const prompt = `You are a market penetration strategy and competitive growth expert. Design the market penetration strategy for ${company} in ${market} to gain ${share}. Cover the market penetration strategy framework, the competitive position assessment, the customer acquisition strategy, the pricing and promotion strategy for penetration, the distribution expansion strategy, the competitive attack and defense strategy, the customer switching cost reduction, the penetration metrics and milestones, the penetration investment and payback, and how to design market penetration strategies that systematically grow market share in existing markets through a combination of winning new customers, taking customers from competitors, and increasing usage among existing customers using the resources and capabilities your business already has.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/resilience', requireAuth, async (req: AuthRequest, res) => {
+  const { professional, stressors, goals } = req.body;
+  const prompt = `You are a psychological resilience and performance under pressure expert. Build the resilience of ${professional} managing ${stressors} toward ${goals}. Cover the resilience framework and science, the stress response and physiology, the cognitive resilience and reframing, the emotional regulation practices, the social support system building, the purpose and meaning connection, the recovery and restoration practices, the post-traumatic growth, the resilience measurement and tracking, and how to build resilience as a trainable skill rather than a fixed trait, developing the mental and emotional capacity to absorb adversity and bounce back quickly, to maintain performance under sustained pressure, and to use difficult experiences as fuel for growth rather than being defined or limited by them.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/launch-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, timeline } = req.body;
+  const prompt = `You are a product launch strategy and go-to-market expert. Design the launch strategy for ${product} in ${market} on ${timeline}. Cover the launch strategy framework, the launch readiness assessment, the launch objectives and success metrics, the target audience and positioning, the launch messaging and narrative, the channel strategy for launch, the launch activation plan, the PR and influencer strategy for launch, the sales enablement for launch, and how to design product launches that generate the awareness, trial, and momentum needed to establish market position quickly, that align all functions toward coordinated execution, that create the media and social moments that amplify reach beyond paid channels, and that build the early customer success stories and social proof that accelerate subsequent growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/saas-metrics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, focus } = req.body;
+  const prompt = `You are a SaaS metrics and business analytics expert. Analyze the SaaS metrics for ${company} at ${stage} focusing on ${focus}. Cover the SaaS metrics framework, the ARR and MRR analysis, the growth rate and efficiency analysis, the churn and retention metrics, the expansion revenue metrics, the CAC and LTV analysis, the payback period calculation, the Rule of 40 analysis, the unit economics deep dive, and how to build SaaS metrics systems that give leadership accurate visibility into business health and growth momentum, that identify early warning signs of churn and growth deceleration, that create the investor-grade financial reporting that supports fundraising, and that enable data-driven decisions about sales, marketing, and product investment based on what the metrics reveal about what is working.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/ethnographic-research', requireAuth, async (req: AuthRequest, res) => {
+  const { product, users, context } = req.body;
+  const prompt = `You are an ethnographic research and design anthropology expert. Design the ethnographic study for ${product} with ${users} in ${context}. Cover the ethnographic research methodology, the participant selection and recruitment, the contextual inquiry design, the observation and shadowing design, the in-home and in-context research, the artifact and cultural probe design, the field note and documentation design, the ethnographic analysis and synthesis, the insight translation to design, and how to conduct ethnographic research that reveals the hidden and unarticulated needs, mental models, and behavior patterns of users in their natural context that users themselves cannot articulate in interviews, producing the deep human understanding that leads to genuinely innovative product concepts rather than incremental improvements on existing solutions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/nps-program', requireAuth, async (req: AuthRequest, res) => {
+  const { company, touchpoints, segments } = req.body;
+  const prompt = `You are an NPS and customer satisfaction measurement expert. Design the NPS program for ${company} across ${touchpoints} for ${segments}. Cover the NPS strategy and program design, the survey design and question methodology, the sampling and distribution strategy, the transactional vs. relationship NPS, the NPS analysis and segmentation, the inner loop close-the-loop process, the outer loop product and process improvement, the NPS benchmarking, the NPS business outcome correlation, and how to design NPS programs that generate actionable insights rather than just scores, that close the loop with detractors in ways that recover relationships and identify systemic issues, and that create the organizational discipline to act on what customers are telling you rather than just measuring it.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/mind-share', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, category, position } = req.body;
+  const prompt = `You are a brand mind share and category ownership expert. Build the mind share for ${brand} in ${category} owning ${position}. Cover the mind share strategy framework, the category definition and ownership, the thought leadership content strategy, the analyst and research firm strategy, the speaking and conference strategy, the awards and recognition strategy, the media and press strategy, the digital presence and SEO strategy, the mind share measurement, and how to build brand mind share that positions your company as the definitive authority in your category so that when buyers think about your problem space they think of your brand first, that is built through genuine expertise and value creation rather than just marketing spend, and that translates into the consideration and preference that drives pipeline and revenue.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
