@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v593.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v594.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199817,6 +199817,66 @@ app.post('/api/marketing/buyer-persona', requireAuth, async (req: AuthRequest, r
 app.post('/api/hr/engineering-culture', requireAuth, async (req: AuthRequest, res) => {
   const { org, values, size } = req.body;
   const prompt = `You are an engineering culture and technical leadership expert. Build the engineering culture for ${org} embodying ${values} values at ${size} organization size. Cover the engineering culture definition and why it matters for talent and outcomes, the engineering principles and values design, the psychological safety and blameless culture design, the technical excellence program, the code review culture design, the documentation culture, the engineering blog and knowledge sharing program, the technical career ladder design, the engineering recognition program, and how to evolve engineering culture deliberately as the organization grows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/job-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { org, levels, functions } = req.body;
+  const prompt = `You are a job architecture and career framework expert. Design the job architecture for ${org} with ${levels} career levels across ${functions} functions. Cover the job family and function taxonomy, the career level definition framework, the job title standardization approach, the skills and competency framework design, the leveling calibration process, the career path design, the salary banding alignment to job architecture, the promotion criteria by level, the job architecture governance model, and how to implement a new job architecture without disrupting current employees.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/pricing-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, deals, velocity } = req.body;
+  const prompt = `You are a pricing operations and deal desk expert. Build the pricing operations function for ${company} handling ${deals} deal types at ${velocity} deal velocity. Cover the pricing ops charter and scope, the deal desk design and workflow, the pricing approval matrix, the discount governance framework, the CPQ tool design and implementation, the price book management, the pricing analytics and reporting, the competitive pricing response protocols, the pricing exceptions process, the pricing audit program, and how to measure pricing operations efficiency and margin impact.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/okr-system', requireAuth, async (req: AuthRequest, res) => {
+  const { company, cadence, size } = req.body;
+  const prompt = `You are an OKR strategy and goal management expert. Design the OKR system for ${company} at ${cadence} cadence for ${size} organization size. Cover the OKR philosophy and principles, the objective writing framework, the key result design for measurability, the OKR hierarchy design, the OKR setting cadence and process, the check-in and tracking cadence, the OKR scoring methodology, the cascade vs. alignment approach, the OKR health assessment, and how to avoid the common OKR failure modes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/infra-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { org, cloud, scale } = req.body;
+  const prompt = `You are an infrastructure operations and cloud platform engineering expert. Build the infrastructure operations capability for ${org} on ${cloud} cloud at ${scale} scale. Cover the infrastructure as code strategy, the cloud architecture design principles, the cost optimization framework, the reliability and SLA design, the security posture management, the capacity planning model, the change management for infrastructure, the incident response for infrastructure, the observability stack for infrastructure, and the FinOps program for cloud cost accountability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/sales-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { org, process, data } = req.body;
+  const prompt = `You are a sales operations and GTM excellence expert. Build the sales operations function for ${org} optimizing ${process} processes using ${data} data. Cover the sales ops charter and scope, the CRM strategy and data model, the sales process design and enforcement, the territory and quota design process, the forecasting methodology and cadence, the sales compensation plan design review, the sales analytics and reporting, the sales technology stack management, the sales hiring and onboarding process, and how to measure sales ops impact on revenue efficiency.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/program-mgmt', requireAuth, async (req: AuthRequest, res) => {
+  const { program, stakeholders, timeline } = req.body;
+  const prompt = `You are a program management and complex initiative delivery expert. Lead the ${program} program with ${stakeholders} stakeholders on ${timeline} timeline. Cover the program charter design, the work breakdown structure, the program governance model, the dependency mapping and management, the risk register and escalation protocols, the communication plan design, the milestone and milestone review design, the change control process, the program health reporting, and how to deliver complex cross-functional programs on time and on budget.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/price-book', requireAuth, async (req: AuthRequest, res) => {
+  const { products, segments, currency } = req.body;
+  const prompt = `You are a price book design and commercial architecture expert. Design the price book for ${products} products across ${segments} customer segments in ${currency} currencies. Cover the price book structure design, the product and SKU taxonomy, the pricing tier and volume discount design, the segment-based pricing differentiation, the bundle and package pricing design, the promotional pricing structure, the partner and channel pricing design, the multi-currency pricing management, the price book governance and change management, and how to keep the price book current as products and markets evolve.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/ai-copy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, audience, channel } = req.body;
+  const prompt = `You are an expert copywriter and conversion optimization specialist. Write high-converting copy for ${product} targeting ${audience} on ${channel} channel. Cover the copywriting principles that never go out of style, the headline formula for the channel, the hook and opening design, the benefit vs. feature framing, the social proof integration, the objection handling in copy, the call-to-action design, the copy testing methodology, and how to use AI to scale copywriting without losing authenticity and specificity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/lead-enrich', requireAuth, async (req: AuthRequest, res) => {
+  const { leads, signals, actions } = req.body;
+  const prompt = `You are a B2B lead intelligence and sales prospecting expert. Build the lead enrichment system for ${leads} lead type using ${signals} intent signals to trigger ${actions}. Cover the lead data taxonomy, the enrichment data source strategy, the intent signal monitoring design, the lead scoring model, the enrichment workflow automation, the CRM integration design, the data quality and hygiene program, the privacy compliance for enrichment data, the routing and assignment logic, and how to measure lead enrichment impact on conversion rates and pipeline quality.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/feature-adoption', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, users, baseline } = req.body;
+  const prompt = `You are a product adoption and feature activation expert. Optimize adoption of ${feature} feature for ${users} user segment from ${baseline} baseline adoption. Cover the feature adoption funnel design, the awareness and discoverability strategy, the in-product education design, the onboarding flow for the feature, the adoption trigger and nudge design, the adoption measurement framework, the power user identification and amplification strategy, the adoption barrier research methodology, the cohort-based adoption tracking, and how to use adoption data to inform the product roadmap.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
