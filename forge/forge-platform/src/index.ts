@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v698.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v699.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -206117,6 +206117,66 @@ app.post('/api/strategy/procurement-tech', requireAuth, async (req: AuthRequest,
 app.post('/api/strategy/biotech', requireAuth, async (req: AuthRequest, res) => {
   const { company, platform, therapeutic } = req.body;
   const prompt = `You are a biotech strategy and life sciences company building expert. Design biotech strategy for ${company} with ${platform} targeting ${therapeutic}. Cover biotech strategy framework, platform versus asset company decision, therapeutic area selection and competitive positioning, financing strategy across seed, Series A, B, and C, partnership and licensing strategy with large pharma, clinical development prioritization, manufacturing and CMO strategy, regulatory strategy and FDA pathway, IP strategy and freedom to operate, and how to build biotech companies that generate value by making disciplined decisions about which programs to advance based on the clinical and commercial probability of success, structuring partnerships that bring capital and development capabilities while preserving upside for the company, and building the scientific and regulatory expertise that gives investors and partners confidence in the development team ability to execute on the scientific promise of the platform.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/media-licensing', requireAuth, async (req: AuthRequest, res) => {
+  const { rights_holder, content, markets } = req.body;
+  const prompt = `You are a media licensing strategy and content rights management expert. Design media licensing for ${rights_holder} with ${content} across ${markets}. Cover media licensing framework, rights clearance and licensing administration, territory and window licensing strategy, licensing deal structures and royalty models, streaming and digital licensing, sports rights and live event licensing, music licensing and synchronization, licensing technology and rights management systems, anti-piracy and enforcement, and how to build media licensing programs that maximize the commercial value of intellectual property by understanding the complex web of rights that apply to different content types, structuring licensing deals that capture value across territories and distribution windows, and building the rights management infrastructure that tracks licensing obligations and royalty flows accurately across an increasingly complex global distribution landscape.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-agent-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, task, users } = req.body;
+  const prompt = `You are an AI agent design strategy and autonomous system expert. Design AI agent for ${company} performing ${task} for ${users}. Cover AI agent design framework, task decomposition and agent capability definition, tool selection and API integration, memory and context management, planning and reasoning architecture, error handling and graceful degradation, human-in-the-loop design and escalation, agent evaluation and testing methodology, safety constraints and guardrails, and how to design AI agents that reliably complete real-world tasks by carefully scoping what the agent is expected to do and not do, investing in robust error handling and fallback behaviors for the inevitable cases where the agent encounters situations outside its training distribution, and building the evaluation infrastructure that continuously measures agent performance in production rather than only in pre-deployment testing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/publishing', requireAuth, async (req: AuthRequest, res) => {
+  const { publisher, content, audience } = req.body;
+  const prompt = `You are a publishing strategy and media business expert. Design publishing strategy for ${publisher} with ${content} targeting ${audience}. Cover publishing strategy framework, editorial strategy and content differentiation, distribution channel mix across print, digital, and audio, subscription and membership model design, advertising and sponsorship revenue, author acquisition and development, content licensing and syndication, publishing technology and platform, and how to build publishing businesses that survive digital disruption by identifying the specific editorial perspective and community that readers value enough to pay for directly rather than relying on advertising revenue that migrates to platforms that aggregate audience at lower cost, and building the direct reader relationships through subscription and membership models that provide sustainable economics independent of the algorithm changes and advertising market fluctuations that make ad-supported publishing perpetually precarious.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/account-management', requireAuth, async (req: AuthRequest, res) => {
+  const { company, accounts, revenue } = req.body;
+  const prompt = `You are an account management strategy and key account development expert. Design account management for ${company} with ${accounts} targeting ${revenue}. Cover account management framework, account segmentation and tiering, account planning and strategic account review, relationship mapping and executive sponsorship, value realization and outcome measurement, expansion and cross-sell strategy, contract renewal and price increase management, multi-threaded relationship development, account health measurement, and how to build account management programs that generate strong retention and expansion revenue by genuinely helping customers achieve business outcomes with the product, building the deep relationships at multiple levels that make switching difficult and renewal conversations natural, and identifying expansion opportunities that create additional value for the customer rather than pushing products they do not need to hit upsell targets.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/manufacturing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, market } = req.body;
+  const prompt = `You are a manufacturing strategy and production management expert. Design manufacturing strategy for ${company} producing ${products} for ${market}. Cover manufacturing strategy framework, manufacturing footprint and location decisions, make versus buy and vertical integration, capacity planning and investment, lean manufacturing and waste elimination, quality management systems, supply chain integration and supplier development, manufacturing cost structure and cost reduction, new product introduction and manufacturing launch, and how to build manufacturing strategies that deliver competitive advantage through cost, quality, and responsiveness by making the right decisions about what to manufacture internally versus source externally, investing in the process technology and workforce skills that make manufacturing genuinely excellent, and managing the manufacturing operations with the discipline to deliver consistent quality and on-time delivery that manufacturing customers require.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/direct-sales', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, territory } = req.body;
+  const prompt = `You are a direct sales strategy and field sales management expert. Design direct sales for ${company} selling ${product} in ${territory}. Cover direct sales framework, territory design and coverage model, prospecting and pipeline development, discovery and needs assessment, solution presentation and demonstration, objection handling and negotiation, closing and contract execution, customer handoff and implementation, sales manager coaching and inspection, and how to build direct sales organizations that consistently hit revenue targets by recruiting salespeople who have the specific skills and motivation to succeed in the selling environment, providing the training and coaching that develops skills methodically rather than leaving performance to individual talent, and designing compensation plans that align individual salesperson behavior with the company revenue and margin objectives rather than creating incentives that drive volume at the expense of profitability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/brand-narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, story, audience } = req.body;
+  const prompt = `You are a brand narrative strategy and storytelling expert. Design brand narrative for ${brand} with ${story} for ${audience}. Cover brand narrative framework, origin story and founding myth, hero and journey narrative structure, customer as hero framework, conflict and resolution in brand story, values and belief system articulation, proof points and evidence integration, narrative consistency across channels, employee as storyteller, and how to build brand narratives that create genuine emotional connection with audiences by telling stories that reflect authentic truths about the brand rather than aspirational fictions, centering the customer rather than the company in the story, and creating the kind of narrative tension and resolution that makes people want to share the story because it helps them make sense of something they care about.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/trade-finance', requireAuth, async (req: AuthRequest, res) => {
+  const { company, trade_flows, banks } = req.body;
+  const prompt = `You are a trade finance strategy and international trade expert. Design trade finance for ${company} with ${trade_flows} through ${banks}. Cover trade finance framework, letters of credit and documentary collections, supply chain finance and dynamic discounting, export credit and trade insurance, bank guarantee and performance bond, commodity finance and structured trade, receivables financing and factoring, trade finance technology and digitization, trade compliance and sanctions screening, and how to build trade finance programs that efficiently fund the working capital cycle of international trade by selecting the right instruments for each trade relationship and risk profile, optimizing the cost of trade finance across the banking relationships, and managing the documentary and compliance requirements that international trade finance imposes without creating the operational burden that makes trade finance too slow and expensive for routine transactions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/experience-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, touchpoints, customers } = req.body;
+  const prompt = `You are an experience design strategy and service design expert. Design experience for ${company} across ${touchpoints} with ${customers}. Cover experience design framework, service blueprint and backstage design, experience mapping and emotional journey, moments of delight and signature experience creation, physical environment design, digital-physical integration, experience consistency and recovery, employee experience and service delivery, experience measurement and management, and how to design experiences that create genuine customer loyalty and word of mouth by identifying the specific moments where customer effort, emotion, and memory are formed, investing in the backstage processes and employee capabilities that make front-stage experiences consistently excellent, and designing memorable moments that give customers a story worth telling rather than merely avoiding the service failures that generate complaints.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/public-health', requireAuth, async (req: AuthRequest, res) => {
+  const { agency, population, issue } = req.body;
+  const prompt = `You are a public health strategy and population health management expert. Design public health strategy for ${agency} serving ${population} addressing ${issue}. Cover public health strategy framework, epidemiological analysis and burden of disease, social determinants of health and equity, health behavior theory and intervention design, primary prevention and health promotion, surveillance and early warning systems, community engagement and co-design, cross-sector partnerships for health, health communication and risk communication, and how to develop public health strategies that produce genuine population health improvement by addressing the underlying social, economic, and environmental factors that drive health outcomes alongside the behavioral interventions that help individuals make healthier choices, and by building the community trust and engagement that makes public health interventions work when they require community behavior change rather than just individual clinical care.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
