@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v558.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v559.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -197717,6 +197717,66 @@ app.post('/api/data/churn-model', requireAuth, async (req: AuthRequest, res) => 
 app.post('/api/ux/journey-map', requireAuth, async (req: AuthRequest, res) => {
   const { product, persona, goal } = req.body;
   const prompt = `You are a UX and customer experience expert. Create a comprehensive user journey map for ${product} for ${persona} persona trying to achieve ${goal}. Map all touchpoints across awareness, consideration, activation, engagement, and advocacy stages. For each stage: user actions, thoughts, emotions, pain points, opportunities, and moments of delight. Identify the highest-impact improvements and how to instrument journey analytics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/ethics', requireAuth, async (req: AuthRequest, res) => {
+  const { useCase, stakeholders, risks } = req.body;
+  const prompt = `You are an AI ethics and responsible AI expert. Design an AI ethics framework for ${useCase} involving ${stakeholders} with identified risks: ${risks}. Cover fairness and bias assessment, transparency and explainability requirements, privacy by design, human oversight mechanisms, accountability structure, impact assessment process, and how to build an AI ethics review board.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/metrics-tree', requireAuth, async (req: AuthRequest, res) => {
+  const { product, northStar, teams } = req.body;
+  const prompt = `You are a product analytics and metrics expert. Build a product metrics tree for ${product} with north star metric: ${northStar} across ${teams} teams. Define the north star metric and its decomposition into input metrics, leading indicators, guardrail metrics, and counter metrics. Map each metric to owning team, measurement frequency, and how changes in input metrics roll up to the north star.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/enablement', requireAuth, async (req: AuthRequest, res) => {
+  const { product, salesStage, persona } = req.body;
+  const prompt = `You are a sales enablement expert. Build a sales enablement content framework for ${product} at ${salesStage} stage for ${persona} buyer persona. Define content needs by funnel stage (awareness, consideration, decision), create a battle card template, design a product demo script, build an objection handling guide, define proof point and case study requirements, and create a sales certification program outline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/architecture-doc', requireAuth, async (req: AuthRequest, res) => {
+  const { system, components, audience } = req.body;
+  const prompt = `You are a software architecture expert. Write comprehensive architecture documentation for ${system} with components: ${components} for ${audience} audience. Cover system overview and context diagram, component architecture and interactions, data flow diagrams, API design principles, scalability and reliability design, security architecture, deployment topology, ADR (architecture decision records) for key choices, and the onboarding guide for new engineers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ux/research-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { question, method, participants } = req.body;
+  const prompt = `You are a UX research expert. Design a customer research plan for research question: ${question} using ${method} method with ${participants} participant profile. Cover research objectives and sub-questions, screener criteria, discussion guide or survey instrument, sample size and recruitment strategy, analysis approach, how to synthesize findings into actionable insights, and research report template.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/announcement', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, audience, impact } = req.body;
+  const prompt = `You are a product marketing expert. Write a product announcement for ${feature} targeting ${audience} with impact: ${impact}. Create the announcement in multiple formats: blog post (800 words), email announcement, in-app notification (50 words), social media posts (LinkedIn, X), and press release. Each format should be tailored to the channel while maintaining consistent messaging and highlighting the customer benefit.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cs/value-realization', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customer, outcomes } = req.body;
+  const prompt = `You are a business value and ROI expert. Build a business value realization framework for ${product} with ${customer} customer targeting ${outcomes}. Define value metrics and measurement approach, baseline assessment process, ROI calculation model, value realization milestones, executive reporting template, how to handle cases where value is not being realized, and how to use value delivery to drive expansion and renewal.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/tech-stack', requireAuth, async (req: AuthRequest, res) => {
+  const { project, requirements, team } = req.body;
+  const prompt = `You are a software architecture and engineering strategy expert. Recommend a tech stack for ${project} with requirements: ${requirements} given ${team} team. Evaluate frontend framework options, backend language and framework, database selection (SQL vs. NoSQL, specific options), infrastructure and hosting, caching strategy, message queue needs, observability stack, and CI/CD tooling. Provide a decision matrix with trade-offs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/experiment-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { product, team, infrastructure } = req.body;
+  const prompt = `You are a product experimentation and A/B testing expert. Design a product experimentation framework for ${product} with ${team} team using ${infrastructure}. Cover experiment lifecycle (hypothesis → design → implementation → analysis → decision), feature flag architecture, experiment prioritization process, statistical methodology (frequentist vs. Bayesian), avoiding common pitfalls (novelty effects, peeking problem), scaling experimentation culture, and how to build an experiment review board.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/data-platform', requireAuth, async (req: AuthRequest, res) => {
+  const { company, dataTypes, useCases } = req.body;
+  const prompt = `You are a data engineering and analytics architecture expert. Design a data platform architecture for ${company} handling ${dataTypes} data for ${useCases} use cases. Cover ingestion layer (batch vs. streaming), storage layer (data lake, data warehouse, lakehouse), transformation layer (dbt, Spark), serving layer (BI, APIs, ML), data governance (catalog, lineage, quality), security and access control, and the build vs. buy decision for each component.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
