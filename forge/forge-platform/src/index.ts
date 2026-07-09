@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v434.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v435.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191019,6 +191019,59 @@ app.post('/api/product/prd-summary', requireAuth, async (req: AuthRequest, res) 
 app.post('/api/sales/deep-discovery', requireAuth, async (req: AuthRequest, res) => {
   const { company, pain, budget } = req.body;
   const prompt = `Conduct a deep discovery session.\nCompany: ${company}\nSuspected pain: ${pain}\nBudget signals: ${budget}\nInclude: situation questions, problem questions, implication questions, need-payoff questions (SPIN selling), budget and authority qualification, timeline establishment, competitive landscape questions, and how to summarize back to confirm understanding and advance the deal.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 289+290 routes
+app.post('/api/dev/zero-downtime-deploy', requireAuth, async (req: AuthRequest, res) => {
+  const { stack, database, traffic } = req.body;
+  const prompt = `Design a zero-downtime deployment strategy.\nStack: ${stack}\nDatabase: ${database}\nTraffic level: ${traffic}\nInclude: deployment pattern (blue-green/canary/rolling), database migration approach (expand-contract), health check design, traffic shifting strategy, rollback procedure, feature flag coordination, and smoke test checklist post-deploy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/revenue-model', requireAuth, async (req: AuthRequest, res) => {
+  const { product, channels, segments } = req.body;
+  const prompt = `Build a revenue model.\nProduct: ${product}\nSales channels: ${channels}\nCustomer segments: ${segments}\nInclude: revenue stream mapping, unit economics per segment, CAC/LTV by channel, revenue mix targets, expansion revenue model, churn impact analysis, and 3-year financial projection assumptions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/ai-feature-design', requireAuth, async (req: AuthRequest, res) => {
+  const { useCase, model, ux } = req.body;
+  const prompt = `Design an AI-powered product feature.\nUse case: ${useCase}\nModel type: ${model}\nUX preference: ${ux}\nInclude: AI feature specification, UX design principles for AI (transparency/control/error handling), prompt engineering approach, latency management, fallback behavior, user feedback loop, evaluation metrics, and how to explain the AI to users.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/product-led-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { product, virality, conversion } = req.body;
+  const prompt = `Design a Product-Led Growth marketing strategy.\nProduct: ${product}\nVirality mechanics: ${virality}\nConversion goal: ${conversion}\nInclude: free-to-paid conversion optimization, in-product marketing moments, PQL (product-qualified lead) definition, activation sequence marketing, usage-based email triggers, community-led growth layer, and how to coordinate PLG with sales-assisted motion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/workforce-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { growth, roles, timeline } = req.body;
+  const prompt = `Build a workforce planning model.\nGrowth projection: ${growth}\nKey roles to fill: ${roles}\nTimeline: ${timeline}\nInclude: headcount plan by quarter, role prioritization rationale, time-to-hire assumptions, recruiter capacity model, internal vs. external sourcing split, succession planning integration, and contingency plan if hiring slows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/impact-investing', requireAuth, async (req: AuthRequest, res) => {
+  const { thesis, metrics, returns } = req.body;
+  const prompt = `Build an impact investing framework.\nImpact thesis: ${thesis}\nImpact metrics: ${metrics}\nReturn expectations: ${returns}\nInclude: theory of change, impact measurement approach (IRIS+/B Impact), portfolio construction for blended return, impact washing red flags, reporting framework, and how to communicate impact to LPs without greenwashing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/rest-to-graphql', requireAuth, async (req: AuthRequest, res) => {
+  const { endpoints, entities, clients } = req.body;
+  const prompt = `Migrate REST API to GraphQL.\nCurrent endpoints: ${endpoints}\nData entities: ${entities}\nClients: ${clients}\nInclude: schema design from existing REST resources, resolver architecture, N+1 problem prevention (DataLoader), coexistence strategy (run both during migration), client migration guide, performance comparison checklist, and subscription design for real-time needs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/hypergrowth-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, channels, constraints } = req.body;
+  const prompt = `Design a hypergrowth marketing strategy.\nGrowth stage: ${stage}\nChannels: ${channels}\nConstraints: ${constraints}\nInclude: growth model (acquisition/activation/retention/referral/revenue), channel sequencing for scale, team structure for hypergrowth, budget allocation as percentage of revenue, experiment velocity targets, and when to shift from growth hacking to brand building.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/pricing-page', requireAuth, async (req: AuthRequest, res) => {
+  const { tiers, audience, competitor } = req.body;
+  const prompt = `Design a high-converting pricing page.\nTiers: ${tiers}\nTarget audience: ${audience}\nCompetitors: ${competitor}\nInclude: tier naming and positioning, feature/limit table design, recommended plan highlighting, social proof placement, FAQ section, annual vs. monthly toggle, comparison table strategy, and psychological pricing principles to increase conversion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/enterprise-land', requireAuth, async (req: AuthRequest, res) => {
+  const { target, department, useCase } = req.body;
+  const prompt = `Design an enterprise land strategy.\nTarget company: ${target}\nDepartment to land: ${department}\nUse case: ${useCase}\nInclude: land entry point selection, pilot proposal design, success criteria for pilot, executive sponsor identification, security/procurement navigation, legal agreement strategy, and land-to-expand playbook post-signature.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
