@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v598.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v599.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200117,6 +200117,66 @@ app.post('/api/sales/outbound-sequence', requireAuth, async (req: AuthRequest, r
 app.post('/api/strategy/ma-advisor', requireAuth, async (req: AuthRequest, res) => {
   const { acquirer, target, rationale } = req.body;
   const prompt = `You are a mergers and acquisitions strategy and integration expert. Advise on the acquisition of ${target} by ${acquirer} with ${rationale} as the strategic rationale. Cover the strategic fit assessment, the valuation framework and methodology, the due diligence scope design, the deal structure options, the synergy identification and quantification, the integration planning approach, the cultural assessment and integration risk, the organizational design post-merger, the Day 1 readiness planning, and the 100-day integration plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/demand-gen', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, budget } = req.body;
+  const prompt = `You are a demand generation and pipeline marketing expert. Build the demand gen strategy for ${company} targeting ${segment} with ${budget} budget. Cover the demand gen funnel design, the inbound vs. outbound demand mix, the content and SEO demand generation, the paid acquisition strategy, the event and webinar demand gen, the ABM demand generation approach, the SDR and marketing alignment, the MQL to SQL conversion optimization, the demand gen measurement model, and how to build a demand gen engine that predictably fills the pipeline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/design-sprint', requireAuth, async (req: AuthRequest, res) => {
+  const { challenge, team, outcome } = req.body;
+  const prompt = `You are a design sprint and rapid prototyping expert. Facilitate the design sprint for ${challenge} with ${team} team to achieve ${outcome}. Cover the design sprint methodology and 5-day structure, the problem framing and sprint question design, the expert interview design, the lightning demo format, the sketching and storyboarding techniques, the decider and vote mechanics, the prototype design principles, the user testing recruitment, the test script design, and how to implement the sprint learnings into the product roadmap.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ecosystem', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, partners, value } = req.body;
+  const prompt = `You are a platform ecosystem and network effects strategy expert. Build the ecosystem strategy for ${platform} with ${partners} partner types creating ${value} value. Cover the platform vs. pipeline business model distinction, the ecosystem design principles, the network effect type identification, the multi-sided market design, the ecosystem governance design, the developer and partner attraction strategy, the ecosystem metrics and health monitoring, the platform pricing and monetization, the ecosystem competitive moat building, and how to accelerate ecosystem flywheel effects.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/customer-ltv', requireAuth, async (req: AuthRequest, res) => {
+  const { segment, revenue, cost } = req.body;
+  const prompt = `You are a customer lifetime value and retention economics expert. Optimize the LTV for ${segment} with ${revenue} average revenue and ${cost} acquisition cost. Cover the LTV formula and calculation methodology, the LTV by cohort analysis, the LTV improvement levers, the retention rate improvement strategies, the expansion revenue maximization, the purchase frequency optimization, the average order value improvement, the win-back campaign design, the LTV to CAC ratio optimization, and how to build a LTV-driven culture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/growth-model', requireAuth, async (req: AuthRequest, res) => {
+  const { business, metric, levers } = req.body;
+  const prompt = `You are a growth modeling and financial forecasting expert. Build the growth model for ${business} tracking ${metric} with ${levers} as primary growth levers. Cover the growth model structure and components, the bottom-up vs. top-down modeling approach, the assumption documentation methodology, the sensitivity analysis design, the scenario planning framework, the growth driver identification, the leading indicator selection, the model calibration against historical data, the growth model governance, and how to use the model to make resource allocation decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/ai-assistant', requireAuth, async (req: AuthRequest, res) => {
+  const { role, workflow, tool } = req.body;
+  const prompt = `You are an AI-augmented sales and revenue technology expert. Design the AI sales assistant for ${role} sales role to enhance ${workflow} workflow using ${tool}. Cover the AI sales use case prioritization, the AI for prospecting and outreach, the AI for call preparation and research, the AI for objection handling and coaching, the AI for proposal and content generation, the AI for CRM data entry and hygiene, the AI for deal risk scoring, the AI adoption and change management approach, the AI governance for sales, and how to measure AI impact on sales productivity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/operating-model', requireAuth, async (req: AuthRequest, res) => {
+  const { org, strategy, change } = req.body;
+  const prompt = `You are an operating model design and organizational effectiveness expert. Design the operating model for ${org} to execute ${strategy} through ${change}. Cover the operating model components and design dimensions, the organizational structure options, the governance and decision rights design, the process and workflow design, the technology and data architecture alignment, the talent and capability model, the performance management design, the culture and ways of working design, the operating model implementation roadmap, and how to sustain the operating model through ongoing change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/customer-acquisition', requireAuth, async (req: AuthRequest, res) => {
+  const { segment, channel, cac } = req.body;
+  const prompt = `You are a customer acquisition strategy and paid growth expert. Design the customer acquisition engine for ${segment} through ${channel} targeting ${cac} CAC. Cover the ideal customer profile sharpening, the channel selection and mix design, the creative strategy and testing framework, the landing page and conversion optimization, the audience targeting and segmentation, the bidding strategy, the attribution model design, the budget allocation optimization, the acquisition funnel optimization, and how to scale customer acquisition while maintaining CAC efficiency.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/sustainability', requireAuth, async (req: AuthRequest, res) => {
+  const { company, scope, goal } = req.body;
+  const prompt = `You are a corporate sustainability and ESG strategy expert. Build the sustainability strategy for ${company} covering ${scope} with ${goal} as the primary goal. Cover the ESG materiality assessment, the sustainability vision and commitment design, the carbon footprint measurement and reduction, the supply chain sustainability program, the circular economy integration, the social impact program design, the sustainability reporting framework, the stakeholder engagement on sustainability, the sustainability governance structure, and how to integrate sustainability into core business strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/team-rituals', requireAuth, async (req: AuthRequest, res) => {
+  const { team, challenge, culture } = req.body;
+  const prompt = `You are a team dynamics and high-performance culture expert. Design the team rituals for ${team} addressing ${challenge} to build ${culture} culture. Cover the ritual design principles, the meeting and ceremony design, the feedback and recognition rituals, the learning and growth rituals, the celebration and milestone rituals, the conflict and candor rituals, the energy and wellbeing rituals, the team identity and belonging rituals, the async and remote ritual adaptation, and how to measure whether rituals are actually improving team performance.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
