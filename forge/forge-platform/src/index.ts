@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v583.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v584.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199217,6 +199217,66 @@ app.post('/api/product/design-sprint', requireAuth, async (req: AuthRequest, res
 app.post('/api/strategy/competitive-intel', requireAuth, async (req: AuthRequest, res) => {
   const { market, competitors, questions } = req.body;
   const prompt = `You are a competitive intelligence and market strategy expert. Analyze the competitive landscape in ${market} focusing on ${competitors} to answer ${questions}. Deliver: the competitive landscape map (who are the players, how do they segment, what are their archetypes), for each competitor: business model, go-to-market strategy, product strategy, strengths and weaknesses, recent strategic moves and signals, the competitive dynamics (who is gaining share, who is losing, why), the white spaces competitors are not addressing, the competitive threats to your position in the next 12-24 months, the counter-moves available to you for each threat, and how to build a competitive intelligence system to maintain ongoing awareness.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/tech-debt-reducer', requireAuth, async (req: AuthRequest, res) => {
+  const { codebase, debt, velocity } = req.body;
+  const prompt = `You are a software engineering and technical debt management expert. Build a tech debt reduction plan for ${codebase} codebase with ${debt} type of technical debt impacting ${velocity}. Cover the tech debt audit methodology (categorizing debt: intentional vs. inadvertent, reckless vs. prudent, short-term vs. long-term), the tech debt registry design, how to prioritize debt reduction (impact on velocity, risk, customer experience), the refactoring strategy (strangler fig pattern, branch by abstraction, parallel run), how to make the business case for tech debt reduction to non-technical stakeholders, how to balance debt reduction with new feature development, how to prevent tech debt accumulation going forward (definition of done, code review standards, architecture decision records), and how to measure tech debt reduction progress.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/social-impact', requireAuth, async (req: AuthRequest, res) => {
+  const { program, beneficiaries, goals } = req.body;
+  const prompt = `You are a social impact measurement and evaluation expert. Design the impact measurement framework for ${program} serving ${beneficiaries} to achieve ${goals}. Cover the theory of change (how does the program create change — inputs, activities, outputs, outcomes, impact), the indicators selection (leading and lagging, quantitative and qualitative), the data collection methods (surveys, interviews, administrative data, observational), the counterfactual design (how do you know the change is caused by the program?), the social return on investment (SROI) methodology, how to involve beneficiaries in measurement design, how to use data for program improvement (not just reporting), how to communicate impact to different stakeholders, and the common pitfalls in social impact measurement to avoid.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/personal-brand', requireAuth, async (req: AuthRequest, res) => {
+  const { name, expertise, goal } = req.body;
+  const prompt = `You are a personal branding and thought leadership expert. Build the personal brand for ${name} with ${expertise} expertise targeting ${goal}. Cover the personal brand positioning statement (what you do, who you help, and what makes you different), the content strategy (what topics to own, what formats to use, what cadence to maintain), the platform selection (LinkedIn, Twitter/X, newsletter, podcast, speaking), how to create a content flywheel (one big piece repurposed into many small pieces), the community strategy (which communities to join and contribute to, how to build your own), how to get speaking opportunities and media coverage, how to convert audience to opportunities (clients, jobs, partnerships), and how to measure personal brand growth (followers, engagement, inbound opportunities, speaking invitations).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/metrics-framework', requireAuth, async (req: AuthRequest, res) => {
+  const { product, stage, northStar } = req.body;
+  const prompt = `You are a product analytics and metrics strategy expert. Build the product metrics framework for ${product} at ${stage} stage with ${northStar} as the North Star metric. Cover the North Star metric selection and why it matters, the metric tree (what inputs drive the North Star), the counter-metrics that prevent gaming, the level metrics by team (what each team owns and optimizes), the product health metrics (bugs, performance, reliability), the engagement and retention metrics hierarchy, the business metrics that connect product to revenue, the instrumentation requirements for each metric, the dashboard design for different audiences, and how to run a weekly metrics review that actually drives decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/api-design', requireAuth, async (req: AuthRequest, res) => {
+  const { api, consumers, style } = req.body;
+  const prompt = `You are an API design and developer experience expert. Design the API for ${api} serving ${consumers} using ${style} style. Cover the API design principles (consistency, simplicity, evolvability), the resource modeling and naming conventions, the HTTP verb and status code usage, the request/response schema design (field names, types, nullability, pagination), the authentication and authorization design, the versioning strategy, the error response format and error codes, the rate limiting and throttling design, the API documentation structure (reference docs, tutorials, how-to guides), the SDK design considerations, how to design for backward compatibility, and the API governance process to keep the API consistent as it evolves.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/predictive-analytics', requireAuth, async (req: AuthRequest, res) => {
+  const { question, data, output } = req.body;
+  const prompt = `You are a data science and predictive analytics expert. Build a predictive analytics solution to answer ${question} using ${data} data to produce ${output}. Cover the problem framing (what decision will this prediction inform?), the data assessment (what data is available, what is the quality, what is missing?), the feature engineering approach, the model selection rationale (regression, classification, time series, clustering — which fits the problem?), the model training and validation methodology (train/test split, cross-validation, overfitting prevention), the model evaluation metrics appropriate for this problem, how to productionize the model (serving, monitoring, retraining), how to explain the model outputs to non-technical stakeholders, and how to measure whether the predictions are actually improving the target decision.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/investor-relations', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, investors } = req.body;
+  const prompt = `You are an investor relations and public company preparedness expert. Build the investor relations program for ${company} at ${stage} with ${investors} type of investors. Cover the IR program design (frequency and format of investor communications), the investor update template (key metrics, progress vs. plan, wins and misses, outlook), how to run board meetings effectively (pre-reads, agenda, facilitation, follow-up), the investor data room design and maintenance, how to build trust with investors during good times and bad, how to communicate bad news (principle: early, direct, with a plan), how to manage investor expectations, the fundraising preparation timeline, how to handle secondary transactions and cap table management, and how to transition from private to public company IR practices.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/procurement', requireAuth, async (req: AuthRequest, res) => {
+  const { company, spend, categories } = req.body;
+  const prompt = `You are a procurement strategy and strategic sourcing expert. Build the procurement strategy for ${company} managing ${spend} in ${categories} spend categories. Cover the procurement maturity model (transactional → strategic), spend analysis and category management design, the strategic sourcing process (requirements → market analysis → RFP → evaluation → negotiation → contract), supplier relationship management tiers, contract management best practices, the make vs. buy decision framework, procurement technology stack (eSourcing, eProcurement, contract management), how to build procurement as a competitive advantage (not just cost savings), savings tracking and reporting methodology, and how to manage procurement risk (single-source dependency, supplier financial health, geopolitical risk).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/circular-economy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, model } = req.body;
+  const prompt = `You are a circular economy and sustainable business model expert. Design a circular economy strategy for ${company} with ${product} using ${model} circular model. Cover the circular economy principles (eliminate waste, circulate products and materials, regenerate nature), the circular design guidelines (design for durability, repairability, disassembly, recyclability), the circular business model options (product-as-a-service, refurbishment and resale, take-back and recycling, sharing platform), the value retention hierarchy (maintain → repair → reuse → refurbish → remanufacture → recycle → recover), the business case for circular economy (cost reduction, new revenue streams, brand value, regulatory compliance), how to engage customers in circular behaviors, and how to measure circular economy performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/mindset', requireAuth, async (req: AuthRequest, res) => {
+  const { challenge, pattern, goal } = req.body;
+  const prompt = `You are a performance psychology and executive coaching expert. Coach through ${challenge} by addressing ${pattern} mental pattern to achieve ${goal}. Apply evidence-based approaches: cognitive behavioral coaching (identifying and reframing limiting beliefs), Carol Dweck's growth mindset framework, the imposter syndrome diagnostic and treatment, how to build mental toughness and resilience, how to manage performance anxiety and pressure, the pre-performance routine design, how to use failure as a learning accelerator, how to build confidence through progressive challenge, how to use visualization and mental rehearsal effectively, how to build the daily practices that sustain peak performance, and the specific mindset shifts that will unlock the next level of performance.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
