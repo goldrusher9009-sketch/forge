@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v601.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v602.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200297,6 +200297,66 @@ app.post('/api/strategy/startup-validation', requireAuth, async (req: AuthReques
 app.post('/api/strategy/retail-strategy', requireAuth, async (req: AuthRequest, res) => {
   const { brand, channel, shopper } = req.body;
   const prompt = `You are a retail strategy and omnichannel commerce expert. Build the retail strategy for ${brand} in ${channel} targeting ${shopper} shopper. Cover the retail channel strategy, the category management approach, the planogram and shelf strategy, the pricing and promotional strategy for retail, the trade marketing and account management, the retail media and digital shelf strategy, the omnichannel integration of retail and ecommerce, the retail data and shopper insights, the retail execution and compliance, and how to win at retail in an increasingly competitive and digital environment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/venture-studio', requireAuth, async (req: AuthRequest, res) => {
+  const { studio, thesis, stage } = req.body;
+  const prompt = `You are a venture studio and company building expert. Design the venture studio for ${studio} with ${thesis} investment thesis at ${stage} stage. Cover the venture studio model vs. traditional VC, the thesis development and portfolio construction, the studio operating model, the idea generation and validation process, the founder and team model, the shared services and leverage design, the studio economics and carry design, the portfolio company graduation criteria, the studio LP and capital strategy, and how to build a venture studio that creates durable companies at scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-launch', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, market, budget } = req.body;
+  const prompt = `You are a brand launch and market introduction strategy expert. Design the brand launch for ${brand} entering ${market} with ${budget} budget. Cover the pre-launch market readiness, the launch narrative and story design, the launch moment and timing strategy, the PR and earned media strategy, the paid launch amplification, the influencer and ambassador program, the launch event design, the retail and channel readiness, the employee and internal launch activation, and how to create a brand launch that builds awareness and drives first purchase.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/tokenomics', requireAuth, async (req: AuthRequest, res) => {
+  const { protocol, utility, supply } = req.body;
+  const prompt = `You are a tokenomics and crypto economic design expert. Design the tokenomics for ${protocol} with ${utility} token utility and ${supply} supply model. Cover the token utility design and value accrual, the token supply schedule and emission model, the token distribution design, the governance token design, the staking and locking mechanics, the token burn mechanisms, the liquidity provision incentives, the token economic security, the regulatory considerations for token design, and how to design tokenomics that align stakeholders for long-term protocol health.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/churn-prediction', requireAuth, async (req: AuthRequest, res) => {
+  const { product, signals, segment } = req.body;
+  const prompt = `You are a churn prediction and customer retention expert. Build the churn prediction model for ${product} using ${signals} signals targeting ${segment}. Cover the churn definition and measurement, the churn predictor feature engineering, the model selection and validation approach, the churn score interpretation and thresholds, the intervention design for different churn risk levels, the save and win-back playbook, the early warning indicator dashboard, the churn prediction model refresh cadence, the customer success integration with churn scoring, and how to build a churn prevention culture using data.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/intrapreneurship', requireAuth, async (req: AuthRequest, res) => {
+  const { org, program, resources } = req.body;
+  const prompt = `You are an intrapreneurship and corporate innovation expert. Design the intrapreneurship program for ${org} through ${program} structure with ${resources} resources. Cover the intrapreneurship program models, the idea sourcing and challenge design, the selection and funding process, the intrapreneurial team design, the protection and air cover strategy, the internal resource access design, the mentor and sponsor network, the graduation and spin-out criteria, the intrapreneurship culture building, and how to make intrapreneurship a sustainable competitive capability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, market, goal } = req.body;
+  const prompt = `You are a sales strategy and revenue growth expert. Build the sales strategy for ${company} in ${market} to achieve ${goal}. Cover the sales strategy framework, the target market and ICP refinement, the sales motion and coverage model, the quota and territory design, the sales team structure and roles, the sales compensation design, the forecasting and pipeline methodology, the win rate and deal velocity improvement, the sales technology stack, and how to build a sales organization that consistently exceeds quota.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/community-led-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { product, community, members } = req.body;
+  const prompt = `You are a community-led growth and community strategy expert. Design the community-led growth strategy for ${product} building ${community} community for ${members} members. Cover the community-led growth model, the community purpose and charter, the community platform selection, the community content and programming, the community moderation and health, the member journey and onboarding design, the community-to-product feedback loop, the community monetization without alienating members, the community metrics and health scoring, and how to turn a community into a sustainable growth engine.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cx-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, touchpoint, gap } = req.body;
+  const prompt = `You are a customer experience strategy and service design expert. Build the CX strategy for ${brand} across ${touchpoint} touchpoints addressing ${gap} experience gap. Cover the CX vision and promise design, the customer journey mapping, the moments of truth identification, the experience measurement system, the CX operating model, the cross-functional CX governance, the CX technology and data platform, the employee experience enablement, the CX investment prioritization, and how to build a customer-centric culture that delivers consistently excellent experiences.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/engineering-manager', requireAuth, async (req: AuthRequest, res) => {
+  const { manager, team, challenge } = req.body;
+  const prompt = `You are an engineering management and technical leadership expert. Coach ${manager} managing ${team} engineers through ${challenge} challenge. Cover the technical to management transition, the 1-on-1 meeting design and cadence, the performance management for engineers, the technical roadmap communication, the engineering culture and health, the hiring and interviewing for engineering, the engineering productivity metrics, the cross-functional engineering relationships, the senior individual contributor management, and how to grow as an engineering leader from team lead to director and beyond.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { org, maturity, priority } = req.body;
+  const prompt = `You are a data strategy and enterprise analytics expert. Build the data strategy for ${org} at ${maturity} maturity level focusing on ${priority}. Cover the data strategy framework and roadmap, the data architecture vision, the data platform and infrastructure design, the data talent and team model, the data culture and literacy program, the data product design, the data monetization opportunities, the data security and privacy program, the data governance integration, and how to become a genuinely data-driven organization where decisions are routinely informed by data.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
