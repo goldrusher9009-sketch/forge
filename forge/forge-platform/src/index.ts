@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v683.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v684.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205217,6 +205217,66 @@ app.post('/api/strategy/product-led-growth', requireAuth, async (req: AuthReques
 app.post('/api/strategy/corporate-responsibility', requireAuth, async (req: AuthRequest, res) => {
   const { organization, stakeholders, priorities } = req.body;
   const prompt = `You are a corporate social responsibility strategy and stakeholder value expert. Design corporate responsibility for ${organization} with ${stakeholders} on ${priorities}. Cover corporate responsibility framework, materiality assessment and priority setting, ESG strategy and integration, community investment and social impact, environmental stewardship programs, employee and labor practices, supply chain responsibility and human rights, governance and ethics programs, CSR reporting and transparency, and how to develop corporate responsibility strategies that create genuine social and environmental value while building the stakeholder trust and license to operate that are increasingly necessary for business success, by focusing on the material issues where the organization can make the most significant positive impact given its business model and stakeholder relationships.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-safety', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, systems, risks } = req.body;
+  const prompt = `You are an AI safety strategy and responsible AI deployment expert. Design AI safety for ${organization} with ${systems} addressing ${risks}. Cover AI safety framework, alignment and value specification, robustness and reliability testing, adversarial attack resistance, distributional shift detection, human oversight and control mechanisms, AI containment and fail-safe design, safety monitoring and incident response, AI safety culture and training, and how to deploy AI systems safely by ensuring they behave as intended across the full distribution of inputs and edge cases, remain under meaningful human control, and fail gracefully when they encounter situations outside their training distribution rather than producing harmful or unexpected outputs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-mesh', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, domains, consumers } = req.body;
+  const prompt = `You are a data mesh architecture and decentralized data platform expert. Design data mesh for ${organization} across ${domains} serving ${consumers}. Cover data mesh framework, domain ownership and data product thinking, self-serve data infrastructure platform, federated computational governance, data product design and contract, data discovery and observability, interoperability across domain data products, data product team structure and skills, data mesh adoption sequencing, and how to implement data mesh architectures that solve the scalability and ownership problems of centralized data platforms by treating data as a product and distributing data ownership to the domain teams closest to the data, while maintaining governance and interoperability through federated standards rather than centralized control.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/agritech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, crop, region } = req.body;
+  const prompt = `You are an agricultural technology strategy and precision farming expert. Design AgriTech strategy for ${company} in ${crop} across ${region}. Cover AgriTech strategy framework, precision agriculture and sensor technology, crop monitoring and remote sensing, soil health and fertility management, irrigation and water efficiency technology, pest and disease management AI, farm management software and data platforms, supply chain traceability from farm to fork, climate adaptation and resilience in agriculture, and how to deploy agricultural technology in ways that genuinely improve farmer profitability and sustainability by solving the specific agronomic and economic challenges that farmers face in their specific crops and geographies rather than applying generic technology solutions that do not fit the practical realities of farming.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cyber-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, assets, threats } = req.body;
+  const prompt = `You are a cybersecurity strategy and information security expert. Design cybersecurity strategy for ${organization} protecting ${assets} against ${threats}. Cover cybersecurity strategy framework, risk-based security prioritization, zero trust architecture, identity and access management, data protection and encryption, endpoint and network security, cloud security posture, security operations and SOC, incident response and recovery planning, and how to develop cybersecurity strategies that protect the most critical assets against the most likely and impactful threats by making risk-informed investment decisions rather than trying to achieve perfect security everywhere, while building the detection and response capabilities that allow the organization to limit damage and recover quickly when breaches inevitably occur.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/construction-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, projects, goals } = req.body;
+  const prompt = `You are a construction technology strategy and BuildTech expert. Design construction tech strategy for ${company} on ${projects} toward ${goals}. Cover construction tech framework, BIM and digital twin for construction, project management and scheduling software, construction robotics and automation, prefabrication and modular construction, drone and site monitoring technology, safety technology and wearables, supply chain and materials management, construction analytics and reporting, and how to deploy construction technology in ways that genuinely improve project delivery by reducing delays, cost overruns, and safety incidents through better information, coordination, and automation rather than adding technological complexity that slows down the practical work of building.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/learning-design', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, audience, objectives } = req.body;
+  const prompt = `You are a learning design strategy and instructional design expert. Design learning for ${organization} with ${audience} toward ${objectives}. Cover learning design framework, adult learning principles and andragogy, needs analysis and learning objectives, instructional strategy selection, content development and multimedia design, assessment and feedback design, blended and digital learning design, learning effectiveness evaluation, learning technology selection, and how to design learning experiences that achieve genuine behavior change and skill development rather than information transfer, by starting with the performance outcomes that matter and working backward to the learning experiences and practice opportunities that build the skills and confidence needed to perform in the real work context.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/space-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, capability, market } = req.body;
+  const prompt = `You are a space technology strategy and commercial space expert. Design space tech strategy for ${company} with ${capability} in ${market}. Cover space tech strategy framework, launch and satellite technology trends, earth observation and remote sensing applications, satellite communications and connectivity, space situational awareness, in-space manufacturing and resource utilization, regulatory and spectrum management, defense and government space markets, commercial space business models, and how to develop commercial space strategies that identify genuine market opportunities created by the dramatic reduction in launch costs and miniaturization of satellite technology by focusing on applications that solve real problems for customers who will pay for the unique capabilities that space-based systems provide.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/microfinance', requireAuth, async (req: AuthRequest, res) => {
+  const { institution, clients, region } = req.body;
+  const prompt = `You are a microfinance strategy and financial inclusion expert. Design microfinance strategy for ${institution} serving ${clients} in ${region}. Cover microfinance strategy framework, product design for underserved populations, credit scoring without traditional data, digital financial services and mobile money, agricultural and seasonal lending, group lending and social collateral, client protection and responsible finance, financial literacy and education, microfinance sustainability and social mission balance, and how to design microfinance programs that genuinely expand access to financial services for underserved populations in ways that are affordable enough for clients to benefit, sustainable enough for the institution to continue operating, and responsible enough to avoid the over-indebtedness and exploitative practices that have damaged the microfinance sector reputation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/nanotechnology', requireAuth, async (req: AuthRequest, res) => {
+  const { company, application, market } = req.body;
+  const prompt = `You are a nanotechnology strategy and advanced materials expert. Design nanotechnology strategy for ${company} in ${application} for ${market}. Cover nanotechnology strategy framework, nanomaterials and synthesis methods, nano-enabled product development, intellectual property in nanotechnology, regulatory approval for nanomaterials, scale-up and manufacturing challenges, nano-enabled drug delivery and diagnostics, environmental and safety considerations for nanomaterials, commercialization pathway and timeline, and how to commercialize nanotechnology innovations by navigating the long development timelines, regulatory uncertainty, and manufacturing scale-up challenges that are common in nanotechnology, while building the IP portfolio and customer relationships needed to capture the value created when nano-enabled products eventually reach market at scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/automotive', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, transition } = req.body;
+  const prompt = `You are an automotive strategy and mobility transformation expert. Design automotive strategy for ${company} in ${segment} through ${transition}. Cover automotive strategy framework, electrification strategy and EV transition, software-defined vehicle architecture, autonomous driving capability development, mobility services and fleet business models, supply chain for electrification and chips, OEM and supplier relationship transformation, connected vehicle and data monetization, regulatory and policy landscape for EVs, and how to navigate the automotive industry transformation from internal combustion to electric and software-defined vehicles by making the technology investments, capability acquisitions, and business model adaptations needed to compete in both the current ICE business and the emerging EV and software business while managing the financial and operational complexity of running both simultaneously.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
