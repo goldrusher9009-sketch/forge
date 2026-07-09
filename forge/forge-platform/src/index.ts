@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v699.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v700.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -206177,6 +206177,66 @@ app.post('/api/strategy/experience-design', requireAuth, async (req: AuthRequest
 app.post('/api/strategy/public-health', requireAuth, async (req: AuthRequest, res) => {
   const { agency, population, issue } = req.body;
   const prompt = `You are a public health strategy and population health management expert. Design public health strategy for ${agency} serving ${population} addressing ${issue}. Cover public health strategy framework, epidemiological analysis and burden of disease, social determinants of health and equity, health behavior theory and intervention design, primary prevention and health promotion, surveillance and early warning systems, community engagement and co-design, cross-sector partnerships for health, health communication and risk communication, and how to develop public health strategies that produce genuine population health improvement by addressing the underlying social, economic, and environmental factors that drive health outcomes alongside the behavioral interventions that help individuals make healthier choices, and by building the community trust and engagement that makes public health interventions work when they require community behavior change rather than just individual clinical care.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/legal-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, volume, budget } = req.body;
+  const prompt = `You are a legal operations strategy and law department management expert. Design legal ops for ${company} with ${volume} legal work on ${budget}. Cover legal operations framework, legal spend management and outside counsel governance, matter management and workflow automation, contract lifecycle management, legal technology stack selection, legal project management, legal metrics and KPIs, insourcing versus outsourcing decisions, vendor panel management, and how to build legal operations functions that deliver more legal value at lower cost by systematically managing outside counsel spend through rigorous billing guidelines and invoice review, deploying legal technology that automates routine work so lawyers focus on high-value judgment-intensive matters, and measuring legal performance with the metrics that demonstrate business value rather than just cost control.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/venture-studio', requireAuth, async (req: AuthRequest, res) => {
+  const { studio, focus, model } = req.body;
+  const prompt = `You are a venture studio strategy and company creation expert. Design venture studio for ${studio} focusing on ${focus} with ${model}. Cover venture studio framework, thesis development and opportunity identification, founder recruitment and co-founder matching, idea validation and product development, shared services and studio leverage, studio economics and fund structure, portfolio management and follow-on, studio-to-fund transition, talent network development, and how to build venture studios that create companies more efficiently than traditional venture funding by combining the operational expertise to validate ideas quickly, the talent network to recruit the right founding teams, and the shared infrastructure that reduces the time and cost of getting new companies to product-market fit while maintaining the ownership that makes the studio model economically viable.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/carbon-credits', requireAuth, async (req: AuthRequest, res) => {
+  const { company, emissions, goals } = req.body;
+  const prompt = `You are a carbon credit strategy and voluntary carbon market expert. Design carbon credit strategy for ${company} with ${emissions} targeting ${goals}. Cover carbon credit strategy framework, emissions measurement and reporting, carbon offset project types and quality assessment, registry and standard selection, credit procurement and portfolio management, additionality and permanence verification, corporate carbon accounting, nature-based versus technology solutions, carbon credit market dynamics, and how to build carbon credit strategies that credibly support corporate climate commitments by prioritizing genuine emissions reductions first, selecting high-quality credits that meet rigorous additionality and permanence standards for unavoidable residual emissions, and engaging transparently with stakeholders about what the carbon credits represent rather than using them to make misleading net-zero claims.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/labor-relations', requireAuth, async (req: AuthRequest, res) => {
+  const { company, workforce, issue } = req.body;
+  const prompt = `You are a labor relations strategy and collective bargaining expert. Design labor relations strategy for ${company} with ${workforce} on ${issue}. Cover labor relations framework, union organizing and recognition, collective bargaining preparation and strategy, contract negotiation and agreement structure, grievance procedures and arbitration, labor-management cooperation, work rules and productivity, strike and lockout contingency, NLRA compliance, and how to build labor relations strategies that create productive relationships between management and workforce by engaging employees and their representatives with genuine respect for worker interests, negotiating agreements that provide fair compensation and working conditions while preserving the operational flexibility the business needs, and resolving disputes through the processes that maintain trust rather than adversarial litigation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/security/infrastructure', requireAuth, async (req: AuthRequest, res) => {
+  const { company, systems, threats } = req.body;
+  const prompt = `You are an infrastructure security strategy and network defense expert. Design infrastructure security for ${company} protecting ${systems} against ${threats}. Cover infrastructure security framework, network segmentation and zero trust architecture, identity and access management for infrastructure, patch management and vulnerability remediation, infrastructure configuration hardening, intrusion detection and network monitoring, privileged access management, disaster recovery and backup security, cloud infrastructure security, and how to build infrastructure security programs that protect critical systems against sophisticated attackers by implementing defense-in-depth across network, identity, endpoint, and application layers, continuously monitoring for indicators of compromise that signal attackers who have already bypassed perimeter controls, and testing security controls regularly through red team exercises that reveal gaps before adversaries do.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/growth-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, stage } = req.body;
+  const prompt = `You are a growth marketing strategy and user acquisition expert. Design growth marketing for ${company} with ${product} at ${stage}. Cover growth marketing framework, acquisition channel mix and paid versus organic balance, conversion rate optimization and funnel improvement, referral and viral growth mechanics, content and SEO as growth engine, lifecycle marketing and retention, product-led growth and activation, attribution and marketing analytics, experiment design and velocity, and how to build growth marketing programs that acquire customers efficiently by identifying the channels where the target customer actually makes decisions and is open to discovery, investing in the conversion experience that turns interest into activation, and building the referral and retention mechanics that make each acquired customer generate additional customers rather than churning immediately.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are a pricing strategy and monetization design expert. Design pricing strategy for ${company} with ${product} in ${market}. Cover pricing strategy framework, value-based versus cost-plus pricing, price segmentation and versioning, packaging and bundling design, pricing psychology and anchoring, price testing and optimization, competitive pricing response, pricing governance and discount management, price increase strategy, and how to build pricing strategies that capture value proportional to the outcomes the product delivers by deeply understanding the economic value customers receive, designing pricing structures that align price with value consumption rather than arbitrary metrics, and building the organizational capabilities to test and optimize pricing continuously rather than setting prices once and hoping they remain optimal as the market evolves.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-integration', requireAuth, async (req: AuthRequest, res) => {
+  const { company, sources, destination } = req.body;
+  const prompt = `You are a data integration strategy and ETL architecture expert. Design data integration for ${company} from ${sources} to ${destination}. Cover data integration framework, ETL versus ELT architecture decisions, real-time streaming versus batch processing, data pipeline design and orchestration, schema management and data modeling, data quality monitoring and validation, API integration and event-driven architecture, master data management, metadata management, and how to build data integration systems that reliably move data between systems at the quality and latency the business requires by designing pipelines that handle the inevitable messiness of real-world data sources, implementing the monitoring that detects data quality issues before they propagate into business decisions, and building the schema management practices that allow data models to evolve without breaking downstream consumers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/learning-dev', requireAuth, async (req: AuthRequest, res) => {
+  const { company, workforce, goals } = req.body;
+  const prompt = `You are a learning and development strategy and organizational capability expert. Design learning strategy for ${company} with ${workforce} targeting ${goals}. Cover learning strategy framework, skills gap analysis and capability assessment, learning experience design and modality selection, leadership development and succession planning, onboarding and time-to-productivity, manager effectiveness programs, technical skill development, learning measurement and ROI, external learning partnerships, and how to build learning and development programs that actually improve performance by designing learning experiences that address specific skill gaps tied to business outcomes rather than general programs that feel good but do not change behavior, measuring whether learning transfers to on-the-job performance rather than just satisfaction scores, and creating the coaching and reinforcement environment that makes formal learning stick.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cofounder-fit', requireAuth, async (req: AuthRequest, res) => {
+  const { founder, role, stage } = req.body;
+  const prompt = `You are a co-founder relationship strategy and founding team design expert. Design co-founder approach for ${founder} seeking ${role} at ${stage}. Cover co-founder fit framework, complementary skill mapping and gap analysis, values and mission alignment assessment, communication style and conflict resolution, equity split and vesting structure, role clarity and decision rights, co-founder agreement design, red flag identification, trial project and evaluation period, and how to build founding team relationships that survive the inevitable stress of building a company by selecting co-founders based on complementary capabilities and values alignment rather than convenience or existing friendship, structuring the relationship with explicit agreements about decision rights and equity that prevent disputes from becoming existential, and investing in the communication and conflict resolution practices that keep the founding team functional when the company faces its most difficult moments.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
