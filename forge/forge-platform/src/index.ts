@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v681.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v682.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205097,6 +205097,66 @@ app.post('/api/strategy/market-research', requireAuth, async (req: AuthRequest, 
 app.post('/api/strategy/enterprise-architecture', requireAuth, async (req: AuthRequest, res) => {
   const { organization, strategy, current } = req.body;
   const prompt = `You are an enterprise architecture strategy and technology landscape expert. Design enterprise architecture for ${organization} aligned to ${strategy} from ${current}. Cover enterprise architecture framework, business and application and data and technology architecture layers, architecture principles and decision governance, current state assessment and gap analysis, target state architecture design, architecture roadmap and transition planning, architecture patterns and reference models, architecture governance and compliance, and how to develop enterprise architectures that translate business strategy into technology landscape decisions in a way that reduces complexity and cost over time by standardizing where standardization adds value, integrating systems where integration enables business capabilities, and retiring technical debt that constrains the organization agility.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/innovation-mgmt', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, domain, model } = req.body;
+  const prompt = `You are an innovation management strategy and systematic innovation expert. Design innovation management for ${organization} in ${domain} via ${model}. Cover innovation management framework, innovation strategy and portfolio, idea generation and open innovation, stage-gate and agile innovation process, innovation governance and funding, innovation culture and psychological safety, design thinking and human-centered innovation, technology scouting and horizon scanning, innovation metrics and learning, and how to build innovation management capabilities that generate a consistent pipeline of innovations across the incremental to radical spectrum by creating the organizational conditions, processes, and incentives that encourage people to identify opportunities, experiment quickly, and scale what works rather than optimizing entirely for the core business.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/loyalty-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, customers, program } = req.body;
+  const prompt = `You are a loyalty strategy and customer retention expert. Design loyalty strategy for ${company} with ${customers} via ${program}. Cover loyalty strategy framework, loyalty program design and economics, points and rewards architecture, tier and status system design, emotional vs rational loyalty drivers, loyalty personalization and segmentation, coalition and partner loyalty programs, loyalty program technology, loyalty measurement and lifetime value, and how to design loyalty programs that build genuine behavioral and emotional loyalty by rewarding the behaviors that are most valuable to the business and delivering rewards and experiences that customers actually value, rather than creating complex programs that generate breakage revenue but do little to change customer behavior or deepen the relationship.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/strategic-partnerships', requireAuth, async (req: AuthRequest, res) => {
+  const { company, partner, objectives } = req.body;
+  const prompt = `You are a strategic partnerships strategy and business development expert. Design strategic partnerships for ${company} with ${partner} toward ${objectives}. Cover strategic partnerships framework, partner identification and qualification, partnership value proposition and business case, deal structure and commercial terms, partnership governance and operating model, co-marketing and co-selling arrangements, integration and technical partnerships, joint product development, partnership performance management, and how to structure strategic partnerships that deliver the market access, technology capabilities, or customer relationships that neither partner could develop independently as quickly or cost-effectively, while creating sufficient mutual value that both partners are genuinely motivated to invest in making the partnership successful.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/tech-ethics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, technology, impacts } = req.body;
+  const prompt = `You are a technology ethics strategy and responsible technology expert. Design tech ethics for ${company} with ${technology} considering ${impacts}. Cover tech ethics framework, ethical impact assessment methodology, stakeholder rights and interests in technology, privacy and surveillance ethics, automation and labor impact, accessibility and digital inclusion, environmental impact of technology, technology power and monopoly concerns, ethics board and governance structure, and how to build technology ethics capabilities that help organizations identify and address the ethical dimensions of their technology decisions before products are built and deployed, rather than responding to ethical failures after they have already caused harm and generated regulatory and reputational consequences.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/service-innovation', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, service, customers } = req.body;
+  const prompt = `You are a service innovation strategy and service design expert. Design service innovation for ${organization} in ${service} for ${customers}. Cover service innovation framework, service blueprinting and process design, front and back stage service design, service recovery and failure design, digital and human service integration, self-service and automation strategy, service personalization and customization, service packaging and bundling, employee experience as service driver, and how to design service innovations that create genuinely differentiated customer experiences by addressing the specific moments and interactions that matter most to customers and eliminating the friction and failures that make existing services frustrating, while building the operational capabilities needed to deliver the improved service consistently at scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/debt-vs-equity', requireAuth, async (req: AuthRequest, res) => {
+  const { company, amount, purpose } = req.body;
+  const prompt = `You are a capital structure strategy and financing decision expert. Analyze debt vs equity for ${company} raising ${amount} for ${purpose}. Cover capital structure theory, optimal capital structure analysis, debt capacity and coverage ratio assessment, cost of debt and tax shield, cost of equity and required return, financing alternatives comparison, impact on control and governance, flexibility and covenant considerations, market timing and windows, and how to make financing decisions that optimize the cost of capital while maintaining the financial flexibility needed to pursue strategic opportunities and manage through economic downturns without the financial distress that comes from over-leverage or the dilution and loss of control that comes from unnecessary equity issuance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/crisis-communication', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, crisis, stakeholders } = req.body;
+  const prompt = `You are a crisis communication strategy and reputation management expert. Design crisis communication for ${organization} managing ${crisis} with ${stakeholders}. Cover crisis communication framework, crisis assessment and severity classification, immediate response and holding statements, stakeholder identification and prioritization, media strategy and spokesperson management, social media crisis management, internal communication during crisis, third-party and endorser management, post-crisis reputation rebuilding, and how to manage organizational crises in a way that protects reputation by communicating transparently and quickly with the stakeholders who matter most, taking genuine responsibility where appropriate, and demonstrating through actions rather than words that the organization is addressing the underlying issues that caused the crisis.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/workplace-wellness', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, workforce, challenges } = req.body;
+  const prompt = `You are a workplace wellness strategy and employee wellbeing expert. Design workplace wellness for ${organization} with ${workforce} addressing ${challenges}. Cover workplace wellness framework, mental health and psychological safety, physical health and ergonomics, financial wellness programs, social connection and belonging, work-life integration and flexibility, manager training for wellbeing, measurement and ROI of wellness, digital wellness tools and apps, and how to design workplace wellness programs that improve genuine employee wellbeing rather than just offering benefits that look good in recruiting but do little to address the work-related stressors and organizational factors that most significantly affect employee health and engagement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/geopolitical-risk', requireAuth, async (req: AuthRequest, res) => {
+  const { company, regions, exposure } = req.body;
+  const prompt = `You are a geopolitical risk strategy and global political economy expert. Design geopolitical risk management for ${company} in ${regions} with ${exposure}. Cover geopolitical risk framework, political risk assessment and country analysis, supply chain geopolitical vulnerability, trade policy and tariff risk, sanctions and compliance risk, regulatory and expropriation risk, social and political instability, geopolitical scenario planning, risk mitigation and diversification strategies, and how to manage geopolitical risks in a way that allows the organization to pursue global opportunities while maintaining the supply chain resilience, regulatory compliance, and stakeholder trust that determines whether the organization can continue operating effectively when the geopolitical environment in key markets deteriorates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/brand-portrayal', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, media, context } = req.body;
+  const prompt = `You are a brand portrayal strategy and brand representation expert. Design brand portrayal for ${brand} in ${media} across ${context}. Cover brand portrayal framework, visual identity and design standards, photographic and illustration style, spokesperson and talent selection, diversity and representation strategy, brand placement and product portrayal, editorial and creative brief standards, brand portrayal monitoring and quality control, influencer content guidelines, and how to ensure consistent and authentic brand portrayal across every piece of content and media placement by developing clear creative standards that give content creators enough direction to maintain brand consistency while enough flexibility to create genuinely compelling content that performs in each specific context and channel.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
