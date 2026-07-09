@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v707.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v708.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -206657,6 +206657,66 @@ app.post('/api/finance/capex-strategy', requireAuth, async (req: AuthRequest, re
 app.post('/api/strategy/stakeholder-management', requireAuth, async (req: AuthRequest, res) => {
   const { leader, project, stakeholders } = req.body;
   const prompt = `You are a stakeholder management strategy and influence without authority expert. Design stakeholder management for ${leader} on ${project} with ${stakeholders}. Cover stakeholder management framework, stakeholder mapping and influence assessment, communication strategy by stakeholder type, coalition building and sponsor alignment, resistance identification and management, executive engagement and escalation, update cadence and reporting design, conflict resolution and competing priorities, stakeholder commitment and co-ownership, and how to build stakeholder management approaches that achieve complex organizational change by mapping the full stakeholder landscape to understand who has formal and informal influence over the outcome, engaging key stakeholders early as collaborators rather than communicating to them as recipients after decisions are made, and building the coalition of supporters across the organization whose visible endorsement gives other stakeholders the confidence to commit to a change they might otherwise resist.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/political-risk', requireAuth, async (req: AuthRequest, res) => {
+  const { company, country, operations } = req.body;
+  const prompt = `You are a political risk strategy and geopolitical analysis expert. Design political risk assessment for ${company} in ${country} with ${operations}. Cover political risk framework, political stability and regime risk assessment, policy and regulatory change risk, expropriation and contract enforcement, currency and capital controls, social unrest and security risk, sanctions and export control compliance, supply chain geopolitical exposure, political risk insurance, and how to build political risk management capabilities that protect international business operations by maintaining current intelligence on the political environment in each operating country, structuring investments and contracts to mitigate the most likely political risk scenarios, and building the stakeholder relationships with host country government and civil society that reduce the likelihood of adverse political action against the company.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/channel', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, segments } = req.body;
+  const prompt = `You are a channel strategy and distribution management expert. Design channel strategy for ${company} selling ${product} to ${segments}. Cover channel strategy framework, direct versus indirect channel economics, reseller and distributor selection, multi-channel and omnichannel design, channel conflict management, partner enablement and incentive design, digital channel integration, key account versus channel coverage decisions, channel analytics and performance management, and how to build channel strategies that maximize market coverage and revenue by selecting the channel partners who have genuine access to the target customer segments and the capability to represent the product credibly, designing the economics and support that make partners motivated to prioritize the product over competitive alternatives, and managing channel conflict proactively when direct and indirect channels compete for the same customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ma-integration', requireAuth, async (req: AuthRequest, res) => {
+  const { company, acquisition, timeline } = req.body;
+  const prompt = `You are an M and A integration strategy and post-merger integration expert. Design integration plan for ${company} integrating ${acquisition} over ${timeline}. Cover M and A integration framework, integration management office design, Day 1 readiness and communication, workstream structure and governance, synergy capture planning and tracking, IT systems integration sequencing, organizational design and staffing decisions, culture assessment and integration, customer and supplier communication, and how to build M and A integration programs that capture the value that justified the acquisition price by moving quickly on the integration decisions that generate synergies without moving so fast on cultural integration that key talent departs rather than staying to help build the combined company, maintaining the customer relationships and operational continuity that prevent the revenue attrition that makes many acquisitions destroy rather than create value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cfo-agenda', requireAuth, async (req: AuthRequest, res) => {
+  const { cfo, company, priorities } = req.body;
+  const prompt = `You are a CFO strategic agenda and finance leadership expert. Design CFO agenda for ${cfo} at ${company} focusing on ${priorities}. Cover CFO strategic agenda framework, business partnership and commercial support, financial planning and analysis modernization, capital allocation and investment decision governance, finance talent and capability development, finance technology and automation, risk management and internal controls, treasury and liquidity management, investor relations and narrative, and how to build CFO agendas that transform finance from a backward-looking reporting function to a forward-looking business partner that helps the CEO and leadership team make better decisions by providing the financial analysis and commercial insight that improves strategy and operations, building the finance talent who understand the business well enough to challenge assumptions rather than just modeling what they are told, and freeing finance from the manual work that consumes capacity without adding analytical value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/operating-cadence', requireAuth, async (req: AuthRequest, res) => {
+  const { company, size, challenges } = req.body;
+  const prompt = `You are an operating cadence strategy and management rhythm expert. Design operating cadence for ${company} at ${size} addressing ${challenges}. Cover operating cadence framework, annual planning and goal setting, quarterly business reviews and strategy updates, monthly performance reviews and course correction, weekly team meetings and priorities, daily standups and issue resolution, board and investor reporting rhythm, cross-functional coordination forums, decision escalation and resolution process, and how to build operating cadences that keep organizations aligned and moving fast by designing the minimum set of forums and meetings that create the alignment and accountability the organization needs without creating the meeting culture that consumes all time available for actual work, structuring each meeting around decisions to be made and issues to be resolved rather than information sharing that could be done async, and creating the discipline of preparation and follow-up that makes meetings effective rather than theater.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/dtc', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, product, channel } = req.body;
+  const prompt = `You are a direct-to-consumer strategy and digital brand building expert. Design DTC strategy for ${brand} with ${product} through ${channel}. Cover DTC strategy framework, owned channel strategy and platform selection, customer acquisition economics and LTV to CAC ratio, brand building versus performance marketing balance, subscription and recurring revenue design, fulfillment and last-mile delivery experience, return and customer service excellence, first-party data and customer relationship, wholesale and retail channel integration, and how to build DTC businesses that achieve sustainable unit economics by acquiring customers at costs that the LTV supports rather than subsidizing growth with venture capital, building the brand and product quality that generates the repeat purchase rate that makes the customer economics work, and building the first-party data and direct customer relationship that provides competitive advantage as third-party data signals degrade and performance marketing costs increase.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/board-governance', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, issues } = req.body;
+  const prompt = `You are a board governance strategy and corporate governance expert. Design board governance for ${company} at ${stage} addressing ${issues}. Cover board governance framework, board composition and director recruitment, committee structure and charters, board information and reporting package, executive session and CEO evaluation, board and management relationship, activist investor response, board refreshment and succession, governance best practices and proxy advisor standards, and how to build effective board governance that provides genuine oversight and strategic counsel to management by recruiting directors with the specific expertise and independence that complements the management team, creating the information flows and board processes that allow directors to ask the hard questions before problems become crises, and managing the board-CEO relationship with the clarity about respective roles that prevents the micromanagement that undermines management effectiveness or the rubber-stamping that fails the oversight function.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-risk', requireAuth, async (req: AuthRequest, res) => {
+  const { company, ai_systems, risks } = req.body;
+  const prompt = `You are an AI risk management strategy and AI governance expert. Design AI risk management for ${company} with ${ai_systems} addressing ${risks}. Cover AI risk management framework, AI risk taxonomy and classification, model risk management and validation, algorithmic fairness and bias testing, AI system monitoring and drift detection, explainability and auditability requirements, AI incident response, vendor and third-party AI risk, regulatory compliance for AI, and how to build AI risk management programs that allow organizations to deploy AI at scale with acceptable risk by establishing the risk-based governance that applies rigorous oversight to high-stakes AI decisions while allowing low-risk AI applications to move quickly, building the technical infrastructure for model validation and monitoring that catches AI system failures before they cause significant harm, and maintaining the human oversight and escalation paths that remain essential even as AI systems handle more decisions autonomously.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/chief-of-staff', requireAuth, async (req: AuthRequest, res) => {
+  const { executive, org, priorities } = req.body;
+  const prompt = `You are a chief of staff strategy and executive effectiveness expert. Design chief of staff role for ${executive} in ${org} on ${priorities}. Cover chief of staff framework, executive time and priority management, meeting and decision preparation, cross-functional project leadership, organizational communication and cascading, strategic initiative tracking, external relationship management, chief of staff leverage and scope, and how to design chief of staff roles that multiply executive effectiveness by taking on the operational coordination and communication work that consumes executive time without requiring executive judgment, preparing the analysis and context that enables executives to make better decisions faster, and managing the internal and external relationships that require attention below the executive agenda threshold but matter for organizational effectiveness.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/supply-chain-risk', requireAuth, async (req: AuthRequest, res) => {
+  const { company, supply_chain, disruptions } = req.body;
+  const prompt = `You are a supply chain risk management strategy and resilience expert. Design supply chain risk management for ${company} with ${supply_chain} against ${disruptions}. Cover supply chain risk framework, risk mapping and supplier dependency analysis, single source and geographic concentration risk, inventory and safety stock strategy, supplier financial and operational health monitoring, alternative sourcing and dual sourcing, demand sensing and supply flexibility, near-shoring and reshoring decisions, business continuity planning, and how to build supply chain resilience that protects business continuity against the disruptions that have become more frequent and severe by mapping the full supplier network to identify the concentrations and dependencies that create vulnerability, diversifying supply across geographies and suppliers in ways that do not eliminate the cost benefits that drove the original supply chain design, and building the inventory and flexibility buffers that absorb disruption impact while the underlying supply chain returns to normal.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
