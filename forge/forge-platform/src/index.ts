@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v547.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v548.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -197057,6 +197057,66 @@ app.post('/api/ops/vendor-selection', requireAuth, async (req: AuthRequest, res)
 app.post('/api/product/cab', requireAuth, async (req: AuthRequest, res) => {
   const { company, stage, goals } = req.body;
   const prompt = `You are a customer advisory board expert. Design a Customer Advisory Board program for ${company} at ${stage} stage with goals: ${goals}. Cover member selection criteria, meeting cadence and format, engagement mechanisms, feedback integration process, compensation/recognition, and how to make CAB members feel valued while extracting maximum strategic insight.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/eng/microservices', requireAuth, async (req: AuthRequest, res) => {
+  const { domain, teamStructure, scalingNeeds } = req.body;
+  const prompt = `You are a distributed systems architect. Design a microservices architecture for ${domain} with team structure: ${teamStructure} and scaling needs: ${scalingNeeds}. Define service boundaries using DDD, API contracts, event-driven patterns, data ownership, saga patterns for transactions, and operational concerns.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brand/identity', requireAuth, async (req: AuthRequest, res) => {
+  const { company, personality, competitors } = req.body;
+  const prompt = `You are a brand identity expert. Create a brand identity brief for ${company} with personality: ${personality} differentiating from competitors: ${competitors}. Cover brand archetype, visual identity direction, color psychology, typography rationale, logo concepts, and brand standards for consistency across touchpoints.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/cdp', requireAuth, async (req: AuthRequest, res) => {
+  const { business, dataGoals, currentStack } = req.body;
+  const prompt = `You are a customer data strategy expert. Design a CDP strategy for ${business} with data goals: ${dataGoals} and current stack: ${currentStack}. Cover unified profile architecture, identity resolution, segmentation models, activation channels, consent management, and ROI measurement framework.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/operating-model', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, teamSize } = req.body;
+  const prompt = `You are a startup operations expert. Design an operating model for ${company} at ${stage} stage with ${teamSize} people. Cover OKR cadence, decision-making frameworks, communication rhythms, cross-functional collaboration, tools and systems, and how to preserve speed as the company scales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/influencer', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, targetAudience, budget } = req.body;
+  const prompt = `You are an influencer marketing expert. Design an influencer partner program for ${brand} reaching ${targetAudience} with ${budget} budget. Cover influencer tiers and selection criteria, compensation models, content brief templates, FTC compliance, performance tracking, and long-term partnership vs one-off campaign strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/okr-workshop', requireAuth, async (req: AuthRequest, res) => {
+  const { company, annualGoal, teams } = req.body;
+  const prompt = `You are an OKR coach. Facilitate an OKR design process for ${company} pursuing annual goal: ${annualGoal} with teams: ${teams}. Draft company-level Objectives and Key Results, cascade to team OKRs, design check-in cadence, grading rubric, and common OKR mistakes to avoid for your specific context.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/eng/devsecops', requireAuth, async (req: AuthRequest, res) => {
+  const { tech, compliance, teamSize } = req.body;
+  const prompt = `You are a DevSecOps expert. Create a DevSecOps implementation plan for ${tech} stack with ${compliance} compliance requirements and ${teamSize} engineering team. Cover SAST/DAST integration, secrets management, dependency scanning, container security, IaC security, and shift-left security culture change management.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/plg', requireAuth, async (req: AuthRequest, res) => {
+  const { product, freeToPayConversion, aha } = req.body;
+  const prompt = `You are a PLG strategy expert. Build a product-led growth engine for ${product} improving ${freeToPayConversion} free-to-paid conversion with aha moment: ${aha}. Design activation funnel, in-product growth loops, viral mechanisms, freemium limits, expansion triggers, and sales-assist motion for enterprise.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/exec/board-onboarding', requireAuth, async (req: AuthRequest, res) => {
+  const { company, directorBackground, priorities } = req.body;
+  const prompt = `You are a corporate governance expert. Design a board director onboarding program for ${company} welcoming a director with background: ${directorBackground} focused on priorities: ${priorities}. Cover company deep-dive sessions, key stakeholder introductions, governance documents review, first 90-day engagement plan, and committee responsibilities.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/eng/doc-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, devAudience, currentState } = req.body;
+  const prompt = `You are a developer documentation expert. Build a technical documentation strategy for ${product} targeting ${devAudience} developers with current state: ${currentState}. Cover docs architecture, content types (tutorials/how-tos/reference/explanations), tooling selection, contribution model, versioning, and doc quality metrics.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
