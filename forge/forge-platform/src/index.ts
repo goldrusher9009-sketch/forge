@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v647.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v648.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203057,6 +203057,66 @@ app.post('/api/strategy/tech-moat', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/strategy/pitch-deck', requireAuth, async (req: AuthRequest, res) => {
   const { company, stage, investors } = req.body;
   const prompt = `You are a startup pitch deck and investor storytelling expert. Build the pitch deck for ${company} at ${stage} for ${investors}. Cover the pitch deck framework, the problem and opportunity framing, the solution and product story, the market size and opportunity, the business model and unit economics, the traction and validation, the team and credentials, the competitive positioning, the financial projections and ask, and how to build pitch decks that tell a compelling investment story that helps investors quickly understand why your opportunity is large, why your solution is differentiated, why your team is uniquely positioned to win, and why now is the right time to invest, that present traction and unit economics in ways that build confidence in your ability to scale efficiently, and that anticipate and preemptively address the most common investor objections so that questions lead to deeper engagement rather than raising doubts that kill the deal.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/customer-success', requireAuth, async (req: AuthRequest, res) => {
+  const { company, customers, goals } = req.body;
+  const prompt = `You are a customer success strategy and implementation expert. Design the customer success program for ${company} with ${customers} toward ${goals}. Cover the customer success framework, the customer onboarding design, the health scoring and segmentation, the success plan methodology, the proactive outreach and cadence, the QBR and executive engagement, the expansion and upsell strategy, the at-risk customer intervention, the CS team structure and hiring, and how to build customer success programs that maximize customer lifetime value by ensuring customers achieve their desired outcomes with your product, that shift CS from reactive account management to proactive value delivery, and that create the customer relationships and advocacy that turn your best customers into references, case studies, and referral sources that reduce your cost of acquiring new customers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/beta-launch', requireAuth, async (req: AuthRequest, res) => {
+  const { product, testers, goals } = req.body;
+  const prompt = `You are a beta launch strategy and early adopter program expert. Design the beta launch for ${product} with ${testers} toward ${goals}. Cover the beta launch framework, the beta participant selection and recruitment, the beta program structure and timeline, the feedback collection methodology, the beta product readiness criteria, the beta community management, the beta-to-GA transition strategy, the beta case study development, the beta launch communications, and how to design beta programs that generate the genuine product feedback that leads to significant improvements before GA launch, that recruit the right early adopters who are motivated to provide deep feedback rather than just want early access to the product, and that use the beta cohort to develop the reference customers, testimonials, and usage data that make the GA launch credible and compelling to mainstream buyers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/consulting-business', requireAuth, async (req: AuthRequest, res) => {
+  const { consultant, niche, model } = req.body;
+  const prompt = `You are a consulting business strategy and practice development expert. Build the consulting business for ${consultant} specializing in ${niche} using ${model}. Cover the consulting business framework, the niche and positioning strategy, the service offering design, the consulting methodology and IP, the pricing and project economics, the business development and pipeline, the proposal and win strategy, the delivery excellence, the thought leadership and marketing, and how to build consulting businesses that attract premium clients willing to pay for genuine expertise rather than commodity services, that develop the proprietary methodologies and frameworks that make your approach distinctive and harder to compare to generic competition on price, and that build the business development systems that create a consistent flow of qualified opportunities without requiring the founder to spend all their time selling rather than delivering excellent client work.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/sales-process', requireAuth, async (req: AuthRequest, res) => {
+  const { company, motion, stage } = req.body;
+  const prompt = `You are a sales process design and optimization expert. Design the sales process for ${company} using ${motion} at ${stage}. Cover the sales process framework, the pipeline stage definition and exit criteria, the sales methodology selection, the discovery process design, the demo and evaluation process, the proposal and business case process, the negotiation and close process, the handoff and implementation process, the sales process analytics and optimization, and how to design sales processes that give salespeople a repeatable, evidence-based playbook for converting prospects into customers, that are documented well enough to onboard new salespeople quickly and maintain consistency as the team scales, and that are continuously improved based on win/loss analysis and conversion data to address the specific stages where deals are most commonly lost.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/human-resources/dei-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, gaps, goals } = req.body;
+  const prompt = `You are a diversity, equity, and inclusion strategy expert. Design the DEI strategy for ${organization} addressing ${gaps} toward ${goals}. Cover the DEI strategy framework, the DEI data collection and analysis, the representation and pipeline goals, the inclusive hiring and promotion practices, the pay equity analysis and remediation, the inclusive culture design, the ERG and community strategy, the manager training and accountability, the DEI measurement and reporting, and how to design DEI strategies that move beyond performative commitments to systemic changes in how the organization attracts, develops, and retains diverse talent, that address the root causes of representation gaps rather than just treating symptoms, and that create genuinely inclusive cultures where people from all backgrounds can contribute fully and advance based on their capabilities rather than their identity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/hardware', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are a hardware product strategy and manufacturing expert. Design the hardware strategy for ${company} with ${product} in ${market}. Cover the hardware strategy framework, the hardware product roadmap, the industrial design and UX, the hardware supply chain design, the contract manufacturing strategy, the hardware BOM and cost management, the hardware certification and compliance, the hardware business model and recurring revenue, the hardware go-to-market strategy, and how to design hardware product strategies that navigate the uniquely capital-intensive and long-cycle nature of hardware development, that build the supply chain and manufacturing relationships that allow you to scale production without quality degradation, and that develop the software and services revenue that creates the recurring revenue and margins that make hardware businesses financially attractive rather than dependent on hardware margin alone.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/roi-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { investment, costs, benefits } = req.body;
+  const prompt = `You are an ROI analysis and investment justification expert. Analyze the ROI for ${investment} with ${costs} against ${benefits}. Cover the ROI analysis framework, the cost identification and quantification, the benefit identification and quantification, the hard vs. soft benefit analysis, the time value of money and NPV, the payback period calculation, the sensitivity and scenario analysis, the risk-adjusted ROI, the ROI communication to stakeholders, and how to build ROI analyses that accurately represent the true costs and benefits of investments rather than cherry-picking favorable assumptions, that appropriately discount future benefits for the time value of money and execution risk, and that present ROI in formats that enable decision-makers to understand the key drivers and make informed decisions about whether the investment is justified given their alternatives and the assumptions required.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/human-resources/skills-gap', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, strategy, timeframe } = req.body;
+  const prompt = `You are a skills gap analysis and workforce capability expert. Analyze the skills gap for ${organization} executing ${strategy} over ${timeframe}. Cover the skills gap framework, the future capability requirements mapping, the current capability assessment, the gap quantification by role and function, the critical skill prioritization, the build vs. buy vs. borrow analysis, the reskilling and upskilling investment, the talent acquisition to fill gaps, the skills gap monitoring and tracking, and how to design skills gap analyses that give organizations accurate visibility into the capability gaps that could prevent them from executing their strategy, that prioritize the gaps by business criticality so that learning and development investment goes to the skills that matter most, and that translate gap analysis into concrete workforce plans that close gaps through the right combination of training, hiring, and restructuring.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/agency-model', requireAuth, async (req: AuthRequest, res) => {
+  const { agency, services, clients } = req.body;
+  const prompt = `You are an agency business model and service firm strategy expert. Design the agency model for ${agency} offering ${services} to ${clients}. Cover the agency model framework, the service offering and positioning, the client acquisition and sales process, the pricing and profitability model, the talent model and utilization, the account management and retention, the productization and scalable service design, the agency technology and efficiency, the agency growth and expansion strategy, and how to design agency business models that are sustainably profitable rather than dependent on founder heroics and overworked staff, that develop the processes and technology that allow junior talent to deliver work at senior quality, and that build the client relationships and recurring revenue arrangements that reduce the feast-or-famine revenue volatility that makes agency businesses difficult to plan and staff effectively.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/obstacle-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { goal, obstacles, resources } = req.body;
+  const prompt = `You are a strategic obstacle analysis and problem-solving expert. Analyze the obstacles for ${goal} facing ${obstacles} with ${resources}. Cover the obstacle analysis framework, the obstacle identification and mapping, the constraint analysis methodology, the root cause analysis, the obstacle prioritization by impact, the resource constraint analysis, the option generation for each obstacle, the implementation planning, the monitoring and adaptation strategy, and how to conduct obstacle analyses that distinguish between genuine constraints that require creative solutions and self-imposed limitations that can be removed with the right mindset and decision-making, that identify the critical path obstacles whose removal would create the most momentum toward the goal, and that generate a practical action plan that allocates available resources to the highest-leverage obstacle removal activities rather than spreading effort evenly across all obstacles regardless of their relative importance.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
