@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v668.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v669.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204317,6 +204317,66 @@ app.post('/api/hr/rewards-strategy', requireAuth, async (req: AuthRequest, res) 
 app.post('/api/strategy/corporate-dev', requireAuth, async (req: AuthRequest, res) => {
   const { company, objective, budget } = req.body;
   const prompt = `You are a corporate development strategy and deal execution expert. Design corporate development for ${company} pursuing ${objective} with ${budget}. Cover corporate development framework, strategic rationale and acquisition criteria, deal sourcing and pipeline management, valuation and deal structuring, diligence process and risk assessment, negotiation strategy and deal terms, integration planning and governance, partnership and JV alternatives, portfolio review and divestiture, and how to build corporate development capabilities that consistently execute transactions that deliver strategic value rather than destroying value through overpayment or failed integration.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/strategic-fit', requireAuth, async (req: AuthRequest, res) => {
+  const { company, opportunity, criteria } = req.body;
+  const prompt = `You are a strategic fit analysis and opportunity evaluation expert. Assess strategic fit for ${company} evaluating ${opportunity} against ${criteria}. Cover strategic fit framework, market attractiveness assessment, competitive position evaluation, capability and resource fit analysis, financial attractiveness and returns, risk and uncertainty assessment, strategic options comparison, portfolio fit and synergies, go or no-go decision framework, and how to make rigorous strategic decisions about which opportunities to pursue by systematically evaluating fit against the criteria that matter most rather than being driven by enthusiasm or competitive fear.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/b2b-brand', requireAuth, async (req: AuthRequest, res) => {
+  const { company, buyers, competitors } = req.body;
+  const prompt = `You are a B2B brand strategy and enterprise brand building expert. Design B2B brand for ${company} targeting ${buyers} versus ${competitors}. Cover B2B brand strategy framework, B2B buying process and committee, thought leadership and credibility building, account-based brand experience, category and industry positioning, B2B brand storytelling and content, sales and brand alignment, analyst and press relations strategy, B2B brand measurement, and how to build B2B brands that earn the trust and preference of professional buyers by demonstrating deep expertise and genuine customer focus rather than brand attributes that work for consumer brands but fall flat with sophisticated business buyers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/healthcare', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, market, model } = req.body;
+  const prompt = `You are a healthcare strategy and health system transformation expert. Design healthcare strategy for ${organization} in ${market} with ${model}. Cover healthcare strategy framework, healthcare market landscape and value-based care, patient experience and access strategy, clinical program development, payor strategy and contracting, healthcare workforce and talent, digital health and telehealth integration, regulatory and compliance landscape, healthcare financial sustainability, and how to develop healthcare strategies that improve patient outcomes and experience while achieving the financial sustainability needed to continue investing in care quality and access.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/education', requireAuth, async (req: AuthRequest, res) => {
+  const { institution, market, goals } = req.body;
+  const prompt = `You are an education strategy and institutional transformation expert. Design education strategy for ${institution} in ${market} toward ${goals}. Cover education strategy framework, student value proposition and outcomes, program portfolio design, online and hybrid learning strategy, employer partnerships and employability, research and innovation strategy, financial model and revenue diversification, faculty talent and development, brand and enrollment strategy, and how to develop education strategies that prepare institutions to thrive in an environment of changing student expectations and demographics and funding models while maintaining the quality and mission that distinguishes great educational institutions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/retail', requireAuth, async (req: AuthRequest, res) => {
+  const { retailer, format, customers } = req.body;
+  const prompt = `You are a retail strategy and omnichannel commerce expert. Design retail strategy for ${retailer} with ${format} serving ${customers}. Cover retail strategy framework, retail value proposition and positioning, store network and location strategy, omnichannel and digital integration, merchandising and category management, private label and exclusive products, retail media and monetization, store operations and labor model, supply chain and inventory management, and how to develop retail strategies that create competitive advantage in an environment where digital alternatives are always available by offering genuine value in physical retail experiences that customers choose rather than settle for.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/insurance', requireAuth, async (req: AuthRequest, res) => {
+  const { insurer, lines, market } = req.body;
+  const prompt = `You are an insurance strategy and underwriting excellence expert. Design insurance strategy for ${insurer} with ${lines} in ${market}. Cover insurance strategy framework, underwriting profitability and combined ratio management, product design and pricing adequacy, distribution channel strategy, claims management excellence, reinsurance and capital management, digital and insurtech integration, regulatory capital and compliance, customer retention and cross-sell, and how to develop insurance strategies that build sustainable profitability by achieving underwriting discipline and operational excellence while innovating in the customer experience to reduce the friction that characterizes most insurance interactions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/mobility', requireAuth, async (req: AuthRequest, res) => {
+  const { company, mode, market } = req.body;
+  const prompt = `You are a mobility strategy and transportation innovation expert. Design mobility strategy for ${company} offering ${mode} in ${market}. Cover mobility strategy framework, urban mobility landscape and trends, multimodal integration and MaaS, fleet electrification and sustainability, autonomous vehicle readiness, regulatory and permits navigation, unit economics and business model, data and digital platform strategy, partnership and ecosystem, and how to develop mobility strategies that position companies to capture value in the significant restructuring of how people and goods move in urban environments as electrification and autonomy and new business models reshape the transportation landscape.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/media-biz', requireAuth, async (req: AuthRequest, res) => {
+  const { company, model, audience } = req.body;
+  const prompt = `You are a media business strategy and content monetization expert. Design media business strategy for ${company} with ${model} serving ${audience}. Cover media business framework, subscription and advertising model economics, content strategy and investment prioritization, audience development and engagement, platform and distribution strategy, data and first-party audience strategy, brand and creator partnerships, technology and product investment, international expansion, and how to develop media business strategies that build sustainable economics in an environment of fragmenting audiences and intense competition for attention by creating content that builds genuine and loyal audiences rather than chasing traffic.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/legal-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, volume, budget } = req.body;
+  const prompt = `You are a legal operations and in-house counsel efficiency expert. Design legal operations for ${company} handling ${volume} with ${budget}. Cover legal operations framework, legal matter management, outside counsel management and billing, legal technology and automation, contract lifecycle management, legal spend analytics, alternative legal service providers, legal self-service and education, legal team structure and staffing, and how to build legal operations capabilities that allow legal teams to deliver more legal value with the same or fewer resources by eliminating waste and automating routine work and focusing lawyer time on the highest value legal matters.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/exit-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { company, timeline, goals } = req.body;
+  const prompt = `You are an exit planning strategy and transaction execution expert. Design exit planning for ${company} with ${timeline} toward ${goals}. Cover exit planning framework, exit readiness assessment, value creation levers before exit, buyer universe mapping, deal structure options, transaction preparation and data room, M and A process management, tax optimization and structure, management retention and incentives, and how to plan and execute business exits that maximize value for owners by preparing the business well in advance of the transaction to present the business at its best to the buyers most likely to pay premium value.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
