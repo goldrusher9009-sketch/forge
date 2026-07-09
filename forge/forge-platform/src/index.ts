@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v690.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v691.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205637,6 +205637,66 @@ app.post('/api/strategy/executive-coaching', requireAuth, async (req: AuthReques
 app.post('/api/strategy/green-building', requireAuth, async (req: AuthRequest, res) => {
   const { developer, project, certif } = req.body;
   const prompt = `You are a green building strategy and sustainable construction expert. Design green building for ${developer} with ${project} pursuing ${certif}. Cover green building framework, sustainability certification systems including LEED, BREEAM, and WELL, energy modeling and efficiency, water efficiency and management, materials selection and embodied carbon, indoor environmental quality and occupant health, renewable energy integration, green building cost premium and ROI, operational performance versus design performance gap, and how to develop green building projects that deliver genuine environmental and occupant benefits rather than achieving certification points through design choices that satisfy rating criteria without meaningfully improving sustainability performance, by focusing on the building systems and envelope decisions that have the highest impact on energy use and occupant experience.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/procurement-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, categories, spend } = req.body;
+  const prompt = `You are a procurement strategy and strategic sourcing expert. Design procurement strategy for ${company} across ${categories} with ${spend}. Cover procurement strategy framework, spend analysis and category management, strategic sourcing methodology, supplier market analysis and total cost of ownership, RFP design and supplier selection, contract negotiation and value capture, supplier relationship management tiers, procurement operating model and shared services, purchase-to-pay process optimization, and how to build procurement functions that deliver sustained value beyond initial sourcing savings by developing deep category expertise, building collaborative supplier relationships that unlock innovation and continuous improvement, and operating with the speed and responsiveness that internal stakeholders need to get their work done rather than creating procurement processes that prioritize compliance over the business outcomes the spend is intended to achieve.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/tech-partnerships', requireAuth, async (req: AuthRequest, res) => {
+  const { company, partners, goals } = req.body;
+  const prompt = `You are a technology partnerships strategy and alliance management expert. Design tech partnerships for ${company} with ${partners} toward ${goals}. Cover technology partnerships framework, partnership model selection across resellers, technology integrators, and co-sell, partner value proposition and business case, partner recruitment and onboarding, enablement and training for partners, co-marketing and demand generation, partner performance management, partner economics and incentive design, and how to build technology partnership programs that generate incremental revenue and market reach by creating genuine value for partners through economics, support, and product capability that makes the partnership worth investing in rather than building partner programs that look impressive but deliver little value to partners who have limited incentive to invest in selling the product.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/commercial-real-estate', requireAuth, async (req: AuthRequest, res) => {
+  const { investor, asset_class, strategy } = req.body;
+  const prompt = `You are a commercial real estate strategy and property investment expert. Design commercial real estate strategy for ${investor} in ${asset_class} using ${strategy}. Cover commercial real estate framework, market cycle analysis and timing, office, retail, industrial, and multifamily fundamentals, cap rate analysis and valuation, NOI optimization and asset management, value-add renovation and repositioning, development feasibility and proforma, debt financing and capital structure, property management and tenant relations, and how to build commercial real estate investment strategies that generate target returns by underwriting transactions with realistic assumptions about rent growth, vacancy, and capital expenditure, understanding the supply and demand dynamics specific to each submarket and asset class, and actively managing assets to maximize NOI rather than simply holding and waiting for appreciation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/product-launch', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are a product launch strategy and go-to-market execution expert. Design product launch for ${company} bringing ${product} to ${market}. Cover product launch framework, launch readiness assessment across product, marketing, sales, and support, positioning and messaging for launch, target customer and use case prioritization, pricing and packaging decisions, channel strategy and distribution, launch event and PR strategy, sales enablement and training, launch metrics and success criteria, and how to execute product launches that generate strong initial adoption and sustained growth by building genuine product-market fit before launch, activating the distribution channels that reach target customers efficiently, and investing in the customer success capabilities that convert initial customers into enthusiastic references and long-term users.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/data-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, use_cases, maturity } = req.body;
+  const prompt = `You are a data strategy and enterprise data management expert. Design data strategy for ${company} targeting ${use_cases} at ${maturity}. Cover data strategy framework, data vision and value identification, data architecture and platform selection, data governance and ownership, master data management, data quality and reliability, self-service analytics and democratization, data product thinking, AI and machine learning data readiness, and how to build data strategies that generate business value from data by prioritizing the use cases where better data and analytics most directly improves decisions and outcomes, building the governance and quality practices that make data trustworthy enough that business users actually rely on it, and investing in the data literacy and tooling that allows non-technical users to access and use data without always requiring data team support.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/stakeholder-mapping', requireAuth, async (req: AuthRequest, res) => {
+  const { project, organization, objective } = req.body;
+  const prompt = `You are a stakeholder mapping strategy and influence management expert. Design stakeholder mapping for ${project} in ${organization} pursuing ${objective}. Cover stakeholder mapping framework, stakeholder identification and categorization, influence and interest matrix, stakeholder analysis and motivation mapping, coalition building and ally identification, resistor identification and engagement, communication planning by stakeholder segment, change champion network, stakeholder monitoring and plan updates, and how to use stakeholder mapping to successfully navigate organizational change and project approval by understanding what each stakeholder actually cares about, designing engagement approaches that address their real concerns rather than pushing a message they did not ask for, and building the coalitions of support needed to move initiatives forward in organizations where formal authority rarely explains how decisions actually get made.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/revops-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, revenue_teams, bottlenecks } = req.body;
+  const prompt = `You are a revenue operations strategy and go-to-market efficiency expert. Design RevOps for ${company} aligning ${revenue_teams} and addressing ${bottlenecks}. Cover RevOps framework, revenue funnel architecture and handoff design, CRM design and data standards, marketing and sales alignment and SLA, sales and customer success handoff, revenue analytics and forecasting, territory and quota design, compensation design alignment, tech stack rationalization, and how to build revenue operations capabilities that improve go-to-market efficiency by creating clear accountability for each stage of the revenue funnel, establishing the data standards and CRM hygiene that make pipeline data reliable enough for accurate forecasting, and aligning the incentives of marketing, sales, and customer success around the shared revenue outcomes the company is trying to achieve.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/energy-management', requireAuth, async (req: AuthRequest, res) => {
+  const { facility, consumption, targets } = req.body;
+  const prompt = `You are an energy management strategy and industrial efficiency expert. Design energy management for ${facility} with ${consumption} toward ${targets}. Cover energy management framework, energy audit and baseline establishment, energy management information systems, demand management and load shifting, HVAC and lighting optimization, industrial process energy efficiency, renewable energy procurement and on-site generation, energy storage and demand response, ISO 50001 implementation, and how to build energy management programs that deliver sustained energy cost reduction and carbon emissions improvement by investing in the monitoring and analytics that reveal where energy is used and wasted, implementing the operational practices and control systems that maintain efficiency without requiring constant manual intervention, and making the capital investments in equipment and infrastructure that have the highest return on energy investment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/compliance-program', requireAuth, async (req: AuthRequest, res) => {
+  const { company, regulations, risks } = req.body;
+  const prompt = `You are a compliance program strategy and regulatory management expert. Design compliance program for ${company} under ${regulations} addressing ${risks}. Cover compliance program framework, regulatory universe mapping and requirement inventory, risk-based compliance prioritization, policies and procedures development, training and awareness programs, monitoring and testing, hotline and reporting mechanisms, investigation procedures, compliance metrics and board reporting, and how to build compliance programs that genuinely reduce regulatory risk and ethical misconduct rather than creating a compliance bureaucracy that satisfies regulators during reviews without actually changing behavior, which requires making compliance genuinely integrated into how business decisions are made rather than treating it as a separate function that reviews decisions after they have already been made.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/tokenomics', requireAuth, async (req: AuthRequest, res) => {
+  const { project, token, ecosystem } = req.body;
+  const prompt = `You are a tokenomics design strategy and web3 economics expert. Design tokenomics for ${project} with ${token} in ${ecosystem}. Cover tokenomics framework, token utility and value accrual mechanisms, token supply and emission schedule, distribution and vesting for team, investors, and community, governance and voting design, staking and yield mechanisms, treasury management and protocol revenue, token burn and deflationary mechanisms, economic attack vectors and security, and how to design tokenomics that create genuine economic sustainability for the protocol by ensuring that token demand is driven by real utility and protocol usage rather than speculative reflexivity, that token supply dynamics do not create sell pressure that undermines the ecosystem, and that incentive mechanisms reward the behaviors that actually make the protocol more valuable rather than optimizing for metrics that look good without creating underlying value.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
