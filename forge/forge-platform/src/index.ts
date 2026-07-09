@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v359.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v412.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -187003,6 +187003,109 @@ Apply the framework to every item in the backlog
     const result = await callLLM(req.user!.id, prompt, 'You are a product strategy expert specializing in prioritization and roadmap decisions.');
     res.json({ framework: result });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 245 routes
+app.post('/api/dev/dependency-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { project, concerns } = req.body;
+  const key = await getUserKey(req.user!.userId, 'anthropic');
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const msg = await client.messages.create({ model: 'claude-opus-4-5', max_tokens: 1024, messages: [{ role: 'user', content: `Build a dependency audit plan for this project:\n\nProject: ${project}\n\nConcerns: ${concerns}\n\nInclude: vulnerability scanning workflow, license compliance check, outdated package prioritization, update strategy, CI integration, and rollback plan.` }] });
+  res.json({ audit: msg.content[0].type === 'text' ? msg.content[0].text : JSON.stringify(msg.content) });
+});
+
+app.post('/api/sales/customer-advocacy', requireAuth, async (req: AuthRequest, res) => {
+  const { customer, ask } = req.body;
+  const key = await getUserKey(req.user!.userId, 'anthropic');
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const msg = await client.messages.create({ model: 'claude-opus-4-5', max_tokens: 1024, messages: [{ role: 'user', content: `Build a customer advocacy program:\n\nCustomer base: ${customer}\n\nAdvocacy needed: ${ask}\n\nInclude: advocate identification process, ask sequence, reciprocity system, program tiers, measurement framework, and scaling plan.` }] });
+  res.json({ plan: msg.content[0].type === 'text' ? msg.content[0].text : JSON.stringify(msg.content) });
+});
+
+app.post('/api/product/plg-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, current } = req.body;
+  const key = await getUserKey(req.user!.userId, 'anthropic');
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const msg = await client.messages.create({ model: 'claude-opus-4-5', max_tokens: 1024, messages: [{ role: 'user', content: `Build a product-led growth strategy:\n\nProduct: ${product}\n\nCurrent motion: ${current}\n\nInclude: free tier design, activation sequence to aha moment, viral loop mechanics, upgrade triggers, PQL definition, expansion motion, and sales assist triggers.` }] });
+  res.json({ strategy: msg.content[0].type === 'text' ? msg.content[0].text : JSON.stringify(msg.content) });
+});
+
+app.post('/api/marketing/demand-gen', requireAuth, async (req: AuthRequest, res) => {
+  const { business, pipeline } = req.body;
+  const key = await getUserKey(req.user!.userId, 'anthropic');
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const msg = await client.messages.create({ model: 'claude-opus-4-5', max_tokens: 1024, messages: [{ role: 'user', content: `Build a demand generation strategy:\n\nBusiness: ${business}\n\nPipeline goal: ${pipeline}\n\nInclude: channel mix, content strategy, ICP targeting, MQL definition, nurture sequences, attribution model, and budget allocation recommendations.` }] });
+  res.json({ strategy: msg.content[0].type === 'text' ? msg.content[0].text : JSON.stringify(msg.content) });
+});
+
+app.post('/api/hr/manager-calibration', requireAuth, async (req: AuthRequest, res) => {
+  const { team, cycle } = req.body;
+  const key = await getUserKey(req.user!.userId, 'anthropic');
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const msg = await client.messages.create({ model: 'claude-opus-4-5', max_tokens: 1024, messages: [{ role: 'user', content: `Build a performance calibration guide:\n\nTeam: ${team}\n\nCycle: ${cycle}\n\nInclude: pre-calibration prep checklist, calibration meeting agenda, comparison framework, handling inflation/deflation bias, recalibration process, documentation standards, and manager communication templates.` }] });
+  res.json({ guide: msg.content[0].type === 'text' ? msg.content[0].text : JSON.stringify(msg.content) });
+});
+
+// Wave 246 routes
+app.post('/api/dev/graphql-design', requireAuth, async (req: AuthRequest, res) => {
+  const { api, requirements } = req.body;
+  const key = await getUserKey(req.user!.userId, 'anthropic');
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const msg = await client.messages.create({ model: 'claude-opus-4-5', max_tokens: 1024, messages: [{ role: 'user', content: `Design a GraphQL API:\n\nContext: ${api}\n\nRequirements: ${requirements}\n\nInclude: schema design principles, type definitions, resolver architecture, N+1 prevention with DataLoader, auth at resolver layer, pagination approach, error handling, and tooling recommendations.` }] });
+  res.json({ design: msg.content[0].type === 'text' ? msg.content[0].text : JSON.stringify(msg.content) });
+});
+
+app.post('/api/investor/seed-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, traction } = req.body;
+  const key = await getUserKey(req.user!.userId, 'anthropic');
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const msg = await client.messages.create({ model: 'claude-opus-4-5', max_tokens: 1024, messages: [{ role: 'user', content: `Build a seed fundraising strategy:\n\nCompany: ${company}\n\nTraction: ${traction}\n\nInclude: investor targeting list criteria, pitch sequencing, learning from early meetings, FOMO creation tactics, data room contents, term sheet negotiation priorities, and common rejection reasons with rebuttals.` }] });
+  res.json({ strategy: msg.content[0].type === 'text' ? msg.content[0].text : JSON.stringify(msg.content) });
+});
+
+app.post('/api/product/technical-roadmap', requireAuth, async (req: AuthRequest, res) => {
+  const { system, goals } = req.body;
+  const key = await getUserKey(req.user!.userId, 'anthropic');
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const msg = await client.messages.create({ model: 'claude-opus-4-5', max_tokens: 1024, messages: [{ role: 'user', content: `Build a technical roadmap:\n\nSystem: ${system}\n\nBusiness goals: ${goals}\n\nInclude: debt triage matrix, platform investment ROI framing, quarterly sequencing, dependency mapping, team capacity allocation, stakeholder narrative, and success metrics for each initiative.` }] });
+  res.json({ roadmap: msg.content[0].type === 'text' ? msg.content[0].text : JSON.stringify(msg.content) });
+});
+
+app.post('/api/sales/rfp-response', requireAuth, async (req: AuthRequest, res) => {
+  const { rfp, company } = req.body;
+  const key = await getUserKey(req.user!.userId, 'anthropic');
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const msg = await client.messages.create({ model: 'claude-opus-4-5', max_tokens: 1024, messages: [{ role: 'user', content: `Build an RFP response strategy:\n\nRFP context: ${rfp}\n\nOur company: ${company}\n\nInclude: executive summary approach, differentiation angles per requirement, sections to add beyond what was asked, win themes, pricing strategy, implementation credibility builders, and reference selection criteria.` }] });
+  res.json({ response: msg.content[0].type === 'text' ? msg.content[0].text : JSON.stringify(msg.content) });
+});
+
+app.post('/api/marketing/copy-testing', requireAuth, async (req: AuthRequest, res) => {
+  const { copy, audience } = req.body;
+  const key = await getUserKey(req.user!.userId, 'anthropic');
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const Anthropic = require('@anthropic-ai/sdk');
+  const client = new Anthropic.default({ apiKey: key });
+  const msg = await client.messages.create({ model: 'claude-opus-4-5', max_tokens: 1024, messages: [{ role: 'user', content: `Analyze and rewrite this marketing copy:\n\nCopy: ${copy}\n\nAudience and context: ${audience}\n\nInclude: clarity score (1-10), persuasion audit by emotion, specific rewrites for each weak section with reasoning, headline variants to test, CTA alternatives, and A/B test recommendations.` }] });
+  res.json({ analysis: msg.content[0].type === 'text' ? msg.content[0].text : JSON.stringify(msg.content) });
 });
 
 app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));
