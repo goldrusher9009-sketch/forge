@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v581.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v582.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -199097,6 +199097,66 @@ app.post('/api/product/ai-strategy', requireAuth, async (req: AuthRequest, res) 
 app.post('/api/productivity/deep-work', requireAuth, async (req: AuthRequest, res) => {
   const { goals, schedule, distractions } = req.body;
   const prompt = `You are a deep work methodology and productivity expert. Design a deep work system for ${goals} with ${schedule} available time and ${distractions} as primary distractions. Apply Cal Newport's Deep Work framework and related research: the four deep work philosophies (monastic, bimodal, rhythmic, journalistic) and which fits best, how to structure the ideal deep work day and week, the shutdown ritual design, the attention management system (how to handle interruptions, communications, and shallow work), how to train the ability to concentrate through progressive difficulty, the deep work environment design (physical and digital), how to measure deep work quality (hours, output quality, progress on goals), and how to sustain deep work practices long-term without burnout.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/mentor', requireAuth, async (req: AuthRequest, res) => {
+  const { situation, goal, constraints } = req.body;
+  const prompt = `You are a career mentor, executive coach, and advisor with decades of experience across startups and Fortune 500 companies. A mentee is facing ${situation} and is trying to achieve ${goal} with ${constraints} constraints. Provide: honest assessment of the situation (what is really going on, not just what they said), the advice you would give a close friend in this situation, the options available ranked by expected value, the risks and downsides of each path that they might not be seeing, the questions they should be asking themselves, what success looks like in 6 months if they get this right, and one uncomfortable truth they probably need to hear.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/leadership-360', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, behaviors, role } = req.body;
+  const prompt = `You are an executive coach and 360-degree feedback expert. Synthesize and deliver leadership feedback for ${leader} based on ${behaviors} observed behaviors in their ${role} role. Structure the feedback in four areas: What to continue (strengths to double down on with specific examples), What to stop (behaviors that are limiting effectiveness or damaging relationships), What to start (new behaviors that would accelerate impact), and What to watch (blind spots or emerging risks to monitor). For each piece of feedback: make it specific and behavioral (not personality-based), explain the impact on others and on results, and provide a concrete development action. End with the one thing that if changed would have the biggest impact on their leadership effectiveness.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/strategic-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { company, horizon, goals } = req.body;
+  const prompt = `You are a strategy consultant and organizational planning expert. Create a strategic plan for ${company} for a ${horizon} horizon to achieve ${goals}. Structure: situation analysis (where we are today — strengths, weaknesses, market position), market analysis (where the market is going — trends, opportunities, threats), strategic choices (where to play and how to win — key strategic bets), the strategic priorities for each planning period, the initiatives and programs that will execute the strategy, the resource allocation across priorities, the organizational capabilities needed, the key risks and mitigation strategies, the success metrics and milestones, and how to communicate and cascade the strategy through the organization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/enterprise', requireAuth, async (req: AuthRequest, res) => {
+  const { product, deal, stakeholders } = req.body;
+  const prompt = `You are an enterprise sales and complex deal management expert. Build the enterprise sales playbook for ${product} for ${deal} size deals with ${stakeholders} buying committee. Cover enterprise buying dynamics (economic buyer, champion, technical buyer, legal, security, procurement), the multi-threaded account management strategy, how to build and run an enterprise evaluation (POC design, success criteria, evaluation committee management), the business case and ROI model for enterprise buyers, security and legal review navigation, procurement and negotiation tactics, how to use the partner ecosystem to accelerate enterprise deals, the post-signature expansion strategy, and how to build reference customers that close future enterprise deals.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-activation', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, audience, budget } = req.body;
+  const prompt = `You are a brand marketing and experiential marketing expert. Plan a brand activation for ${brand} targeting ${audience} with ${budget}. Cover the activation concept and big idea (what is the experience that will make people feel something?), the channel mix (event, digital, OOH, social, partnership), how to create a shareable moment that extends reach through UGC, the production and logistics plan, the measurement framework (brand lift, reach, sentiment, earned media), how to train brand ambassadors and staff, the before-during-after social media plan, how to extend the activation into earned media, and how to measure whether the activation actually moved brand metrics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, goal } = req.body;
+  const prompt = `You are a growth strategy and business development expert. Build the growth strategy for ${company} at ${stage} stage to achieve ${goal}. Cover the growth model type (product-led, sales-led, marketing-led, or hybrid), the growth levers available at this stage (acquisition, activation, retention, referral, revenue), the growth bets to make (where to invest for highest return), the resource allocation across growth bets, how to build the growth function (team, processes, cadence), the growth experiment framework, how to avoid premature scaling of channels that havent been validated, the metrics that will tell you if the growth strategy is working, and how to evolve the growth strategy as you hit each major inflection point.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/exec-presence', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, context, gaps } = req.body;
+  const prompt = `You are an executive presence and leadership communication expert. Coach ${leader} on executive presence for ${context} with ${gaps} as development areas. Cover the three dimensions of executive presence (gravitas, communication, appearance), how to project confidence without arrogance, the communication skills that executives need (clarity, brevity, storytelling, listening), how to command a room in different settings (board meetings, all-hands, investor presentations, 1:1s), how to handle tough questions and pushback gracefully, how to give and receive feedback in ways that elevate your credibility, how to build and maintain your professional reputation, and specific techniques to develop the identified gaps through deliberate practice.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/objection-handling', requireAuth, async (req: AuthRequest, res) => {
+  const { product, objection, stage } = req.body;
+  const prompt = `You are a sales methodology and objection handling expert. Respond to the ${objection} objection for ${product} raised at the ${stage} stage of the sales process. Deliver: the root cause analysis of this objection (is it really about price/timing/need/trust?), the LAER method response (Listen, Acknowledge, Explore, Respond), three different response approaches for different buyer types (analytical, pragmatic, visionary), how to turn this objection into a reason to buy, the questions to ask to get underneath the stated objection to the real concern, when to push vs. when to let the objection win gracefully, and how to prevent this objection from arising in future deals through better qualification and discovery.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/podcast', requireAuth, async (req: AuthRequest, res) => {
+  const { show, episode, guest } = req.body;
+  const prompt = `You are a podcast strategy and content production expert. Produce the episode for ${show} podcast covering ${episode} topic with ${guest} guest. Deliver: the episode concept and hook, the pre-interview research brief (guest background, recent work, talking points to explore), the episode structure (opening hook, warmup questions, core content segments, listener value moments, closing call to action), 10 interview questions ranked from rapport-building to provocative, the social media clips strategy (which 3 moments will drive shares), the show notes template, the promotional strategy for this episode, how to follow up with the guest post-episode to turn them into a long-term advocate, and the thumbnail and title A/B test plan.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/retro', requireAuth, async (req: AuthRequest, res) => {
+  const { team, period, focus } = req.body;
+  const prompt = `You are an agile facilitation and team effectiveness expert. Facilitate a retrospective for ${team} covering ${period} with ${focus} as the primary focus area. Design the full retrospective: the opening activity to set psychological safety, the data gathering phase (what happened this period — timeline or story format), the insight generation phase (why did these things happen — 5 Whys, fishbone, or PMI), the decision phase (what should we do differently — action item format with owners and due dates), how to close and energize the team, how to make retrospective outputs actually get implemented (tracking system, accountability), how to handle when the retrospective surfaces tension or conflict, and how to measure whether the retrospective led to actual team improvement over time.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
