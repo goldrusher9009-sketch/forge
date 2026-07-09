@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v440.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v441.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191337,6 +191337,59 @@ app.post('/api/product/wave300-milestone', requireAuth, async (req: AuthRequest,
 app.post('/api/sales/revops-blueprint', requireAuth, async (req: AuthRequest, res) => {
   const { stage, team, tools } = req.body;
   const prompt = `Design a Revenue Operations blueprint.\nCompany stage: ${stage}\nGTM team size: ${team}\nCurrent tools: ${tools}\nInclude: RevOps org design (centralized vs. embedded), tech stack rationalization and integration architecture, lead routing and assignment rules, deal desk and approval workflow design, revenue reporting and forecasting infrastructure, quota setting methodology, territory planning process, commission plan administration, CRM data hygiene standards, and RevOps OKRs to measure the function's impact on revenue velocity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 301+302 routes
+app.post('/api/dev/websocket-design', requireAuth, async (req: AuthRequest, res) => {
+  const { useCase, scale, protocol } = req.body;
+  const prompt = `Design a WebSocket architecture.\nUse case: ${useCase}\nScale target: ${scale}\nProtocol preference: ${protocol}\nInclude: connection lifecycle management, message protocol design (JSON schema/binary), room/channel architecture, horizontal scaling with Redis pub/sub, authentication on WebSocket upgrade, heartbeat and reconnection strategy, backpressure handling, graceful degradation to long-polling, event schema versioning, and client-side connection management library design.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/pipeline-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, icp, channels } = req.body;
+  const prompt = `Build a sales pipeline from scratch.\nCompany stage: ${stage}\nIdeal customer profile: ${icp}\nAcquisition channels: ${channels}\nInclude: pipeline stage definitions with exit criteria, lead source prioritization, inbound vs. outbound motion design, SDR/AE workflow and handoff SLA, pipeline velocity targets (conversion rate × deal size × cycle time), CRM pipeline configuration recommendations, pipeline review cadence, pipeline hygiene standards, and how to build pipeline 3× quota coverage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/product-narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { product, audience, differentiation } = req.body;
+  const prompt = `Craft a compelling product narrative.\nProduct: ${product}\nTarget audience: ${audience}\nKey differentiation: ${differentiation}\nInclude: hero narrative (before/after/bridge), product positioning statement, elevator pitch (30-second and 2-minute versions), website hero copy, product demo narrative arc, objection-handling talking points, competitive differentiation story, customer success story framework, sales deck narrative structure, and how the narrative changes for different audiences (technical/business/executive).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/influencer-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, niche, budget } = req.body;
+  const prompt = `Design an influencer marketing strategy.\nBrand: ${brand}\nNiche: ${niche}\nBudget: ${budget}\nInclude: influencer tier selection (nano/micro/macro/mega) and rationale, discovery methodology and vetting criteria, authentic vs. paid content balance, brief and creative direction template, compensation model (flat fee/affiliate/equity/product), campaign structure and approval process, FTC disclosure requirements, performance metrics (EMV/reach/conversion), long-term vs. one-off partnership strategy, and how to build an influencer network that scales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/org-leverage-model', requireAuth, async (req: AuthRequest, res) => {
+  const { headcount, revenue, roles } = req.body;
+  const prompt = `Build an organizational leverage model.\nCurrent headcount: ${headcount}\nRevenue target: ${revenue}\nKey roles: ${roles}\nInclude: revenue per employee benchmarking by stage, high-leverage vs. low-leverage role identification, automation opportunities to delay hiring, span of control optimization, manager-to-IC ratio targets, offshore/nearshore leverage model, contractor vs. FTE cost comparison, headcount ROI by function, and how to grow revenue faster than headcount.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/saas-metrics', requireAuth, async (req: AuthRequest, res) => {
+  const { arr, growth, churn } = req.body;
+  const prompt = `Analyze SaaS metrics for investor presentation.\nARR: ${arr}\nGrowth rate: ${growth}\nChurn metrics: ${churn}\nInclude: Rule of 40 calculation and interpretation, NRR (net revenue retention) analysis, CAC payback period assessment, LTV/CAC ratio benchmarking by segment, magic number for go-to-market efficiency, gross margin analysis, burn multiple evaluation, cohort revenue retention visualization description, investor benchmark comparison by ARR range, and narrative framing for strengths and areas of focus.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/security-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { appType, threats, compliance } = req.body;
+  const prompt = `Design application security architecture.\nApp type: ${appType}\nThreat model: ${threats}\nCompliance requirements: ${compliance}\nInclude: threat modeling (STRIDE methodology), defense-in-depth layers, authentication architecture (OAuth2/OIDC/MFA), authorization model (RBAC/ABAC), secrets management, encryption at rest and in transit, OWASP Top 10 mitigations, security scanning in CI/CD, incident response plan, penetration testing cadence, and compliance mapping (SOC2/GDPR/HIPAA).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/case-study', requireAuth, async (req: AuthRequest, res) => {
+  const { customer, challenge, result } = req.body;
+  const prompt = `Write a compelling customer case study.\nCustomer: ${customer}\nChallenge they faced: ${challenge}\nResults achieved: ${result}\nInclude: headline with quantified result, customer background (1 paragraph), challenge narrative with emotional stakes, solution description (how they used the product), results with specific metrics, customer quote placement strategy, sidebar statistics, call-to-action, social proof amplification plan, and how to repurpose this case study across 8+ marketing channels.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/mvp-scope', requireAuth, async (req: AuthRequest, res) => {
+  const { idea, users, constraints } = req.body;
+  const prompt = `Define MVP scope with precision.\nProduct idea: ${idea}\nTarget users: ${users}\nConstraints: ${constraints}\nInclude: core job-to-be-done the MVP must solve, must-have vs. nice-to-have feature list, feature cut rationale, what the MVP explicitly does NOT do, success criteria for MVP validation, prototype vs. functional MVP decision, technical architecture for MVP (speed over scale), user testing plan, pivot triggers vs. persevere signals, and path from MVP to v1.0.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/pitch-deck-outline', requireAuth, async (req: AuthRequest, res) => {
+  const { product, audience, ask } = req.body;
+  const prompt = `Create a sales pitch deck outline.\nProduct: ${product}\nAudience: ${audience}\nAsk: ${ask}\nInclude: slide-by-slide outline (problem/solution/market/product/traction/team/financials/ask), opening hook design, data visualization recommendations per slide, executive summary one-pager, leave-behind design, objection pre-handling slides, competitive differentiation slide approach, social proof placement, ROI calculator slide, and closing call-to-action design.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
