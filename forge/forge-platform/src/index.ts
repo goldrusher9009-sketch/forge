@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v600.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v601.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200237,6 +200237,66 @@ app.post('/api/strategy/pricing-audit', requireAuth, async (req: AuthRequest, re
 app.post('/api/strategy/market-entry', requireAuth, async (req: AuthRequest, res) => {
   const { company, market, timeline } = req.body;
   const prompt = `You are a market entry and international expansion strategy expert. Design the market entry strategy for ${company} entering ${market} over ${timeline}. Cover the market attractiveness and sizing, the competitive landscape assessment, the entry mode options and trade-offs, the beachhead segment selection, the localization requirements, the go-to-market model for the new market, the partnership and channel design, the regulatory and compliance assessment, the investment and resource plan, and the market entry success metrics and milestones.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/hyper-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, constraint } = req.body;
+  const prompt = `You are a hyper-growth strategy and scaling expert. Build the hyper-growth playbook for ${company} at ${stage} stage constrained by ${constraint}. Cover the hyper-growth stage characteristics, the growth architecture design, the organizational scaling principles, the hiring velocity and quality design, the management leverage and delegation, the systems and processes that scale, the culture preservation during rapid growth, the capital efficiency at hyper-growth, the board and investor management during scaling, and how to avoid the common hyper-growth failure modes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/acquisition-funnel', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, rate, lever } = req.body;
+  const prompt = `You are a conversion funnel and growth marketing expert. Optimize the acquisition funnel at ${stage} stage with ${rate} conversion rate using ${lever} as the primary lever. Cover the funnel stage definition and measurement, the drop-off diagnosis methodology, the qualitative and quantitative research integration, the hypothesis generation framework, the A/B test design and prioritization, the landing page optimization, the form and checkout optimization, the personalization and segmentation, the funnel automation design, and how to build a conversion rate optimization culture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/board-presentation', requireAuth, async (req: AuthRequest, res) => {
+  const { topic, audience, outcome } = req.body;
+  const prompt = `You are a board presentation and executive communication expert. Coach on the board presentation for ${topic} to ${audience} board seeking ${outcome}. Cover the board communication principles, the board deck structure design, the executive summary writing, the data visualization for boards, the narrative and storytelling for senior audiences, the financial metric presentation, the risk and opportunity framing, the recommendation structuring, the Q&A preparation and handling, and how to build board confidence in the executive team.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/innovation-lab', requireAuth, async (req: AuthRequest, res) => {
+  const { org, mandate, resources } = req.body;
+  const prompt = `You are an innovation strategy and corporate innovation expert. Design the innovation lab for ${org} with ${mandate} mandate and ${resources} resources. Cover the innovation lab models and trade-offs, the innovation mandate and scope, the innovation portfolio and stage-gate design, the innovation team and talent model, the external ecosystem and startup collaboration, the idea management and funnel design, the incubation and acceleration process, the innovation metrics and governance, the innovation culture integration, and how to connect innovation lab outputs to core business growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/cog-efficiency', requireAuth, async (req: AuthRequest, res) => {
+  const { product, margin, target } = req.body;
+  const prompt = `You are a cost of goods and gross margin optimization expert. Improve the gross margin for ${product} from ${margin} to ${target} target margin. Cover the COGS component breakdown and analysis, the direct material cost reduction strategies, the labor and manufacturing efficiency, the overhead allocation and reduction, the supplier negotiation and strategic sourcing, the product design for cost reduction, the quality vs. cost trade-off framework, the make vs. buy analysis, the volume and scale economics, and how to build a continuous margin improvement culture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/product-led-cs', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, trigger } = req.body;
+  const prompt = `You are a product-led customer success and expansion strategy expert. Design the product-led CS model for ${product} serving ${segment} using ${trigger} as the expansion trigger. Cover the product-led CS philosophy and principles, the in-product health scoring, the automated intervention design, the in-product expansion trigger design, the CS tech stack for product-led, the human touch integration points, the onboarding automation design, the customer health dashboard, the expansion playbook design, and how to measure product-led CS effectiveness.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productivity/ai-prompting', requireAuth, async (req: AuthRequest, res) => {
+  const { task, model, quality } = req.body;
+  const prompt = `You are an AI prompt engineering and LLM optimization expert. Design the optimal prompting strategy for ${task} using ${model} to achieve ${quality} quality output. Cover the prompt engineering principles and taxonomy, the system prompt design, the few-shot example selection, the chain of thought prompting, the role and persona prompting, the output format specification, the temperature and parameter tuning, the prompt testing and evaluation framework, the prompt versioning and management, and how to build a prompt library and governance for your organization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ai-ethics', requireAuth, async (req: AuthRequest, res) => {
+  const { org, usecase, risk } = req.body;
+  const prompt = `You are an AI ethics and responsible AI strategy expert. Build the AI ethics framework for ${org} deploying ${usecase} with ${risk} as the primary risk. Cover the AI ethics principles and values definition, the AI risk taxonomy and classification, the algorithmic bias audit methodology, the AI governance and oversight design, the AI transparency and explainability requirements, the human oversight and accountability design, the AI impact assessment process, the AI ethics review board design, the stakeholder engagement on AI ethics, and how to build trustworthy AI that creates value sustainably.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/startup-validation', requireAuth, async (req: AuthRequest, res) => {
+  const { idea, customer, hypothesis } = req.body;
+  const prompt = `You are a lean startup and customer validation expert. Validate the startup idea of ${idea} for ${customer} testing the hypothesis that ${hypothesis}. Cover the lean startup methodology applied here, the riskiest assumption identification, the MVP design for maximum learning, the customer discovery interview design, the experiment design and measurement, the pivot vs. persevere decision framework, the product-market fit signals, the validation of willingness to pay, the competitive validation approach, and how to move from validation to scaling with confidence.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/retail-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, channel, shopper } = req.body;
+  const prompt = `You are a retail strategy and omnichannel commerce expert. Build the retail strategy for ${brand} in ${channel} targeting ${shopper} shopper. Cover the retail channel strategy, the category management approach, the planogram and shelf strategy, the pricing and promotional strategy for retail, the trade marketing and account management, the retail media and digital shelf strategy, the omnichannel integration of retail and ecommerce, the retail data and shopper insights, the retail execution and compliance, and how to win at retail in an increasingly competitive and digital environment.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
