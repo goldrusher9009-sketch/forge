@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v616.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v617.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201197,6 +201197,66 @@ app.post('/api/product/coaching', requireAuth, async (req: AuthRequest, res) => 
 app.post('/api/ops/startup-operations', requireAuth, async (req: AuthRequest, res) => {
   const { startup, stage, function } = req.body;
   const prompt = `You are a startup operations and early-stage operations expert. Design the operations for ${startup} at ${stage} stage scaling ${function} function. Cover the startup operations principles and priorities, the minimal viable process design, the tools and systems selection for early stage, the hiring and onboarding operations, the financial operations and controls design, the legal and compliance operations, the customer operations design, the communication and information flow design, the metrics and reporting cadence, and how to build just enough operational infrastructure to scale efficiently without over-engineering processes before the business model is proven.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/corporate', requireAuth, async (req: AuthRequest, res) => {
+  const { company, portfolio, horizon } = req.body;
+  const prompt = `You are a corporate strategy and portfolio management expert. Design the corporate strategy for ${company} with ${portfolio} portfolio over ${horizon} horizon. Cover the corporate strategy framework and purpose, the business portfolio analysis and management, the corporate parenting advantage design, the resource allocation framework, the mergers and acquisitions strategy, the organic growth vs. inorganic growth trade-offs, the corporate center value-add design, the capital allocation framework, the corporate performance management, and how to create a corporate strategy that generates value above what independent businesses would achieve on their own.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/account-based', requireAuth, async (req: AuthRequest, res) => {
+  const { company, accounts, signal } = req.body;
+  const prompt = `You are an account-based marketing and ABM strategy expert. Design the ABM program for ${company} targeting ${accounts} accounts using ${signal} buying signals. Cover the ABM strategy framework and maturity model, the account selection and ICP definition, the ABM program tier design, the account intelligence and intent data, the personalized content and campaign design, the multi-channel ABM orchestration, the sales and marketing alignment for ABM, the ABM technology stack design, the ABM measurement and attribution, and how to build an ABM program that creates pipeline from your highest-value accounts with precision targeting and personalization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/inclusive', requireAuth, async (req: AuthRequest, res) => {
+  const { product, users, barriers } = req.body;
+  const prompt = `You are an inclusive design and accessibility expert. Design ${product} inclusively for ${users} users removing ${barriers} barriers. Cover the inclusive design principles and philosophy, the WCAG accessibility standards application, the assistive technology compatibility design, the cognitive accessibility design, the sensory accessibility design, the motor accessibility design, the inclusive user research methodology, the accessibility testing process, the inclusive design governance, and how to build products that work for everyone regardless of ability, age, language, or context of use.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/enablement', requireAuth, async (req: AuthRequest, res) => {
+  const { team, gap, content } = req.body;
+  const prompt = `You are a sales enablement and sales readiness expert. Build the sales enablement program for ${team} closing ${gap} gap with ${content} content strategy. Cover the sales enablement strategy and charter, the buyer journey content mapping, the sales playbook design and structure, the competitive battle card design, the product and solution training program, the sales skills and methodology training, the onboarding program for new reps, the sales content management and CMS, the sales enablement metrics and impact, and how to build a sales enablement program that measurably improves rep productivity, ramp time, and win rates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, capability, outcome } = req.body;
+  const prompt = `You are a data strategy and data-driven organization expert. Build the data strategy for ${company} to develop ${capability} capability and achieve ${outcome}. Cover the data strategy vision and principles, the data maturity assessment, the data architecture and infrastructure design, the data collection and ingestion strategy, the data quality and master data management, the data platform and tools selection, the data team and capability building, the data monetization opportunities, the data governance and privacy strategy, and how to build a data strategy that transforms raw data into a genuine competitive advantage through better decisions, better products, and new revenue streams.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/workflow-automation', requireAuth, async (req: AuthRequest, res) => {
+  const { process, tools, savings } = req.body;
+  const prompt = `You are a workflow automation and process automation expert. Automate ${process} using ${tools} to achieve ${savings} efficiency savings. Cover the process automation strategy and prioritization, the process mapping and documentation, the automation opportunity identification, the RPA vs. API vs. AI automation selection, the workflow design and logic mapping, the integration and data flow design, the error handling and exception management, the testing and quality assurance, the change management for automation, and how to implement workflow automation that actually saves time and reduces errors rather than creating new forms of technical debt.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/transition-management', requireAuth, async (req: AuthRequest, res) => {
+  const { change, stakeholders, timeline } = req.body;
+  const prompt = `You are a transition management and organizational change expert. Manage the transition for ${change} involving ${stakeholders} over ${timeline} timeline. Cover the transition management framework and methodology, the change impact assessment, the stakeholder analysis and engagement design, the resistance management strategy, the communication strategy and plan, the training and capability development, the transition governance and oversight, the benefits realization tracking, the transition risk management, and how to manage organizational transitions in a way that achieves the intended business outcomes while minimizing disruption and maintaining employee engagement and productivity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/values-activation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, values, behaviors } = req.body;
+  const prompt = `You are a company values and culture activation expert. Activate ${company} values through ${values} by defining ${behaviors} concrete behaviors. Cover the values definition and language refinement, the value-to-behavior translation, the values integration into hiring and onboarding, the values reinforcement in performance management, the values recognition and storytelling program, the leadership modeling of values, the values accountability mechanisms, the values evolution and refresh process, the values measurement and culture survey design, and how to turn stated values from wall decorations into genuine operating principles that guide decisions and behaviors across the organization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/chatbot-design', requireAuth, async (req: AuthRequest, res) => {
+  const { usecase, persona, handoff } = req.body;
+  const prompt = `You are an AI chatbot design and conversational AI expert. Design the AI chatbot for ${usecase} with ${persona} personality and ${handoff} human handoff protocol. Cover the chatbot strategy and use case prioritization, the conversation flow design, the natural language understanding design, the chatbot personality and tone design, the intent and entity design, the fallback and error handling design, the context management and memory design, the human handoff trigger and escalation design, the chatbot analytics and performance measurement, and how to design AI chatbots that solve real customer problems, create positive experiences, and know when to get humans involved.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/social-impact', requireAuth, async (req: AuthRequest, res) => {
+  const { company, cause, stakeholders } = req.body;
+  const prompt = `You are a corporate social responsibility and social impact expert. Design the social impact strategy for ${company} focused on ${cause} engaging ${stakeholders}. Cover the social impact strategy framework, the materiality assessment and issue prioritization, the theory of change design, the social impact program design, the employee volunteering and giving program, the supplier diversity and ESG supply chain, the community investment and partnerships, the social impact measurement and reporting, the stakeholder communication and transparency, and how to build a social impact strategy that creates genuine positive change while strengthening the business through talent attraction, customer loyalty, and regulatory goodwill.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
