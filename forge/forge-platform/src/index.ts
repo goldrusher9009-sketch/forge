@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v415.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v416.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190012,6 +190012,59 @@ app.post('/api/product/onboarding-design', requireAuth, async (req: AuthRequest,
 app.post('/api/sales/demo-optimizer', requireAuth, async (req: AuthRequest, res) => {
   const { product, persona, currentDemo } = req.body;
   const prompt = `Optimize the sales demo for maximum conversion.\nProduct: ${product}\nBuyer persona: ${persona}\nCurrent demo: ${currentDemo}\nInclude: demo flow redesign, discovery questions to ask first, objection pre-emption, proof points to include, and next step close.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 251+252 routes
+app.post('/api/dev/feature-rollout', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, riskLevel, targetUsers } = req.body;
+  const prompt = `Design a safe feature rollout plan.\nFeature: ${feature}\nRisk level: ${riskLevel}\nTarget users: ${targetUsers}\nInclude: rollout phases (canary, beta, GA), feature flag strategy, monitoring and rollback triggers, communication plan, and success metrics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/enterprise-pitch', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stakeholders, pain } = req.body;
+  const prompt = `Build an enterprise sales pitch strategy.\nCompany: ${company}\nStakeholders: ${stakeholders}\nPain points: ${pain}\nInclude: executive summary narrative, ROI business case, multi-stakeholder engagement plan, and deal progression strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/jtbd', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, interviews } = req.body;
+  const prompt = `Apply Jobs To Be Done framework.\nProduct: ${product}\nSegment: ${segment}\nInterview insights: ${interviews}\nIdentify: functional, emotional, and social jobs; hiring criteria; competing solutions; and product opportunities from unmet jobs.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/launch-sequence', requireAuth, async (req: AuthRequest, res) => {
+  const { product, audience, timeline } = req.body;
+  const prompt = `Create a product launch email/content sequence.\nProduct: ${product}\nAudience: ${audience}\nTimeline: ${timeline}\nInclude: pre-launch teaser (T-14), announcement (T-0), follow-up (T+3, T+7), subject lines, and send timing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/culture-survey', requireAuth, async (req: AuthRequest, res) => {
+  const { companyStage, issues, goals } = req.body;
+  const prompt = `Design an employee culture survey and action plan.\nCompany stage: ${companyStage}\nKnown issues: ${issues}\nGoals: ${goals}\nInclude: 15 survey questions, Likert scale design, anonymous submission strategy, and action planning template.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/update-template', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, metrics, highlights } = req.body;
+  const prompt = `Write a compelling investor update.\nStage: ${stage}\nKey metrics: ${metrics}\nHighlights: ${highlights}\nInclude: monthly/quarterly narrative, metrics table, wins, challenges (be honest), asks, and next milestones. Keep it under 500 words.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/deploy-automation', requireAuth, async (req: AuthRequest, res) => {
+  const { stack, currentProcess, goals } = req.body;
+  const prompt = `Design a deploy automation system.\nStack: ${stack}\nCurrent process: ${currentProcess}\nGoals: ${goals}\nInclude: CI pipeline design, automated testing gates, deployment strategy (blue-green/canary), rollback automation, and monitoring hooks.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/affiliate-program', requireAuth, async (req: AuthRequest, res) => {
+  const { product, margins, audience } = req.body;
+  const prompt = `Design an affiliate marketing program.\nProduct: ${product}\nMargins: ${margins}\nTarget audience: ${audience}\nInclude: commission structure, affiliate recruitment strategy, tracking setup, creative assets plan, and payout schedule.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/user-research', requireAuth, async (req: AuthRequest, res) => {
+  const { question, segment, timeline } = req.body;
+  const prompt = `Create a user research plan.\nResearch question: ${question}\nUser segment: ${segment}\nTimeline: ${timeline}\nInclude: methodology selection, screener questions, interview guide, synthesis framework, and how findings will drive product decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/story-board', requireAuth, async (req: AuthRequest, res) => {
+  const { product, persona, outcome } = req.body;
+  const prompt = `Build a sales story using the hero's journey framework.\nProduct: ${product}\nBuyer persona: ${persona}\nDesired outcome: ${outcome}\nInclude: before state, inciting incident, guide introduction, plan, action, transformation, and proof. Write it as a narrative the sales rep can tell.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
