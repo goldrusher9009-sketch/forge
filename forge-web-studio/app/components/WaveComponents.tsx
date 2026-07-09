@@ -62132,3 +62132,283 @@ export function ForgeTab_productfintechstrategy1900() {
     </div>
   );
 }
+
+export function ForgeTab_productmedicaldevice1901() {
+  const [company, setCompany] = React.useState('');
+  const [device, setDevice] = React.useState('');
+  const [markets, setMarkets] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/strategy/medical-device', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"company": company, "device": device, "markets": markets})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>M Medical Device Strategy Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="company" value={company} onChange={e=>setCompany(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="device" value={device} onChange={e=>setDevice(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="markets" value={markets} onChange={e=>setMarkets(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productstrategyexecution1902() {
+  const [organization, setOrganization] = React.useState('');
+  const [strategy, setStrategy] = React.useState('');
+  const [timeframe, setTimeframe] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/strategy/strategy-execution', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"organization": organization, "strategy": strategy, "timeframe": timeframe})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>S Strategy Execution Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="organization" value={organization} onChange={e=>setOrganization(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="strategy" value={strategy} onChange={e=>setStrategy(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="timeframe" value={timeframe} onChange={e=>setTimeframe(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productlegalops1903() {
+  const [organization, setOrganization] = React.useState('');
+  const [matters, setMatters] = React.useState('');
+  const [budget, setBudget] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/legal/legal-ops', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"organization": organization, "matters": matters, "budget": budget})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>L Legal Operations Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="organization" value={organization} onChange={e=>setOrganization(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="matters" value={matters} onChange={e=>setMatters(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="budget" value={budget} onChange={e=>setBudget(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productsalesops1904() {
+  const [organization, setOrganization] = React.useState('');
+  const [sales, setSales] = React.useState('');
+  const [goals, setGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/strategy/sales-ops', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"organization": organization, "sales": sales, "goals": goals})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>O Sales Operations Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="organization" value={organization} onChange={e=>setOrganization(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="sales" value={sales} onChange={e=>setSales(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="goals" value={goals} onChange={e=>setGoals(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productitgovernance1905() {
+  const [organization, setOrganization] = React.useState('');
+  const [systems, setSystems] = React.useState('');
+  const [framework, setFramework] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/strategy/it-governance', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"organization": organization, "systems": systems, "framework": framework})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>I IT Governance Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="organization" value={organization} onChange={e=>setOrganization(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="systems" value={systems} onChange={e=>setSystems(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="framework" value={framework} onChange={e=>setFramework(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productpharmacommercialization1906() {
+  const [company, setCompany] = React.useState('');
+  const [drug, setDrug] = React.useState('');
+  const [indication, setIndication] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/strategy/pharma-commercialization', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"company": company, "drug": drug, "indication": indication})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>P Pharma Commercialization Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="company" value={company} onChange={e=>setCompany(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="drug" value={drug} onChange={e=>setDrug(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="indication" value={indication} onChange={e=>setIndication(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productinternalsales1907() {
+  const [person, setPerson] = React.useState('');
+  const [proposal, setProposal] = React.useState('');
+  const [stakeholders, setStakeholders] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/strategy/internal-selling', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"person": person, "proposal": proposal, "stakeholders": stakeholders})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>B Internal Selling Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="person" value={person} onChange={e=>setPerson(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="proposal" value={proposal} onChange={e=>setProposal(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="stakeholders" value={stakeholders} onChange={e=>setStakeholders(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productagilescaling1908() {
+  const [organization, setOrganization] = React.useState('');
+  const [teams, setTeams] = React.useState('');
+  const [framework, setFramework] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/strategy/agile-scaling', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"organization": organization, "teams": teams, "framework": framework})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>A Agile Scaling Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="organization" value={organization} onChange={e=>setOrganization(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="teams" value={teams} onChange={e=>setTeams(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="framework" value={framework} onChange={e=>setFramework(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productecotourism1909() {
+  const [destination, setDestination] = React.useState('');
+  const [visitors, setVisitors] = React.useState('');
+  const [goals, setGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/strategy/sustainable-tourism', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"destination": destination, "visitors": visitors, "goals": goals})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>E Sustainable Tourism Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="destination" value={destination} onChange={e=>setDestination(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="visitors" value={visitors} onChange={e=>setVisitors(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="goals" value={goals} onChange={e=>setGoals(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}
+
+export function ForgeTab_productglobalhrm1910() {
+  const [organization, setOrganization] = React.useState('');
+  const [countries, setCountries] = React.useState('');
+  const [priorities, setPriorities] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(API+'/api/strategy/global-hrm', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"organization": organization, "countries": countries, "priorities": priorities})});
+      const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
+    } catch(e:any){setResult(e.message);} finally{setLoading(false);}
+  };
+  return (
+    <div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}>
+      <h2>G Global HRM Expert</h2>
+      <div style={{display:'grid',gap:'1rem'}}>
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="organization" value={organization} onChange={e=>setOrganization(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="countries" value={countries} onChange={e=>setCountries(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="priorities" value={priorities} onChange={e=>setPriorities(e.target.value)} />
+        <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
+      </div>
+      {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
+    </div>
+  );
+}

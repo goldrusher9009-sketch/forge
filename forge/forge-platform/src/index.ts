@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v679.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v680.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -204977,6 +204977,66 @@ app.post('/api/strategy/digital-ops', requireAuth, async (req: AuthRequest, res)
 app.post('/api/strategy/fintech-strategy', requireAuth, async (req: AuthRequest, res) => {
   const { company, segment, model } = req.body;
   const prompt = `You are a fintech strategy and financial services innovation expert. Design fintech strategy for ${company} in ${segment} via ${model}. Cover fintech strategy framework, financial services market disruption analysis, regulatory landscape for fintech, product innovation and financial product design, banking and payment infrastructure, financial data and open banking, distribution and customer acquisition for fintech, unit economics and scaling for financial products, partnership and embedded finance strategy, and how to develop fintech strategies that identify genuine opportunities to deliver better financial services to underserved segments or to solve persistent pain points in existing financial services by combining technology innovation with the regulatory compliance and risk management that financial services require.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/medical-device', requireAuth, async (req: AuthRequest, res) => {
+  const { company, device, markets } = req.body;
+  const prompt = `You are a medical device strategy and health technology commercialization expert. Design medical device strategy for ${company} with ${device} in ${markets}. Cover medical device strategy framework, regulatory pathway and FDA clearance strategy, clinical evidence generation, reimbursement and coding strategy, hospital and physician sales model, health economics and outcomes research, post-market surveillance and lifecycle, device design and human factors, competitive positioning in medical devices, and how to commercialize medical devices by building the clinical evidence, regulatory approval, and reimbursement access that determines whether a device can actually be used and paid for in clinical practice regardless of how innovative the underlying technology is.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/strategy-execution', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, strategy, timeframe } = req.body;
+  const prompt = `You are a strategy execution and performance management expert. Design strategy execution for ${organization} pursuing ${strategy} over ${timeframe}. Cover strategy execution framework, strategy translation and cascade, OKR and balanced scorecard design, initiative portfolio management, resource allocation to strategy, accountability and governance, performance review cadence, strategy communication and engagement, adaptive strategy and course correction, and how to translate strategic intent into consistent action across the organization by designing the management systems and routines that keep the organization focused on the priorities that matter most rather than drifting back to business as usual when the initial strategic planning excitement fades.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/legal-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, matters, budget } = req.body;
+  const prompt = `You are a legal operations strategy and legal department efficiency expert. Design legal operations for ${organization} managing ${matters} within ${budget}. Cover legal operations framework, legal spend management and outside counsel governance, matter management and legal project management, legal technology and workflow automation, contract lifecycle management, legal data analytics and reporting, vendor panel management, alternative fee arrangements, legal department structure and resourcing, and how to build legal operations capabilities that allow legal departments to deliver more legal services faster and at lower cost while maintaining quality and reducing risk, by applying the process discipline and technology investment that other business functions have long embraced.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/sales-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, sales, goals } = req.body;
+  const prompt = `You are a sales operations strategy and sales effectiveness expert. Design sales operations for ${organization} with ${sales} toward ${goals}. Cover sales operations framework, sales process design and methodology, territory and quota design, sales compensation and incentive plan design, CRM management and data quality, sales forecasting and pipeline management, sales analytics and reporting, sales enablement and tools, sales productivity and efficiency measurement, and how to build sales operations capabilities that help sales teams spend more time selling and less time on administrative tasks by providing the tools, data, and processes that enable salespeople to manage their territories, forecast accurately, and close deals efficiently.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/it-governance', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, systems, framework } = req.body;
+  const prompt = `You are an IT governance strategy and technology risk management expert. Design IT governance for ${organization} with ${systems} using ${framework}. Cover IT governance framework, IT strategy alignment with business, IT investment portfolio management, IT risk management and control, information security governance, IT performance measurement, vendor and third-party IT governance, data governance and information management, IT audit and compliance, and how to implement IT governance frameworks that ensure IT investments are aligned with business needs, IT risks are managed to acceptable levels, and IT resources are used responsibly and efficiently while enabling the innovation and agility that business leaders expect from technology.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pharma-commercialization', requireAuth, async (req: AuthRequest, res) => {
+  const { company, drug, indication } = req.body;
+  const prompt = `You are a pharmaceutical commercialization strategy and launch excellence expert. Design pharma commercialization for ${company} launching ${drug} for ${indication}. Cover pharma commercialization framework, launch readiness assessment, commercial model design for pharma, patient identification and diagnosis rates, prescriber segmentation and targeting, medical affairs and scientific engagement, payer strategy and managed care, patient support programs, launch metrics and performance management, and how to commercialize pharmaceutical products by building the commercial infrastructure, medical education, and market access that turns regulatory approval into prescription volume, while ensuring that patients who can benefit from the therapy actually get access to it.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/internal-selling', requireAuth, async (req: AuthRequest, res) => {
+  const { person, proposal, stakeholders } = req.body;
+  const prompt = `You are an internal selling strategy and organizational influence expert. Design internal selling approach for ${person} proposing ${proposal} to ${stakeholders}. Cover internal selling framework, stakeholder mapping and power analysis, coalition building and ally development, business case construction, objection anticipation and handling, timing and political landscape reading, executive sponsorship and champion development, pilot and proof of concept design, decision process navigation, and how to successfully advance initiatives and proposals inside organizations by understanding the informal power structures and decision processes that determine what actually gets approved and funded, and building the support and momentum needed to move proposals from idea to approved initiative.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/agile-scaling', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, teams, framework } = req.body;
+  const prompt = `You are an agile scaling strategy and enterprise agility expert. Design agile scaling for ${organization} with ${teams} using ${framework}. Cover agile scaling framework, SAFe and LeSS and Spotify model comparison, portfolio and program level agility, dependency management at scale, agile budgeting and funding, agile product management at scale, cross-functional team design, agile leadership and culture, agile metrics and performance, and how to scale agile from individual teams to the enterprise level in a way that preserves the speed, adaptability, and team autonomy that make agile valuable at the team level while adding the coordination and alignment mechanisms needed to deliver large programs coherently without reverting to waterfall planning.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/sustainable-tourism', requireAuth, async (req: AuthRequest, res) => {
+  const { destination, visitors, goals } = req.body;
+  const prompt = `You are a sustainable tourism strategy and regenerative travel expert. Design sustainable tourism for ${destination} welcoming ${visitors} toward ${goals}. Cover sustainable tourism framework, visitor management and carrying capacity, community benefit and local economic inclusion, environmental impact minimization, cultural preservation and heritage management, sustainable certification and standards, regenerative tourism beyond sustainability, visitor segmentation and experience design, marketing for responsible tourism, and how to develop tourism strategies that create genuine economic benefit for host communities and authentic experiences for visitors while protecting the natural and cultural assets that are the foundation of the tourism value proposition and ensuring that tourism development enhances rather than degrades the destination over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/global-hrm', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, countries, priorities } = req.body;
+  const prompt = `You are a global human resources management strategy and international people expert. Design global HRM for ${organization} operating in ${countries} with ${priorities}. Cover global HRM framework, international compensation and benefits design, global mobility and expatriate management, local employment law compliance, global talent management and career paths, cross-cultural management and inclusion, global learning and development, international labor relations, global HRIS and data privacy, and how to manage a global workforce in a way that balances the need for global consistency in people practices with the necessity of local adaptation to employment law requirements, cultural norms, and labor market conditions that vary significantly across the countries where the organization operates.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
