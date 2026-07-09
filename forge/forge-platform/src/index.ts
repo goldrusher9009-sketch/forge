@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v543.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v544.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -196817,6 +196817,66 @@ app.post('/api/sales/demo-script', requireAuth, async (req: AuthRequest, res) =>
 app.post('/api/ops/automation-finder', requireAuth, async (req: AuthRequest, res) => {
   const { department, processes, toolStack } = req.body;
   const prompt = `You are a business process automation expert. Identify automation opportunities in ${department} with processes: ${processes} using tool stack: ${toolStack}. Prioritize by ROI, assess implementation complexity, and create an automation roadmap with quick wins.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/contract-draft', requireAuth, async (req: AuthRequest, res) => {
+  const { contractType, parties, keyTerms } = req.body;
+  const prompt = `You are a legal expert. Draft a comprehensive ${contractType} contract between ${parties} covering key terms: ${keyTerms}. Include standard clauses, representations and warranties, liability limitations, termination conditions, and jurisdiction. Note: consult a lawyer before use.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/launch-runbook', requireAuth, async (req: AuthRequest, res) => {
+  const { product, launchDate, channels } = req.body;
+  const prompt = `You are a product launch expert. Create a detailed launch runbook for ${product} launching on ${launchDate} across channels: ${channels}. Cover T-minus timeline, cross-functional tasks, PR coordination, social media schedule, monitoring plan, and rollback procedures.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/ir-pack', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, highlights } = req.body;
+  const prompt = `You are an investor relations expert. Build an investor relations communication pack for ${company} at ${stage} stage highlighting: ${highlights}. Cover shareholder letter, key metrics dashboard, forward-looking statements guidance, FAQ for common investor questions, and earnings call script.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/eng/tech-stack', requireAuth, async (req: AuthRequest, res) => {
+  const { useCase, teamSize, budget } = req.body;
+  const prompt = `You are a CTO-level technology advisor. Evaluate technology stack options for ${useCase} with a ${teamSize} person team and ${budget} budget. Compare frameworks, databases, cloud providers, and tooling across dimensions of scalability, developer experience, cost, and ecosystem maturity.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/nps-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { currentNPS, verbatims, industry } = req.body;
+  const prompt = `You are a customer experience expert. Create an NPS improvement plan starting from ${currentNPS} NPS with customer verbatims: ${verbatims} in ${industry} industry. Identify root causes, quick wins, systemic fixes, and a 90-day roadmap with measurement milestones.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/content/repurpose', requireAuth, async (req: AuthRequest, res) => {
+  const { originalContent, targetFormats, audience } = req.body;
+  const prompt = `You are a content strategy expert. Repurpose this content: ${originalContent} into target formats: ${targetFormats} for audience: ${audience}. Adapt messaging, optimize for each channel format, and maintain consistent brand voice across all repurposed pieces.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/eng/postmortem', requireAuth, async (req: AuthRequest, res) => {
+  const { incident, timeline, impact } = req.body;
+  const prompt = `You are a site reliability expert. Write a blameless post-mortem for incident: ${incident} with timeline: ${timeline} and impact: ${impact}. Cover executive summary, root cause analysis, contributing factors, what went well, action items with owners, and preventive measures.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/metrics-tree', requireAuth, async (req: AuthRequest, res) => {
+  const { northStar, productArea, userJourney } = req.body;
+  const prompt = `You are a product analytics expert. Build a product metrics tree for north star metric: ${northStar} in product area ${productArea} across user journey: ${userJourney}. Define L1/L2/L3 metrics, leading vs lagging indicators, instrumentation requirements, and target setting framework.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/territory', requireAuth, async (req: AuthRequest, res) => {
+  const { market, salesReps, quota } = req.body;
+  const prompt = `You are a sales operations expert. Design an optimal sales territory plan for ${market} with ${salesReps} sales reps and ${quota} quota. Cover territory carving methodology, account scoring, coverage ratios, compensation alignment, and seasonal adjustment strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/knowledge-base', requireAuth, async (req: AuthRequest, res) => {
+  const { product, topIssues, audience } = req.body;
+  const prompt = `You are a technical documentation expert. Design and structure a knowledge base for ${product} addressing top issues: ${topIssues} for audience: ${audience}. Create article taxonomy, writing guidelines, self-service flow design, search optimization strategy, and content maintenance cadence.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
