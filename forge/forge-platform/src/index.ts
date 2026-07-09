@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v429.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v430.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190754,6 +190754,59 @@ app.post('/api/product/onboarding-flow', requireAuth, async (req: AuthRequest, r
 app.post('/api/sales/customer-success-plan', requireAuth, async (req: AuthRequest, res) => {
   const { account, goals, risks } = req.body;
   const prompt = `Build a customer success plan.\nAccount: ${account}\nCustomer goals: ${goals}\nChurn risks: ${risks}\nInclude: success milestone map, health score definition, EBR cadence and agenda, adoption playbook, at-risk intervention triggers, renewal strategy, expansion signals to watch, and how to build executive relationships.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 279+280 routes
+app.post('/api/dev/monorepo-setup', requireAuth, async (req: AuthRequest, res) => {
+  const { stack, packages, tooling } = req.body;
+  const prompt = `Design a monorepo architecture.\nTech stack: ${stack}\nPackages/apps: ${packages}\nTooling preference: ${tooling}\nInclude: tool selection (Turborepo/Nx/pnpm workspaces), package structure, shared config strategy, build caching, CI/CD pipeline per package, release strategy (independent vs. lockstep), and developer experience optimizations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/outbound-cadence', requireAuth, async (req: AuthRequest, res) => {
+  const { persona, channel, product } = req.body;
+  const prompt = `Design an outbound sales cadence.\nBuyer persona: ${persona}\nChannels: ${channel}\nProduct: ${product}\nInclude: 15-touch cadence timeline, touch-by-touch scripts (email subject + body), LinkedIn message templates, call scripts with voicemail version, break-up email, timing rationale, and personalization variables per step.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/data-model', requireAuth, async (req: AuthRequest, res) => {
+  const { domain, entities, constraints } = req.body;
+  const prompt = `Design a product data model.\nDomain: ${domain}\nKey entities: ${entities}\nConstraints: ${constraints}\nInclude: entity relationship diagram (text format), table definitions with key columns, index strategy, normalization decisions with reasoning, soft delete approach, audit trail design, and multi-tenancy strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/gtm-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, motion } = req.body;
+  const prompt = `Create a Go-to-Market playbook.\nProduct: ${product}\nTarget segment: ${segment}\nGTM motion: ${motion}\nInclude: positioning statement, messaging framework by persona, channel strategy, sales motion definition, marketing-to-sales handoff criteria, first 90 days launch plan, success metrics, and budget allocation guidance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/culture-design', requireAuth, async (req: AuthRequest, res) => {
+  const { values, stage, challenges } = req.body;
+  const prompt = `Design company culture intentionally.\nCore values: ${values}\nCompany stage: ${stage}\nCulture challenges: ${challenges}\nInclude: values-to-behavior translation, rituals that reinforce culture, hiring for culture fit without exclusion, culture decay warning signs, remote culture adaptations, and how to maintain culture through hypergrowth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/fundraise-prep', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, amount } = req.body;
+  const prompt = `Prepare for a fundraise.\nCompany: ${company}\nStage: ${stage}\nAmount: ${amount}\nInclude: investor targeting strategy (tier 1/2/3 list approach), data room checklist, narrative arc for the deck, due diligence preparation, common objections with responses, process management (creating FOMO), and closing mechanics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/api-versioning', requireAuth, async (req: AuthRequest, res) => {
+  const { api, changes, clients } = req.body;
+  const prompt = `Design an API versioning strategy.\nAPI: ${api}\nIncoming changes: ${changes}\nClient types: ${clients}\nInclude: versioning approach (URL path vs. header vs. query param), deprecation policy with timeline, backward compatibility rules, changelog format, SDK versioning alignment, migration guide template, and how to sunset old versions gracefully.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/nps-program', requireAuth, async (req: AuthRequest, res) => {
+  const { product, touchpoints, action } = req.body;
+  const prompt = `Design an NPS measurement and action program.\nProduct: ${product}\nMeasurement touchpoints: ${touchpoints}\nAction capability: ${action}\nInclude: survey timing and channel, score segmentation (promoters/passives/detractors), follow-up sequences per segment, closed-loop process, dashboard design, and how to use NPS insights to drive product and CX improvements.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/competitive-moat', requireAuth, async (req: AuthRequest, res) => {
+  const { product, strengths, threats } = req.body;
+  const prompt = `Analyze and strengthen a competitive moat.\nProduct: ${product}\nCurrent strengths: ${strengths}\nCompetitive threats: ${threats}\nInclude: moat type analysis (network effects/switching costs/data/brand/economies of scale), moat durability assessment, investment priorities to deepen moat, emerging threat scenarios, and how to communicate moat to investors.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/territory-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { region, accounts, quota } = req.body;
+  const prompt = `Build a sales territory plan.\nRegion: ${region}\nAccount base: ${accounts}\nQuota: ${quota}\nInclude: account tiering (tier 1/2/3), time allocation by tier, coverage model, top 10 target account deep dives, quarterly milestone breakdown, pipeline build strategy, and what winning looks like in 90/180/365 days.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
