@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v599.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v600.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200177,6 +200177,66 @@ app.post('/api/strategy/sustainability', requireAuth, async (req: AuthRequest, r
 app.post('/api/hr/team-rituals', requireAuth, async (req: AuthRequest, res) => {
   const { team, challenge, culture } = req.body;
   const prompt = `You are a team dynamics and high-performance culture expert. Design the team rituals for ${team} addressing ${challenge} to build ${culture} culture. Cover the ritual design principles, the meeting and ceremony design, the feedback and recognition rituals, the learning and growth rituals, the celebration and milestone rituals, the conflict and candor rituals, the energy and wellbeing rituals, the team identity and belonging rituals, the async and remote ritual adaptation, and how to measure whether rituals are actually improving team performance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/network-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { org, nodes, goal } = req.body;
+  const prompt = `You are a network strategy and relationship capital expert. Build the network strategy for ${org} connecting ${nodes} key nodes to achieve ${goal}. Cover the network mapping and analysis, the strategic relationship identification, the relationship investment prioritization, the network development plan, the warm introduction and connector strategy, the thought leadership for network building, the conference and event strategy, the digital network building, the network reciprocity and giving strategy, and how to turn relationships into revenue and competitive advantage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/gtm-motion', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, motion } = req.body;
+  const prompt = `You are a go-to-market motion and sales strategy expert. Design the GTM motion for ${product} targeting ${segment} through ${motion} motion. Cover the GTM motion options and trade-offs, the ideal customer profile and buyer journey, the value proposition and messaging architecture, the channel and coverage design, the sales and marketing playbook, the pricing and packaging alignment to motion, the activation and time-to-value design, the customer success motion design, the GTM metrics and leading indicators, and how to evolve the GTM motion as the business scales.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/supply-chain', requireAuth, async (req: AuthRequest, res) => {
+  const { product, risk, goal } = req.body;
+  const prompt = `You are a supply chain strategy and operations expert. Optimize the supply chain for ${product} addressing ${risk} to achieve ${goal}. Cover the supply chain network design, the supplier diversification strategy, the inventory optimization model, the demand forecasting improvement, the supply chain risk and resilience program, the nearshoring and reshoring analysis, the logistics and distribution optimization, the supplier relationship management, the supply chain visibility and technology, and how to build a supply chain as a competitive advantage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/b2b-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, target, budget } = req.body;
+  const prompt = `You are a B2B marketing strategy and demand creation expert. Build the B2B marketing strategy for ${company} targeting ${target} with ${budget} budget. Cover the B2B marketing model options, the ICP and buyer committee mapping, the content and thought leadership strategy, the account-based marketing approach, the field marketing and event strategy, the analyst and influencer relations, the customer marketing and advocacy program, the B2B digital marketing strategy, the marketing and sales alignment model, and how to measure B2B marketing impact on pipeline and revenue.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/price-transparency', requireAuth, async (req: AuthRequest, res) => {
+  const { business, model, concern } = req.body;
+  const prompt = `You are a pricing transparency and customer trust expert. Design the pricing transparency strategy for ${business} with ${model} pricing addressing ${concern}. Cover the pricing transparency spectrum, the customer psychology of pricing clarity, the pricing page design principles, the calculator and estimate tool design, the total cost of ownership communication, the pricing FAQ design, the competitor comparison transparency, the pricing change communication protocol, the pricing transparency for different segments, and how transparency in pricing builds long-term trust and reduces churn.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productivity/deep-work', requireAuth, async (req: AuthRequest, res) => {
+  const { role, distraction, goal } = req.body;
+  const prompt = `You are a deep work and peak performance expert. Design the deep work system for ${role} overcoming ${distraction} to achieve ${goal}. Cover the deep work philosophy and science, the schedule and time blocking design, the workspace and environment optimization, the digital minimalism and tool reduction, the single-tasking and focus protocols, the deep work ritual design, the shutdown ritual and transition, the deep work tracking and measurement, the recovery and energy management, and how to protect deep work time from organizational interruptions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/freemium', requireAuth, async (req: AuthRequest, res) => {
+  const { product, feature, conversion } = req.body;
+  const prompt = `You are a freemium strategy and conversion optimization expert. Design the freemium model for ${product} with ${feature} as the free-tier limit targeting ${conversion} conversion rate. Cover the freemium model types and trade-offs, the free tier feature selection principle, the usage limit and ceiling design, the conversion trigger identification, the upgrade path and paywall design, the free user activation sequence, the free to paid conversion journey, the pricing page and upgrade prompt design, the free tier abuse prevention, and how to optimize freemium conversion without alienating the free user base.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/knowledge-management', requireAuth, async (req: AuthRequest, res) => {
+  const { org, knowledge, users } = req.body;
+  const prompt = `You are a knowledge management and organizational learning expert. Build the knowledge management system for ${org} capturing ${knowledge} for ${users}. Cover the knowledge management strategy and taxonomy, the explicit vs. tacit knowledge capture, the knowledge base and wiki design, the documentation culture and standards, the knowledge creation workflow, the knowledge validation and quality, the knowledge discovery and search, the onboarding and knowledge transfer, the knowledge decay and refresh management, and how to build a learning organization that continuously improves.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, issues } = req.body;
+  const prompt = `You are a pricing audit and price optimization expert. Audit the pricing for ${company} across ${products} to diagnose ${issues}. Cover the pricing audit framework and methodology, the price waterfall analysis, the discount and leakage diagnosis, the price realization analysis, the pricing vs. value perception gap, the customer willingness to pay research, the competitive pricing benchmark, the pricing process and governance audit, the sales behavior and incentive alignment, and the pricing improvement roadmap with quick wins and strategic changes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-entry', requireAuth, async (req: AuthRequest, res) => {
+  const { company, market, timeline } = req.body;
+  const prompt = `You are a market entry and international expansion strategy expert. Design the market entry strategy for ${company} entering ${market} over ${timeline}. Cover the market attractiveness and sizing, the competitive landscape assessment, the entry mode options and trade-offs, the beachhead segment selection, the localization requirements, the go-to-market model for the new market, the partnership and channel design, the regulatory and compliance assessment, the investment and resource plan, and the market entry success metrics and milestones.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
