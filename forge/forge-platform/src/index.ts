@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v651.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v652.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203297,6 +203297,66 @@ app.post('/api/operations/scale-ops', requireAuth, async (req: AuthRequest, res)
 app.post('/api/finance/financial-model', requireAuth, async (req: AuthRequest, res) => {
   const { company, purpose, horizon } = req.body;
   const prompt = `You are a financial modeling and business finance expert. Build the financial model for ${company} for ${purpose} over ${horizon}. Cover the financial model framework, the revenue model and drivers, the cost structure and unit economics, the P&L model, the balance sheet model, the cash flow model, the working capital requirements, the scenario and sensitivity analysis, the valuation model, and how to build financial models that illuminate the key business drivers and financial dynamics of your business rather than creating false precision through complex spreadsheets with many inputs that are all guesses, that are structured around the key questions you need to answer rather than completeness for its own sake, and that provide the scenario analysis to understand how the business performs under different assumptions about the key variables that most affect your financial outcomes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/negotiation', requireAuth, async (req: AuthRequest, res) => {
+  const { contract, position, priority } = req.body;
+  const prompt = `You are a contract negotiation and legal strategy expert. Negotiate the ${contract} from ${position} prioritizing ${priority}. Cover the negotiation framework, the opening position and anchoring, the key terms analysis, the non-negotiable vs. tradeable terms, the risk allocation strategy, the fallback positions, the concession sequencing, the deal-breaker identification, the negotiation tactics and counter-tactics, and how to negotiate contracts that protect your key interests while maintaining the relationship quality needed for a successful long-term partnership, that identify the terms that matter most to each party so you can make trades that are high value to the other side at low cost to you, and that close efficiently without unnecessary delays that cost both parties money and erode the relationship before the deal is even signed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/crisis-comms', requireAuth, async (req: AuthRequest, res) => {
+  const { crisis, stakeholders, timeline } = req.body;
+  const prompt = `You are a crisis communications and reputation management expert. Design the crisis response for ${crisis} reaching ${stakeholders} over ${timeline}. Cover the crisis communications framework, the crisis assessment and classification, the crisis team activation, the holding statement and first response, the stakeholder mapping and prioritization, the message development by audience, the media and social media strategy, the regulatory and legal coordination, the recovery and reputation repair, and how to manage crisis communications that acknowledge the situation honestly and quickly, demonstrate genuine concern for those affected, communicate what you know and what you are doing clearly without overcommitting to information you cannot verify, and preserve the credibility and relationships that allow the organization to recover and emerge stronger from the crisis.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/investor-update', requireAuth, async (req: AuthRequest, res) => {
+  const { company, period, highlights } = req.body;
+  const prompt = `You are an investor communications and fundraising strategy expert. Write the investor update for ${company} covering ${period} with ${highlights}. Cover the investor update framework, the financial performance and metrics, the key wins and milestones, the challenges and setbacks, the team updates, the product and roadmap updates, the ask and support needed, the forward guidance and next quarter goals, the investor update design principles, and how to write investor updates that build the trust and credibility that lead to investors becoming genuine champions who make introductions and provide support rather than just passive capital providers, that share bad news proactively rather than hiding it until it becomes undeniable, and that make investors feel informed and engaged between fundraising rounds so they are excited to participate in the next round when it comes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/org-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, goals } = req.body;
+  const prompt = `You are an organizational design and structure expert. Design the organization for ${company} at ${stage} optimized for ${goals}. Cover the org design framework, the functional vs. divisional vs. matrix structures, the span of control and management layers, the centralization vs. decentralization decisions, the team size optimization, the role definition and clarity, the decision rights allocation, the coordination mechanisms, the organizational evolution roadmap, and how to design organizational structures that minimize coordination costs and enable fast decision-making at the current stage while building the foundations for effective operation at the next stage of scale, that align the organizational structure with the strategic priorities so the things that matter most get the most organizational attention and resources.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { business, market, objective } = req.body;
+  const prompt = `You are a comprehensive pricing strategy and revenue optimization expert. Design the pricing strategy for ${business} in ${market} achieving ${objective}. Cover the pricing strategy framework, the pricing objective and strategy alignment, the value-based vs. cost-plus vs. competitive pricing, the price elasticity analysis, the segmented pricing strategy, the dynamic pricing considerations, the price change management, the pricing governance and process, the pricing analytics and optimization, and how to develop pricing strategies that maximize the total revenue and profit from your customer base rather than leaving money on the table by underpricing your highest-value customers or losing lower-value customers who would be profitable at lower price points, that evolve as your product matures and your understanding of customer value deepens.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/gtm-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, stage } = req.body;
+  const prompt = `You are a go-to-market strategy and market entry expert. Design the GTM strategy for ${product} entering ${market} at ${stage}. Cover the GTM framework, the ideal customer profile and market segmentation, the value proposition and positioning, the channel strategy and sales motion, the marketing and demand generation, the pricing and packaging for GTM, the sales enablement and playbook, the customer success and onboarding, the GTM metrics and milestones, and how to design GTM strategies that concentrate resources on the specific customer segment and use case where you have the highest chance of winning in a way that is repeatable and scalable, rather than trying to serve too many segments and use cases simultaneously with a strategy that is too broad to execute effectively.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/leadership-development', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, stage, gaps } = req.body;
+  const prompt = `You are a leadership development and executive coaching expert. Design the leadership development program for ${leader} at ${stage} addressing ${gaps}. Cover the leadership development framework, the leadership assessment and feedback, the leadership competency model, the development planning and goal setting, the coaching and mentoring program, the stretch assignments and experiential learning, the peer learning and cohort programs, the feedback and accountability systems, the leadership culture and modeling, and how to develop the specific leadership capabilities that are most important for the next stage of your career and your organization, that build the self-awareness to understand how your behavior affects others and what patterns are holding you back, and that create the development habits and feedback loops that allow continuous growth rather than plateau.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/customer-expansion', requireAuth, async (req: AuthRequest, res) => {
+  const { company, customers, products } = req.body;
+  const prompt = `You are a customer expansion and account growth strategy expert. Design the expansion strategy for ${company} growing ${customers} across ${products}. Cover the expansion strategy framework, the land and expand playbook, the product expansion triggers and signals, the upsell and cross-sell strategy, the expansion pricing and packaging, the customer success role in expansion, the executive sponsorship and champion mapping, the expansion motion by segment, the expansion metrics and forecasting, and how to design expansion strategies that grow revenue from existing customers in ways that genuinely deliver more value to them rather than aggressive upselling that creates customer resentment, that identify the natural expansion moments when customers are most receptive to additional products or higher tiers, and that align the customer success and sales teams around shared expansion goals.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/biz-model-validation', requireAuth, async (req: AuthRequest, res) => {
+  const { model, assumptions, resources } = req.body;
+  const prompt = `You are a business model validation and lean startup methodology expert. Validate the business model for ${model} testing ${assumptions} with ${resources}. Cover the validation framework, the business model canvas mapping, the riskiest assumption identification, the minimum viable experiment design, the customer discovery methodology, the pivot vs. persevere decision criteria, the validated learning documentation, the business model iteration process, the validation roadmap and timeline, and how to validate business models as efficiently as possible by identifying the key assumptions that must be true for the business to work, designing the cheapest and fastest tests of those assumptions, and making clear decisions about whether the evidence supports pivoting or persevering rather than continuing to invest in unvalidated assumptions because you are attached to the original idea.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/data-governance', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, data, goals } = req.body;
+  const prompt = `You are a data governance strategy and data management expert. Design the data governance for ${organization} covering ${data} achieving ${goals}. Cover the data governance framework, the data ownership and stewardship model, the data quality standards and measurement, the data catalog and metadata management, the data access controls and security, the data privacy and compliance, the master data management, the data lifecycle management, the data governance operating model, and how to design data governance programs that make data more accessible and useful to the people who need it for decisions rather than creating bureaucratic processes that slow down data access in the name of governance, that address the actual data quality and consistency problems that erode trust in data and lead people to make decisions based on gut feel rather than evidence.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
