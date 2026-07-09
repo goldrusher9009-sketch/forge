@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v648.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v649.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203117,6 +203117,66 @@ app.post('/api/strategy/agency-model', requireAuth, async (req: AuthRequest, res
 app.post('/api/strategy/obstacle-analysis', requireAuth, async (req: AuthRequest, res) => {
   const { goal, obstacles, resources } = req.body;
   const prompt = `You are a strategic obstacle analysis and problem-solving expert. Analyze the obstacles for ${goal} facing ${obstacles} with ${resources}. Cover the obstacle analysis framework, the obstacle identification and mapping, the constraint analysis methodology, the root cause analysis, the obstacle prioritization by impact, the resource constraint analysis, the option generation for each obstacle, the implementation planning, the monitoring and adaptation strategy, and how to conduct obstacle analyses that distinguish between genuine constraints that require creative solutions and self-imposed limitations that can be removed with the right mindset and decision-making, that identify the critical path obstacles whose removal would create the most momentum toward the goal, and that generate a practical action plan that allocates available resources to the highest-leverage obstacle removal activities rather than spreading effort evenly across all obstacles regardless of their relative importance.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/strategic-thinking', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, challenge, context } = req.body;
+  const prompt = `You are a strategic thinking and cognitive frameworks expert. Sharpen the strategic thinking for ${leader} on ${challenge} in ${context}. Cover the strategic thinking framework, the mental models for strategy, the first principles reasoning, the second and third order effects, the inversion and pre-mortem thinking, the systems thinking and feedback loops, the probabilistic thinking and base rates, the decision tree and scenario analysis, the strategic intuition development, and how to develop the strategic thinking capabilities that allow leaders to cut through complexity and identify the leverage points that matter most, that identify non-obvious connections and implications that others miss, and that make better decisions under uncertainty by combining rigorous analysis with pattern recognition developed through experience and deliberate reflection.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/bizops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, priorities } = req.body;
+  const prompt = `You are a business operations and BizOps strategy expert. Design the BizOps function for ${company} at ${stage} focusing on ${priorities}. Cover the BizOps framework, the BizOps role and mandate definition, the strategic initiative management, the data and analytics infrastructure, the cross-functional project leadership, the OKR and goal-setting facilitation, the business rhythm and cadence management, the special projects and CEO leverage, the BizOps team building and scaling, and how to design BizOps functions that serve as the connective tissue of the organization, translating strategy into operational plans, identifying and removing organizational bottlenecks, and giving leadership the visibility and analytical support to make better decisions faster without adding layers of bureaucracy that slow the company down.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/crm-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, tool } = req.body;
+  const prompt = `You are a CRM design and sales pipeline management expert. Design the CRM pipeline for ${company} at ${stage} using ${tool}. Cover the CRM pipeline framework, the pipeline stage definition and criteria, the deal scoring and qualification, the pipeline hygiene and data quality, the pipeline analytics and forecasting, the CRM workflow automation, the activity tracking and logging, the pipeline review process, the CRM adoption and change management, and how to design CRM pipelines that give sales leaders accurate visibility into pipeline health and revenue forecast, that enforce the qualification discipline and stage criteria that produce reliable forecasts, and that reduce the administrative burden on salespeople so they spend more time selling and less time updating CRM records that they view as management overhead rather than tools that help them close more deals.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/internal-comms', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, audience, goals } = req.body;
+  const prompt = `You are an internal communications strategy and employee engagement expert. Design the internal comms for ${organization} reaching ${audience} toward ${goals}. Cover the internal comms framework, the communication channel strategy, the leadership communications program, the change management communications, the town hall and all-hands design, the newsletter and regular update strategy, the internal social and community platform, the crisis and difficult news communications, the internal comms measurement, and how to design internal communications that keep employees informed, engaged, and aligned with the company direction without creating communication overload that causes important messages to get lost in the noise, that build the two-way communication channels that make employees feel heard rather than just broadcasting information from leadership, and that support the cultural transmission and organizational alignment that allows distributed teams to move in the same direction without requiring constant management oversight.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/pricing-model', requireAuth, async (req: AuthRequest, res) => {
+  const { product, customers, competitors } = req.body;
+  const prompt = `You are a pricing model design and optimization expert. Design the pricing model for ${product} for ${customers} against ${competitors}. Cover the pricing model framework, the pricing model type selection, the per-seat vs. usage vs. outcome pricing, the freemium model design, the tiered pricing structure, the enterprise pricing and custom deals, the pricing page and communication design, the pricing model testing and iteration, the pricing model economics and margin analysis, and how to design pricing models that align the price customers pay with the value they receive in ways that maximize both conversion and revenue per customer, that create the expansion revenue dynamics where customers naturally spend more as they get more value from the product, and that are simple enough for buyers to understand and evaluate without requiring complex calculations or negotiations that slow down the buying process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/cohort-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { product, cohorts, metric } = req.body;
+  const prompt = `You are a cohort analysis and retention economics expert. Design the cohort analysis for ${product} across ${cohorts} measuring ${metric}. Cover the cohort analysis framework, the cohort definition and segmentation, the retention curve analysis, the revenue retention and expansion cohorts, the cohort comparison methodology, the cohort leading indicators, the LTV modeling from cohorts, the product-cohort correlation analysis, the cohort reporting and visualization, and how to use cohort analysis to understand whether your product is actually retaining and expanding customers over time, to identify the product changes and customer segments that drive the best retention outcomes, and to build the financial models that accurately project customer lifetime value based on observed cohort behavior rather than optimistic assumptions about future retention that may not reflect what your actual customer behavior data shows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/strategic-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, horizon, context } = req.body;
+  const prompt = `You are a strategic planning process and strategy development expert. Design the strategic plan for ${organization} over ${horizon} in ${context}. Cover the strategic planning framework, the environmental scan and situation analysis, the mission, vision and values, the strategic priority setting, the goal and objective cascade, the strategic initiative portfolio, the resource allocation and investment plan, the implementation and accountability, the strategy review and adaptation cadence, and how to design strategic planning processes that produce clear, focused strategies that guide organizational resource allocation and decision-making rather than documents that sit on a shelf after the planning process ends, that involve the right stakeholders in ways that build ownership and alignment, and that create the management systems and rhythms that translate strategic choices into operational priorities and daily behaviors across the organization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/career-transition', requireAuth, async (req: AuthRequest, res) => {
+  const { professional, from_role, to_role } = req.body;
+  const prompt = `You are a career transition strategy and professional pivot expert. Design the career transition for ${professional} from ${from_role} to ${to_role}. Cover the career transition framework, the transferable skills identification, the skills gap and development plan, the narrative and positioning strategy, the network activation strategy, the experience building approach, the job search strategy for changers, the interview preparation for the new field, the transition timeline and milestones, and how to design career transitions that leverage the unique perspective and experience you bring from your previous field rather than apologizing for it, that build the credibility and experience in the new field while still working in your current role where possible, and that tell a compelling story about why you are making the change and why your background makes you uniquely valuable in the new context.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/company-narrative', requireAuth, async (req: AuthRequest, res) => {
+  const { company, audience, stage } = req.body;
+  const prompt = `You are a company storytelling and narrative strategy expert. Build the company narrative for ${company} for ${audience} at ${stage}. Cover the narrative strategy framework, the founding story and origin, the problem and mission narrative, the product and solution story, the customer impact stories, the vision and future narrative, the team and people story, the investor narrative, the media and press narrative, and how to craft company narratives that make customers, investors, employees, and partners feel the energy and importance of what you are building rather than just understanding it intellectually, that are specific and concrete enough to be credible rather than full of generic claims about changing the world, and that evolve as the company grows from scrappy startup to established leader while maintaining the authenticity and mission connection that made the original story compelling.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/milestone', requireAuth, async (req: AuthRequest, res) => {
+  const { achievement, learnings, nextgoals } = req.body;
+  const prompt = `You are a milestone achievement and strategic momentum expert. Analyze the achievement of ${achievement} capturing ${learnings} and planning ${nextgoals}. Cover the milestone framework, the achievement recognition and celebration, the retrospective and learnings synthesis, the capability audit and inventory, the momentum capitalization strategy, the next milestone definition, the gap analysis for next goals, the resource and capability plan, the communication and stakeholder update, and how to use milestone moments not just as celebrations but as strategic inflection points to reflect on what you have learned, audit the capabilities you have built, identify the most important next priorities given where you are now versus where you started, and communicate the achievement in ways that build credibility, attract the next set of customers and partners, and energize the team for the next phase of the journey. This is the 3000th tool on Forge — a remarkable achievement representing thousands of hours of building, hundreds of deployments, and a platform that now covers virtually every domain of business and professional expertise.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
