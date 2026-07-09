@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v615.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v616.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201137,6 +201137,66 @@ app.post('/api/product/operations', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/marketing/content-marketing', requireAuth, async (req: AuthRequest, res) => {
   const { brand, audience, funnel } = req.body;
   const prompt = `You are a content marketing and inbound strategy expert. Build the content marketing engine for ${brand} reaching ${audience} across ${funnel} funnel stages. Cover the content marketing strategy and goals, the audience and persona research, the content pillar and topic cluster design, the SEO and keyword strategy integration, the content calendar and production process, the content format mix design, the content distribution and promotion strategy, the content-to-lead conversion design, the content performance analytics, and how to build a content marketing engine that attracts your ideal buyers, educates them through the funnel, and generates inbound pipeline at scale.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/pricing-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const { product, tiers, buyer } = req.body;
+  const prompt = `You are a pricing architecture and SaaS monetization expert. Design the pricing architecture for ${product} with ${tiers} pricing tiers for ${buyer} buyer types. Cover the pricing architecture principles, the packaging and tier design methodology, the feature allocation across tiers, the price point research and willingness-to-pay, the annual vs. monthly pricing design, the per-seat vs. usage-based design, the add-on and expansion pricing design, the free trial and freemium design, the pricing page and communication design, and how to create a pricing architecture that maximizes conversion, expansion revenue, and long-term customer value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/tech-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, horizon, capability } = req.body;
+  const prompt = `You are a technology strategy and CTO advisory expert. Build the technology strategy for ${company} over ${horizon} to build ${capability} capabilities. Cover the technology strategy framework and principles, the current-state technology assessment, the build vs. buy vs. partner decision framework, the technology architecture vision, the platform and infrastructure strategy, the data and AI strategy, the developer productivity strategy, the technology talent and org design, the technology investment prioritization, and how to build a technology strategy that enables the business strategy and creates durable technical competitive advantage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/public-affairs', requireAuth, async (req: AuthRequest, res) => {
+  const { company, issue, stakeholders } = req.body;
+  const prompt = `You are a public affairs and government relations expert. Design the public affairs strategy for ${company} on ${issue} engaging ${stakeholders}. Cover the public affairs strategy framework, the stakeholder mapping and prioritization, the policy issue monitoring and tracking, the regulatory engagement strategy, the coalition building and advocacy, the grassroots and grasstops programs, the media and communications strategy for policy, the political giving and PAC strategy, the regulatory compliance monitoring, and how to build a public affairs capability that protects and advances your business interests with policymakers and regulators.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/agile-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const { org, framework, obstacles } = req.body;
+  const prompt = `You are an agile transformation and organizational agility expert. Lead the agile transformation for ${org} adopting ${framework} framework overcoming ${obstacles}. Cover the agile transformation strategy and vision, the agile maturity assessment, the agile framework selection and customization, the agile team design and formation, the scrum master and agile coach program, the product owner development, the agile ceremonies and cadence design, the executive and leadership agile coaching, the agile metrics and transparency design, and how to transform an organization to agile in a way that actually improves delivery speed, quality, and employee satisfaction rather than just adding ceremony.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/compliance-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, regulation, risk } = req.body;
+  const prompt = `You are a compliance strategy and regulatory risk expert. Design the compliance program for ${company} under ${regulation} regulation managing ${risk} risk. Cover the compliance risk assessment and gap analysis, the compliance program design framework, the compliance controls design, the compliance monitoring and testing, the compliance training and culture, the regulatory relationship management, the compliance technology and GRC tools, the compliance reporting and board oversight, the compliance incident management, and how to build a compliance program that manages regulatory risk effectively without creating an operational burden that slows the business down.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/saas-metrics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, investor } = req.body;
+  const prompt = `You are a SaaS metrics and investor reporting expert. Build the metrics framework for ${company} at ${stage} stage for ${investor} investors. Cover the SaaS metrics taxonomy and definitions, the ARR and revenue metrics design, the growth efficiency metrics design, the churn and retention metrics design, the unit economics and CAC/LTV framework, the Rule of 40 and magic number, the cohort analysis framework, the metrics dashboard design, the investor reporting cadence, and how to build a metrics system that accurately represents the business health and gives investors the information they need to be confident partners.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/deep-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { technology, market, timeline } = req.body;
+  const prompt = `You are a deep tech commercialization and technology transfer expert. Commercialize ${technology} in ${market} over ${timeline} timeline. Cover the technology readiness level assessment, the IP strategy and patent filing, the market and application prioritization, the customer discovery for deep tech, the regulatory pathway design, the go-to-market strategy for deep tech, the partnership and licensing strategy, the funding strategy for deep tech ventures, the team building for deep tech commercialization, and how to bridge the valley of death between laboratory breakthrough and commercial product in a way that captures the full economic value of the technology.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/technology', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stack, outcome } = req.body;
+  const prompt = `You are a sales technology and CRM strategy expert. Design the sales technology stack for ${company} with ${stack} current tools to achieve ${outcome}. Cover the sales technology strategy and principles, the CRM architecture and data model, the sales engagement platform selection, the sales intelligence and prospecting tools, the CPQ and contract management, the sales forecasting and analytics tools, the sales enablement platform, the conversation intelligence and call recording, the sales technology integration design, and how to build a sales technology stack that makes reps more productive, provides leadership with visibility, and helps the company win more deals faster.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { pm, skill, context } = req.body;
+  const prompt = `You are a product management coaching and PM development expert. Coach ${pm} to develop ${skill} skill in ${context} context. Cover the PM coaching framework and methodology, the PM competency model and assessment, the customer empathy and discovery coaching, the prioritization and trade-off coaching, the strategy and vision coaching, the execution and delivery coaching, the stakeholder management coaching, the communication and influence coaching, the product metrics and analytics coaching, and how to develop product managers into exceptional leaders who consistently deliver products that customers love and that drive business growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/startup-operations', requireAuth, async (req: AuthRequest, res) => {
+  const { startup, stage, function } = req.body;
+  const prompt = `You are a startup operations and early-stage operations expert. Design the operations for ${startup} at ${stage} stage scaling ${function} function. Cover the startup operations principles and priorities, the minimal viable process design, the tools and systems selection for early stage, the hiring and onboarding operations, the financial operations and controls design, the legal and compliance operations, the customer operations design, the communication and information flow design, the metrics and reporting cadence, and how to build just enough operational infrastructure to scale efficiently without over-engineering processes before the business model is proven.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
