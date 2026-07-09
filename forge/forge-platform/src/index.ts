@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v682.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v683.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205157,6 +205157,66 @@ app.post('/api/strategy/geopolitical-risk', requireAuth, async (req: AuthRequest
 app.post('/api/strategy/brand-portrayal', requireAuth, async (req: AuthRequest, res) => {
   const { brand, media, context } = req.body;
   const prompt = `You are a brand portrayal strategy and brand representation expert. Design brand portrayal for ${brand} in ${media} across ${context}. Cover brand portrayal framework, visual identity and design standards, photographic and illustration style, spokesperson and talent selection, diversity and representation strategy, brand placement and product portrayal, editorial and creative brief standards, brand portrayal monitoring and quality control, influencer content guidelines, and how to ensure consistent and authentic brand portrayal across every piece of content and media placement by developing clear creative standards that give content creators enough direction to maintain brand consistency while enough flexibility to create genuinely compelling content that performs in each specific context and channel.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/insurance-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, lines, markets } = req.body;
+  const prompt = `You are an insurance strategy and risk transfer expert. Design insurance strategy for ${company} with ${lines} in ${markets}. Cover insurance strategy framework, risk appetite and underwriting philosophy, product design and pricing actuarial, distribution model and channel strategy, claims management and loss control, reinsurance and risk transfer, capital management and solvency, InsurTech and digital innovation, customer experience in insurance, and how to develop insurance strategies that build sustainable competitive advantage by achieving superior risk selection and pricing accuracy, building efficient distribution relationships, and delivering claims experiences that turn loss events into loyalty-building moments rather than sources of churn and reputation damage.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/retail-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { retailer, format, customers } = req.body;
+  const prompt = `You are a retail strategy and omnichannel commerce expert. Design retail strategy for ${retailer} in ${format} serving ${customers}. Cover retail strategy framework, store format and concept design, assortment strategy and category management, pricing and promotional strategy, customer experience and retail theater, supply chain for retail, retail technology and digital integration, loyalty and private label strategy, retail real estate and network strategy, and how to develop retail strategies that create compelling reasons for customers to choose your stores over competitors and online alternatives by delivering an assortment, price, and experience proposition that is distinctive enough that customers cannot easily replicate the value by shopping elsewhere.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/education-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { institution, programs, students } = req.body;
+  const prompt = `You are an education strategy and academic innovation expert. Design education strategy for ${institution} with ${programs} serving ${students}. Cover education strategy framework, academic program design and curriculum, student recruitment and enrollment management, learning outcomes and assessment, faculty development and research strategy, technology and digital learning integration, institutional differentiation and positioning, financial sustainability model, industry and community partnerships, and how to develop education strategies that prepare students for successful careers and lives by combining rigorous academic content with the practical skills and mindsets that employers and society need, while maintaining financial sustainability in an increasingly competitive and technology-disrupted education landscape.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/real-estate-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, portfolio, objectives } = req.body;
+  const prompt = `You are a real estate strategy and property portfolio expert. Design real estate strategy for ${organization} with ${portfolio} toward ${objectives}. Cover real estate strategy framework, real estate portfolio analysis and optimization, make-vs-lease-vs-own decision framework, location strategy and site selection, workplace strategy and space planning, real estate market analysis, lease negotiation and management, property disposition and transaction management, real estate technology and PropTech, and how to develop real estate strategies that optimize the organization portfolio to support business strategy and workforce needs while minimizing occupancy costs and maintaining the flexibility to expand, contract, or reposition the real estate footprint as business needs evolve.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/organic-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { company, current, horizon } = req.body;
+  const prompt = `You are an organic growth strategy and business development expert. Design organic growth for ${company} from ${current} over ${horizon}. Cover organic growth framework, market penetration and share gain, new product and service development, geographic expansion, customer segment expansion, pricing and monetization improvement, operational leverage and efficiency gains, talent and capability investment, innovation and R and D investment, and how to design organic growth strategies that deliver sustained above-market revenue and profit growth by building the capabilities, products, and customer relationships that allow the business to capture increasing share of growing markets rather than relying on acquisitions or financial engineering that do not build genuine business value.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/healthcare-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, services, population } = req.body;
+  const prompt = `You are a healthcare strategy and health system transformation expert. Design healthcare strategy for ${organization} delivering ${services} to ${population}. Cover healthcare strategy framework, value-based care and payment model transition, clinical program development and service line strategy, population health management, digital health and virtual care, physician alignment and employment strategy, health system consolidation and partnership, patient experience and access strategy, clinical quality and safety strategy, and how to develop healthcare strategies that position health systems to thrive as the industry shifts from volume-based to value-based care by building the clinical capabilities, data infrastructure, and provider relationships needed to manage population health at scale while delivering excellent individual patient experiences.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/private-equity', requireAuth, async (req: AuthRequest, res) => {
+  const { fund, thesis, targets } = req.body;
+  const prompt = `You are a private equity strategy and leveraged buyout expert. Design private equity strategy for ${fund} with ${thesis} targeting ${targets}. Cover private equity framework, investment thesis development and screening, deal sourcing and proprietary flow, due diligence and valuation, deal structuring and leverage, value creation planning and 100-day plan, portfolio company governance and management, operational improvement and margin expansion, exit strategy and timing, and how to develop private equity investment strategies that generate superior returns by identifying and acquiring businesses with genuine value creation potential, making operational and strategic improvements that increase earnings and cash flow, and exiting at attractive multiples through a well-timed and well-positioned sale or IPO.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/change-leadership', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, change, organization } = req.body;
+  const prompt = `You are a change leadership strategy and organizational transformation expert. Design change leadership for ${leader} driving ${change} in ${organization}. Cover change leadership framework, change vision and case for change, leadership coalition and alignment, stakeholder engagement and communication, resistance management and co-creation, quick wins and early momentum, capability building for change, culture and mindset change, sustaining change over time, and how to lead organizational change in a way that moves beyond compliance to genuine commitment by helping people understand not just what is changing and how but why the change matters, what it means for them personally, and how their contribution to the change effort creates something worth being part of.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/product-led-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, segments } = req.body;
+  const prompt = `You are a product-led growth strategy and PLG motion design expert. Design product-led growth for ${company} with ${product} in ${segments}. Cover product-led growth framework, free trial and freemium model design, activation and time-to-value optimization, viral and collaborative features, product qualified lead identification, PLG to sales handoff design, expansion revenue within accounts, community and network effects in PLG, PLG metrics and funnel optimization, and how to design product-led growth motions that use the product itself as the primary vehicle for customer acquisition, retention, and expansion by delivering so much value to individual users that they bring the product into their organizations and advocate for company-wide adoption without requiring a traditional sales process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/corporate-responsibility', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, stakeholders, priorities } = req.body;
+  const prompt = `You are a corporate social responsibility strategy and stakeholder value expert. Design corporate responsibility for ${organization} with ${stakeholders} on ${priorities}. Cover corporate responsibility framework, materiality assessment and priority setting, ESG strategy and integration, community investment and social impact, environmental stewardship programs, employee and labor practices, supply chain responsibility and human rights, governance and ethics programs, CSR reporting and transparency, and how to develop corporate responsibility strategies that create genuine social and environmental value while building the stakeholder trust and license to operate that are increasingly necessary for business success, by focusing on the material issues where the organization can make the most significant positive impact given its business model and stakeholder relationships.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
