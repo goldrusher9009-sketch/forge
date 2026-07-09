@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v437.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v438.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191178,6 +191178,59 @@ app.post('/api/product/roadmap-comms', requireAuth, async (req: AuthRequest, res
 app.post('/api/sales/cpq-design', requireAuth, async (req: AuthRequest, res) => {
   const { products, complexity, volume } = req.body;
   const prompt = `Design a Configure-Price-Quote system.\nProduct catalog: ${products}\nConfiguration complexity: ${complexity}\nQuote volume: ${volume}\nInclude: product catalog structure and bundling rules, pricing engine design (volume discounts/product bundles/regional pricing), approval workflow by discount threshold, quote template design, guided selling flow, electronic signature integration, CRM integration architecture, revenue recognition tagging for billing, and ROI calculation for CPQ implementation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 295+296 routes
+app.post('/api/dev/observability-stack', requireAuth, async (req: AuthRequest, res) => {
+  const { services, slo, team } = req.body;
+  const prompt = `Design a production observability stack.\nServices: ${services}\nSLO targets: ${slo}\nTeam size: ${team}\nInclude: three pillars implementation (metrics/logs/traces), tool selection (Prometheus+Grafana vs. Datadog vs. OpenTelemetry), SLO/SLI/error budget design, alerting philosophy (symptom-based not cause-based), on-call runbook structure, distributed tracing setup, log aggregation strategy, dashboard hierarchy (service → dependency → infrastructure), and cost optimization for observability data.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/customer-expansion', requireAuth, async (req: AuthRequest, res) => {
+  const { account, product, trigger } = req.body;
+  const prompt = `Build a customer expansion playbook.\nAccount: ${account}\nProduct to expand: ${product}\nExpansion trigger: ${trigger}\nInclude: expansion signal identification (usage thresholds/new hire/new budget/trigger events), timing strategy for expansion conversation, stakeholder mapping for new departments, business case template for internal champion, multi-threading approach, pricing and packaging options for expansion, negotiation strategy for upsell, and success metrics post-expansion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/accessibility-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { component, standard, userBase } = req.body;
+  const prompt = `Conduct a product accessibility audit.\nComponent/feature: ${component}\nStandard target: ${standard}\nUser base: ${userBase}\nInclude: WCAG checklist for the component (perceivable/operable/understandable/robust), keyboard navigation flow, screen reader behavior, color contrast requirements, focus management, ARIA label implementation, mobile touch target sizing, cognitive load considerations, automated testing tools to add to CI, and remediation priority ranking.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/seo-content', requireAuth, async (req: AuthRequest, res) => {
+  const { keyword, intent, competitor } = req.body;
+  const prompt = `Create an SEO-optimized content strategy.\nTarget keyword: ${keyword}\nSearch intent: ${intent}\nCompetitors ranking: ${competitor}\nInclude: content type recommendation based on SERP analysis, ideal article structure with H2/H3 hierarchy, semantic keyword cluster, featured snippet optimization, internal linking strategy, meta title/description templates, E-E-A-T signals to build in, content length recommendation, multimedia recommendations, and 90-day ranking timeline expectations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/dei-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { orgSize, gaps, goals } = req.body;
+  const prompt = `Build a DEI strategy and roadmap.\nOrg size: ${orgSize}\nIdentified gaps: ${gaps}\nGoals: ${goals}\nInclude: DEI assessment framework (representation/inclusion/equity/belonging), hiring funnel audit for bias points, ERG structure and resourcing, manager training program for inclusive leadership, pay equity analysis methodology, promotion equity audit, DEI metrics and reporting cadence, supplier diversity program, and how to communicate DEI progress authentically.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/due-diligence', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, sector } = req.body;
+  const prompt = `Create a due diligence framework.\nCompany: ${company}\nStage: ${stage}\nSector: ${sector}\nInclude: DD checklist by category (business/financial/legal/technical/market/team), key questions for founder diligence calls, reference check framework, market sizing methodology, unit economics validation approach, cap table red flags, IP ownership verification, customer reference questions, competitive moat assessment, and pre-term-sheet vs. post-term-sheet DD sequencing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/feature-flags', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, rollout, platform } = req.body;
+  const prompt = `Design a feature flag system.\nFeature: ${feature}\nRollout strategy: ${rollout}\nPlatform: ${platform}\nInclude: flag taxonomy (release/experiment/ops/permission flags), targeting rule design (user segment/percentage/attribute-based), flag lifecycle management (creation→rollout→cleanup), kill switch implementation, frontend vs. backend flag evaluation, SDK integration pattern, flag dependency management, tech debt from stale flags, and evaluation analytics for experiment flags.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/event-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { eventType, audience, goal } = req.body;
+  const prompt = `Design an event marketing strategy.\nEvent type: ${eventType}\nTarget audience: ${audience}\nPrimary goal: ${goal}\nInclude: event format and agenda design, pre-event marketing sequence (8-week countdown), registration page optimization, speaker/content strategy, sponsor integration, on-site experience design, lead capture and qualification, post-event follow-up sequence (48-hour window), ROI measurement framework, and how to repurpose event content for 6 months of marketing.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/vision-pitch', requireAuth, async (req: AuthRequest, res) => {
+  const { problem, solution, market } = req.body;
+  const prompt = `Craft a compelling product vision pitch.\nProblem: ${problem}\nSolution: ${solution}\nTarget market: ${market}\nInclude: opening hook (the world before/after), problem statement with emotional resonance, solution narrative (not features, outcomes), market size framing (TAM/SAM/SOM story), competitive differentiation, traction proof points, team credibility signals, ask and use of proceeds, closing vision statement, and Q&A preparation for top 10 investor questions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/partner-program', requireAuth, async (req: AuthRequest, res) => {
+  const { partnerType, product, incentives } = req.body;
+  const prompt = `Design a partner program.\nPartner type: ${partnerType}\nProduct: ${product}\nIncentive model: ${incentives}\nInclude: partner tier structure (Silver/Gold/Platinum), certification program design, co-selling motion and rules of engagement, deal registration and protection, MDF (market development funds) program, partner portal requirements, partner enablement curriculum, QBR cadence with key partners, partner success metrics (sourced/influenced revenue), and how to recruit the right first 10 partners.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
