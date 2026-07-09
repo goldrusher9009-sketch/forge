@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v629.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v630.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201977,6 +201977,66 @@ app.post('/api/strategy/scenario-planning', requireAuth, async (req: AuthRequest
 app.post('/api/career/deep-work', requireAuth, async (req: AuthRequest, res) => {
   const { professional, work_type, obstacles } = req.body;
   const prompt = `You are a deep work and cognitive productivity expert. Optimize the deep work practice of ${professional} doing ${work_type} overcoming ${obstacles}. Cover the deep work philosophy and principles, the cognitive capacity and attention science, the deep work scheduling and time blocking, the distraction and interruption elimination, the environment design for deep work, the ritual and routine design, the deep work metrics and tracking, the shallow work reduction strategy, the recovery and restoration design, and how to build deep work habits and systems that enable knowledge workers to consistently produce their best work by protecting and maximizing the high-concentration time that produces most of their value, while managing the shallow work demands that are unavoidable in organizational life.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/community-building', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, members, purpose } = req.body;
+  const prompt = `You are a community building and community-led growth expert. Build the community for ${brand} with ${members} around ${purpose}. Cover the community strategy framework, the community purpose and value proposition, the community platform selection, the community structure and governance, the content and programming strategy, the member journey and onboarding, the community moderation and culture, the community growth and acquisition strategy, the community-to-product feedback loop, and how to build communities that create genuine belonging and connection for members, that become self-sustaining through member-generated value, and that drive business outcomes through advocacy, retention, and the network effects that come from passionate members bringing in others who share their interests.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/discovery', requireAuth, async (req: AuthRequest, res) => {
+  const { product, users, problem } = req.body;
+  const prompt = `You are a product discovery and customer problem validation expert. Run discovery for ${product} with ${users} on ${problem}. Cover the product discovery framework, the customer problem identification and framing, the discovery research methods, the customer interview design and execution, the problem validation techniques, the opportunity sizing and prioritization, the solution hypothesis design, the prototype and concept testing, the discovery-to-delivery handoff, and how to run product discovery processes that produce genuine customer insight rather than confirmation bias, that validate that you are solving real problems worth solving before investing in building solutions, and that create a pipeline of well-validated opportunities for the development team to execute.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cognitive-mapping', requireAuth, async (req: AuthRequest, res) => {
+  const { decision, factors, relationships } = req.body;
+  const prompt = `You are a cognitive mapping and strategic thinking expert. Build the cognitive map for ${decision} considering ${factors} and their ${relationships}. Cover the cognitive mapping methodology, the mental model elicitation, the causal loop diagram design, the feedback loop identification, the leverage point analysis, the unintended consequence mapping, the stakeholder belief mapping, the assumption surfacing and testing, the decision model refinement, and how to use cognitive mapping to make complex decisions more systematically by making the mental models of decision-makers explicit, surfacing hidden assumptions, revealing the causal relationships and feedback loops that determine system behavior, and identifying leverage points where interventions will have the greatest effect.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/workforce-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, horizon, capabilities } = req.body;
+  const prompt = `You are a workforce planning and human capital strategy expert. Plan the workforce for ${organization} over ${horizon} horizon for ${capabilities}. Cover the workforce planning framework, the demand forecasting methodology, the supply analysis and pipeline, the gap analysis and prioritization, the build vs. buy vs. borrow analysis, the workforce segmentation strategy, the succession planning design, the workforce risk management, the workforce plan financials, and how to build workforce plans that connect human capital strategy to business strategy, anticipate capability gaps before they become operational problems, and make proactive investments in building the workforce the organization needs to execute its strategy over the planning horizon.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/ai-product', requireAuth, async (req: AuthRequest, res) => {
+  const { product, users, ai_capability } = req.body;
+  const prompt = `You are an AI product management and AI feature design expert. Design the ${ai_capability} AI feature for ${product} serving ${users}. Cover the AI product strategy framework, the AI use case identification and prioritization, the data and model requirements, the AI feature design and UX, the human-in-the-loop design, the AI quality and evaluation framework, the AI safety and bias mitigation, the AI product metrics and success criteria, the AI product roadmap design, and how to build AI-powered products that deliver genuine user value rather than AI for its own sake, that handle edge cases and failure modes gracefully, and that build user trust through transparency about what the AI is doing and when to rely on it versus human judgment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/debt-restructuring', requireAuth, async (req: AuthRequest, res) => {
+  const { company, obligations, constraints } = req.body;
+  const prompt = `You are a debt restructuring and financial distress expert. Restructure the debt of ${company} with ${obligations} under ${constraints}. Cover the financial distress diagnosis, the debt capacity and coverage analysis, the creditor mapping and priority analysis, the restructuring strategy options, the out-of-court restructuring approach, the in-court process considerations, the creditor negotiation strategy, the business plan development for restructuring, the liquidity and cash management, and how to navigate debt restructuring processes that preserve going-concern value for all stakeholders, achieve sustainable capital structures, and position the business for recovery and growth after the restructuring is complete.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/talent-retention', requireAuth, async (req: AuthRequest, res) => {
+  const { company, talent, risks } = req.body;
+  const prompt = `You are a talent retention and employee engagement expert. Design the retention strategy for ${company} retaining ${talent} mitigating ${risks}. Cover the retention strategy framework, the flight risk identification and prediction, the stay interview and retention conversation design, the compensation and equity competitiveness analysis, the career development and growth opportunity design, the manager effectiveness improvement, the recognition and reward program design, the work environment and culture improvements, the retention metrics and measurement, and how to build retention strategies that address the actual reasons your best people might leave rather than generic programs, and that create an environment where top performers choose to stay because the opportunity to grow, the quality of their manager, and the mission of the company are compelling.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/public-relations', requireAuth, async (req: AuthRequest, res) => {
+  const { company, story, media } = req.body;
+  const prompt = `You are a public relations and media strategy expert. Design the PR strategy for ${company} telling ${story} across ${media}. Cover the PR strategy framework, the media landscape mapping, the journalist and influencer mapping, the news and story angle development, the press release and media pitch design, the thought leadership and executive visibility program, the crisis communications integration, the media monitoring and measurement, the PR agency management, and how to build PR programs that generate authentic earned media coverage that builds awareness and credibility, that position your executives as genuine thought leaders rather than promotional voices, and that create a media narrative that supports your business objectives without depending on paid media.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/presentation-coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { presenter, topic, audience } = req.body;
+  const prompt = `You are a presentation skills and executive communication expert. Coach ${presenter} on presenting ${topic} to ${audience}. Cover the presentation framework and structure, the audience analysis and message tailoring, the opening and attention capture, the core argument and narrative structure, the data visualization and simplification, the slide design principles, the body language and vocal delivery, the Q&A management and difficult question handling, the practice and rehearsal strategy, and how to develop the presentation skills that allow executives and professionals to consistently communicate with clarity, confidence, and impact in any setting from board presentations to all-hands meetings to media appearances and keynote speeches.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/ops-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { operations, metrics, decisions } = req.body;
+  const prompt = `You are an operations analytics and continuous improvement expert. Build the operations intelligence capability for ${operations} tracking ${metrics} to drive ${decisions}. Cover the operational analytics strategy, the operations metric framework design, the data collection and instrumentation, the operational dashboard design, the anomaly detection and alerting, the root cause analysis methodology, the continuous improvement program, the benchmarking and best practice identification, the operations review cadence and governance, and how to build operations intelligence that goes beyond reporting on what happened to understanding why it happened, predicting what will happen, and prescribing what actions to take to continuously improve operational performance in ways that compound over time.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
