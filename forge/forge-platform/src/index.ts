@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v445.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v446.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191602,6 +191602,59 @@ app.post('/api/product/launch-readiness', requireAuth, async (req: AuthRequest, 
 app.post('/api/sales/customer-advisory-board', requireAuth, async (req: AuthRequest, res) => {
   const { stage, goals, members } = req.body;
   const prompt = `Design a Customer Advisory Board.\nCompany stage: ${stage}\nCAB goals: ${goals}\nTarget member profile: ${members}\nInclude: CAB charter and purpose, member selection criteria and composition (10-15 ideal members), recruitment and commitment ask, meeting cadence and format (in-person/virtual), agenda design for maximum value, how to use CAB input in product decisions, member benefits and recognition, confidentiality framework, CAB lifecycle management (rotation policy), and how to leverage CAB members as references and advocates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 311+312 routes
+app.post('/api/dev/monorepo-design', requireAuth, async (req: AuthRequest, res) => {
+  const { packages, team, tooling } = req.body;
+  const prompt = `Design a monorepo architecture.\nPackages/apps: ${packages}\nTeam size: ${team}\nPreferred tooling: ${tooling}\nInclude: monorepo vs. polyrepo decision framework, tooling selection (Turborepo/Nx/Bazel/Lerna), workspace configuration, shared package design, build caching strategy, CI/CD for monorepo (affected packages only), versioning strategy (independent vs. fixed), dependency management, code ownership model, and how to migrate from polyrepo to monorepo incrementally.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/champion-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { contact, company, stage } = req.body;
+  const prompt = `Build a champion development strategy.\nContact: ${contact}\nCompany: ${company}\nDeal stage: ${stage}\nInclude: champion vs. coach vs. economic buyer distinction, champion identification criteria, champion development ladder (awareness→advocate→internal seller), giving champions selling tools (internal decks/ROI calculators/business case), executive visibility for champion, champion protection if they leave, how to build a second champion, multi-threading even with a strong champion, and champion motivation mapping (what's in it for them personally).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/journey-map', requireAuth, async (req: AuthRequest, res) => {
+  const { persona, goal, touchpoints } = req.body;
+  const prompt = `Create a customer journey map.\nPersona: ${persona}\nGoal they're trying to achieve: ${goal}\nKey touchpoints: ${touchpoints}\nInclude: journey phases (awareness/consideration/decision/onboarding/adoption/expansion/advocacy), actions at each phase, thoughts and questions at each phase, emotional highs and lows, pain points and friction, opportunities for improvement, moments of truth, cross-functional ownership map, metrics to measure each phase, and how to use the journey map in product and marketing decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/growth-sprint', requireAuth, async (req: AuthRequest, res) => {
+  const { metric, timeline, resources } = req.body;
+  const prompt = `Design a focused growth sprint.\nMetric to move: ${metric}\nTimeline: ${timeline}\nResources available: ${resources}\nInclude: sprint goal and success criteria, experiment backlog generation (20+ ideas), ICE scoring for prioritization (Impact/Confidence/Ease), top 5 experiments to run, experiment design for each (hypothesis/variant/success metric/audience), execution timeline, daily standup format for growth sprint, results analysis template, and criteria for scaling a winning experiment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/performance-improvement-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { role, issues, timeline } = req.body;
+  const prompt = `Design a Performance Improvement Plan (PIP).\nRole: ${role}\nPerformance issues: ${issues}\nTimeline: ${timeline}\nInclude: PIP legal and ethical framework, specific measurable goals for improvement, weekly check-in structure, manager support commitments, documentation requirements, success criteria definition, consequence communication, how to deliver the PIP conversation, employee support resources, and what happens at PIP completion (success path vs. separation path).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/cohort-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { metric, period, segments } = req.body;
+  const prompt = `Design a cohort analysis framework.\nKey metric: ${metric}\nAnalysis period: ${period}\nCustomer segments: ${segments}\nInclude: cohort definition (time-based vs. behavior-based), retention curve interpretation, LTV cohort analysis by acquisition channel, payback period by cohort, early indicators of long-term retention, cohort comparison methodology, statistical significance for cohort differences, visualization recommendations (heatmap/waterfall/line chart), leading indicator identification, and how to use cohort analysis to improve unit economics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/disaster-recovery', requireAuth, async (req: AuthRequest, res) => {
+  const { system, rto, rpo } = req.body;
+  const prompt = `Design a disaster recovery plan.\nSystem: ${system}\nRecovery Time Objective: ${rto}\nRecovery Point Objective: ${rpo}\nInclude: disaster scenario classification (hardware/software/data/natural/security), DR tier selection (cold/warm/hot standby), backup strategy (3-2-1 rule), data replication approach, failover automation vs. manual decision, DR drill cadence and runbooks, communication plan during incident, RTO/RPO testing methodology, cost modeling for DR investment, and business continuity planning integration.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/growth-hacking', requireAuth, async (req: AuthRequest, res) => {
+  const { product, constraint, goal } = req.body;
+  const prompt = `Design growth hacking experiments.\nProduct: ${product}\nConstraint: ${constraint}\nGrowth goal: ${goal}\nInclude: 20 growth hacking ideas across acquisition/activation/retention/referral/revenue, viral coefficient calculation methodology, referral program mechanics, product-led virality hooks, landing page experimentation ideas, distribution channel arbitrage opportunities, partnership growth tactics, content-led growth flywheel, community-led acquisition, and how to build a systematic growth experimentation culture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/risk-matrix', requireAuth, async (req: AuthRequest, res) => {
+  const { features, timeline, dependencies } = req.body;
+  const prompt = `Create a product risk matrix.\nFeatures in scope: ${features}\nTimeline: ${timeline}\nKey dependencies: ${dependencies}\nInclude: risk identification by category (technical/resource/market/dependency/scope), probability and impact scoring, risk heat map description, mitigation strategy per high risk, contingency plans, risk owner assignments, early warning signals for each risk, risk review cadence, how to communicate risks to stakeholders, and go/no-go risk threshold definition.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/sales-transition-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { account, rep, timeline } = req.body;
+  const prompt = `Design a sales account transition plan.\nAccount: ${account}\nRep transition: ${rep}\nTimeline: ${timeline}\nInclude: account handoff documentation (history/contacts/open opportunities/key relationships), customer communication strategy for rep change, introduction meeting format (outgoing + incoming rep + customer), relationship mapping transfer, open deal status and next steps, risk assessment for churn during transition, first 30-day plan for incoming rep, and how to turn a transition into an expansion opportunity.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
