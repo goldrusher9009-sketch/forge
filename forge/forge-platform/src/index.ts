@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v417.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v418.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190118,6 +190118,59 @@ app.post('/api/product/feature-team', requireAuth, async (req: AuthRequest, res)
 app.post('/api/sales/deal-accelerate', requireAuth, async (req: AuthRequest, res) => {
   const { deal, blockers, timeline } = req.body;
   const prompt = `Create a deal acceleration strategy.\nDeal context: ${deal}\nBlockers: ${blockers}\nNeeded by: ${timeline}\nInclude: blocker removal tactics, executive sponsor outreach plan, economic buyer strategy, urgency creation (mutual action plan), and specific next steps with owners and dates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 255+256 routes
+app.post('/api/dev/observability-stack', requireAuth, async (req: AuthRequest, res) => {
+  const { stack, issues, scale } = req.body;
+  const prompt = `Design a comprehensive observability stack.\nStack: ${stack}\nCurrent issues: ${issues}\nScale: ${scale}\nInclude: metrics (Prometheus/Grafana), logs (ELK/Loki), traces (Jaeger/Tempo), alerting strategy, SLO/SLA definitions, and runbook templates.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/customer-story', requireAuth, async (req: AuthRequest, res) => {
+  const { customer, problem, outcome } = req.body;
+  const prompt = `Write a compelling customer success story for sales use.\nCustomer: ${customer}\nProblem they had: ${problem}\nOutcome achieved: ${outcome}\nInclude: situation, complication, solution, results (quantified), and 3 pull quotes. Format for case study and one-pager use.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/expansion-revenue', requireAuth, async (req: AuthRequest, res) => {
+  const { product, currentArr, topSegment } = req.body;
+  const prompt = `Design an expansion revenue strategy.\nProduct: ${product}\nCurrent ARR: ${currentArr}\nTop segment: ${topSegment}\nInclude: upsell triggers, cross-sell opportunities, usage-based expansion model, customer success playbook for expansion, and 12-month expansion ARR model.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/b2b-seo', requireAuth, async (req: AuthRequest, res) => {
+  const { product, icp, competitors } = req.body;
+  const prompt = `Create a B2B SEO strategy.\nProduct: ${product}\nICP: ${icp}\nCompetitors: ${competitors}\nInclude: keyword strategy (bottom/middle/top of funnel), content pillars, competitor gap analysis, link building approach, technical SEO priorities, and 6-month content calendar outline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/talent-brand', requireAuth, async (req: AuthRequest, res) => {
+  const { company, culture, competitors } = req.body;
+  const prompt = `Build an employer talent brand strategy.\nCompany: ${company}\nCulture: ${culture}\nCompetitor employers: ${competitors}\nInclude: EVP (Employee Value Proposition), career page copy, LinkedIn strategy, Glassdoor response approach, and talent marketing calendar.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/saas-unit-economics', requireAuth, async (req: AuthRequest, res) => {
+  const { arr, cac, ltv } = req.body;
+  const prompt = `Analyze and optimize SaaS unit economics.\nARR: ${arr}\nCAC: ${cac}\nLTV: ${ltv}\nInclude: LTV:CAC ratio analysis, payback period, gross margin impact, cohort analysis recommendations, benchmark comparison, and specific levers to improve each metric.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/data-quality', requireAuth, async (req: AuthRequest, res) => {
+  const { schema, issues, pipeline } = req.body;
+  const prompt = `Design a data quality framework.\nSchema: ${schema}\nKnown issues: ${issues}\nPipeline: ${pipeline}\nInclude: data quality dimensions (accuracy, completeness, consistency), validation rules, monitoring alerts, lineage tracking, and remediation workflows.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/paid-media', requireAuth, async (req: AuthRequest, res) => {
+  const { budget, audience, goal } = req.body;
+  const prompt = `Create a paid media strategy and budget allocation.\nBudget: ${budget}\nTarget audience: ${audience}\nGoal: ${goal}\nInclude: channel mix (Google/LinkedIn/Meta), campaign structure, bidding strategy, creative brief, landing page recommendations, and expected CPL/ROAS targets.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/beta-program-design', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, targetUsers, timeline } = req.body;
+  const prompt = `Design a beta program for a new feature.\nFeature: ${feature}\nTarget users: ${targetUsers}\nTimeline: ${timeline}\nInclude: beta cohort selection criteria, feedback collection system, success metrics, communication cadence, feature flag rollout plan, and graduation criteria to GA.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/cold-call-script', requireAuth, async (req: AuthRequest, res) => {
+  const { persona, pain, product } = req.body;
+  const prompt = `Write a cold call script that actually books meetings.\nBuyer persona: ${persona}\nKey pain points: ${pain}\nProduct: ${product}\nInclude: opener (10 seconds), permission-based pitch, qualifying questions, objection handlers (not interested, send an email, no budget, wrong time), and close for the meeting.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
