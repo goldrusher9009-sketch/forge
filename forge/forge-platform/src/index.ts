@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v704.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v705.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -206477,6 +206477,66 @@ app.post('/api/strategy/social-enterprise', requireAuth, async (req: AuthRequest
 app.post('/api/strategy/knowledge-work', requireAuth, async (req: AuthRequest, res) => {
   const { organization, workers, output } = req.body;
   const prompt = `You are a knowledge work strategy and productivity expert. Design knowledge work strategy for ${organization} with ${workers} targeting ${output}. Cover knowledge work framework, deep work and focus time protection, meeting culture and async communication, knowledge management and institutional memory, tools and workflow design, performance measurement for knowledge workers, creative environment and autonomy, learning and skill development, remote and hybrid work design, and how to build knowledge work organizations that produce exceptional output by creating the conditions where knowledge workers can do their best thinking through protecting uninterrupted focus time, reducing the coordination overhead of unnecessary meetings and approvals, and building the knowledge management systems that make expertise and context accessible to everyone rather than locked in individual minds or email inboxes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-access', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, markets } = req.body;
+  const prompt = `You are a market access strategy and payer relations expert. Design market access strategy for ${company} with ${product} in ${markets}. Cover market access framework, value dossier and health economic modeling, payer segmentation and coverage strategy, reimbursement pathway and pricing strategy, HTA submission and evidence requirements, real-world evidence generation, patient access programs, key account management for payers, market access launch sequencing, and how to build market access strategies that achieve broad coverage and reimbursement by generating the clinical and economic evidence that demonstrates value in terms that payers use to make coverage decisions, engaging payers early to understand their specific evidence requirements before committing to the pivotal trial design, and designing patient access programs that bridge coverage gaps while the permanent reimbursement pathway is established.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/tech-ethics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, technology, impacts } = req.body;
+  const prompt = `You are a technology ethics strategy and responsible innovation expert. Design tech ethics framework for ${company} deploying ${technology} with ${impacts}. Cover technology ethics framework, stakeholder impact assessment, rights-based and consequentialist analysis, algorithmic accountability, privacy by design, digital rights and consent architecture, worker and community impact, ethics review board design, ethics washing avoidance, and how to build technology ethics programs that move beyond compliance to genuine responsibility by conducting rigorous impact assessments that identify who is harmed by the technology before it scales rather than after, embedding ethicists in product teams who have authority to delay or modify launches rather than just writing reports, and building the external accountability mechanisms that provide credibility that internal ethics review lacks.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/liquidity-management', requireAuth, async (req: AuthRequest, res) => {
+  const { company, cash_flows, needs } = req.body;
+  const prompt = `You are a corporate liquidity management and treasury strategy expert. Design liquidity management for ${company} with ${cash_flows} for ${needs}. Cover liquidity management framework, cash flow forecasting and visibility, cash concentration and pooling structures, working capital optimization, short-term investment policy and counterparty limits, credit facility design and revolving credit, contingency liquidity planning, FX and interest rate exposure, banking relationship management, and how to build liquidity management programs that ensure the company always has access to the cash it needs by developing the cash flow forecasting capability that provides visibility into future liquidity needs with enough lead time to arrange funding, structuring the credit facilities that provide backstop liquidity when operating cash flows are insufficient, and optimizing the cash management infrastructure that puts every dollar to work rather than sitting in non-earning accounts.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/food-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, market } = req.body;
+  const prompt = `You are a food technology strategy and alternative protein expert. Design food tech strategy for ${company} with ${product} in ${market}. Cover food tech strategy framework, food science and formulation strategy, regulatory pathway and GRAS status, manufacturing scale-up and cost reduction roadmap, taste and texture parity achievement, supply chain and ingredient sourcing, retail and foodservice channel strategy, consumer education and behavior change, sustainability positioning, and how to build food technology businesses that achieve mainstream adoption by solving the taste and texture parity challenge that prevents alternative protein products from converting mainstream consumers who will not compromise on sensory experience, developing the manufacturing cost reduction roadmap that achieves price parity with conventional products at scale, and building the distribution relationships in retail and foodservice that provide the accessibility mainstream consumers require.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/health-equity', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, population, disparities } = req.body;
+  const prompt = `You are a health equity strategy and social determinants expert. Design health equity strategy for ${organization} serving ${population} addressing ${disparities}. Cover health equity framework, health disparity data analysis and root cause, social determinants screening and referral, culturally competent care design, community health worker programs, language access and health literacy, structural racism and bias in care, community benefit investment, health equity metrics and accountability, and how to build health equity strategies that measurably reduce disparities in health outcomes by addressing both the clinical care and the social determinants of health that drive health disparities, designing interventions that are developed with the communities they serve rather than for those communities, and building the data infrastructure that makes disparities visible and tracks whether interventions are actually closing the gap or just addressing the most accessible patients within disadvantaged populations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/competitive-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { company, competitors, decisions } = req.body;
+  const prompt = `You are a competitive intelligence strategy and market intelligence expert. Design competitive intelligence for ${company} tracking ${competitors} informing ${decisions}. Cover competitive intelligence framework, intelligence requirements definition, primary and secondary research methodology, competitor monitoring and signal detection, win and loss analysis, competitive positioning assessment, technology and patent monitoring, sales enablement intelligence, intelligence distribution and consumption, and how to build competitive intelligence programs that provide genuine decision advantage by defining the specific strategic questions the intelligence needs to answer before designing the collection and analysis approach, building the systematic monitoring that detects competitor moves early when there is still time to respond rather than discovering competitive threats after they have already affected market position, and distributing intelligence in formats that busy decision-makers will actually read and apply rather than comprehensive reports that sit unread.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/space-industry', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, market } = req.body;
+  const prompt = `You are a space industry strategy and commercial space expert. Design space industry strategy for ${company} in ${segment} targeting ${market}. Cover space industry framework, launch services and rideshare economics, satellite constellation design and spectrum, earth observation and data services, in-space manufacturing and services, space tourism and human spaceflight, government versus commercial revenue mix, space regulation and licensing, international competition, and how to build commercial space businesses that achieve sustainable revenue by identifying the specific market need that space-based capability serves better than terrestrial alternatives at a cost the market will pay, designing the technical architecture that achieves the performance requirements while managing the development cost risk that has consumed many commercial space ventures, and building the regulatory relationships and launch manifest that provide the deployment certainty commercial customers require to commit to satellite-based services.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/philanthropy', requireAuth, async (req: AuthRequest, res) => {
+  const { funder, focus, approach } = req.body;
+  const prompt = `You are a philanthropy strategy and grantmaking expert. Design philanthropy strategy for ${funder} focused on ${focus} with ${approach}. Cover philanthropy strategy framework, theory of change and impact hypothesis, portfolio construction across catalytic and sustaining grants, grantee selection and due diligence, general operating versus restricted support, capacity building and technical assistance, field building and ecosystem investment, learning and adaptation, philanthropic exit and sustainability, and how to build philanthropic strategies that maximize impact by developing a clear and testable theory of change that specifies how the philanthropic investment produces the outcomes targeted, selecting grantees with the organizational capacity to execute rather than just compelling missions, and providing the long-term general operating support that allows grantees to build the organizational strength that makes programmatic work sustainable rather than perpetually grant-dependent.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/creative-industries', requireAuth, async (req: AuthRequest, res) => {
+  const { company, content, market } = req.body;
+  const prompt = `You are a creative industries strategy and entertainment business expert. Design creative industries strategy for ${company} creating ${content} for ${market}. Cover creative industries framework, IP development and franchise building, talent relationships and creative partnerships, distribution strategy and windowing, audience development and community, rights management and licensing, international content adaptation, streaming versus theatrical versus broadcast, production economics and financing, and how to build creative industry businesses that generate sustainable IP value by developing the creative voice and aesthetic that defines a distinctive brand in crowded markets where audiences have nearly infinite content choices, building the talent relationships that provide consistent access to the creative excellence that drives audience engagement, and managing the IP portfolio with the long-term discipline that builds franchise value rather than exploiting IP short-term until the audience has had enough.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/deep-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, technology, application } = req.body;
+  const prompt = `You are a deep tech strategy and hard technology commercialization expert. Design deep tech strategy for ${company} with ${technology} targeting ${application}. Cover deep tech strategy framework, technology readiness level assessment, IP strategy and freedom to operate, development timeline and milestone planning, capital requirements and funding strategy, technical risk management and de-risking, application market selection and beachhead, customer development for complex technical products, manufacturing scale-up strategy, and how to build deep tech companies that successfully navigate the long and capital-intensive path from laboratory breakthrough to commercial product by disciplining technology development with market validation at each stage, making the difficult application market selection decisions early that focus development resources rather than trying to build for every potential use case, and building the capital raising strategy that matches funding sources to development stage from government grants through venture capital to strategic corporate partners who have commercial interest in the technology succeeding.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
