@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v433.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v434.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -190966,6 +190966,59 @@ app.post('/api/product/north-star-metric', requireAuth, async (req: AuthRequest,
 app.post('/api/sales/opportunity-plan', requireAuth, async (req: AuthRequest, res) => {
   const { deal, timeline, risks } = req.body;
   const prompt = `Build a comprehensive opportunity plan.\nDeal: ${deal}\nClose timeline: ${timeline}\nRisks: ${risks}\nInclude: MEDDPICC scorecard, stakeholder map with influence ratings, decision criteria alignment, competitive position, mutual action plan with dates, risk mitigation actions, internal resource requirements, and weekly milestones to close.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 287+288 routes
+app.post('/api/dev/data-security', requireAuth, async (req: AuthRequest, res) => {
+  const { dataTypes, threats, compliance } = req.body;
+  const prompt = `Design a data security architecture.\nData types: ${dataTypes}\nThreat model: ${threats}\nCompliance requirements: ${compliance}\nInclude: data classification schema, encryption at rest and in transit, access control model (RBAC/ABAC), secrets management, audit logging strategy, penetration testing plan, and incident response for data breaches.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/revops-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { process, tools, gaps } = req.body;
+  const prompt = `Conduct a Revenue Operations audit.\nCurrent process: ${process}\nTools in use: ${tools}\nKnown gaps: ${gaps}\nInclude: lead-to-revenue flow mapping, funnel conversion analysis, data quality assessment, tech stack redundancy audit, reporting gaps, alignment issues (marketing-sales-CS), and prioritized improvement roadmap.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/product-announcement', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, audience, channel } = req.body;
+  const prompt = `Write a product announcement strategy.\nFeature: ${feature}\nAudience: ${audience}\nChannel: ${channel}\nInclude: announcement copy (in-app/email/blog variants), launch timeline, segmented rollout messaging, support team briefing, social media copy, and how to turn the launch into a media/community moment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/paid-ads-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, budget, channels } = req.body;
+  const prompt = `Build a paid advertising strategy.\nProduct: ${product}\nBudget: ${budget}\nChannels: ${channels}\nInclude: channel allocation by funnel stage, audience targeting strategy per channel, creative testing framework, bidding strategy, landing page requirements, attribution model, budget pacing, and scaling triggers (ROAS/CPA thresholds).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/offboarding-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { role, knowledge, timeline } = req.body;
+  const prompt = `Design an employee offboarding plan.\nRole: ${role}\nKnowledge areas: ${knowledge}\nTimeline: ${timeline}\nInclude: knowledge transfer plan, documentation checklist, system access revocation sequence, handoff meeting structure, exit interview guide, alumni relations strategy, reference policy, and how to preserve institutional knowledge.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/deal-flow-system', requireAuth, async (req: AuthRequest, res) => {
+  const { stage, sources, criteria } = req.body;
+  const prompt = `Design a deal flow management system.\nTarget stage: ${stage}\nSourcing channels: ${sources}\nInvestment criteria: ${criteria}\nInclude: sourcing strategy by channel, CRM pipeline design, first-pass screening criteria, deep dive process, partner introduction system, founder follow-up cadence, and reporting metrics (funnel conversion, sourcing attribution).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/container-registry', requireAuth, async (req: AuthRequest, res) => {
+  const { stack, scale, security } = req.body;
+  const prompt = `Design a container registry and image management strategy.\nStack: ${stack}\nScale: ${scale}\nSecurity requirements: ${security}\nInclude: registry selection (ECR/GCR/Harbor/DockerHub), image naming conventions, tagging strategy, vulnerability scanning pipeline, base image policy, image lifecycle management, and pull policy for production deployments.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/customer-expansion-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { segment, product, trigger } = req.body;
+  const prompt = `Design a customer expansion marketing program.\nTarget segment: ${segment}\nExpansion product: ${product}\nTrigger signals: ${trigger}\nInclude: in-app upsell moments, lifecycle email sequence for expansion, CS-to-marketing handoff, usage-based triggers, trial-within-product approach, ROI calculator for upgrade, and how to coordinate with sales on large account expansion.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/prd-summary', requireAuth, async (req: AuthRequest, res) => {
+  const { feature, problem, solution } = req.body;
+  const prompt = `Write a Product Requirements Document (PRD).\nFeature: ${feature}\nProblem: ${problem}\nSolution approach: ${solution}\nInclude: problem statement, goals and non-goals, user stories (5-7), functional requirements, non-functional requirements (performance/security/scale), open questions, success metrics, launch criteria, and out-of-scope items.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/deep-discovery', requireAuth, async (req: AuthRequest, res) => {
+  const { company, pain, budget } = req.body;
+  const prompt = `Conduct a deep discovery session.\nCompany: ${company}\nSuspected pain: ${pain}\nBudget signals: ${budget}\nInclude: situation questions, problem questions, implication questions, need-payoff questions (SPIN selling), budget and authority qualification, timeline establishment, competitive landscape questions, and how to summarize back to confirm understanding and advance the deal.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
