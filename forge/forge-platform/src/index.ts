@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v645.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v646.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202937,6 +202937,66 @@ app.post('/api/product/service-design', requireAuth, async (req: AuthRequest, re
 app.post('/api/strategy/venture-building', requireAuth, async (req: AuthRequest, res) => {
   const { organization, opportunity, resources } = req.body;
   const prompt = `You are a corporate venture building and new business creation expert. Design the venture build for ${organization} around ${opportunity} with ${resources}. Cover the venture building framework, the opportunity identification and validation, the venture thesis development, the team formation strategy, the MVP and validation approach, the venture governance and structure, the corporate-venture relationship design, the funding and investment strategy, the venture scaling strategy, and how to design corporate venture building programs that give new ventures the autonomy and speed they need to move like startups while leveraging the corporate assets of brand, distribution, data, and capital that give corporate ventures structural advantages over purely independent startups, and that navigate the organizational tensions between corporate control and venture autonomy in ways that allow ventures to move fast enough to win while maintaining the strategic alignment that justifies the corporate investment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/human-resources/org-design', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, strategy, stage } = req.body;
+  const prompt = `You are an organizational design and structure expert. Design the organization for ${organization} executing ${strategy} at ${stage}. Cover the org design framework, the structural design options, the span of control optimization, the centralization vs. decentralization decisions, the matrix and cross-functional design, the role and accountability design, the team topology and size, the org design change management, the org design measurement and iteration, and how to design organizations that efficiently coordinate work and decision-making to execute the business strategy, that balance the specialization benefits of functional structures with the customer focus and agility of product or business unit structures, and that evolve the organizational design as the company grows and the strategy changes rather than keeping organizational structures that made sense at an earlier stage but are now limiting the company ability to execute at the speed and scale the market requires.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/sales-compensation', requireAuth, async (req: AuthRequest, res) => {
+  const { company, roles, goals } = req.body;
+  const prompt = `You are a sales compensation design and incentive strategy expert. Design the sales compensation for ${company} for ${roles} driving ${goals}. Cover the sales compensation framework, the on-target earnings and pay mix design, the quota setting methodology, the commission structure and rates, the accelerators and decelerators, the SPIFs and contests, the compensation plan administration, the plan communication and adoption, the compensation plan analytics and optimization, and how to design sales compensation plans that drive the specific sales behaviors that lead to the business outcomes you want, that are simple enough for salespeople to understand and trust, that pay the right people the right amounts relative to market benchmarks and internal equity, and that are reviewed and updated regularly as the business model and go-to-market strategy evolve rather than perpetuating plans that incentivize the wrong behaviors because updating them is administratively inconvenient.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/online-course', requireAuth, async (req: AuthRequest, res) => {
+  const { creator, topic, audience } = req.body;
+  const prompt = `You are an online course business strategy and course creation expert. Build the online course business for ${creator} on ${topic} for ${audience}. Cover the online course business framework, the course topic validation and positioning, the course curriculum design, the course format and production, the platform selection strategy, the pricing and packaging strategy, the launch strategy, the evergreen course strategy, the student success and community design, and how to build online course businesses that generate sustainable revenue by helping students achieve real outcomes, that develop the marketing and sales systems that attract a consistent flow of qualified students rather than being dependent on launch-to-launch income spikes, and that create the learning experiences that generate the testimonials and case studies that become the most powerful marketing assets for attracting future students who want the same results.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/manufacturing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, goals } = req.body;
+  const prompt = `You are a manufacturing strategy and operations excellence expert. Design the manufacturing strategy for ${company} producing ${product} toward ${goals}. Cover the manufacturing strategy framework, the make vs. buy analysis, the manufacturing footprint strategy, the lean manufacturing and waste reduction, the quality management system, the manufacturing technology and automation, the supplier integration strategy, the manufacturing capacity planning, the manufacturing cost structure, and how to design manufacturing strategies that deliver the quality, cost, and agility needed to compete in your market, that build the operational capabilities that create durable competitive advantages rather than just meeting minimum performance thresholds, and that invest in the manufacturing technologies and process improvements that reduce cost and improve quality over time rather than accepting current performance as the baseline for future operations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/global-expansion', requireAuth, async (req: AuthRequest, res) => {
+  const { company, markets, model } = req.body;
+  const prompt = `You are a global expansion strategy and international market entry expert. Design the global expansion for ${company} into ${markets} using ${model}. Cover the global expansion framework, the market selection and prioritization, the market entry mode selection, the localization strategy, the go-to-market localization, the regulatory and compliance strategy, the local talent and partnerships, the global operating model, the global expansion metrics and milestones, and how to design global expansion strategies that enter markets in the right sequence and through the right modes to maximize learning and success probability, that localize enough to win in each market while maintaining the efficiency and brand consistency that comes from global coordination, and that build the international organizational capabilities and partnerships that allow you to grow across multiple markets simultaneously rather than treating each market as a one-off project that requires reinventing your international playbook from scratch.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/platform', requireAuth, async (req: AuthRequest, res) => {
+  const { company, ecosystem, model } = req.body;
+  const prompt = `You are a platform strategy and ecosystem design expert. Design the platform strategy for ${company} with ${ecosystem} using ${model}. Cover the platform strategy framework, the platform architecture and openness decisions, the ecosystem participant design, the governance and rule setting, the value proposition for each participant type, the seeding and bootstrapping strategy, the network effects design, the monetization and value capture strategy, the platform evolution and expansion, and how to design platform strategies that create the multi-sided network effects that produce winner-take-most dynamics, that attract and retain the ecosystem participants whose participation creates value for other participants, and that capture enough of the value created through the platform to build a sustainable business while leaving enough value for ecosystem participants to make their participation worthwhile and to prefer your platform over competitors or going direct.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/data-governance', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, data, goals } = req.body;
+  const prompt = `You are a data governance strategy and data management expert. Design the data governance for ${organization} over ${data} toward ${goals}. Cover the data governance framework, the data ownership and stewardship model, the data quality standards and measurement, the data catalog and metadata management, the data privacy and security governance, the data access and entitlements, the master data management, the data lifecycle management, the data governance organization, and how to design data governance programs that make data a trusted, governed asset that supports analytics and AI initiatives rather than a source of quality problems and compliance risk, that give data users access to the data they need while protecting sensitive data from unauthorized access, and that build the data culture and practices that make good data management a shared organizational responsibility rather than a burden imposed by a central team on resistant business units.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/human-resources/culture-building', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, values, goals } = req.body;
+  const prompt = `You are an organizational culture design and culture change expert. Build the culture for ${organization} around ${values} toward ${goals}. Cover the culture building framework, the culture assessment and diagnosis, the culture vision and values definition, the culture architecture design, the hiring for culture fit and add, the onboarding culture transmission, the leadership modeling and behavior, the culture reinforcement systems, the culture measurement and evolution, and how to build organizational cultures that create competitive advantages by attracting and retaining the best people, enabling faster decision-making, and driving the behaviors that lead to superior customer and business outcomes, that are designed intentionally rather than emerging by accident from the accumulated behaviors and decisions of founders and early employees, and that evolve as the company grows and the strategy changes while maintaining the core identity and values that define what makes the organization distinctive.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/creative-brief', requireAuth, async (req: AuthRequest, res) => {
+  const { project, audience, goals } = req.body;
+  const prompt = `You are a creative strategy and briefing expert. Write the creative brief for ${project} targeting ${audience} to achieve ${goals}. Cover the creative brief framework, the business objective and marketing role, the audience insight and tension, the single-minded proposition, the tone and brand voice, the mandatory elements and constraints, the media context and channel, the success measurement, the timeline and production considerations, and how to write creative briefs that give creative teams the clear strategic direction and audience insight they need to do their best work rather than briefs that are so open-ended that they produce random creative or so prescriptive that they prevent creative thinking, that capture the one most important insight about the audience and their relationship to the brand that should drive the creative work, and that set clear success criteria so the team knows what a winning creative response looks like before presenting work.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-sizing', requireAuth, async (req: AuthRequest, res) => {
+  const { market, segment, approach } = req.body;
+  const prompt = `You are a market sizing and TAM/SAM/SOM analysis expert. Size the market for ${market} in ${segment} using ${approach}. Cover the market sizing framework, the top-down market sizing approach, the bottom-up market sizing approach, the TAM total addressable market, the SAM serviceable addressable market, the SOM serviceable obtainable market, the market sizing data sources, the market sizing assumptions and sensitivities, the market sizing validation and triangulation, and how to build market sizing analyses that are credible and defensible to investors and boards rather than arriving at unrealistically large numbers by making heroic assumptions about market share, that triangulate estimates from multiple approaches and data sources to bound the uncertainty, and that clearly document the assumptions and methodology so that the analysis can be updated as new data becomes available and stakeholders can evaluate the quality of the reasoning behind the numbers.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
