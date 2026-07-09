@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v442.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v443.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191443,6 +191443,59 @@ app.post('/api/product/user-testing', requireAuth, async (req: AuthRequest, res)
 app.post('/api/sales/sales-enablement', requireAuth, async (req: AuthRequest, res) => {
   const { persona, stage, format } = req.body;
   const prompt = `Create a sales enablement content plan.\nBuyer persona: ${persona}\nDeal stage: ${stage}\nPreferred format: ${format}\nInclude: content audit by funnel stage, content gap analysis, top 5 assets to create first (ROI-ranked), battle card template, objection handling one-pager, discovery question cheat sheet, demo script, POC/trial success kit, executive business review template, and how to measure sales enablement content effectiveness (usage/win rate/deal velocity impact).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 305+306 routes
+app.post('/api/dev/cloud-cost-optimize', requireAuth, async (req: AuthRequest, res) => {
+  const { provider, services, spend } = req.body;
+  const prompt = `Optimize cloud infrastructure costs.\nProvider: ${provider}\nServices in use: ${services}\nCurrent monthly spend: ${spend}\nInclude: cost visibility setup (tagging strategy/cost explorer), right-sizing analysis for compute, reserved instance vs. spot vs. savings plan recommendation, storage tiering strategy, data transfer cost reduction, unused resource identification, auto-scaling policy optimization, FinOps culture and team structure, showback/chargeback model for engineering teams, and realistic savings target by category.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/sales-tech-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { stack, team, problems } = req.body;
+  const prompt = `Audit the sales technology stack.\nCurrent tools: ${stack}\nTeam size: ${team}\nPain points: ${problems}\nInclude: tool overlap and consolidation opportunities, integration gaps causing manual work, data flow diagram between tools, CRM as system of record assessment, tool adoption metrics to measure, ROI calculation per tool, build vs. buy vs. consolidate decision framework, migration risk assessment, recommended stack by stage (seed/series A/growth), and implementation sequencing for improvements.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/documentation-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { product, audience, format } = req.body;
+  const prompt = `Design a product documentation strategy.\nProduct: ${product}\nAudience: ${audience}\nPreferred format: ${format}\nInclude: docs-as-code approach vs. traditional, documentation types hierarchy (quickstart/tutorials/how-to/reference/explanation — Diátaxis framework), content architecture and navigation, search optimization for docs, versioning strategy, contribution workflow for docs, freshness maintenance process, in-product contextual help integration, docs analytics to measure helpfulness, and localization approach.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/video-marketing', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, goal, platform } = req.body;
+  const prompt = `Design a video marketing strategy.\nBrand: ${brand}\nGoal: ${goal}\nTarget platform: ${platform}\nInclude: video format mix (short-form/long-form/live/animated), content pillar framework for video, production quality vs. authenticity balance, scriptwriting structure for marketing videos, thumbnail and hook optimization, distribution and cross-posting strategy, video SEO for YouTube, repurposing workflow (long → short clips), influencer video collaboration model, and performance metrics (view-through rate/watch time/conversion rate).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/employee-engagement', requireAuth, async (req: AuthRequest, res) => {
+  const { score, issues, team } = req.body;
+  const prompt = `Build an employee engagement improvement plan.\nCurrent engagement score: ${score}\nTop issues identified: ${issues}\nTeam context: ${team}\nInclude: root cause analysis framework for engagement drivers, quick wins (30-day actions), structural changes (90-day), manager behavior changes, recognition program design, feedback loop cadence (pulse surveys), psychological safety initiatives, work-life integration policies, career pathing clarity improvements, and how to measure engagement improvement over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/lp-relations', requireAuth, async (req: AuthRequest, res) => {
+  const { fundStage, performance, updates } = req.body;
+  const prompt = `Build an LP relations strategy.\nFund stage: ${fundStage}\nPerformance to date: ${performance}\nUpdate cadence: ${updates}\nInclude: LP communication calendar, quarterly report structure, annual meeting design, how to share bad news with LPs, portfolio company highlight format, DPI/TVPI/IRR communication best practices, how to manage LP concerns proactively, next fund fundraising timeline from existing LPs, LP advisory committee design, and how to build relationships that lead to re-ups.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/architecture-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { system, scale, problems } = req.body;
+  const prompt = `Conduct a system architecture audit.\nSystem description: ${system}\nCurrent scale: ${scale}\nKnown problems: ${problems}\nInclude: architecture diagram review methodology, bottleneck identification (single points of failure/scaling limits), coupling and cohesion analysis, data consistency risks, security posture review, observability gaps, tech debt hotspots, cost efficiency opportunities, migration path to improved architecture, and prioritized improvement roadmap by risk and impact.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/ab-test-design', requireAuth, async (req: AuthRequest, res) => {
+  const { element, hypothesis, traffic } = req.body;
+  const prompt = `Design a rigorous A/B test.\nElement to test: ${element}\nHypothesis: ${hypothesis}\nMonthly traffic: ${traffic}\nInclude: test design (A/B vs. A/B/n vs. multivariate), sample size and power calculation, minimum detectable effect definition, test duration calculation, randomization approach, primary and secondary metrics, guardrail metrics, how to avoid peeking and early stopping, statistical significance vs. practical significance, Bayesian vs. frequentist analysis choice, and decision framework for shipping vs. iterating.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/user-personas', requireAuth, async (req: AuthRequest, res) => {
+  const { research, segments, product } = req.body;
+  const prompt = `Create research-based user personas.\nResearch available: ${research}\nUser segments: ${segments}\nProduct: ${product}\nInclude: persona development methodology (data-driven vs. assumption-based), 3-4 persona profiles (name/role/goals/frustrations/behaviors/quote), jobs-to-be-done mapping per persona, persona validation approach, how to avoid persona anti-patterns (stereotyping/too many personas), persona usage in product decisions, persona update cadence, and lightweight persona card format for team reference.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/negotiation-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, leverage, redlines } = req.body;
+  const prompt = `Build a negotiation playbook for this deal.\nDeal context: ${deal}\nLeverage position: ${leverage}\nRedline issues: ${redlines}\nInclude: BATNA (best alternative to negotiated agreement) analysis, opening position strategy, concession sequencing (what to give up and when), value exchange framework, anchoring tactics, how to handle procurement professionals, silence as a negotiation tool, multi-issue negotiation to create value, how to use time pressure, escalation to executive strategy, and closing the negotiation gracefully.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
