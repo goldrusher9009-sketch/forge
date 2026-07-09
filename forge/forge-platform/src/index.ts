@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v634.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v635.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202277,6 +202277,66 @@ app.post('/api/strategy/platform-ecosystem', requireAuth, async (req: AuthReques
 app.post('/api/finance/tax-strategy', requireAuth, async (req: AuthRequest, res) => {
   const { company, structure, jurisdictions } = req.body;
   const prompt = `You are a corporate tax strategy and tax planning expert. Design the tax strategy for ${company} with ${structure} across ${jurisdictions}. Cover the tax strategy framework, the legal entity structure optimization, the transfer pricing strategy, the R&D tax credit optimization, the capital gains planning, the international tax planning, the tax risk management, the deferred tax optimization, the tax controversy management, the tax compliance program design, and how to build tax strategies that legitimately minimize tax burden through proper planning and structure while maintaining full legal compliance, that manage tax risk appropriately, and that are sustainable as tax laws and enforcement priorities evolve, avoiding aggressive positions that create reputational or legal risk disproportionate to the tax savings.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/white-label', requireAuth, async (req: AuthRequest, res) => {
+  const { product, partners, model } = req.body;
+  const prompt = `You are a white label strategy and OEM business model expert. Design the white label strategy for ${product} with ${partners} using ${model}. Cover the white label strategy framework, the partner qualification and selection, the white label product design, the brand and customization architecture, the pricing and commercial model, the partner onboarding and enablement, the support and SLA model, the channel conflict management, the white label contract design, and how to build white label programs that successfully extend your product distribution through partners without cannibalizing your direct business, that give partners enough flexibility to succeed while maintaining the quality and consistency that protects your core product reputation, and that create commercial models that are genuinely win-win for both parties.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/customer-segmentation', requireAuth, async (req: AuthRequest, res) => {
+  const { market, variables, decisions } = req.body;
+  const prompt = `You are a customer segmentation and market targeting expert. Segment the ${market} using ${variables} to inform ${decisions}. Cover the segmentation strategy framework, the segmentation variable selection, the quantitative segmentation analysis, the segment profile development, the segment attractiveness assessment, the segment prioritization framework, the segment-specific value proposition, the segment go-to-market strategy, the segmentation model maintenance, and how to develop customer segmentation that goes beyond demographic slices to identify meaningful differences in customer needs, behavior, and value that drive genuinely different product, marketing, and sales strategies, and that create a shared language across the organization for thinking about which customers you serve and why.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/brand-guidelines', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, elements, teams } = req.body;
+  const prompt = `You are a brand guidelines and brand management system expert. Create the brand guidelines for ${brand} covering ${elements} for ${teams}. Cover the brand guidelines framework, the brand strategy foundations, the visual identity system, the logo usage guidelines, the color palette and typography, the photography and illustration style, the voice and tone guidelines, the channel application guidelines, the brand governance and approval process, and how to create brand guidelines that are comprehensive enough to ensure consistency across all touchpoints while being clear and practical enough that teams without design expertise can follow them, and that are designed to evolve with the brand while maintaining the core identity that customers recognize and trust.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/revenue-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { company, levers, targets } = req.body;
+  const prompt = `You are a revenue growth strategy and commercial excellence expert. Design the revenue growth strategy for ${company} pulling ${levers} toward ${targets}. Cover the revenue growth framework, the revenue growth diagnostic and baseline, the growth lever identification and prioritization, the pricing optimization strategy, the volume growth strategy, the expansion revenue strategy, the new product revenue strategy, the channel optimization strategy, the revenue growth metrics and tracking, and how to build revenue growth strategies that identify the highest-leverage opportunities across pricing, volume, mix, and new business, that allocate commercial resources toward the initiatives with the best ROI, and that create sustainable revenue momentum rather than one-time improvements that fade as market conditions change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/stakeholder-management', requireAuth, async (req: AuthRequest, res) => {
+  const { project, stakeholders, interests } = req.body;
+  const prompt = `You are a stakeholder management and political intelligence expert. Design the stakeholder management strategy for ${project} engaging ${stakeholders} with ${interests}. Cover the stakeholder mapping and analysis, the stakeholder influence and interest assessment, the stakeholder engagement strategy, the communication planning by stakeholder, the coalition building strategy, the resistance management, the stakeholder feedback integration, the stakeholder reporting design, the stakeholder relationship investment, and how to manage stakeholders in ways that build the support needed to move projects and initiatives forward, that address legitimate concerns and resistance before they become blockers, and that maintain trust with all stakeholders even when you cannot give everyone what they want.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/feedback-system', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, types, cadence } = req.body;
+  const prompt = `You are a feedback system and performance dialogue expert. Design the feedback system for ${organization} covering ${types} at ${cadence} cadence. Cover the feedback system framework, the feedback culture design, the continuous feedback program, the formal feedback process design, the 360-degree feedback design, the manager feedback training, the feedback conversation framework, the feedback technology and tooling, the feedback-to-development connection, and how to design feedback systems that create a culture of continuous learning and development, that give people the specific and actionable feedback they need to grow, that normalize feedback as a regular part of work rather than an annual uncomfortable event, and that build the psychological safety that enables honest feedback to flow in all directions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/consulting-frameworks', requireAuth, async (req: AuthRequest, res) => {
+  const { problem, context, audience } = req.body;
+  const prompt = `You are a strategic consulting methodology and structured thinking expert. Apply consulting frameworks to ${problem} in ${context} for ${audience}. Cover the problem structuring methodology, the MECE framework application, the issue tree design, the hypothesis-driven analysis, the insight pyramid design, the McKinsey 7S framework, the Porter Five Forces analysis, the value chain analysis, the BCG growth-share matrix application, and how to apply structured analytical frameworks that break complex business problems into their component parts, generate hypotheses about root causes and solutions, prioritize analysis toward the highest-value insights, and communicate findings in the clear, logical, evidence-based way that earns trust with senior audiences and drives decisions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/time-management', requireAuth, async (req: AuthRequest, res) => {
+  const { professional, priorities, blockers } = req.body;
+  const prompt = `You are a time management and executive productivity expert. Optimize the time management of ${professional} with ${priorities} overcoming ${blockers}. Cover the time management philosophy and principles, the priority framework and decision matrix, the time audit and analysis, the calendar design and time blocking, the meeting load reduction strategy, the email and communication management, the delegation and saying no, the energy management and peak performance times, the time protection systems, and how to build time management systems that ensure the highest-priority work gets the time and attention it deserves, that create the protected time for deep work that produces most of the value in knowledge work, and that are sustainable rather than requiring the kind of rigid discipline that breaks down under real-world pressure.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/complex-sales', requireAuth, async (req: AuthRequest, res) => {
+  const { deal, committee, timeline } = req.body;
+  const prompt = `You are a complex B2B sales and enterprise selling expert. Navigate the ${deal} sale through ${committee} buying committee on ${timeline}. Cover the complex sale framework, the buying committee mapping and management, the champion development strategy, the economic buyer access strategy, the multi-threaded relationship strategy, the value quantification and business case, the competitive strategy in the deal, the objection and risk management, the procurement and legal navigation, and how to navigate complex enterprise sales processes that involve multiple stakeholders, long timelines, and significant procurement bureaucracy by building the right relationships, creating compelling business cases, managing the political dynamics within the buying organization, and maintaining momentum through a process that tests the patience of even the most experienced sales professionals.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/ai-agent', requireAuth, async (req: AuthRequest, res) => {
+  const { agent, tasks, environment } = req.body;
+  const prompt = `You are an AI agent design and agentic systems expert. Design the ${agent} AI agent to perform ${tasks} in ${environment}. Cover the AI agent architecture design, the agent goal and task specification, the planning and reasoning design, the tool use and action space design, the memory and context management, the multi-agent coordination design, the agent safety and alignment, the agent evaluation and testing, the agent deployment and monitoring, and how to design AI agents that reliably accomplish complex multi-step tasks, that handle edge cases and failure modes gracefully, that are safe and aligned with user intentions, and that can be evaluated and improved systematically as you learn where they succeed and where they fall short in real-world deployment.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
