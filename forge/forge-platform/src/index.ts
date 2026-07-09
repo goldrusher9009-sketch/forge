@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v620.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v621.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -201437,6 +201437,66 @@ app.post('/api/strategy/competitive-intel', requireAuth, async (req: AuthRequest
 app.post('/api/hr/team-design', requireAuth, async (req: AuthRequest, res) => {
   const { company, mission, size } = req.body;
   const prompt = `You are a team design and organizational structure expert. Design the team for ${company} with ${mission} mission at ${size} headcount. Cover the team design principles and trade-offs, the team topology selection, the team charter and purpose design, the roles and responsibilities design, the team size and span of control, the cross-functional interface design, the team governance and decision-making, the team performance management, the team health and psychological safety design, and how to design teams that are the right size and structure to execute their mission effectively while maintaining the speed, quality, and collaboration needed to succeed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/growth-leadership', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, stage, challenge } = req.body;
+  const prompt = `You are a growth leadership and scaling executive coach. Coach ${leader} through ${stage} stage company growth managing ${challenge}. Cover the leadership evolution from founder to executive, the delegation and empowerment at scale, the building leadership team and direct reports, the culture and values stewardship at scale, the managing through managers design, the strategic vs. operational balance, the external presence and stakeholder management, the personal leadership brand, the board and investor relationship management, and how to grow as a leader at the same rate the company is growing so that you remain an asset rather than becoming a constraint on the company's potential.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/cfo-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, priorities } = req.body;
+  const prompt = `You are a CFO advisory and financial leadership expert. Design the finance function for ${company} at ${stage} with ${priorities} priorities. Cover the CFO strategic role and priorities, the financial reporting and accounting function design, the FP&A and business partnering design, the treasury and cash management, the tax strategy and optimization, the audit and compliance function, the investor relations function, the finance technology and systems, the finance team and talent strategy, and how to build a finance function that is a true strategic partner to the business rather than just a reporting and compliance function.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/market-research', requireAuth, async (req: AuthRequest, res) => {
+  const { company, question, method } = req.body;
+  const prompt = `You are a market research and customer insights expert. Design the market research for ${company} to answer ${question} using ${method}. Cover the research design methodology, the primary vs. secondary research selection, the qualitative research design, the quantitative survey design, the focus group methodology, the ethnographic research design, the customer panel and advisory board, the competitive intelligence research, the market sizing research methodology, and how to design market research that generates reliable insights that inform strategy and product decisions rather than confirming existing biases and wasting budget on research no one acts on.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/partnerships/solution-architect', requireAuth, async (req: AuthRequest, res) => {
+  const { partners, solution, customers } = req.body;
+  const prompt = `You are a partner solution architecture and co-sell strategy expert. Architect the joint solution between ${partners} around ${solution} for ${customers}. Cover the joint solution design framework, the complementary capability mapping, the integration architecture design, the joint value proposition creation, the co-sell motion design, the partner technical enablement, the joint implementation methodology, the customer success hand-off design, the joint pricing and commercial model, and how to build partner solutions that create genuine combined value for customers while growing the business for all parties involved.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/agent-design', requireAuth, async (req: AuthRequest, res) => {
+  const { usecase, tools, guardrails } = req.body;
+  const prompt = `You are an AI agent design and autonomous systems expert. Design the AI agent for ${usecase} with ${tools} tool access and ${guardrails} guardrails. Cover the agent architecture and reasoning design, the tool and capability selection, the prompt and instruction design, the memory and context management, the planning and task decomposition, the error handling and recovery design, the human-in-the-loop checkpoint design, the agent evaluation and testing framework, the safety and guardrail design, and how to design AI agents that are useful, reliable, and safe by giving them the right capabilities with the right constraints and oversight mechanisms.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/cloud-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, workloads, provider } = req.body;
+  const prompt = `You are a cloud strategy and cloud architecture expert. Design the cloud strategy for ${company} migrating ${workloads} to ${provider}. Cover the cloud strategy framework and cloud maturity model, the cloud readiness and migration assessment, the lift-and-shift vs. cloud-native design, the cloud architecture patterns and best practices, the multi-cloud and hybrid cloud strategy, the cloud cost optimization design, the cloud security and compliance architecture, the cloud governance and FinOps design, the cloud migration roadmap and sequencing, and how to build a cloud strategy that achieves the flexibility, scalability, and cost benefits of cloud while managing the complexity and risk of migration.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customer/cx-metrics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, journey, program } = req.body;
+  const prompt = `You are a customer experience measurement and CX analytics expert. Design the CX metrics program for ${company} across ${journey} measuring ${program} impact. Cover the CX measurement strategy and framework, the NPS and relationship metrics design, the CSAT and transactional metrics design, the CES and effort metrics design, the operational CX metrics design, the CX survey design and sampling, the CX metrics integration with financial outcomes, the CX dashboard and reporting design, the CX metrics governance and ownership, and how to build a CX measurement program that creates accountability for customer experience and drives action to improve it.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/roadmap-prioritization', requireAuth, async (req: AuthRequest, res) => {
+  const { team, backlog, framework } = req.body;
+  const prompt = `You are a product roadmap prioritization and trade-off expert. Prioritize the roadmap for ${team} from ${backlog} using ${framework} framework. Cover the prioritization framework selection and design, the RICE and impact/effort scoring, the opportunity scoring methodology, the jobs-to-be-done prioritization, the strategic alignment filtering, the technical debt vs. new feature balance, the stakeholder input synthesis, the prioritization meeting and decision facilitation, the roadmap communication and buy-in, and how to make prioritization decisions that are defensible, strategic, and genuinely focused on the customer and business outcomes rather than the loudest voice in the room.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/leadership-development', requireAuth, async (req: AuthRequest, res) => {
+  const { company, leaders, capability } = req.body;
+  const prompt = `You are a leadership development and executive education expert. Design the leadership development program for ${company} developing ${leaders} in ${capability} capabilities. Cover the leadership competency model design, the leadership pipeline and succession planning, the 360-degree feedback program design, the executive coaching program, the leadership development program design, the action learning and stretch assignment design, the peer learning and cohort program, the leadership assessment center design, the leadership development measurement, and how to build leadership development programs that produce measurably better leaders who drive better business outcomes rather than programs that feel good but produce no real change.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/payment-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, market, friction } = req.body;
+  const prompt = `You are a payment experience and checkout optimization expert. Design the payment experience for ${product} in ${market} reducing ${friction}. Cover the payment strategy and method selection, the checkout flow design and optimization, the payment security and PCI compliance design, the international payment and currency design, the subscription and recurring payment design, the payment failure and retry design, the refund and dispute handling, the payment analytics and optimization, the buy-now-pay-later integration, and how to design payment experiences that maximize conversion, minimize friction, and build trust with customers at the most critical moment in the purchase journey.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
