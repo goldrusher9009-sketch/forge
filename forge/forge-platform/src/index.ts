@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v552.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v553.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -197357,6 +197357,66 @@ app.post('/api/design/accessibility', requireAuth, async (req: AuthRequest, res)
 app.post('/api/sales/ops-dashboard', requireAuth, async (req: AuthRequest, res) => {
   const { team, metrics, cadence } = req.body;
   const prompt = `You are a sales operations expert. Design a sales operations dashboard for a ${team} team tracking ${metrics} on a ${cadence} review cadence. Define metric hierarchy, leading vs lagging indicators, pipeline health views, rep-level performance breakdowns, and how to use the dashboard to run effective pipeline reviews.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/trial', requireAuth, async (req: AuthRequest, res) => {
+  const { product, trialLength, conversionGoal } = req.body;
+  const prompt = `You are a PLG and trial optimization expert. Design a product-led trial experience for ${product} with ${trialLength} trial targeting ${conversionGoal} conversion. Cover trial onboarding flow, activation milestones, in-trial engagement, usage limit design, upgrade prompts placement, trial extension strategy, and post-trial nurture.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ops/scale-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { company, bottlenecks, growthTarget } = req.body;
+  const prompt = `You are an operations scaling expert. Create an operations scale plan for ${company} addressing bottlenecks: ${bottlenecks} to support ${growthTarget} growth. Cover process standardization, automation opportunities, headcount planning, tooling upgrades, quality control at scale, and organizational structure changes needed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/eng/debt-triage', requireAuth, async (req: AuthRequest, res) => {
+  const { codebase, symptoms, velocity } = req.body;
+  const prompt = `You are a software engineering expert. Triage technical debt for ${codebase} with symptoms: ${symptoms} impacting ${velocity} team velocity. Categorize debt (architecture, code quality, testing, dependencies, documentation), estimate remediation effort and business impact, and build a prioritized paydown plan that fits into feature development sprints.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/growth/loops', requireAuth, async (req: AuthRequest, res) => {
+  const { product, userAction, incentive } = req.body;
+  const prompt = `You are a growth loops expert. Design viral and retention growth loops for ${product} where ${userAction} drives ${incentive}. Map the loop mechanics, identify friction points, quantify loop efficiency (k-factor for viral loops), and design experiments to accelerate each loop from current baseline.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/exec/agenda', requireAuth, async (req: AuthRequest, res) => {
+  const { meetingType, attendees, objectives } = req.body;
+  const prompt = `You are an executive effectiveness expert. Design a high-impact meeting agenda for a ${meetingType} with ${attendees} focused on ${objectives}. Structure the agenda with time allocations, pre-read requirements, decision-rights clarity, discussion facilitation guides, and post-meeting action tracking to maximize meeting ROI.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brand/voice', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, personality, examples } = req.body;
+  const prompt = `You are a brand voice and tone expert. Create a brand voice playbook for ${brand} with personality: ${personality} based on examples: ${examples}. Define voice attributes, tone spectrum by context, vocabulary do and dont lists, writing style guidelines, copy examples for key touchpoints, and how to maintain voice consistency across all channels.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/revops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, teams, systems } = req.body;
+  const prompt = `You are a Revenue Operations expert. Build a RevOps blueprint for ${company} aligning ${teams} across systems: ${systems}. Cover funnel ownership, handoff criteria, data model standardization, attribution model, tech stack optimization, reporting hierarchy, and how to structure the RevOps team to support $10M-$100M ARR growth.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/data/activation', requireAuth, async (req: AuthRequest, res) => {
+  const { dataAssets, channels, personalization } = req.body;
+  const prompt = `You are a customer data and martech expert. Build a customer data activation plan for ${dataAssets} data assets across ${channels} channels targeting ${personalization} personalization. Cover identity resolution, segment activation, real-time triggers, cross-channel journey orchestration, consent management, and measurement framework.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/price-test', requireAuth, async (req: AuthRequest, res) => {
+  const { currentPrice, hypothesis, segment } = req.body;
+  const prompt = `You are a pricing experimentation expert. Design a pricing test starting from ${currentPrice} testing hypothesis: ${hypothesis} for segment: ${segment}. Cover test design, control vs treatment setup, statistical requirements, guardrail metrics, analysis plan, and decision framework for rolling out or reverting pricing changes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/xfn-roadmap', requireAuth, async (req: AuthRequest, res) => {
+  const { initiative, teams, timeline } = req.body;
+  const prompt = `You are a product roadmap and cross-functional alignment expert. Create a cross-functional roadmap for initiative: ${initiative} involving teams: ${teams} with ${timeline} timeline. Define workstreams, dependencies, milestones, RACI, risk flags, escalation paths, and the communication cadence to keep all teams synchronized.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
