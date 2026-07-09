@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v660.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v661.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -203837,6 +203837,66 @@ app.post('/api/marketing/brand-activation', requireAuth, async (req: AuthRequest
 app.post('/api/operations/team-collaboration', requireAuth, async (req: AuthRequest, res) => {
   const { team, context, challenges } = req.body;
   const prompt = `You are a team collaboration design and organizational effectiveness expert. Design the collaboration system for ${team} in ${context} addressing ${challenges}. Cover the collaboration framework, the collaboration norms and agreements, the meeting culture and calendar design, the async collaboration tools and practices, the cross-functional collaboration design, the collaboration technology stack, the trust and psychological safety, the creative collaboration methods, the collaboration metrics and health, and how to design team collaboration systems that enable people to do their best work together without the meeting overload, communication fragmentation, and coordination overhead that makes collaboration feel like a burden rather than a force multiplier, that create the norms and structures that allow people to balance focused independent work with productive collaborative sessions.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/category-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, category, audience } = req.body;
+  const prompt = `You are a category design and market category creation expert. Design the category for the company: ${company}, defining category: ${category} for audience: ${audience}. Cover category design framework, category name and definition, category POV and market narrative, problem reframing and enemy identification, category ecosystem design, category king strategy, community and category education, category measurement, category creation timeline, and how to design and own a market category that positions your company as the leader.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/emerging-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, technology, horizon } = req.body;
+  const prompt = `You are an emerging technology strategy expert. Assess the emerging technology for ${organization} evaluating ${technology} over ${horizon}. Cover emerging technology framework, technology maturity and adoption curve, business impact potential, competitive and disruption risk, technology scouting and intelligence, pilot and proof of concept design, build vs buy vs partner decision, technology roadmap integration, organizational readiness, and how to develop emerging technology strategies that distinguish impactful technologies from hype.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/transfer-pricing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, transactions, jurisdictions } = req.body;
+  const prompt = `You are a transfer pricing strategy and international tax expert. Design transfer pricing for ${company} covering ${transactions} across ${jurisdictions}. Cover transfer pricing framework, transfer pricing methods and selection, comparable uncontrolled price analysis, cost plus and resale price methods, profit-based methods and TNMM, documentation requirements by jurisdiction, OECD guidelines and BEPS compliance, advance pricing agreements, transfer pricing risk management, and how to design transfer pricing policies that appropriately allocate profits and minimize double taxation risk.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/inflection-point', requireAuth, async (req: AuthRequest, res) => {
+  const { company, inflection, response } = req.body;
+  const prompt = `You are a strategic inflection point analysis expert. Navigate the inflection point for ${company} caused by ${inflection} with response: ${response}. Cover inflection point framework, inflection point identification and signal reading, strategic options analysis, pivot vs double-down decision, organizational change management, resource reallocation strategy, stakeholder communication, execution of new direction, momentum rebuilding, and how to navigate strategic inflection points that represent both threats and transformational opportunities.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/global-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, markets, model } = req.body;
+  const prompt = `You are a global business strategy and international expansion expert. Design the global strategy for ${company} across ${markets} using model: ${model}. Cover global strategy framework, global vs local strategy balance, market prioritization and sequencing, operating model for global scale, global talent and leadership development, cultural adaptation and localization, global supply chain and operations, regulatory and compliance complexity, global financial management, and how to develop global strategies that balance standardization with local adaptation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/family-business', requireAuth, async (req: AuthRequest, res) => {
+  const { business, generation, challenges } = req.body;
+  const prompt = `You are a family business strategy and family enterprise governance expert. Advise ${business} at ${generation} addressing ${challenges}. Cover family business framework, family governance and council, family constitution and values, succession planning and next generation development, non-family management and professionalization, ownership transition and estate planning, family conflict resolution, family business culture and values preservation, external board and governance, and how to navigate the unique challenges of family businesses combining economic logic with family dynamics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineering/enterprise-arch', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, systems, goals } = req.body;
+  const prompt = `You are an enterprise architecture strategy and IT governance expert. Design the enterprise architecture for ${organization} integrating ${systems} toward ${goals}. Cover enterprise architecture framework, TOGAF and architecture methodology, business architecture and capability mapping, application architecture and portfolio rationalization, data architecture and master data management, technology architecture and infrastructure, architecture governance and standards, architecture roadmap and migration planning, cloud and hybrid architecture strategy, and how to develop enterprise architectures that align IT investments with business strategy.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ethical-business', requireAuth, async (req: AuthRequest, res) => {
+  const { company, dilemma, stakeholders } = req.body;
+  const prompt = `You are a business ethics and stakeholder capitalism expert. Design the ethical business approach for ${company} addressing ${dilemma} for ${stakeholders}. Cover ethical business framework, stakeholder identification and interests, ethical decision-making process, values and principles application, short-term vs long-term trade-offs, transparency and accountability mechanisms, ethical culture and leadership, whistleblower and speak-up systems, ethics governance and oversight, and how to build businesses that are genuinely ethical rather than just legally compliant.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/transformation-lead', requireAuth, async (req: AuthRequest, res) => {
+  const { leader, transformation, organization } = req.body;
+  const prompt = `You are a transformation leadership and large-scale change expert. Guide ${leader} leading ${transformation} across ${organization}. Cover transformation leadership framework, transformation vision and case for change, coalition and sponsorship building, transformation architecture and program, culture and mindset change, capability building, communication and engagement strategy, transformation governance and accountability, transformation sustainability and embedding, and how to lead large-scale organizational transformations that achieve intended outcomes.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cognitive-bias', requireAuth, async (req: AuthRequest, res) => {
+  const { decision, biases, stakes } = req.body;
+  const prompt = `You are a cognitive bias identification and decision-quality expert. Analyze the ${decision} for ${biases} at ${stakes}. Cover cognitive bias framework, confirmation bias and information selection, anchoring and adjustment effects, availability heuristic and recency bias, overconfidence and planning fallacy, sunk cost fallacy, groupthink and social pressure, narrative fallacy and pattern matching, de-biasing techniques and red teams, and how to make higher-quality decisions by systematically identifying and counteracting cognitive biases before they lead to costly mistakes.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
