@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v438.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v439.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -191231,6 +191231,59 @@ app.post('/api/product/vision-pitch', requireAuth, async (req: AuthRequest, res)
 app.post('/api/sales/partner-program', requireAuth, async (req: AuthRequest, res) => {
   const { partnerType, product, incentives } = req.body;
   const prompt = `Design a partner program.\nPartner type: ${partnerType}\nProduct: ${product}\nIncentive model: ${incentives}\nInclude: partner tier structure (Silver/Gold/Platinum), certification program design, co-selling motion and rules of engagement, deal registration and protection, MDF (market development funds) program, partner portal requirements, partner enablement curriculum, QBR cadence with key partners, partner success metrics (sourced/influenced revenue), and how to recruit the right first 10 partners.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Wave 297+298 routes
+app.post('/api/dev/kubernetes-design', requireAuth, async (req: AuthRequest, res) => {
+  const { appType, scale, cloud } = req.body;
+  const prompt = `Design a Kubernetes architecture.\nApplication type: ${appType}\nScale requirements: ${scale}\nCloud provider: ${cloud}\nInclude: cluster topology (node pools/zones/regions), namespace strategy, resource requests/limits policy, horizontal pod autoscaler configuration, ingress controller selection, persistent storage design, RBAC model, network policies, secrets management (Vault/Sealed Secrets/CSI), GitOps deployment approach (ArgoCD/Flux), and cost optimization strategies.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/forecasting-model', requireAuth, async (req: AuthRequest, res) => {
+  const { pipeline, cycle, historical } = req.body;
+  const prompt = `Build a sales forecasting model.\nCurrent pipeline: ${pipeline}\nAverage sales cycle: ${cycle}\nHistorical data: ${historical}\nInclude: forecast methodology (stage-weighted vs. AI-assisted vs. rep commit), pipeline coverage ratio targets, forecast categories (commit/best case/pipeline/omitted), seasonal adjustment factors, new vs. renewal split model, ramp rep adjustment, forecast cadence and review process, accuracy measurement, and how to improve forecast precision over time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/price-sensitivity', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, current } = req.body;
+  const prompt = `Analyze price sensitivity for a product.\nProduct: ${product}\nCustomer segment: ${segment}\nCurrent price: ${current}\nInclude: Van Westendorp price sensitivity meter methodology, willingness-to-pay research design, price elasticity estimation, good/better/best tier design, psychological pricing tactics, price anchoring strategies, how to test price increases with minimal churn risk, competitive price positioning map, and recommendations for price change communication.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/community-led-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { product, community, channels } = req.body;
+  const prompt = `Design a community-led growth strategy.\nProduct: ${product}\nCommunity type: ${community}\nChannels: ${channels}\nInclude: community platform selection, community flywheel design (content→engagement→members→product→content), community roles and moderation structure, ambassador program design, community-to-product feedback loop, virtual event calendar, content contribution incentives, metrics (MAU/NPS/referrals/product adoption), and how to monetize community without killing it.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/hr/succession-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { roles, timeline, bench } = req.body;
+  const prompt = `Build a succession planning framework.\nCritical roles: ${roles}\nTimeline: ${timeline}\nCurrent bench strength: ${bench}\nInclude: role criticality assessment matrix, successor readiness scoring (ready now/1-2 years/3+ years), development plan design for high-potential succession candidates, retention risk for key talent, knowledge transfer documentation approach, interim coverage planning, board and executive succession considerations, and how to run succession planning conversations without spooking employees.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/investor/exit-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, options } = req.body;
+  const prompt = `Design an exit strategy.\nCompany: ${company}\nCurrent stage: ${stage}\nExit options: ${options}\nInclude: exit path comparison (strategic acquisition/PE/IPO/secondary), preparation timeline (24-36 months before target), financial cleanup and audit readiness, management team strengthening for exit, data room checklist, buyer/investor universe mapping, valuation multiple optimization strategies, deal structure considerations, and how to run a competitive exit process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/dev/api-rate-limiting', requireAuth, async (req: AuthRequest, res) => {
+  const { endpoints, clients, load } = req.body;
+  const prompt = `Design an API rate limiting system.\nEndpoints to protect: ${endpoints}\nClient types: ${clients}\nExpected load: ${load}\nInclude: algorithm selection (token bucket/sliding window/fixed window/leaky bucket), per-client vs. per-endpoint limits, tier-based limit design (free/paid/enterprise), rate limit headers (X-RateLimit-*), graceful degradation strategy, distributed rate limiting (Redis-based), bypass mechanisms for trusted clients, abuse detection patterns, and how to communicate limits to API consumers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/marketing/localization-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { markets, product, budget } = req.body;
+  const prompt = `Build a market localization strategy.\nTarget markets: ${markets}\nProduct: ${product}\nBudget: ${budget}\nInclude: market prioritization framework (TAM × strategic fit × complexity), localization depth model (translation-only vs. full cultural adaptation), content localization workflow, local SEO strategy, regional pricing approach, payment method localization, customer support language coverage, legal/compliance requirements per market, local partnership vs. direct model decision, and localization ROI measurement.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/product/mobile-design', requireAuth, async (req: AuthRequest, res) => {
+  const { platform, userFlow, constraints } = req.body;
+  const prompt = `Design a mobile product experience.\nPlatform: ${platform}\nCore user flow: ${userFlow}\nConstraints: ${constraints}\nInclude: mobile-first design principles, thumb zone optimization, gesture design (swipe/tap/long-press patterns), navigation pattern selection (tab bar/drawer/bottom sheet), offline-first architecture considerations, push notification strategy and permission flow, app store optimization (ASO) for discoverability, performance optimization for mobile networks, and platform-specific design conventions (iOS HIG vs. Material Design).`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/sales/customer-health', requireAuth, async (req: AuthRequest, res) => {
+  const { metrics, segments, signals } = req.body;
+  const prompt = `Build a customer health scoring system.\nMetrics available: ${metrics}\nCustomer segments: ${segments}\nChurn signals observed: ${signals}\nInclude: health score formula design (weighted metrics), leading vs. lagging indicator balance, red/yellow/green threshold definitions, segment-specific health models, early warning alert triggers, CS playbook per health tier, executive dashboard design, churn prediction model inputs, health score review cadence, and how to use health scores in renewal and expansion conversations.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
