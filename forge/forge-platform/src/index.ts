@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v606.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v607.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -200597,6 +200597,66 @@ app.post('/api/ops/support-system', requireAuth, async (req: AuthRequest, res) =
 app.post('/api/sales/modern-strategy', requireAuth, async (req: AuthRequest, res) => {
   const { company, buyer, shift } = req.body;
   const prompt = `You are a modern sales strategy and buyer-centric selling expert. Redesign the sales strategy for ${company} for ${buyer} buyer behavior addressing ${shift} market shift. Cover the modern buyer journey and self-service behavior, the consultative and challenger selling integration, the digital selling and social proof, the value selling methodology, the multi-stakeholder selling complexity, the AI-augmented sales motion, the community and peer selling, the near-term pipeline vs. long-term market development balance, the sales and marketing revenue team integration, and how to build a modern sales organization that buyers want to engage with.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/operations-scaling', requireAuth, async (req: AuthRequest, res) => {
+  const { company, headcount, region } = req.body;
+  const prompt = `You are an HR operations and people operations scaling expert. Scale the HR operations for ${company} to ${headcount} headcount across ${region}. Cover the HR operating model for scale, the HRIS and people tech stack design, the HR service delivery model, the HR business partner model, the talent acquisition infrastructure, the compensation and benefits operations, the learning and development infrastructure, the HR analytics and reporting, the HR compliance and legal infrastructure, and how to build an HR operations function that scales with the business without breaking.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/board-dynamics', requireAuth, async (req: AuthRequest, res) => {
+  const { role, board, challenge } = req.body;
+  const prompt = `You are a board governance and board dynamics expert. Advise on navigating ${role} with ${board} board addressing ${challenge}. Cover the board governance framework, the board composition and skills matrix, the board committee design, the CEO and board relationship management, the board information and reporting design, the board meeting design and facilitation, the board decision rights vs. management rights, the activist investor and difficult board member management, the independent director recruitment, and how to build a board that is a genuine strategic asset.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/conversation-design', requireAuth, async (req: AuthRequest, res) => {
+  const { product, channel, intent } = req.body;
+  const prompt = `You are a conversation design and conversational UX expert. Design the conversation for ${product} in ${channel} channel handling ${intent}. Cover the conversation design principles, the intent taxonomy and NLU design, the dialog flow design, the persona and tone of voice design, the confirmation and error handling design, the escalation to human design, the context and memory in conversation, the multi-modal conversation design, the conversation testing and evaluation, and how to design conversations that feel natural and helpful.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/pricing-matrix', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segments, dimensions } = req.body;
+  const prompt = `You are a pricing matrix and segmented pricing expert. Design the pricing matrix for ${product} across ${segments} segments using ${dimensions} dimensions. Cover the pricing matrix structure design, the dimension selection for segmentation, the price fence design between segments, the willingness to pay by segment, the value metric selection, the matrix communication strategy, the matrix administration and governance, the matrix exception handling, the matrix evolution over time, and how to implement a pricing matrix that captures value from each segment.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/career/pitch-deck', requireAuth, async (req: AuthRequest, res) => {
+  const { company, stage, raise } = req.body;
+  const prompt = `You are a pitch deck and fundraising narrative expert. Coach on the pitch deck for ${company} at ${stage} stage raising ${raise}. Cover the pitch deck structure for the stage, the problem and market slide design, the solution and product slide design, the market size and opportunity design, the business model slide, the traction and metrics slide, the team slide, the financial projection design, the ask and use of funds, and how to tell a compelling story that makes investors want to lead the round.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/contract-management', requireAuth, async (req: AuthRequest, res) => {
+  const { company, volume, risk } = req.body;
+  const prompt = `You are a contract management and CLM strategy expert. Design the contract management system for ${company} handling ${volume} contracts with ${risk} risk profile. Cover the contract management lifecycle, the CLM technology selection, the contract template and playbook design, the contract negotiation and redline workflow, the contract approval and signature process, the contract obligation management, the contract analytics and reporting, the contract renewal and expiration management, the risk scoring and monitoring, and how to build a contract management capability that reduces risk and cycle time.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/launch', requireAuth, async (req: AuthRequest, res) => {
+  const { product, segment, date } = req.body;
+  const prompt = `You are a product launch and go-to-market execution expert. Design the product launch for ${product} targeting ${segment} on ${date}. Cover the launch readiness framework, the launch narrative and messaging, the internal alignment and launch brief, the marketing campaign design, the sales launch enablement, the PR and earned media strategy, the customer success launch readiness, the launch metrics and success criteria, the launch risk and contingency planning, and how to execute a launch that creates momentum and drives adoption from day one.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/industry-analysis', requireAuth, async (req: AuthRequest, res) => {
+  const { industry, forces, horizon } = req.body;
+  const prompt = `You are an industry analysis and competitive dynamics expert. Analyze ${industry} using ${forces} framework over ${horizon} horizon. Cover the industry structure analysis, the competitive intensity mapping, the industry profitability drivers, the industry disruption and transformation forces, the value chain analysis, the regulatory and policy environment, the technology impact on industry structure, the industry lifecycle positioning, the macro trend overlay, and how to use industry analysis to identify where to compete and how to win.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales/b2c-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, product, consumer } = req.body;
+  const prompt = `You are a B2C sales and direct-to-consumer strategy expert. Build the B2C sales strategy for ${brand} selling ${product} to ${consumer}. Cover the DTC channel strategy, the in-store vs. online channel optimization, the customer acquisition for B2C, the retail partner management, the B2C pricing and promotional strategy, the loyalty and repeat purchase design, the B2C customer service strategy, the social commerce integration, the B2C data and personalization, and how to build a B2C sales engine that grows revenue and customer lifetime value simultaneously.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/circular-business', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, model } = req.body;
+  const prompt = `You are a circular economy and sustainable business model expert. Design the circular business model for ${company} with ${product} using ${model} approach. Cover the circular economy principles and business case, the product design for circularity, the reverse logistics and take-back design, the refurbishment and remanufacturing model, the product-as-a-service design, the materials recovery and recycling, the circular supply chain design, the customer behavior change for circularity, the circular metrics and reporting, and how to build a circular business model that is both sustainable and profitable.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
