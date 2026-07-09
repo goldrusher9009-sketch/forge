@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v764.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v765.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -210077,6 +210077,66 @@ app.post('/api/biotech/diagnostics', requireAuth, async (req: AuthRequest, res) 
 app.post('/api/biotech/clinicalresearch', requireAuth, async (req: AuthRequest, res) => {
   const { sponsor, trial, indication } = req.body;
   const prompt = `You are a clinical research strategy and trial management expert. Design clinical research strategy for ${sponsor} running ${trial} in ${indication}. Cover clinical research framework, protocol design and endpoints, site selection and startup, patient recruitment and retention, data management and EDC, monitoring and oversight, regulatory submission and IND, safety reporting and pharmacovigilance, biostatistics and analysis plan, and how to build clinical research programs that achieve the enrollment target and the data quality and the timeline that successful trials require by designing the protocol with the eligibility criteria and the visit schedule and the endpoint assessment that balances the scientific rigor with the patient burden that determines the enrollment feasibility and the retention rate at the sites that must recruit and retain the patients.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/genomics', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, platform, applications } = req.body;
+  const prompt = `You are a genomics strategy and precision medicine expert. Design genomics strategy for ${organization} using ${platform} for ${applications}. Cover genomics strategy framework, next-generation sequencing and platforms, whole genome and exome sequencing, bioinformatics pipeline and variant calling, clinical interpretation and reporting, pharmacogenomics and drug response, population genomics and biobanks, liquid biopsy and circulating DNA, gene therapy and cell therapy, and how to build genomics programs that achieve the clinical utility and the analytical validity and the ethical framework that responsible genomics requires by validating the sequencing pipeline with the orthogonal method comparison and the reference material testing that demonstrates the sensitivity and the specificity of the variant detection at the clinically actionable thresholds.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/synbio', requireAuth, async (req: AuthRequest, res) => {
+  const { team, application, organism } = req.body;
+  const prompt = `You are a synthetic biology strategy and biological engineering expert. Design synthetic biology strategy for ${team} developing ${application} in ${organism}. Cover synthetic biology framework, design-build-test-learn cycle, genetic parts and standardization, metabolic engineering and pathway design, cell-free systems and prototyping, CRISPR and genome editing, biosafety and biosecurity, scale-up and fermentation, regulatory strategy for bioengineered organisms, and how to build synthetic biology programs that achieve the biological function and the production titer and the genetic stability that industrial and therapeutic applications require by designing the genetic circuit with the characterized parts and the computational modeling and the rapid prototyping that iterates through the design-build-test-learn cycle efficiently to find the genetic construct that performs at the specification.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/bioanalysis', requireAuth, async (req: AuthRequest, res) => {
+  const { laboratory, method, molecules } = req.body;
+  const prompt = `You are a bioanalytical strategy and method development expert. Design bioanalytical strategy for ${laboratory} developing ${method} measuring ${molecules}. Cover bioanalytical framework, LC-MS/MS and immunoassay platforms, method development and optimization, method validation per FDA and EMA guidance, incurred sample reanalysis, reference standard and reagent qualification, pharmacokinetic and biomarker assays, regulated bioanalysis and GLP, and how to build bioanalytical programs that achieve the sensitivity and the selectivity and the reproducibility that drug development programs require by developing the method with the systematic optimization of the sample preparation and the chromatographic separation and the mass spectrometry detection that achieves the LLOQ and the calibration range that covers the pharmacokinetically relevant concentrations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/regulatory', requireAuth, async (req: AuthRequest, res) => {
+  const { sponsor, product, region } = req.body;
+  const prompt = `You are a regulatory strategy and drug development expert. Design regulatory strategy for ${sponsor} developing ${product} in ${region}. Cover regulatory strategy framework, FDA and EMA regulatory pathways, breakthrough therapy and accelerated approval, orphan drug designation, Type A B C meeting request strategy, common technical document structure, IND and NDA filing strategy, pediatric investigation plan, post-marketing commitments, and how to build regulatory strategy programs that achieve the most efficient path to market authorization by engaging the agency early with the pre-IND meeting and the End of Phase 2 meeting that aligns the development program with the regulatory expectations before the Phase 3 commitment that cannot be changed without the timeline and the cost that late-stage program redesign requires.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/quality', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, system, products } = req.body;
+  const prompt = `You are a quality systems strategy and GxP compliance expert. Design quality systems strategy for ${organization} managing ${system} for ${products}. Cover quality systems framework, GMP and GLP compliance, quality management system design, CAPA and deviation management, change control and configuration management, supplier qualification and audit, document control and records management, quality by design principles, inspection readiness and FDA audit preparation, and how to build quality systems programs that achieve the regulatory compliance and the product quality and the inspection readiness that GxP manufacturing requires by designing the quality management system with the risk-based approach that focuses the quality resources on the process parameters and the material attributes that have the highest impact on the product quality and the patient safety.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, network, products } = req.body;
+  const prompt = `You are a logistics strategy and supply chain operations expert. Design logistics strategy for ${company} operating ${network} moving ${products}. Cover logistics strategy framework, warehouse design and layout optimization, transportation mode selection, carrier management and rate negotiation, last-mile delivery strategy, cold chain and temperature control, customs and trade compliance, logistics technology and WMS, reverse logistics and returns management, and how to build logistics programs that achieve the delivery speed and the cost efficiency and the service reliability that competitive logistics requires by designing the network with the distribution center location analysis and the inventory positioning and the transportation lane optimization that minimizes the total landed cost while meeting the delivery time commitment that the customer service standard requires.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/procurement', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, category, suppliers } = req.body;
+  const prompt = `You are a procurement strategy and strategic sourcing expert. Design procurement strategy for ${organization} managing ${category} with ${suppliers}. Cover procurement strategy framework, spend analysis and category management, strategic sourcing and RFx process, supplier evaluation and selection, contract negotiation and terms, supplier relationship management, total cost of ownership, supplier diversity and ESG, procurement technology and e-procurement, and how to build procurement programs that achieve the cost savings and the supply security and the supplier quality that strategic sourcing requires by segmenting the spend with the Kraljic matrix that identifies the strategic and leverage and bottleneck and routine categories that require the differentiated sourcing strategies and the supplier relationship investments.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/inventory', requireAuth, async (req: AuthRequest, res) => {
+  const { company, products, channels } = req.body;
+  const prompt = `You are an inventory management strategy and supply chain optimization expert. Design inventory management strategy for ${company} managing ${products} across ${channels}. Cover inventory management framework, demand forecasting and statistical methods, safety stock and reorder point calculation, ABC and XYZ analysis, economic order quantity and lot sizing, cycle counting and physical inventory, multi-echelon inventory optimization, seasonal and promotional planning, inventory visibility and real-time tracking, and how to build inventory management programs that achieve the service level and the inventory turn and the working capital efficiency that balanced inventory management requires by segmenting the SKU portfolio with the velocity and the variability analysis that identifies the fast and predictable items where the service level justifies the low safety stock and the slow and erratic items that require the higher safety stock to prevent the stockout.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/fleet', requireAuth, async (req: AuthRequest, res) => {
+  const { operator, fleet, operations } = req.body;
+  const prompt = `You are a fleet management strategy and transportation operations expert. Design fleet management strategy for ${operator} managing ${fleet} for ${operations}. Cover fleet management framework, vehicle acquisition and total cost of ownership, preventive maintenance and reliability, driver management and safety, route optimization and dispatch, telematics and GPS tracking, fuel management and efficiency, fleet electrification and alternative fuels, regulatory compliance and DOT, and how to build fleet management programs that achieve the vehicle uptime and the fuel efficiency and the safety performance that effective fleet operations requires by implementing the preventive maintenance schedule with the condition-based monitoring and the predictive analytics that anticipates the failure before the breakdown that takes the vehicle off the road.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/wholesale', requireAuth, async (req: AuthRequest, res) => {
+  const { trader, commodities, markets } = req.body;
+  const prompt = `You are a wholesale trading strategy and commodity markets expert. Design wholesale trading strategy for ${trader} trading ${commodities} in ${markets}. Cover wholesale trading framework, commodity market structure and participants, price discovery and basis trading, hedging strategy and risk management, physical delivery and logistics, contract terms and INCOTERMS, credit and counterparty risk, trading technology and execution, market information and intelligence, and how to build wholesale trading programs that achieve the margin and the risk management and the market position that profitable commodity trading requires by developing the market intelligence with the supply and demand analysis and the cost curve and the inventory data that identifies the price driver and the market inefficiency that the trading position can exploit within the risk limit that the capital and the risk appetite define.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
