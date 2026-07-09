@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v642.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v643.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -202757,6 +202757,66 @@ app.post('/api/marketing/price-testing', requireAuth, async (req: AuthRequest, r
 app.post('/api/strategy/scenario-planning', requireAuth, async (req: AuthRequest, res) => {
   const { organization, horizon, uncertainties } = req.body;
   const prompt = `You are a scenario planning and strategic foresight expert. Build the future scenarios for ${organization} over ${horizon} horizon facing ${uncertainties}. Cover the scenario planning framework, the driving forces and uncertainty identification, the scenario axis selection, the scenario narrative development, the scenario plausibility assessment, the strategic implications analysis, the early warning indicator identification, the strategic option development, the robust strategy identification, and how to use scenario planning to make better strategic decisions under deep uncertainty by developing and testing strategies against multiple possible futures rather than planning against a single forecast that is guaranteed to be wrong, that identify the strategic options that are robust across scenarios and the bets that only pay off in specific futures, and that create the organizational awareness and monitoring systems that allow you to detect which scenario is emerging early enough to adjust your strategy before competitors do.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/cx-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, segment, vision } = req.body;
+  const prompt = `You are a customer experience strategy and design expert. Build the CX strategy for ${company} for ${segment} toward ${vision}. Cover the CX strategy framework, the CX vision and principles, the customer understanding and empathy research, the experience design standards, the voice of customer program, the CX measurement and governance, the employee experience and CX connection, the CX technology and digital experience, the CX investment prioritization, and how to design customer experience strategies that create genuine competitive differentiation by delivering experiences that customers remember, recommend, and return for, that align every function and employee around a shared understanding of the experience you are trying to create, and that build the organizational capabilities and culture to consistently deliver that experience at scale across every touchpoint in the customer lifecycle.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/revenue-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { company, revenue, targets } = req.body;
+  const prompt = `You are a revenue growth strategy and acceleration expert. Design the revenue growth for ${company} from ${revenue} to ${targets}. Cover the revenue growth framework, the growth lever identification, the market expansion strategy, the product expansion and cross-sell, the pricing optimization for growth, the sales capacity and productivity, the marketing efficiency and pipeline, the customer success expansion revenue, the partnership and channel revenue, and how to design revenue growth strategies that identify the highest-leverage combination of growth levers specific to your business model and market position, that sequence growth investments to build momentum and compound over time, and that balance the short-term revenue actions that hit immediate targets with the longer-term capability building that creates sustainable, high-quality growth rather than growth that is expensive, volatile, or dependent on unsustainable tactics.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/innovation-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  const { company, horizon, resources } = req.body;
+  const prompt = `You are an innovation pipeline management and portfolio expert. Build the innovation pipeline for ${company} across ${horizon} with ${resources}. Cover the innovation pipeline framework, the innovation horizon portfolio, the idea generation and sourcing, the idea screening and prioritization, the stage-gate innovation process, the innovation resource allocation, the innovation partnership and open innovation, the innovation metrics and tracking, the innovation culture building, and how to build innovation pipelines that produce a steady flow of new products, services, and business models that sustain competitive advantage, that balance the incremental innovations that improve the core business with the more exploratory innovations that create new growth platforms, and that manage the tension between the discipline needed to commercialize innovations and the creativity and risk-taking needed to generate them in the first place.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/category-design', requireAuth, async (req: AuthRequest, res) => {
+  const { company, problem, vision } = req.body;
+  const prompt = `You are a category design and market creation expert. Design the category for ${company} solving ${problem} with ${vision}. Cover the category design framework, the problem definition and naming, the category POV development, the ecosystem design, the lightning strike strategy, the conditioned response building, the category evangelist network, the category metrics and language, the category king strategy, and how to design new market categories that you can own and define rather than competing in existing categories where incumbents have established rules, relationships, and brand recognition that disadvantage new entrants, building the narrative, ecosystem, and conditioned response that makes your company the default choice when buyers think about your category and makes competitors look like inferior alternatives rather than equals.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/saas-growth', requireAuth, async (req: AuthRequest, res) => {
+  const { product, stage, model } = req.body;
+  const prompt = `You are a SaaS growth strategy and go-to-market expert. Design the SaaS growth strategy for ${product} at ${stage} using ${model}. Cover the SaaS growth framework, the growth motion selection, the product-led growth design, the sales-led growth design, the hybrid PLG and sales motion, the pricing for growth, the expansion revenue strategy, the partner-led growth, the international growth strategy, the SaaS growth metrics and targets, and how to design SaaS growth strategies that match your growth motion to your product complexity, deal size, and customer segment, that build the self-serve and product-led capabilities that reduce customer acquisition costs and increase reach, and that create the land-and-expand revenue model where initial customer acquisition is just the beginning of a revenue relationship that grows as the customer succeeds with your product.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/human-resources/employee-experience', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, segment, priorities } = req.body;
+  const prompt = `You are an employee experience design and workplace culture expert. Design the employee experience for ${organization} for ${segment} focusing on ${priorities}. Cover the employee experience framework, the employee journey mapping, the onboarding experience design, the day-to-day work experience, the growth and development experience, the recognition and reward experience, the offboarding experience design, the EX measurement and analytics, the EX technology stack, and how to design employee experiences that attract and retain the talent your organization needs, that create the engagement and discretionary effort that drives productivity and customer experience, and that build the employer brand that makes your organization a destination employer where the best people want to work because they know they will be developed, valued, and given meaningful work that aligns with their own goals and values.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/compliance-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, regulations, risks } = req.body;
+  const prompt = `You are a regulatory compliance strategy and risk management expert. Design the compliance strategy for ${organization} covering ${regulations} managing ${risks}. Cover the compliance strategy framework, the regulatory landscape mapping, the compliance risk assessment, the compliance program design, the policies and procedures development, the training and awareness program, the monitoring and testing program, the incident response and remediation, the compliance technology and automation, and how to design compliance programs that protect the organization from regulatory risk while enabling the business to operate efficiently, that build compliance into business processes rather than treating it as an afterthought that requires expensive remediation, and that create the compliance culture and governance that allows compliance to keep pace with a rapidly evolving regulatory environment without constantly disrupting business operations.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/marketing/martech-stack', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, maturity, goals } = req.body;
+  const prompt = `You are a marketing technology strategy and stack design expert. Design the MarTech stack for ${organization} at ${maturity} to achieve ${goals}. Cover the MarTech strategy framework, the marketing use case inventory, the data infrastructure and CDP strategy, the channel technology selection, the analytics and measurement platform, the personalization and AI technology, the MarTech integration architecture, the MarTech governance and data management, the MarTech ROI and performance measurement, and how to build marketing technology stacks that enable the marketing capabilities your business needs rather than accumulating tools that create integration complexity and data silos, that center around a robust customer data infrastructure that enables personalization and measurement, and that give marketers the tools to execute campaigns and analyze results without requiring engineering resources for every change, enabling the speed and experimentation that modern digital marketing demands.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ecommerce', requireAuth, async (req: AuthRequest, res) => {
+  const { brand, market, goals } = req.body;
+  const prompt = `You are an e-commerce strategy and digital retail expert. Design the e-commerce strategy for ${brand} in ${market} to achieve ${goals}. Cover the e-commerce strategy framework, the channel strategy for e-commerce, the owned store vs. marketplace balance, the product catalog and merchandising, the pricing and promotions strategy, the customer acquisition for e-commerce, the conversion rate optimization, the fulfillment and logistics strategy, the customer service for e-commerce, and how to design e-commerce strategies that build owned customer relationships and brand equity rather than depending entirely on marketplace algorithms and customer bases, that create the customer experience that converts first-time buyers into repeat purchasers and brand advocates, and that optimize the unit economics of e-commerce through the right combination of owned and marketplace channels, efficient fulfillment, and customer lifetime value maximization.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/health-tech', requireAuth, async (req: AuthRequest, res) => {
+  const { company, solution, market } = req.body;
+  const prompt = `You are a health technology strategy and healthcare market expert. Design the health tech strategy for ${company} with ${solution} in ${market}. Cover the health tech strategy framework, the regulatory pathway analysis, the clinical evidence strategy, the healthcare buyer and payer dynamics, the reimbursement strategy, the provider and health system sales, the patient engagement strategy, the health data privacy and security, the clinical workflow integration, and how to navigate the uniquely complex healthcare market where clinical evidence, regulatory approval, reimbursement coverage, and stakeholder alignment across providers, payers, and patients are all required before you can achieve commercial scale, building the clinical and commercial strategy that allows your health technology to deliver its potential impact on patient outcomes while building a sustainable business.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
