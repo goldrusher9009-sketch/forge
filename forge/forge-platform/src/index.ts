@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v695.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v696.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -205937,6 +205937,66 @@ app.post('/api/finance/mortgage-strategy', requireAuth, async (req: AuthRequest,
 app.post('/api/strategy/creator-economy', requireAuth, async (req: AuthRequest, res) => {
   const { platform, creators, monetization } = req.body;
   const prompt = `You are a creator economy strategy and content platform expert. Design creator economy for ${platform} with ${creators} through ${monetization}. Cover creator economy framework, creator value proposition and acquisition, monetization model design across ads, subscriptions, tips, and commerce, creator fund and revenue sharing economics, creator tools and workflow enablement, audience development and discovery algorithms, creator retention and satisfaction, brand partnership and sponsorship marketplace, creator analytics and insights, and how to build creator economy platforms that attract and retain top creators by offering economics that allow creators to build sustainable businesses on the platform, providing tools that reduce the cost and complexity of content production, and designing discovery systems that help quality creators build audiences rather than optimizing purely for engagement metrics that favor viral content over sustainable creator careers.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/debt-restructuring', requireAuth, async (req: AuthRequest, res) => {
+  const { company, debt_structure, creditors } = req.body;
+  const prompt = `You are a debt restructuring strategy and financial distress management expert. Design debt restructuring for ${company} with ${debt_structure} and ${creditors}. Cover debt restructuring framework, liquidity assessment and cash flow modeling, creditor map and claim priority, out-of-court versus in-court restructuring, distressed debt exchange and tender offer, covenant waiver and amendment process, lender group dynamics and holdout problem, DIP financing and cash management, operational restructuring alongside financial, and how to execute debt restructuring that preserves business value for creditors and stakeholders by moving quickly once financial distress is evident, maintaining transparent communication with creditors, and combining financial restructuring with the operational changes needed to make the business viable at the restructured capital structure rather than simply reducing debt without addressing the underlying performance problems.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/content-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, content_volume, channels } = req.body;
+  const prompt = `You are a content operations strategy and editorial workflow expert. Design content operations for ${organization} producing ${content_volume} across ${channels}. Cover content operations framework, editorial calendar and content planning, content brief and production workflow, content review and approval process, content management system and DAM, content performance analytics and optimization, content localization and translation workflow, content governance and quality standards, content team structure and roles, and how to build content operations that consistently produce high-quality content at scale by designing workflows that maintain quality without creating approval bottlenecks, using templates and playbooks that enable consistent content without sacrificing freshness, and building the analytics capabilities that allow content teams to learn what works and continuously improve content performance rather than producing content based on gut instinct.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/dei-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, workforce, goals } = req.body;
+  const prompt = `You are a diversity equity and inclusion strategy and organizational change expert. Design DEI strategy for ${organization} with ${workforce} toward ${goals}. Cover DEI strategy framework, DEI data and representation assessment, pay equity analysis, inclusive hiring and promotion practices, bias interruption in talent processes, employee resource groups and belonging programs, inclusive leadership development, supplier diversity, DEI metrics and accountability, and how to build DEI strategies that produce genuine and sustained improvement in representation and inclusion by addressing the specific structural barriers and bias that produce current outcomes rather than implementing generic DEI programs that signal commitment without changing the decisions and processes that determine who gets hired, promoted, and retained.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/nanotechnology', requireAuth, async (req: AuthRequest, res) => {
+  const { company, application, market } = req.body;
+  const prompt = `You are a nanotechnology strategy and advanced materials innovation expert. Design nanotechnology strategy for ${company} in ${application} targeting ${market}. Cover nanotechnology strategy framework, nanomaterial synthesis and characterization, surface engineering and functionalization, nano-enabled drug delivery and therapeutics, nanoelectronics and semiconductor applications, nanomaterial safety and toxicology, manufacturing scale-up from lab to production, IP strategy in nanotechnology, regulatory pathway for nanomaterials, and how to develop nanotechnology products that achieve commercial success by bridging the gap between laboratory performance and manufacturing scalability, building the application-specific performance data that convinces industrial customers to qualify new materials in their production processes, and navigating the regulatory uncertainty around nanomaterial safety that creates barriers to market entry in regulated industries.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/policy-advocacy', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, policy_issue, stakeholders } = req.body;
+  const prompt = `You are a policy advocacy strategy and government relations expert. Design policy advocacy for ${organization} on ${policy_issue} with ${stakeholders}. Cover policy advocacy framework, policy landscape and decision-maker mapping, coalition building and third-party validation, messaging and framing strategy for policy audiences, grassroots and grasstops mobilization, regulatory comment and formal engagement, think tank and academic partnerships, media and public opinion strategy, lobbying compliance and ethics, and how to build policy advocacy programs that achieve genuine policy outcomes by developing deep expertise on the policy issue, building diverse coalitions that demonstrate broad support beyond narrow self-interest, and engaging authentically with the legitimate concerns of policymakers and opposing stakeholders rather than treating advocacy as a purely adversarial process.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/predictive-maintenance', requireAuth, async (req: AuthRequest, res) => {
+  const { company, assets, sensors } = req.body;
+  const prompt = `You are a predictive maintenance strategy and industrial AI expert. Design predictive maintenance for ${company} with ${assets} using ${sensors}. Cover predictive maintenance framework, failure mode and effects analysis, condition monitoring and sensor selection, data collection and historian architecture, feature engineering for time-series data, machine learning model selection and training, alert threshold and work order integration, maintenance scheduling optimization, ROI measurement and failure avoidance quantification, and how to implement predictive maintenance programs that deliver genuine maintenance cost reduction and asset availability improvement by selecting the assets and failure modes where prediction is technically feasible and the cost of unplanned failure justifies the investment in monitoring and analytics, rather than instrumenting all assets regardless of failure consequence or predictability.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/ecommerce-ops', requireAuth, async (req: AuthRequest, res) => {
+  const { retailer, volume, markets } = req.body;
+  const prompt = `You are an e-commerce operations strategy and digital fulfillment expert. Design e-commerce operations for ${retailer} with ${volume} across ${markets}. Cover e-commerce operations framework, order management and fulfillment architecture, warehouse operations and pick pack ship, last-mile delivery strategy and carrier mix, returns management and reverse logistics, inventory positioning and demand forecasting, customer service and order support, e-commerce platform and integration stack, international e-commerce and cross-border fulfillment, and how to build e-commerce operations that deliver the fast, reliable fulfillment that online customers expect at the lowest possible cost by optimizing the fulfillment network design, carrier mix, and warehouse operations in combination rather than independently, and by designing returns processes that recover value efficiently while maintaining customer satisfaction.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/fundraising', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, goal, donors } = req.body;
+  const prompt = `You are a fundraising strategy and development management expert. Design fundraising strategy for ${organization} toward ${goal} with ${donors}. Cover fundraising strategy framework, donor pyramid and prospect research, major gift cultivation and stewardship, annual fund and direct mail program, digital fundraising and crowdfunding, planned giving and legacy program, corporate and foundation grant strategy, fundraising events and peer-to-peer, donor retention and lapsed donor reactivation, and how to build fundraising programs that generate sustainable income growth by investing in the major donor relationships that generate the highest return per dollar of fundraising cost, building the donor retention that compounds the donor base over time, and treating donors as partners in the mission rather than sources of funding who are only contacted when money is needed.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/customer-success', requireAuth, async (req: AuthRequest, res) => {
+  const { company, customers, product } = req.body;
+  const prompt = `You are a customer success strategy and retention program expert. Design customer success for ${company} with ${customers} using ${product}. Cover customer success framework, customer segmentation and CS coverage model, onboarding and time-to-value acceleration, health scoring and early warning systems, business review and executive engagement, expansion and upsell motion, at-risk intervention and save plays, CS operations and technology stack, CS team structure and capacity planning, and how to build customer success programs that drive retention and expansion by genuinely helping customers achieve the business outcomes they purchased the product to deliver, identifying and resolving adoption and usage barriers before they become churn risks, and creating the executive-level relationships that make renewal conversations about continued partnership rather than price negotiation.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/neuromorphic', requireAuth, async (req: AuthRequest, res) => {
+  const { organization, application, requirements } = req.body;
+  const prompt = `You are a neuromorphic computing strategy and brain-inspired AI hardware expert. Design neuromorphic computing for ${organization} in ${application} with ${requirements}. Cover neuromorphic computing framework, spiking neural network architecture, event-driven processing and temporal coding, neuromorphic hardware platforms including Intel Loihi and IBM TrueNorth, energy efficiency advantages for edge inference, on-chip learning and adaptation, comparison with conventional deep learning hardware, programming models for neuromorphic systems, application domains including sensory processing and robotics, and how to evaluate neuromorphic computing for specific applications by understanding where the energy efficiency and temporal processing advantages of neuromorphic approaches justify the immaturity of the development ecosystem and the need to rethink algorithms for spiking neural network implementation rather than directly porting conventional deep learning models.`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
