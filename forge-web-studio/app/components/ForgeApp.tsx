@@ -664,6 +664,16 @@ ForgeTab_hroperations3577,
 ForgeTab_diversityinclusion3578,
 ForgeTab_successionplanning3579,
 ForgeTab_hrtechstack3580,
+ForgeTab_sportstech3581,
+ForgeTab_esportsstrategy3582,
+ForgeTab_gamingproduct3583,
+ForgeTab_sportsanalytics3584,
+ForgeTab_fanengagement3585,
+ForgeTab_athletebranding3586,
+ForgeTab_sportsventure3587,
+ForgeTab_gamedesign3588,
+ForgeTab_sportsmediarights3589,
+ForgeTab_fitnessstartup3590,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58221,6 +58231,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'diversityinclusion3578' && <ForgeTab_diversityinclusion3578 />}
               {(mainTab as string) === 'successionplanning3579' && <ForgeTab_successionplanning3579 />}
               {(mainTab as string) === 'hrtechstack3580' && <ForgeTab_hrtechstack3580 />}
+              {(mainTab as string) === 'sportstech3581' && <ForgeTab_sportstech3581 />}
+              {(mainTab as string) === 'esportsstrategy3582' && <ForgeTab_esportsstrategy3582 />}
+              {(mainTab as string) === 'gamingproduct3583' && <ForgeTab_gamingproduct3583 />}
+              {(mainTab as string) === 'sportsanalytics3584' && <ForgeTab_sportsanalytics3584 />}
+              {(mainTab as string) === 'fanengagement3585' && <ForgeTab_fanengagement3585 />}
+              {(mainTab as string) === 'athletebranding3586' && <ForgeTab_athletebranding3586 />}
+              {(mainTab as string) === 'sportsventure3587' && <ForgeTab_sportsventure3587 />}
+              {(mainTab as string) === 'gamedesign3588' && <ForgeTab_gamedesign3588 />}
+              {(mainTab as string) === 'sportsmediarights3589' && <ForgeTab_sportsmediarights3589 />}
+              {(mainTab as string) === 'fitnessstartup3590' && <ForgeTab_fitnessstartup3590 />}
       </div>
     </div>
   );
