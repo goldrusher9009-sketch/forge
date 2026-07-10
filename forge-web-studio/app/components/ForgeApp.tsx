@@ -1364,6 +1364,16 @@ ForgeTab_liveeventstech4277,
 ForgeTab_mediastrategy4278,
 ForgeTab_fanengagement4279,
 ForgeTab_sportsbetting4280,
+ForgeTab_blockchainstrategy4281,
+ForgeTab_web3strategy4282,
+ForgeTab_defistrategy4283,
+ForgeTab_nftstrategy4284,
+ForgeTab_cryptoexchange4285,
+ForgeTab_daostrategy4286,
+ForgeTab_tokenomicsdesign4287,
+ForgeTab_cryptocompliancestrategy4288,
+ForgeTab_web3gaming4289,
+ForgeTab_metaversestrategy4290,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59621,6 +59631,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'mediastrategy4278' && <ForgeTab_mediastrategy4278 />}
               {(mainTab as string) === 'fanengagement4279' && <ForgeTab_fanengagement4279 />}
               {(mainTab as string) === 'sportsbetting4280' && <ForgeTab_sportsbetting4280 />}
+              {(mainTab as string) === 'blockchainstrategy4281' && <ForgeTab_blockchainstrategy4281 />}
+              {(mainTab as string) === 'web3strategy4282' && <ForgeTab_web3strategy4282 />}
+              {(mainTab as string) === 'defistrategy4283' && <ForgeTab_defistrategy4283 />}
+              {(mainTab as string) === 'nftstrategy4284' && <ForgeTab_nftstrategy4284 />}
+              {(mainTab as string) === 'cryptoexchange4285' && <ForgeTab_cryptoexchange4285 />}
+              {(mainTab as string) === 'daostrategy4286' && <ForgeTab_daostrategy4286 />}
+              {(mainTab as string) === 'tokenomicsdesign4287' && <ForgeTab_tokenomicsdesign4287 />}
+              {(mainTab as string) === 'cryptocompliancestrategy4288' && <ForgeTab_cryptocompliancestrategy4288 />}
+              {(mainTab as string) === 'web3gaming4289' && <ForgeTab_web3gaming4289 />}
+              {(mainTab as string) === 'metaversestrategy4290' && <ForgeTab_metaversestrategy4290 />}
       </div>
     </div>
   );
