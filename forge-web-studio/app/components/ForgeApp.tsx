@@ -974,6 +974,16 @@ ForgeTab_cleantech3887,
 ForgeTab_carboncapture3888,
 ForgeTab_smartgrid3889,
 ForgeTab_hydrogeneconomy3890,
+ForgeTab_mobilitystrat3891,
+ForgeTab_evstrategy3892,
+ForgeTab_autonomousvehicle3893,
+ForgeTab_fleetmanage3894,
+ForgeTab_urbanmobility3895,
+ForgeTab_logisticstech3896,
+ForgeTab_aviationstrat3897,
+ForgeTab_shippingmaritime3898,
+ForgeTab_railstrategy3899,
+ForgeTab_micromobility3900,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58841,6 +58851,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'carboncapture3888' && <ForgeTab_carboncapture3888 />}
               {(mainTab as string) === 'smartgrid3889' && <ForgeTab_smartgrid3889 />}
               {(mainTab as string) === 'hydrogeneconomy3890' && <ForgeTab_hydrogeneconomy3890 />}
+              {(mainTab as string) === 'mobilitystrat3891' && <ForgeTab_mobilitystrat3891 />}
+              {(mainTab as string) === 'evstrategy3892' && <ForgeTab_evstrategy3892 />}
+              {(mainTab as string) === 'autonomousvehicle3893' && <ForgeTab_autonomousvehicle3893 />}
+              {(mainTab as string) === 'fleetmanage3894' && <ForgeTab_fleetmanage3894 />}
+              {(mainTab as string) === 'urbanmobility3895' && <ForgeTab_urbanmobility3895 />}
+              {(mainTab as string) === 'logisticstech3896' && <ForgeTab_logisticstech3896 />}
+              {(mainTab as string) === 'aviationstrat3897' && <ForgeTab_aviationstrat3897 />}
+              {(mainTab as string) === 'shippingmaritime3898' && <ForgeTab_shippingmaritime3898 />}
+              {(mainTab as string) === 'railstrategy3899' && <ForgeTab_railstrategy3899 />}
+              {(mainTab as string) === 'micromobility3900' && <ForgeTab_micromobility3900 />}
       </div>
     </div>
   );
