@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v785.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v786.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211337,5 +211337,65 @@ app.post('/api/logistics/supplierquality', requireAuth, async (req: AuthRequest,
 app.post('/api/logistics/demand', requireAuth, async (req: AuthRequest, res) => {
   const { planner, product, market } = req.body;
   const prompt = `You are a demand planning strategy and sales and operations planning expert. Design demand planning strategy for ${planner} forecasting ${product} in ${market}. Cover demand planning framework, statistical forecasting and algorithms, market intelligence and signal sensing, new product introduction forecasting, promotional lift modeling, consensus demand process, forecast accuracy and bias measurement, S and OP and IBP integration, planning system and technology, and how to build demand planning programs that achieve the forecast accuracy and the inventory optimization and the service level that successful demand-driven supply chain requires by implementing the demand sensing with the POS data and the customer signal and the market intelligence and the statistical model and the collaborative consensus process that produces the accurate and the unbiased demand plan that drives the supply plan and the inventory target and the capacity plan to meet the customer demand at the lowest inventory cost.`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/strategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, threatFocus, budgetRange } = req.body;
+  const prompt = `You are a cybersecurity strategy expert. Build a comprehensive cybersecurity strategy framework. Organization type: ${orgType}. Threat focus: ${threatFocus}. Budget range: ${budgetRange}. Respond in JSON: { framework: string, priorities: string[], roadmap: string[], controls: string[], metrics: string[], investment_areas: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/networksec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { networkType, netSize, complianceNeeds } = req.body;
+  const prompt = `You are a network security expert. Design a network security architecture. Network type: ${networkType}. Size: ${netSize}. Compliance: ${complianceNeeds}. Respond in JSON: { architecture: string, segmentation: string[], firewall_rules: string[], monitoring: string[], vulnerabilities: string[], recommendations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/cloudsec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cloudProvider, workloadType, dataSensitivity } = req.body;
+  const prompt = `You are a cloud security architect. Design a cloud security posture. Cloud provider: ${cloudProvider}. Workload: ${workloadType}. Data sensitivity: ${dataSensitivity}. Respond in JSON: { posture_score: string, iam_recommendations: string[], encryption_standards: string[], monitoring_tools: string[], compliance_gaps: string[], remediation_steps: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/appsec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { appType, techStack, deployModel } = req.body;
+  const prompt = `You are an application security expert. Create a security testing and hardening plan. App type: ${appType}. Tech stack: ${techStack}. Deployment: ${deployModel}. Respond in JSON: { sast_recommendations: string[], dast_tools: string[], owasp_coverage: string[], secure_coding_guidelines: string[], ci_cd_security: string[], pen_test_scope: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/identitysec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { userCount, authMethods, zeroTrustMaturity } = req.body;
+  const prompt = `You are an identity and access management expert. Design an identity security framework. Users: ${userCount}. Auth methods: ${authMethods}. Zero trust maturity: ${zeroTrustMaturity}. Respond in JSON: { iam_architecture: string, mfa_strategy: string[], privileged_access: string[], identity_governance: string[], zero_trust_roadmap: string[], quick_wins: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/threatintel', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sector, threatActors, intelMaturity } = req.body;
+  const prompt = `You are a threat intelligence analyst. Build a threat intelligence program. Sector: ${sector}. Threat actors: ${threatActors}. Maturity: ${intelMaturity}. Respond in JSON: { threat_landscape: string, top_threats: string[], ioc_categories: string[], intel_sources: string[], sharing_frameworks: string[], hunting_use_cases: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/socops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { socTier, toolsInUse, alertVolume } = req.body;
+  const prompt = `You are a SOC operations expert. Optimize security operations center performance. SOC tier: ${socTier}. Tools: ${toolsInUse}. Alert volume: ${alertVolume}. Respond in JSON: { triage_process: string, escalation_matrix: string[], playbook_templates: string[], automation_opportunities: string[], kpis: string[], staffing_recommendations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/incidentresponse', requireAuth, async (req: AuthRequest, res: any) => {
+  const { incidentType, affectedSystems, severityLevel } = req.body;
+  const prompt = `You are an incident response expert. Create an incident response plan. Incident: ${incidentType}. Systems: ${affectedSystems}. Severity: ${severityLevel}. Respond in JSON: { immediate_actions: string[], containment_steps: string[], eradication_plan: string[], recovery_timeline: string[], forensics_checklist: string[], lessons_learned_template: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/grc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { complianceFramework, orgSize, auditTimeline } = req.body;
+  const prompt = `You are a GRC (Governance, Risk and Compliance) expert. Build a compliance and risk management program. Framework: ${complianceFramework}. Org size: ${orgSize}. Audit timeline: ${auditTimeline}. Respond in JSON: { compliance_roadmap: string, control_domains: string[], risk_register_template: string[], policy_gaps: string[], audit_prep_checklist: string[], continuous_monitoring: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/pentest', requireAuth, async (req: AuthRequest, res: any) => {
+  const { targetScope, testType, engagementRules } = req.body;
+  const prompt = `You are a penetration testing expert. Design a penetration testing engagement plan. Scope: ${targetScope}. Test type: ${testType}. Rules: ${engagementRules}. Respond in JSON: { methodology: string, reconnaissance_steps: string[], attack_vectors: string[], tools_recommended: string[], reporting_template: string[], remediation_priorities: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

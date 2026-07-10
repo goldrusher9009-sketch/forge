@@ -91812,3 +91812,113 @@ export function ForgeTab_productdemandplanning2960() {
     </div>
   );
 }
+
+export function ForgeTab_cyberstrategy2961() {
+  const [orgType, setOrgType] = React.useState('');
+  const [threatFocus, setThreatFocus] = React.useState('');
+  const [budgetRange, setBudgetRange] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/cybersecurity/strategy', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"orgType": orgType, "threatFocus": threatFocus, "budgetRange": budgetRange})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🔐 Cyber Strategy</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Organization Type" value={orgType} onChange={e=>setOrgType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Threat Focus Area" value={threatFocus} onChange={e=>setThreatFocus(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Budget Range" value={budgetRange} onChange={e=>setBudgetRange(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Cyber Strategy'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_networksec2962() {
+  const [networkType, setNetworkType] = React.useState('');
+  const [netSize, setNetSize] = React.useState('');
+  const [complianceNeeds, setComplianceNeeds] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/cybersecurity/networksec', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"networkType": networkType, "netSize": netSize, "complianceNeeds": complianceNeeds})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🌐 Network Security</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Network Type" value={networkType} onChange={e=>setNetworkType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Network Size" value={netSize} onChange={e=>setNetSize(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Compliance Requirements" value={complianceNeeds} onChange={e=>setComplianceNeeds(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Network Security'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_cloudsec2963() {
+  const [cloudProvider, setCloudProvider] = React.useState('');
+  const [workloadType, setWorkloadType] = React.useState('');
+  const [dataSensitivity, setDataSensitivity] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/cybersecurity/cloudsec', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"cloudProvider": cloudProvider, "workloadType": workloadType, "dataSensitivity": dataSensitivity})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>☁️ Cloud Security</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Cloud Provider" value={cloudProvider} onChange={e=>setCloudProvider(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Workload Type" value={workloadType} onChange={e=>setWorkloadType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Data Sensitivity Level" value={dataSensitivity} onChange={e=>setDataSensitivity(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Cloud Security'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_appsec2964() {
+  const [appType, setAppType] = React.useState('');
+  const [techStack, setTechStack] = React.useState('');
+  const [deployModel, setDeployModel] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/cybersecurity/appsec', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"appType": appType, "techStack": techStack, "deployModel": deployModel})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🛡️ Application Security</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Application Type" value={appType} onChange={e=>setAppType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Technology Stack" value={techStack} onChange={e=>setTechStack(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Deployment Model" value={deployModel} onChange={e=>setDeployModel(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Application Security'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_identitysec2965() {
+  const [userCount, setUserCount] = React.useState('');
+  const [authMethods, setAuthMethods] = React.useState('');
+  const [zeroTrustMaturity, setZeroTrustMaturity] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/cybersecurity/identitysec', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"userCount": userCount, "authMethods": authMethods, "zeroTrustMaturity": zeroTrustMaturity})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🔑 Identity Security</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="User Count" value={userCount} onChange={e=>setUserCount(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current Auth Methods" value={authMethods} onChange={e=>setAuthMethods(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Zero Trust Maturity Level" value={zeroTrustMaturity} onChange={e=>setZeroTrustMaturity(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Identity Security'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_threatintel2966() {
+  const [sector, setSector] = React.useState('');
+  const [threatActors, setThreatActors] = React.useState('');
+  const [intelMaturity, setIntelMaturity] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/cybersecurity/threatintel', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"sector": sector, "threatActors": threatActors, "intelMaturity": intelMaturity})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🔍 Threat Intelligence</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Industry Sector" value={sector} onChange={e=>setSector(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Known Threat Actors" value={threatActors} onChange={e=>setThreatActors(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Intel Maturity Level" value={intelMaturity} onChange={e=>setIntelMaturity(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Threat Intelligence'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_socops2967() {
+  const [socTier, setSocTier] = React.useState('');
+  const [toolsInUse, setToolsInUse] = React.useState('');
+  const [alertVolume, setAlertVolume] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/cybersecurity/socops', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"socTier": socTier, "toolsInUse": toolsInUse, "alertVolume": alertVolume})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🖥️ SOC Operations</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="SOC Tier Level" value={socTier} onChange={e=>setSocTier(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current Security Tools" value={toolsInUse} onChange={e=>setToolsInUse(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Daily Alert Volume" value={alertVolume} onChange={e=>setAlertVolume(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run SOC Operations'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_incidentresponse2968() {
+  const [incidentType, setIncidentType] = React.useState('');
+  const [affectedSystems, setAffectedSystems] = React.useState('');
+  const [severityLevel, setSeverityLevel] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/cybersecurity/incidentresponse', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"incidentType": incidentType, "affectedSystems": affectedSystems, "severityLevel": severityLevel})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🚨 Incident Response</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Incident Type" value={incidentType} onChange={e=>setIncidentType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Affected Systems" value={affectedSystems} onChange={e=>setAffectedSystems(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Severity Level" value={severityLevel} onChange={e=>setSeverityLevel(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Incident Response'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_grc2969() {
+  const [complianceFramework, setComplianceFramework] = React.useState('');
+  const [orgSize, setOrgSize] = React.useState('');
+  const [auditTimeline, setAuditTimeline] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/cybersecurity/grc', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"complianceFramework": complianceFramework, "orgSize": orgSize, "auditTimeline": auditTimeline})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>📋 GRC Framework</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Compliance Framework (SOC2/ISO/NIST)" value={complianceFramework} onChange={e=>setComplianceFramework(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Organization Size" value={orgSize} onChange={e=>setOrgSize(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Audit Timeline" value={auditTimeline} onChange={e=>setAuditTimeline(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run GRC Framework'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_pentest2970() {
+  const [targetScope, setTargetScope] = React.useState('');
+  const [testType, setTestType] = React.useState('');
+  const [engagementRules, setEngagementRules] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/cybersecurity/pentest', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"targetScope": targetScope, "testType": testType, "engagementRules": engagementRules})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>⚔️ Penetration Testing</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Target Scope" value={targetScope} onChange={e=>setTargetScope(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Test Type (black/gray/white box)" value={testType} onChange={e=>setTestType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Rules of Engagement" value={engagementRules} onChange={e=>setEngagementRules(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Penetration Testing'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
