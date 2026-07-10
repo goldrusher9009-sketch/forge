@@ -294,6 +294,16 @@ ForgeTab_nonprofitfinance3197,
 ForgeTab_advocacycampaign3198,
 ForgeTab_communityoutreach3199,
 ForgeTab_socialenterprise3200,
+ForgeTab_lessonplan3201,
+ForgeTab_curriculummap3202,
+ForgeTab_rubricbuilder3203,
+ForgeTab_edtechstack3204,
+ForgeTab_studentengagement3205,
+ForgeTab_differentiatedinstruction3206,
+ForgeTab_projectbasedlearning3207,
+ForgeTab_onlinecoursecreator3208,
+ForgeTab_studentfeedback3209,
+ForgeTab_academicintegrity3210,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57481,6 +57491,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'advocacycampaign3198' && <ForgeTab_advocacycampaign3198 />}
               {(mainTab as string) === 'communityoutreach3199' && <ForgeTab_communityoutreach3199 />}
               {(mainTab as string) === 'socialenterprise3200' && <ForgeTab_socialenterprise3200 />}
+              {(mainTab as string) === 'lessonplan3201' && <ForgeTab_lessonplan3201 />}
+              {(mainTab as string) === 'curriculummap3202' && <ForgeTab_curriculummap3202 />}
+              {(mainTab as string) === 'rubricbuilder3203' && <ForgeTab_rubricbuilder3203 />}
+              {(mainTab as string) === 'edtechstack3204' && <ForgeTab_edtechstack3204 />}
+              {(mainTab as string) === 'studentengagement3205' && <ForgeTab_studentengagement3205 />}
+              {(mainTab as string) === 'differentiatedinstruction3206' && <ForgeTab_differentiatedinstruction3206 />}
+              {(mainTab as string) === 'projectbasedlearning3207' && <ForgeTab_projectbasedlearning3207 />}
+              {(mainTab as string) === 'onlinecoursecreator3208' && <ForgeTab_onlinecoursecreator3208 />}
+              {(mainTab as string) === 'studentfeedback3209' && <ForgeTab_studentfeedback3209 />}
+              {(mainTab as string) === 'academicintegrity3210' && <ForgeTab_academicintegrity3210 />}
       </div>
     </div>
   );

@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v809.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v810.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -212538,5 +212538,65 @@ app.post('/api/nonprofit/outreach', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/nonprofit/socialenterprise', requireAuth, async (req: AuthRequest, res: any) => {
   const { socialMission, enterpriseModel, targetMarket } = req.body;
   const prompt = `You are a social enterprise expert. Design a sustainable social enterprise. Mission: ${socialMission}. Model: ${enterpriseModel}. Market: ${targetMarket}. Respond in JSON: { enterprise_design: string, theory_of_change: string[], revenue_model: string[], market_strategy: string[], impact_measurement: string[], scaling_pathway: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/lesson', requireAuth, async (req: AuthRequest, res: any) => {
+  const { subject, gradeLevel, learningObjectives } = req.body;
+  const prompt = `You are an expert educator. Create a detailed lesson plan. Subject: ${subject}. Grade: ${gradeLevel}. Objectives: ${learningObjectives}. Respond in JSON: { lesson_overview: string, warm_up_activity: string, main_instruction: string[], guided_practice: string[], independent_practice: string[], assessment_strategy: string, differentiation_strategies: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/curriculum', requireAuth, async (req: AuthRequest, res: any) => {
+  const { courseTitle, courseDuration, standardsFramework } = req.body;
+  const prompt = `You are a curriculum design expert. Create a comprehensive curriculum map. Course: ${courseTitle}. Duration: ${courseDuration}. Standards: ${standardsFramework}. Respond in JSON: { course_overview: string, unit_sequence: string[], pacing_guide: string[], essential_questions: string[], assessment_calendar: string[], cross_curricular_connections: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/rubric', requireAuth, async (req: AuthRequest, res: any) => {
+  const { assignmentType, gradeLevel, skillsToAssess } = req.body;
+  const prompt = `You are an assessment design expert. Build a detailed rubric. Assignment: ${assignmentType}. Grade: ${gradeLevel}. Skills: ${skillsToAssess}. Respond in JSON: { rubric_title: string, criteria: string[], performance_levels: string[], scoring_guide: string[], feedback_prompts: string[], total_points: string }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/edtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { institutionType, teachingNeeds, budget } = req.body;
+  const prompt = `You are an EdTech consultant. Recommend an optimal technology stack. Institution: ${institutionType}. Needs: ${teachingNeeds}. Budget: ${budget}. Respond in JSON: { recommended_lms: string, assessment_tools: string[], collaboration_tools: string[], content_creation: string[], analytics_platform: string[], implementation_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/engagement', requireAuth, async (req: AuthRequest, res: any) => {
+  const { courseType, studentChallenges, availableResources } = req.body;
+  const prompt = `You are a student engagement expert. Design an engagement strategy. Course: ${courseType}. Challenges: ${studentChallenges}. Resources: ${availableResources}. Respond in JSON: { engagement_framework: string, active_learning_strategies: string[], gamification_elements: string[], community_building: string[], feedback_mechanisms: string[], motivation_techniques: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/differentiate', requireAuth, async (req: AuthRequest, res: any) => {
+  const { topicContent, studentDiversityNeeds, gradeLevel } = req.body;
+  const prompt = `You are a differentiated instruction specialist. Design a differentiated lesson approach. Topic: ${topicContent}. Diversity: ${studentDiversityNeeds}. Grade: ${gradeLevel}. Respond in JSON: { tiered_activities: string[], learning_centers: string[], flexible_grouping: string[], scaffolding_strategies: string[], extension_activities: string[], universal_design_elements: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/pbl', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pblTopic, subjectArea, projectDuration } = req.body;
+  const prompt = `You are a PBL design expert. Create a complete project-based learning experience. Topic: ${pblTopic}. Subject: ${subjectArea}. Duration: ${projectDuration}. Respond in JSON: { driving_question: string, project_overview: string, entry_event: string, inquiry_arc: string[], milestones: string[], public_product: string, assessment_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/onlinecourse', requireAuth, async (req: AuthRequest, res: any) => {
+  const { courseTopic, targetLearners, courseLengthFormat } = req.body;
+  const prompt = `You are an instructional design expert. Design a complete online course. Topic: ${courseTopic}. Learners: ${targetLearners}. Format: ${courseLengthFormat}. Respond in JSON: { course_structure: string, module_breakdown: string[], video_script_outline: string[], interactive_elements: string[], assessment_design: string[], marketing_description: string }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/studentfb', requireAuth, async (req: AuthRequest, res: any) => {
+  const { studentWork, assignmentCriteria, feedbackGoal } = req.body;
+  const prompt = `You are an expert at giving constructive student feedback. Generate meaningful feedback. Work: ${studentWork}. Criteria: ${assignmentCriteria}. Goal: ${feedbackGoal}. Respond in JSON: { strengths: string[], areas_for_improvement: string[], specific_suggestions: string[], growth_mindset_message: string, next_steps: string[], grade_rationale: string }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/integrity', requireAuth, async (req: AuthRequest, res: any) => {
+  const { institutionType, currentChallenges, aiPolicyStance } = req.body;
+  const prompt = `You are an academic integrity expert. Design a comprehensive academic integrity framework. Institution: ${institutionType}. Challenges: ${currentChallenges}. AI Policy: ${aiPolicyStance}. Respond in JSON: { policy_framework: string, ai_guidelines: string[], honor_code_elements: string[], detection_approach: string[], education_program: string[], restorative_practices: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
