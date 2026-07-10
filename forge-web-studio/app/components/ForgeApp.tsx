@@ -334,6 +334,16 @@ ForgeTab_insuranceroi3237,
 ForgeTab_contractorisk3238,
 ForgeTab_workerscomp3239,
 ForgeTab_riskfinancing3240,
+ForgeTab_scriptwriting3241,
+ForgeTab_podcastplanner3242,
+ForgeTab_contentcreatorplan3243,
+ForgeTab_musicmarketing3244,
+ForgeTab_mediapitch3245,
+ForgeTab_videoproduction3246,
+ForgeTab_entertainmentbiz3247,
+ForgeTab_socialmediacontent3248,
+ForgeTab_audiencebuilding3249,
+ForgeTab_brandstorytelling3250,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57561,6 +57571,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'contractorisk3238' && <ForgeTab_contractorisk3238 />}
               {(mainTab as string) === 'workerscomp3239' && <ForgeTab_workerscomp3239 />}
               {(mainTab as string) === 'riskfinancing3240' && <ForgeTab_riskfinancing3240 />}
+              {(mainTab as string) === 'scriptwriting3241' && <ForgeTab_scriptwriting3241 />}
+              {(mainTab as string) === 'podcastplanner3242' && <ForgeTab_podcastplanner3242 />}
+              {(mainTab as string) === 'contentcreatorplan3243' && <ForgeTab_contentcreatorplan3243 />}
+              {(mainTab as string) === 'musicmarketing3244' && <ForgeTab_musicmarketing3244 />}
+              {(mainTab as string) === 'mediapitch3245' && <ForgeTab_mediapitch3245 />}
+              {(mainTab as string) === 'videoproduction3246' && <ForgeTab_videoproduction3246 />}
+              {(mainTab as string) === 'entertainmentbiz3247' && <ForgeTab_entertainmentbiz3247 />}
+              {(mainTab as string) === 'socialmediacontent3248' && <ForgeTab_socialmediacontent3248 />}
+              {(mainTab as string) === 'audiencebuilding3249' && <ForgeTab_audiencebuilding3249 />}
+              {(mainTab as string) === 'brandstorytelling3250' && <ForgeTab_brandstorytelling3250 />}
       </div>
     </div>
   );
