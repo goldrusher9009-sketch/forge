@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v890.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v891.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -217398,5 +217398,65 @@ app.post('/api/investbank/lp', requireAuth, async (req: AuthRequest, res: any) =
 app.post('/api/investbank/restructure', requireAuth, async (req: AuthRequest, res: any) => {
   const { companySize, distressType, restructGoals } = req.body;
   const prompt = `You are a corporate restructuring expert. Build a restructuring strategy. Company: ${companySize}. Distress: ${distressType}. Goals: ${restructGoals}. Respond in JSON: { restructuring_strategy: string, liquidity_management: string[], operational_turnaround: string[], debt_restructuring: string[], stakeholder_management: string[], stabilization_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalinno/legaltech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { legalTechType, targetLegalSegment, legaltechGoals } = req.body;
+  const prompt = `You are a legal tech strategy expert. Build a legal tech strategy. Type: ${legalTechType}. Segment: ${targetLegalSegment}. Goals: ${legaltechGoals}. Respond in JSON: { legaltech_strategy: string, product_roadmap: string[], go_to_market: string[], legal_ops_integration: string[], compliance_framework: string[], growth_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalinno/compliancetech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { compType, regulatoryScope, compGoals } = req.body;
+  const prompt = `You are a compliance tech strategy expert. Build a compliance tech strategy. Type: ${compType}. Scope: ${regulatoryScope}. Goals: ${compGoals}. Respond in JSON: { compliance_strategy: string, regulatory_coverage: string[], technology_architecture: string[], risk_monitoring: string[], audit_automation: string[], regulatory_change_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalinno/contracts', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, contractVolume, clmGoals } = req.body;
+  const prompt = `You are a contract lifecycle management expert. Build a CLM strategy. Org: ${orgType}. Volume: ${contractVolume}. Goals: ${clmGoals}. Respond in JSON: { clm_strategy: string, process_automation: string[], template_standardization: string[], risk_playbooks: string[], technology_selection: string[], performance_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalinno/ediscovery', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, litigationProfile, ediscGoals } = req.body;
+  const prompt = `You are an eDiscovery strategy expert. Build an eDiscovery strategy. Org: ${orgType}. Litigation: ${litigationProfile}. Goals: ${ediscGoals}. Respond in JSON: { ediscovery_strategy: string, data_governance: string[], technology_platform: string[], workflow_design: string[], cost_management: string[], ai_adoption_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalinno/privacy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, dataProcessingScope, privacyGoals } = req.body;
+  const prompt = `You are a privacy law strategy expert. Build a privacy strategy. Org: ${orgType}. Scope: ${dataProcessingScope}. Goals: ${privacyGoals}. Respond in JSON: { privacy_strategy: string, regulatory_compliance: string[], consent_management: string[], data_subject_rights: string[], breach_response: string[], privacy_by_design: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalinno/legalops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { legalDeptSize, currentMaturity, legalOpsGoals } = req.body;
+  const prompt = `You are a legal operations strategy expert. Build a legal ops strategy. Dept: ${legalDeptSize}. Maturity: ${currentMaturity}. Goals: ${legalOpsGoals}. Respond in JSON: { legal_ops_strategy: string, operating_model: string[], technology_stack: string[], vendor_management: string[], kpi_framework: string[], business_partnership: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalinno/ip', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, ipPortfolio, ipGoals } = req.body;
+  const prompt = `You are an IP strategy expert. Build an IP strategy. Org: ${orgType}. Portfolio: ${ipPortfolio}. Goals: ${ipGoals}. Respond in JSON: { ip_strategy: string, portfolio_development: string[], prosecution_strategy: string[], licensing_program: string[], enforcement_approach: string[], competitive_intelligence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalinno/antitrust', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, marketPosition, antitrustGoals } = req.body;
+  const prompt = `You are an antitrust strategy expert. Build a competition strategy. Org: ${orgType}. Position: ${marketPosition}. Goals: ${antitrustGoals}. Respond in JSON: { antitrust_strategy: string, compliance_program: string[], merger_control: string[], conduct_guidelines: string[], regulatory_engagement: string[], risk_monitoring: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalinno/regaffairs', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industryType, regulatoryScope, regGoals } = req.body;
+  const prompt = `You are a regulatory affairs strategy expert. Build a regulatory strategy. Industry: ${industryType}. Scope: ${regulatoryScope}. Goals: ${regGoals}. Respond in JSON: { regulatory_strategy: string, agency_engagement: string[], submission_roadmap: string[], compliance_framework: string[], regulatory_intelligence: string[], risk_mitigation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalinno/gc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyType, currentLegalState, gcGoals } = req.body;
+  const prompt = `You are a General Counsel strategy expert. Build a GC function strategy. Company: ${companyType}. Legal state: ${currentLegalState}. Goals: ${gcGoals}. Respond in JSON: { gc_strategy: string, risk_management: string[], legal_team_structure: string[], board_governance: string[], outside_counsel_strategy: string[], legal_innovation: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
