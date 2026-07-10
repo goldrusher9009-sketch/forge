@@ -704,6 +704,16 @@ ForgeTab_nonprofitstrategy3617,
 ForgeTab_regulatoryaffairs3618,
 ForgeTab_publichealth3619,
 ForgeTab_defensetechstrategy3620,
+ForgeTab_mentalhealth3621,
+ForgeTab_wellnessapp3622,
+ForgeTab_digitaltherapy3623,
+ForgeTab_sleeptech3624,
+ForgeTab_fitnesstech3625,
+ForgeTab_nutritiontech3626,
+ForgeTab_corporatewellness3627,
+ForgeTab_substanceuse3628,
+ForgeTab_mindfulnesstech3629,
+ForgeTab_healthcoaching3630,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58301,6 +58311,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'regulatoryaffairs3618' && <ForgeTab_regulatoryaffairs3618 />}
               {(mainTab as string) === 'publichealth3619' && <ForgeTab_publichealth3619 />}
               {(mainTab as string) === 'defensetechstrategy3620' && <ForgeTab_defensetechstrategy3620 />}
+              {(mainTab as string) === 'mentalhealth3621' && <ForgeTab_mentalhealth3621 />}
+              {(mainTab as string) === 'wellnessapp3622' && <ForgeTab_wellnessapp3622 />}
+              {(mainTab as string) === 'digitaltherapy3623' && <ForgeTab_digitaltherapy3623 />}
+              {(mainTab as string) === 'sleeptech3624' && <ForgeTab_sleeptech3624 />}
+              {(mainTab as string) === 'fitnesstech3625' && <ForgeTab_fitnesstech3625 />}
+              {(mainTab as string) === 'nutritiontech3626' && <ForgeTab_nutritiontech3626 />}
+              {(mainTab as string) === 'corporatewellness3627' && <ForgeTab_corporatewellness3627 />}
+              {(mainTab as string) === 'substanceuse3628' && <ForgeTab_substanceuse3628 />}
+              {(mainTab as string) === 'mindfulnesstech3629' && <ForgeTab_mindfulnesstech3629 />}
+              {(mainTab as string) === 'healthcoaching3630' && <ForgeTab_healthcoaching3630 />}
       </div>
     </div>
   );
