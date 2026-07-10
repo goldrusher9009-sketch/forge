@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v827.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v828.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -213618,5 +213618,65 @@ app.post('/api/blockchain/web3mktg', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/blockchain/cryptofund', requireAuth, async (req: AuthRequest, res: any) => {
   const { fundStrategy, targetAUM, investorType } = req.body;
   const prompt = `You are a crypto fund strategy expert. Build a crypto fund strategy. Strategy: ${fundStrategy}. AUM: ${targetAUM}. Investors: ${investorType}. Respond in JSON: { fund_structure: string, investment_thesis: string[], portfolio_construction: string[], risk_management: string[], lp_reporting: string[], regulatory_setup: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hrtech/hiring', requireAuth, async (req: AuthRequest, res: any) => {
+  const { roleType, companyStage, hiringVolume } = req.body;
+  const prompt = `You are an HR and talent acquisition expert. Design an optimized hiring process. Role: ${roleType}. Stage: ${companyStage}. Volume: ${hiringVolume}. Respond in JSON: { hiring_framework: string, job_description: string[], sourcing_strategy: string[], interview_structure: string[], assessment_methods: string[], offer_process: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hrtech/empexp', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companySize, currentPainPoints, expGoals } = req.body;
+  const prompt = `You are an employee experience expert. Design an employee experience program. Size: ${companySize}. Issues: ${currentPainPoints}. Goals: ${expGoals}. Respond in JSON: { experience_framework: string, journey_mapping: string[], touchpoint_improvements: string[], recognition_program: string[], feedback_systems: string[], culture_initiatives: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hrtech/performance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyType, currentApproach, performanceGoals } = req.body;
+  const prompt = `You are a performance management expert. Design a performance management system. Type: ${companyType}. Current: ${currentApproach}. Goals: ${performanceGoals}. Respond in JSON: { system_design: string, goal_framework: string[], review_cadence: string[], feedback_model: string[], calibration_process: string[], development_planning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hrtech/remote', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyType, rolesMix, remoteGoals } = req.body;
+  const prompt = `You are a remote work strategy expert. Design a remote work program. Company: ${companyType}. Roles: ${rolesMix}. Goals: ${remoteGoals}. Respond in JSON: { remote_policy: string, async_communication: string[], collaboration_tools: string[], team_rituals: string[], performance_tracking: string[], wellbeing_support: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hrtech/lnd', requireAuth, async (req: AuthRequest, res: any) => {
+  const { skillGaps, learnerAudience, ldBudget } = req.body;
+  const prompt = `You are a Learning & Development expert. Build an L&D program. Gaps: ${skillGaps}. Audience: ${learnerAudience}. Budget: ${ldBudget}. Respond in JSON: { learning_strategy: string, program_design: string[], delivery_methods: string[], technology_stack: string[], measurement_framework: string[], manager_enablement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hrtech/compbands', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industry, companyStage, roles } = req.body;
+  const prompt = `You are a compensation design expert. Build a compensation banding framework. Industry: ${industry}. Stage: ${companyStage}. Roles: ${roles}. Respond in JSON: { comp_philosophy: string, banding_framework: string[], market_benchmarking: string[], equity_integration: string[], pay_equity: string[], communication_guide: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hrtech/dei', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgProfile, currentState, deiGoals } = req.body;
+  const prompt = `You are a DEI strategy expert. Build a comprehensive DEI strategy. Profile: ${orgProfile}. State: ${currentState}. Goals: ${deiGoals}. Respond in JSON: { dei_framework: string, representation_goals: string[], inclusive_practices: string[], bias_mitigation: string[], community_programs: string[], accountability_system: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hrtech/succession', requireAuth, async (req: AuthRequest, res: any) => {
+  const { organizationSize, criticalRoles, timeHorizon } = req.body;
+  const prompt = `You are a succession planning expert. Build a succession planning framework. Size: ${organizationSize}. Roles: ${criticalRoles}. Horizon: ${timeHorizon}. Respond in JSON: { succession_framework: string, talent_identification: string[], development_pipelines: string[], readiness_assessment: string[], knowledge_transfer: string[], implementation_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hrtech/hranalytics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hrDataSources, businessQuestions, analyticsMaturity } = req.body;
+  const prompt = `You are an HR analytics expert. Build an HR analytics strategy. Data: ${hrDataSources}. Questions: ${businessQuestions}. Maturity: ${analyticsMaturity}. Respond in JSON: { analytics_strategy: string, key_metrics: string[], data_infrastructure: string[], predictive_models: string[], reporting_dashboards: string[], actionable_insights: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hrtech/futwork', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industryType, workforceProfile, futureHorizon } = req.body;
+  const prompt = `You are a future of work strategist. Build a future of work strategy. Industry: ${industryType}. Workforce: ${workforceProfile}. Horizon: ${futureHorizon}. Respond in JSON: { future_of_work_vision: string, workforce_transformation: string[], skills_of_future: string[], automation_strategy: string[], talent_ecosystem: string[], change_roadmap: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
