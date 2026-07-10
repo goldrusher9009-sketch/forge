@@ -674,6 +674,16 @@ ForgeTab_sportsventure3587,
 ForgeTab_gamedesign3588,
 ForgeTab_sportsmediarights3589,
 ForgeTab_fitnessstartup3590,
+ForgeTab_agristrategy3591,
+ForgeTab_precisionfarming3592,
+ForgeTab_foodtech3593,
+ForgeTab_foodsupplychain3594,
+ForgeTab_alternativeprotein3595,
+ForgeTab_restauranttech3596,
+ForgeTab_foodbranding3597,
+ForgeTab_groceryretail3598,
+ForgeTab_sustainableagriculture3599,
+ForgeTab_fooddelivery3600,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58241,6 +58251,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'gamedesign3588' && <ForgeTab_gamedesign3588 />}
               {(mainTab as string) === 'sportsmediarights3589' && <ForgeTab_sportsmediarights3589 />}
               {(mainTab as string) === 'fitnessstartup3590' && <ForgeTab_fitnessstartup3590 />}
+              {(mainTab as string) === 'agristrategy3591' && <ForgeTab_agristrategy3591 />}
+              {(mainTab as string) === 'precisionfarming3592' && <ForgeTab_precisionfarming3592 />}
+              {(mainTab as string) === 'foodtech3593' && <ForgeTab_foodtech3593 />}
+              {(mainTab as string) === 'foodsupplychain3594' && <ForgeTab_foodsupplychain3594 />}
+              {(mainTab as string) === 'alternativeprotein3595' && <ForgeTab_alternativeprotein3595 />}
+              {(mainTab as string) === 'restauranttech3596' && <ForgeTab_restauranttech3596 />}
+              {(mainTab as string) === 'foodbranding3597' && <ForgeTab_foodbranding3597 />}
+              {(mainTab as string) === 'groceryretail3598' && <ForgeTab_groceryretail3598 />}
+              {(mainTab as string) === 'sustainableagriculture3599' && <ForgeTab_sustainableagriculture3599 />}
+              {(mainTab as string) === 'fooddelivery3600' && <ForgeTab_fooddelivery3600 />}
       </div>
     </div>
   );

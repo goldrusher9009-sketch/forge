@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v847.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v848.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -214818,5 +214818,65 @@ app.post('/api/sports/mediarights', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/sports/fitnessstartup', requireAuth, async (req: AuthRequest, res: any) => {
   const { fitnessProduct, targetCustomers, fitnessGoals } = req.body;
   const prompt = `You are a fitness startup expert. Build a fitness business strategy. Product: ${fitnessProduct}. Customers: ${targetCustomers}. Goals: ${fitnessGoals}. Respond in JSON: { fitness_strategy: string, product_positioning: string[], customer_acquisition: string[], retention_approach: string[], revenue_model: string[], differentiation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agri/agristrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { agriProduct, targetFarmers, agriGoals } = req.body;
+  const prompt = `You are an AgriTech strategy expert. Build an AgriTech business strategy. Product: ${agriProduct}. Farmers: ${targetFarmers}. Goals: ${agriGoals}. Respond in JSON: { agritech_strategy: string, market_opportunity: string[], farmer_adoption: string[], distribution_model: string[], revenue_streams: string[], impact_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agri/precisionfarm', requireAuth, async (req: AuthRequest, res: any) => {
+  const { farmType, currentPractices, precisionGoals } = req.body;
+  const prompt = `You are a precision farming expert. Build a precision farming strategy. Farm: ${farmType}. Practices: ${currentPractices}. Goals: ${precisionGoals}. Respond in JSON: { precision_strategy: string, sensor_technology: string[], data_analytics: string[], automation_roadmap: string[], input_optimization: string[], roi_projection: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agri/foodtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { foodProduct, targetConsumers, foodTechGoals } = req.body;
+  const prompt = `You are a food tech innovation expert. Build a food tech strategy. Product: ${foodProduct}. Consumers: ${targetConsumers}. Goals: ${foodTechGoals}. Respond in JSON: { foodtech_strategy: string, product_development: string[], regulatory_pathway: string[], consumer_education: string[], distribution_strategy: string[], sustainability_story: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agri/foodsupply', requireAuth, async (req: AuthRequest, res: any) => {
+  const { foodCategory, supplyChainScope, supplyGoals } = req.body;
+  const prompt = `You are a food supply chain expert. Optimize the food supply chain. Category: ${foodCategory}. Scope: ${supplyChainScope}. Goals: ${supplyGoals}. Respond in JSON: { supply_chain_strategy: string, cold_chain_design: string[], traceability_system: string[], waste_reduction: string[], supplier_management: string[], technology_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agri/altprotein', requireAuth, async (req: AuthRequest, res: any) => {
+  const { proteinType, targetMarket, proteinGoals } = req.body;
+  const prompt = `You are an alternative protein expert. Build an alternative protein strategy. Type: ${proteinType}. Market: ${targetMarket}. Goals: ${proteinGoals}. Respond in JSON: { protein_strategy: string, product_development: string[], taste_texture: string[], cost_down_roadmap: string[], regulatory_approach: string[], market_entry: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agri/resttech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { restaurantType, currentOperations, techGoals } = req.body;
+  const prompt = `You are a restaurant technology expert. Build a restaurant tech strategy. Type: ${restaurantType}. Operations: ${currentOperations}. Goals: ${techGoals}. Respond in JSON: { restaurant_tech_strategy: string, pos_modernization: string[], kitchen_automation: string[], customer_experience: string[], delivery_integration: string[], data_analytics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agri/foodbrand', requireAuth, async (req: AuthRequest, res: any) => {
+  const { foodProduct, targetDemographics, brandGoals } = req.body;
+  const prompt = `You are a food brand expert. Build a food brand strategy. Product: ${foodProduct}. Demographics: ${targetDemographics}. Goals: ${brandGoals}. Respond in JSON: { brand_strategy: string, brand_identity: string[], packaging_direction: string[], channel_strategy: string[], messaging_framework: string[], launch_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agri/grocery', requireAuth, async (req: AuthRequest, res: any) => {
+  const { groceryFormat, targetShoppers, retailGoals } = req.body;
+  const prompt = `You are a grocery retail expert. Build a grocery retail strategy. Format: ${groceryFormat}. Shoppers: ${targetShoppers}. Goals: ${retailGoals}. Respond in JSON: { retail_strategy: string, assortment_design: string[], pricing_architecture: string[], fresh_department: string[], loyalty_program: string[], digital_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agri/sustainagri', requireAuth, async (req: AuthRequest, res: any) => {
+  const { farmingSystem, sustainability, sustainGoals } = req.body;
+  const prompt = `You are a sustainable agriculture expert. Build a sustainable farming strategy. System: ${farmingSystem}. Practices: ${sustainability}. Goals: ${sustainGoals}. Respond in JSON: { sustainability_strategy: string, soil_health: string[], water_management: string[], carbon_sequestration: string[], certification_pathway: string[], premium_market_access: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agri/fooddelivery', requireAuth, async (req: AuthRequest, res: any) => {
+  const { deliveryModel, targetMarket, deliveryGoals } = req.body;
+  const prompt = `You are a food delivery strategy expert. Build a food delivery business strategy. Model: ${deliveryModel}. Market: ${targetMarket}. Goals: ${deliveryGoals}. Respond in JSON: { delivery_strategy: string, supply_side_strategy: string[], demand_generation: string[], logistics_optimization: string[], unit_economics: string[], technology_platform: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
