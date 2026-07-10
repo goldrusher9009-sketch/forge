@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v887.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v888.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -217218,5 +217218,65 @@ app.post('/api/sports/gamestudio', requireAuth, async (req: AuthRequest, res: an
 app.post('/api/sports/franchise', requireAuth, async (req: AuthRequest, res: any) => {
   const { franchiseType, currentPerformance, franchiseGoals } = req.body;
   const prompt = `You are a sports franchise strategy expert. Build a franchise strategy. Franchise: ${franchiseType}. Performance: ${currentPerformance}. Goals: ${franchiseGoals}. Respond in JSON: { franchise_strategy: string, team_building: string[], revenue_streams: string[], brand_development: string[], fan_experience: string[], facility_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travel/traveltech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { travelTechType, targetSegment, travelTechGoals } = req.body;
+  const prompt = `You are a travel tech strategy expert. Build a travel tech strategy. Type: ${travelTechType}. Segment: ${targetSegment}. Goals: ${travelTechGoals}. Respond in JSON: { travel_tech_strategy: string, product_roadmap: string[], distribution_model: string[], supplier_partnerships: string[], personalization_engine: string[], revenue_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travel/hotel', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hotelType, currentPosition, hotelGoals } = req.body;
+  const prompt = `You are a hotel strategy expert. Build a hotel strategy. Type: ${hotelType}. Position: ${currentPosition}. Goals: ${hotelGoals}. Respond in JSON: { hotel_strategy: string, revenue_management: string[], distribution_mix: string[], loyalty_program: string[], brand_positioning: string[], operational_excellence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travel/airline', requireAuth, async (req: AuthRequest, res: any) => {
+  const { airlineType, networkModel, airlineGoals } = req.body;
+  const prompt = `You are an airline strategy expert. Build an airline strategy. Type: ${airlineType}. Network: ${networkModel}. Goals: ${airlineGoals}. Respond in JSON: { airline_strategy: string, network_planning: string[], revenue_management: string[], ancillary_revenue: string[], fleet_strategy: string[], loyalty_commercial: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travel/cruise', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cruiseType, targetPassenger, cruiseGoals } = req.body;
+  const prompt = `You are a cruise industry strategy expert. Build a cruise strategy. Type: ${cruiseType}. Passengers: ${targetPassenger}. Goals: ${cruiseGoals}. Respond in JSON: { cruise_strategy: string, itinerary_development: string[], onboard_revenue: string[], distribution_strategy: string[], sustainability_plan: string[], new_ship_concepts: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travel/destination', requireAuth, async (req: AuthRequest, res: any) => {
+  const { destinationType, currentVisitors, destinationGoals } = req.body;
+  const prompt = `You are a destination marketing expert. Build a DMO strategy. Destination: ${destinationType}. Visitors: ${currentVisitors}. Goals: ${destinationGoals}. Respond in JSON: { destination_strategy: string, brand_positioning: string[], target_segments: string[], channel_mix: string[], sustainability_tourism: string[], stakeholder_engagement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travel/shortterm', requireAuth, async (req: AuthRequest, res: any) => {
+  const { strType, currentPortfolio, strGoals } = req.body;
+  const prompt = `You are a short-term rental strategy expert. Build an STR strategy. Type: ${strType}. Portfolio: ${currentPortfolio}. Goals: ${strGoals}. Respond in JSON: { str_strategy: string, revenue_optimization: string[], distribution_mix: string[], operational_model: string[], regulatory_compliance: string[], guest_experience: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travel/fnb', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fnbType, currentConcepts, fnbGoals } = req.body;
+  const prompt = `You are a food and beverage strategy expert. Build an F&B strategy. Type: ${fnbType}. Concepts: ${currentConcepts}. Goals: ${fnbGoals}. Respond in JSON: { fnb_strategy: string, concept_development: string[], unit_economics: string[], supply_chain: string[], digital_channels: string[], expansion_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travel/touroperator', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tourType, currentProducts, tourGoals } = req.body;
+  const prompt = `You are a tour operator strategy expert. Build a tour operator strategy. Type: ${tourType}. Products: ${currentProducts}. Goals: ${tourGoals}. Respond in JSON: { tour_strategy: string, product_portfolio: string[], distribution_channels: string[], supplier_management: string[], sustainability_program: string[], technology_platform: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travel/mice', requireAuth, async (req: AuthRequest, res: any) => {
+  const { miceOrgType, currentPortfolio, miceGoals } = req.body;
+  const prompt = `You are a MICE strategy expert. Build a MICE strategy. Org: ${miceOrgType}. Portfolio: ${currentPortfolio}. Goals: ${miceGoals}. Respond in JSON: { mice_strategy: string, venue_product: string[], sales_bidding: string[], technology_platform: string[], hybrid_events: string[], sustainability_certification: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travel/travelretail', requireAuth, async (req: AuthRequest, res: any) => {
+  const { retailType, locationProfile, retailGoals } = req.body;
+  const prompt = `You are a travel retail strategy expert. Build a travel retail strategy. Type: ${retailType}. Location: ${locationProfile}. Goals: ${retailGoals}. Respond in JSON: { travel_retail_strategy: string, category_management: string[], customer_engagement: string[], digital_pre_order: string[], brand_partnerships: string[], concession_management: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
