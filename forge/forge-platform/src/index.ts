@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v806.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v807.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -212358,5 +212358,65 @@ app.post('/api/product/competitive', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/product/gto', requireAuth, async (req: AuthRequest, res: any) => {
   const { productDescription, targetSegment, launchTimeline } = req.body;
   const prompt = `You are a go-to-market strategy expert. Design a comprehensive GTM plan. Product: ${productDescription}. Segment: ${targetSegment}. Timeline: ${launchTimeline}. Respond in JSON: { gtm_narrative: string, icp_definition: string, positioning_statement: string, launch_phases: string[], channel_strategy: string[], success_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sustainability/esgstrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyIndustry, currentEsgMaturity, stakeholderExpectations } = req.body;
+  const prompt = `You are an ESG strategy expert. Design a comprehensive ESG program. Industry: ${companyIndustry}. Maturity: ${currentEsgMaturity}. Stakeholders: ${stakeholderExpectations}. Respond in JSON: { esg_framework: string, material_issues: string[], environmental_pillars: string[], social_pillars: string[], governance_pillars: string[], reporting_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sustainability/carbon', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessOperations, energySources, reductionTarget } = req.body;
+  const prompt = `You are a carbon footprint expert. Analyze and reduce carbon emissions. Operations: ${businessOperations}. Energy: ${energySources}. Target: ${reductionTarget}. Respond in JSON: { carbon_inventory: string, scope_1_2_3: string[], reduction_opportunities: string[], offset_strategy: string[], net_zero_pathway: string[], reporting_standards: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sustainability/sustainsupply', requireAuth, async (req: AuthRequest, res: any) => {
+  const { supplyChainScope, currentSustainability, sustainabilityGoals } = req.body;
+  const prompt = `You are a sustainable supply chain expert. Transform supply chain sustainability. Scope: ${supplyChainScope}. Current: ${currentSustainability}. Goals: ${sustainabilityGoals}. Respond in JSON: { sustainability_framework: string, supplier_assessment: string[], green_procurement: string[], circular_economy: string[], traceability_system: string[], reporting_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sustainability/esgdisclosure', requireAuth, async (req: AuthRequest, res: any) => {
+  const { reportingFramework, materialTopics, reportingPeriod } = req.body;
+  const prompt = `You are an ESG disclosure expert. Prepare ESG disclosure content. Framework: ${reportingFramework}. Topics: ${materialTopics}. Period: ${reportingPeriod}. Respond in JSON: { disclosure_structure: string, environmental_metrics: string[], social_metrics: string[], governance_metrics: string[], narrative_sections: string[], assurance_recommendations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sustainability/greenenergy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentEnergyMix, facilityDetails, renewableTarget } = req.body;
+  const prompt = `You are a green energy transition expert. Design an energy transition plan. Energy: ${currentEnergyMix}. Facilities: ${facilityDetails}. Target: ${renewableTarget}. Respond in JSON: { energy_audit: string, renewable_options: string[], implementation_phases: string[], financial_analysis: string[], incentive_opportunities: string[], monitoring_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sustainability/diversityreport', requireAuth, async (req: AuthRequest, res: any) => {
+  const { workforceData, industryBenchmarks, reportingAudience } = req.body;
+  const prompt = `You are a D&I reporting expert. Create a comprehensive diversity report. Data: ${workforceData}. Benchmarks: ${industryBenchmarks}. Audience: ${reportingAudience}. Respond in JSON: { representation_summary: string, pay_equity_analysis: string[], inclusion_metrics: string[], gap_analysis: string[], action_commitments: string[], progress_tracking: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sustainability/waste', requireAuth, async (req: AuthRequest, res: any) => {
+  const { wasteStreams, currentDisposal, zeroWasteGoal } = req.body;
+  const prompt = `You are a waste reduction expert. Design a zero waste strategy. Waste: ${wasteStreams}. Disposal: ${currentDisposal}. Goal: ${zeroWasteGoal}. Respond in JSON: { waste_audit: string, reduction_hierarchy: string[], circular_opportunities: string[], recycling_programs: string[], supplier_collaboration: string[], measurement_system: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sustainability/sustainbrand', requireAuth, async (req: AuthRequest, res: any) => {
+  const { brandValues, sustainabilityActions, targetConsumers } = req.body;
+  const prompt = `You are a sustainable branding expert. Build authentic sustainability communications. Values: ${brandValues}. Actions: ${sustainabilityActions}. Consumers: ${targetConsumers}. Respond in JSON: { sustainability_narrative: string, key_messages: string[], proof_points: string[], channel_strategy: string[], greenwashing_risks: string[], stakeholder_engagement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sustainability/climaterisk', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessModel, geographicFootprint, timeHorizon } = req.body;
+  const prompt = `You are a climate risk expert. Conduct a TCFD-aligned climate risk assessment. Model: ${businessModel}. Geography: ${geographicFootprint}. Horizon: ${timeHorizon}. Respond in JSON: { physical_risks: string[], transition_risks: string[], opportunities: string[], scenario_analysis: string[], financial_impacts: string[], adaptation_strategies: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sustainability/impact', requireAuth, async (req: AuthRequest, res: any) => {
+  const { socialPrograms, beneficiaryGroups, impactGoals } = req.body;
+  const prompt = `You are a social impact measurement expert. Design an impact measurement framework. Programs: ${socialPrograms}. Beneficiaries: ${beneficiaryGroups}. Goals: ${impactGoals}. Respond in JSON: { impact_theory: string, outcome_indicators: string[], data_collection: string[], impact_calculation: string[], reporting_format: string[], continuous_improvement: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
