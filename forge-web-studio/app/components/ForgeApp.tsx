@@ -624,6 +624,16 @@ ForgeTab_aifinetuning3537,
 ForgeTab_aiagentdesign3538,
 ForgeTab_datascienceworkflow3539,
 ForgeTab_aibenchmarking3540,
+ForgeTab_web3strategy3541,
+ForgeTab_tokenomicsdesign3542,
+ForgeTab_smartcontractstrategy3543,
+ForgeTab_defiprotocol3544,
+ForgeTab_nftstrategy3545,
+ForgeTab_daostrategy3546,
+ForgeTab_cryptomarketmaking3547,
+ForgeTab_web3community3548,
+ForgeTab_blockchainintegration3549,
+ForgeTab_cryptocompliance3550,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58141,6 +58151,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'aiagentdesign3538' && <ForgeTab_aiagentdesign3538 />}
               {(mainTab as string) === 'datascienceworkflow3539' && <ForgeTab_datascienceworkflow3539 />}
               {(mainTab as string) === 'aibenchmarking3540' && <ForgeTab_aibenchmarking3540 />}
+              {(mainTab as string) === 'web3strategy3541' && <ForgeTab_web3strategy3541 />}
+              {(mainTab as string) === 'tokenomicsdesign3542' && <ForgeTab_tokenomicsdesign3542 />}
+              {(mainTab as string) === 'smartcontractstrategy3543' && <ForgeTab_smartcontractstrategy3543 />}
+              {(mainTab as string) === 'defiprotocol3544' && <ForgeTab_defiprotocol3544 />}
+              {(mainTab as string) === 'nftstrategy3545' && <ForgeTab_nftstrategy3545 />}
+              {(mainTab as string) === 'daostrategy3546' && <ForgeTab_daostrategy3546 />}
+              {(mainTab as string) === 'cryptomarketmaking3547' && <ForgeTab_cryptomarketmaking3547 />}
+              {(mainTab as string) === 'web3community3548' && <ForgeTab_web3community3548 />}
+              {(mainTab as string) === 'blockchainintegration3549' && <ForgeTab_blockchainintegration3549 />}
+              {(mainTab as string) === 'cryptocompliance3550' && <ForgeTab_cryptocompliance3550 />}
       </div>
     </div>
   );
