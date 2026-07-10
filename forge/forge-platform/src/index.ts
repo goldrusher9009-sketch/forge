@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v794.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v795.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211638,5 +211638,65 @@ app.post('/api/realestate/retax', requireAuth, async (req: AuthRequest, res: any
 app.post('/api/realestate/realtormarketing', requireAuth, async (req: AuthRequest, res: any) => {
   const { marketSpecialty, targetClientele, marketingBudget } = req.body;
   const prompt = `You are a real estate marketing expert. Create a realtor marketing strategy. Specialty: ${marketSpecialty}. Clients: ${targetClientele}. Budget: ${marketingBudget}. Respond in JSON: { personal_brand: string, lead_generation: string[], content_strategy: string[], social_media_plan: string[], referral_system: string[], conversion_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/supplychain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productCategory, supplierCount, supplyChainRisk } = req.body;
+  const prompt = `You are a supply chain optimization expert. Design a resilient supply chain. Products: ${productCategory}. Suppliers: ${supplierCount}. Risks: ${supplyChainRisk}. Respond in JSON: { optimization_strategy: string, supplier_diversification: string[], inventory_buffers: string[], risk_mitigation: string[], technology_enablers: string[], cost_reduction: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/procurement', requireAuth, async (req: AuthRequest, res: any) => {
+  const { spendCategory, supplierMarket, savingsTarget } = req.body;
+  const prompt = `You are a procurement strategy expert. Build a strategic sourcing plan. Category: ${spendCategory}. Market: ${supplierMarket}. Target: ${savingsTarget}. Respond in JSON: { sourcing_strategy: string, supplier_evaluation: string[], negotiation_playbook: string[], contract_terms: string[], performance_metrics: string[], risk_controls: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/demandforecast', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productLine, historicalData, marketFactors } = req.body;
+  const prompt = `You are a demand forecasting expert. Build a demand forecasting model. Products: ${productLine}. History: ${historicalData}. Factors: ${marketFactors}. Respond in JSON: { forecasting_methodology: string, accuracy_improvements: string[], seasonal_adjustments: string[], demand_signals: string[], safety_stock_formula: string[], review_cadence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/warehouse', requireAuth, async (req: AuthRequest, res: any) => {
+  const { warehouseSize, skuCount, throughputGoal } = req.body;
+  const prompt = `You are a warehouse operations expert. Optimize warehouse efficiency. Size: ${warehouseSize}. SKUs: ${skuCount}. Throughput: ${throughputGoal}. Respond in JSON: { layout_optimization: string, slotting_strategy: string[], picking_methodology: string[], automation_opportunities: string[], kpi_framework: string[], labor_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/logistics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { distributionNodes, customerLocations, serviceLevel } = req.body;
+  const prompt = `You are a logistics network design expert. Design an optimal distribution network. Nodes: ${distributionNodes}. Customers: ${customerLocations}. Service: ${serviceLevel}. Respond in JSON: { network_design: string, node_optimization: string[], transportation_modes: string[], cost_service_tradeoffs: string[], technology_platform: string[], implementation_phases: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/vendormanage', requireAuth, async (req: AuthRequest, res: any) => {
+  const { vendorCount, spendVolume, vendorRisks } = req.body;
+  const prompt = `You are a vendor management expert. Build a comprehensive VMS. Vendors: ${vendorCount}. Spend: ${spendVolume}. Risks: ${vendorRisks}. Respond in JSON: { vendor_segmentation: string[], performance_scorecard: string[], relationship_tiers: string[], risk_framework: string[], contract_management: string[], innovation_sourcing: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/qualitymanage', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industryStandard, defectRate, qualityGoal } = req.body;
+  const prompt = `You are a quality management expert. Design a quality management system. Standard: ${industryStandard}. Defects: ${defectRate}. Goal: ${qualityGoal}. Respond in JSON: { qms_framework: string, process_controls: string[], inspection_protocols: string[], root_cause_methodology: string[], continuous_improvement: string[], certification_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/leanmfg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { processType, wasteTypes, cycleTime } = req.body;
+  const prompt = `You are a lean manufacturing expert. Apply lean principles to operations. Process: ${processType}. Waste: ${wasteTypes}. Cycle time: ${cycleTime}. Respond in JSON: { value_stream_map: string, kaizen_events: string[], 5s_implementation: string[], kanban_design: string[], takt_time_calculation: string[], expected_improvements: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/opexcellence', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessUnit, currentPerformance, excellenceGoal } = req.body;
+  const prompt = `You are an operational excellence expert. Design a continuous improvement program. Unit: ${businessUnit}. Baseline: ${currentPerformance}. Goal: ${excellenceGoal}. Respond in JSON: { excellence_framework: string, improvement_initiatives: string[], performance_metrics: string[], change_management: string[], governance_model: string[], quick_wins: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/operations/sustainableops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industryType, currentFootprint, sustainabilityGoal } = req.body;
+  const prompt = `You are a sustainable operations expert. Build a sustainability roadmap. Industry: ${industryType}. Footprint: ${currentFootprint}. Goal: ${sustainabilityGoal}. Respond in JSON: { sustainability_strategy: string, emissions_reduction: string[], circular_economy: string[], supplier_sustainability: string[], reporting_framework: string[], roi_of_sustainability: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

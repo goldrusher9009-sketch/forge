@@ -144,6 +144,16 @@ ForgeTab_commercialre3047,
 ForgeTab_rentalportfolio3048,
 ForgeTab_realestatetax3049,
 ForgeTab_realtormarketing3050,
+ForgeTab_supplychain3051,
+ForgeTab_procurementstrategy3052,
+ForgeTab_demandforecasting3053,
+ForgeTab_warehouseops3054,
+ForgeTab_logisticsnetwork3055,
+ForgeTab_vendormanage3056,
+ForgeTab_qualitymanage3057,
+ForgeTab_leanmanufacturing3058,
+ForgeTab_operationalexcellence3059,
+ForgeTab_sustainableops3060,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57181,6 +57191,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'rentalportfolio3048' && <ForgeTab_rentalportfolio3048 />}
               {(mainTab as string) === 'realestatetax3049' && <ForgeTab_realestatetax3049 />}
               {(mainTab as string) === 'realtormarketing3050' && <ForgeTab_realtormarketing3050 />}
+              {(mainTab as string) === 'supplychain3051' && <ForgeTab_supplychain3051 />}
+              {(mainTab as string) === 'procurementstrategy3052' && <ForgeTab_procurementstrategy3052 />}
+              {(mainTab as string) === 'demandforecasting3053' && <ForgeTab_demandforecasting3053 />}
+              {(mainTab as string) === 'warehouseops3054' && <ForgeTab_warehouseops3054 />}
+              {(mainTab as string) === 'logisticsnetwork3055' && <ForgeTab_logisticsnetwork3055 />}
+              {(mainTab as string) === 'vendormanage3056' && <ForgeTab_vendormanage3056 />}
+              {(mainTab as string) === 'qualitymanage3057' && <ForgeTab_qualitymanage3057 />}
+              {(mainTab as string) === 'leanmanufacturing3058' && <ForgeTab_leanmanufacturing3058 />}
+              {(mainTab as string) === 'operationalexcellence3059' && <ForgeTab_operationalexcellence3059 />}
+              {(mainTab as string) === 'sustainableops3060' && <ForgeTab_sustainableops3060 />}
       </div>
     </div>
   );
