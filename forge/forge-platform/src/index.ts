@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v907.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v908.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -218418,5 +218418,65 @@ app.post('/api/marktech/community', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/marktech/perfmkt', requireAuth, async (req: AuthRequest, res: any) => {
   const { bizType, currentPerfState, perfGoals } = req.body;
   const prompt = `You are a performance marketing strategy expert. Build a performance marketing strategy. Biz: ${bizType}. State: ${currentPerfState}. Goals: ${perfGoals}. Respond in JSON: { performance_strategy: string, channel_mix: string[], creative_testing: string[], audience_targeting: string[], attribution_model: string[], optimization_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/entbiz/entsaas', requireAuth, async (req: AuthRequest, res: any) => {
+  const { saasType, targetEnterprise, entSaasGoals } = req.body;
+  const prompt = `You are an enterprise SaaS strategy expert. Build an enterprise SaaS strategy. Type: ${saasType}. Target: ${targetEnterprise}. Goals: ${entSaasGoals}. Respond in JSON: { enterprise_saas_strategy: string, product_enterprise_readiness: string[], sales_motion: string[], implementation_model: string[], expansion_playbook: string[], compliance_security: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/entbiz/digitrans', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, currentDigitalState, dtGoals } = req.body;
+  const prompt = `You are a digital transformation strategy expert. Build a DX strategy. Org: ${orgType}. State: ${currentDigitalState}. Goals: ${dtGoals}. Respond in JSON: { digital_transformation_strategy: string, assessment_framework: string[], technology_modernization: string[], change_management: string[], quick_wins: string[], governance_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/entbiz/cloud', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, currentCloudState, cloudGoals } = req.body;
+  const prompt = `You are a cloud strategy expert. Build a cloud strategy. Org: ${orgType}. State: ${currentCloudState}. Goals: ${cloudGoals}. Respond in JSON: { cloud_strategy: string, migration_approach: string[], cloud_architecture: string[], cost_optimization: string[], security_governance: string[], ai_cloud_services: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/entbiz/entai', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, currentAIState, entAIGoals } = req.body;
+  const prompt = `You are an enterprise AI strategy expert. Build an enterprise AI strategy. Org: ${orgType}. State: ${currentAIState}. Goals: ${entAIGoals}. Respond in JSON: { enterprise_ai_strategy: string, use_case_prioritization: string[], data_foundation: string[], build_buy_partner: string[], risk_governance: string[], roi_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/entbiz/erp', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, currentERPState, erpGoals } = req.body;
+  const prompt = `You are an ERP strategy expert. Build an ERP strategy. Org: ${orgType}. ERP: ${currentERPState}. Goals: ${erpGoals}. Respond in JSON: { erp_strategy: string, system_selection: string[], migration_approach: string[], process_redesign: string[], integration_architecture: string[], change_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/entbiz/entdata', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, currentDataState, entDataGoals } = req.body;
+  const prompt = `You are an enterprise data strategy expert. Build an enterprise data strategy. Org: ${orgType}. Data: ${currentDataState}. Goals: ${entDataGoals}. Respond in JSON: { enterprise_data_strategy: string, architecture_design: string[], governance_framework: string[], self_service_analytics: string[], ai_ml_foundation: string[], data_products: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/entbiz/opex', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, currentOpsState, opexGoals } = req.body;
+  const prompt = `You are an operational excellence strategy expert. Build an OpEx strategy. Org: ${orgType}. Ops: ${currentOpsState}. Goals: ${opexGoals}. Respond in JSON: { operational_excellence_strategy: string, process_optimization: string[], automation_roadmap: string[], quality_management: string[], lean_six_sigma: string[], performance_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/entbiz/entarch', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, currentArchState, archGoals } = req.body;
+  const prompt = `You are an enterprise architecture strategy expert. Build an EA strategy. Org: ${orgType}. Architecture: ${currentArchState}. Goals: ${archGoals}. Respond in JSON: { enterprise_architecture_strategy: string, reference_architecture: string[], integration_platform: string[], api_strategy: string[], technology_roadmap: string[], governance_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/entbiz/supplychain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industryType, supplyChainScope, scGoals } = req.body;
+  const prompt = `You are a supply chain strategy expert. Build a supply chain strategy. Industry: ${industryType}. Scope: ${supplyChainScope}. Goals: ${scGoals}. Respond in JSON: { supply_chain_strategy: string, network_design: string[], digital_twin: string[], supplier_management: string[], resilience_framework: string[], sustainability_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/entbiz/corpstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyType, currentPosition, corpGoals } = req.body;
+  const prompt = `You are a corporate strategy expert. Build a corporate strategy. Company: ${companyType}. Position: ${currentPosition}. Goals: ${corpGoals}. Respond in JSON: { corporate_strategy: string, strategic_priorities: string[], portfolio_management: string[], ma_strategy: string[], competitive_positioning: string[], value_creation: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
