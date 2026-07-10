@@ -384,6 +384,16 @@ ForgeTab_neurotechinnovation3287,
 ForgeTab_cleanenergytech3288,
 ForgeTab_ar_vr_xr3289,
 ForgeTab_web3strategy3290,
+ForgeTab_therapygoals3291,
+ForgeTab_stressmanagement3292,
+ForgeTab_burnoutrecovery3293,
+ForgeTab_anxietytools3294,
+ForgeTab_selfcareroutine3295,
+ForgeTab_mentalwellnessworkplace3296,
+ForgeTab_griefjourney3297,
+ForgeTab_relationshipwellness3298,
+ForgeTab_sleepoptimizer3299,
+ForgeTab_resilience3300,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57661,6 +57671,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'cleanenergytech3288' && <ForgeTab_cleanenergytech3288 />}
               {(mainTab as string) === 'ar_vr_xr3289' && <ForgeTab_ar_vr_xr3289 />}
               {(mainTab as string) === 'web3strategy3290' && <ForgeTab_web3strategy3290 />}
+              {(mainTab as string) === 'therapygoals3291' && <ForgeTab_therapygoals3291 />}
+              {(mainTab as string) === 'stressmanagement3292' && <ForgeTab_stressmanagement3292 />}
+              {(mainTab as string) === 'burnoutrecovery3293' && <ForgeTab_burnoutrecovery3293 />}
+              {(mainTab as string) === 'anxietytools3294' && <ForgeTab_anxietytools3294 />}
+              {(mainTab as string) === 'selfcareroutine3295' && <ForgeTab_selfcareroutine3295 />}
+              {(mainTab as string) === 'mentalwellnessworkplace3296' && <ForgeTab_mentalwellnessworkplace3296 />}
+              {(mainTab as string) === 'griefjourney3297' && <ForgeTab_griefjourney3297 />}
+              {(mainTab as string) === 'relationshipwellness3298' && <ForgeTab_relationshipwellness3298 />}
+              {(mainTab as string) === 'sleepoptimizer3299' && <ForgeTab_sleepoptimizer3299 />}
+              {(mainTab as string) === 'resilience3300' && <ForgeTab_resilience3300 />}
       </div>
     </div>
   );

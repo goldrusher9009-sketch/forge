@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v818.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v819.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -213078,5 +213078,65 @@ app.post('/api/spacetech/xrdesign', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/spacetech/web3', requireAuth, async (req: AuthRequest, res: any) => {
   const { web3UseCase, targetEcosystem, businessObjective } = req.body;
   const prompt = `You are a Web3 strategy expert. Design a Web3 strategy. Use case: ${web3UseCase}. Ecosystem: ${targetEcosystem}. Objective: ${businessObjective}. Respond in JSON: { web3_strategy: string, token_economics: string[], smart_contract_design: string[], community_building: string[], regulatory_considerations: string[], launch_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mentalhealth/therapygoals', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentChallenges, therapyType, desiredOutcomes } = req.body;
+  const prompt = `You are a mental health education expert. Help plan therapy goals. Challenges: ${currentChallenges}. Type: ${therapyType}. Outcomes: ${desiredOutcomes}. Respond in JSON: { goal_framework: string, smart_goals: string[], progress_indicators: string[], self_monitoring_tools: string[], between_session_practices: string[], communication_tips: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mentalhealth/stress', requireAuth, async (req: AuthRequest, res: any) => {
+  const { stressTriggers, lifestyle, stressLevel } = req.body;
+  const prompt = `You are a stress management expert. Create a personalized stress management plan. Triggers: ${stressTriggers}. Lifestyle: ${lifestyle}. Level: ${stressLevel}. Respond in JSON: { stress_assessment: string, coping_strategies: string[], relaxation_techniques: string[], lifestyle_adjustments: string[], mindfulness_practices: string[], professional_resources: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mentalhealth/burnout', requireAuth, async (req: AuthRequest, res: any) => {
+  const { burnoutSymptoms, workSituation, recoveryGoals } = req.body;
+  const prompt = `You are a burnout recovery expert. Design a burnout recovery plan. Symptoms: ${burnoutSymptoms}. Situation: ${workSituation}. Goals: ${recoveryGoals}. Respond in JSON: { burnout_assessment: string, immediate_actions: string[], boundary_setting: string[], recovery_phases: string[], sustainable_work_practices: string[], support_resources: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mentalhealth/anxiety', requireAuth, async (req: AuthRequest, res: any) => {
+  const { anxietyType, triggerSituations, copingHistory } = req.body;
+  const prompt = `You are a mental health education expert. Build an anxiety management toolkit. Type: ${anxietyType}. Triggers: ${triggerSituations}. History: ${copingHistory}. Respond in JSON: { anxiety_education: string, grounding_techniques: string[], cognitive_reframing: string[], exposure_hierarchy: string[], daily_practices: string[], crisis_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mentalhealth/selfcare', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentWellbeing, availableTime, selfCareGoals } = req.body;
+  const prompt = `You are a wellbeing coach. Design a personalized self-care routine. Wellbeing: ${currentWellbeing}. Time: ${availableTime}. Goals: ${selfCareGoals}. Respond in JSON: { self_care_framework: string, morning_routine: string[], evening_routine: string[], weekly_practices: string[], boundary_scripts: string[], sustainability_tips: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mentalhealth/workplacewellness', requireAuth, async (req: AuthRequest, res: any) => {
+  const { organizationType, workforceNeeds, wellnessBudget } = req.body;
+  const prompt = `You are a workplace mental health expert. Design an employee wellness program. Org: ${organizationType}. Needs: ${workforceNeeds}. Budget: ${wellnessBudget}. Respond in JSON: { program_framework: string, core_initiatives: string[], manager_training: string[], stigma_reduction: string[], eap_integration: string[], measurement_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mentalhealth/grief', requireAuth, async (req: AuthRequest, res: any) => {
+  const { lossType, griefStage, supportNeeds } = req.body;
+  const prompt = `You are a grief support education expert. Provide grief support guidance. Loss: ${lossType}. Stage: ${griefStage}. Needs: ${supportNeeds}. Respond in JSON: { grief_education: string, coping_strategies: string[], meaning_making: string[], support_network: string[], self_care_practices: string[], professional_resources: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mentalhealth/relwellness', requireAuth, async (req: AuthRequest, res: any) => {
+  const { relationshipType, currentChallenges, relationshipGoals } = req.body;
+  const prompt = `You are a relationship wellness expert. Provide relationship guidance. Type: ${relationshipType}. Challenges: ${currentChallenges}. Goals: ${relationshipGoals}. Respond in JSON: { relationship_assessment: string, communication_skills: string[], conflict_resolution: string[], boundary_setting: string[], connection_practices: string[], professional_support: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mentalhealth/sleep', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sleepIssues, currentRoutine, sleepGoals } = req.body;
+  const prompt = `You are a sleep health expert. Create a sleep optimization plan. Issues: ${sleepIssues}. Routine: ${currentRoutine}. Goals: ${sleepGoals}. Respond in JSON: { sleep_assessment: string, sleep_hygiene: string[], bedtime_routine: string[], environment_optimization: string[], cognitive_techniques: string[], medical_considerations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mentalhealth/resilience', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentStressors, strengthsAndResources, resilienceGoals } = req.body;
+  const prompt = `You are a resilience coach. Design a resilience building program. Stressors: ${currentStressors}. Strengths: ${strengthsAndResources}. Goals: ${resilienceGoals}. Respond in JSON: { resilience_framework: string, mindset_shifts: string[], skill_building: string[], social_support: string[], purpose_meaning: string[], growth_practices: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
