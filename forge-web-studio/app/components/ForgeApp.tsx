@@ -714,6 +714,16 @@ ForgeTab_corporatewellness3627,
 ForgeTab_substanceuse3628,
 ForgeTab_mindfulnesstech3629,
 ForgeTab_healthcoaching3630,
+ForgeTab_creatorbusiness3631,
+ForgeTab_influencermarketing3632,
+ForgeTab_podcastgrowth3633,
+ForgeTab_youtubegrowth3634,
+ForgeTab_newsletterstrategy3635,
+ForgeTab_coursebuilder3636,
+ForgeTab_tiktokstrategy3637,
+ForgeTab_creatormonetize3638,
+ForgeTab_communitybuilder3639,
+ForgeTab_personalbranding3640,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58321,6 +58331,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'substanceuse3628' && <ForgeTab_substanceuse3628 />}
               {(mainTab as string) === 'mindfulnesstech3629' && <ForgeTab_mindfulnesstech3629 />}
               {(mainTab as string) === 'healthcoaching3630' && <ForgeTab_healthcoaching3630 />}
+              {(mainTab as string) === 'creatorbusiness3631' && <ForgeTab_creatorbusiness3631 />}
+              {(mainTab as string) === 'influencermarketing3632' && <ForgeTab_influencermarketing3632 />}
+              {(mainTab as string) === 'podcastgrowth3633' && <ForgeTab_podcastgrowth3633 />}
+              {(mainTab as string) === 'youtubegrowth3634' && <ForgeTab_youtubegrowth3634 />}
+              {(mainTab as string) === 'newsletterstrategy3635' && <ForgeTab_newsletterstrategy3635 />}
+              {(mainTab as string) === 'coursebuilder3636' && <ForgeTab_coursebuilder3636 />}
+              {(mainTab as string) === 'tiktokstrategy3637' && <ForgeTab_tiktokstrategy3637 />}
+              {(mainTab as string) === 'creatormonetize3638' && <ForgeTab_creatormonetize3638 />}
+              {(mainTab as string) === 'communitybuilder3639' && <ForgeTab_communitybuilder3639 />}
+              {(mainTab as string) === 'personalbranding3640' && <ForgeTab_personalbranding3640 />}
       </div>
     </div>
   );
