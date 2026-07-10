@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v817.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v818.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -213018,5 +213018,65 @@ app.post('/api/agriculture/agriexport', requireAuth, async (req: AuthRequest, re
 app.post('/api/agriculture/aquaculture', requireAuth, async (req: AuthRequest, res: any) => {
   const { speciesAndScale, productionSystem, marketTarget } = req.body;
   const prompt = `You are an aquaculture business expert. Plan this aquaculture operation. Species: ${speciesAndScale}. System: ${productionSystem}. Market: ${marketTarget}. Respond in JSON: { facility_design: string, production_model: string[], water_quality_management: string[], feed_strategy: string[], financial_projections: string[], regulatory_compliance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/spaceventure', requireAuth, async (req: AuthRequest, res: any) => {
+  const { spaceTechConcept, targetMarket, fundingStage } = req.body;
+  const prompt = `You are a space technology business expert. Plan this space venture. Concept: ${spaceTechConcept}. Market: ${targetMarket}. Stage: ${fundingStage}. Respond in JSON: { venture_overview: string, technology_readiness: string[], market_opportunity: string[], regulatory_path: string[], partnership_strategy: string[], funding_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/robotics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { applicationDomain, roboticRequirements, deploymentEnvironment } = req.body;
+  const prompt = `You are a robotics systems expert. Design a robotics solution. Domain: ${applicationDomain}. Requirements: ${roboticRequirements}. Environment: ${deploymentEnvironment}. Respond in JSON: { system_architecture: string, hardware_components: string[], software_stack: string[], sensor_suite: string[], safety_systems: string[], development_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/quantum', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessProblem, currentClassicalApproach, quantumReadiness } = req.body;
+  const prompt = `You are a quantum computing strategy expert. Advise on quantum computing adoption. Problem: ${businessProblem}. Current: ${currentClassicalApproach}. Readiness: ${quantumReadiness}. Respond in JSON: { quantum_advantage_assessment: string, use_case_fit: string[], near_term_actions: string[], talent_strategy: string[], vendor_landscape: string[], investment_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/drone', requireAuth, async (req: AuthRequest, res: any) => {
+  const { droneApplication, operatingEnvironment, regulatoryJurisdiction } = req.body;
+  const prompt = `You are a drone operations expert. Plan drone operations. Application: ${droneApplication}. Environment: ${operatingEnvironment}. Regulations: ${regulatoryJurisdiction}. Respond in JSON: { operations_plan: string, airspace_management: string[], safety_protocols: string[], equipment_selection: string[], regulatory_compliance: string[], data_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/advmfg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, currentManufacturing, manufacturingGoals } = req.body;
+  const prompt = `You are an advanced manufacturing expert. Design a manufacturing strategy. Product: ${productType}. Current: ${currentManufacturing}. Goals: ${manufacturingGoals}. Respond in JSON: { manufacturing_strategy: string, technology_roadmap: string[], automation_opportunities: string[], additive_manufacturing: string[], quality_systems: string[], cost_reduction_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/aiethics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiSystemDescription, stakeholders, regulatoryContext } = req.body;
+  const prompt = `You are an AI ethics expert. Build an AI ethics framework. System: ${aiSystemDescription}. Stakeholders: ${stakeholders}. Context: ${regulatoryContext}. Respond in JSON: { ethics_framework: string, fairness_principles: string[], transparency_measures: string[], accountability_structure: string[], bias_mitigation: string[], governance_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/neurotech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { neurotechApplication, targetUsers, developmentStage } = req.body;
+  const prompt = `You are a neurotech innovation expert. Advise on this neurotech venture. Application: ${neurotechApplication}. Users: ${targetUsers}. Stage: ${developmentStage}. Respond in JSON: { technology_assessment: string, clinical_pathway: string[], regulatory_strategy: string[], ethical_framework: string[], market_opportunity: string[], partnership_needs: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/cleanenergy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { energyTechnology, deploymentScale, marketTarget } = req.body;
+  const prompt = `You are a clean energy technology expert. Design a cleantech strategy. Technology: ${energyTechnology}. Scale: ${deploymentScale}. Market: ${marketTarget}. Respond in JSON: { technology_readiness: string, deployment_strategy: string[], economics_analysis: string[], grid_integration: string[], regulatory_pathway: string[], scaling_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/xrdesign', requireAuth, async (req: AuthRequest, res: any) => {
+  const { xrApplicationConcept, targetPlatform, userExperience } = req.body;
+  const prompt = `You are an XR product design expert. Design this extended reality experience. Concept: ${xrApplicationConcept}. Platform: ${targetPlatform}. UX: ${userExperience}. Respond in JSON: { experience_design: string, technical_architecture: string[], interaction_model: string[], content_strategy: string[], hardware_requirements: string[], go_to_market: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/web3', requireAuth, async (req: AuthRequest, res: any) => {
+  const { web3UseCase, targetEcosystem, businessObjective } = req.body;
+  const prompt = `You are a Web3 strategy expert. Design a Web3 strategy. Use case: ${web3UseCase}. Ecosystem: ${targetEcosystem}. Objective: ${businessObjective}. Respond in JSON: { web3_strategy: string, token_economics: string[], smart_contract_design: string[], community_building: string[], regulatory_considerations: string[], launch_roadmap: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
