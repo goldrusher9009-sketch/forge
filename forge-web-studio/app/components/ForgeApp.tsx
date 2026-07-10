@@ -504,6 +504,16 @@ ForgeTab_amazonppc3407,
 ForgeTab_ecomemailflows3408,
 ForgeTab_retailpricing3409,
 ForgeTab_omnichannel3410,
+ForgeTab_contractreview3411,
+ForgeTab_gdprcompliance3412,
+ForgeTab_ipstrategy3413,
+ForgeTab_employmentlaw3414,
+ForgeTab_privacypolicy3415,
+ForgeTab_regulatorycompliance3416,
+ForgeTab_vendorcontracts3417,
+ForgeTab_corporategovernance3418,
+ForgeTab_termsconditions3419,
+ForgeTab_dataretention3420,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57901,6 +57911,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'ecomemailflows3408' && <ForgeTab_ecomemailflows3408 />}
               {(mainTab as string) === 'retailpricing3409' && <ForgeTab_retailpricing3409 />}
               {(mainTab as string) === 'omnichannel3410' && <ForgeTab_omnichannel3410 />}
+              {(mainTab as string) === 'contractreview3411' && <ForgeTab_contractreview3411 />}
+              {(mainTab as string) === 'gdprcompliance3412' && <ForgeTab_gdprcompliance3412 />}
+              {(mainTab as string) === 'ipstrategy3413' && <ForgeTab_ipstrategy3413 />}
+              {(mainTab as string) === 'employmentlaw3414' && <ForgeTab_employmentlaw3414 />}
+              {(mainTab as string) === 'privacypolicy3415' && <ForgeTab_privacypolicy3415 />}
+              {(mainTab as string) === 'regulatorycompliance3416' && <ForgeTab_regulatorycompliance3416 />}
+              {(mainTab as string) === 'vendorcontracts3417' && <ForgeTab_vendorcontracts3417 />}
+              {(mainTab as string) === 'corporategovernance3418' && <ForgeTab_corporategovernance3418 />}
+              {(mainTab as string) === 'termsconditions3419' && <ForgeTab_termsconditions3419 />}
+              {(mainTab as string) === 'dataretention3420' && <ForgeTab_dataretention3420 />}
       </div>
     </div>
   );

@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v830.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v831.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -213798,5 +213798,65 @@ app.post('/api/ecom/retailprice', requireAuth, async (req: AuthRequest, res: any
 app.post('/api/ecom/omnichannel', requireAuth, async (req: AuthRequest, res: any) => {
   const { currentChannels, customerJourney, integrationGoals } = req.body;
   const prompt = `You are an omnichannel retail expert. Build an omnichannel strategy. Channels: ${currentChannels}. Journey: ${customerJourney}. Goals: ${integrationGoals}. Respond in JSON: { omnichannel_framework: string, channel_integration: string[], unified_commerce: string[], inventory_sync: string[], customer_data_platform: string[], experience_consistency: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/contractreview', requireAuth, async (req: AuthRequest, res: any) => {
+  const { contractType, keyRisks, jurisdiction } = req.body;
+  const prompt = `You are a legal contract review expert. Analyze this contract scenario. Type: ${contractType}. Risks: ${keyRisks}. Jurisdiction: ${jurisdiction}. Respond in JSON: { review_summary: string, red_flags: string[], negotiation_points: string[], missing_clauses: string[], market_standard: string[], recommendations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/gdpr', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyType, dataProcessing, jurisdiction } = req.body;
+  const prompt = `You are a GDPR compliance expert. Assess GDPR compliance needs. Company: ${companyType}. Data: ${dataProcessing}. Jurisdiction: ${jurisdiction}. Respond in JSON: { compliance_assessment: string, lawful_basis: string[], data_mapping: string[], required_policies: string[], dpia_triggers: string[], implementation_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/ip', requireAuth, async (req: AuthRequest, res: any) => {
+  const { innovationType, businessModel, competitiveLandscape } = req.body;
+  const prompt = `You are an intellectual property strategy expert. Build an IP strategy. Innovation: ${innovationType}. Model: ${businessModel}. Competition: ${competitiveLandscape}. Respond in JSON: { ip_strategy: string, patent_approach: string[], trademark_plan: string[], trade_secret_program: string[], licensing_strategy: string[], defensive_measures: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/emplaw', requireAuth, async (req: AuthRequest, res: any) => {
+  const { issueType, employeeCount, stateJurisdiction } = req.body;
+  const prompt = `You are an employment law expert. Provide guidance on this employment law scenario. Issue: ${issueType}. Size: ${employeeCount}. Jurisdiction: ${stateJurisdiction}. Respond in JSON: { legal_framework: string, risk_assessment: string[], required_actions: string[], policy_recommendations: string[], documentation_checklist: string[], compliance_timeline: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/privacypol', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyType, dataCollected, targetRegions } = req.body;
+  const prompt = `You are a privacy law expert. Generate a privacy policy framework. Company: ${companyType}. Data: ${dataCollected}. Regions: ${targetRegions}. Respond in JSON: { policy_sections: string[], data_collection_disclosure: string[], user_rights: string[], retention_policy: string[], third_party_sharing: string[], compliance_requirements: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/regcompliance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industry, operatingRegions, companySize } = req.body;
+  const prompt = `You are a regulatory compliance expert. Map compliance requirements. Industry: ${industry}. Regions: ${operatingRegions}. Size: ${companySize}. Respond in JSON: { regulatory_landscape: string, applicable_regulations: string[], compliance_priorities: string[], gap_analysis: string[], implementation_roadmap: string[], monitoring_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/vendorcontract', requireAuth, async (req: AuthRequest, res: any) => {
+  const { vendorType, contractValue, negotiationPriorities } = req.body;
+  const prompt = `You are a vendor contract negotiation expert. Build a negotiation strategy. Vendor: ${vendorType}. Value: ${contractValue}. Priorities: ${negotiationPriorities}. Respond in JSON: { negotiation_strategy: string, key_terms: string[], redlines: string[], fallback_positions: string[], deal_breakers: string[], closing_tactics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/governance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyStage, boardComposition, governanceGoals } = req.body;
+  const prompt = `You are a corporate governance expert. Build a governance framework. Stage: ${companyStage}. Board: ${boardComposition}. Goals: ${governanceGoals}. Respond in JSON: { governance_framework: string, board_structure: string[], committee_design: string[], policy_requirements: string[], reporting_cadence: string[], compliance_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/termsgen', requireAuth, async (req: AuthRequest, res: any) => {
+  const { serviceType, userBase, keyRisks } = req.body;
+  const prompt = `You are a terms and conditions expert. Generate T&C framework. Service: ${serviceType}. Users: ${userBase}. Risks: ${keyRisks}. Respond in JSON: { terms_structure: string, key_provisions: string[], liability_limitations: string[], dispute_resolution: string[], user_obligations: string[], termination_clauses: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/dataretention', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyType, dataCategories, regulatoryRequirements } = req.body;
+  const prompt = `You are a data retention policy expert. Build a data retention framework. Company: ${companyType}. Data: ${dataCategories}. Requirements: ${regulatoryRequirements}. Respond in JSON: { retention_framework: string, retention_schedule: string[], deletion_procedures: string[], legal_holds: string[], audit_requirements: string[], implementation_guide: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
