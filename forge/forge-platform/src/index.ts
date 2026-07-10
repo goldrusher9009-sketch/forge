@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v886.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v887.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -217158,5 +217158,65 @@ app.post('/api/deeptech/neurotech', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/deeptech/deeptech', requireAuth, async (req: AuthRequest, res: any) => {
   const { deepTechType, trlLevel, commercGoals } = req.body;
   const prompt = `You are a deep tech commercialization expert. Build a deep tech strategy. Type: ${deepTechType}. TRL: ${trlLevel}. Goals: ${commercGoals}. Respond in JSON: { deep_tech_strategy: string, technology_push_pull: string[], customer_discovery: string[], partnership_options: string[], ip_licensing: string[], funding_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/sportstech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sportsTechType, targetSport, sportsTechGoals } = req.body;
+  const prompt = `You are a sports tech strategy expert. Build a sports tech strategy. Type: ${sportsTechType}. Sport: ${targetSport}. Goals: ${sportsTechGoals}. Respond in JSON: { sports_tech_strategy: string, technology_application: string[], data_analytics: string[], team_league_partnerships: string[], athlete_adoption: string[], commercialization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/esports', requireAuth, async (req: AuthRequest, res: any) => {
+  const { esportsType, targetGame, esportsGoals } = req.body;
+  const prompt = `You are an esports strategy expert. Build an esports strategy. Type: ${esportsType}. Game: ${targetGame}. Goals: ${esportsGoals}. Respond in JSON: { esports_strategy: string, competitive_program: string[], content_streaming: string[], sponsorship_model: string[], fan_engagement: string[], revenue_diversification: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/sportsanalytics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { teamOrgType, currentDataCapability, analyticsGoals } = req.body;
+  const prompt = `You are a sports analytics expert. Build a sports analytics strategy. Org: ${teamOrgType}. Data: ${currentDataCapability}. Goals: ${analyticsGoals}. Respond in JSON: { analytics_strategy: string, data_collection: string[], performance_modeling: string[], injury_prediction: string[], game_strategy_tools: string[], recruiting_analytics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/entertainment', requireAuth, async (req: AuthRequest, res: any) => {
+  const { entertainmentType, currentContent, entertainmentGoals } = req.body;
+  const prompt = `You are an entertainment industry strategy expert. Build an entertainment strategy. Type: ${entertainmentType}. Content: ${currentContent}. Goals: ${entertainmentGoals}. Respond in JSON: { entertainment_strategy: string, content_strategy: string[], distribution_model: string[], ip_development: string[], audience_growth: string[], monetization_mix: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/streaming', requireAuth, async (req: AuthRequest, res: any) => {
+  const { streamingType, currentSubsBase, streamingGoals } = req.body;
+  const prompt = `You are a streaming strategy expert. Build a streaming strategy. Type: ${streamingType}. Subs: ${currentSubsBase}. Goals: ${streamingGoals}. Respond in JSON: { streaming_strategy: string, content_investment: string[], subscriber_acquisition: string[], churn_reduction: string[], international_expansion: string[], bundling_partnerships: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/liveevents', requireAuth, async (req: AuthRequest, res: any) => {
+  const { eventType, currentEventPortfolio, eventGoals } = req.body;
+  const prompt = `You are a live events strategy expert. Build a live events strategy. Type: ${eventType}. Portfolio: ${currentEventPortfolio}. Goals: ${eventGoals}. Respond in JSON: { live_events_strategy: string, venue_programming: string[], ticketing_model: string[], sponsorship_activation: string[], digital_hybrid: string[], fan_experience: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/music', requireAuth, async (req: AuthRequest, res: any) => {
+  const { musicOrgType, currentArtists, musicGoals } = req.body;
+  const prompt = `You are a music industry strategy expert. Build a music strategy. Org: ${musicOrgType}. Artists: ${currentArtists}. Goals: ${musicGoals}. Respond in JSON: { music_strategy: string, artist_development: string[], distribution_model: string[], sync_licensing: string[], touring_revenue: string[], brand_partnerships: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/faneng', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, currentFanBase, fanGoals } = req.body;
+  const prompt = `You are a fan engagement strategy expert. Build a fan engagement strategy. Org: ${orgType}. Fans: ${currentFanBase}. Goals: ${fanGoals}. Respond in JSON: { fan_engagement_strategy: string, community_building: string[], digital_platforms: string[], membership_programs: string[], content_strategy: string[], monetization_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/gamestudio', requireAuth, async (req: AuthRequest, res: any) => {
+  const { studioType, currentGames, studioGoals } = req.body;
+  const prompt = `You are a gaming studio strategy expert. Build a gaming studio strategy. Studio: ${studioType}. Games: ${currentGames}. Goals: ${studioGoals}. Respond in JSON: { studio_strategy: string, game_development: string[], platform_strategy: string[], monetization_model: string[], community_marketing: string[], ip_building: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/franchise', requireAuth, async (req: AuthRequest, res: any) => {
+  const { franchiseType, currentPerformance, franchiseGoals } = req.body;
+  const prompt = `You are a sports franchise strategy expert. Build a franchise strategy. Franchise: ${franchiseType}. Performance: ${currentPerformance}. Goals: ${franchiseGoals}. Respond in JSON: { franchise_strategy: string, team_building: string[], revenue_streams: string[], brand_development: string[], fan_experience: string[], facility_strategy: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

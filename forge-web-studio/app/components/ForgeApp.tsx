@@ -1064,6 +1064,16 @@ ForgeTab_roboticsstrategy3977,
 ForgeTab_semiconductors3978,
 ForgeTab_neurotechnology3979,
 ForgeTab_deeptech3980,
+ForgeTab_sportstech3981,
+ForgeTab_esports3982,
+ForgeTab_sportsanalytics3983,
+ForgeTab_entertainment3984,
+ForgeTab_streaming3985,
+ForgeTab_liveevents3986,
+ForgeTab_musicindustry3987,
+ForgeTab_fanengagement3988,
+ForgeTab_gamingstudio3989,
+ForgeTab_sportsfranchise3990,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59021,6 +59031,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'semiconductors3978' && <ForgeTab_semiconductors3978 />}
               {(mainTab as string) === 'neurotechnology3979' && <ForgeTab_neurotechnology3979 />}
               {(mainTab as string) === 'deeptech3980' && <ForgeTab_deeptech3980 />}
+              {(mainTab as string) === 'sportstech3981' && <ForgeTab_sportstech3981 />}
+              {(mainTab as string) === 'esports3982' && <ForgeTab_esports3982 />}
+              {(mainTab as string) === 'sportsanalytics3983' && <ForgeTab_sportsanalytics3983 />}
+              {(mainTab as string) === 'entertainment3984' && <ForgeTab_entertainment3984 />}
+              {(mainTab as string) === 'streaming3985' && <ForgeTab_streaming3985 />}
+              {(mainTab as string) === 'liveevents3986' && <ForgeTab_liveevents3986 />}
+              {(mainTab as string) === 'musicindustry3987' && <ForgeTab_musicindustry3987 />}
+              {(mainTab as string) === 'fanengagement3988' && <ForgeTab_fanengagement3988 />}
+              {(mainTab as string) === 'gamingstudio3989' && <ForgeTab_gamingstudio3989 />}
+              {(mainTab as string) === 'sportsfranchise3990' && <ForgeTab_sportsfranchise3990 />}
       </div>
     </div>
   );
