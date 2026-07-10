@@ -884,6 +884,16 @@ ForgeTab_asiapacific3797,
 ForgeTab_europeanmarket3798,
 ForgeTab_latamstrategy3799,
 ForgeTab_middleafrica3800,
+ForgeTab_vcstrategy3801,
+ForgeTab_startupraise3802,
+ForgeTab_pitchdeck3803,
+ForgeTab_privatequity3804,
+ForgeTab_portfoliostrategy3805,
+ForgeTab_angelinvesting3806,
+ForgeTab_duediligence3807,
+ForgeTab_exitstrategy3808,
+ForgeTab_vcportfolioops3809,
+ForgeTab_spac3810,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58661,6 +58671,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'europeanmarket3798' && <ForgeTab_europeanmarket3798 />}
               {(mainTab as string) === 'latamstrategy3799' && <ForgeTab_latamstrategy3799 />}
               {(mainTab as string) === 'middleafrica3800' && <ForgeTab_middleafrica3800 />}
+              {(mainTab as string) === 'vcstrategy3801' && <ForgeTab_vcstrategy3801 />}
+              {(mainTab as string) === 'startupraise3802' && <ForgeTab_startupraise3802 />}
+              {(mainTab as string) === 'pitchdeck3803' && <ForgeTab_pitchdeck3803 />}
+              {(mainTab as string) === 'privatequity3804' && <ForgeTab_privatequity3804 />}
+              {(mainTab as string) === 'portfoliostrategy3805' && <ForgeTab_portfoliostrategy3805 />}
+              {(mainTab as string) === 'angelinvesting3806' && <ForgeTab_angelinvesting3806 />}
+              {(mainTab as string) === 'duediligence3807' && <ForgeTab_duediligence3807 />}
+              {(mainTab as string) === 'exitstrategy3808' && <ForgeTab_exitstrategy3808 />}
+              {(mainTab as string) === 'vcportfolioops3809' && <ForgeTab_vcportfolioops3809 />}
+              {(mainTab as string) === 'spac3810' && <ForgeTab_spac3810 />}
       </div>
     </div>
   );

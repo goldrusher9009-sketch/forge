@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v868.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v869.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -216078,5 +216078,65 @@ app.post('/api/international/latam', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/international/meafricastrategy', requireAuth, async (req: AuthRequest, res: any) => {
   const { productType, meafCountries, meafGoals } = req.body;
   const prompt = `You are a Middle East & Africa market expert. Build a ME&Africa strategy. Product: ${productType}. Countries: ${meafCountries}. Goals: ${meafGoals}. Respond in JSON: { meaf_strategy: string, market_prioritization: string[], distribution_model: string[], local_partnerships: string[], regulatory_approach: string[], fintech_mobile_first: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/venturecapital/vcstrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fundStage, targetSectors, vcFundGoals } = req.body;
+  const prompt = `You are a venture capital strategy expert. Build a VC fund strategy. Stage: ${fundStage}. Sectors: ${targetSectors}. Goals: ${vcFundGoals}. Respond in JSON: { vc_strategy: string, thesis_development: string[], deal_sourcing: string[], portfolio_construction: string[], value_add_model: string[], lp_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/venturecapital/fundraise', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyStage, fundingAmount, raiseGoals } = req.body;
+  const prompt = `You are a startup fundraising expert. Build a fundraising strategy. Stage: ${companyStage}. Amount: ${fundingAmount}. Goals: ${raiseGoals}. Respond in JSON: { fundraising_strategy: string, investor_targeting: string[], pitch_narrative: string[], due_diligence_prep: string[], term_sheet_guidance: string[], close_tactics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/venturecapital/pitchdeck', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyDescription, targetInvestors, deckGoals } = req.body;
+  const prompt = `You are a pitch deck expert. Build a pitch deck strategy. Company: ${companyDescription}. Investors: ${targetInvestors}. Goals: ${deckGoals}. Respond in JSON: { deck_strategy: string, narrative_arc: string[], slide_structure: string[], data_storytelling: string[], investor_objections: string[], visual_design: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/venturecapital/pe', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fundType, targetIndustries, peGoals } = req.body;
+  const prompt = `You are a private equity strategy expert. Build a PE strategy. Fund: ${fundType}. Industries: ${targetIndustries}. Goals: ${peGoals}. Respond in JSON: { pe_strategy: string, deal_sourcing: string[], value_creation_playbook: string[], due_diligence_framework: string[], portfolio_operations: string[], exit_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/venturecapital/portfolio', requireAuth, async (req: AuthRequest, res: any) => {
+  const { portfolioCompany, investorType, portfolioGoals } = req.body;
+  const prompt = `You are a portfolio strategy expert. Build a portfolio company strategy. Company: ${portfolioCompany}. Investor: ${investorType}. Goals: ${portfolioGoals}. Respond in JSON: { portfolio_strategy: string, growth_levers: string[], board_engagement: string[], talent_strategy: string[], next_fundraise: string[], exit_preparation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/venturecapital/angel', requireAuth, async (req: AuthRequest, res: any) => {
+  const { investorProfile, targetSectors, angelGoals } = req.body;
+  const prompt = `You are an angel investing expert. Build an angel investing strategy. Profile: ${investorProfile}. Sectors: ${targetSectors}. Goals: ${angelGoals}. Respond in JSON: { angel_strategy: string, deal_sourcing: string[], evaluation_framework: string[], portfolio_construction: string[], founder_support: string[], syndicate_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/venturecapital/duediligence', requireAuth, async (req: AuthRequest, res: any) => {
+  const { investmentType, targetCompany, ddGoals } = req.body;
+  const prompt = `You are a due diligence expert. Build a DD framework. Investment: ${investmentType}. Company: ${targetCompany}. Goals: ${ddGoals}. Respond in JSON: { dd_framework: string, market_analysis: string[], team_assessment: string[], financial_review: string[], technology_audit: string[], risk_factors: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/venturecapital/exitstrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyProfile, potentialAcquirers, exitGoals } = req.body;
+  const prompt = `You are an exit strategy expert. Build an exit strategy. Company: ${companyProfile}. Acquirers: ${potentialAcquirers}. Goals: ${exitGoals}. Respond in JSON: { exit_strategy: string, exit_options: string[], valuation_framework: string[], acquirer_outreach: string[], negotiation_playbook: string[], ipo_considerations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/venturecapital/portfolioops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { portfolioSize, operatingCapabilities, portopsGoals } = req.body;
+  const prompt = `You are a VC portfolio operations expert. Build a portfolio ops strategy. Portfolio: ${portfolioSize}. Capabilities: ${operatingCapabilities}. Goals: ${portopsGoals}. Respond in JSON: { portfolio_ops_strategy: string, talent_network: string[], go_to_market_support: string[], data_analytics: string[], lp_reporting: string[], founder_community: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/venturecapital/spac', requireAuth, async (req: AuthRequest, res: any) => {
+  const { spacType, targetSectors, spacGoals } = req.body;
+  const prompt = `You are a SPAC and special situations expert. Build a strategy. Type: ${spacType}. Sectors: ${targetSectors}. Goals: ${spacGoals}. Respond in JSON: { spac_strategy: string, target_identification: string[], deal_structuring: string[], shareholder_management: string[], regulatory_compliance: string[], post_merger_value: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
