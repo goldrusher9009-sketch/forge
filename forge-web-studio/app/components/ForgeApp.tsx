@@ -1374,6 +1374,16 @@ ForgeTab_tokenomicsdesign4287,
 ForgeTab_cryptocompliancestrategy4288,
 ForgeTab_web3gaming4289,
 ForgeTab_metaversestrategy4290,
+ForgeTab_logisticstechstrategy4291,
+ForgeTab_supplychaindigital4292,
+ForgeTab_autonomousvehicles4293,
+ForgeTab_evstrategy4294,
+ForgeTab_lastmiledelivery4295,
+ForgeTab_freightbrokerage4296,
+ForgeTab_warehouseautomation4297,
+ForgeTab_mobilityaas4298,
+ForgeTab_portlogistics4299,
+ForgeTab_aerospacestrategy4300,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59641,6 +59651,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'cryptocompliancestrategy4288' && <ForgeTab_cryptocompliancestrategy4288 />}
               {(mainTab as string) === 'web3gaming4289' && <ForgeTab_web3gaming4289 />}
               {(mainTab as string) === 'metaversestrategy4290' && <ForgeTab_metaversestrategy4290 />}
+              {(mainTab as string) === 'logisticstechstrategy4291' && <ForgeTab_logisticstechstrategy4291 />}
+              {(mainTab as string) === 'supplychaindigital4292' && <ForgeTab_supplychaindigital4292 />}
+              {(mainTab as string) === 'autonomousvehicles4293' && <ForgeTab_autonomousvehicles4293 />}
+              {(mainTab as string) === 'evstrategy4294' && <ForgeTab_evstrategy4294 />}
+              {(mainTab as string) === 'lastmiledelivery4295' && <ForgeTab_lastmiledelivery4295 />}
+              {(mainTab as string) === 'freightbrokerage4296' && <ForgeTab_freightbrokerage4296 />}
+              {(mainTab as string) === 'warehouseautomation4297' && <ForgeTab_warehouseautomation4297 />}
+              {(mainTab as string) === 'mobilityaas4298' && <ForgeTab_mobilityaas4298 />}
+              {(mainTab as string) === 'portlogistics4299' && <ForgeTab_portlogistics4299 />}
+              {(mainTab as string) === 'aerospacestrategy4300' && <ForgeTab_aerospacestrategy4300 />}
       </div>
     </div>
   );
