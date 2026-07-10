@@ -1134,6 +1134,16 @@ ForgeTab_adtech4047,
 ForgeTab_musictech4048,
 ForgeTab_gamingmedia4049,
 ForgeTab_contentplatform4050,
+ForgeTab_supplychain4051,
+ForgeTab_logisticstech4052,
+ForgeTab_warehouse4053,
+ForgeTab_lastmile4054,
+ForgeTab_freightbrokerage4055,
+ForgeTab_procurement4056,
+ForgeTab_inventorymanage4057,
+ForgeTab_coldchain4058,
+ForgeTab_reverselogistics4059,
+ForgeTab_scvisibility4060,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59161,6 +59171,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'musictech4048' && <ForgeTab_musictech4048 />}
               {(mainTab as string) === 'gamingmedia4049' && <ForgeTab_gamingmedia4049 />}
               {(mainTab as string) === 'contentplatform4050' && <ForgeTab_contentplatform4050 />}
+              {(mainTab as string) === 'supplychain4051' && <ForgeTab_supplychain4051 />}
+              {(mainTab as string) === 'logisticstech4052' && <ForgeTab_logisticstech4052 />}
+              {(mainTab as string) === 'warehouse4053' && <ForgeTab_warehouse4053 />}
+              {(mainTab as string) === 'lastmile4054' && <ForgeTab_lastmile4054 />}
+              {(mainTab as string) === 'freightbrokerage4055' && <ForgeTab_freightbrokerage4055 />}
+              {(mainTab as string) === 'procurement4056' && <ForgeTab_procurement4056 />}
+              {(mainTab as string) === 'inventorymanage4057' && <ForgeTab_inventorymanage4057 />}
+              {(mainTab as string) === 'coldchain4058' && <ForgeTab_coldchain4058 />}
+              {(mainTab as string) === 'reverselogistics4059' && <ForgeTab_reverselogistics4059 />}
+              {(mainTab as string) === 'scvisibility4060' && <ForgeTab_scvisibility4060 />}
       </div>
     </div>
   );
