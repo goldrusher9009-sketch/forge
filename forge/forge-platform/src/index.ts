@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v826.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v827.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -213558,5 +213558,65 @@ app.post('/api/climatetech/biodiversity', requireAuth, async (req: AuthRequest, 
 app.post('/api/climatetech/climatefinance', requireAuth, async (req: AuthRequest, res: any) => {
   const { projectType, fundingNeeds, impactMetrics } = req.body;
   const prompt = `You are a climate finance expert. Structure climate finance for this project. Project: ${projectType}. Needs: ${fundingNeeds}. Metrics: ${impactMetrics}. Respond in JSON: { finance_structure: string, funding_sources: string[], green_bond_viability: string[], impact_framework: string[], blended_finance: string[], investor_targeting: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/blockchain/defi', requireAuth, async (req: AuthRequest, res: any) => {
+  const { protocolConcept, targetUsers, blockchain } = req.body;
+  const prompt = `You are a DeFi protocol design expert. Design this DeFi protocol. Concept: ${protocolConcept}. Users: ${targetUsers}. Chain: ${blockchain}. Respond in JSON: { protocol_architecture: string, tokenomics: string[], smart_contract_design: string[], liquidity_strategy: string[], security_considerations: string[], launch_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/blockchain/nft', requireAuth, async (req: AuthRequest, res: any) => {
+  const { nftConcept, targetCollectors, utility } = req.body;
+  const prompt = `You are an NFT strategy expert. Build an NFT project strategy. Concept: ${nftConcept}. Collectors: ${targetCollectors}. Utility: ${utility}. Respond in JSON: { project_concept: string, art_strategy: string[], smart_contract: string[], community_building: string[], roadmap: string[], launch_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/blockchain/tokenomics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { projectType, tokenPurpose, economicModel } = req.body;
+  const prompt = `You are a tokenomics design expert. Design tokenomics for this project. Type: ${projectType}. Purpose: ${tokenPurpose}. Model: ${economicModel}. Respond in JSON: { token_overview: string, supply_mechanics: string[], distribution_plan: string[], incentive_design: string[], governance_model: string[], value_capture: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/blockchain/smartcontract', requireAuth, async (req: AuthRequest, res: any) => {
+  const { contractPurpose, blockchain, requirements } = req.body;
+  const prompt = `You are a smart contract expert. Advise on smart contract design. Purpose: ${contractPurpose}. Chain: ${blockchain}. Requirements: ${requirements}. Respond in JSON: { contract_architecture: string, key_functions: string[], security_patterns: string[], gas_optimization: string[], testing_strategy: string[], audit_checklist: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/blockchain/cryptostrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tradingGoals, riskTolerance, portfolioSize } = req.body;
+  const prompt = `You are a crypto trading education expert. Build a crypto trading framework. Goals: ${tradingGoals}. Risk: ${riskTolerance}. Portfolio: ${portfolioSize}. Respond in JSON: { trading_framework: string, strategy_types: string[], risk_management: string[], technical_analysis: string[], portfolio_construction: string[], tax_considerations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/blockchain/dao', requireAuth, async (req: AuthRequest, res: any) => {
+  const { daoMission, membershipModel, decisionMaking } = req.body;
+  const prompt = `You are a DAO governance expert. Design a DAO governance framework. Mission: ${daoMission}. Membership: ${membershipModel}. Decisions: ${decisionMaking}. Respond in JSON: { dao_structure: string, governance_design: string[], proposal_process: string[], treasury_management: string[], contributor_incentives: string[], legal_considerations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/blockchain/entchain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessUseCase, currentSystems, stakeholders } = req.body;
+  const prompt = `You are an enterprise blockchain expert. Design an enterprise blockchain solution. Use case: ${businessUseCase}. Systems: ${currentSystems}. Stakeholders: ${stakeholders}. Respond in JSON: { blockchain_strategy: string, platform_selection: string[], architecture_design: string[], integration_plan: string[], governance_model: string[], roi_analysis: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/blockchain/cryptoreg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessType, jurisdiction, cryptoActivities } = req.body;
+  const prompt = `You are a crypto regulatory expert. Navigate crypto regulations. Business: ${businessType}. Jurisdiction: ${jurisdiction}. Activities: ${cryptoActivities}. Respond in JSON: { regulatory_landscape: string, licensing_requirements: string[], compliance_framework: string[], aml_kyc: string[], reporting_obligations: string[], legal_structure: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/blockchain/web3mktg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { project, targetCommunity, marketingGoals } = req.body;
+  const prompt = `You are a Web3 marketing expert. Build a Web3 community and marketing strategy. Project: ${project}. Community: ${targetCommunity}. Goals: ${marketingGoals}. Respond in JSON: { community_strategy: string, discord_playbook: string[], twitter_strategy: string[], ambassador_program: string[], content_calendar: string[], growth_tactics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/blockchain/cryptofund', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fundStrategy, targetAUM, investorType } = req.body;
+  const prompt = `You are a crypto fund strategy expert. Build a crypto fund strategy. Strategy: ${fundStrategy}. AUM: ${targetAUM}. Investors: ${investorType}. Respond in JSON: { fund_structure: string, investment_thesis: string[], portfolio_construction: string[], risk_management: string[], lp_reporting: string[], regulatory_setup: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

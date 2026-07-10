@@ -464,6 +464,16 @@ ForgeTab_climatetech_startup3367,
 ForgeTab_waterstewardship3368,
 ForgeTab_biodiversity3369,
 ForgeTab_climatefinance3370,
+ForgeTab_defiprotocol3371,
+ForgeTab_nftstrategy3372,
+ForgeTab_tokenomics3373,
+ForgeTab_smartcontract3374,
+ForgeTab_cryptotrading3375,
+ForgeTab_daogovernance3376,
+ForgeTab_blockchainenterprise3377,
+ForgeTab_cryptoregulatory3378,
+ForgeTab_web3marketing3379,
+ForgeTab_cryptofund3380,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57821,6 +57831,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'waterstewardship3368' && <ForgeTab_waterstewardship3368 />}
               {(mainTab as string) === 'biodiversity3369' && <ForgeTab_biodiversity3369 />}
               {(mainTab as string) === 'climatefinance3370' && <ForgeTab_climatefinance3370 />}
+              {(mainTab as string) === 'defiprotocol3371' && <ForgeTab_defiprotocol3371 />}
+              {(mainTab as string) === 'nftstrategy3372' && <ForgeTab_nftstrategy3372 />}
+              {(mainTab as string) === 'tokenomics3373' && <ForgeTab_tokenomics3373 />}
+              {(mainTab as string) === 'smartcontract3374' && <ForgeTab_smartcontract3374 />}
+              {(mainTab as string) === 'cryptotrading3375' && <ForgeTab_cryptotrading3375 />}
+              {(mainTab as string) === 'daogovernance3376' && <ForgeTab_daogovernance3376 />}
+              {(mainTab as string) === 'blockchainenterprise3377' && <ForgeTab_blockchainenterprise3377 />}
+              {(mainTab as string) === 'cryptoregulatory3378' && <ForgeTab_cryptoregulatory3378 />}
+              {(mainTab as string) === 'web3marketing3379' && <ForgeTab_web3marketing3379 />}
+              {(mainTab as string) === 'cryptofund3380' && <ForgeTab_cryptofund3380 />}
       </div>
     </div>
   );
