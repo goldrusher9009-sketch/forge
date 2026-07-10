@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v798.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v799.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211878,5 +211878,65 @@ app.post('/api/aiml/agentdesign', requireAuth, async (req: AuthRequest, res: any
 app.post('/api/aiml/datapipeline', requireAuth, async (req: AuthRequest, res: any) => {
   const { dataSource, targetModel, dataVolume } = req.body;
   const prompt = `You are an AI data pipeline expert. Design a data pipeline for ML training. Sources: ${dataSource}. Model: ${targetModel}. Volume: ${dataVolume}. Respond in JSON: { pipeline_design: string, data_collection: string[], preprocessing_steps: string[], quality_checks: string[], feature_engineering: string[], versioning_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/socialmedia/contentcal', requireAuth, async (req: AuthRequest, res: any) => {
+  const { brandNiche, platforms, postingFrequency } = req.body;
+  const prompt = `You are a social media content strategist. Build a 30-day content calendar. Niche: ${brandNiche}. Platforms: ${platforms}. Frequency: ${postingFrequency}. Respond in JSON: { content_themes: string[], weekly_schedule: string[], content_types: string[], hook_formulas: string[], cta_variations: string[], repurposing_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/socialmedia/viralcontent', requireAuth, async (req: AuthRequest, res: any) => {
+  const { platform, targetAudience, contentGoal } = req.body;
+  const prompt = `You are a viral content expert. Create a viral content strategy. Platform: ${platform}. Audience: ${targetAudience}. Goal: ${contentGoal}. Respond in JSON: { viral_hooks: string[], content_formats: string[], trending_angles: string[], engagement_tactics: string[], posting_optimization: string[], viral_amplifiers: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/socialmedia/influencer', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productCategory, influencerTier, campaignGoal } = req.body;
+  const prompt = `You are an influencer marketing strategist. Design an influencer campaign. Category: ${productCategory}. Tier: ${influencerTier}. Goal: ${campaignGoal}. Respond in JSON: { influencer_criteria: string[], outreach_strategy: string[], campaign_brief: string[], content_guidelines: string[], compensation_structure: string[], performance_tracking: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/socialmedia/community', requireAuth, async (req: AuthRequest, res: any) => {
+  const { communityPlatform, targetMembers, communityPurpose } = req.body;
+  const prompt = `You are a community building expert. Design a thriving online community. Platform: ${communityPlatform}. Members: ${targetMembers}. Purpose: ${communityPurpose}. Respond in JSON: { community_structure: string, onboarding_flow: string[], engagement_rituals: string[], moderation_guidelines: string[], growth_strategy: string[], monetization_options: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/socialmedia/podcaststrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { podcastTopic, targetListeners, podcastGoal } = req.body;
+  const prompt = `You are a podcast strategy expert. Design a podcast launch and growth strategy. Topic: ${podcastTopic}. Listeners: ${targetListeners}. Goal: ${podcastGoal}. Respond in JSON: { show_format: string, episode_structure: string[], content_pillars: string[], guest_strategy: string[], distribution_plan: string[], monetization_path: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/socialmedia/youtubestrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { channelNiche, competitorChannels, channelGoal } = req.body;
+  const prompt = `You are a YouTube growth strategist. Build a YouTube channel strategy. Niche: ${channelNiche}. Competitors: ${competitorChannels}. Goal: ${channelGoal}. Respond in JSON: { channel_positioning: string, content_series: string[], seo_strategy: string[], thumbnail_formula: string[], posting_schedule: string[], monetization_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/socialmedia/emailnewsletter', requireAuth, async (req: AuthRequest, res: any) => {
+  const { newsletterTopic, subscriberGoal, monetizationModel } = req.body;
+  const prompt = `You are an email newsletter expert. Design a profitable newsletter strategy. Topic: ${newsletterTopic}. Subscribers: ${subscriberGoal}. Monetization: ${monetizationModel}. Respond in JSON: { newsletter_format: string, content_cadence: string[], growth_tactics: string[], subject_line_formulas: string[], monetization_approaches: string[], retention_strategies: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/socialmedia/linkedingrowth', requireAuth, async (req: AuthRequest, res: any) => {
+  const { professionalGoal, targetAudience, currentFollowers } = req.body;
+  const prompt = `You are a LinkedIn growth expert. Design a LinkedIn presence strategy. Goal: ${professionalGoal}. Audience: ${targetAudience}. Followers: ${currentFollowers}. Respond in JSON: { profile_optimization: string[], content_strategy: string[], posting_cadence: string[], engagement_tactics: string[], networking_approach: string[], lead_generation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/socialmedia/ugcstrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { brandProduct, ugcGoal, incentiveStructure } = req.body;
+  const prompt = `You are a UGC campaign strategist. Design a user-generated content campaign. Product: ${brandProduct}. Goal: ${ugcGoal}. Incentives: ${incentiveStructure}. Respond in JSON: { campaign_concept: string, creator_brief: string[], hashtag_strategy: string[], rights_management: string[], amplification_plan: string[], performance_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/socialmedia/socialads', requireAuth, async (req: AuthRequest, res: any) => {
+  const { product, targetAudience, adPlatform } = req.body;
+  const prompt = `You are a social media advertising copywriter. Write high-converting ad copy. Product: ${product}. Audience: ${targetAudience}. Platform: ${adPlatform}. Respond in JSON: { primary_headlines: string[], ad_hooks: string[], body_copy_variations: string[], cta_options: string[], emotional_angles: string[], a_b_test_ideas: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
