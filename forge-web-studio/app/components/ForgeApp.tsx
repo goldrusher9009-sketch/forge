@@ -1154,6 +1154,16 @@ ForgeTab_educationgov4067,
 ForgeTab_infratech4068,
 ForgeTab_regulatorybody4069,
 ForgeTab_publicfinance4070,
+ForgeTab_retailtech4071,
+ForgeTab_omnichannel4072,
+ForgeTab_dtocbrand4073,
+ForgeTab_grocerytech4074,
+ForgeTab_luxurybrand4075,
+ForgeTab_fashiontech4076,
+ForgeTab_loyaltyprogram4077,
+ForgeTab_retailmedia4078,
+ForgeTab_consumerbehavior4079,
+ForgeTab_retailops4080,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59201,6 +59211,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'infratech4068' && <ForgeTab_infratech4068 />}
               {(mainTab as string) === 'regulatorybody4069' && <ForgeTab_regulatorybody4069 />}
               {(mainTab as string) === 'publicfinance4070' && <ForgeTab_publicfinance4070 />}
+              {(mainTab as string) === 'retailtech4071' && <ForgeTab_retailtech4071 />}
+              {(mainTab as string) === 'omnichannel4072' && <ForgeTab_omnichannel4072 />}
+              {(mainTab as string) === 'dtocbrand4073' && <ForgeTab_dtocbrand4073 />}
+              {(mainTab as string) === 'grocerytech4074' && <ForgeTab_grocerytech4074 />}
+              {(mainTab as string) === 'luxurybrand4075' && <ForgeTab_luxurybrand4075 />}
+              {(mainTab as string) === 'fashiontech4076' && <ForgeTab_fashiontech4076 />}
+              {(mainTab as string) === 'loyaltyprogram4077' && <ForgeTab_loyaltyprogram4077 />}
+              {(mainTab as string) === 'retailmedia4078' && <ForgeTab_retailmedia4078 />}
+              {(mainTab as string) === 'consumerbehavior4079' && <ForgeTab_consumerbehavior4079 />}
+              {(mainTab as string) === 'retailops4080' && <ForgeTab_retailops4080 />}
       </div>
     </div>
   );
