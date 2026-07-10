@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v865.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v866.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -215898,5 +215898,65 @@ app.post('/api/security/iam', requireAuth, async (req: AuthRequest, res: any) =>
 app.post('/api/security/secawareness', requireAuth, async (req: AuthRequest, res: any) => {
   const { orgSize, threatProfile, awarenessGoals } = req.body;
   const prompt = `You are a security awareness expert. Build a security awareness strategy. Org: ${orgSize}. Threats: ${threatProfile}. Goals: ${awarenessGoals}. Respond in JSON: { awareness_strategy: string, training_curriculum: string[], phishing_simulation: string[], culture_building: string[], measurement_metrics: string[], executive_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/aistartup', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiProduct, targetCustomers, aiGoals } = req.body;
+  const prompt = `You are an AI startup strategy expert. Build an AI startup strategy. Product: ${aiProduct}. Customers: ${targetCustomers}. Goals: ${aiGoals}. Respond in JSON: { ai_strategy: string, model_differentiation: string[], data_moat: string[], go_to_market: string[], pricing_model: string[], defensibility: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/mlplatform', requireAuth, async (req: AuthRequest, res: any) => {
+  const { platformType, targetMLTeams, mlGoals } = req.body;
+  const prompt = `You are an ML platform strategy expert. Build an ML platform strategy. Platform: ${platformType}. Teams: ${targetMLTeams}. Goals: ${mlGoals}. Respond in JSON: { ml_platform_strategy: string, product_differentiation: string[], developer_adoption: string[], enterprise_motion: string[], pricing_model: string[], ecosystem_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/aigovernance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, aiApplications, governanceGoals } = req.body;
+  const prompt = `You are an AI governance expert. Build an AI governance strategy. Org: ${orgType}. Applications: ${aiApplications}. Goals: ${governanceGoals}. Respond in JSON: { governance_strategy: string, risk_framework: string[], bias_mitigation: string[], transparency_requirements: string[], regulatory_compliance: string[], oversight_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/genai', requireAuth, async (req: AuthRequest, res: any) => {
+  const { genaiProduct, targetUsers, genaiGoals } = req.body;
+  const prompt = `You are a generative AI strategy expert. Build a GenAI business strategy. Product: ${genaiProduct}. Users: ${targetUsers}. Goals: ${genaiGoals}. Respond in JSON: { genai_strategy: string, model_selection: string[], fine_tuning_approach: string[], safety_guardrails: string[], monetization_model: string[], competitive_moat: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/aiadoption', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companySize, aiMaturity, adoptionGoals } = req.body;
+  const prompt = `You are an enterprise AI adoption expert. Build an AI adoption strategy. Company: ${companySize}. Maturity: ${aiMaturity}. Goals: ${adoptionGoals}. Respond in JSON: { adoption_strategy: string, use_case_prioritization: string[], change_management: string[], data_readiness: string[], build_buy_partner: string[], roi_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/aiops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mlInfrastructure, teamSize, aiopsGoals } = req.body;
+  const prompt = `You are an MLOps/AIOps strategy expert. Build an MLOps strategy. Infrastructure: ${mlInfrastructure}. Team: ${teamSize}. Goals: ${aiopsGoals}. Respond in JSON: { mlops_strategy: string, pipeline_automation: string[], model_monitoring: string[], infrastructure_optimization: string[], team_structure: string[], toolchain_selection: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/nlpstrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { nlpApplication, targetLanguages, nlpGoals } = req.body;
+  const prompt = `You are an NLP strategy expert. Build an NLP strategy. Application: ${nlpApplication}. Languages: ${targetLanguages}. Goals: ${nlpGoals}. Respond in JSON: { nlp_strategy: string, model_architecture: string[], training_data: string[], evaluation_framework: string[], deployment_approach: string[], multilingual_expansion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/computervision', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cvApplication, targetIndustry, cvGoals } = req.body;
+  const prompt = `You are a computer vision strategy expert. Build a computer vision strategy. Application: ${cvApplication}. Industry: ${targetIndustry}. Goals: ${cvGoals}. Respond in JSON: { cv_strategy: string, model_development: string[], data_acquisition: string[], edge_cloud_deployment: string[], customer_integration: string[], performance_benchmarks: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/aiproduct', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, targetPersonas, aiProductGoals } = req.body;
+  const prompt = `You are an AI product strategy expert. Build an AI product strategy. Product: ${productType}. Personas: ${targetPersonas}. Goals: ${aiProductGoals}. Respond in JSON: { ai_product_strategy: string, core_experience: string[], ai_feature_roadmap: string[], trust_transparency: string[], feedback_loop: string[], differentiation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ai/datascience', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyType, dataMaturity, dsGoals } = req.body;
+  const prompt = `You are a data science strategy expert. Build a data science strategy. Company: ${companyType}. Maturity: ${dataMaturity}. Goals: ${dsGoals}. Respond in JSON: { data_science_strategy: string, team_structure: string[], use_case_roadmap: string[], data_infrastructure: string[], tools_stack: string[], stakeholder_alignment: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

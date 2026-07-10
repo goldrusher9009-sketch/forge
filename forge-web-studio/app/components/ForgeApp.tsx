@@ -854,6 +854,16 @@ ForgeTab_ransomwaredefense3767,
 ForgeTab_threatintel3768,
 ForgeTab_identitysec3769,
 ForgeTab_securityawareness3770,
+ForgeTab_aistartupstrategy3771,
+ForgeTab_mlplatform3772,
+ForgeTab_aigovernance3773,
+ForgeTab_generativeai3774,
+ForgeTab_aienterpriseadopt3775,
+ForgeTab_aiopsstrategy3776,
+ForgeTab_nlpstrategy3777,
+ForgeTab_computervision3778,
+ForgeTab_aiproductstrategy3779,
+ForgeTab_datascience3780,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58601,6 +58611,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'threatintel3768' && <ForgeTab_threatintel3768 />}
               {(mainTab as string) === 'identitysec3769' && <ForgeTab_identitysec3769 />}
               {(mainTab as string) === 'securityawareness3770' && <ForgeTab_securityawareness3770 />}
+              {(mainTab as string) === 'aistartupstrategy3771' && <ForgeTab_aistartupstrategy3771 />}
+              {(mainTab as string) === 'mlplatform3772' && <ForgeTab_mlplatform3772 />}
+              {(mainTab as string) === 'aigovernance3773' && <ForgeTab_aigovernance3773 />}
+              {(mainTab as string) === 'generativeai3774' && <ForgeTab_generativeai3774 />}
+              {(mainTab as string) === 'aienterpriseadopt3775' && <ForgeTab_aienterpriseadopt3775 />}
+              {(mainTab as string) === 'aiopsstrategy3776' && <ForgeTab_aiopsstrategy3776 />}
+              {(mainTab as string) === 'nlpstrategy3777' && <ForgeTab_nlpstrategy3777 />}
+              {(mainTab as string) === 'computervision3778' && <ForgeTab_computervision3778 />}
+              {(mainTab as string) === 'aiproductstrategy3779' && <ForgeTab_aiproductstrategy3779 />}
+              {(mainTab as string) === 'datascience3780' && <ForgeTab_datascience3780 />}
       </div>
     </div>
   );
