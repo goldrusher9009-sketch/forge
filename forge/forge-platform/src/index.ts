@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v854.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v855.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -215238,5 +215238,65 @@ app.post('/api/insurtech/embedded', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/insurtech/insuranalytics', requireAuth, async (req: AuthRequest, res: any) => {
   const { dataEnvironment, analyticsUseCase, analyticsGoals } = req.body;
   const prompt = `You are an insurance analytics expert. Build an analytics strategy. Data: ${dataEnvironment}. Use case: ${analyticsUseCase}. Goals: ${analyticsGoals}. Respond in JSON: { analytics_strategy: string, data_architecture: string[], model_portfolio: string[], deployment_approach: string[], talent_strategy: string[], roi_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/supplychain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industryType, supplyChainScope, scGoals } = req.body;
+  const prompt = `You are a supply chain technology expert. Build a supply chain tech strategy. Industry: ${industryType}. Scope: ${supplyChainScope}. Goals: ${scGoals}. Respond in JSON: { sc_strategy: string, visibility_platform: string[], risk_mitigation: string[], supplier_management: string[], demand_planning: string[], technology_stack: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/logisticstech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { logisticsType, operationsScale, logisticsGoals } = req.body;
+  const prompt = `You are a logistics technology expert. Build a logistics tech strategy. Type: ${logisticsType}. Scale: ${operationsScale}. Goals: ${logisticsGoals}. Respond in JSON: { logistics_strategy: string, route_optimization: string[], fleet_management: string[], customer_tracking: string[], warehouse_integration: string[], cost_reduction: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/warehousetech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { warehouseType, inventoryProfile, warehouseGoals } = req.body;
+  const prompt = `You are a warehouse technology expert. Build a warehouse tech strategy. Type: ${warehouseType}. Inventory: ${inventoryProfile}. Goals: ${warehouseGoals}. Respond in JSON: { warehouse_strategy: string, wms_selection: string[], automation_roadmap: string[], picking_optimization: string[], inventory_management: string[], roi_analysis: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/procuretech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, spendCategory, procureTechGoals } = req.body;
+  const prompt = `You are a procurement technology expert. Build a procurement tech strategy. Org: ${orgType}. Spend: ${spendCategory}. Goals: ${procureTechGoals}. Respond in JSON: { procurement_strategy: string, platform_selection: string[], supplier_onboarding: string[], spend_analytics: string[], contract_management: string[], savings_realization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/freighttech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { freightMode, tradeRoutes, freightGoals } = req.body;
+  const prompt = `You are a freight technology expert. Build a freight tech strategy. Mode: ${freightMode}. Routes: ${tradeRoutes}. Goals: ${freightGoals}. Respond in JSON: { freight_strategy: string, digital_forwarding: string[], rate_management: string[], customs_compliance: string[], tracking_visibility: string[], carrier_network: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/inventory', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, demandPattern, inventoryGoals } = req.body;
+  const prompt = `You are an inventory optimization expert. Build an inventory strategy. Product: ${productType}. Demand: ${demandPattern}. Goals: ${inventoryGoals}. Respond in JSON: { inventory_strategy: string, demand_forecasting: string[], safety_stock: string[], replenishment_model: string[], abc_analysis: string[], technology_tools: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/coldchain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productCategory, coldChainScope, coldChainGoals } = req.body;
+  const prompt = `You are a cold chain logistics expert. Build a cold chain strategy. Product: ${productCategory}. Scope: ${coldChainScope}. Goals: ${coldChainGoals}. Respond in JSON: { cold_chain_strategy: string, temperature_monitoring: string[], carrier_qualification: string[], compliance_framework: string[], waste_reduction: string[], technology_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/reverselogistics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, returnVolume, reverseGoals } = req.body;
+  const prompt = `You are a reverse logistics expert. Build a reverse logistics strategy. Product: ${productType}. Volume: ${returnVolume}. Goals: ${reverseGoals}. Respond in JSON: { reverse_strategy: string, returns_process: string[], disposition_model: string[], refurbishment_program: string[], cost_recovery: string[], sustainability_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/customs', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tradeLanes, productHsCodes, complianceGoals } = req.body;
+  const prompt = `You are a customs and trade compliance expert. Build a trade compliance strategy. Lanes: ${tradeLanes}. Products: ${productHsCodes}. Goals: ${complianceGoals}. Respond in JSON: { compliance_strategy: string, duty_optimization: string[], ftz_utilization: string[], broker_management: string[], customs_technology: string[], risk_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/supplyrisk', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industryType, riskExposures, riskGoals } = req.body;
+  const prompt = `You are a supply chain risk expert. Build a supply chain risk strategy. Industry: ${industryType}. Risks: ${riskExposures}. Goals: ${riskGoals}. Respond in JSON: { risk_strategy: string, risk_mapping: string[], supplier_diversification: string[], inventory_buffering: string[], scenario_planning: string[], monitoring_system: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
