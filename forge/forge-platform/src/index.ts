@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v799.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v800.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211938,5 +211938,65 @@ app.post('/api/socialmedia/ugcstrategy', requireAuth, async (req: AuthRequest, r
 app.post('/api/socialmedia/socialads', requireAuth, async (req: AuthRequest, res: any) => {
   const { product, targetAudience, adPlatform } = req.body;
   const prompt = `You are a social media advertising copywriter. Write high-converting ad copy. Product: ${product}. Audience: ${targetAudience}. Platform: ${adPlatform}. Respond in JSON: { primary_headlines: string[], ad_hooks: string[], body_copy_variations: string[], cta_options: string[], emotional_angles: string[], a_b_test_ideas: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creator/coursecreate', requireAuth, async (req: AuthRequest, res: any) => {
+  const { courseTopic, targetStudent, courseFormat } = req.body;
+  const prompt = `You are an online course creation expert. Design a comprehensive online course. Topic: ${courseTopic}. Student: ${targetStudent}. Format: ${courseFormat}. Respond in JSON: { course_outline: string[], module_breakdown: string[], learning_objectives: string[], assessment_strategy: string[], pricing_strategy: string[], launch_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creator/membership', requireAuth, async (req: AuthRequest, res: any) => {
+  const { expertiseTopic, memberBenefits, pricingModel } = req.body;
+  const prompt = `You are a membership site expert. Design a profitable membership business. Topic: ${expertiseTopic}. Benefits: ${memberBenefits}. Pricing: ${pricingModel}. Respond in JSON: { membership_tiers: string[], content_strategy: string[], community_features: string[], retention_tactics: string[], onboarding_flow: string[], revenue_projections: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creator/digitalproduct', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, targetBuyer, pricePoint } = req.body;
+  const prompt = `You are a digital product expert. Design a sellable digital product. Type: ${productType}. Buyer: ${targetBuyer}. Price: ${pricePoint}. Respond in JSON: { product_concept: string, content_outline: string[], value_proposition: string[], sales_page_structure: string[], upsell_opportunities: string[], marketing_channels: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creator/coachingbiz', requireAuth, async (req: AuthRequest, res: any) => {
+  const { coachingNiche, clientAvatar, revenueGoal } = req.body;
+  const prompt = `You are a coaching business expert. Build a profitable coaching practice. Niche: ${coachingNiche}. Client: ${clientAvatar}. Revenue: ${revenueGoal}. Respond in JSON: { signature_program: string, offer_stack: string[], client_journey: string[], discovery_call_script: string[], pricing_architecture: string[], lead_generation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creator/sponsorkit', requireAuth, async (req: AuthRequest, res: any) => {
+  const { creatorNiche, audienceSize, sponsorCategory } = req.body;
+  const prompt = `You are a creator sponsorship expert. Build a compelling sponsorship kit. Niche: ${creatorNiche}. Audience: ${audienceSize}. Sponsors: ${sponsorCategory}. Respond in JSON: { media_kit_sections: string[], audience_data_highlights: string[], sponsorship_packages: string[], rate_card: string[], pitch_talking_points: string[], outreach_sequence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creator/affiliatestrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { niche, contentPlatform, monthlyTraffic } = req.body;
+  const prompt = `You are an affiliate marketing expert. Design a high-converting affiliate strategy. Niche: ${niche}. Platform: ${contentPlatform}. Traffic: ${monthlyTraffic}. Respond in JSON: { affiliate_program_selection: string[], content_strategy: string[], conversion_optimization: string[], disclosure_compliance: string[], revenue_projections: string[], scaling_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creator/creatormonetize', requireAuth, async (req: AuthRequest, res: any) => {
+  const { creatorPlatform, currentFollowers, monthlyGoal } = req.body;
+  const prompt = `You are a creator economy expert. Design a full monetization roadmap. Platform: ${creatorPlatform}. Followers: ${currentFollowers}. Goal: ${monthlyGoal}. Respond in JSON: { revenue_streams: string[], milestone_thresholds: string[], quick_wins: string[], long_term_plays: string[], diversification_plan: string[], 90_day_action_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creator/newslettermonetize', requireAuth, async (req: AuthRequest, res: any) => {
+  const { newsletterNiche, subscriberCount, currentRevenue } = req.body;
+  const prompt = `You are a newsletter monetization expert. Design a newsletter revenue strategy. Niche: ${newsletterNiche}. Subscribers: ${subscriberCount}. Revenue: ${currentRevenue}. Respond in JSON: { monetization_models: string[], sponsor_pitch_template: string[], paid_tier_design: string[], product_extensions: string[], growth_tactics: string[], revenue_milestones: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creator/branddeals', requireAuth, async (req: AuthRequest, res: any) => {
+  const { creatorProfile, dealType, proposedBudget } = req.body;
+  const prompt = `You are a creator brand deal negotiation expert. Optimize this brand deal. Creator: ${creatorProfile}. Deal type: ${dealType}. Budget: ${proposedBudget}. Respond in JSON: { market_rate_analysis: string, counter_proposal: string, deliverables_package: string[], usage_rights_terms: string[], performance_metrics: string[], contract_essentials: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/creator/repurpose', requireAuth, async (req: AuthRequest, res: any) => {
+  const { originalContent, sourcePlatform, targetPlatforms } = req.body;
+  const prompt = `You are a content repurposing strategist. Maximize content reach through repurposing. Content: ${originalContent}. Source: ${sourcePlatform}. Targets: ${targetPlatforms}. Respond in JSON: { repurposing_plan: string[], platform_adaptations: string[], format_transformations: string[], scheduling_sequence: string[], seo_opportunities: string[], distribution_checklist: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
