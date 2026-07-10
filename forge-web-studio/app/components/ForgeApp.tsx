@@ -844,6 +844,16 @@ ForgeTab_diversityinclusion3757,
 ForgeTab_compensationdesign3758,
 ForgeTab_peopleanaly3759,
 ForgeTab_futurework3760,
+ForgeTab_cybersecurity3761,
+ForgeTab_zerotrust3762,
+ForgeTab_cloudsecurity3763,
+ForgeTab_socopssec3764,
+ForgeTab_appsecurity3765,
+ForgeTab_compliancesec3766,
+ForgeTab_ransomwaredefense3767,
+ForgeTab_threatintel3768,
+ForgeTab_identitysec3769,
+ForgeTab_securityawareness3770,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58581,6 +58591,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'compensationdesign3758' && <ForgeTab_compensationdesign3758 />}
               {(mainTab as string) === 'peopleanaly3759' && <ForgeTab_peopleanaly3759 />}
               {(mainTab as string) === 'futurework3760' && <ForgeTab_futurework3760 />}
+              {(mainTab as string) === 'cybersecurity3761' && <ForgeTab_cybersecurity3761 />}
+              {(mainTab as string) === 'zerotrust3762' && <ForgeTab_zerotrust3762 />}
+              {(mainTab as string) === 'cloudsecurity3763' && <ForgeTab_cloudsecurity3763 />}
+              {(mainTab as string) === 'socopssec3764' && <ForgeTab_socopssec3764 />}
+              {(mainTab as string) === 'appsecurity3765' && <ForgeTab_appsecurity3765 />}
+              {(mainTab as string) === 'compliancesec3766' && <ForgeTab_compliancesec3766 />}
+              {(mainTab as string) === 'ransomwaredefense3767' && <ForgeTab_ransomwaredefense3767 />}
+              {(mainTab as string) === 'threatintel3768' && <ForgeTab_threatintel3768 />}
+              {(mainTab as string) === 'identitysec3769' && <ForgeTab_identitysec3769 />}
+              {(mainTab as string) === 'securityawareness3770' && <ForgeTab_securityawareness3770 />}
       </div>
     </div>
   );
