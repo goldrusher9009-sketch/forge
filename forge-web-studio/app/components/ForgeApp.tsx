@@ -964,6 +964,16 @@ ForgeTab_categorymanage3877,
 ForgeTab_retailmarketing3878,
 ForgeTab_franchisestrat3879,
 ForgeTab_retailsustain3880,
+ForgeTab_energystrategy3881,
+ForgeTab_renewableenergy3882,
+ForgeTab_energystorage3883,
+ForgeTab_utilitystrategy3884,
+ForgeTab_energyefficiency3885,
+ForgeTab_oilandgas3886,
+ForgeTab_cleantech3887,
+ForgeTab_carboncapture3888,
+ForgeTab_smartgrid3889,
+ForgeTab_hydrogeneconomy3890,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58821,6 +58831,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'retailmarketing3878' && <ForgeTab_retailmarketing3878 />}
               {(mainTab as string) === 'franchisestrat3879' && <ForgeTab_franchisestrat3879 />}
               {(mainTab as string) === 'retailsustain3880' && <ForgeTab_retailsustain3880 />}
+              {(mainTab as string) === 'energystrategy3881' && <ForgeTab_energystrategy3881 />}
+              {(mainTab as string) === 'renewableenergy3882' && <ForgeTab_renewableenergy3882 />}
+              {(mainTab as string) === 'energystorage3883' && <ForgeTab_energystorage3883 />}
+              {(mainTab as string) === 'utilitystrategy3884' && <ForgeTab_utilitystrategy3884 />}
+              {(mainTab as string) === 'energyefficiency3885' && <ForgeTab_energyefficiency3885 />}
+              {(mainTab as string) === 'oilandgas3886' && <ForgeTab_oilandgas3886 />}
+              {(mainTab as string) === 'cleantech3887' && <ForgeTab_cleantech3887 />}
+              {(mainTab as string) === 'carboncapture3888' && <ForgeTab_carboncapture3888 />}
+              {(mainTab as string) === 'smartgrid3889' && <ForgeTab_smartgrid3889 />}
+              {(mainTab as string) === 'hydrogeneconomy3890' && <ForgeTab_hydrogeneconomy3890 />}
       </div>
     </div>
   );
