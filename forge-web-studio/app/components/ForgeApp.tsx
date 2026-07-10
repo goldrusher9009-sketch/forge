@@ -164,6 +164,16 @@ ForgeTab_soctriage3067,
 ForgeTab_vulnerabilitymgmt3068,
 ForgeTab_secawareness3069,
 ForgeTab_cryptostrategy3070,
+ForgeTab_budgetplanner3071,
+ForgeTab_debtpayoff3072,
+ForgeTab_investmentplan3073,
+ForgeTab_retirementplan3074,
+ForgeTab_taxoptimization3075,
+ForgeTab_emergencyfund3076,
+ForgeTab_creditrepair3077,
+ForgeTab_insurancereview3078,
+ForgeTab_estateplanning3079,
+ForgeTab_sideincomeplan3080,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57221,6 +57231,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'vulnerabilitymgmt3068' && <ForgeTab_vulnerabilitymgmt3068 />}
               {(mainTab as string) === 'secawareness3069' && <ForgeTab_secawareness3069 />}
               {(mainTab as string) === 'cryptostrategy3070' && <ForgeTab_cryptostrategy3070 />}
+              {(mainTab as string) === 'budgetplanner3071' && <ForgeTab_budgetplanner3071 />}
+              {(mainTab as string) === 'debtpayoff3072' && <ForgeTab_debtpayoff3072 />}
+              {(mainTab as string) === 'investmentplan3073' && <ForgeTab_investmentplan3073 />}
+              {(mainTab as string) === 'retirementplan3074' && <ForgeTab_retirementplan3074 />}
+              {(mainTab as string) === 'taxoptimization3075' && <ForgeTab_taxoptimization3075 />}
+              {(mainTab as string) === 'emergencyfund3076' && <ForgeTab_emergencyfund3076 />}
+              {(mainTab as string) === 'creditrepair3077' && <ForgeTab_creditrepair3077 />}
+              {(mainTab as string) === 'insurancereview3078' && <ForgeTab_insurancereview3078 />}
+              {(mainTab as string) === 'estateplanning3079' && <ForgeTab_estateplanning3079 />}
+              {(mainTab as string) === 'sideincomeplan3080' && <ForgeTab_sideincomeplan3080 />}
       </div>
     </div>
   );

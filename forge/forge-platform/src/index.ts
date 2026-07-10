@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v796.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v797.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211758,5 +211758,65 @@ app.post('/api/cybersecurity/secawareness', requireAuth, async (req: AuthRequest
 app.post('/api/cybersecurity/cryptostrategy', requireAuth, async (req: AuthRequest, res: any) => {
   const { dataTypes, complianceNeeds, systemsToProtect } = req.body;
   const prompt = `You are a cryptography and data protection expert. Design an encryption strategy. Data: ${dataTypes}. Compliance: ${complianceNeeds}. Systems: ${systemsToProtect}. Respond in JSON: { encryption_framework: string, algorithm_selection: string[], key_management: string[], data_at_rest: string[], data_in_transit: string[], certificate_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/budgetplan', requireAuth, async (req: AuthRequest, res: any) => {
+  const { monthlyIncome, fixedExpenses, financialGoal } = req.body;
+  const prompt = `You are a personal finance expert. Create a comprehensive budget plan. Income: ${monthlyIncome}. Fixed expenses: ${fixedExpenses}. Goal: ${financialGoal}. Respond in JSON: { budget_summary: string, 50_30_20_breakdown: string[], expense_categories: string[], savings_plan: string[], debt_payoff: string[], monthly_actions: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/debtpayoff', requireAuth, async (req: AuthRequest, res: any) => {
+  const { debtList, monthlyPayment, debtFreeGoal } = req.body;
+  const prompt = `You are a debt elimination expert. Design an optimal debt payoff strategy. Debts: ${debtList}. Payment: ${monthlyPayment}. Goal: ${debtFreeGoal}. Respond in JSON: { strategy_comparison: string, avalanche_plan: string[], snowball_plan: string[], recommended_approach: string, interest_savings: string, payoff_timeline: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/investplan', requireAuth, async (req: AuthRequest, res: any) => {
+  const { investmentGoal, riskTolerance, timeHorizon } = req.body;
+  const prompt = `You are a personal investment strategist. Create a personalized investment strategy. Goal: ${investmentGoal}. Risk: ${riskTolerance}. Horizon: ${timeHorizon}. Respond in JSON: { asset_allocation: string[], portfolio_construction: string[], account_types: string[], rebalancing_strategy: string[], tax_efficiency: string[], expected_returns: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/retirementplan', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentAge, retirementAge, currentSavings } = req.body;
+  const prompt = `You are a retirement planning expert. Build a comprehensive retirement plan. Age: ${currentAge}. Retirement: ${retirementAge}. Savings: ${currentSavings}. Respond in JSON: { retirement_summary: string, savings_rate_needed: string, account_strategy: string[], social_security_optimization: string[], income_in_retirement: string[], withdrawal_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/taxoptimize', requireAuth, async (req: AuthRequest, res: any) => {
+  const { filingStatus, annualIncome, currentDeductions } = req.body;
+  const prompt = `You are a personal tax optimization expert. Identify tax saving opportunities. Status: ${filingStatus}. Income: ${annualIncome}. Deductions: ${currentDeductions}. Respond in JSON: { tax_strategy: string, deduction_opportunities: string[], credit_eligibility: string[], account_contributions: string[], timing_strategies: string[], estimated_tax_savings: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/emergencyfund', requireAuth, async (req: AuthRequest, res: any) => {
+  const { monthlyExpenses, jobStability, currentSaved } = req.body;
+  const prompt = `You are a financial security expert. Build an emergency fund strategy. Expenses: ${monthlyExpenses}. Stability: ${jobStability}. Saved: ${currentSaved}. Respond in JSON: { target_amount: string, savings_timeline: string[], funding_sources: string[], account_recommendations: string[], milestone_targets: string[], maintenance_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/creditrepair', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentScore, creditIssues, creditGoal } = req.body;
+  const prompt = `You are a credit repair and optimization expert. Design a credit improvement plan. Score: ${currentScore}. Issues: ${creditIssues}. Goal: ${creditGoal}. Respond in JSON: { credit_assessment: string, quick_wins: string[], dispute_strategy: string[], utilization_plan: string[], payment_optimization: string[], timeline_to_goal: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/insurancereview', requireAuth, async (req: AuthRequest, res: any) => {
+  const { lifeStage, currentCoverage, coverageGaps } = req.body;
+  const prompt = `You are a personal insurance planning expert. Review and optimize insurance coverage. Stage: ${lifeStage}. Coverage: ${currentCoverage}. Gaps: ${coverageGaps}. Respond in JSON: { coverage_assessment: string, recommended_policies: string[], coverage_gaps: string[], cost_optimization: string[], priority_actions: string[], coverage_amounts: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/estateplanning', requireAuth, async (req: AuthRequest, res: any) => {
+  const { familySituation, assetValue, estateGoals } = req.body;
+  const prompt = `You are an estate planning expert. Create an estate planning roadmap. Family: ${familySituation}. Assets: ${assetValue}. Goals: ${estateGoals}. Respond in JSON: { estate_plan_overview: string, documents_needed: string[], beneficiary_strategy: string[], trust_considerations: string[], tax_minimization: string[], professional_team: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/sideincome', requireAuth, async (req: AuthRequest, res: any) => {
+  const { primarySkills, availableHours, incomeGoal } = req.body;
+  const prompt = `You are a personal income growth expert. Design a side income strategy. Skills: ${primarySkills}. Time: ${availableHours}. Goal: ${incomeGoal}. Respond in JSON: { income_opportunities: string[], quick_start: string[], skill_monetization: string[], platform_recommendations: string[], scaling_path: string[], 90_day_action_plan: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
