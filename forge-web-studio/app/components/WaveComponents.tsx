@@ -92692,3 +92692,113 @@ export function ForgeTab_sideincomeplan3080() {
   const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/personalfinance/sideincome', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"primarySkills": primarySkills, "availableHours": availableHours, "incomeGoal": incomeGoal})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
   return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>💰 Side Income Strategy</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Primary Skills/Expertise" value={primarySkills} onChange={e=>setPrimarySkills(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Available Hours Per Week" value={availableHours} onChange={e=>setAvailableHours(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Monthly Income Goal" value={incomeGoal} onChange={e=>setIncomeGoal(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Side Income Strategy'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
 }
+
+export function ForgeTab_aiprojectroadmap3081() {
+  const [businessProblem, setBusinessProblem] = React.useState('');
+  const [dataAvailability, setDataAvailability] = React.useState('');
+  const [teamCapability, setTeamCapability] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/aiml/airoadmap', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"businessProblem": businessProblem, "dataAvailability": dataAvailability, "teamCapability": teamCapability})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🤖 AI Project Roadmap</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Business Problem to Solve" value={businessProblem} onChange={e=>setBusinessProblem(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Data Availability & Quality" value={dataAvailability} onChange={e=>setDataAvailability(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Team AI Capability Level" value={teamCapability} onChange={e=>setTeamCapability(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run AI Project Roadmap'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_mlmodelselect3082() {
+  const [taskType, setTaskType] = React.useState('');
+  const [datasetSize, setDatasetSize] = React.useState('');
+  const [inferenceReq, setInferenceReq] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/aiml/mlmodelselect', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"taskType": taskType, "datasetSize": datasetSize, "inferenceReq": inferenceReq})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🧬 ML Model Selection</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Task Type (classification/regression/generation)" value={taskType} onChange={e=>setTaskType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Dataset Size & Characteristics" value={datasetSize} onChange={e=>setDatasetSize(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Inference Requirements (speed/accuracy)" value={inferenceReq} onChange={e=>setInferenceReq(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run ML Model Selection'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_promptengineering3083() {
+  const [useCase, setUseCase] = React.useState('');
+  const [modelFamily, setModelFamily] = React.useState('');
+  const [outputFormat, setOutputFormat] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/aiml/prompteng', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"useCase": useCase, "modelFamily": modelFamily, "outputFormat": outputFormat})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>✏️ Prompt Engineering</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Use Case / Task" value={useCase} onChange={e=>setUseCase(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Model Family (GPT/Claude/Gemini/etc)" value={modelFamily} onChange={e=>setModelFamily(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Desired Output Format" value={outputFormat} onChange={e=>setOutputFormat(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Prompt Engineering'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_ragarchitecture3084() {
+  const [documentCorpus, setDocumentCorpus] = React.useState('');
+  const [queryTypes, setQueryTypes] = React.useState('');
+  const [latencyReq, setLatencyReq] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/aiml/ragarch', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"documentCorpus": documentCorpus, "queryTypes": queryTypes, "latencyReq": latencyReq})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>📚 RAG Architecture Design</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Document Corpus Description" value={documentCorpus} onChange={e=>setDocumentCorpus(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Types of Queries to Handle" value={queryTypes} onChange={e=>setQueryTypes(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Latency Requirements" value={latencyReq} onChange={e=>setLatencyReq(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run RAG Architecture Design'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_aiethicsreview3085() {
+  const [aiSystem, setAiSystem] = React.useState('');
+  const [affectedGroups, setAffectedGroups] = React.useState('');
+  const [riskLevel, setRiskLevel] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/aiml/aiethics', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"aiSystem": aiSystem, "affectedGroups": affectedGroups, "riskLevel": riskLevel})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>⚖️ AI Ethics Review</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="AI System Description" value={aiSystem} onChange={e=>setAiSystem(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Affected User Groups" value={affectedGroups} onChange={e=>setAffectedGroups(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Risk Level Assessment" value={riskLevel} onChange={e=>setRiskLevel(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run AI Ethics Review'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_finetuningplan3086() {
+  const [baseModel, setBaseModel] = React.useState('');
+  const [domainData, setDomainData] = React.useState('');
+  const [performanceTarget, setPerformanceTarget] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/aiml/finetuning', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"baseModel": baseModel, "domainData": domainData, "performanceTarget": performanceTarget})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🔧 Fine-Tuning Strategy</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Base Model to Fine-Tune" value={baseModel} onChange={e=>setBaseModel(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Domain Data Description" value={domainData} onChange={e=>setDomainData(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Performance Target" value={performanceTarget} onChange={e=>setPerformanceTarget(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Fine-Tuning Strategy'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_aiprocurement3087() {
+  const [aiRequirements, setAiRequirements] = React.useState('');
+  const [budget, setBudget] = React.useState('');
+  const [integrationNeeds, setIntegrationNeeds] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/aiml/aiprocure', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"aiRequirements": aiRequirements, "budget": budget, "integrationNeeds": integrationNeeds})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🛒 AI Tool Procurement</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="AI Requirements / Use Cases" value={aiRequirements} onChange={e=>setAiRequirements(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Annual Budget" value={budget} onChange={e=>setBudget(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Integration Requirements" value={integrationNeeds} onChange={e=>setIntegrationNeeds(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run AI Tool Procurement'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_mlopsdesign3088() {
+  const [mlFramework, setMlFramework] = React.useState('');
+  const [deploymentTarget, setDeploymentTarget] = React.useState('');
+  const [modelCount, setModelCount] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/aiml/mlopsdesign', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"mlFramework": mlFramework, "deploymentTarget": deploymentTarget, "modelCount": modelCount})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🏗️ MLOps Pipeline Design</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="ML Framework (PyTorch/TF/SKlearn)" value={mlFramework} onChange={e=>setMlFramework(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Deployment Target" value={deploymentTarget} onChange={e=>setDeploymentTarget(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Number of Models to Manage" value={modelCount} onChange={e=>setModelCount(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run MLOps Pipeline Design'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_aiagentdesign3089() {
+  const [agentGoal, setAgentGoal] = React.useState('');
+  const [availableTools, setAvailableTools] = React.useState('');
+  const [autonomyLevel, setAutonomyLevel] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/aiml/agentdesign', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"agentGoal": agentGoal, "availableTools": availableTools, "autonomyLevel": autonomyLevel})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🤖 AI Agent Architecture</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Agent Goal / Task" value={agentGoal} onChange={e=>setAgentGoal(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Available Tools / APIs" value={availableTools} onChange={e=>setAvailableTools(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Required Autonomy Level" value={autonomyLevel} onChange={e=>setAutonomyLevel(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run AI Agent Architecture'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_datapipeline3090() {
+  const [dataSource, setDataSource] = React.useState('');
+  const [targetModel, setTargetModel] = React.useState('');
+  const [dataVolume, setDataVolume] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/aiml/datapipeline', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"dataSource": dataSource, "targetModel": targetModel, "dataVolume": dataVolume})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🔀 AI Data Pipeline</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Data Source Types" value={dataSource} onChange={e=>setDataSource(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Target Model / Task" value={targetModel} onChange={e=>setTargetModel(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Daily Data Volume" value={dataVolume} onChange={e=>setDataVolume(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run AI Data Pipeline'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}

@@ -174,6 +174,16 @@ ForgeTab_creditrepair3077,
 ForgeTab_insurancereview3078,
 ForgeTab_estateplanning3079,
 ForgeTab_sideincomeplan3080,
+ForgeTab_aiprojectroadmap3081,
+ForgeTab_mlmodelselect3082,
+ForgeTab_promptengineering3083,
+ForgeTab_ragarchitecture3084,
+ForgeTab_aiethicsreview3085,
+ForgeTab_finetuningplan3086,
+ForgeTab_aiprocurement3087,
+ForgeTab_mlopsdesign3088,
+ForgeTab_aiagentdesign3089,
+ForgeTab_datapipeline3090,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57241,6 +57251,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'insurancereview3078' && <ForgeTab_insurancereview3078 />}
               {(mainTab as string) === 'estateplanning3079' && <ForgeTab_estateplanning3079 />}
               {(mainTab as string) === 'sideincomeplan3080' && <ForgeTab_sideincomeplan3080 />}
+              {(mainTab as string) === 'aiprojectroadmap3081' && <ForgeTab_aiprojectroadmap3081 />}
+              {(mainTab as string) === 'mlmodelselect3082' && <ForgeTab_mlmodelselect3082 />}
+              {(mainTab as string) === 'promptengineering3083' && <ForgeTab_promptengineering3083 />}
+              {(mainTab as string) === 'ragarchitecture3084' && <ForgeTab_ragarchitecture3084 />}
+              {(mainTab as string) === 'aiethicsreview3085' && <ForgeTab_aiethicsreview3085 />}
+              {(mainTab as string) === 'finetuningplan3086' && <ForgeTab_finetuningplan3086 />}
+              {(mainTab as string) === 'aiprocurement3087' && <ForgeTab_aiprocurement3087 />}
+              {(mainTab as string) === 'mlopsdesign3088' && <ForgeTab_mlopsdesign3088 />}
+              {(mainTab as string) === 'aiagentdesign3089' && <ForgeTab_aiagentdesign3089 />}
+              {(mainTab as string) === 'datapipeline3090' && <ForgeTab_datapipeline3090 />}
       </div>
     </div>
   );
