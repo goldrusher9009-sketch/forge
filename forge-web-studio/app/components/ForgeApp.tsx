@@ -64,6 +64,16 @@ ForgeTab_socops2967,
 ForgeTab_incidentresponse2968,
 ForgeTab_grc2969,
 ForgeTab_pentest2970,
+ForgeTab_devopsstrategy2971,
+ForgeTab_cicdpipeline2972,
+ForgeTab_infraascode2973,
+ForgeTab_containerorchestration2974,
+ForgeTab_sitereleng2975,
+ForgeTab_observability2976,
+ForgeTab_gitflowops2977,
+ForgeTab_devsecops2978,
+ForgeTab_cloudcostops2979,
+ForgeTab_platformeng2980,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57021,6 +57031,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'incidentresponse2968' && <ForgeTab_incidentresponse2968 />}
               {(mainTab as string) === 'grc2969' && <ForgeTab_grc2969 />}
               {(mainTab as string) === 'pentest2970' && <ForgeTab_pentest2970 />}
+              {(mainTab as string) === 'devopsstrategy2971' && <ForgeTab_devopsstrategy2971 />}
+              {(mainTab as string) === 'cicdpipeline2972' && <ForgeTab_cicdpipeline2972 />}
+              {(mainTab as string) === 'infraascode2973' && <ForgeTab_infraascode2973 />}
+              {(mainTab as string) === 'containerorchestration2974' && <ForgeTab_containerorchestration2974 />}
+              {(mainTab as string) === 'sitereleng2975' && <ForgeTab_sitereleng2975 />}
+              {(mainTab as string) === 'observability2976' && <ForgeTab_observability2976 />}
+              {(mainTab as string) === 'gitflowops2977' && <ForgeTab_gitflowops2977 />}
+              {(mainTab as string) === 'devsecops2978' && <ForgeTab_devsecops2978 />}
+              {(mainTab as string) === 'cloudcostops2979' && <ForgeTab_cloudcostops2979 />}
+              {(mainTab as string) === 'platformeng2980' && <ForgeTab_platformeng2980 />}
       </div>
     </div>
   );
