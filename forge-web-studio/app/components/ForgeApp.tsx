@@ -224,6 +224,16 @@ ForgeTab_diversityinclusion3127,
 ForgeTab_hrpolicybuilder3128,
 ForgeTab_offboardingplan3129,
 ForgeTab_hranalytics3130,
+ForgeTab_csonboarding3131,
+ForgeTab_churnprevention3132,
+ForgeTab_csplaybook3133,
+ForgeTab_npsimprovement3134,
+ForgeTab_supporttiering3135,
+ForgeTab_expansionrevenue3136,
+ForgeTab_voiceofcustomer3137,
+ForgeTab_customerhealth3138,
+ForgeTab_supportkb3139,
+ForgeTab_renewalprocess3140,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57341,6 +57351,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'hrpolicybuilder3128' && <ForgeTab_hrpolicybuilder3128 />}
               {(mainTab as string) === 'offboardingplan3129' && <ForgeTab_offboardingplan3129 />}
               {(mainTab as string) === 'hranalytics3130' && <ForgeTab_hranalytics3130 />}
+              {(mainTab as string) === 'csonboarding3131' && <ForgeTab_csonboarding3131 />}
+              {(mainTab as string) === 'churnprevention3132' && <ForgeTab_churnprevention3132 />}
+              {(mainTab as string) === 'csplaybook3133' && <ForgeTab_csplaybook3133 />}
+              {(mainTab as string) === 'npsimprovement3134' && <ForgeTab_npsimprovement3134 />}
+              {(mainTab as string) === 'supporttiering3135' && <ForgeTab_supporttiering3135 />}
+              {(mainTab as string) === 'expansionrevenue3136' && <ForgeTab_expansionrevenue3136 />}
+              {(mainTab as string) === 'voiceofcustomer3137' && <ForgeTab_voiceofcustomer3137 />}
+              {(mainTab as string) === 'customerhealth3138' && <ForgeTab_customerhealth3138 />}
+              {(mainTab as string) === 'supportkb3139' && <ForgeTab_supportkb3139 />}
+              {(mainTab as string) === 'renewalprocess3140' && <ForgeTab_renewalprocess3140 />}
       </div>
     </div>
   );

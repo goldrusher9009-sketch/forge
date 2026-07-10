@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v802.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v803.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -212118,5 +212118,65 @@ app.post('/api/hr/offboarding', requireAuth, async (req: AuthRequest, res: any) 
 app.post('/api/hr/hranalytics', requireAuth, async (req: AuthRequest, res: any) => {
   const { hrMetrics, workforce_size, analyticsGoal } = req.body;
   const prompt = `You are an HR analytics expert. Design an HR analytics program. Metrics: ${hrMetrics}. Workforce: ${workforce_size}. Goal: ${analyticsGoal}. Respond in JSON: { analytics_framework: string, key_metrics: string[], data_sources: string[], predictive_models: string[], dashboard_design: string[], action_triggers: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/csonboard', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, customerSegment, timeToValue } = req.body;
+  const prompt = `You are a customer onboarding expert. Design a world-class onboarding experience. Product: ${productType}. Segment: ${customerSegment}. TTV: ${timeToValue}. Respond in JSON: { onboarding_journey: string, milestone_map: string[], touchpoint_sequence: string[], activation_metrics: string[], friction_removal: string[], success_criteria: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/churnprev', requireAuth, async (req: AuthRequest, res: any) => {
+  const { churnRate, customerSegments, churnReasons } = req.body;
+  const prompt = `You are a churn prevention expert. Design a proactive churn reduction program. Churn: ${churnRate}. Segments: ${customerSegments}. Reasons: ${churnReasons}. Respond in JSON: { churn_prediction_signals: string[], early_warning_system: string[], intervention_playbooks: string[], save_strategies: string[], winback_campaigns: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/csplaybook', requireAuth, async (req: AuthRequest, res: any) => {
+  const { customerLifecycle, csTeamSize, productComplexity } = req.body;
+  const prompt = `You are a customer success expert. Build a CS team playbook. Lifecycle: ${customerLifecycle}. Team: ${csTeamSize}. Complexity: ${productComplexity}. Respond in JSON: { playbook_structure: string, qbr_template: string[], health_score_model: string[], escalation_process: string[], expansion_triggers: string[], kpi_dashboard: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/npsimprove', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentNPS, promoterDetractorRatio, keyFeedbackThemes } = req.body;
+  const prompt = `You are an NPS improvement expert. Design a strategy to improve customer loyalty. NPS: ${currentNPS}. Ratio: ${promoterDetractorRatio}. Themes: ${keyFeedbackThemes}. Respond in JSON: { nps_diagnosis: string, detractor_rescue: string[], passive_conversion: string[], promoter_amplification: string[], systemic_fixes: string[], 90_day_action_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/supporttier', requireAuth, async (req: AuthRequest, res: any) => {
+  const { customerBase, supportVolume, slaTargets } = req.body;
+  const prompt = `You are a support operations expert. Design a tiered support model. Customers: ${customerBase}. Volume: ${supportVolume}. SLAs: ${slaTargets}. Respond in JSON: { support_tiers: string[], tier_criteria: string[], channel_routing: string[], escalation_matrix: string[], staffing_model: string[], technology_stack: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/expansion', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentARR, expansionOpportunities, expansionGoal } = req.body;
+  const prompt = `You are a CS expansion revenue expert. Design a systematic expansion program. ARR: ${currentARR}. Opportunities: ${expansionOpportunities}. Goal: ${expansionGoal}. Respond in JSON: { expansion_framework: string, trigger_events: string[], playbook_by_motion: string[], cs_ae_collaboration: string[], compensation_design: string[], tracking_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/voc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { customerSize, feedbackChannels, vocGoals } = req.body;
+  const prompt = `You are a Voice of Customer expert. Design a comprehensive VoC program. Customers: ${customerSize}. Channels: ${feedbackChannels}. Goals: ${vocGoals}. Respond in JSON: { voc_framework: string, listening_posts: string[], synthesis_process: string[], insight_distribution: string[], closed_loop_process: string[], roi_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/healthscore', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productUsageData, businessOutcomes, riskIndicators } = req.body;
+  const prompt = `You are a customer health scoring expert. Design a predictive health score model. Usage: ${productUsageData}. Outcomes: ${businessOutcomes}. Risks: ${riskIndicators}. Respond in JSON: { health_score_model: string, metric_weights: string[], scoring_thresholds: string[], signal_interpretation: string[], action_triggers: string[], model_refinement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/supportkb', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productFeatures, topTicketCategories, kbAudience } = req.body;
+  const prompt = `You are a knowledge management expert. Design a self-service knowledge base. Features: ${productFeatures}. Tickets: ${topTicketCategories}. Audience: ${kbAudience}. Respond in JSON: { kb_architecture: string, content_categories: string[], article_templates: string[], search_optimization: string[], deflection_strategy: string[], maintenance_process: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/renewal', requireAuth, async (req: AuthRequest, res: any) => {
+  const { contractLength, renewalRate, renewalTeamSize } = req.body;
+  const prompt = `You are a renewal management expert. Design a proactive renewal process. Contracts: ${contractLength}. Rate: ${renewalRate}. Team: ${renewalTeamSize}. Respond in JSON: { renewal_timeline: string[], early_warning_triggers: string[], negotiation_playbook: string[], multithreading_strategy: string[], at_risk_intervention: string[], forecasting_model: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
