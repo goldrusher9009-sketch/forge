@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v889.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v890.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -217338,5 +217338,65 @@ app.post('/api/hrfow/pplanalytics', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/hrfow/chro', requireAuth, async (req: AuthRequest, res: any) => {
   const { orgType, hrCurrentState, chroGoals } = req.body;
   const prompt = `You are a CHRO strategy expert. Build an HR function strategy. Org: ${orgType}. HR state: ${hrCurrentState}. Goals: ${chroGoals}. Respond in JSON: { hr_strategy: string, operating_model: string[], digital_transformation: string[], talent_agenda: string[], culture_capability: string[], measurement_roi: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investbank/privateequity', requireAuth, async (req: AuthRequest, res: any) => {
+  const { peType, investmentFocus, peGoals } = req.body;
+  const prompt = `You are a private equity strategy expert. Build a PE strategy. Type: ${peType}. Focus: ${investmentFocus}. Goals: ${peGoals}. Respond in JSON: { pe_strategy: string, deal_sourcing: string[], due_diligence: string[], value_creation: string[], portfolio_management: string[], exit_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investbank/ib', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ibType, sectorFocus, ibGoals } = req.body;
+  const prompt = `You are an investment banking strategy expert. Build an IB strategy. Type: ${ibType}. Sector: ${sectorFocus}. Goals: ${ibGoals}. Respond in JSON: { ib_strategy: string, product_coverage: string[], client_development: string[], deal_execution: string[], talent_model: string[], competitive_positioning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investbank/vc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { vcType, investmentThesis, vcGoals } = req.body;
+  const prompt = `You are a venture capital strategy expert. Build a VC strategy. Type: ${vcType}. Thesis: ${investmentThesis}. Goals: ${vcGoals}. Respond in JSON: { vc_strategy: string, deal_sourcing: string[], portfolio_support: string[], follow_on_reserves: string[], lp_relations: string[], fund_differentiation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investbank/mna', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mnaOrgType, targetProfile, mnaGoals } = req.body;
+  const prompt = `You are an M&A strategy expert. Build an M&A strategy. Org: ${mnaOrgType}. Target: ${targetProfile}. Goals: ${mnaGoals}. Respond in JSON: { mna_strategy: string, deal_rationale: string[], valuation_approach: string[], due_diligence_plan: string[], integration_planning: string[], regulatory_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investbank/ipo', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyType, financialProfile, ipoGoals } = req.body;
+  const prompt = `You are an IPO strategy expert. Build an IPO strategy. Company: ${companyType}. Financials: ${financialProfile}. Goals: ${ipoGoals}. Respond in JSON: { ipo_strategy: string, readiness_assessment: string[], equity_story: string[], investor_targeting: string[], roadshow_preparation: string[], post_ipo_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investbank/debt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { borrowerType, capitalStructure, debtGoals } = req.body;
+  const prompt = `You are a debt financing strategy expert. Build a debt strategy. Borrower: ${borrowerType}. Structure: ${capitalStructure}. Goals: ${debtGoals}. Respond in JSON: { debt_strategy: string, instrument_selection: string[], lender_markets: string[], covenant_negotiation: string[], refinancing_approach: string[], credit_rating_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investbank/portco', requireAuth, async (req: AuthRequest, res: any) => {
+  const { portcoType, currentPerformance, portcoGoals } = req.body;
+  const prompt = `You are a PE portfolio company expert. Build a value creation strategy. PortCo: ${portcoType}. Performance: ${currentPerformance}. Goals: ${portcoGoals}. Respond in JSON: { value_creation_strategy: string, revenue_acceleration: string[], margin_improvement: string[], operational_excellence: string[], bolt_on_acquisitions: string[], exit_preparation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investbank/fundmgr', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fundType, currentAUM, fundGoals } = req.body;
+  const prompt = `You are a fund manager strategy expert. Build a fund management strategy. Fund: ${fundType}. AUM: ${currentAUM}. Goals: ${fundGoals}. Respond in JSON: { fund_strategy: string, investment_process: string[], risk_management: string[], investor_relations: string[], operations_technology: string[], talent_culture: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investbank/lp', requireAuth, async (req: AuthRequest, res: any) => {
+  const { lpType, currentPortfolio, lpGoals } = req.body;
+  const prompt = `You are an LP investment strategy expert. Build an LP investment strategy. LP: ${lpType}. Portfolio: ${currentPortfolio}. Goals: ${lpGoals}. Respond in JSON: { lp_strategy: string, asset_allocation: string[], manager_selection: string[], co_investment_program: string[], esg_integration: string[], liquidity_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investbank/restructure', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companySize, distressType, restructGoals } = req.body;
+  const prompt = `You are a corporate restructuring expert. Build a restructuring strategy. Company: ${companySize}. Distress: ${distressType}. Goals: ${restructGoals}. Respond in JSON: { restructuring_strategy: string, liquidity_management: string[], operational_turnaround: string[], debt_restructuring: string[], stakeholder_management: string[], stabilization_plan: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
