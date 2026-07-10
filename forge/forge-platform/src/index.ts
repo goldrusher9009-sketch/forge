@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v808.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v809.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -212478,5 +212478,65 @@ app.post('/api/devops/dr', requireAuth, async (req: AuthRequest, res: any) => {
 app.post('/api/devops/platform', requireAuth, async (req: AuthRequest, res: any) => {
   const { orgSize, developerNeeds, platformGoals } = req.body;
   const prompt = `You are a platform engineering expert. Design an internal developer platform. Org: ${orgSize}. Needs: ${developerNeeds}. Goals: ${platformGoals}. Respond in JSON: { platform_vision: string, golden_path: string[], self_service_capabilities: string[], developer_experience: string[], toolchain_standardization: string[], adoption_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/grant', requireAuth, async (req: AuthRequest, res: any) => {
+  const { organizationMission, programDescription, fundingAmount } = req.body;
+  const prompt = `You are a grant writing expert. Write a compelling grant proposal. Mission: ${organizationMission}. Program: ${programDescription}. Funding: ${fundingAmount}. Respond in JSON: { executive_summary: string, needs_statement: string, program_goals: string[], evaluation_plan: string[], organizational_capacity: string, budget_narrative: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/donor', requireAuth, async (req: AuthRequest, res: any) => {
+  const { donorBase, fundraisingGoal, organizationCause } = req.body;
+  const prompt = `You are a nonprofit fundraising expert. Design a donor engagement strategy. Donors: ${donorBase}. Goal: ${fundraisingGoal}. Cause: ${organizationCause}. Respond in JSON: { donor_segments: string[], cultivation_journey: string[], stewardship_program: string[], major_gift_strategy: string[], annual_fund_approach: string[], retention_tactics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/board', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgStage, currentBoardGaps, boardGoals } = req.body;
+  const prompt = `You are a nonprofit governance expert. Develop a board strengthening plan. Stage: ${orgStage}. Gaps: ${currentBoardGaps}. Goals: ${boardGoals}. Respond in JSON: { board_assessment: string, recruitment_strategy: string[], onboarding_process: string[], governance_practices: string[], committee_structure: string[], board_engagement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/volunteer', requireAuth, async (req: AuthRequest, res: any) => {
+  const { volunteerCount, programNeeds, volunteerGoals } = req.body;
+  const prompt = `You are a volunteer management expert. Design a volunteer program. Count: ${volunteerCount}. Needs: ${programNeeds}. Goals: ${volunteerGoals}. Respond in JSON: { recruitment_strategy: string[], onboarding_program: string[], role_descriptions: string[], recognition_program: string[], retention_tactics: string[], management_system: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/nonprofitmkt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { missionStatement, targetAudiences, marketingBudget } = req.body;
+  const prompt = `You are a nonprofit marketing expert. Build a mission-driven marketing plan. Mission: ${missionStatement}. Audiences: ${targetAudiences}. Budget: ${marketingBudget}. Respond in JSON: { brand_narrative: string, channel_strategy: string[], content_calendar: string[], storytelling_approach: string[], digital_strategy: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/progevaluation', requireAuth, async (req: AuthRequest, res: any) => {
+  const { programDescription, targetBeneficiaries, programGoals } = req.body;
+  const prompt = `You are a program evaluation expert. Design an evaluation framework. Program: ${programDescription}. Beneficiaries: ${targetBeneficiaries}. Goals: ${programGoals}. Respond in JSON: { evaluation_design: string, logic_model: string[], data_collection: string[], outcome_indicators: string[], analysis_approach: string[], learning_dissemination: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/nonprofitfin', requireAuth, async (req: AuthRequest, res: any) => {
+  const { annualBudget, revenueStreams, financialChallenges } = req.body;
+  const prompt = `You are a nonprofit financial expert. Strengthen nonprofit financial health. Budget: ${annualBudget}. Revenue: ${revenueStreams}. Challenges: ${financialChallenges}. Respond in JSON: { financial_assessment: string, revenue_diversification: string[], reserve_fund_strategy: string[], cost_optimization: string[], financial_policies: string[], reporting_practices: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/advocacy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { policyIssue, targetDecisionMakers, campaignTimeline } = req.body;
+  const prompt = `You are an advocacy campaign expert. Design a strategic advocacy campaign. Issue: ${policyIssue}. Targets: ${targetDecisionMakers}. Timeline: ${campaignTimeline}. Respond in JSON: { campaign_theory: string, stakeholder_map: string[], message_framework: string[], tactics_toolkit: string[], coalition_building: string[], evaluation_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/outreach', requireAuth, async (req: AuthRequest, res: any) => {
+  const { communityServed, outreachGoals, availableResources } = req.body;
+  const prompt = `You are a community outreach expert. Design a community engagement plan. Community: ${communityServed}. Goals: ${outreachGoals}. Resources: ${availableResources}. Respond in JSON: { community_assessment: string, engagement_strategy: string[], partnership_development: string[], culturally_responsive_approaches: string[], communication_channels: string[], sustainability_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/socialenterprise', requireAuth, async (req: AuthRequest, res: any) => {
+  const { socialMission, enterpriseModel, targetMarket } = req.body;
+  const prompt = `You are a social enterprise expert. Design a sustainable social enterprise. Mission: ${socialMission}. Model: ${enterpriseModel}. Market: ${targetMarket}. Respond in JSON: { enterprise_design: string, theory_of_change: string[], revenue_model: string[], market_strategy: string[], impact_measurement: string[], scaling_pathway: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

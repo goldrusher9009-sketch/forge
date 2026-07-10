@@ -284,6 +284,16 @@ ForgeTab_clouddcost3187,
 ForgeTab_gitbranching3188,
 ForgeTab_disasterrecovery3189,
 ForgeTab_platformengineering3190,
+ForgeTab_grantwriting3191,
+ForgeTab_donorengagement3192,
+ForgeTab_nonprofitboard3193,
+ForgeTab_volunteermgmt3194,
+ForgeTab_nonprofitmarketing3195,
+ForgeTab_programevaluation3196,
+ForgeTab_nonprofitfinance3197,
+ForgeTab_advocacycampaign3198,
+ForgeTab_communityoutreach3199,
+ForgeTab_socialenterprise3200,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57461,6 +57471,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'gitbranching3188' && <ForgeTab_gitbranching3188 />}
               {(mainTab as string) === 'disasterrecovery3189' && <ForgeTab_disasterrecovery3189 />}
               {(mainTab as string) === 'platformengineering3190' && <ForgeTab_platformengineering3190 />}
+              {(mainTab as string) === 'grantwriting3191' && <ForgeTab_grantwriting3191 />}
+              {(mainTab as string) === 'donorengagement3192' && <ForgeTab_donorengagement3192 />}
+              {(mainTab as string) === 'nonprofitboard3193' && <ForgeTab_nonprofitboard3193 />}
+              {(mainTab as string) === 'volunteermgmt3194' && <ForgeTab_volunteermgmt3194 />}
+              {(mainTab as string) === 'nonprofitmarketing3195' && <ForgeTab_nonprofitmarketing3195 />}
+              {(mainTab as string) === 'programevaluation3196' && <ForgeTab_programevaluation3196 />}
+              {(mainTab as string) === 'nonprofitfinance3197' && <ForgeTab_nonprofitfinance3197 />}
+              {(mainTab as string) === 'advocacycampaign3198' && <ForgeTab_advocacycampaign3198 />}
+              {(mainTab as string) === 'communityoutreach3199' && <ForgeTab_communityoutreach3199 />}
+              {(mainTab as string) === 'socialenterprise3200' && <ForgeTab_socialenterprise3200 />}
       </div>
     </div>
   );
