@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v872.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v873.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -216318,5 +216318,65 @@ app.post('/api/realestate/refinance', requireAuth, async (req: AuthRequest, res:
 app.post('/api/realestate/retech', requireAuth, async (req: AuthRequest, res: any) => {
   const { reOrgType, currentTechStack, retechGoals } = req.body;
   const prompt = `You are a real estate technology expert. Build a RE tech strategy. Org: ${reOrgType}. Tech: ${currentTechStack}. Goals: ${retechGoals}. Respond in JSON: { retech_strategy: string, crm_proptech: string[], data_analytics: string[], automation_roadmap: string[], client_portal: string[], competitive_advantage: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/creator', requireAuth, async (req: AuthRequest, res: any) => {
+  const { creatorType, currentPlatforms, creatorGoals } = req.body;
+  const prompt = `You are a creator economy strategy expert. Build a creator strategy. Type: ${creatorType}. Platforms: ${currentPlatforms}. Goals: ${creatorGoals}. Respond in JSON: { creator_strategy: string, content_pillars: string[], monetization_streams: string[], platform_strategy: string[], brand_building: string[], community_growth: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/mediastrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mediaType, currentModel, mediaGoals } = req.body;
+  const prompt = `You are a media strategy expert. Build a media company strategy. Type: ${mediaType}. Model: ${currentModel}. Goals: ${mediaGoals}. Respond in JSON: { media_strategy: string, content_strategy: string[], distribution_channels: string[], monetization_model: string[], digital_transformation: string[], audience_development: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/streaming', requireAuth, async (req: AuthRequest, res: any) => {
+  const { streamingType, currentPosition, streamingGoals } = req.body;
+  const prompt = `You are a streaming platform expert. Build a streaming strategy. Type: ${streamingType}. Position: ${currentPosition}. Goals: ${streamingGoals}. Respond in JSON: { streaming_strategy: string, content_investment: string[], discovery_algorithm: string[], pricing_tiers: string[], churn_reduction: string[], international_expansion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/podcast', requireAuth, async (req: AuthRequest, res: any) => {
+  const { podcastType, currentMetrics, podcastGoals } = req.body;
+  const prompt = `You are a podcast strategy expert. Build a podcast strategy. Type: ${podcastType}. Metrics: ${currentMetrics}. Goals: ${podcastGoals}. Respond in JSON: { podcast_strategy: string, content_format: string[], growth_tactics: string[], monetization_model: string[], distribution_platforms: string[], audience_retention: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/gaming', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gamingType, targetAudience, gamingGoals } = req.body;
+  const prompt = `You are a gaming strategy expert. Build a gaming strategy. Type: ${gamingType}. Audience: ${targetAudience}. Goals: ${gamingGoals}. Respond in JSON: { gaming_strategy: string, game_design_pillars: string[], monetization_model: string[], community_building: string[], esports_integration: string[], platform_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/influencer', requireAuth, async (req: AuthRequest, res: any) => {
+  const { brandType, targetAudience, influencerGoals } = req.body;
+  const prompt = `You are an influencer marketing expert. Build an influencer strategy. Brand: ${brandType}. Audience: ${targetAudience}. Goals: ${influencerGoals}. Respond in JSON: { influencer_strategy: string, tier_mix: string[], platform_focus: string[], creator_selection: string[], campaign_structure: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/iplicense', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ipType, currentAssets, ipGoals } = req.body;
+  const prompt = `You are an entertainment IP and licensing expert. Build an IP strategy. Type: ${ipType}. Assets: ${currentAssets}. Goals: ${ipGoals}. Respond in JSON: { ip_strategy: string, franchise_development: string[], licensing_model: string[], merchandise_strategy: string[], global_distribution: string[], new_media_adaptation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/music', requireAuth, async (req: AuthRequest, res: any) => {
+  const { musicType, currentSituation, musicGoals } = req.body;
+  const prompt = `You are a music industry strategy expert. Build a music strategy. Type: ${musicType}. Situation: ${currentSituation}. Goals: ${musicGoals}. Respond in JSON: { music_strategy: string, release_strategy: string[], platform_optimization: string[], sync_licensing: string[], touring_merch: string[], brand_partnerships: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/newsmedia', requireAuth, async (req: AuthRequest, res: any) => {
+  const { newsOrgType, currentModel, newsGoals } = req.body;
+  const prompt = `You are a news media strategy expert. Build a news media strategy. Org: ${newsOrgType}. Model: ${currentModel}. Goals: ${newsGoals}. Respond in JSON: { news_strategy: string, subscription_model: string[], content_differentiation: string[], audience_engagement: string[], advertising_diversification: string[], technology_investment: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/media/adtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { adtechRole, currentCapabilities, adtechGoals } = req.body;
+  const prompt = `You are an ad tech strategy expert. Build an ad tech strategy. Role: ${adtechRole}. Capabilities: ${currentCapabilities}. Goals: ${adtechGoals}. Respond in JSON: { adtech_strategy: string, data_strategy: string[], programmatic_approach: string[], identity_solution: string[], measurement_framework: string[], cookieless_readiness: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
