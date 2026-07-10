@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v834.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v835.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -214038,5 +214038,65 @@ app.post('/api/healthtech/pophealth', requireAuth, async (req: AuthRequest, res:
 app.post('/api/healthtech/biopharma', requireAuth, async (req: AuthRequest, res: any) => {
   const { therapeuticArea, drugProfile, targetPatients } = req.body;
   const prompt = `You are a biopharma commercialization expert. Build a biopharma go-to-market strategy. Area: ${therapeuticArea}. Drug: ${drugProfile}. Patients: ${targetPatients}. Respond in JSON: { gtm_strategy: string, market_analysis: string[], physician_targeting: string[], patient_services: string[], access_strategy: string[], launch_readiness: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/supplychain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, currentSupplyChain, optimizationGoals } = req.body;
+  const prompt = `You are a supply chain optimization expert. Optimize this supply chain. Product: ${productType}. Chain: ${currentSupplyChain}. Goals: ${optimizationGoals}. Respond in JSON: { optimization_strategy: string, sourcing_improvements: string[], inventory_optimization: string[], logistics_enhancements: string[], risk_mitigation: string[], technology_recommendations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/warehouse', requireAuth, async (req: AuthRequest, res: any) => {
+  const { warehouseType, volumeProfile, operationalGoals } = req.body;
+  const prompt = `You are a warehouse operations expert. Optimize warehouse operations. Type: ${warehouseType}. Volume: ${volumeProfile}. Goals: ${operationalGoals}. Respond in JSON: { operations_strategy: string, layout_optimization: string[], picking_strategy: string[], technology_stack: string[], staffing_model: string[], kpi_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/lastmile', requireAuth, async (req: AuthRequest, res: any) => {
+  const { deliveryType, deliveryZone, deliveryGoals } = req.body;
+  const prompt = `You are a last mile delivery expert. Optimize last mile delivery. Type: ${deliveryType}. Zone: ${deliveryZone}. Goals: ${deliveryGoals}. Respond in JSON: { delivery_strategy: string, routing_optimization: string[], carrier_mix: string[], technology_stack: string[], customer_experience: string[], cost_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/inventory', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessType, skuCount, inventoryGoals } = req.body;
+  const prompt = `You are an inventory management expert. Build an inventory management system. Business: ${businessType}. SKUs: ${skuCount}. Goals: ${inventoryGoals}. Respond in JSON: { inventory_strategy: string, forecasting_model: string[], reorder_system: string[], safety_stock: string[], technology_tools: string[], performance_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/freight', requireAuth, async (req: AuthRequest, res: any) => {
+  const { shipmentProfile, originDestination, freightGoals } = req.body;
+  const prompt = `You are a freight optimization expert. Optimize freight operations. Profile: ${shipmentProfile}. Lanes: ${originDestination}. Goals: ${freightGoals}. Respond in JSON: { freight_strategy: string, mode_selection: string[], carrier_negotiation: string[], lane_optimization: string[], visibility_tools: string[], cost_reduction: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/scrisk', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industryType, currentRisks, riskTolerance } = req.body;
+  const prompt = `You are a supply chain risk management expert. Build a risk management program. Industry: ${industryType}. Risks: ${currentRisks}. Tolerance: ${riskTolerance}. Respond in JSON: { risk_framework: string, risk_identification: string[], mitigation_strategies: string[], supplier_diversification: string[], monitoring_system: string[], contingency_plans: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/procurement', requireAuth, async (req: AuthRequest, res: any) => {
+  const { spendCategory, supplierLandscape, procurementGoals } = req.body;
+  const prompt = `You are a procurement strategy expert. Build a procurement strategy. Category: ${spendCategory}. Suppliers: ${supplierLandscape}. Goals: ${procurementGoals}. Respond in JSON: { procurement_strategy: string, sourcing_approach: string[], supplier_selection: string[], contract_strategy: string[], savings_opportunities: string[], supplier_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/coldchain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, temperatureRequirements, distributionNetwork } = req.body;
+  const prompt = `You are a cold chain logistics expert. Build a cold chain strategy. Product: ${productType}. Temp: ${temperatureRequirements}. Network: ${distributionNetwork}. Respond in JSON: { cold_chain_strategy: string, packaging_requirements: string[], carrier_requirements: string[], monitoring_systems: string[], compliance_framework: string[], contingency_planning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/reverselogistics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { returnCategories, returnVolume, returnGoals } = req.body;
+  const prompt = `You are a reverse logistics expert. Build a reverse logistics strategy. Categories: ${returnCategories}. Volume: ${returnVolume}. Goals: ${returnGoals}. Respond in JSON: { returns_strategy: string, receiving_process: string[], disposition_matrix: string[], refurbishment_program: string[], customer_experience: string[], cost_recovery: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/suppliermgmt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { supplierBase, spendConcentration, supplierGoals } = req.body;
+  const prompt = `You are a supplier management expert. Build a supplier management program. Base: ${supplierBase}. Spend: ${spendConcentration}. Goals: ${supplierGoals}. Respond in JSON: { supplier_program: string, segmentation_model: string[], scorecard_framework: string[], development_program: string[], risk_monitoring: string[], relationship_management: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
