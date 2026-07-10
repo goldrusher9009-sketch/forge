@@ -904,6 +904,16 @@ ForgeTab_operationalexcel3817,
 ForgeTab_costoptimize3818,
 ForgeTab_ecosystemstrategy3819,
 ForgeTab_scenarioplanning3820,
+ForgeTab_supplychain3821,
+ForgeTab_logisticsopt3822,
+ForgeTab_procurement3823,
+ForgeTab_inventorymanage3824,
+ForgeTab_warehousing3825,
+ForgeTab_supplierrelation3826,
+ForgeTab_coldchain3827,
+ForgeTab_reverselogistics3828,
+ForgeTab_tradelogistics3829,
+ForgeTab_scmdigital3830,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58701,6 +58711,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'costoptimize3818' && <ForgeTab_costoptimize3818 />}
               {(mainTab as string) === 'ecosystemstrategy3819' && <ForgeTab_ecosystemstrategy3819 />}
               {(mainTab as string) === 'scenarioplanning3820' && <ForgeTab_scenarioplanning3820 />}
+              {(mainTab as string) === 'supplychain3821' && <ForgeTab_supplychain3821 />}
+              {(mainTab as string) === 'logisticsopt3822' && <ForgeTab_logisticsopt3822 />}
+              {(mainTab as string) === 'procurement3823' && <ForgeTab_procurement3823 />}
+              {(mainTab as string) === 'inventorymanage3824' && <ForgeTab_inventorymanage3824 />}
+              {(mainTab as string) === 'warehousing3825' && <ForgeTab_warehousing3825 />}
+              {(mainTab as string) === 'supplierrelation3826' && <ForgeTab_supplierrelation3826 />}
+              {(mainTab as string) === 'coldchain3827' && <ForgeTab_coldchain3827 />}
+              {(mainTab as string) === 'reverselogistics3828' && <ForgeTab_reverselogistics3828 />}
+              {(mainTab as string) === 'tradelogistics3829' && <ForgeTab_tradelogistics3829 />}
+              {(mainTab as string) === 'scmdigital3830' && <ForgeTab_scmdigital3830 />}
       </div>
     </div>
   );
