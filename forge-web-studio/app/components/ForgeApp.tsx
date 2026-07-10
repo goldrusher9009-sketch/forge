@@ -434,6 +434,16 @@ ForgeTab_coachingbiz3337,
 ForgeTab_marathon3338,
 ForgeTab_sportsteam3339,
 ForgeTab_yogastudio3340,
+ForgeTab_graphicdesign3341,
+ForgeTab_musicproducer3342,
+ForgeTab_screenwriting3343,
+ForgeTab_photographybiz3344,
+ForgeTab_animationconcept3345,
+ForgeTab_fashiondesign3346,
+ForgeTab_interiordesign3347,
+ForgeTab_writingcoach3348,
+ForgeTab_podcastcreator3349,
+ForgeTab_artgallery3350,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57761,6 +57771,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'marathon3338' && <ForgeTab_marathon3338 />}
               {(mainTab as string) === 'sportsteam3339' && <ForgeTab_sportsteam3339 />}
               {(mainTab as string) === 'yogastudio3340' && <ForgeTab_yogastudio3340 />}
+              {(mainTab as string) === 'graphicdesign3341' && <ForgeTab_graphicdesign3341 />}
+              {(mainTab as string) === 'musicproducer3342' && <ForgeTab_musicproducer3342 />}
+              {(mainTab as string) === 'screenwriting3343' && <ForgeTab_screenwriting3343 />}
+              {(mainTab as string) === 'photographybiz3344' && <ForgeTab_photographybiz3344 />}
+              {(mainTab as string) === 'animationconcept3345' && <ForgeTab_animationconcept3345 />}
+              {(mainTab as string) === 'fashiondesign3346' && <ForgeTab_fashiondesign3346 />}
+              {(mainTab as string) === 'interiordesign3347' && <ForgeTab_interiordesign3347 />}
+              {(mainTab as string) === 'writingcoach3348' && <ForgeTab_writingcoach3348 />}
+              {(mainTab as string) === 'podcastcreator3349' && <ForgeTab_podcastcreator3349 />}
+              {(mainTab as string) === 'artgallery3350' && <ForgeTab_artgallery3350 />}
       </div>
     </div>
   );
