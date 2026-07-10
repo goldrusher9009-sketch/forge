@@ -1444,6 +1444,16 @@ ForgeTab_openbanking4357,
 ForgeTab_cryptostrategy4358,
 ForgeTab_embeddedfinance4359,
 ForgeTab_financialdata4360,
+ForgeTab_cybersecstrategy4361,
+ForgeTab_zerotruststrategy4362,
+ForgeTab_securityoperations4363,
+ForgeTab_cloudsecurity4364,
+ForgeTab_appsecurity4365,
+ForgeTab_incidentresponse4366,
+ForgeTab_threatintelligence4367,
+ForgeTab_datasecurityprivacy4368,
+ForgeTab_iotsecurity4369,
+ForgeTab_identityaccessmgmt4370,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59781,6 +59791,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'cryptostrategy4358' && <ForgeTab_cryptostrategy4358 />}
               {(mainTab as string) === 'embeddedfinance4359' && <ForgeTab_embeddedfinance4359 />}
               {(mainTab as string) === 'financialdata4360' && <ForgeTab_financialdata4360 />}
+              {(mainTab as string) === 'cybersecstrategy4361' && <ForgeTab_cybersecstrategy4361 />}
+              {(mainTab as string) === 'zerotruststrategy4362' && <ForgeTab_zerotruststrategy4362 />}
+              {(mainTab as string) === 'securityoperations4363' && <ForgeTab_securityoperations4363 />}
+              {(mainTab as string) === 'cloudsecurity4364' && <ForgeTab_cloudsecurity4364 />}
+              {(mainTab as string) === 'appsecurity4365' && <ForgeTab_appsecurity4365 />}
+              {(mainTab as string) === 'incidentresponse4366' && <ForgeTab_incidentresponse4366 />}
+              {(mainTab as string) === 'threatintelligence4367' && <ForgeTab_threatintelligence4367 />}
+              {(mainTab as string) === 'datasecurityprivacy4368' && <ForgeTab_datasecurityprivacy4368 />}
+              {(mainTab as string) === 'iotsecurity4369' && <ForgeTab_iotsecurity4369 />}
+              {(mainTab as string) === 'identityaccessmgmt4370' && <ForgeTab_identityaccessmgmt4370 />}
       </div>
     </div>
   );
