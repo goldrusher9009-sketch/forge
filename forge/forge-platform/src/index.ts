@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v791.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v792.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211458,5 +211458,65 @@ app.post('/api/ecommerce/ecomanalytics', requireAuth, async (req: AuthRequest, r
 app.post('/api/ecommerce/socialcommerce', requireAuth, async (req: AuthRequest, res: any) => {
   const { socialPlatform, targetDemographic, productType } = req.body;
   const prompt = `You are a social commerce expert. Design a social commerce strategy. Platform: ${socialPlatform}. Demo: ${targetDemographic}. Product: ${productType}. Respond in JSON: { content_strategy: string[], shoppable_formats: string[], influencer_approach: string[], live_commerce_plan: string[], ugc_strategy: string[], platform_ads: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/health/nutritionplan', requireAuth, async (req: AuthRequest, res: any) => {
+  const { healthGoal, dietaryRestrictions, activityLevel } = req.body;
+  const prompt = `You are a registered dietitian expert. Create a personalized nutrition plan. Goal: ${healthGoal}. Restrictions: ${dietaryRestrictions}. Activity: ${activityLevel}. Respond in JSON: { daily_calorie_target: string, macronutrient_breakdown: string[], meal_timing: string[], food_recommendations: string[], foods_to_avoid: string[], supplement_suggestions: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/health/workoutprogram', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fitnessGoal, equipmentAccess, weeklyAvailability } = req.body;
+  const prompt = `You are a certified personal trainer. Design a complete workout program. Goal: ${fitnessGoal}. Equipment: ${equipmentAccess}. Time: ${weeklyAvailability}. Respond in JSON: { program_overview: string, weekly_schedule: string[], exercise_list: string[], progression_plan: string[], recovery_protocol: string[], form_cues: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/health/mentalwellness', requireAuth, async (req: AuthRequest, res: any) => {
+  const { stressLevel, sleepQuality, lifestyleFactors } = req.body;
+  const prompt = `You are a mental wellness expert. Create a comprehensive mental wellness plan. Stress: ${stressLevel}. Sleep: ${sleepQuality}. Lifestyle: ${lifestyleFactors}. Respond in JSON: { wellness_assessment: string, daily_practices: string[], stress_reduction: string[], sleep_optimization: string[], mindfulness_exercises: string[], professional_referral_indicators: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/health/sleepoptimize', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sleepIssue, bedtimeRoutine, sleepEnvironment } = req.body;
+  const prompt = `You are a sleep science expert. Optimize sleep quality and duration. Issue: ${sleepIssue}. Routine: ${bedtimeRoutine}. Environment: ${sleepEnvironment}. Respond in JSON: { sleep_hygiene_protocol: string[], schedule_optimization: string[], environment_changes: string[], relaxation_techniques: string[], foods_and_supplements: string[], when_to_see_doctor: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/health/chronicdisease', requireAuth, async (req: AuthRequest, res: any) => {
+  const { condition, currentMedications, lifestyleGoals } = req.body;
+  const prompt = `You are a chronic disease management specialist. Create a lifestyle management plan. Condition: ${condition}. Medications: ${currentMedications}. Goals: ${lifestyleGoals}. Respond in JSON: { lifestyle_modifications: string[], dietary_adjustments: string[], exercise_guidelines: string[], monitoring_plan: string[], symptom_management: string[], care_team_coordination: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/health/mindfulness', requireAuth, async (req: AuthRequest, res: any) => {
+  const { experienceLevel, timeAvailable, mindfulnessGoal } = req.body;
+  const prompt = `You are a mindfulness and meditation expert. Design a personalized mindfulness practice. Level: ${experienceLevel}. Time: ${timeAvailable}. Goal: ${mindfulnessGoal}. Respond in JSON: { practice_overview: string, daily_routine: string[], meditation_techniques: string[], breathing_exercises: string[], progress_milestones: string[], resources: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/health/weightmanage', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentWeight, targetWeight, timeline } = req.body;
+  const prompt = `You are a weight management specialist. Create a sustainable weight management plan. Current: ${currentWeight}. Target: ${targetWeight}. Timeline: ${timeline}. Respond in JSON: { strategy_overview: string, calorie_approach: string[], exercise_plan: string[], behavioral_strategies: string[], plateau_breaking: string[], maintenance_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/health/immunehealth', requireAuth, async (req: AuthRequest, res: any) => {
+  const { healthConcerns, currentLifestyle, seasonalFactors } = req.body;
+  const prompt = `You are an immune health expert. Build an immune optimization protocol. Concerns: ${healthConcerns}. Lifestyle: ${currentLifestyle}. Environment: ${seasonalFactors}. Respond in JSON: { immune_assessment: string, nutrition_protocol: string[], lifestyle_habits: string[], supplement_stack: string[], stress_immune_connection: string[], warning_signs: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/health/corpwellness', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companySize, workforceHealthIssues, budget } = req.body;
+  const prompt = `You are a corporate wellness expert. Design a comprehensive employee wellness program. Size: ${companySize}. Issues: ${workforceHealthIssues}. Budget: ${budget}. Respond in JSON: { program_pillars: string[], initiatives: string[], roi_projections: string[], engagement_strategy: string[], measurement_metrics: string[], implementation_timeline: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/health/longevityplan', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentAge, familyHistory, longevityGoals } = req.body;
+  const prompt = `You are a longevity medicine expert. Create a healthspan optimization plan. Age: ${currentAge}. History: ${familyHistory}. Goals: ${longevityGoals}. Respond in JSON: { longevity_framework: string, biomarkers_to_track: string[], dietary_approach: string[], exercise_protocol: string[], preventive_screenings: string[], lifestyle_longevity_factors: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

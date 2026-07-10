@@ -114,6 +114,16 @@ ForgeTab_customerretention3017,
 ForgeTab_shippinglogistics3018,
 ForgeTab_ecomanalytics3019,
 ForgeTab_socialcommerce3020,
+ForgeTab_nutritionplan3021,
+ForgeTab_workoutprogram3022,
+ForgeTab_mentalwellness3023,
+ForgeTab_sleepoptimizer3024,
+ForgeTab_chronicdisease3025,
+ForgeTab_mindfulnessguide3026,
+ForgeTab_weightmanagement3027,
+ForgeTab_immunehealth3028,
+ForgeTab_corporatewellness3029,
+ForgeTab_longevityplan3030,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57121,6 +57131,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'shippinglogistics3018' && <ForgeTab_shippinglogistics3018 />}
               {(mainTab as string) === 'ecomanalytics3019' && <ForgeTab_ecomanalytics3019 />}
               {(mainTab as string) === 'socialcommerce3020' && <ForgeTab_socialcommerce3020 />}
+              {(mainTab as string) === 'nutritionplan3021' && <ForgeTab_nutritionplan3021 />}
+              {(mainTab as string) === 'workoutprogram3022' && <ForgeTab_workoutprogram3022 />}
+              {(mainTab as string) === 'mentalwellness3023' && <ForgeTab_mentalwellness3023 />}
+              {(mainTab as string) === 'sleepoptimizer3024' && <ForgeTab_sleepoptimizer3024 />}
+              {(mainTab as string) === 'chronicdisease3025' && <ForgeTab_chronicdisease3025 />}
+              {(mainTab as string) === 'mindfulnessguide3026' && <ForgeTab_mindfulnessguide3026 />}
+              {(mainTab as string) === 'weightmanagement3027' && <ForgeTab_weightmanagement3027 />}
+              {(mainTab as string) === 'immunehealth3028' && <ForgeTab_immunehealth3028 />}
+              {(mainTab as string) === 'corporatewellness3029' && <ForgeTab_corporatewellness3029 />}
+              {(mainTab as string) === 'longevityplan3030' && <ForgeTab_longevityplan3030 />}
       </div>
     </div>
   );
