@@ -774,6 +774,16 @@ ForgeTab_watertech3687,
 ForgeTab_sustainablefashion3688,
 ForgeTab_greenbuilding3689,
 ForgeTab_climatefinance3690,
+ForgeTab_saasgtm3691,
+ForgeTab_b2bsales3692,
+ForgeTab_saasmetrics3693,
+ForgeTab_productledgrowth3694,
+ForgeTab_customersuccesssaas3695,
+ForgeTab_saaspricingstrategy3696,
+ForgeTab_saaspartner3697,
+ForgeTab_saasmarketing3698,
+ForgeTab_venturebuilder3699,
+ForgeTab_apimonetize3700,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58441,6 +58451,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'sustainablefashion3688' && <ForgeTab_sustainablefashion3688 />}
               {(mainTab as string) === 'greenbuilding3689' && <ForgeTab_greenbuilding3689 />}
               {(mainTab as string) === 'climatefinance3690' && <ForgeTab_climatefinance3690 />}
+              {(mainTab as string) === 'saasgtm3691' && <ForgeTab_saasgtm3691 />}
+              {(mainTab as string) === 'b2bsales3692' && <ForgeTab_b2bsales3692 />}
+              {(mainTab as string) === 'saasmetrics3693' && <ForgeTab_saasmetrics3693 />}
+              {(mainTab as string) === 'productledgrowth3694' && <ForgeTab_productledgrowth3694 />}
+              {(mainTab as string) === 'customersuccesssaas3695' && <ForgeTab_customersuccesssaas3695 />}
+              {(mainTab as string) === 'saaspricingstrategy3696' && <ForgeTab_saaspricingstrategy3696 />}
+              {(mainTab as string) === 'saaspartner3697' && <ForgeTab_saaspartner3697 />}
+              {(mainTab as string) === 'saasmarketing3698' && <ForgeTab_saasmarketing3698 />}
+              {(mainTab as string) === 'venturebuilder3699' && <ForgeTab_venturebuilder3699 />}
+              {(mainTab as string) === 'apimonetize3700' && <ForgeTab_apimonetize3700 />}
       </div>
     </div>
   );
