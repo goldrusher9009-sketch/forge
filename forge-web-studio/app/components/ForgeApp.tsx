@@ -234,6 +234,16 @@ ForgeTab_voiceofcustomer3137,
 ForgeTab_customerhealth3138,
 ForgeTab_supportkb3139,
 ForgeTab_renewalprocess3140,
+ForgeTab_cashflowforecast3141,
+ForgeTab_fundingreadiness3142,
+ForgeTab_uniteconomics3143,
+ForgeTab_financialmodel3144,
+ForgeTab_taxstrategy3145,
+ForgeTab_pricingstrategy3146,
+ForgeTab_capbudgeting3147,
+ForgeTab_mnavaluation3148,
+ForgeTab_budgetplanning3149,
+ForgeTab_investorreport3150,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57361,6 +57371,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'customerhealth3138' && <ForgeTab_customerhealth3138 />}
               {(mainTab as string) === 'supportkb3139' && <ForgeTab_supportkb3139 />}
               {(mainTab as string) === 'renewalprocess3140' && <ForgeTab_renewalprocess3140 />}
+              {(mainTab as string) === 'cashflowforecast3141' && <ForgeTab_cashflowforecast3141 />}
+              {(mainTab as string) === 'fundingreadiness3142' && <ForgeTab_fundingreadiness3142 />}
+              {(mainTab as string) === 'uniteconomics3143' && <ForgeTab_uniteconomics3143 />}
+              {(mainTab as string) === 'financialmodel3144' && <ForgeTab_financialmodel3144 />}
+              {(mainTab as string) === 'taxstrategy3145' && <ForgeTab_taxstrategy3145 />}
+              {(mainTab as string) === 'pricingstrategy3146' && <ForgeTab_pricingstrategy3146 />}
+              {(mainTab as string) === 'capbudgeting3147' && <ForgeTab_capbudgeting3147 />}
+              {(mainTab as string) === 'mnavaluation3148' && <ForgeTab_mnavaluation3148 />}
+              {(mainTab as string) === 'budgetplanning3149' && <ForgeTab_budgetplanning3149 />}
+              {(mainTab as string) === 'investorreport3150' && <ForgeTab_investorreport3150 />}
       </div>
     </div>
   );

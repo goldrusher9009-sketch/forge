@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v803.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v804.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -212178,5 +212178,65 @@ app.post('/api/customersuccess/supportkb', requireAuth, async (req: AuthRequest,
 app.post('/api/customersuccess/renewal', requireAuth, async (req: AuthRequest, res: any) => {
   const { contractLength, renewalRate, renewalTeamSize } = req.body;
   const prompt = `You are a renewal management expert. Design a proactive renewal process. Contracts: ${contractLength}. Rate: ${renewalRate}. Team: ${renewalTeamSize}. Respond in JSON: { renewal_timeline: string[], early_warning_triggers: string[], negotiation_playbook: string[], multithreading_strategy: string[], at_risk_intervention: string[], forecasting_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/cashflow', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessRevenue, fixedCosts, growthProjections } = req.body;
+  const prompt = `You are a financial forecasting expert. Build a detailed cash flow forecast. Revenue: ${businessRevenue}. Costs: ${fixedCosts}. Growth: ${growthProjections}. Respond in JSON: { cash_flow_summary: string, monthly_projections: string[], scenario_analysis: string[], cash_burn_rate: string, runway_calculation: string, improvement_levers: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/fundingready', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessStage, currentMetrics, fundingTarget } = req.body;
+  const prompt = `You are a startup funding expert. Assess funding readiness. Stage: ${businessStage}. Metrics: ${currentMetrics}. Target: ${fundingTarget}. Respond in JSON: { readiness_score: string, investor_narrative: string[], financial_gaps: string[], metrics_to_improve: string[], investor_targeting: string[], timeline_to_raise: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/uniteconomics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessModel, acquisitionCost, revenuePerCustomer } = req.body;
+  const prompt = `You are a unit economics expert. Analyze and optimize unit economics. Model: ${businessModel}. CAC: ${acquisitionCost}. Revenue: ${revenuePerCustomer}. Respond in JSON: { unit_economics_summary: string, ltv_cac_analysis: string[], payback_period: string, contribution_margin: string[], optimization_levers: string[], benchmarks: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/finmodel', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyStage, revenueStreams, modelHorizon } = req.body;
+  const prompt = `You are a financial modeling expert. Build a comprehensive financial model. Stage: ${companyStage}. Revenue: ${revenueStreams}. Horizon: ${modelHorizon}. Respond in JSON: { model_structure: string, revenue_assumptions: string[], cost_assumptions: string[], key_drivers: string[], sensitivity_variables: string[], output_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/taxstrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessStructure, annualRevenue, taxJurisdictions } = req.body;
+  const prompt = `You are a business tax strategy expert. Design tax optimization strategies. Structure: ${businessStructure}. Revenue: ${annualRevenue}. Jurisdictions: ${taxJurisdictions}. Respond in JSON: { tax_strategy: string, entity_optimization: string[], deduction_opportunities: string[], timing_strategies: string[], jurisdictional_planning: string[], compliance_requirements: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/pricingstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productService, targetMarket, competitorPricing } = req.body;
+  const prompt = `You are a pricing strategy expert. Design an optimal pricing strategy. Product: ${productService}. Market: ${targetMarket}. Competitors: ${competitorPricing}. Respond in JSON: { pricing_model: string, price_point_recommendation: string, value_metric: string[], tier_structure: string[], discounting_policy: string[], price_increase_playbook: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/capbudget', requireAuth, async (req: AuthRequest, res: any) => {
+  const { investmentOptions, availableCapital, returnRequirements } = req.body;
+  const prompt = `You are a capital budgeting expert. Analyze investment decisions. Options: ${investmentOptions}. Capital: ${availableCapital}. Requirements: ${returnRequirements}. Respond in JSON: { investment_analysis: string, npv_irr_comparison: string[], payback_periods: string[], risk_assessment: string[], recommendation: string, sensitivity_analysis: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/mnavaluation', requireAuth, async (req: AuthRequest, res: any) => {
+  const { targetCompany, valuationMethod, dealContext } = req.body;
+  const prompt = `You are an M&A valuation expert. Design a valuation framework. Target: ${targetCompany}. Method: ${valuationMethod}. Context: ${dealContext}. Respond in JSON: { valuation_framework: string, comparable_companies: string[], valuation_multiples: string[], dcf_assumptions: string[], synergy_assessment: string[], deal_structure: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/budgetplan', requireAuth, async (req: AuthRequest, res: any) => {
+  const { departmentScope, lastYearActuals, growthTargets } = req.body;
+  const prompt = `You are a financial planning expert. Build a comprehensive annual budget. Scope: ${departmentScope}. Actuals: ${lastYearActuals}. Targets: ${growthTargets}. Respond in JSON: { budget_framework: string, headcount_plan: string[], opex_categories: string[], capex_plan: string[], contingency_reserves: string[], budget_calendar: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finance/investorreport', requireAuth, async (req: AuthRequest, res: any) => {
+  const { reportingPeriod, keyMetrics, narrativeHighlights } = req.body;
+  const prompt = `You are an investor relations expert. Generate a comprehensive investor report. Period: ${reportingPeriod}. Metrics: ${keyMetrics}. Highlights: ${narrativeHighlights}. Respond in JSON: { executive_summary: string, metrics_dashboard: string[], business_highlights: string[], challenges_learnings: string[], forward_guidance: string[], ask_and_needs: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
