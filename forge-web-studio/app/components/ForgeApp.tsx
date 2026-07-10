@@ -314,6 +314,16 @@ ForgeTab_realestatecma3217,
 ForgeTab_buyernegotiation3218,
 ForgeTab_rentalpricing3219,
 ForgeTab_reitsanalysis3220,
+ForgeTab_securityaudit3221,
+ForgeTab_threatmodeling3222,
+ForgeTab_incidentresponse3223,
+ForgeTab_privacyprogram3224,
+ForgeTab_zerotrustsecurity3225,
+ForgeTab_vulnmanagement3226,
+ForgeTab_securityawareness3227,
+ForgeTab_cloudsecrisk3228,
+ForgeTab_supplychainsec3229,
+ForgeTab_cryptostrategy3230,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57521,6 +57531,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'buyernegotiation3218' && <ForgeTab_buyernegotiation3218 />}
               {(mainTab as string) === 'rentalpricing3219' && <ForgeTab_rentalpricing3219 />}
               {(mainTab as string) === 'reitsanalysis3220' && <ForgeTab_reitsanalysis3220 />}
+              {(mainTab as string) === 'securityaudit3221' && <ForgeTab_securityaudit3221 />}
+              {(mainTab as string) === 'threatmodeling3222' && <ForgeTab_threatmodeling3222 />}
+              {(mainTab as string) === 'incidentresponse3223' && <ForgeTab_incidentresponse3223 />}
+              {(mainTab as string) === 'privacyprogram3224' && <ForgeTab_privacyprogram3224 />}
+              {(mainTab as string) === 'zerotrustsecurity3225' && <ForgeTab_zerotrustsecurity3225 />}
+              {(mainTab as string) === 'vulnmanagement3226' && <ForgeTab_vulnmanagement3226 />}
+              {(mainTab as string) === 'securityawareness3227' && <ForgeTab_securityawareness3227 />}
+              {(mainTab as string) === 'cloudsecrisk3228' && <ForgeTab_cloudsecrisk3228 />}
+              {(mainTab as string) === 'supplychainsec3229' && <ForgeTab_supplychainsec3229 />}
+              {(mainTab as string) === 'cryptostrategy3230' && <ForgeTab_cryptostrategy3230 />}
       </div>
     </div>
   );

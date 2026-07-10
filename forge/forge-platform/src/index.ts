@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v811.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v812.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -212658,5 +212658,65 @@ app.post('/api/realestate/rentprice', requireAuth, async (req: AuthRequest, res:
 app.post('/api/realestate/reits', requireAuth, async (req: AuthRequest, res: any) => {
   const { reitName, investmentAmount, investmentHorizon } = req.body;
   const prompt = `You are a REIT investment analyst. Analyze this REIT investment. REIT: ${reitName}. Amount: ${investmentAmount}. Horizon: ${investmentHorizon}. Respond in JSON: { reit_overview: string, financial_metrics: string[], dividend_analysis: string[], portfolio_quality: string[], risk_assessment: string[], investment_thesis: string }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/secaudit', requireAuth, async (req: AuthRequest, res: any) => {
+  const { systemDescription, complianceRequirements, auditScope } = req.body;
+  const prompt = `You are a cybersecurity audit expert. Plan a comprehensive security audit. System: ${systemDescription}. Compliance: ${complianceRequirements}. Scope: ${auditScope}. Respond in JSON: { audit_framework: string, control_domains: string[], testing_methodology: string[], evidence_requirements: string[], risk_scoring: string[], remediation_priority: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/threatmodel', requireAuth, async (req: AuthRequest, res: any) => {
+  const { applicationArchitecture, dataAssets, threatActors } = req.body;
+  const prompt = `You are a threat modeling expert. Build a STRIDE threat model. Architecture: ${applicationArchitecture}. Data: ${dataAssets}. Actors: ${threatActors}. Respond in JSON: { threat_model_summary: string, attack_surface: string[], stride_analysis: string[], attack_trees: string[], mitigations: string[], residual_risks: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/incident', requireAuth, async (req: AuthRequest, res: any) => {
+  const { incidentType, affectedSystems, organizationSize } = req.body;
+  const prompt = `You are a cybersecurity incident response expert. Build an IR playbook. Type: ${incidentType}. Systems: ${affectedSystems}. Org: ${organizationSize}. Respond in JSON: { ir_phases: string[], immediate_actions: string[], containment_steps: string[], evidence_preservation: string[], stakeholder_comms: string[], recovery_checklist: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/privacy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessType, dataProcessingActivities, regulatoryJurisdictions } = req.body;
+  const prompt = `You are a privacy program expert. Design a comprehensive privacy program. Business: ${businessType}. Processing: ${dataProcessingActivities}. Regulations: ${regulatoryJurisdictions}. Respond in JSON: { privacy_framework: string, data_inventory: string[], consent_management: string[], subject_rights: string[], vendor_management: string[], training_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/zerotrust', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentInfrastructure, userWorkforce, securityMaturity } = req.body;
+  const prompt = `You are a Zero Trust architecture expert. Design a Zero Trust implementation. Infrastructure: ${currentInfrastructure}. Workforce: ${userWorkforce}. Maturity: ${securityMaturity}. Respond in JSON: { zt_principles: string[], identity_strategy: string[], network_segmentation: string[], device_trust: string[], application_access: string[], implementation_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/vulnmgmt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { assetInventory, currentVulnProcess, remediationCapacity } = req.body;
+  const prompt = `You are a vulnerability management expert. Build a vulnerability management program. Assets: ${assetInventory}. Process: ${currentVulnProcess}. Capacity: ${remediationCapacity}. Respond in JSON: { vm_program_design: string, scanning_strategy: string[], prioritization_framework: string[], remediation_workflow: string[], metrics_dashboard: string[], tooling_recommendations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/secaware', requireAuth, async (req: AuthRequest, res: any) => {
+  const { organizationType, employeeCount, currentSecurityGaps } = req.body;
+  const prompt = `You are a security awareness expert. Design an employee security training program. Org: ${organizationType}. Employees: ${employeeCount}. Gaps: ${currentSecurityGaps}. Respond in JSON: { program_framework: string, training_modules: string[], phishing_simulation: string[], role_based_training: string[], gamification_elements: string[], measurement_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/cloudsec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cloudEnvironment, workloadsHosted, currentControls } = req.body;
+  const prompt = `You are a cloud security expert. Assess cloud security risks. Environment: ${cloudEnvironment}. Workloads: ${workloadsHosted}. Controls: ${currentControls}. Respond in JSON: { risk_assessment: string, critical_findings: string[], misconfiguration_risks: string[], iam_recommendations: string[], data_protection: string[], remediation_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/supplychainsec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { vendorList, integrationTypes, dataShared } = req.body;
+  const prompt = `You are a supply chain security expert. Review third-party security risks. Vendors: ${vendorList}. Integrations: ${integrationTypes}. Data: ${dataShared}. Respond in JSON: { risk_inventory: string, vendor_tiering: string[], assessment_questionnaire: string[], contract_requirements: string[], continuous_monitoring: string[], incident_response_coordination: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cybersecurity/crypto', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dataTypes, useCase, complianceNeeds } = req.body;
+  const prompt = `You are a cryptography strategy expert. Recommend cryptographic controls. Data: ${dataTypes}. Use case: ${useCase}. Compliance: ${complianceNeeds}. Respond in JSON: { crypto_recommendations: string[], algorithm_selections: string[], key_management: string[], implementation_guidance: string[], quantum_readiness: string[], compliance_mapping: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
