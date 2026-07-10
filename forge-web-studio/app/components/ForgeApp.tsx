@@ -154,6 +154,16 @@ ForgeTab_qualitymanage3057,
 ForgeTab_leanmanufacturing3058,
 ForgeTab_operationalexcellence3059,
 ForgeTab_sustainableops3060,
+ForgeTab_threatmodeling3061,
+ForgeTab_securityaudit3062,
+ForgeTab_incidentresponse3063,
+ForgeTab_penetrationtest3064,
+ForgeTab_zerotrust3065,
+ForgeTab_cloudsecscan3066,
+ForgeTab_soctriage3067,
+ForgeTab_vulnerabilitymgmt3068,
+ForgeTab_secawareness3069,
+ForgeTab_cryptostrategy3070,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57201,6 +57211,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'leanmanufacturing3058' && <ForgeTab_leanmanufacturing3058 />}
               {(mainTab as string) === 'operationalexcellence3059' && <ForgeTab_operationalexcellence3059 />}
               {(mainTab as string) === 'sustainableops3060' && <ForgeTab_sustainableops3060 />}
+              {(mainTab as string) === 'threatmodeling3061' && <ForgeTab_threatmodeling3061 />}
+              {(mainTab as string) === 'securityaudit3062' && <ForgeTab_securityaudit3062 />}
+              {(mainTab as string) === 'incidentresponse3063' && <ForgeTab_incidentresponse3063 />}
+              {(mainTab as string) === 'penetrationtest3064' && <ForgeTab_penetrationtest3064 />}
+              {(mainTab as string) === 'zerotrust3065' && <ForgeTab_zerotrust3065 />}
+              {(mainTab as string) === 'cloudsecscan3066' && <ForgeTab_cloudsecscan3066 />}
+              {(mainTab as string) === 'soctriage3067' && <ForgeTab_soctriage3067 />}
+              {(mainTab as string) === 'vulnerabilitymgmt3068' && <ForgeTab_vulnerabilitymgmt3068 />}
+              {(mainTab as string) === 'secawareness3069' && <ForgeTab_secawareness3069 />}
+              {(mainTab as string) === 'cryptostrategy3070' && <ForgeTab_cryptostrategy3070 />}
       </div>
     </div>
   );
