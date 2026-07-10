@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v875.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v876.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -216498,5 +216498,65 @@ app.post('/api/health/valuebased', requireAuth, async (req: AuthRequest, res: an
 app.post('/api/health/biopharma', requireAuth, async (req: AuthRequest, res: any) => {
   const { companyType, therapeuticAreas, bioPharmaGoals } = req.body;
   const prompt = `You are a biopharma strategy expert. Build a biopharma R&D strategy. Company: ${companyType}. Areas: ${therapeuticAreas}. Goals: ${bioPharmaGoals}. Respond in JSON: { biopharma_strategy: string, pipeline_prioritization: string[], clinical_development: string[], regulatory_strategy: string[], partnership_model: string[], funding_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retail/retail', requireAuth, async (req: AuthRequest, res: any) => {
+  const { retailType, currentPosition, retailGoals } = req.body;
+  const prompt = `You are a retail strategy expert. Build a retail strategy. Type: ${retailType}. Position: ${currentPosition}. Goals: ${retailGoals}. Respond in JSON: { retail_strategy: string, omnichannel_model: string[], assortment_strategy: string[], pricing_model: string[], customer_experience: string[], technology_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retail/ecommerce', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ecomType, currentMetrics, ecomGoals } = req.body;
+  const prompt = `You are an e-commerce strategy expert. Build an e-commerce strategy. Type: ${ecomType}. Metrics: ${currentMetrics}. Goals: ${ecomGoals}. Respond in JSON: { ecommerce_strategy: string, acquisition_channels: string[], conversion_optimization: string[], retention_model: string[], fulfillment_strategy: string[], technology_stack: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retail/cpg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cpgType, targetChannels, cpgGoals } = req.body;
+  const prompt = `You are a CPG strategy expert. Build a CPG strategy. Type: ${cpgType}. Channels: ${targetChannels}. Goals: ${cpgGoals}. Respond in JSON: { cpg_strategy: string, brand_architecture: string[], channel_strategy: string[], innovation_pipeline: string[], trade_marketing: string[], pricing_revenue_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retail/luxury', requireAuth, async (req: AuthRequest, res: any) => {
+  const { luxuryType, targetCustomers, luxuryGoals } = req.body;
+  const prompt = `You are a luxury brand strategy expert. Build a luxury brand strategy. Type: ${luxuryType}. Customers: ${targetCustomers}. Goals: ${luxuryGoals}. Respond in JSON: { luxury_strategy: string, brand_positioning: string[], customer_experience: string[], digital_strategy: string[], distribution_control: string[], pricing_architecture: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retail/d2c', requireAuth, async (req: AuthRequest, res: any) => {
+  const { brandType, currentChannels, d2cGoals } = req.body;
+  const prompt = `You are a DTC strategy expert. Build a DTC strategy. Brand: ${brandType}. Channels: ${currentChannels}. Goals: ${d2cGoals}. Respond in JSON: { dtc_strategy: string, brand_building: string[], customer_acquisition: string[], retention_loyalty: string[], omnichannel_expansion: string[], unit_economics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retail/retailtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { retailOrgType, currentTechStack, retailTechGoals } = req.body;
+  const prompt = `You are a retail technology expert. Build a retail tech strategy. Org: ${retailOrgType}. Tech: ${currentTechStack}. Goals: ${retailTechGoals}. Respond in JSON: { retail_tech_strategy: string, pos_commerce: string[], inventory_management: string[], personalization_ai: string[], fulfillment_automation: string[], data_analytics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retail/category', requireAuth, async (req: AuthRequest, res: any) => {
+  const { retailType, categoryPortfolio, categoryGoals } = req.body;
+  const prompt = `You are a category management expert. Build a category strategy. Retail: ${retailType}. Categories: ${categoryPortfolio}. Goals: ${categoryGoals}. Respond in JSON: { category_strategy: string, assortment_optimization: string[], planogram_design: string[], pricing_promotion: string[], vendor_collaboration: string[], performance_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retail/retailmkt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { retailType, currentMarketing, mktGoals } = req.body;
+  const prompt = `You are a retail marketing expert. Build a retail marketing strategy. Retail: ${retailType}. Marketing: ${currentMarketing}. Goals: ${mktGoals}. Respond in JSON: { marketing_strategy: string, channel_mix: string[], promotional_calendar: string[], loyalty_program: string[], digital_marketing: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retail/franchise', requireAuth, async (req: AuthRequest, res: any) => {
+  const { franchiseType, currentNetwork, franchiseGoals } = req.body;
+  const prompt = `You are a franchise strategy expert. Build a franchise strategy. Type: ${franchiseType}. Network: ${currentNetwork}. Goals: ${franchiseGoals}. Respond in JSON: { franchise_strategy: string, franchise_model_design: string[], franchisee_recruitment: string[], training_support: string[], brand_standards: string[], international_expansion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/retail/retailsustain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { retailType, currentSustainability, sustainGoals } = req.body;
+  const prompt = `You are a retail sustainability expert. Build a retail sustainability strategy. Retail: ${retailType}. Current: ${currentSustainability}. Goals: ${sustainGoals}. Respond in JSON: { sustainability_strategy: string, supply_chain_ethics: string[], packaging_reduction: string[], circularity_model: string[], carbon_reduction: string[], consumer_communication: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

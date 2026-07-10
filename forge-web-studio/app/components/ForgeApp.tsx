@@ -954,6 +954,16 @@ ForgeTab_medicalddevice3867,
 ForgeTab_healthdataanalytics3868,
 ForgeTab_valuebased3869,
 ForgeTab_biopharma3870,
+ForgeTab_retailstrategy3871,
+ForgeTab_ecommercestrat3872,
+ForgeTab_consumergoodsstrat3873,
+ForgeTab_luxurybrand3874,
+ForgeTab_d2cstrategy3875,
+ForgeTab_retailtech3876,
+ForgeTab_categorymanage3877,
+ForgeTab_retailmarketing3878,
+ForgeTab_franchisestrat3879,
+ForgeTab_retailsustain3880,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58801,6 +58811,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'healthdataanalytics3868' && <ForgeTab_healthdataanalytics3868 />}
               {(mainTab as string) === 'valuebased3869' && <ForgeTab_valuebased3869 />}
               {(mainTab as string) === 'biopharma3870' && <ForgeTab_biopharma3870 />}
+              {(mainTab as string) === 'retailstrategy3871' && <ForgeTab_retailstrategy3871 />}
+              {(mainTab as string) === 'ecommercestrat3872' && <ForgeTab_ecommercestrat3872 />}
+              {(mainTab as string) === 'consumergoodsstrat3873' && <ForgeTab_consumergoodsstrat3873 />}
+              {(mainTab as string) === 'luxurybrand3874' && <ForgeTab_luxurybrand3874 />}
+              {(mainTab as string) === 'd2cstrategy3875' && <ForgeTab_d2cstrategy3875 />}
+              {(mainTab as string) === 'retailtech3876' && <ForgeTab_retailtech3876 />}
+              {(mainTab as string) === 'categorymanage3877' && <ForgeTab_categorymanage3877 />}
+              {(mainTab as string) === 'retailmarketing3878' && <ForgeTab_retailmarketing3878 />}
+              {(mainTab as string) === 'franchisestrat3879' && <ForgeTab_franchisestrat3879 />}
+              {(mainTab as string) === 'retailsustain3880' && <ForgeTab_retailsustain3880 />}
       </div>
     </div>
   );
