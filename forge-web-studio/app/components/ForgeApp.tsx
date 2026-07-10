@@ -1304,6 +1304,16 @@ ForgeTab_localizationstrategy4217,
 ForgeTab_tradecomplianceexport4218,
 ForgeTab_globalsupplychain4219,
 ForgeTab_internationalpartnerships4220,
+ForgeTab_innovationmanagement4221,
+ForgeTab_rdstrategy4222,
+ForgeTab_openinnovation4223,
+ForgeTab_technologytransfer4224,
+ForgeTab_designthinking4225,
+ForgeTab_corporateinnovation4226,
+ForgeTab_patentip4227,
+ForgeTab_productinnovation4228,
+ForgeTab_sustainableinnovation4229,
+ForgeTab_innovationculture4230,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59501,6 +59511,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'tradecomplianceexport4218' && <ForgeTab_tradecomplianceexport4218 />}
               {(mainTab as string) === 'globalsupplychain4219' && <ForgeTab_globalsupplychain4219 />}
               {(mainTab as string) === 'internationalpartnerships4220' && <ForgeTab_internationalpartnerships4220 />}
+              {(mainTab as string) === 'innovationmanagement4221' && <ForgeTab_innovationmanagement4221 />}
+              {(mainTab as string) === 'rdstrategy4222' && <ForgeTab_rdstrategy4222 />}
+              {(mainTab as string) === 'openinnovation4223' && <ForgeTab_openinnovation4223 />}
+              {(mainTab as string) === 'technologytransfer4224' && <ForgeTab_technologytransfer4224 />}
+              {(mainTab as string) === 'designthinking4225' && <ForgeTab_designthinking4225 />}
+              {(mainTab as string) === 'corporateinnovation4226' && <ForgeTab_corporateinnovation4226 />}
+              {(mainTab as string) === 'patentip4227' && <ForgeTab_patentip4227 />}
+              {(mainTab as string) === 'productinnovation4228' && <ForgeTab_productinnovation4228 />}
+              {(mainTab as string) === 'sustainableinnovation4229' && <ForgeTab_sustainableinnovation4229 />}
+              {(mainTab as string) === 'innovationculture4230' && <ForgeTab_innovationculture4230 />}
       </div>
     </div>
   );

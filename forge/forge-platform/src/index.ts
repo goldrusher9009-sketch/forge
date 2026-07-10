@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v910.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v911.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -218598,5 +218598,65 @@ app.post('/api/intlbiz/globalsc', requireAuth, async (req: AuthRequest, res: any
 app.post('/api/intlbiz/intlpartners', requireAuth, async (req: AuthRequest, res: any) => {
   const { partnerType, targetRegion, partnerGoals } = req.body;
   const prompt = `You are an international partnerships strategy expert. Build a partnership strategy. Type: ${partnerType}. Region: ${targetRegion}. Goals: ${partnerGoals}. Respond in JSON: { partnership_strategy: string, partner_identification: string[], deal_structure: string[], governance_model: string[], ip_protection: string[], performance_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/rdinno/innovation', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, innovationState, innoGoals } = req.body;
+  const prompt = `You are an innovation management strategy expert. Build an innovation strategy. Org: ${orgType}. State: ${innovationState}. Goals: ${innoGoals}. Respond in JSON: { innovation_strategy: string, portfolio_management: string[], idea_generation: string[], stage_gate_process: string[], culture_enablers: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/rdinno/rds', requireAuth, async (req: AuthRequest, res: any) => {
+  const { researchType, currentRDState, rdGoals } = req.body;
+  const prompt = `You are an R&D strategy expert. Build an R&D strategy. Type: ${researchType}. State: ${currentRDState}. Goals: ${rdGoals}. Respond in JSON: { rd_strategy: string, portfolio_allocation: string[], research_roadmap: string[], talent_framework: string[], ip_strategy: string[], commercialization_path: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/rdinno/openinno', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, currentOpenInnoState, openInnoGoals } = req.body;
+  const prompt = `You are an open innovation strategy expert. Build an open innovation strategy. Org: ${orgType}. State: ${currentOpenInnoState}. Goals: ${openInnoGoals}. Respond in JSON: { open_innovation_strategy: string, external_sensing: string[], startup_engagement: string[], academic_partnerships: string[], hackathon_model: string[], ecosystem_governance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/rdinno/techtransfer', requireAuth, async (req: AuthRequest, res: any) => {
+  const { institutionType, techPortfolio, transferGoals } = req.body;
+  const prompt = `You are a technology transfer strategy expert. Build a tech transfer strategy. Institution: ${institutionType}. Portfolio: ${techPortfolio}. Goals: ${transferGoals}. Respond in JSON: { tech_transfer_strategy: string, ip_valuation: string[], licensing_model: string[], spinout_framework: string[], industry_partnerships: string[], commercialization_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/rdinno/designthink', requireAuth, async (req: AuthRequest, res: any) => {
+  const { challengeType, orgContext, dtGoals } = req.body;
+  const prompt = `You are a design thinking strategy expert. Build a design thinking strategy. Challenge: ${challengeType}. Context: ${orgContext}. Goals: ${dtGoals}. Respond in JSON: { design_thinking_strategy: string, empathize_phase: string[], define_framework: string[], ideation_methods: string[], prototype_approach: string[], test_and_iterate: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/rdinno/corpinno', requireAuth, async (req: AuthRequest, res: any) => {
+  const { corpType, currentInnoModel, corpInnoGoals } = req.body;
+  const prompt = `You are a corporate innovation strategy expert. Build a corporate innovation strategy. Corp: ${corpType}. Model: ${currentInnoModel}. Goals: ${corpInnoGoals}. Respond in JSON: { corporate_innovation_strategy: string, intrapreneurship_program: string[], corporate_venture: string[], innovation_lab_model: string[], ma_innovation: string[], culture_transformation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/rdinno/patentip', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, currentIPPortfolio, ipGoals } = req.body;
+  const prompt = `You are a patent and IP strategy expert. Build an IP strategy. Org: ${orgType}. Portfolio: ${currentIPPortfolio}. Goals: ${ipGoals}. Respond in JSON: { ip_strategy: string, patent_portfolio: string[], filing_priorities: string[], licensing_framework: string[], defensive_strategy: string[], ip_monetization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/rdinno/productinno', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, currentProductState, productInnoGoals } = req.body;
+  const prompt = `You are a product innovation strategy expert. Build a product innovation strategy. Product: ${productType}. State: ${currentProductState}. Goals: ${productInnoGoals}. Respond in JSON: { product_innovation_strategy: string, portfolio_mapping: string[], discovery_process: string[], build_test_learn: string[], platform_strategy: string[], launch_excellence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/rdinno/sustinno', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, sustainabilityState, sustInnoGoals } = req.body;
+  const prompt = `You are a sustainable innovation strategy expert. Build a sustainable innovation strategy. Org: ${orgType}. State: ${sustainabilityState}. Goals: ${sustInnoGoals}. Respond in JSON: { sustainable_innovation_strategy: string, circular_economy: string[], clean_tech_pipeline: string[], social_impact: string[], esg_integration: string[], measurement_reporting: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/rdinno/innoculture', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, currentCultureState, cultInnoGoals } = req.body;
+  const prompt = `You are an innovation culture strategy expert. Build an innovation culture strategy. Org: ${orgType}. Culture: ${currentCultureState}. Goals: ${cultInnoGoals}. Respond in JSON: { innovation_culture_strategy: string, psychological_safety: string[], experimentation_framework: string[], reward_recognition: string[], leadership_behaviors: string[], measurement_system: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
