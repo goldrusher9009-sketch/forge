@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v816.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v817.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -212958,5 +212958,65 @@ app.post('/api/biotech/pharmaprice', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/biotech/clinicalops', requireAuth, async (req: AuthRequest, res: any) => {
   const { studyDesign, siteRequirements, operationalConstraints } = req.body;
   const prompt = `You are a clinical operations expert. Design a clinical operations plan. Study: ${studyDesign}. Sites: ${siteRequirements}. Constraints: ${operationalConstraints}. Respond in JSON: { ops_strategy: string, site_selection: string[], patient_recruitment: string[], data_management: string[], risk_based_monitoring: string[], timeline_milestones: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agriculture/crop', requireAuth, async (req: AuthRequest, res: any) => {
+  const { farmDetails, soilConditions, marketGoals } = req.body;
+  const prompt = `You are an agricultural planning expert. Optimize crop planning. Farm: ${farmDetails}. Soil: ${soilConditions}. Goals: ${marketGoals}. Respond in JSON: { crop_rotation_plan: string, planting_schedule: string[], yield_projections: string[], input_recommendations: string[], risk_management: string[], revenue_forecast: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agriculture/precisionag', requireAuth, async (req: AuthRequest, res: any) => {
+  const { farmScale, currentTechnology, productivityGoals } = req.body;
+  const prompt = `You are a precision agriculture expert. Design a precision ag implementation plan. Scale: ${farmScale}. Technology: ${currentTechnology}. Goals: ${productivityGoals}. Respond in JSON: { precision_ag_roadmap: string, sensor_strategy: string[], data_analytics: string[], variable_rate_application: string[], drone_usage: string[], roi_analysis: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agriculture/foodsafety', requireAuth, async (req: AuthRequest, res: any) => {
+  const { foodProduct, productionProcess, regulatoryFramework } = req.body;
+  const prompt = `You are a food safety expert. Build a food safety management plan. Product: ${foodProduct}. Process: ${productionProcess}. Framework: ${regulatoryFramework}. Respond in JSON: { food_safety_plan: string, hazard_analysis: string[], critical_control_points: string[], monitoring_procedures: string[], corrective_actions: string[], verification_schedule: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agriculture/agritech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { agritechIdea, targetFarmers, fundingStage } = req.body;
+  const prompt = `You are an AgriTech startup expert. Advise on this AgriTech venture. Idea: ${agritechIdea}. Farmers: ${targetFarmers}. Stage: ${fundingStage}. Respond in JSON: { market_opportunity: string, go_to_market: string[], technology_stack: string[], farmer_adoption: string[], revenue_model: string[], funding_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agriculture/sustainfarm', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentFarmingPractices, sustainabilityGoals, certificationTargets } = req.body;
+  const prompt = `You are a sustainable agriculture expert. Design a sustainable farming transition plan. Practices: ${currentFarmingPractices}. Goals: ${sustainabilityGoals}. Certifications: ${certificationTargets}. Respond in JSON: { transition_roadmap: string, soil_health_plan: string[], water_conservation: string[], biodiversity_strategy: string[], carbon_sequestration: string[], certification_timeline: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agriculture/foodtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productConcept, targetConsumers, marketPosition } = req.body;
+  const prompt = `You are a food technology expert. Develop this food tech product. Concept: ${productConcept}. Consumers: ${targetConsumers}. Position: ${marketPosition}. Respond in JSON: { product_development_plan: string, formulation_approach: string[], regulatory_path: string[], manufacturing_requirements: string[], launch_strategy: string[], pricing_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agriculture/verticalfarm', requireAuth, async (req: AuthRequest, res: any) => {
+  const { facilityDetails, targetCrops, businessModel } = req.body;
+  const prompt = `You are a vertical farming expert. Plan a vertical farming operation. Facility: ${facilityDetails}. Crops: ${targetCrops}. Model: ${businessModel}. Respond in JSON: { facility_design: string, growing_system: string[], lighting_climate: string[], crop_selection: string[], unit_economics: string[], market_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agriculture/agrifinance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { farmOperation, financialNeeds, riskProfile } = req.body;
+  const prompt = `You are an agricultural finance expert. Advise on farm financing. Operation: ${farmOperation}. Needs: ${financialNeeds}. Risk: ${riskProfile}. Respond in JSON: { financing_options: string[], government_programs: string[], crop_insurance: string[], cash_flow_planning: string[], debt_management: string[], investment_analysis: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agriculture/agriexport', requireAuth, async (req: AuthRequest, res: any) => {
+  const { product, targetExportMarkets, currentExportCapability } = req.body;
+  const prompt = `You are an agricultural export expert. Develop an export market strategy. Product: ${product}. Markets: ${targetExportMarkets}. Capability: ${currentExportCapability}. Respond in JSON: { market_entry_strategy: string, certification_requirements: string[], logistics_plan: string[], buyer_identification: string[], pricing_strategy: string[], compliance_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agriculture/aquaculture', requireAuth, async (req: AuthRequest, res: any) => {
+  const { speciesAndScale, productionSystem, marketTarget } = req.body;
+  const prompt = `You are an aquaculture business expert. Plan this aquaculture operation. Species: ${speciesAndScale}. System: ${productionSystem}. Market: ${marketTarget}. Respond in JSON: { facility_design: string, production_model: string[], water_quality_management: string[], feed_strategy: string[], financial_projections: string[], regulatory_compliance: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
