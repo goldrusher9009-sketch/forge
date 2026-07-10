@@ -1004,6 +1004,16 @@ ForgeTab_advancedmfg3917,
 ForgeTab_productionplan3918,
 ForgeTab_manufacturingsales3919,
 ForgeTab_sustainmfg3920,
+ForgeTab_insurancestrat3921,
+ForgeTab_insurtech3922,
+ForgeTab_underwriting3923,
+ForgeTab_claimsmanage3924,
+ForgeTab_reinsurance3925,
+ForgeTab_parametricinsure3926,
+ForgeTab_embeddedinsure3927,
+ForgeTab_healthinsurance3928,
+ForgeTab_insurancedist3929,
+ForgeTab_insurancerisk3930,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58901,6 +58911,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'productionplan3918' && <ForgeTab_productionplan3918 />}
               {(mainTab as string) === 'manufacturingsales3919' && <ForgeTab_manufacturingsales3919 />}
               {(mainTab as string) === 'sustainmfg3920' && <ForgeTab_sustainmfg3920 />}
+              {(mainTab as string) === 'insurancestrat3921' && <ForgeTab_insurancestrat3921 />}
+              {(mainTab as string) === 'insurtech3922' && <ForgeTab_insurtech3922 />}
+              {(mainTab as string) === 'underwriting3923' && <ForgeTab_underwriting3923 />}
+              {(mainTab as string) === 'claimsmanage3924' && <ForgeTab_claimsmanage3924 />}
+              {(mainTab as string) === 'reinsurance3925' && <ForgeTab_reinsurance3925 />}
+              {(mainTab as string) === 'parametricinsure3926' && <ForgeTab_parametricinsure3926 />}
+              {(mainTab as string) === 'embeddedinsure3927' && <ForgeTab_embeddedinsure3927 />}
+              {(mainTab as string) === 'healthinsurance3928' && <ForgeTab_healthinsurance3928 />}
+              {(mainTab as string) === 'insurancedist3929' && <ForgeTab_insurancedist3929 />}
+              {(mainTab as string) === 'insurancerisk3930' && <ForgeTab_insurancerisk3930 />}
       </div>
     </div>
   );
