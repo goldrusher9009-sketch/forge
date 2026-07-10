@@ -134,6 +134,16 @@ ForgeTab_classroommanage3037,
 ForgeTab_studentengagement3038,
 ForgeTab_profdevplan3039,
 ForgeTab_stemprogram3040,
+ForgeTab_propertyanalysis3041,
+ForgeTab_marketvaluation3042,
+ForgeTab_buyervsseller3043,
+ForgeTab_realestatenegotiation3044,
+ForgeTab_propertymanage3045,
+ForgeTab_fixandflip3046,
+ForgeTab_commercialre3047,
+ForgeTab_rentalportfolio3048,
+ForgeTab_realestatetax3049,
+ForgeTab_realtormarketing3050,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57161,6 +57171,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'studentengagement3038' && <ForgeTab_studentengagement3038 />}
               {(mainTab as string) === 'profdevplan3039' && <ForgeTab_profdevplan3039 />}
               {(mainTab as string) === 'stemprogram3040' && <ForgeTab_stemprogram3040 />}
+              {(mainTab as string) === 'propertyanalysis3041' && <ForgeTab_propertyanalysis3041 />}
+              {(mainTab as string) === 'marketvaluation3042' && <ForgeTab_marketvaluation3042 />}
+              {(mainTab as string) === 'buyervsseller3043' && <ForgeTab_buyervsseller3043 />}
+              {(mainTab as string) === 'realestatenegotiation3044' && <ForgeTab_realestatenegotiation3044 />}
+              {(mainTab as string) === 'propertymanage3045' && <ForgeTab_propertymanage3045 />}
+              {(mainTab as string) === 'fixandflip3046' && <ForgeTab_fixandflip3046 />}
+              {(mainTab as string) === 'commercialre3047' && <ForgeTab_commercialre3047 />}
+              {(mainTab as string) === 'rentalportfolio3048' && <ForgeTab_rentalportfolio3048 />}
+              {(mainTab as string) === 'realestatetax3049' && <ForgeTab_realestatetax3049 />}
+              {(mainTab as string) === 'realtormarketing3050' && <ForgeTab_realtormarketing3050 />}
       </div>
     </div>
   );
