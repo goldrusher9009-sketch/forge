@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v869.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v870.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -216138,5 +216138,65 @@ app.post('/api/venturecapital/portfolioops', requireAuth, async (req: AuthReques
 app.post('/api/venturecapital/spac', requireAuth, async (req: AuthRequest, res: any) => {
   const { spacType, targetSectors, spacGoals } = req.body;
   const prompt = `You are a SPAC and special situations expert. Build a strategy. Type: ${spacType}. Sectors: ${targetSectors}. Goals: ${spacGoals}. Respond in JSON: { spac_strategy: string, target_identification: string[], deal_structuring: string[], shareholder_management: string[], regulatory_compliance: string[], post_merger_value: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/corpstrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyType, strategicContext, corpGoals } = req.body;
+  const prompt = `You are a corporate strategy expert. Build a corporate strategy. Company: ${companyType}. Context: ${strategicContext}. Goals: ${corpGoals}. Respond in JSON: { corporate_strategy: string, growth_vectors: string[], competitive_positioning: string[], resource_allocation: string[], portfolio_decisions: string[], execution_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/manda', requireAuth, async (req: AuthRequest, res: any) => {
+  const { acquirerType, targetProfile, mandaGoals } = req.body;
+  const prompt = `You are an M&A strategy expert. Build an M&A strategy. Acquirer: ${acquirerType}. Target: ${targetProfile}. Goals: ${mandaGoals}. Respond in JSON: { ma_strategy: string, deal_sourcing: string[], valuation_approach: string[], due_diligence: string[], integration_planning: string[], synergy_realization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/turnaround', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyProfile, currentChallenges, turnaroundGoals } = req.body;
+  const prompt = `You are a business turnaround expert. Build a turnaround strategy. Company: ${companyProfile}. Challenges: ${currentChallenges}. Goals: ${turnaroundGoals}. Respond in JSON: { turnaround_strategy: string, stabilization_actions: string[], cost_restructuring: string[], revenue_recovery: string[], operational_improvements: string[], stakeholder_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/growthstrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessType, currentPosition, growthGoals } = req.body;
+  const prompt = `You are a growth strategy expert. Build a growth strategy. Business: ${businessType}. Position: ${currentPosition}. Goals: ${growthGoals}. Respond in JSON: { growth_strategy: string, organic_growth: string[], inorganic_options: string[], market_expansion: string[], product_innovation: string[], execution_priorities: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/digitaltransform', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, currentDigitalState, transformGoals } = req.body;
+  const prompt = `You are a digital transformation expert. Build a DX strategy. Org: ${orgType}. Current: ${currentDigitalState}. Goals: ${transformGoals}. Respond in JSON: { dx_strategy: string, technology_priorities: string[], process_redesign: string[], change_management: string[], talent_upskilling: string[], governance_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/innovation', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyType, innovationChallenge, innovationGoals } = req.body;
+  const prompt = `You are an innovation strategy expert. Build an innovation strategy. Company: ${companyType}. Challenges: ${innovationChallenge}. Goals: ${innovationGoals}. Respond in JSON: { innovation_strategy: string, innovation_model: string[], pipeline_management: string[], culture_building: string[], open_innovation: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/opexcel', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgType, operationalChallenges, opexGoals } = req.body;
+  const prompt = `You are an operational excellence expert. Build an OpEx strategy. Org: ${orgType}. Challenges: ${operationalChallenges}. Goals: ${opexGoals}. Respond in JSON: { opex_strategy: string, process_optimization: string[], lean_six_sigma: string[], technology_enablement: string[], performance_management: string[], continuous_improvement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/costoptimize', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyType, costStructure, costGoals } = req.body;
+  const prompt = `You are a cost optimization expert. Build a cost optimization strategy. Company: ${companyType}. Costs: ${costStructure}. Goals: ${costGoals}. Respond in JSON: { cost_strategy: string, quick_wins: string[], structural_changes: string[], technology_savings: string[], procurement_optimization: string[], workforce_restructuring: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/ecosystem', requireAuth, async (req: AuthRequest, res: any) => {
+  const { platformType, ecosystemParticipants, ecosystemGoals } = req.body;
+  const prompt = `You are a business ecosystem expert. Build an ecosystem strategy. Platform: ${platformType}. Participants: ${ecosystemParticipants}. Goals: ${ecosystemGoals}. Respond in JSON: { ecosystem_strategy: string, platform_design: string[], participant_incentives: string[], governance_model: string[], network_effects: string[], competitive_moat: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/strategy/scenario', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industryContext, keyUncertainties, scenarioGoals } = req.body;
+  const prompt = `You are a scenario planning expert. Build a scenario planning strategy. Context: ${industryContext}. Uncertainties: ${keyUncertainties}. Goals: ${scenarioGoals}. Respond in JSON: { scenario_strategy: string, scenario_archetypes: string[], leading_indicators: string[], strategic_options: string[], early_warning_system: string[], decision_triggers: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
