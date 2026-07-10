@@ -304,6 +304,16 @@ ForgeTab_projectbasedlearning3207,
 ForgeTab_onlinecoursecreator3208,
 ForgeTab_studentfeedback3209,
 ForgeTab_academicintegrity3210,
+ForgeTab_propertyanalysis3211,
+ForgeTab_listingcopy3212,
+ForgeTab_mortgagecalc3213,
+ForgeTab_propertymanagement3214,
+ForgeTab_redevstrategy3215,
+ForgeTab_neighborhoodanalysis3216,
+ForgeTab_realestatecma3217,
+ForgeTab_buyernegotiation3218,
+ForgeTab_rentalpricing3219,
+ForgeTab_reitsanalysis3220,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57501,6 +57511,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'onlinecoursecreator3208' && <ForgeTab_onlinecoursecreator3208 />}
               {(mainTab as string) === 'studentfeedback3209' && <ForgeTab_studentfeedback3209 />}
               {(mainTab as string) === 'academicintegrity3210' && <ForgeTab_academicintegrity3210 />}
+              {(mainTab as string) === 'propertyanalysis3211' && <ForgeTab_propertyanalysis3211 />}
+              {(mainTab as string) === 'listingcopy3212' && <ForgeTab_listingcopy3212 />}
+              {(mainTab as string) === 'mortgagecalc3213' && <ForgeTab_mortgagecalc3213 />}
+              {(mainTab as string) === 'propertymanagement3214' && <ForgeTab_propertymanagement3214 />}
+              {(mainTab as string) === 'redevstrategy3215' && <ForgeTab_redevstrategy3215 />}
+              {(mainTab as string) === 'neighborhoodanalysis3216' && <ForgeTab_neighborhoodanalysis3216 />}
+              {(mainTab as string) === 'realestatecma3217' && <ForgeTab_realestatecma3217 />}
+              {(mainTab as string) === 'buyernegotiation3218' && <ForgeTab_buyernegotiation3218 />}
+              {(mainTab as string) === 'rentalpricing3219' && <ForgeTab_rentalpricing3219 />}
+              {(mainTab as string) === 'reitsanalysis3220' && <ForgeTab_reitsanalysis3220 />}
       </div>
     </div>
   );

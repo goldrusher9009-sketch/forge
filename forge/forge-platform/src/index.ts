@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v810.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v811.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -212598,5 +212598,65 @@ app.post('/api/education/studentfb', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/education/integrity', requireAuth, async (req: AuthRequest, res: any) => {
   const { institutionType, currentChallenges, aiPolicyStance } = req.body;
   const prompt = `You are an academic integrity expert. Design a comprehensive academic integrity framework. Institution: ${institutionType}. Challenges: ${currentChallenges}. AI Policy: ${aiPolicyStance}. Respond in JSON: { policy_framework: string, ai_guidelines: string[], honor_code_elements: string[], detection_approach: string[], education_program: string[], restorative_practices: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/propanalysis', requireAuth, async (req: AuthRequest, res: any) => {
+  const { propertyDetails, purchasePrice, financingDetails } = req.body;
+  const prompt = `You are a real estate investment expert. Analyze this property investment. Details: ${propertyDetails}. Price: ${purchasePrice}. Financing: ${financingDetails}. Respond in JSON: { investment_summary: string, cash_flow_analysis: string[], cap_rate: string, roi_projections: string[], risk_factors: string[], recommendation: string }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/listing', requireAuth, async (req: AuthRequest, res: any) => {
+  const { propertyFeatures, neighborhood, targetBuyer } = req.body;
+  const prompt = `You are a real estate copywriter. Write compelling listing copy. Features: ${propertyFeatures}. Location: ${neighborhood}. Target: ${targetBuyer}. Respond in JSON: { headline: string, property_description: string, key_features: string[], neighborhood_highlights: string[], call_to_action: string, social_media_posts: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/mortgage', requireAuth, async (req: AuthRequest, res: any) => {
+  const { homePrice, financialProfile, mortgageGoals } = req.body;
+  const prompt = `You are a mortgage strategy expert. Advise on mortgage options. Price: ${homePrice}. Profile: ${financialProfile}. Goals: ${mortgageGoals}. Respond in JSON: { loan_options: string[], rate_comparison: string[], down_payment_strategies: string[], pre_approval_checklist: string[], cost_breakdown: string[], timeline: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/propmanage', requireAuth, async (req: AuthRequest, res: any) => {
+  const { portfolioDescription, currentChallenges, managementGoals } = req.body;
+  const prompt = `You are a property management expert. Design a management system. Portfolio: ${portfolioDescription}. Challenges: ${currentChallenges}. Goals: ${managementGoals}. Respond in JSON: { management_framework: string, tenant_screening: string[], maintenance_system: string[], rent_collection: string[], financial_reporting: string[], vacancy_reduction: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/redev', requireAuth, async (req: AuthRequest, res: any) => {
+  const { developmentConcept, siteDetails, marketContext } = req.body;
+  const prompt = `You are a real estate development expert. Plan a development project. Concept: ${developmentConcept}. Site: ${siteDetails}. Market: ${marketContext}. Respond in JSON: { development_strategy: string, feasibility_highlights: string[], design_program: string[], financial_structure: string[], permitting_roadmap: string[], risk_mitigation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/neighborhood', requireAuth, async (req: AuthRequest, res: any) => {
+  const { neighborhoodName, analysisGoal, propertyType } = req.body;
+  const prompt = `You are a real estate market analyst. Analyze this neighborhood. Area: ${neighborhoodName}. Goal: ${analysisGoal}. Type: ${propertyType}. Respond in JSON: { market_overview: string, price_trends: string[], demand_drivers: string[], risk_factors: string[], comparable_areas: string[], investment_verdict: string }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/cma', requireAuth, async (req: AuthRequest, res: any) => {
+  const { subjectProperty, comparableProperties, marketConditions } = req.body;
+  const prompt = `You are a real estate valuation expert. Prepare a CMA. Subject: ${subjectProperty}. Comps: ${comparableProperties}. Market: ${marketConditions}. Respond in JSON: { value_range: string, comp_analysis: string[], adjustments: string[], market_positioning: string, pricing_strategy: string, days_on_market_estimate: string }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/buynegotiate', requireAuth, async (req: AuthRequest, res: any) => {
+  const { propertyAndPrice, buyerPosition, sellerMotivation } = req.body;
+  const prompt = `You are a real estate negotiation expert. Coach this buyer. Property: ${propertyAndPrice}. Position: ${buyerPosition}. Seller: ${sellerMotivation}. Respond in JSON: { negotiation_strategy: string, initial_offer: string, contingencies: string[], escalation_plan: string[], inspection_leverage: string[], closing_tactics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/rentprice', requireAuth, async (req: AuthRequest, res: any) => {
+  const { propertyDescription, localMarketData, occupancyGoal } = req.body;
+  const prompt = `You are a rental pricing expert. Optimize rental pricing strategy. Property: ${propertyDescription}. Market: ${localMarketData}. Goal: ${occupancyGoal}. Respond in JSON: { recommended_rent: string, pricing_rationale: string[], seasonal_adjustments: string[], amenity_premiums: string[], concession_strategy: string[], revenue_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/reits', requireAuth, async (req: AuthRequest, res: any) => {
+  const { reitName, investmentAmount, investmentHorizon } = req.body;
+  const prompt = `You are a REIT investment analyst. Analyze this REIT investment. REIT: ${reitName}. Amount: ${investmentAmount}. Horizon: ${investmentHorizon}. Respond in JSON: { reit_overview: string, financial_metrics: string[], dividend_analysis: string[], portfolio_quality: string[], risk_assessment: string[], investment_thesis: string }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
