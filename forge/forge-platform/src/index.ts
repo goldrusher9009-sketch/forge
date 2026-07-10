@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v909.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v910.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -218538,5 +218538,65 @@ app.post('/api/vcstartup/founder', requireAuth, async (req: AuthRequest, res: an
 app.post('/api/vcstartup/startuphr', requireAuth, async (req: AuthRequest, res: any) => {
   const { startupStage, currentTeamSize, talentGoals } = req.body;
   const prompt = `You are a startup talent strategy expert. Build a startup talent strategy. Stage: ${startupStage}. Team: ${currentTeamSize}. Goals: ${talentGoals}. Respond in JSON: { talent_strategy: string, hiring_plan: string[], culture_design: string[], compensation_framework: string[], performance_system: string[], retention_programs: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/globaltrade', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tradeType, targetMarkets, tradeGoals } = req.body;
+  const prompt = `You are a global trade strategy expert. Build a global trade strategy. Type: ${tradeType}. Markets: ${targetMarkets}. Goals: ${tradeGoals}. Respond in JSON: { trade_strategy: string, market_prioritization: string[], regulatory_compliance: string[], partner_selection: string[], logistics_framework: string[], risk_mitigation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/intlbiz', requireAuth, async (req: AuthRequest, res: any) => {
+  const { bizType, currentPresence, intlGoals } = req.body;
+  const prompt = `You are an international business expansion expert. Build an international strategy. Biz: ${bizType}. Presence: ${currentPresence}. Goals: ${intlGoals}. Respond in JSON: { international_strategy: string, market_selection: string[], entry_mode: string[], legal_structure: string[], talent_approach: string[], localization_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/emerging', requireAuth, async (req: AuthRequest, res: any) => {
+  const { marketType, targetRegion, emGoals } = req.body;
+  const prompt = `You are an emerging markets strategy expert. Build an emerging markets strategy. Market: ${marketType}. Region: ${targetRegion}. Goals: ${emGoals}. Respond in JSON: { emerging_markets_strategy: string, country_prioritization: string[], market_entry: string[], partner_ecosystem: string[], regulatory_navigation: string[], localization_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/crossborderecom', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ecomType, targetCountries, cbGoals } = req.body;
+  const prompt = `You are a cross-border e-commerce strategy expert. Build a cross-border strategy. Type: ${ecomType}. Countries: ${targetCountries}. Goals: ${cbGoals}. Respond in JSON: { crossborder_strategy: string, market_prioritization: string[], logistics_model: string[], payment_localization: string[], compliance_framework: string[], customer_experience: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/geopolbiz', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industryType, exposureRegions, geopolGoals } = req.body;
+  const prompt = `You are a geopolitical business risk expert. Build a geopolitical risk strategy. Industry: ${industryType}. Exposure: ${exposureRegions}. Goals: ${geopolGoals}. Respond in JSON: { geopolitical_strategy: string, risk_assessment: string[], supply_chain_resilience: string[], scenario_planning: string[], regulatory_monitoring: string[], crisis_response: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/fdi', requireAuth, async (req: AuthRequest, res: any) => {
+  const { investorType, targetCountry, fdiGoals } = req.body;
+  const prompt = `You are a foreign direct investment strategy expert. Build an FDI strategy. Investor: ${investorType}. Country: ${targetCountry}. Goals: ${fdiGoals}. Respond in JSON: { fdi_strategy: string, country_assessment: string[], investment_structure: string[], incentive_optimization: string[], regulatory_pathway: string[], exit_planning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/localize', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, targetLocale, localGoals } = req.body;
+  const prompt = `You are a localization strategy expert. Build a localization strategy. Product: ${productType}. Locale: ${targetLocale}. Goals: ${localGoals}. Respond in JSON: { localization_strategy: string, language_framework: string[], cultural_adaptation: string[], regulatory_compliance: string[], ux_localization: string[], content_workflow: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/tradecompliance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyType, tradeActivity, complianceGoals } = req.body;
+  const prompt = `You are a trade compliance and export control expert. Build a trade compliance strategy. Company: ${companyType}. Activity: ${tradeActivity}. Goals: ${complianceGoals}. Respond in JSON: { trade_compliance_strategy: string, classification_framework: string[], sanctions_screening: string[], export_control: string[], customs_compliance: string[], program_governance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/globalsc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industryType, currentSCState, globalSCGoals } = req.body;
+  const prompt = `You are a global supply chain strategy expert. Build a global supply chain strategy. Industry: ${industryType}. State: ${currentSCState}. Goals: ${globalSCGoals}. Respond in JSON: { global_sc_strategy: string, network_redesign: string[], nearshoring_plan: string[], supplier_diversification: string[], digital_visibility: string[], sustainability_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/intlpartners', requireAuth, async (req: AuthRequest, res: any) => {
+  const { partnerType, targetRegion, partnerGoals } = req.body;
+  const prompt = `You are an international partnerships strategy expert. Build a partnership strategy. Type: ${partnerType}. Region: ${targetRegion}. Goals: ${partnerGoals}. Respond in JSON: { partnership_strategy: string, partner_identification: string[], deal_structure: string[], governance_model: string[], ip_protection: string[], performance_management: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

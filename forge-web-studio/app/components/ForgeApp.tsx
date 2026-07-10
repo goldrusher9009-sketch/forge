@@ -1294,6 +1294,16 @@ ForgeTab_acceleratorincubator4207,
 ForgeTab_exitstrategy4208,
 ForgeTab_founderleadership4209,
 ForgeTab_startuptalent4210,
+ForgeTab_globaltrade4211,
+ForgeTab_internationalbusiness4212,
+ForgeTab_emergingmarkets4213,
+ForgeTab_crossborderecommerce4214,
+ForgeTab_geopoliticalbusiness4215,
+ForgeTab_foreigndirectinvestment4216,
+ForgeTab_localizationstrategy4217,
+ForgeTab_tradecomplianceexport4218,
+ForgeTab_globalsupplychain4219,
+ForgeTab_internationalpartnerships4220,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59481,6 +59491,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'exitstrategy4208' && <ForgeTab_exitstrategy4208 />}
               {(mainTab as string) === 'founderleadership4209' && <ForgeTab_founderleadership4209 />}
               {(mainTab as string) === 'startuptalent4210' && <ForgeTab_startuptalent4210 />}
+              {(mainTab as string) === 'globaltrade4211' && <ForgeTab_globaltrade4211 />}
+              {(mainTab as string) === 'internationalbusiness4212' && <ForgeTab_internationalbusiness4212 />}
+              {(mainTab as string) === 'emergingmarkets4213' && <ForgeTab_emergingmarkets4213 />}
+              {(mainTab as string) === 'crossborderecommerce4214' && <ForgeTab_crossborderecommerce4214 />}
+              {(mainTab as string) === 'geopoliticalbusiness4215' && <ForgeTab_geopoliticalbusiness4215 />}
+              {(mainTab as string) === 'foreigndirectinvestment4216' && <ForgeTab_foreigndirectinvestment4216 />}
+              {(mainTab as string) === 'localizationstrategy4217' && <ForgeTab_localizationstrategy4217 />}
+              {(mainTab as string) === 'tradecomplianceexport4218' && <ForgeTab_tradecomplianceexport4218 />}
+              {(mainTab as string) === 'globalsupplychain4219' && <ForgeTab_globalsupplychain4219 />}
+              {(mainTab as string) === 'internationalpartnerships4220' && <ForgeTab_internationalpartnerships4220 />}
       </div>
     </div>
   );
