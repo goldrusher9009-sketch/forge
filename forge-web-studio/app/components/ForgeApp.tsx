@@ -84,6 +84,16 @@ ForgeTab_datagovernance2987,
 ForgeTab_analyticsplatform2988,
 ForgeTab_dataqualityeng2989,
 ForgeTab_realtimeanalytics2990,
+ForgeTab_uxstrategy2991,
+ForgeTab_designsystem2992,
+ForgeTab_userresearch2993,
+ForgeTab_wireframing2994,
+ForgeTab_usabilitytesting2995,
+ForgeTab_informationarch2996,
+ForgeTab_motiondesign2997,
+ForgeTab_accessibilityux2998,
+ForgeTab_conversionux2999,
+ForgeTab_brandidentity3000,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57061,6 +57071,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'analyticsplatform2988' && <ForgeTab_analyticsplatform2988 />}
               {(mainTab as string) === 'dataqualityeng2989' && <ForgeTab_dataqualityeng2989 />}
               {(mainTab as string) === 'realtimeanalytics2990' && <ForgeTab_realtimeanalytics2990 />}
+              {(mainTab as string) === 'uxstrategy2991' && <ForgeTab_uxstrategy2991 />}
+              {(mainTab as string) === 'designsystem2992' && <ForgeTab_designsystem2992 />}
+              {(mainTab as string) === 'userresearch2993' && <ForgeTab_userresearch2993 />}
+              {(mainTab as string) === 'wireframing2994' && <ForgeTab_wireframing2994 />}
+              {(mainTab as string) === 'usabilitytesting2995' && <ForgeTab_usabilitytesting2995 />}
+              {(mainTab as string) === 'informationarch2996' && <ForgeTab_informationarch2996 />}
+              {(mainTab as string) === 'motiondesign2997' && <ForgeTab_motiondesign2997 />}
+              {(mainTab as string) === 'accessibilityux2998' && <ForgeTab_accessibilityux2998 />}
+              {(mainTab as string) === 'conversionux2999' && <ForgeTab_conversionux2999 />}
+              {(mainTab as string) === 'brandidentity3000' && <ForgeTab_brandidentity3000 />}
       </div>
     </div>
   );

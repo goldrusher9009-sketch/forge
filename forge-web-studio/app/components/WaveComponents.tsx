@@ -92142,3 +92142,113 @@ export function ForgeTab_realtimeanalytics2990() {
   const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/dataeng/realtimeanalytics', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"metricTypes": metricTypes, "updateFrequency": updateFrequency, "dashboardUsers": dashboardUsers})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
   return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>⚡ Real-Time Analytics</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Metric Types to Track" value={metricTypes} onChange={e=>setMetricTypes(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Required Update Frequency" value={updateFrequency} onChange={e=>setUpdateFrequency(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Dashboard User Count" value={dashboardUsers} onChange={e=>setDashboardUsers(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Real-Time Analytics'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
 }
+
+export function ForgeTab_uxstrategy2991() {
+  const [productType, setProductType] = React.useState('');
+  const [userPersona, setUserPersona] = React.useState('');
+  const [businessGoal, setBusinessGoal] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/design/uxstrategy', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"productType": productType, "userPersona": userPersona, "businessGoal": businessGoal})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🎨 UX Strategy</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Product Type" value={productType} onChange={e=>setProductType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Target User Persona" value={userPersona} onChange={e=>setUserPersona(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Business Goal" value={businessGoal} onChange={e=>setBusinessGoal(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run UX Strategy'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_designsystem2992() {
+  const [brandStyle, setBrandStyle] = React.useState('');
+  const [techFramework, setTechFramework] = React.useState('');
+  const [teamSize, setTeamSize] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/design/designsystem', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"brandStyle": brandStyle, "techFramework": techFramework, "teamSize": teamSize})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🧱 Design System</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Brand Style" value={brandStyle} onChange={e=>setBrandStyle(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Frontend Framework" value={techFramework} onChange={e=>setTechFramework(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Design Team Size" value={teamSize} onChange={e=>setTeamSize(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Design System'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_userresearch2993() {
+  const [researchQuestion, setResearchQuestion] = React.useState('');
+  const [targetUsers, setTargetUsers] = React.useState('');
+  const [timeline, setTimeline] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/design/userresearch', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"researchQuestion": researchQuestion, "targetUsers": targetUsers, "timeline": timeline})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🔬 User Research</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Research Question" value={researchQuestion} onChange={e=>setResearchQuestion(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Target Users" value={targetUsers} onChange={e=>setTargetUsers(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Research Timeline" value={timeline} onChange={e=>setTimeline(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run User Research'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_wireframing2994() {
+  const [screenType, setScreenType] = React.useState('');
+  const [userFlow, setUserFlow] = React.useState('');
+  const [fidelityLevel, setFidelityLevel] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/design/wireframing', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"screenType": screenType, "userFlow": userFlow, "fidelityLevel": fidelityLevel})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>📐 Wireframe Strategy</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Screen Type" value={screenType} onChange={e=>setScreenType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Key User Flow" value={userFlow} onChange={e=>setUserFlow(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Required Fidelity Level" value={fidelityLevel} onChange={e=>setFidelityLevel(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Wireframe Strategy'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_usabilitytesting2995() {
+  const [productStage, setProductStage] = React.useState('');
+  const [testingGoal, setTestingGoal] = React.useState('');
+  const [participantCount, setParticipantCount] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/design/usabilitytesting', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"productStage": productStage, "testingGoal": testingGoal, "participantCount": participantCount})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🧪 Usability Testing</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Product Stage" value={productStage} onChange={e=>setProductStage(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Testing Goal" value={testingGoal} onChange={e=>setTestingGoal(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Participant Count" value={participantCount} onChange={e=>setParticipantCount(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Usability Testing'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_informationarch2996() {
+  const [contentTypes, setContentTypes] = React.useState('');
+  const [userMentalModels, setUserMentalModels] = React.useState('');
+  const [navigationNeeds, setNavigationNeeds] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/design/infoarch', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"contentTypes": contentTypes, "userMentalModels": userMentalModels, "navigationNeeds": navigationNeeds})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🗺️ Information Architecture</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Content Types" value={contentTypes} onChange={e=>setContentTypes(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="User Mental Models" value={userMentalModels} onChange={e=>setUserMentalModels(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Navigation Requirements" value={navigationNeeds} onChange={e=>setNavigationNeeds(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Information Architecture'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_motiondesign2997() {
+  const [interfaceType, setInterfaceType] = React.useState('');
+  const [brandPersonality, setBrandPersonality] = React.useState('');
+  const [performanceConstraints, setPerformanceConstraints] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/design/motion', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"interfaceType": interfaceType, "brandPersonality": brandPersonality, "performanceConstraints": performanceConstraints})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>✨ Motion Design</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Interface Type" value={interfaceType} onChange={e=>setInterfaceType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Brand Personality" value={brandPersonality} onChange={e=>setBrandPersonality(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Performance Constraints" value={performanceConstraints} onChange={e=>setPerformanceConstraints(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Motion Design'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_accessibilityux2998() {
+  const [productType, setProductType] = React.useState('');
+  const [wcagLevel, setWcagLevel] = React.useState('');
+  const [userNeeds, setUserNeeds] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/design/accessibility', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"productType": productType, "wcagLevel": wcagLevel, "userNeeds": userNeeds})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>♿ Accessibility Design</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Product Type" value={productType} onChange={e=>setProductType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="WCAG Compliance Level" value={wcagLevel} onChange={e=>setWcagLevel(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Specific User Accessibility Needs" value={userNeeds} onChange={e=>setUserNeeds(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Accessibility Design'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_conversionux2999() {
+  const [conversionGoal, setConversionGoal] = React.useState('');
+  const [currentConversionRate, setCurrentConversionRate] = React.useState('');
+  const [userDropOffPoint, setUserDropOffPoint] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/design/conversion', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"conversionGoal": conversionGoal, "currentConversionRate": currentConversionRate, "userDropOffPoint": userDropOffPoint})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>📊 Conversion UX</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Conversion Goal" value={conversionGoal} onChange={e=>setConversionGoal(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current Conversion Rate" value={currentConversionRate} onChange={e=>setCurrentConversionRate(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Primary User Drop-off Point" value={userDropOffPoint} onChange={e=>setUserDropOffPoint(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Conversion UX'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_brandidentity3000() {
+  const [companyName, setCompanyName] = React.useState('');
+  const [targetAudience, setTargetAudience] = React.useState('');
+  const [brandValues, setBrandValues] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/design/brandidentity', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"companyName": companyName, "targetAudience": targetAudience, "brandValues": brandValues})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>💎 Brand Identity Design</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Company Name" value={companyName} onChange={e=>setCompanyName(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Target Audience" value={targetAudience} onChange={e=>setTargetAudience(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Core Brand Values" value={brandValues} onChange={e=>setBrandValues(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Brand Identity Design'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}

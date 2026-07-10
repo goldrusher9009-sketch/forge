@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v788.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v789.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211517,5 +211517,65 @@ app.post('/api/dataeng/dataquality', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/dataeng/realtimeanalytics', requireAuth, async (req: AuthRequest, res: any) => {
   const { metricTypes, updateFrequency, dashboardUsers } = req.body;
   const prompt = `You are a real-time analytics expert. Design a real-time analytics system. Metrics: ${metricTypes}. Frequency: ${updateFrequency}. Users: ${dashboardUsers}. Respond in JSON: { system_architecture: string, data_pipeline: string[], storage_technology: string[], query_engine: string[], visualization_layer: string[], alerting_system: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/uxstrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, userPersona, businessGoal } = req.body;
+  const prompt = `You are a UX strategy expert. Create a UX strategy framework. Product: ${productType}. Users: ${userPersona}. Goal: ${businessGoal}. Respond in JSON: { ux_vision: string, principles: string[], user_journey_phases: string[], success_metrics: string[], research_plan: string[], design_system_needs: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/designsystem', requireAuth, async (req: AuthRequest, res: any) => {
+  const { brandStyle, techFramework, teamSize } = req.body;
+  const prompt = `You are a design system expert. Build a scalable design system. Brand: ${brandStyle}. Framework: ${techFramework}. Team: ${teamSize}. Respond in JSON: { system_architecture: string, token_structure: string[], component_library: string[], documentation_plan: string[], adoption_strategy: string[], governance_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/userresearch', requireAuth, async (req: AuthRequest, res: any) => {
+  const { researchQuestion, targetUsers, timeline } = req.body;
+  const prompt = `You are a user research expert. Design a user research study. Question: ${researchQuestion}. Users: ${targetUsers}. Timeline: ${timeline}. Respond in JSON: { research_method: string, recruitment_criteria: string[], discussion_guide: string[], data_analysis_approach: string[], deliverables: string[], ethical_considerations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/wireframing', requireAuth, async (req: AuthRequest, res: any) => {
+  const { screenType, userFlow, fidelityLevel } = req.body;
+  const prompt = `You are a wireframing expert. Create a wireframing and prototyping strategy. Screen: ${screenType}. Flow: ${userFlow}. Fidelity: ${fidelityLevel}. Respond in JSON: { wireframe_approach: string, key_screens: string[], interaction_patterns: string[], annotation_guide: string[], prototype_flows: string[], stakeholder_review_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/usabilitytesting', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productStage, testingGoal, participantCount } = req.body;
+  const prompt = `You are a usability testing expert. Design a usability test plan. Stage: ${productStage}. Goal: ${testingGoal}. Participants: ${participantCount}. Respond in JSON: { test_methodology: string, task_scenarios: string[], metrics_to_capture: string[], moderation_guide: string[], analysis_framework: string[], report_template: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/infoarch', requireAuth, async (req: AuthRequest, res: any) => {
+  const { contentTypes, userMentalModels, navigationNeeds } = req.body;
+  const prompt = `You are an information architecture expert. Design an optimal IA. Content: ${contentTypes}. Mental models: ${userMentalModels}. Navigation: ${navigationNeeds}. Respond in JSON: { ia_structure: string, taxonomy: string[], navigation_model: string[], labeling_system: string[], search_strategy: string[], wayfinding_elements: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/motion', requireAuth, async (req: AuthRequest, res: any) => {
+  const { interfaceType, brandPersonality, performanceConstraints } = req.body;
+  const prompt = `You are a motion design expert. Create motion design guidelines. Interface: ${interfaceType}. Brand: ${brandPersonality}. Constraints: ${performanceConstraints}. Respond in JSON: { motion_principles: string[], timing_curves: string[], transition_patterns: string[], micro_interactions: string[], loading_states: string[], performance_budget: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/accessibility', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, wcagLevel, userNeeds } = req.body;
+  const prompt = `You are an accessibility design expert. Create an accessibility design checklist. Product: ${productType}. WCAG level: ${wcagLevel}. Needs: ${userNeeds}. Respond in JSON: { audit_checklist: string[], color_contrast_rules: string[], keyboard_navigation: string[], screen_reader_guidelines: string[], testing_tools: string[], remediation_priorities: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/conversion', requireAuth, async (req: AuthRequest, res: any) => {
+  const { conversionGoal, currentConversionRate, userDropOffPoint } = req.body;
+  const prompt = `You are a conversion UX expert. Optimize user flows for conversion. Goal: ${conversionGoal}. Current rate: ${currentConversionRate}. Drop-off: ${userDropOffPoint}. Respond in JSON: { ux_audit_findings: string[], friction_points: string[], ab_test_hypotheses: string[], copy_improvements: string[], trust_signals: string[], quick_wins: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/design/brandidentity', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyName, targetAudience, brandValues } = req.body;
+  const prompt = `You are a brand identity design expert. Create a brand identity system. Company: ${companyName}. Audience: ${targetAudience}. Values: ${brandValues}. Respond in JSON: { brand_positioning: string, visual_identity: string[], typography_system: string[], color_palette: string[], logo_guidelines: string[], brand_voice: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
