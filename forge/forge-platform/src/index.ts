@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v862.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v863.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -215718,5 +215718,65 @@ app.post('/api/deeptech/deeptechvc', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/deeptech/deeptechgtm', requireAuth, async (req: AuthRequest, res: any) => {
   const { deepTechProduct, targetCustomers, deeptechGtmGoals } = req.body;
   const prompt = `You are a deep tech GTM expert. Build a deep tech go-to-market strategy. Product: ${deepTechProduct}. Customers: ${targetCustomers}. Goals: ${deeptechGtmGoals}. Respond in JSON: { gtm_strategy: string, early_adopter_profile: string[], pilot_program_design: string[], pricing_model: string[], channel_strategy: string[], scale_path: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fintech/payments', requireAuth, async (req: AuthRequest, res: any) => {
+  const { paymentProduct, targetMerchants, paymentGoals } = req.body;
+  const prompt = `You are a payments strategy expert. Build a payments strategy. Product: ${paymentProduct}. Merchants: ${targetMerchants}. Goals: ${paymentGoals}. Respond in JSON: { payment_strategy: string, merchant_acquisition: string[], acceptance_network: string[], pricing_model: string[], fraud_risk: string[], international_expansion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fintech/baas', requireAuth, async (req: AuthRequest, res: any) => {
+  const { baasProduct, targetPartners, baasGoals } = req.body;
+  const prompt = `You are a Banking-as-a-Service expert. Build a BaaS strategy. Product: ${baasProduct}. Partners: ${targetPartners}. Goals: ${baasGoals}. Respond in JSON: { baas_strategy: string, partner_onboarding: string[], product_modules: string[], compliance_framework: string[], revenue_model: string[], technology_platform: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fintech/crypto', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cryptoProduct, targetUsers, cryptoGoals } = req.body;
+  const prompt = `You are a crypto/Web3 strategy expert. Build a crypto business strategy. Product: ${cryptoProduct}. Users: ${targetUsers}. Goals: ${cryptoGoals}. Respond in JSON: { crypto_strategy: string, token_model: string[], user_acquisition: string[], regulatory_approach: string[], liquidity_strategy: string[], ecosystem_development: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fintech/wealthtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { wealthProduct, targetInvestors, wealthGoals } = req.body;
+  const prompt = `You are a WealthTech strategy expert. Build a WealthTech strategy. Product: ${wealthProduct}. Investors: ${targetInvestors}. Goals: ${wealthGoals}. Respond in JSON: { wealthtech_strategy: string, product_design: string[], advisor_model: string[], investment_offering: string[], regulatory_compliance: string[], growth_channels: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fintech/regtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { regtechProduct, targetFirms, regtechGoals } = req.body;
+  const prompt = `You are a RegTech strategy expert. Build a RegTech strategy. Product: ${regtechProduct}. Firms: ${targetFirms}. Goals: ${regtechGoals}. Respond in JSON: { regtech_strategy: string, compliance_automation: string[], regulatory_coverage: string[], financial_institution_sales: string[], certification_strategy: string[], data_partnerships: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fintech/openbanking', requireAuth, async (req: AuthRequest, res: any) => {
+  const { openBankingProduct, targetPartners, openBankingGoals } = req.body;
+  const prompt = `You are an open banking strategy expert. Build an open banking strategy. Product: ${openBankingProduct}. Partners: ${targetPartners}. Goals: ${openBankingGoals}. Respond in JSON: { open_banking_strategy: string, api_design: string[], developer_ecosystem: string[], data_monetization: string[], bank_partnerships: string[], regulatory_compliance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fintech/lendingtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { lendingProduct, targetBorrowers, lendingGoals } = req.body;
+  const prompt = `You are a lending technology strategy expert. Build a LendingTech strategy. Product: ${lendingProduct}. Borrowers: ${targetBorrowers}. Goals: ${lendingGoals}. Respond in JSON: { lending_strategy: string, underwriting_model: string[], funding_structure: string[], borrower_acquisition: string[], risk_management: string[], regulatory_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fintech/insurtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { insurtechProduct, targetPolicyholders, insurtechGoals } = req.body;
+  const prompt = `You are an InsurTech strategy expert. Build an InsurTech strategy. Product: ${insurtechProduct}. Policyholders: ${targetPolicyholders}. Goals: ${insurtechGoals}. Respond in JSON: { insurtech_strategy: string, product_design: string[], pricing_model: string[], distribution_channels: string[], claims_automation: string[], reinsurance_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fintech/embeddedfinance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { financeProduct, platformPartners, embeddedGoals } = req.body;
+  const prompt = `You are an embedded finance strategy expert. Build an embedded finance strategy. Product: ${financeProduct}. Partners: ${platformPartners}. Goals: ${embeddedGoals}. Respond in JSON: { embedded_finance_strategy: string, partner_acquisition: string[], product_integration: string[], revenue_sharing: string[], risk_framework: string[], technology_infrastructure: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/fintech/cfostrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyStage, financialChallenges, cfoGoals } = req.body;
+  const prompt = `You are a CFO strategy expert. Build a financial strategy. Stage: ${companyStage}. Challenges: ${financialChallenges}. Goals: ${cfoGoals}. Respond in JSON: { financial_strategy: string, cash_management: string[], unit_economics: string[], fundraising_plan: string[], financial_operations: string[], investor_reporting: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
