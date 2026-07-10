@@ -424,6 +424,16 @@ ForgeTab_sustainabletravel3327,
 ForgeTab_cruiseplanning3328,
 ForgeTab_businesstravel3329,
 ForgeTab_restaurantbiz3330,
+ForgeTab_fitnessplan3331,
+ForgeTab_athleteperformance3332,
+ForgeTab_sportsnuition3333,
+ForgeTab_sportsbiz3334,
+ForgeTab_injuryprevention3335,
+ForgeTab_esports3336,
+ForgeTab_coachingbiz3337,
+ForgeTab_marathon3338,
+ForgeTab_sportsteam3339,
+ForgeTab_yogastudio3340,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57741,6 +57751,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'cruiseplanning3328' && <ForgeTab_cruiseplanning3328 />}
               {(mainTab as string) === 'businesstravel3329' && <ForgeTab_businesstravel3329 />}
               {(mainTab as string) === 'restaurantbiz3330' && <ForgeTab_restaurantbiz3330 />}
+              {(mainTab as string) === 'fitnessplan3331' && <ForgeTab_fitnessplan3331 />}
+              {(mainTab as string) === 'athleteperformance3332' && <ForgeTab_athleteperformance3332 />}
+              {(mainTab as string) === 'sportsnuition3333' && <ForgeTab_sportsnuition3333 />}
+              {(mainTab as string) === 'sportsbiz3334' && <ForgeTab_sportsbiz3334 />}
+              {(mainTab as string) === 'injuryprevention3335' && <ForgeTab_injuryprevention3335 />}
+              {(mainTab as string) === 'esports3336' && <ForgeTab_esports3336 />}
+              {(mainTab as string) === 'coachingbiz3337' && <ForgeTab_coachingbiz3337 />}
+              {(mainTab as string) === 'marathon3338' && <ForgeTab_marathon3338 />}
+              {(mainTab as string) === 'sportsteam3339' && <ForgeTab_sportsteam3339 />}
+              {(mainTab as string) === 'yogastudio3340' && <ForgeTab_yogastudio3340 />}
       </div>
     </div>
   );

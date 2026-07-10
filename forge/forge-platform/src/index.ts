@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v822.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v823.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -213318,5 +213318,65 @@ app.post('/api/travel/biztravel', requireAuth, async (req: AuthRequest, res: any
 app.post('/api/travel/restaurant', requireAuth, async (req: AuthRequest, res: any) => {
   const { conceptType, targetLocation, targetDiners } = req.body;
   const prompt = `You are a restaurant business expert. Plan this restaurant venture. Concept: ${conceptType}. Location: ${targetLocation}. Diners: ${targetDiners}. Respond in JSON: { concept_refinement: string, menu_strategy: string[], location_analysis: string[], operations_model: string[], marketing_plan: string[], financial_projections: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/fitness', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fitnessGoals, currentLevel, equipment } = req.body;
+  const prompt = `You are an expert fitness coach. Create a personalized fitness plan. Goals: ${fitnessGoals}. Level: ${currentLevel}. Equipment: ${equipment}. Respond in JSON: { training_philosophy: string, weekly_schedule: string[], workout_programs: string[], progression_plan: string[], nutrition_guidelines: string[], recovery_protocol: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/athlete', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sport, athleteProfile, performanceGoals } = req.body;
+  const prompt = `You are an elite sports performance expert. Optimize athlete performance. Sport: ${sport}. Profile: ${athleteProfile}. Goals: ${performanceGoals}. Respond in JSON: { performance_assessment: string, training_priorities: string[], strength_conditioning: string[], sport_specific_drills: string[], mental_performance: string[], competition_preparation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/sportnut', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sport, trainingSchedule, bodyComposition } = req.body;
+  const prompt = `You are a sports nutrition expert. Design a sports nutrition plan. Sport: ${sport}. Schedule: ${trainingSchedule}. Goals: ${bodyComposition}. Respond in JSON: { nutrition_strategy: string, macro_targets: string[], meal_timing: string[], pre_workout: string[], post_workout: string[], supplementation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/sportsbiz', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sportsVenture, targetMarket, businessGoals } = req.body;
+  const prompt = `You are a sports business expert. Build a sports business strategy. Venture: ${sportsVenture}. Market: ${targetMarket}. Goals: ${businessGoals}. Respond in JSON: { business_model: string, revenue_streams: string[], fan_engagement: string[], sponsorship_strategy: string[], digital_presence: string[], growth_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/injury', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sport, injuryHistory, trainingLoad } = req.body;
+  const prompt = `You are a sports medicine and injury prevention expert. Build an injury prevention protocol. Sport: ${sport}. History: ${injuryHistory}. Load: ${trainingLoad}. Respond in JSON: { risk_assessment: string, warm_up_protocol: string[], mobility_work: string[], strength_imbalances: string[], load_management: string[], recovery_modalities: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/esports', requireAuth, async (req: AuthRequest, res: any) => {
+  const { game, currentSkillLevel, esportsGoal } = req.body;
+  const prompt = `You are an esports industry expert. Build an esports career strategy. Game: ${game}. Level: ${currentSkillLevel}. Goal: ${esportsGoal}. Respond in JSON: { career_roadmap: string, skill_development: string[], tournament_strategy: string[], content_strategy: string[], team_building: string[], sponsorship_path: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/coaching', requireAuth, async (req: AuthRequest, res: any) => {
+  const { coachingNiche, targetClients, deliveryModel } = req.body;
+  const prompt = `You are a fitness coaching business expert. Build a coaching business. Niche: ${coachingNiche}. Clients: ${targetClients}. Model: ${deliveryModel}. Respond in JSON: { business_model: string, service_packages: string[], client_acquisition: string[], digital_presence: string[], client_retention: string[], scaling_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/marathon', requireAuth, async (req: AuthRequest, res: any) => {
+  const { raceDistance, raceDate, currentFitness } = req.body;
+  const prompt = `You are an endurance coaching expert. Build a marathon/endurance training plan. Distance: ${raceDistance}. Date: ${raceDate}. Fitness: ${currentFitness}. Respond in JSON: { training_philosophy: string, weekly_structure: string[], key_workouts: string[], long_run_plan: string[], race_strategy: string[], taper_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/team', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sport, teamLevel, seasonGoals } = req.body;
+  const prompt = `You are a sports team management expert. Build a team management strategy. Sport: ${sport}. Level: ${teamLevel}. Goals: ${seasonGoals}. Respond in JSON: { team_strategy: string, roster_management: string[], training_program: string[], tactical_approach: string[], team_culture: string[], performance_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sports/yoga', requireAuth, async (req: AuthRequest, res: any) => {
+  const { studioType, targetStudents, businessModel } = req.body;
+  const prompt = `You are a yoga studio business expert. Build a yoga studio strategy. Type: ${studioType}. Students: ${targetStudents}. Model: ${businessModel}. Respond in JSON: { studio_concept: string, class_offerings: string[], teacher_strategy: string[], pricing_model: string[], community_building: string[], digital_expansion: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
