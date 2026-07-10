@@ -634,6 +634,16 @@ ForgeTab_cryptomarketmaking3547,
 ForgeTab_web3community3548,
 ForgeTab_blockchainintegration3549,
 ForgeTab_cryptocompliance3550,
+ForgeTab_growthhacking3551,
+ForgeTab_viralloopdesign3552,
+ForgeTab_productledgrowth3553,
+ForgeTab_abteststrategy3554,
+ForgeTab_retentionengineering3555,
+ForgeTab_conversionoptimization3556,
+ForgeTab_communityled3557,
+ForgeTab_paidgrowthstrategy3558,
+ForgeTab_seogrowthstrategy3559,
+ForgeTab_partnershipgrowth3560,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58161,6 +58171,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'web3community3548' && <ForgeTab_web3community3548 />}
               {(mainTab as string) === 'blockchainintegration3549' && <ForgeTab_blockchainintegration3549 />}
               {(mainTab as string) === 'cryptocompliance3550' && <ForgeTab_cryptocompliance3550 />}
+              {(mainTab as string) === 'growthhacking3551' && <ForgeTab_growthhacking3551 />}
+              {(mainTab as string) === 'viralloopdesign3552' && <ForgeTab_viralloopdesign3552 />}
+              {(mainTab as string) === 'productledgrowth3553' && <ForgeTab_productledgrowth3553 />}
+              {(mainTab as string) === 'abteststrategy3554' && <ForgeTab_abteststrategy3554 />}
+              {(mainTab as string) === 'retentionengineering3555' && <ForgeTab_retentionengineering3555 />}
+              {(mainTab as string) === 'conversionoptimization3556' && <ForgeTab_conversionoptimization3556 />}
+              {(mainTab as string) === 'communityled3557' && <ForgeTab_communityled3557 />}
+              {(mainTab as string) === 'paidgrowthstrategy3558' && <ForgeTab_paidgrowthstrategy3558 />}
+              {(mainTab as string) === 'seogrowthstrategy3559' && <ForgeTab_seogrowthstrategy3559 />}
+              {(mainTab as string) === 'partnershipgrowth3560' && <ForgeTab_partnershipgrowth3560 />}
       </div>
     </div>
   );
