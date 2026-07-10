@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v820.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v821.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -213198,5 +213198,65 @@ app.post('/api/personalfinance/estate', requireAuth, async (req: AuthRequest, re
 app.post('/api/personalfinance/finfire', requireAuth, async (req: AuthRequest, res: any) => {
   const { currentNetWorth, annualExpenses, fireTarget } = req.body;
   const prompt = `You are a financial independence expert. Build a FIRE roadmap. Net worth: ${currentNetWorth}. Expenses: ${annualExpenses}. Target: ${fireTarget}. Respond in JSON: { fire_assessment: string, savings_acceleration: string[], investment_strategy: string[], expense_optimization: string[], income_diversification: string[], milestone_timeline: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/elearning/coursecreate', requireAuth, async (req: AuthRequest, res: any) => {
+  const { courseTopic, targetAudience, platformFormat } = req.body;
+  const prompt = `You are an online course design expert. Design a comprehensive online course. Topic: ${courseTopic}. Audience: ${targetAudience}. Format: ${platformFormat}. Respond in JSON: { course_outline: string, module_structure: string[], learning_objectives: string[], assessment_strategy: string[], engagement_tactics: string[], launch_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/elearning/studyplan', requireAuth, async (req: AuthRequest, res: any) => {
+  const { subject, examDate, currentKnowledge } = req.body;
+  const prompt = `You are a study planning expert. Create a personalized study plan. Subject: ${subject}. Date: ${examDate}. Level: ${currentKnowledge}. Respond in JSON: { study_schedule: string, weekly_plan: string[], topic_priority: string[], memorization_techniques: string[], practice_schedule: string[], exam_strategies: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/elearning/tutor', requireAuth, async (req: AuthRequest, res: any) => {
+  const { learningSubject, studentProfile, learningStyle } = req.body;
+  const prompt = `You are an educational technology expert. Design an AI tutor system. Subject: ${learningSubject}. Student: ${studentProfile}. Style: ${learningStyle}. Respond in JSON: { tutor_approach: string, adaptive_path: string[], explanation_methods: string[], practice_exercises: string[], progress_tracking: string[], motivation_system: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/elearning/certification', requireAuth, async (req: AuthRequest, res: any) => {
+  const { targetSkill, currentLevel, careerGoal } = req.body;
+  const prompt = `You are a professional certification expert. Build a certification roadmap. Skill: ${targetSkill}. Level: ${currentLevel}. Goal: ${careerGoal}. Respond in JSON: { certification_overview: string, prerequisite_path: string[], study_resources: string[], practice_labs: string[], exam_preparation: string[], post_cert_opportunities: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/elearning/elearningbiz', requireAuth, async (req: AuthRequest, res: any) => {
+  const { nicheSubject, targetMarket, revenueModel } = req.body;
+  const prompt = `You are an e-learning business expert. Build an e-learning business strategy. Niche: ${nicheSubject}. Market: ${targetMarket}. Revenue: ${revenueModel}. Respond in JSON: { business_model: string, content_strategy: string[], platform_selection: string[], pricing_strategy: string[], student_acquisition: string[], scaling_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/elearning/microlearn', requireAuth, async (req: AuthRequest, res: any) => {
+  const { learningTopic, targetLearners, deliveryChannel } = req.body;
+  const prompt = `You are a microlearning design expert. Design a microlearning program. Topic: ${learningTopic}. Learners: ${targetLearners}. Channel: ${deliveryChannel}. Respond in JSON: { microlearning_strategy: string, content_modules: string[], bite_size_formats: string[], spaced_repetition: string[], engagement_mechanics: string[], measurement_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/elearning/learningpath', requireAuth, async (req: AuthRequest, res: any) => {
+  const { careerTransition, existingSkills, timeAvailable } = req.body;
+  const prompt = `You are a learning path expert. Build a personalized learning path. Goal: ${careerTransition}. Skills: ${existingSkills}. Time: ${timeAvailable}. Respond in JSON: { learning_path: string, phase_breakdown: string[], resource_list: string[], project_milestones: string[], skill_checkpoints: string[], portfolio_building: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/elearning/corptraining', requireAuth, async (req: AuthRequest, res: any) => {
+  const { trainingNeed, employeeAudience, learningOutcomes } = req.body;
+  const prompt = `You are a corporate L&D expert. Design a corporate training program. Need: ${trainingNeed}. Audience: ${employeeAudience}. Outcomes: ${learningOutcomes}. Respond in JSON: { training_strategy: string, curriculum_outline: string[], delivery_methods: string[], blended_learning: string[], roi_measurement: string[], implementation_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/elearning/assessment', requireAuth, async (req: AuthRequest, res: any) => {
+  const { subject, learnerLevel, assessmentPurpose } = req.body;
+  const prompt = `You are an educational assessment expert. Build a learning assessment. Subject: ${subject}. Level: ${learnerLevel}. Purpose: ${assessmentPurpose}. Respond in JSON: { assessment_framework: string, question_types: string[], rubric_design: string[], bloom_taxonomy: string[], feedback_strategy: string[], validity_measures: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/elearning/language', requireAuth, async (req: AuthRequest, res: any) => {
+  const { targetLanguage, currentLevel, learningPurpose } = req.body;
+  const prompt = `You are a language acquisition expert. Design a language learning accelerator. Language: ${targetLanguage}. Level: ${currentLevel}. Purpose: ${learningPurpose}. Respond in JSON: { learning_strategy: string, immersion_techniques: string[], daily_practice: string[], resource_stack: string[], progress_milestones: string[], fluency_timeline: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
