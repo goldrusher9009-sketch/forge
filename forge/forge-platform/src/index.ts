@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v829.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v830.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -213738,5 +213738,65 @@ app.post('/api/saas/apibiz', requireAuth, async (req: AuthRequest, res: any) => 
 app.post('/api/saas/expansion', requireAuth, async (req: AuthRequest, res: any) => {
   const { currentARR, expansionOpportunities, expansionGoals } = req.body;
   const prompt = `You are a SaaS expansion revenue expert. Build an expansion revenue playbook. ARR: ${currentARR}. Opportunities: ${expansionOpportunities}. Goals: ${expansionGoals}. Respond in JSON: { expansion_strategy: string, upsell_playbook: string[], cross_sell_map: string[], land_expand_motion: string[], trigger_signals: string[], team_alignment: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecom/ecomstrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productCategory, targetMarket, revenueGoals } = req.body;
+  const prompt = `You are an e-commerce strategy expert. Build a comprehensive e-commerce strategy. Category: ${productCategory}. Market: ${targetMarket}. Goals: ${revenueGoals}. Respond in JSON: { ecom_strategy: string, platform_selection: string[], channel_mix: string[], pricing_strategy: string[], fulfillment_model: string[], growth_levers: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecom/listing', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productName, keyFeatures, targetKeywords } = req.body;
+  const prompt = `You are an e-commerce listing expert. Optimize this product listing. Product: ${productName}. Features: ${keyFeatures}. Keywords: ${targetKeywords}. Respond in JSON: { title: string, bullet_points: string[], description: string, backend_keywords: string[], a_plus_content: string[], search_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecom/cartaband', requireAuth, async (req: AuthRequest, res: any) => {
+  const { storeType, averageOrderValue, abandonmentRate } = req.body;
+  const prompt = `You are a cart abandonment expert. Build a recovery strategy. Store: ${storeType}. AOV: ${averageOrderValue}. Rate: ${abandonmentRate}. Respond in JSON: { recovery_strategy: string, email_sequence: string[], retargeting_approach: string[], exit_intent: string[], discount_strategy: string[], sms_recovery: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecom/ecomanalytics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { platform, businessGoals, dataMaturity } = req.body;
+  const prompt = `You are an e-commerce analytics expert. Build an analytics framework. Platform: ${platform}. Goals: ${businessGoals}. Maturity: ${dataMaturity}. Respond in JSON: { analytics_stack: string, key_metrics: string[], funnel_tracking: string[], cohort_analysis: string[], attribution_model: string[], reporting_dashboard: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecom/merch', requireAuth, async (req: AuthRequest, res: any) => {
+  const { retailType, productAssortment, seasonalFocus } = req.body;
+  const prompt = `You are a retail merchandising expert. Build a merchandising plan. Retail: ${retailType}. Assortment: ${productAssortment}. Season: ${seasonalFocus}. Respond in JSON: { merchandising_strategy: string, assortment_plan: string[], visual_merchandising: string[], promotional_calendar: string[], inventory_allocation: string[], performance_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecom/dropship', requireAuth, async (req: AuthRequest, res: any) => {
+  const { niche, targetCountry, startupBudget } = req.body;
+  const prompt = `You are a dropshipping expert. Build a dropshipping business plan. Niche: ${niche}. Country: ${targetCountry}. Budget: ${startupBudget}. Respond in JSON: { business_model: string, supplier_strategy: string[], product_selection: string[], platform_setup: string[], marketing_plan: string[], scaling_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecom/amazonppc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productASIN, monthlyBudget, campaignGoals } = req.body;
+  const prompt = `You are an Amazon PPC expert. Build a PPC campaign strategy. Product: ${productASIN}. Budget: ${monthlyBudget}. Goals: ${campaignGoals}. Respond in JSON: { campaign_structure: string, keyword_strategy: string[], bid_strategy: string[], targeting_approach: string[], budget_allocation: string[], optimization_cadence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecom/ecomemails', requireAuth, async (req: AuthRequest, res: any) => {
+  const { storeType, currentRevenue, emailGoals } = req.body;
+  const prompt = `You are an e-commerce email expert. Build email automation flows. Store: ${storeType}. Revenue: ${currentRevenue}. Goals: ${emailGoals}. Respond in JSON: { email_strategy: string, welcome_series: string[], post_purchase: string[], browse_abandon: string[], winback_series: string[], vip_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecom/retailprice', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, competitorPricing, marginGoals } = req.body;
+  const prompt = `You are a retail pricing expert. Build a pricing strategy. Product: ${productType}. Competitors: ${competitorPricing}. Margins: ${marginGoals}. Respond in JSON: { pricing_strategy: string, price_architecture: string[], promotional_pricing: string[], dynamic_pricing: string[], bundling_strategy: string[], margin_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecom/omnichannel', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentChannels, customerJourney, integrationGoals } = req.body;
+  const prompt = `You are an omnichannel retail expert. Build an omnichannel strategy. Channels: ${currentChannels}. Journey: ${customerJourney}. Goals: ${integrationGoals}. Respond in JSON: { omnichannel_framework: string, channel_integration: string[], unified_commerce: string[], inventory_sync: string[], customer_data_platform: string[], experience_consistency: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

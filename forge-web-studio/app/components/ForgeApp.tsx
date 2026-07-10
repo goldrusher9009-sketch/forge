@@ -494,6 +494,16 @@ ForgeTab_saaspartnerships3397,
 ForgeTab_productroadmap3398,
 ForgeTab_apimonetization3399,
 ForgeTab_expansionrevenue3400,
+ForgeTab_ecomstrategy3401,
+ForgeTab_productlisting3402,
+ForgeTab_cartabandonment3403,
+ForgeTab_ecomanalytics3404,
+ForgeTab_retailmerchandising3405,
+ForgeTab_dropshipping3406,
+ForgeTab_amazonppc3407,
+ForgeTab_ecomemailflows3408,
+ForgeTab_retailpricing3409,
+ForgeTab_omnichannel3410,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57881,6 +57891,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'productroadmap3398' && <ForgeTab_productroadmap3398 />}
               {(mainTab as string) === 'apimonetization3399' && <ForgeTab_apimonetization3399 />}
               {(mainTab as string) === 'expansionrevenue3400' && <ForgeTab_expansionrevenue3400 />}
+              {(mainTab as string) === 'ecomstrategy3401' && <ForgeTab_ecomstrategy3401 />}
+              {(mainTab as string) === 'productlisting3402' && <ForgeTab_productlisting3402 />}
+              {(mainTab as string) === 'cartabandonment3403' && <ForgeTab_cartabandonment3403 />}
+              {(mainTab as string) === 'ecomanalytics3404' && <ForgeTab_ecomanalytics3404 />}
+              {(mainTab as string) === 'retailmerchandising3405' && <ForgeTab_retailmerchandising3405 />}
+              {(mainTab as string) === 'dropshipping3406' && <ForgeTab_dropshipping3406 />}
+              {(mainTab as string) === 'amazonppc3407' && <ForgeTab_amazonppc3407 />}
+              {(mainTab as string) === 'ecomemailflows3408' && <ForgeTab_ecomemailflows3408 />}
+              {(mainTab as string) === 'retailpricing3409' && <ForgeTab_retailpricing3409 />}
+              {(mainTab as string) === 'omnichannel3410' && <ForgeTab_omnichannel3410 />}
       </div>
     </div>
   );
