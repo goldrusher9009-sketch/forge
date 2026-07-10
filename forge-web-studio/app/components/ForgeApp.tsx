@@ -1344,6 +1344,16 @@ ForgeTab_cpgstrategy4257,
 ForgeTab_restauranttechstrategy4258,
 ForgeTab_sustainableagriculture4259,
 ForgeTab_aquatechstrategy4260,
+ForgeTab_govtechstrategy4261,
+ForgeTab_publicsectorinnovation4262,
+ForgeTab_smartcity4263,
+ForgeTab_governmentdigitaltransform4264,
+ForgeTab_publicprocurement4265,
+ForgeTab_regulatorytechstrategy4266,
+ForgeTab_publicpolicytech4267,
+ForgeTab_defensetech4268,
+ForgeTab_civictech4269,
+ForgeTab_publicsafetytechnology4270,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59581,6 +59591,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'restauranttechstrategy4258' && <ForgeTab_restauranttechstrategy4258 />}
               {(mainTab as string) === 'sustainableagriculture4259' && <ForgeTab_sustainableagriculture4259 />}
               {(mainTab as string) === 'aquatechstrategy4260' && <ForgeTab_aquatechstrategy4260 />}
+              {(mainTab as string) === 'govtechstrategy4261' && <ForgeTab_govtechstrategy4261 />}
+              {(mainTab as string) === 'publicsectorinnovation4262' && <ForgeTab_publicsectorinnovation4262 />}
+              {(mainTab as string) === 'smartcity4263' && <ForgeTab_smartcity4263 />}
+              {(mainTab as string) === 'governmentdigitaltransform4264' && <ForgeTab_governmentdigitaltransform4264 />}
+              {(mainTab as string) === 'publicprocurement4265' && <ForgeTab_publicprocurement4265 />}
+              {(mainTab as string) === 'regulatorytechstrategy4266' && <ForgeTab_regulatorytechstrategy4266 />}
+              {(mainTab as string) === 'publicpolicytech4267' && <ForgeTab_publicpolicytech4267 />}
+              {(mainTab as string) === 'defensetech4268' && <ForgeTab_defensetech4268 />}
+              {(mainTab as string) === 'civictech4269' && <ForgeTab_civictech4269 />}
+              {(mainTab as string) === 'publicsafetytechnology4270' && <ForgeTab_publicsafetytechnology4270 />}
       </div>
     </div>
   );
