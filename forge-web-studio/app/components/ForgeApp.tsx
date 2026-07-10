@@ -734,6 +734,16 @@ ForgeTab_commercialrealestate3647,
 ForgeTab_realestatemarketplace3648,
 ForgeTab_shortterm_rental3649,
 ForgeTab_realestatetokenize3650,
+ForgeTab_insurtechstrategy3651,
+ForgeTab_riskmanagement3652,
+ForgeTab_cyberinsurance3653,
+ForgeTab_claimstech3654,
+ForgeTab_underwritingai3655,
+ForgeTab_insurancedistrib3656,
+ForgeTab_reinsurance3657,
+ForgeTab_parametricinsurance3658,
+ForgeTab_embeddedinsurance3659,
+ForgeTab_insuranceanalytics3660,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58361,6 +58371,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'realestatemarketplace3648' && <ForgeTab_realestatemarketplace3648 />}
               {(mainTab as string) === 'shortterm_rental3649' && <ForgeTab_shortterm_rental3649 />}
               {(mainTab as string) === 'realestatetokenize3650' && <ForgeTab_realestatetokenize3650 />}
+              {(mainTab as string) === 'insurtechstrategy3651' && <ForgeTab_insurtechstrategy3651 />}
+              {(mainTab as string) === 'riskmanagement3652' && <ForgeTab_riskmanagement3652 />}
+              {(mainTab as string) === 'cyberinsurance3653' && <ForgeTab_cyberinsurance3653 />}
+              {(mainTab as string) === 'claimstech3654' && <ForgeTab_claimstech3654 />}
+              {(mainTab as string) === 'underwritingai3655' && <ForgeTab_underwritingai3655 />}
+              {(mainTab as string) === 'insurancedistrib3656' && <ForgeTab_insurancedistrib3656 />}
+              {(mainTab as string) === 'reinsurance3657' && <ForgeTab_reinsurance3657 />}
+              {(mainTab as string) === 'parametricinsurance3658' && <ForgeTab_parametricinsurance3658 />}
+              {(mainTab as string) === 'embeddedinsurance3659' && <ForgeTab_embeddedinsurance3659 />}
+              {(mainTab as string) === 'insuranceanalytics3660' && <ForgeTab_insuranceanalytics3660 />}
       </div>
     </div>
   );
