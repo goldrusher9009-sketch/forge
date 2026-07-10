@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v805.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v806.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -212298,5 +212298,65 @@ app.post('/api/sales/channelpartner', requireAuth, async (req: AuthRequest, res:
 app.post('/api/sales/revops', requireAuth, async (req: AuthRequest, res: any) => {
   const { companyStage, revOpsMaturity, growthTarget } = req.body;
   const prompt = `You are a revenue operations expert. Design a RevOps function. Stage: ${companyStage}. Maturity: ${revOpsMaturity}. Target: ${growthTarget}. Respond in JSON: { revops_charter: string, tech_stack_recommendations: string[], process_standardization: string[], data_governance: string[], reporting_framework: string[], 90_day_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/uxresearch', requireAuth, async (req: AuthRequest, res: any) => {
+  const { researchQuestion, targetUsers, researchTimeline } = req.body;
+  const prompt = `You are a UX research expert. Design a comprehensive research plan. Question: ${researchQuestion}. Users: ${targetUsers}. Timeline: ${researchTimeline}. Respond in JSON: { research_methodology: string, study_design: string[], participant_criteria: string[], interview_guide: string[], analysis_framework: string[], deliverables: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/interviewguide', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productArea, userSegment, insightGoals } = req.body;
+  const prompt = `You are a user research expert. Create a structured interview guide. Area: ${productArea}. Users: ${userSegment}. Goals: ${insightGoals}. Respond in JSON: { interview_objectives: string[], warm_up_questions: string[], core_questions: string[], probing_techniques: string[], closing_questions: string[], analysis_template: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/jtbd', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productContext, userBehavior, competingAlternatives } = req.body;
+  const prompt = `You are a Jobs-to-be-Done expert. Analyze the core job customers are hiring this product for. Context: ${productContext}. Behavior: ${userBehavior}. Alternatives: ${competingAlternatives}. Respond in JSON: { functional_job: string, emotional_jobs: string[], social_jobs: string[], job_steps: string[], pain_points: string[], outcome_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/productspec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { featureName, userStory, successMetrics } = req.body;
+  const prompt = `You are a product spec writing expert. Write a comprehensive product spec. Feature: ${featureName}. Story: ${userStory}. Metrics: ${successMetrics}. Respond in JSON: { problem_statement: string, solution_overview: string, user_requirements: string[], technical_requirements: string[], edge_cases: string[], acceptance_criteria: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/roadmap', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productVision, quarterlyThemes, stakeholderNeeds } = req.body;
+  const prompt = `You are a product roadmap expert. Build a strategic product roadmap. Vision: ${productVision}. Themes: ${quarterlyThemes}. Stakeholders: ${stakeholderNeeds}. Respond in JSON: { roadmap_narrative: string, now_next_later: string[], quarterly_breakdown: string[], dependency_map: string[], tradeoff_decisions: string[], communication_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/featurepriority', requireAuth, async (req: AuthRequest, res: any) => {
+  const { featureList, prioritizationGoal, constraints } = req.body;
+  const prompt = `You are a product prioritization expert. Prioritize this feature backlog. Features: ${featureList}. Goal: ${prioritizationGoal}. Constraints: ${constraints}. Respond in JSON: { prioritized_list: string[], rice_scores: string[], cut_decisions: string[], quick_wins: string[], strategic_bets: string[], communication_rationale: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/abtest', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hypothesis, primaryMetric, trafficVolume } = req.body;
+  const prompt = `You are an A/B testing expert. Design a rigorous A/B test. Hypothesis: ${hypothesis}. Metric: ${primaryMetric}. Traffic: ${trafficVolume}. Respond in JSON: { test_design: string, variant_descriptions: string[], sample_size_calculation: string, test_duration: string, guardrail_metrics: string[], analysis_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/persona', requireAuth, async (req: AuthRequest, res: any) => {
+  const { targetMarket, researchData, productContext } = req.body;
+  const prompt = `You are a user persona expert. Build rich, evidence-based user personas. Market: ${targetMarket}. Research: ${researchData}. Product: ${productContext}. Respond in JSON: { primary_persona: string, secondary_persona: string, demographic_profile: string[], psychographic_profile: string[], pain_points: string[], decision_drivers: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/competitive', requireAuth, async (req: AuthRequest, res: any) => {
+  const { yourProduct, competitors, analysisGoal } = req.body;
+  const prompt = `You are a competitive analysis expert. Conduct a thorough competitive analysis. Product: ${yourProduct}. Competitors: ${competitors}. Goal: ${analysisGoal}. Respond in JSON: { competitive_landscape: string, feature_comparison: string[], positioning_gaps: string[], pricing_analysis: string[], differentiation_opportunities: string[], strategic_recommendations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/product/gto', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productDescription, targetSegment, launchTimeline } = req.body;
+  const prompt = `You are a go-to-market strategy expert. Design a comprehensive GTM plan. Product: ${productDescription}. Segment: ${targetSegment}. Timeline: ${launchTimeline}. Respond in JSON: { gtm_narrative: string, icp_definition: string, positioning_statement: string, launch_phases: string[], channel_strategy: string[], success_metrics: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

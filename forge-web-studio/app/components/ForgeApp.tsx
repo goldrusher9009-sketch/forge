@@ -254,6 +254,16 @@ ForgeTab_salesforecast3157,
 ForgeTab_salesenablement3158,
 ForgeTab_channelpartner3159,
 ForgeTab_revenueops3160,
+ForgeTab_uxresearchplan3161,
+ForgeTab_userinterviewguide3162,
+ForgeTab_jobstobedone3163,
+ForgeTab_productspec3164,
+ForgeTab_roadmapbuilder3165,
+ForgeTab_featurepriority3166,
+ForgeTab_abteststrategy3167,
+ForgeTab_personabuilder3168,
+ForgeTab_competitiveanalysis3169,
+ForgeTab_gtostrategy3170,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57401,6 +57411,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'salesenablement3158' && <ForgeTab_salesenablement3158 />}
               {(mainTab as string) === 'channelpartner3159' && <ForgeTab_channelpartner3159 />}
               {(mainTab as string) === 'revenueops3160' && <ForgeTab_revenueops3160 />}
+              {(mainTab as string) === 'uxresearchplan3161' && <ForgeTab_uxresearchplan3161 />}
+              {(mainTab as string) === 'userinterviewguide3162' && <ForgeTab_userinterviewguide3162 />}
+              {(mainTab as string) === 'jobstobedone3163' && <ForgeTab_jobstobedone3163 />}
+              {(mainTab as string) === 'productspec3164' && <ForgeTab_productspec3164 />}
+              {(mainTab as string) === 'roadmapbuilder3165' && <ForgeTab_roadmapbuilder3165 />}
+              {(mainTab as string) === 'featurepriority3166' && <ForgeTab_featurepriority3166 />}
+              {(mainTab as string) === 'abteststrategy3167' && <ForgeTab_abteststrategy3167 />}
+              {(mainTab as string) === 'personabuilder3168' && <ForgeTab_personabuilder3168 />}
+              {(mainTab as string) === 'competitiveanalysis3169' && <ForgeTab_competitiveanalysis3169 />}
+              {(mainTab as string) === 'gtostrategy3170' && <ForgeTab_gtostrategy3170 />}
       </div>
     </div>
   );
