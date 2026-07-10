@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v815.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v816.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -212898,5 +212898,65 @@ app.post('/api/supplychain/reverselogistics', requireAuth, async (req: AuthReque
 app.post('/api/supplychain/supplyrisk', requireAuth, async (req: AuthRequest, res: any) => {
   const { supplyChainMap, riskEvents, businessImpact } = req.body;
   const prompt = `You are a supply chain risk expert. Develop risk mitigation strategies. Map: ${supplyChainMap}. Risks: ${riskEvents}. Impact: ${businessImpact}. Respond in JSON: { risk_assessment: string, supplier_diversification: string[], nearshoring_strategy: string[], buffer_stock_plan: string[], monitoring_system: string[], response_playbooks: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/clinicaltrial', requireAuth, async (req: AuthRequest, res: any) => {
+  const { therapeuticArea, studyPhase, patientPopulation } = req.body;
+  const prompt = `You are a clinical trial design expert. Design a clinical trial protocol. Area: ${therapeuticArea}. Phase: ${studyPhase}. Population: ${patientPopulation}. Respond in JSON: { study_design: string, primary_endpoints: string[], secondary_endpoints: string[], inclusion_criteria: string[], exclusion_criteria: string[], statistical_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/regulatory', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, targetMarkets, developmentStage } = req.body;
+  const prompt = `You are a regulatory affairs expert. Plan regulatory submissions. Product: ${productType}. Markets: ${targetMarkets}. Stage: ${developmentStage}. Respond in JSON: { regulatory_strategy: string, submission_pathways: string[], key_milestones: string[], dossier_requirements: string[], common_pitfalls: string[], timeline: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/drugdiscovery', requireAuth, async (req: AuthRequest, res: any) => {
+  const { diseaseTarget, mechanismOfAction, developmentGoals } = req.body;
+  const prompt = `You are a drug discovery expert. Design a drug discovery strategy. Target: ${diseaseTarget}. Mechanism: ${mechanismOfAction}. Goals: ${developmentGoals}. Respond in JSON: { discovery_strategy: string, target_validation: string[], screening_approach: string[], lead_optimization: string[], preclinical_plan: string[], go_no_go_criteria: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/biotechfund', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyStage, programPortfolio, fundingNeeds } = req.body;
+  const prompt = `You are a biotech financing expert. Design a funding strategy. Stage: ${companyStage}. Portfolio: ${programPortfolio}. Needs: ${fundingNeeds}. Respond in JSON: { funding_strategy: string, investor_types: string[], pitch_narrative: string[], valuation_drivers: string[], milestone_plan: string[], deal_structure_options: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/cmo', requireAuth, async (req: AuthRequest, res: any) => {
+  const { manufacturingNeeds, programStage, qualityRequirements } = req.body;
+  const prompt = `You are a pharmaceutical outsourcing expert. Guide CMO/CRO selection. Needs: ${manufacturingNeeds}. Stage: ${programStage}. Quality: ${qualityRequirements}. Respond in JSON: { outsourcing_strategy: string, vendor_requirements: string[], due_diligence_checklist: string[], contract_terms: string[], tech_transfer_plan: string[], risk_mitigation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/genetherapy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { targetGene, deliveryModality, patientPopulation } = req.body;
+  const prompt = `You are a gene therapy development expert. Plan gene therapy development. Target: ${targetGene}. Modality: ${deliveryModality}. Population: ${patientPopulation}. Respond in JSON: { development_strategy: string, vector_design: string[], manufacturing_considerations: string[], preclinical_program: string[], regulatory_pathway: string[], patient_access_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/pipeline', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyName, pipelineAssets, therapeuticFocus } = req.body;
+  const prompt = `You are a pharmaceutical pipeline analyst. Analyze this pharma pipeline. Company: ${companyName}. Assets: ${pipelineAssets}. Focus: ${therapeuticFocus}. Respond in JSON: { pipeline_assessment: string, asset_valuations: string[], competitive_landscape: string[], risk_analysis: string[], development_gaps: string[], partnership_opportunities: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/biomarker', requireAuth, async (req: AuthRequest, res: any) => {
+  const { therapeuticArea, biomarkerType, clinicalApplication } = req.body;
+  const prompt = `You are a biomarker strategy expert. Develop a biomarker program. Area: ${therapeuticArea}. Type: ${biomarkerType}. Application: ${clinicalApplication}. Respond in JSON: { biomarker_strategy: string, assay_development: string[], validation_plan: string[], regulatory_qualification: string[], companion_diagnostic: string[], data_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/pharmaprice', requireAuth, async (req: AuthRequest, res: any) => {
+  const { drugProfile, therapeuticValue, payerLandscape } = req.body;
+  const prompt = `You are a pharmaceutical pricing expert. Design a pricing and market access strategy. Drug: ${drugProfile}. Value: ${therapeuticValue}. Payers: ${payerLandscape}. Respond in JSON: { pricing_framework: string, value_proposition: string[], payer_strategy: string[], hta_approach: string[], contracting_strategy: string[], patient_access_programs: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biotech/clinicalops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { studyDesign, siteRequirements, operationalConstraints } = req.body;
+  const prompt = `You are a clinical operations expert. Design a clinical operations plan. Study: ${studyDesign}. Sites: ${siteRequirements}. Constraints: ${operationalConstraints}. Respond in JSON: { ops_strategy: string, site_selection: string[], patient_recruitment: string[], data_management: string[], risk_based_monitoring: string[], timeline_milestones: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
