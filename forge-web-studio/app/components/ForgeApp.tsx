@@ -324,6 +324,16 @@ ForgeTab_securityawareness3227,
 ForgeTab_cloudsecrisk3228,
 ForgeTab_supplychainsec3229,
 ForgeTab_cryptostrategy3230,
+ForgeTab_insurancecoverage3231,
+ForgeTab_riskregister3232,
+ForgeTab_claimsstrategy3233,
+ForgeTab_businesscontinuity3234,
+ForgeTab_liabilityassessment3235,
+ForgeTab_cyberinsurance3236,
+ForgeTab_insuranceroi3237,
+ForgeTab_contractorisk3238,
+ForgeTab_workerscomp3239,
+ForgeTab_riskfinancing3240,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57541,6 +57551,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'cloudsecrisk3228' && <ForgeTab_cloudsecrisk3228 />}
               {(mainTab as string) === 'supplychainsec3229' && <ForgeTab_supplychainsec3229 />}
               {(mainTab as string) === 'cryptostrategy3230' && <ForgeTab_cryptostrategy3230 />}
+              {(mainTab as string) === 'insurancecoverage3231' && <ForgeTab_insurancecoverage3231 />}
+              {(mainTab as string) === 'riskregister3232' && <ForgeTab_riskregister3232 />}
+              {(mainTab as string) === 'claimsstrategy3233' && <ForgeTab_claimsstrategy3233 />}
+              {(mainTab as string) === 'businesscontinuity3234' && <ForgeTab_businesscontinuity3234 />}
+              {(mainTab as string) === 'liabilityassessment3235' && <ForgeTab_liabilityassessment3235 />}
+              {(mainTab as string) === 'cyberinsurance3236' && <ForgeTab_cyberinsurance3236 />}
+              {(mainTab as string) === 'insuranceroi3237' && <ForgeTab_insuranceroi3237 />}
+              {(mainTab as string) === 'contractorisk3238' && <ForgeTab_contractorisk3238 />}
+              {(mainTab as string) === 'workerscomp3239' && <ForgeTab_workerscomp3239 />}
+              {(mainTab as string) === 'riskfinancing3240' && <ForgeTab_riskfinancing3240 />}
       </div>
     </div>
   );

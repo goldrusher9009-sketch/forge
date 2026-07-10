@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v812.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v813.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -212718,5 +212718,65 @@ app.post('/api/cybersecurity/supplychainsec', requireAuth, async (req: AuthReque
 app.post('/api/cybersecurity/crypto', requireAuth, async (req: AuthRequest, res: any) => {
   const { dataTypes, useCase, complianceNeeds } = req.body;
   const prompt = `You are a cryptography strategy expert. Recommend cryptographic controls. Data: ${dataTypes}. Use case: ${useCase}. Compliance: ${complianceNeeds}. Respond in JSON: { crypto_recommendations: string[], algorithm_selections: string[], key_management: string[], implementation_guidance: string[], quantum_readiness: string[], compliance_mapping: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurance/insurcoverage', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessType, currentCoverage, riskExposures } = req.body;
+  const prompt = `You are an insurance coverage expert. Analyze and optimize insurance coverage. Business: ${businessType}. Current: ${currentCoverage}. Risks: ${riskExposures}. Respond in JSON: { coverage_gaps: string[], recommended_policies: string[], coverage_limits: string[], priority_additions: string[], estimated_premiums: string[], broker_questions: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurance/riskregister', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industryType, businessOperations, riskAppetite } = req.body;
+  const prompt = `You are an enterprise risk management expert. Build a comprehensive risk register. Industry: ${industryType}. Operations: ${businessOperations}. Appetite: ${riskAppetite}. Respond in JSON: { risk_categories: string[], risk_inventory: string[], likelihood_impact: string[], risk_owners: string[], mitigation_strategies: string[], monitoring_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurance/claims', requireAuth, async (req: AuthRequest, res: any) => {
+  const { claimType, incidentDetails, policyDetails } = req.body;
+  const prompt = `You are an insurance claims expert. Develop a claims strategy. Type: ${claimType}. Incident: ${incidentDetails}. Policy: ${policyDetails}. Respond in JSON: { claim_overview: string, documentation_checklist: string[], negotiation_strategy: string[], common_pitfalls: string[], timeline: string[], dispute_escalation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurance/bcp', requireAuth, async (req: AuthRequest, res: any) => {
+  const { criticalFunctions, potentialDisruptions, recoveryObjectives } = req.body;
+  const prompt = `You are a business continuity expert. Create a BCP framework. Functions: ${criticalFunctions}. Disruptions: ${potentialDisruptions}. Objectives: ${recoveryObjectives}. Respond in JSON: { bcp_framework: string, risk_scenarios: string[], continuity_strategies: string[], recovery_procedures: string[], communication_plan: string[], testing_schedule: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurance/liability', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessActivities, contractualObligations, claimsHistory } = req.body;
+  const prompt = `You are a liability risk expert. Assess liability exposures. Activities: ${businessActivities}. Contracts: ${contractualObligations}. History: ${claimsHistory}. Respond in JSON: { liability_profile: string, exposure_categories: string[], high_risk_areas: string[], contractual_protections: string[], risk_transfer_options: string[], recommended_coverage: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurance/cyberinsur', requireAuth, async (req: AuthRequest, res: any) => {
+  const { technologyEnvironment, dataVolume, cyberMaturity } = req.body;
+  const prompt = `You are a cyber insurance expert. Guide cyber insurance decisions. Tech: ${technologyEnvironment}. Data: ${dataVolume}. Maturity: ${cyberMaturity}. Respond in JSON: { cyber_risk_profile: string, coverage_recommendations: string[], policy_requirements: string[], premium_factors: string[], pre_binding_security: string[], incident_response_requirements: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurance/insuroi', requireAuth, async (req: AuthRequest, res: any) => {
+  const { annualPremiums, historicalLosses, uninsuredRisks } = req.body;
+  const prompt = `You are an insurance ROI expert. Calculate insurance program ROI. Premiums: ${annualPremiums}. Losses: ${historicalLosses}. Risks: ${uninsuredRisks}. Respond in JSON: { roi_analysis: string, loss_ratio: string, cost_of_risk: string[], self_insurance_options: string[], captive_viability: string[], program_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurance/contractrisk', requireAuth, async (req: AuthRequest, res: any) => {
+  const { contractType, keyContractClauses, counterpartyProfile } = req.body;
+  const prompt = `You are a contract risk expert. Review contract risk exposure. Contract: ${contractType}. Clauses: ${keyContractClauses}. Counterparty: ${counterpartyProfile}. Respond in JSON: { risk_summary: string, high_risk_clauses: string[], indemnity_analysis: string[], insurance_requirements: string[], negotiation_points: string[], red_flags: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurance/workerscomp', requireAuth, async (req: AuthRequest, res: any) => {
+  const { workforce, industryClassification, safetyProgram } = req.body;
+  const prompt = `You are a workers compensation expert. Optimize workers comp program. Workforce: ${workforce}. Industry: ${industryClassification}. Safety: ${safetyProgram}. Respond in JSON: { cost_analysis: string, experience_modifier: string, safety_improvements: string[], claims_management: string[], return_to_work: string[], premium_reduction_strategies: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurance/riskfinance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companySize, riskProfile, financialCapacity } = req.body;
+  const prompt = `You are a risk financing expert. Design a risk financing strategy. Size: ${companySize}. Risks: ${riskProfile}. Capacity: ${financialCapacity}. Respond in JSON: { financing_options: string[], retention_vs_transfer: string[], captive_analysis: string[], self_insurance_strategy: string[], reinsurance_options: string[], optimization_roadmap: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
