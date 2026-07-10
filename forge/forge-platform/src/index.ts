@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v819.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v820.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -213138,5 +213138,65 @@ app.post('/api/mentalhealth/sleep', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/mentalhealth/resilience', requireAuth, async (req: AuthRequest, res: any) => {
   const { currentStressors, strengthsAndResources, resilienceGoals } = req.body;
   const prompt = `You are a resilience coach. Design a resilience building program. Stressors: ${currentStressors}. Strengths: ${strengthsAndResources}. Goals: ${resilienceGoals}. Respond in JSON: { resilience_framework: string, mindset_shifts: string[], skill_building: string[], social_support: string[], purpose_meaning: string[], growth_practices: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/budget', requireAuth, async (req: AuthRequest, res: any) => {
+  const { monthlyIncome, currentExpenses, financialGoals } = req.body;
+  const prompt = `You are a personal finance expert. Create a comprehensive personal budget plan. Income: ${monthlyIncome}. Expenses: ${currentExpenses}. Goals: ${financialGoals}. Respond in JSON: { budget_framework: string, spending_categories: string[], savings_targets: string[], expense_cuts: string[], emergency_fund_plan: string[], tracking_system: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/debt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { debtList, monthlyPayment, payoffGoal } = req.body;
+  const prompt = `You are a debt management expert. Create a debt payoff strategy. Debts: ${debtList}. Payment: ${monthlyPayment}. Goal: ${payoffGoal}. Respond in JSON: { payoff_method: string, payment_order: string[], monthly_plan: string[], interest_savings: string[], acceleration_tactics: string[], milestone_targets: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/retirement', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentAge, currentSavings, retirementGoals } = req.body;
+  const prompt = `You are a retirement planning expert. Build a retirement plan. Age: ${currentAge}. Savings: ${currentSavings}. Goals: ${retirementGoals}. Respond in JSON: { retirement_projection: string, savings_strategy: string[], account_optimization: string[], investment_allocation: string[], social_security_strategy: string[], income_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/investing', requireAuth, async (req: AuthRequest, res: any) => {
+  const { investmentAmount, riskTolerance, investmentGoals } = req.body;
+  const prompt = `You are a personal investment education expert. Guide investment decisions. Amount: ${investmentAmount}. Risk: ${riskTolerance}. Goals: ${investmentGoals}. Respond in JSON: { investment_education: string, account_types: string[], asset_allocation: string[], investment_vehicles: string[], diversification_strategy: string[], next_steps: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/tax', requireAuth, async (req: AuthRequest, res: any) => {
+  const { filingStatus, incomeSource, currentDeductions } = req.body;
+  const prompt = `You are a personal tax education expert. Identify tax optimization opportunities. Status: ${filingStatus}. Income: ${incomeSource}. Deductions: ${currentDeductions}. Respond in JSON: { tax_overview: string, deduction_opportunities: string[], credit_eligibility: string[], account_strategies: string[], timing_optimization: string[], professional_guidance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/creditscore', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentScore, creditHistory, creditGoals } = req.body;
+  const prompt = `You are a credit expert. Build a credit improvement plan. Score: ${currentScore}. History: ${creditHistory}. Goals: ${creditGoals}. Respond in JSON: { score_assessment: string, quick_wins: string[], payment_strategy: string[], utilization_plan: string[], dispute_guidance: string[], timeline_projection: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/homebuy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { budget, currentFinances, marketLocation } = req.body;
+  const prompt = `You are a home buying financial expert. Plan the home buying process. Budget: ${budget}. Finances: ${currentFinances}. Market: ${marketLocation}. Respond in JSON: { affordability_assessment: string, savings_plan: string[], mortgage_options: string[], total_cost_breakdown: string[], credit_preparation: string[], buying_timeline: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/insurance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { lifeStage, currentCoverage, riskProfile } = req.body;
+  const prompt = `You are a personal insurance expert. Review and optimize insurance coverage. Stage: ${lifeStage}. Coverage: ${currentCoverage}. Risk: ${riskProfile}. Respond in JSON: { coverage_assessment: string, gaps_identified: string[], recommended_coverage: string[], cost_optimization: string[], priority_actions: string[], review_schedule: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/estate', requireAuth, async (req: AuthRequest, res: any) => {
+  const { familySituation, assets, estatePriorities } = req.body;
+  const prompt = `You are an estate planning education expert. Outline an estate plan framework. Family: ${familySituation}. Assets: ${assets}. Priorities: ${estatePriorities}. Respond in JSON: { estate_overview: string, essential_documents: string[], beneficiary_strategy: string[], asset_protection: string[], tax_considerations: string[], professional_guidance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personalfinance/finfire', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentNetWorth, annualExpenses, fireTarget } = req.body;
+  const prompt = `You are a financial independence expert. Build a FIRE roadmap. Net worth: ${currentNetWorth}. Expenses: ${annualExpenses}. Target: ${fireTarget}. Respond in JSON: { fire_assessment: string, savings_acceleration: string[], investment_strategy: string[], expense_optimization: string[], income_diversification: string[], milestone_timeline: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

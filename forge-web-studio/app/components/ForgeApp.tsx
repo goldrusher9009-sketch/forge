@@ -394,6 +394,16 @@ ForgeTab_griefjourney3297,
 ForgeTab_relationshipwellness3298,
 ForgeTab_sleepoptimizer3299,
 ForgeTab_resilience3300,
+ForgeTab_budgetplanner3301,
+ForgeTab_debtpayoff3302,
+ForgeTab_retirementplan3303,
+ForgeTab_investingstarter3304,
+ForgeTab_taxoptimizer3305,
+ForgeTab_creditscoreplan3306,
+ForgeTab_homebuying3307,
+ForgeTab_insurancereview3308,
+ForgeTab_estateplanning3309,
+ForgeTab_financialfreedom3310,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57681,6 +57691,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'relationshipwellness3298' && <ForgeTab_relationshipwellness3298 />}
               {(mainTab as string) === 'sleepoptimizer3299' && <ForgeTab_sleepoptimizer3299 />}
               {(mainTab as string) === 'resilience3300' && <ForgeTab_resilience3300 />}
+              {(mainTab as string) === 'budgetplanner3301' && <ForgeTab_budgetplanner3301 />}
+              {(mainTab as string) === 'debtpayoff3302' && <ForgeTab_debtpayoff3302 />}
+              {(mainTab as string) === 'retirementplan3303' && <ForgeTab_retirementplan3303 />}
+              {(mainTab as string) === 'investingstarter3304' && <ForgeTab_investingstarter3304 />}
+              {(mainTab as string) === 'taxoptimizer3305' && <ForgeTab_taxoptimizer3305 />}
+              {(mainTab as string) === 'creditscoreplan3306' && <ForgeTab_creditscoreplan3306 />}
+              {(mainTab as string) === 'homebuying3307' && <ForgeTab_homebuying3307 />}
+              {(mainTab as string) === 'insurancereview3308' && <ForgeTab_insurancereview3308 />}
+              {(mainTab as string) === 'estateplanning3309' && <ForgeTab_estateplanning3309 />}
+              {(mainTab as string) === 'financialfreedom3310' && <ForgeTab_financialfreedom3310 />}
       </div>
     </div>
   );
