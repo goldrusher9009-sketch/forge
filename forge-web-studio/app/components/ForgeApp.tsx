@@ -1564,6 +1564,16 @@ ForgeTab_pharmacommercial4477,
 ForgeTab_pharmamfg4478,
 ForgeTab_healtheconomics4479,
 ForgeTab_lifesciencelicensing4480,
+ForgeTab_retailstrategy4481,
+ForgeTab_ecommercestrategy4482,
+ForgeTab_consumergoods4483,
+ForgeTab_customerexperience4484,
+ForgeTab_loyaltystrategy4485,
+ForgeTab_categorymanagement4486,
+ForgeTab_fashionstrategy4487,
+ForgeTab_foodbeverage4488,
+ForgeTab_luxurystrategy4489,
+ForgeTab_dtcstrategy4490,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -60021,6 +60031,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'pharmamfg4478' && <ForgeTab_pharmamfg4478 />}
               {(mainTab as string) === 'healtheconomics4479' && <ForgeTab_healtheconomics4479 />}
               {(mainTab as string) === 'lifesciencelicensing4480' && <ForgeTab_lifesciencelicensing4480 />}
+              {(mainTab as string) === 'retailstrategy4481' && <ForgeTab_retailstrategy4481 />}
+              {(mainTab as string) === 'ecommercestrategy4482' && <ForgeTab_ecommercestrategy4482 />}
+              {(mainTab as string) === 'consumergoods4483' && <ForgeTab_consumergoods4483 />}
+              {(mainTab as string) === 'customerexperience4484' && <ForgeTab_customerexperience4484 />}
+              {(mainTab as string) === 'loyaltystrategy4485' && <ForgeTab_loyaltystrategy4485 />}
+              {(mainTab as string) === 'categorymanagement4486' && <ForgeTab_categorymanagement4486 />}
+              {(mainTab as string) === 'fashionstrategy4487' && <ForgeTab_fashionstrategy4487 />}
+              {(mainTab as string) === 'foodbeverage4488' && <ForgeTab_foodbeverage4488 />}
+              {(mainTab as string) === 'luxurystrategy4489' && <ForgeTab_luxurystrategy4489 />}
+              {(mainTab as string) === 'dtcstrategy4490' && <ForgeTab_dtcstrategy4490 />}
       </div>
     </div>
   );
