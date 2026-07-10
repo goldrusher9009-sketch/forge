@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v926.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v927.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -219558,5 +219558,65 @@ app.post('/api/aimlplatform/vectordb', requireAuth, async (req: AuthRequest, res
 app.post('/api/aimlplatform/aienablement', requireAuth, async (req: AuthRequest, res: any) => {
   const { enableType, currentEnableState, enableGoals } = req.body;
   const prompt = `You are an enterprise AI enablement strategy expert. Build an AI enablement strategy. Org: ${enableType}. State: ${currentEnableState}. Goals: ${enableGoals}. Respond in JSON: { ai_enablement_strategy: string, use_case_portfolio: string[], center_of_excellence: string[], workforce_upskilling: string[], governance_framework: string[], roi_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/saascloud/saas', requireAuth, async (req: AuthRequest, res: any) => {
+  const { saasType, currentSaaSState, saasGoals } = req.body;
+  const prompt = `You are a SaaS strategy expert. Build a SaaS strategy. Type: ${saasType}. State: ${currentSaaSState}. Goals: ${saasGoals}. Respond in JSON: { saas_strategy: string, growth_model: string[], pricing_strategy: string[], churn_reduction: string[], enterprise_motion: string[], international_expansion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/saascloud/cloudmig', requireAuth, async (req: AuthRequest, res: any) => {
+  const { migType, currentMigState, migGoals } = req.body;
+  const prompt = `You are a cloud migration strategy expert. Build a cloud migration strategy. Type: ${migType}. State: ${currentMigState}. Goals: ${migGoals}. Respond in JSON: { cloud_migration_strategy: string, assessment_framework: string[], migration_waves: string[], risk_mitigation: string[], cost_optimization: string[], modernization_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/saascloud/multicloud', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cloudType, currentCloudState, cloudGoals } = req.body;
+  const prompt = `You are a multi-cloud strategy expert. Build a multi-cloud strategy. Cloud: ${cloudType}. State: ${currentCloudState}. Goals: ${cloudGoals}. Respond in JSON: { multi_cloud_strategy: string, workload_placement: string[], governance_framework: string[], cost_management: string[], resilience_design: string[], vendor_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/saascloud/plg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { plgType, currentPLGState, plgGoals } = req.body;
+  const prompt = `You are a PLG strategy expert. Build a product-led growth strategy. Type: ${plgType}. State: ${currentPLGState}. Goals: ${plgGoals}. Respond in JSON: { plg_strategy: string, onboarding_design: string[], aha_moment: string[], viral_loops: string[], pql_framework: string[], expansion_revenue: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/saascloud/saaspricing', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pricingType, currentPricingState, pricingGoals } = req.body;
+  const prompt = `You are a SaaS pricing strategy expert. Build a SaaS pricing strategy. Type: ${pricingType}. State: ${currentPricingState}. Goals: ${pricingGoals}. Respond in JSON: { pricing_strategy: string, pricing_model_design: string[], value_metric: string[], packaging: string[], expansion_motion: string[], competitive_positioning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/saascloud/saasgtm', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gtmType, currentGTMState, gtmGoals } = req.body;
+  const prompt = `You are a SaaS GTM strategy expert. Build a SaaS go-to-market strategy. Type: ${gtmType}. State: ${currentGTMState}. Goals: ${gtmGoals}. Respond in JSON: { gtm_strategy: string, icp_definition: string[], sales_motion: string[], marketing_strategy: string[], channel_strategy: string[], international_expansion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/saascloud/devex', requireAuth, async (req: AuthRequest, res: any) => {
+  const { devexType, currentDXState, dxGoals } = req.body;
+  const prompt = `You are a developer experience strategy expert. Build a DX strategy. Type: ${devexType}. State: ${currentDXState}. Goals: ${dxGoals}. Respond in JSON: { dx_strategy: string, api_design: string[], documentation_system: string[], onboarding_flow: string[], community_building: string[], developer_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/saascloud/customersuccess', requireAuth, async (req: AuthRequest, res: any) => {
+  const { csType, currentCSState, csGoals } = req.body;
+  const prompt = `You are a customer success strategy expert. Build a CS strategy. Type: ${csType}. State: ${currentCSState}. Goals: ${csGoals}. Respond in JSON: { customer_success_strategy: string, onboarding_playbook: string[], health_score_model: string[], expansion_playbook: string[], churn_prevention: string[], cs_ops_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/saascloud/finops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { finopsType, currentFinOpsState, finopsGoals } = req.body;
+  const prompt = `You are a FinOps strategy expert. Build a FinOps strategy. Cloud: ${finopsType}. State: ${currentFinOpsState}. Goals: ${finopsGoals}. Respond in JSON: { finops_strategy: string, cost_visibility: string[], optimization_tactics: string[], commitment_strategy: string[], tagging_governance: string[], team_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/saascloud/saasmetrics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { metricsType, currentMetricsState, metricsGoals } = req.body;
+  const prompt = `You are a SaaS metrics strategy expert. Build a SaaS metrics strategy. Stage: ${metricsType}. State: ${currentMetricsState}. Goals: ${metricsGoals}. Respond in JSON: { saas_metrics_strategy: string, north_star_metrics: string[], cohort_analysis: string[], revenue_analytics: string[], growth_accounting: string[], dashboard_design: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

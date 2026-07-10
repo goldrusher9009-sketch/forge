@@ -1464,6 +1464,16 @@ ForgeTab_nlpstrategy4377,
 ForgeTab_aigovernance4378,
 ForgeTab_vectordbstrategy4379,
 ForgeTab_aienablement4380,
+ForgeTab_saasstrategy4381,
+ForgeTab_cloudmigration4382,
+ForgeTab_multicloudstrategy4383,
+ForgeTab_plgstrategy4384,
+ForgeTab_saaspricingstrategy4385,
+ForgeTab_saasgtm4386,
+ForgeTab_devexstrategy4387,
+ForgeTab_customersuccessstrategy4388,
+ForgeTab_finopsstrategy4389,
+ForgeTab_saasmetrics4390,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59821,6 +59831,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'aigovernance4378' && <ForgeTab_aigovernance4378 />}
               {(mainTab as string) === 'vectordbstrategy4379' && <ForgeTab_vectordbstrategy4379 />}
               {(mainTab as string) === 'aienablement4380' && <ForgeTab_aienablement4380 />}
+              {(mainTab as string) === 'saasstrategy4381' && <ForgeTab_saasstrategy4381 />}
+              {(mainTab as string) === 'cloudmigration4382' && <ForgeTab_cloudmigration4382 />}
+              {(mainTab as string) === 'multicloudstrategy4383' && <ForgeTab_multicloudstrategy4383 />}
+              {(mainTab as string) === 'plgstrategy4384' && <ForgeTab_plgstrategy4384 />}
+              {(mainTab as string) === 'saaspricingstrategy4385' && <ForgeTab_saaspricingstrategy4385 />}
+              {(mainTab as string) === 'saasgtm4386' && <ForgeTab_saasgtm4386 />}
+              {(mainTab as string) === 'devexstrategy4387' && <ForgeTab_devexstrategy4387 />}
+              {(mainTab as string) === 'customersuccessstrategy4388' && <ForgeTab_customersuccessstrategy4388 />}
+              {(mainTab as string) === 'finopsstrategy4389' && <ForgeTab_finopsstrategy4389 />}
+              {(mainTab as string) === 'saasmetrics4390' && <ForgeTab_saasmetrics4390 />}
       </div>
     </div>
   );
