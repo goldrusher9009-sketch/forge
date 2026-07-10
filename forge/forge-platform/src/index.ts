@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v884.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v885.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -217038,5 +217038,65 @@ app.post('/api/security/supplychain', requireAuth, async (req: AuthRequest, res:
 app.post('/api/security/dataprotect', requireAuth, async (req: AuthRequest, res: any) => {
   const { orgType, dataLandscape, dataProtectGoals } = req.body;
   const prompt = `You are a data protection expert. Build a data protection strategy. Org: ${orgType}. Data: ${dataLandscape}. Goals: ${dataProtectGoals}. Respond in JSON: { data_protection_strategy: string, data_discovery_classification: string[], dlp_controls: string[], encryption_approach: string[], privacy_program: string[], regulatory_compliance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3/blockchain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { blockchainUseCase, targetIndustry, blockchainGoals } = req.body;
+  const prompt = `You are a blockchain strategy expert. Build a blockchain strategy. Use case: ${blockchainUseCase}. Industry: ${targetIndustry}. Goals: ${blockchainGoals}. Respond in JSON: { blockchain_strategy: string, use_case_design: string[], technology_selection: string[], governance_model: string[], ecosystem_development: string[], roi_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3/web3', requireAuth, async (req: AuthRequest, res: any) => {
+  const { web3OrgType, targetEcosystem, web3Goals } = req.body;
+  const prompt = `You are a Web3 strategy expert. Build a Web3 strategy. Org: ${web3OrgType}. Ecosystem: ${targetEcosystem}. Goals: ${web3Goals}. Respond in JSON: { web3_strategy: string, protocol_design: string[], tokenomics: string[], community_governance: string[], ecosystem_partnerships: string[], growth_flywheel: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3/defi', requireAuth, async (req: AuthRequest, res: any) => {
+  const { defiType, targetChain, defiGoals } = req.body;
+  const prompt = `You are a DeFi strategy expert. Build a DeFi strategy. Type: ${defiType}. Chain: ${targetChain}. Goals: ${defiGoals}. Respond in JSON: { defi_strategy: string, protocol_mechanics: string[], liquidity_strategy: string[], security_audits: string[], tokenomics_design: string[], growth_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3/nft', requireAuth, async (req: AuthRequest, res: any) => {
+  const { nftOrgType, targetAudience, nftGoals } = req.body;
+  const prompt = `You are an NFT strategy expert. Build an NFT strategy. Org: ${nftOrgType}. Audience: ${targetAudience}. Goals: ${nftGoals}. Respond in JSON: { nft_strategy: string, collection_design: string[], utility_roadmap: string[], community_building: string[], marketplace_approach: string[], revenue_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3/dao', requireAuth, async (req: AuthRequest, res: any) => {
+  const { daoType, communitySize, daoGoals } = req.body;
+  const prompt = `You are a DAO governance expert. Build a DAO strategy. Type: ${daoType}. Community: ${communitySize}. Goals: ${daoGoals}. Respond in JSON: { dao_strategy: string, governance_design: string[], token_voting: string[], treasury_management: string[], contributor_incentives: string[], legal_structure: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3/exchange', requireAuth, async (req: AuthRequest, res: any) => {
+  const { exchangeType, targetMarkets, exchangeGoals } = req.body;
+  const prompt = `You are a crypto exchange strategy expert. Build an exchange strategy. Type: ${exchangeType}. Markets: ${targetMarkets}. Goals: ${exchangeGoals}. Respond in JSON: { exchange_strategy: string, product_roadmap: string[], liquidity_strategy: string[], regulatory_compliance: string[], security_framework: string[], growth_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3/tokenomics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tokenType, protocolMechanism, tokenGoals } = req.body;
+  const prompt = `You are a tokenomics design expert. Build a tokenomics strategy. Token: ${tokenType}. Mechanism: ${protocolMechanism}. Goals: ${tokenGoals}. Respond in JSON: { tokenomics_strategy: string, supply_schedule: string[], distribution_model: string[], value_accrual: string[], incentive_design: string[], vesting_lockups: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3/cryptoreg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cryptoOrgType, operatingJurisdictions, regulatoryGoals } = req.body;
+  const prompt = `You are a crypto regulatory strategy expert. Build a regulatory strategy. Org: ${cryptoOrgType}. Jurisdictions: ${operatingJurisdictions}. Goals: ${regulatoryGoals}. Respond in JSON: { regulatory_strategy: string, jurisdiction_analysis: string[], licensing_roadmap: string[], compliance_framework: string[], regulatory_engagement: string[], entity_structure: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3/web3game', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gameType, targetPlayers, gamefiGoals } = req.body;
+  const prompt = `You are a Web3 gaming strategy expert. Build a Web3 gaming strategy. Game: ${gameType}. Players: ${targetPlayers}. Goals: ${gamefiGoals}. Respond in JSON: { web3_gaming_strategy: string, game_mechanics: string[], token_integration: string[], nft_economy: string[], player_acquisition: string[], sustainable_economics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3/enterprise', requireAuth, async (req: AuthRequest, res: any) => {
+  const { enterpriseType, businessProblem, enterpriseBlockchainGoals } = req.body;
+  const prompt = `You are an enterprise blockchain expert. Build an enterprise blockchain strategy. Enterprise: ${enterpriseType}. Problem: ${businessProblem}. Goals: ${enterpriseBlockchainGoals}. Respond in JSON: { enterprise_blockchain_strategy: string, use_case_prioritization: string[], technology_selection: string[], consortium_governance: string[], integration_approach: string[], roi_measurement: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
