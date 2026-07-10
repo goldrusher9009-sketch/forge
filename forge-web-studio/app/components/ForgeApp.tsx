@@ -1214,6 +1214,16 @@ ForgeTab_cryptofinance4127,
 ForgeTab_embeddedfinance4128,
 ForgeTab_regtechcompliance4129,
 ForgeTab_openbanking4130,
+ForgeTab_climatetech4131,
+ForgeTab_cleanenergy4132,
+ForgeTab_carboncapture4133,
+ForgeTab_sustainablebusiness4134,
+ForgeTab_greenbuildingtech4135,
+ForgeTab_circulareconomy4136,
+ForgeTab_sustainablefinance4137,
+ForgeTab_foodagtech4138,
+ForgeTab_watertech4139,
+ForgeTab_esgstrategy4140,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59321,6 +59331,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'embeddedfinance4128' && <ForgeTab_embeddedfinance4128 />}
               {(mainTab as string) === 'regtechcompliance4129' && <ForgeTab_regtechcompliance4129 />}
               {(mainTab as string) === 'openbanking4130' && <ForgeTab_openbanking4130 />}
+              {(mainTab as string) === 'climatetech4131' && <ForgeTab_climatetech4131 />}
+              {(mainTab as string) === 'cleanenergy4132' && <ForgeTab_cleanenergy4132 />}
+              {(mainTab as string) === 'carboncapture4133' && <ForgeTab_carboncapture4133 />}
+              {(mainTab as string) === 'sustainablebusiness4134' && <ForgeTab_sustainablebusiness4134 />}
+              {(mainTab as string) === 'greenbuildingtech4135' && <ForgeTab_greenbuildingtech4135 />}
+              {(mainTab as string) === 'circulareconomy4136' && <ForgeTab_circulareconomy4136 />}
+              {(mainTab as string) === 'sustainablefinance4137' && <ForgeTab_sustainablefinance4137 />}
+              {(mainTab as string) === 'foodagtech4138' && <ForgeTab_foodagtech4138 />}
+              {(mainTab as string) === 'watertech4139' && <ForgeTab_watertech4139 />}
+              {(mainTab as string) === 'esgstrategy4140' && <ForgeTab_esgstrategy4140 />}
       </div>
     </div>
   );
