@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v792.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v793.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211518,5 +211518,65 @@ app.post('/api/health/corpwellness', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/health/longevityplan', requireAuth, async (req: AuthRequest, res: any) => {
   const { currentAge, familyHistory, longevityGoals } = req.body;
   const prompt = `You are a longevity medicine expert. Create a healthspan optimization plan. Age: ${currentAge}. History: ${familyHistory}. Goals: ${longevityGoals}. Respond in JSON: { longevity_framework: string, biomarkers_to_track: string[], dietary_approach: string[], exercise_protocol: string[], preventive_screenings: string[], lifestyle_longevity_factors: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/curriculum', requireAuth, async (req: AuthRequest, res: any) => {
+  const { subject, gradeLevel, learningObjectives } = req.body;
+  const prompt = `You are an instructional design expert. Create a comprehensive curriculum plan. Subject: ${subject}. Level: ${gradeLevel}. Objectives: ${learningObjectives}. Respond in JSON: { curriculum_overview: string, unit_sequence: string[], lesson_frameworks: string[], assessment_strategy: string[], differentiation_approach: string[], resource_list: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/lessonplan', requireAuth, async (req: AuthRequest, res: any) => {
+  const { topic, duration, studentNeeds } = req.body;
+  const prompt = `You are a master teacher and instructional designer. Build a detailed lesson plan. Topic: ${topic}. Duration: ${duration}. Students: ${studentNeeds}. Respond in JSON: { lesson_objectives: string[], warm_up: string, instruction: string[], guided_practice: string[], independent_practice: string, closure: string, assessment: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/assessmentdesign', requireAuth, async (req: AuthRequest, res: any) => {
+  const { learningGoals, assessmentType, bloomsLevel } = req.body;
+  const prompt = `You are an assessment design expert. Create a valid and reliable assessment. Goals: ${learningGoals}. Type: ${assessmentType}. Level: ${bloomsLevel}. Respond in JSON: { assessment_overview: string, question_bank: string[], rubric_criteria: string[], differentiation: string[], feedback_approach: string[], data_analysis_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/elearning', requireAuth, async (req: AuthRequest, res: any) => {
+  const { courseTitle, targetLearner, deliveryPlatform } = req.body;
+  const prompt = `You are an e-learning design expert. Design an engaging online course. Course: ${courseTitle}. Learner: ${targetLearner}. Platform: ${deliveryPlatform}. Respond in JSON: { course_structure: string[], module_breakdown: string[], engagement_strategies: string[], multimedia_plan: string[], assessment_approach: string[], completion_pathway: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/tutoring', requireAuth, async (req: AuthRequest, res: any) => {
+  const { studentChallenge, subject, learningStyle } = req.body;
+  const prompt = `You are an expert tutor and learning specialist. Design a targeted tutoring strategy. Challenge: ${studentChallenge}. Subject: ${subject}. Style: ${learningStyle}. Respond in JSON: { diagnostic_approach: string, intervention_strategies: string[], session_structure: string[], progress_monitoring: string[], parent_communication: string[], milestone_targets: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/specialeducation', requireAuth, async (req: AuthRequest, res: any) => {
+  const { disabilityType, gradeLevel, academicGoals } = req.body;
+  const prompt = `You are a special education specialist. Design IEP supports and accommodations. Disability: ${disabilityType}. Grade: ${gradeLevel}. Goals: ${academicGoals}. Respond in JSON: { accommodation_list: string[], modification_strategies: string[], goal_writing: string[], progress_measurement: string[], collaboration_tips: string[], assistive_technology: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/classroommanage', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gradeLevel, classSize, behaviorChallenges } = req.body;
+  const prompt = `You are a classroom management expert. Create a proactive classroom management plan. Grade: ${gradeLevel}. Size: ${classSize}. Challenges: ${behaviorChallenges}. Respond in JSON: { classroom_procedures: string[], positive_systems: string[], tier_1_strategies: string[], restorative_practices: string[], family_engagement: string[], data_tracking: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/studentengage', requireAuth, async (req: AuthRequest, res: any) => {
+  const { disengagementCause, ageGroup, subjectArea } = req.body;
+  const prompt = `You are a student engagement specialist. Design strategies to re-engage learners. Cause: ${disengagementCause}. Age: ${ageGroup}. Subject: ${subjectArea}. Respond in JSON: { engagement_diagnosis: string, motivation_strategies: string[], interactive_activities: string[], relevance_connections: string[], student_voice: string[], progress_celebrations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/profdev', requireAuth, async (req: AuthRequest, res: any) => {
+  const { teacherGoal, schoolContext, timeAvailable } = req.body;
+  const prompt = `You are an instructional coaching expert. Design a personalized professional development plan. Goal: ${teacherGoal}. Context: ${schoolContext}. Time: ${timeAvailable}. Respond in JSON: { pd_roadmap: string, learning_activities: string[], coaching_cycle: string[], classroom_application: string[], reflection_prompts: string[], success_indicators: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/education/stemprogram', requireAuth, async (req: AuthRequest, res: any) => {
+  const { stemFocus, gradeSpan, communityResources } = req.body;
+  const prompt = `You are a STEM education program designer. Build an integrated STEM program. Focus: ${stemFocus}. Grades: ${gradeSpan}. Resources: ${communityResources}. Respond in JSON: { program_vision: string, interdisciplinary_units: string[], project_based_learning: string[], industry_partnerships: string[], equipment_needs: string[], assessment_framework: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
