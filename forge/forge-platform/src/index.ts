@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v885.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v886.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -217098,5 +217098,65 @@ app.post('/api/web3/web3game', requireAuth, async (req: AuthRequest, res: any) =
 app.post('/api/web3/enterprise', requireAuth, async (req: AuthRequest, res: any) => {
   const { enterpriseType, businessProblem, enterpriseBlockchainGoals } = req.body;
   const prompt = `You are an enterprise blockchain expert. Build an enterprise blockchain strategy. Enterprise: ${enterpriseType}. Problem: ${businessProblem}. Goals: ${enterpriseBlockchainGoals}. Respond in JSON: { enterprise_blockchain_strategy: string, use_case_prioritization: string[], technology_selection: string[], consortium_governance: string[], integration_approach: string[], roi_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/deeptech/space', requireAuth, async (req: AuthRequest, res: any) => {
+  const { spaceTechType, currentCapability, spaceGoals } = req.body;
+  const prompt = `You are a space tech strategy expert. Build a space tech strategy. Type: ${spaceTechType}. Capability: ${currentCapability}. Goals: ${spaceGoals}. Respond in JSON: { space_strategy: string, technology_roadmap: string[], launch_access: string[], customer_acquisition: string[], regulatory_licensing: string[], financing_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/deeptech/quantum', requireAuth, async (req: AuthRequest, res: any) => {
+  const { quantumType, targetApplication, quantumGoals } = req.body;
+  const prompt = `You are a quantum technology strategy expert. Build a quantum strategy. Type: ${quantumType}. Application: ${targetApplication}. Goals: ${quantumGoals}. Respond in JSON: { quantum_strategy: string, technology_development: string[], application_roadmap: string[], talent_strategy: string[], ecosystem_partnerships: string[], commercialization_path: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/deeptech/biotech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { biotechType, therapeuticArea, biotechGoals } = req.body;
+  const prompt = `You are a biotech strategy expert. Build a biotech strategy. Type: ${biotechType}. Area: ${therapeuticArea}. Goals: ${biotechGoals}. Respond in JSON: { biotech_strategy: string, platform_development: string[], clinical_path: string[], partnership_model: string[], ip_strategy: string[], financing_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/deeptech/materials', requireAuth, async (req: AuthRequest, res: any) => {
+  const { materialType, targetApplication, materialsGoals } = req.body;
+  const prompt = `You are an advanced materials strategy expert. Build a materials strategy. Material: ${materialType}. Application: ${targetApplication}. Goals: ${materialsGoals}. Respond in JSON: { materials_strategy: string, rd_roadmap: string[], manufacturing_scale: string[], customer_qualification: string[], ip_protection: string[], market_entry: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/deeptech/photonics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { photonicsType, targetMarket, photonicsGoals } = req.body;
+  const prompt = `You are a photonics strategy expert. Build a photonics strategy. Type: ${photonicsType}. Market: ${targetMarket}. Goals: ${photonicsGoals}. Respond in JSON: { photonics_strategy: string, technology_development: string[], product_roadmap: string[], manufacturing_approach: string[], customer_partnerships: string[], competitive_positioning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/deeptech/synbio', requireAuth, async (req: AuthRequest, res: any) => {
+  const { synbioType, hostOrganism, synbioGoals } = req.body;
+  const prompt = `You are a synthetic biology strategy expert. Build a synbio strategy. Type: ${synbioType}. Organism: ${hostOrganism}. Goals: ${synbioGoals}. Respond in JSON: { synbio_strategy: string, platform_development: string[], fermentation_scale: string[], regulatory_pathway: string[], ip_strategy: string[], commercial_applications: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/deeptech/robotics2', requireAuth, async (req: AuthRequest, res: any) => {
+  const { roboticsType, targetVertical, roboticsDeepGoals } = req.body;
+  const prompt = `You are a deep tech robotics strategy expert. Build a robotics strategy. Type: ${roboticsType}. Vertical: ${targetVertical}. Goals: ${roboticsDeepGoals}. Respond in JSON: { robotics_strategy: string, hardware_development: string[], software_ai: string[], safety_validation: string[], customer_pilots: string[], regulatory_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/deeptech/semiconductors', requireAuth, async (req: AuthRequest, res: any) => {
+  const { chipType, targetMarket, semiGoals } = req.body;
+  const prompt = `You are a semiconductor strategy expert. Build a semiconductor strategy. Chip: ${chipType}. Market: ${targetMarket}. Goals: ${semiGoals}. Respond in JSON: { semiconductor_strategy: string, design_roadmap: string[], foundry_ecosystem: string[], ip_portfolio: string[], customer_engagement: string[], supply_chain_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/deeptech/neurotech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { neurotechType, targetCondition, neurotechGoals } = req.body;
+  const prompt = `You are a neurotechnology strategy expert. Build a neurotech strategy. Type: ${neurotechType}. Condition: ${targetCondition}. Goals: ${neurotechGoals}. Respond in JSON: { neurotech_strategy: string, technology_development: string[], clinical_evidence: string[], regulatory_pathway: string[], payer_strategy: string[], commercialization_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/deeptech/deeptech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { deepTechType, trlLevel, commercGoals } = req.body;
+  const prompt = `You are a deep tech commercialization expert. Build a deep tech strategy. Type: ${deepTechType}. TRL: ${trlLevel}. Goals: ${commercGoals}. Respond in JSON: { deep_tech_strategy: string, technology_push_pull: string[], customer_discovery: string[], partnership_options: string[], ip_licensing: string[], funding_roadmap: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
