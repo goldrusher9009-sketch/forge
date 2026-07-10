@@ -874,6 +874,16 @@ ForgeTab_esgstrategy3787,
 ForgeTab_watertech3788,
 ForgeTab_sustainablebuilding3789,
 ForgeTab_climateventure3790,
+ForgeTab_globalexpansion3791,
+ForgeTab_emergingmarkets3792,
+ForgeTab_crossborderecom3793,
+ForgeTab_globalpartnerships3794,
+ForgeTab_localization3795,
+ForgeTab_tradecomplianceint3796,
+ForgeTab_asiapacific3797,
+ForgeTab_europeanmarket3798,
+ForgeTab_latamstrategy3799,
+ForgeTab_middleafrica3800,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58641,6 +58651,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'watertech3788' && <ForgeTab_watertech3788 />}
               {(mainTab as string) === 'sustainablebuilding3789' && <ForgeTab_sustainablebuilding3789 />}
               {(mainTab as string) === 'climateventure3790' && <ForgeTab_climateventure3790 />}
+              {(mainTab as string) === 'globalexpansion3791' && <ForgeTab_globalexpansion3791 />}
+              {(mainTab as string) === 'emergingmarkets3792' && <ForgeTab_emergingmarkets3792 />}
+              {(mainTab as string) === 'crossborderecom3793' && <ForgeTab_crossborderecom3793 />}
+              {(mainTab as string) === 'globalpartnerships3794' && <ForgeTab_globalpartnerships3794 />}
+              {(mainTab as string) === 'localization3795' && <ForgeTab_localization3795 />}
+              {(mainTab as string) === 'tradecomplianceint3796' && <ForgeTab_tradecomplianceint3796 />}
+              {(mainTab as string) === 'asiapacific3797' && <ForgeTab_asiapacific3797 />}
+              {(mainTab as string) === 'europeanmarket3798' && <ForgeTab_europeanmarket3798 />}
+              {(mainTab as string) === 'latamstrategy3799' && <ForgeTab_latamstrategy3799 />}
+              {(mainTab as string) === 'middleafrica3800' && <ForgeTab_middleafrica3800 />}
       </div>
     </div>
   );
