@@ -1394,6 +1394,16 @@ ForgeTab_hydrogenstrategy4307,
 ForgeTab_nuclearenergystrategy4308,
 ForgeTab_energyefficiency4309,
 ForgeTab_climatefinance4310,
+ForgeTab_insurtechstrategy4311,
+ForgeTab_riskmanagementstrategy4312,
+ForgeTab_embeddedinsurance4313,
+ForgeTab_cyberinsurance4314,
+ForgeTab_paraminsurance4315,
+ForgeTab_claimstech4316,
+ForgeTab_reinsurancestrategy4317,
+ForgeTab_insuranceanalytics4318,
+ForgeTab_mgastrategy4319,
+ForgeTab_enterpriserisk4320,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59681,6 +59691,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'nuclearenergystrategy4308' && <ForgeTab_nuclearenergystrategy4308 />}
               {(mainTab as string) === 'energyefficiency4309' && <ForgeTab_energyefficiency4309 />}
               {(mainTab as string) === 'climatefinance4310' && <ForgeTab_climatefinance4310 />}
+              {(mainTab as string) === 'insurtechstrategy4311' && <ForgeTab_insurtechstrategy4311 />}
+              {(mainTab as string) === 'riskmanagementstrategy4312' && <ForgeTab_riskmanagementstrategy4312 />}
+              {(mainTab as string) === 'embeddedinsurance4313' && <ForgeTab_embeddedinsurance4313 />}
+              {(mainTab as string) === 'cyberinsurance4314' && <ForgeTab_cyberinsurance4314 />}
+              {(mainTab as string) === 'paraminsurance4315' && <ForgeTab_paraminsurance4315 />}
+              {(mainTab as string) === 'claimstech4316' && <ForgeTab_claimstech4316 />}
+              {(mainTab as string) === 'reinsurancestrategy4317' && <ForgeTab_reinsurancestrategy4317 />}
+              {(mainTab as string) === 'insuranceanalytics4318' && <ForgeTab_insuranceanalytics4318 />}
+              {(mainTab as string) === 'mgastrategy4319' && <ForgeTab_mgastrategy4319 />}
+              {(mainTab as string) === 'enterpriserisk4320' && <ForgeTab_enterpriserisk4320 />}
       </div>
     </div>
   );
