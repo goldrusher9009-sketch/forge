@@ -104,6 +104,16 @@ ForgeTab_termsdrafting3007,
 ForgeTab_businessformation3008,
 ForgeTab_disputeresolution3009,
 ForgeTab_duediligence3010,
+ForgeTab_productlisting3011,
+ForgeTab_conversionfunnel3012,
+ForgeTab_inventoryplanning3013,
+ForgeTab_pricingstrategy3014,
+ForgeTab_cartabandonment3015,
+ForgeTab_marketplaceops3016,
+ForgeTab_customerretention3017,
+ForgeTab_shippinglogistics3018,
+ForgeTab_ecomanalytics3019,
+ForgeTab_socialcommerce3020,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57101,6 +57111,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'businessformation3008' && <ForgeTab_businessformation3008 />}
               {(mainTab as string) === 'disputeresolution3009' && <ForgeTab_disputeresolution3009 />}
               {(mainTab as string) === 'duediligence3010' && <ForgeTab_duediligence3010 />}
+              {(mainTab as string) === 'productlisting3011' && <ForgeTab_productlisting3011 />}
+              {(mainTab as string) === 'conversionfunnel3012' && <ForgeTab_conversionfunnel3012 />}
+              {(mainTab as string) === 'inventoryplanning3013' && <ForgeTab_inventoryplanning3013 />}
+              {(mainTab as string) === 'pricingstrategy3014' && <ForgeTab_pricingstrategy3014 />}
+              {(mainTab as string) === 'cartabandonment3015' && <ForgeTab_cartabandonment3015 />}
+              {(mainTab as string) === 'marketplaceops3016' && <ForgeTab_marketplaceops3016 />}
+              {(mainTab as string) === 'customerretention3017' && <ForgeTab_customerretention3017 />}
+              {(mainTab as string) === 'shippinglogistics3018' && <ForgeTab_shippinglogistics3018 />}
+              {(mainTab as string) === 'ecomanalytics3019' && <ForgeTab_ecomanalytics3019 />}
+              {(mainTab as string) === 'socialcommerce3020' && <ForgeTab_socialcommerce3020 />}
       </div>
     </div>
   );

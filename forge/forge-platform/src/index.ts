@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v790.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v791.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211398,5 +211398,65 @@ app.post("/api/legaltech/dispute", requireAuth, async (req: AuthRequest, res: an
 app.post("/api/legaltech/duediligence", requireAuth, async (req: AuthRequest, res: any) => {
   const { dealType, targetCompany, dealSize } = req.body;
   const prompt = `You are a due diligence expert. Create a due diligence checklist. Deal: ${dealType}. Target: ${targetCompany}. Size: ${dealSize}. Respond in JSON: { legal_checklist: string[], financial_checklist: string[], operational_checklist: string[], ip_audit_items: string[], red_flags: string[], deal_breakers: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecommerce/productlisting', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productName, targetMarket, competitorPrice } = req.body;
+  const prompt = `You are an e-commerce product listing expert. Optimize a product listing for maximum conversions. Product: ${productName}. Market: ${targetMarket}. Competitor pricing: ${competitorPrice}. Respond in JSON: { optimized_title: string, bullet_points: string[], description: string, keywords: string[], pricing_recommendation: string, a_plus_content_ideas: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecommerce/conversionfunnel', requireAuth, async (req: AuthRequest, res: any) => {
+  const { funnelStage, dropOffRate, productCategory } = req.body;
+  const prompt = `You are an e-commerce conversion expert. Audit and optimize an e-commerce conversion funnel. Stage: ${funnelStage}. Drop-off: ${dropOffRate}. Category: ${productCategory}. Respond in JSON: { root_causes: string[], ux_fixes: string[], copy_improvements: string[], trust_signals: string[], ab_test_ideas: string[], expected_lift: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecommerce/inventoryplan', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productSku, salesVelocity, leadTime } = req.body;
+  const prompt = `You are an inventory planning expert. Create an optimal inventory management plan. SKU: ${productSku}. Velocity: ${salesVelocity}. Lead time: ${leadTime}. Respond in JSON: { reorder_point: string, safety_stock: string, economic_order_qty: string, stockout_risk: string[], overstock_risk: string[], demand_forecasting: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecommerce/ecompricing', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productCost, marketPosition, competitorCount } = req.body;
+  const prompt = `You are an e-commerce pricing strategist. Develop an optimal pricing strategy. COGS: ${productCost}. Position: ${marketPosition}. Competitors: ${competitorCount}. Respond in JSON: { recommended_price: string, pricing_model: string, margin_analysis: string[], dynamic_pricing_rules: string[], promotional_strategy: string[], competitive_response: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecommerce/cartabandonment', requireAuth, async (req: AuthRequest, res: any) => {
+  const { abandonmentRate, avgOrderValue, customerSegment } = req.body;
+  const prompt = `You are a cart abandonment recovery expert. Design a cart recovery strategy. Rate: ${abandonmentRate}. AOV: ${avgOrderValue}. Segment: ${customerSegment}. Respond in JSON: { recovery_sequence: string[], email_subjects: string[], sms_templates: string[], incentive_strategy: string[], retargeting_approach: string[], expected_recovery_rate: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecommerce/marketplaceops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { marketplace, productCount, monthlyRevenue } = req.body;
+  const prompt = `You are a marketplace operations expert. Optimize multi-marketplace operations. Platform: ${marketplace}. Listings: ${productCount}. Revenue: ${monthlyRevenue}. Respond in JSON: { algorithm_optimization: string[], buy_box_strategy: string[], listing_health: string[], advertising_approach: string[], fulfillment_recommendations: string[], growth_tactics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecommerce/ecomretention', requireAuth, async (req: AuthRequest, res: any) => {
+  const { repeatPurchaseRate, customerLifetimeValue, churnIndicators } = req.body;
+  const prompt = `You are an e-commerce retention expert. Build a customer retention strategy. Repeat rate: ${repeatPurchaseRate}. LTV: ${customerLifetimeValue}. Churn signals: ${churnIndicators}. Respond in JSON: { retention_programs: string[], loyalty_structure: string[], win_back_campaigns: string[], personalization_tactics: string[], subscription_opportunities: string[], clv_improvement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecommerce/shippinglogistics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orderVolume, deliveryExpectation, returnRate } = req.body;
+  const prompt = `You are a shipping and logistics expert. Optimize e-commerce fulfillment operations. Volume: ${orderVolume}. Expectation: ${deliveryExpectation}. Returns: ${returnRate}. Respond in JSON: { carrier_strategy: string[], fulfillment_network: string[], cost_reduction: string[], delivery_speed_improvements: string[], returns_process: string[], damage_prevention: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecommerce/ecomanalytics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessGoal, trafficSource, conversionRate } = req.body;
+  const prompt = `You are an e-commerce analytics expert. Build an actionable analytics framework. Goal: ${businessGoal}. Traffic: ${trafficSource}. CVR: ${conversionRate}. Respond in JSON: { kpi_framework: string[], attribution_model: string[], cohort_analysis: string[], segmentation_strategy: string[], reporting_cadence: string[], data_driven_actions: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/ecommerce/socialcommerce', requireAuth, async (req: AuthRequest, res: any) => {
+  const { socialPlatform, targetDemographic, productType } = req.body;
+  const prompt = `You are a social commerce expert. Design a social commerce strategy. Platform: ${socialPlatform}. Demo: ${targetDemographic}. Product: ${productType}. Respond in JSON: { content_strategy: string[], shoppable_formats: string[], influencer_approach: string[], live_commerce_plan: string[], ugc_strategy: string[], platform_ads: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
