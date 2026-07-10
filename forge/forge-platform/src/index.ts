@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v836.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v837.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -214158,5 +214158,65 @@ app.post('/api/realestate/refinance', requireAuth, async (req: AuthRequest, res:
 app.post('/api/realestate/smartbuild', requireAuth, async (req: AuthRequest, res: any) => {
   const { buildingType, currentSystems, smartGoals } = req.body;
   const prompt = `You are a smart building technology expert. Build a smart building strategy. Building: ${buildingType}. Systems: ${currentSystems}. Goals: ${smartGoals}. Respond in JSON: { smart_building_strategy: string, iot_infrastructure: string[], automation_systems: string[], energy_management: string[], tenant_experience: string[], roi_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatetech/climatestrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { climateSolution, targetMarket, impactGoals } = req.body;
+  const prompt = `You are a climate tech strategy expert. Build a climate tech strategy. Solution: ${climateSolution}. Market: ${targetMarket}. Goals: ${impactGoals}. Respond in JSON: { climate_strategy: string, market_positioning: string[], impact_measurement: string[], policy_landscape: string[], partnership_approach: string[], funding_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatetech/esg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyType, industryContext, esgGoals } = req.body;
+  const prompt = `You are an ESG reporting expert. Build an ESG framework. Company: ${companyType}. Industry: ${industryContext}. Goals: ${esgGoals}. Respond in JSON: { esg_framework: string, environmental_metrics: string[], social_metrics: string[], governance_metrics: string[], reporting_standards: string[], stakeholder_communication: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatetech/carbon', requireAuth, async (req: AuthRequest, res: any) => {
+  const { organizationType, operations, reductionTargets } = req.body;
+  const prompt = `You are a carbon footprint expert. Analyze and reduce this carbon footprint. Org: ${organizationType}. Operations: ${operations}. Targets: ${reductionTargets}. Respond in JSON: { footprint_assessment: string, emission_sources: string[], reduction_pathways: string[], offset_strategy: string[], technology_solutions: string[], progress_tracking: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatetech/renewable', requireAuth, async (req: AuthRequest, res: any) => {
+  const { energyType, projectScale, marketContext } = req.body;
+  const prompt = `You are a renewable energy strategy expert. Build a renewable energy strategy. Type: ${energyType}. Scale: ${projectScale}. Market: ${marketContext}. Respond in JSON: { energy_strategy: string, technology_selection: string[], project_development: string[], financing_approach: string[], regulatory_pathway: string[], offtake_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatetech/circular', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productCategory, currentModel, circularGoals } = req.body;
+  const prompt = `You are a circular economy expert. Design a circular economy model. Products: ${productCategory}. Model: ${currentModel}. Goals: ${circularGoals}. Respond in JSON: { circular_model: string, design_principles: string[], take_back_program: string[], material_recovery: string[], business_model_shifts: string[], impact_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatetech/susupply', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industryType, supplierBase, sustainabilityGoals } = req.body;
+  const prompt = `You are a sustainable supply chain expert. Build a sustainable supply chain program. Industry: ${industryType}. Suppliers: ${supplierBase}. Goals: ${sustainabilityGoals}. Respond in JSON: { sustainability_program: string, supplier_standards: string[], auditing_framework: string[], decarbonization_path: string[], social_responsibility: string[], reporting_structure: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatetech/cleantech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cleantechSolution, targetSector, commercializationGoal } = req.body;
+  const prompt = `You are a cleantech commercialization expert. Build a cleantech business strategy. Solution: ${cleantechSolution}. Sector: ${targetSector}. Goal: ${commercializationGoal}. Respond in JSON: { cleantech_strategy: string, technology_readiness: string[], market_entry: string[], customer_acquisition: string[], policy_tailwinds: string[], scale_up_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatetech/netzero', requireAuth, async (req: AuthRequest, res: any) => {
+  const { organizationType, baselineEmissions, netZeroTimeline } = req.body;
+  const prompt = `You are a net zero strategy expert. Build a net zero roadmap. Org: ${organizationType}. Baseline: ${baselineEmissions}. Timeline: ${netZeroTimeline}. Respond in JSON: { net_zero_roadmap: string, emissions_inventory: string[], reduction_priorities: string[], technology_investments: string[], carbon_removals: string[], governance_structure: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatetech/sustain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companyProfile, keyInitiatives, stakeholders } = req.body;
+  const prompt = `You are a sustainability communications expert. Write a sustainability report framework. Company: ${companyProfile}. Initiatives: ${keyInitiatives}. Stakeholders: ${stakeholders}. Respond in JSON: { report_structure: string, key_messages: string[], data_visualization: string[], stakeholder_sections: string[], third_party_assurance: string[], communication_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatetech/impact', requireAuth, async (req: AuthRequest, res: any) => {
+  const { investmentThesis, impactAreas, returnExpectations } = req.body;
+  const prompt = `You are an impact investing expert. Build an impact investing strategy. Thesis: ${investmentThesis}. Areas: ${impactAreas}. Returns: ${returnExpectations}. Respond in JSON: { investment_strategy: string, deal_sourcing: string[], impact_measurement: string[], portfolio_construction: string[], reporting_framework: string[], stakeholder_alignment: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
