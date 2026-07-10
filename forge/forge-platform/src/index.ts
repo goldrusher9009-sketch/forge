@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v841.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v842.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -214458,5 +214458,65 @@ app.post('/api/devops/cloudcost', requireAuth, async (req: AuthRequest, res: any
 app.post('/api/devops/dr', requireAuth, async (req: AuthRequest, res: any) => {
   const { systemCriticality, rtoRpo, cloudEnvironment } = req.body;
   const prompt = `You are a disaster recovery expert. Build a DR plan. Criticality: ${systemCriticality}. RTO/RPO: ${rtoRpo}. Environment: ${cloudEnvironment}. Respond in JSON: { dr_strategy: string, backup_architecture: string[], failover_procedures: string[], testing_framework: string[], runbook_structure: string[], recovery_validation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiml/mlmodel', requireAuth, async (req: AuthRequest, res: any) => {
+  const { problemType, dataDescription, mlGoals } = req.body;
+  const prompt = `You are an ML strategy expert. Design an ML model strategy. Problem: ${problemType}. Data: ${dataDescription}. Goals: ${mlGoals}. Respond in JSON: { ml_strategy: string, model_selection: string[], data_pipeline: string[], training_approach: string[], evaluation_framework: string[], deployment_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiml/mlops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mlWorkloads, currentInfra, mlopsGoals } = req.body;
+  const prompt = `You are an MLOps expert. Design an MLOps platform. Workloads: ${mlWorkloads}. Infra: ${currentInfra}. Goals: ${mlopsGoals}. Respond in JSON: { mlops_platform: string, experiment_tracking: string[], model_registry: string[], serving_infrastructure: string[], monitoring_strategy: string[], governance_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiml/llmprod', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productIdea, targetUsers, llmGoals } = req.body;
+  const prompt = `You are an LLM product expert. Build an LLM product strategy. Product: ${productIdea}. Users: ${targetUsers}. Goals: ${llmGoals}. Respond in JSON: { product_strategy: string, llm_architecture: string[], prompt_engineering: string[], rag_design: string[], evaluation_approach: string[], go_to_market: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiml/dataeng', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dataVolume, dataSources, dataGoals } = req.body;
+  const prompt = `You are a data engineering expert. Design a data architecture. Volume: ${dataVolume}. Sources: ${dataSources}. Goals: ${dataGoals}. Respond in JSON: { data_architecture: string, ingestion_layer: string[], storage_strategy: string[], processing_framework: string[], orchestration_approach: string[], data_quality: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiml/aiethics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiSystem, stakeholders, ethicsGoals } = req.body;
+  const prompt = `You are an AI ethics expert. Build an AI governance framework. System: ${aiSystem}. Stakeholders: ${stakeholders}. Goals: ${ethicsGoals}. Respond in JSON: { ethics_framework: string, bias_mitigation: string[], transparency_approach: string[], accountability_model: string[], regulatory_compliance: string[], responsible_ai_practices: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiml/vectordb', requireAuth, async (req: AuthRequest, res: any) => {
+  const { useCase, dataTypes, performanceNeeds } = req.body;
+  const prompt = `You are a vector database expert. Design a vector DB strategy. Use case: ${useCase}. Data: ${dataTypes}. Performance: ${performanceNeeds}. Respond in JSON: { vector_strategy: string, db_selection: string[], embedding_approach: string[], indexing_strategy: string[], query_optimization: string[], scaling_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiml/finetune', requireAuth, async (req: AuthRequest, res: any) => {
+  const { baseModel, taskType, finetuneGoals } = req.body;
+  const prompt = `You are an AI fine-tuning expert. Design a fine-tuning strategy. Model: ${baseModel}. Task: ${taskType}. Goals: ${finetuneGoals}. Respond in JSON: { finetuning_strategy: string, data_preparation: string[], training_approach: string[], evaluation_metrics: string[], cost_estimate: string[], deployment_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiml/aiagent', requireAuth, async (req: AuthRequest, res: any) => {
+  const { agentPurpose, toolsAndAPIs, agentGoals } = req.body;
+  const prompt = `You are an AI agent architecture expert. Design an AI agent system. Purpose: ${agentPurpose}. Tools: ${toolsAndAPIs}. Goals: ${agentGoals}. Respond in JSON: { agent_architecture: string, reasoning_framework: string[], tool_orchestration: string[], memory_design: string[], safety_guardrails: string[], evaluation_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiml/datascience', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessProblem, dataAvailability, dsGoals } = req.body;
+  const prompt = `You are a data science workflow expert. Design a data science workflow. Problem: ${businessProblem}. Data: ${dataAvailability}. Goals: ${dsGoals}. Respond in JSON: { workflow_design: string, problem_framing: string[], data_analysis: string[], feature_engineering: string[], model_selection: string[], business_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiml/aibench', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiSystem, evaluationDimensions, benchmarkGoals } = req.body;
+  const prompt = `You are an AI evaluation expert. Design an AI benchmarking framework. System: ${aiSystem}. Dimensions: ${evaluationDimensions}. Goals: ${benchmarkGoals}. Respond in JSON: { benchmark_framework: string, evaluation_metrics: string[], test_dataset_design: string[], human_eval_approach: string[], cost_analysis: string[], model_comparison_matrix: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

@@ -614,6 +614,16 @@ ForgeTab_gitopsstrategy3527,
 ForgeTab_devsecopspipeline3528,
 ForgeTab_cloudcostopt3529,
 ForgeTab_disasterrecovery3530,
+ForgeTab_mlmodelstrategy3531,
+ForgeTab_mlopsplatform3532,
+ForgeTab_llmproductstrategy3533,
+ForgeTab_dataengineeringarch3534,
+ForgeTab_aiproductethics3535,
+ForgeTab_vectordbstrategy3536,
+ForgeTab_aifinetuning3537,
+ForgeTab_aiagentdesign3538,
+ForgeTab_datascienceworkflow3539,
+ForgeTab_aibenchmarking3540,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58121,6 +58131,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'devsecopspipeline3528' && <ForgeTab_devsecopspipeline3528 />}
               {(mainTab as string) === 'cloudcostopt3529' && <ForgeTab_cloudcostopt3529 />}
               {(mainTab as string) === 'disasterrecovery3530' && <ForgeTab_disasterrecovery3530 />}
+              {(mainTab as string) === 'mlmodelstrategy3531' && <ForgeTab_mlmodelstrategy3531 />}
+              {(mainTab as string) === 'mlopsplatform3532' && <ForgeTab_mlopsplatform3532 />}
+              {(mainTab as string) === 'llmproductstrategy3533' && <ForgeTab_llmproductstrategy3533 />}
+              {(mainTab as string) === 'dataengineeringarch3534' && <ForgeTab_dataengineeringarch3534 />}
+              {(mainTab as string) === 'aiproductethics3535' && <ForgeTab_aiproductethics3535 />}
+              {(mainTab as string) === 'vectordbstrategy3536' && <ForgeTab_vectordbstrategy3536 />}
+              {(mainTab as string) === 'aifinetuning3537' && <ForgeTab_aifinetuning3537 />}
+              {(mainTab as string) === 'aiagentdesign3538' && <ForgeTab_aiagentdesign3538 />}
+              {(mainTab as string) === 'datascienceworkflow3539' && <ForgeTab_datascienceworkflow3539 />}
+              {(mainTab as string) === 'aibenchmarking3540' && <ForgeTab_aibenchmarking3540 />}
       </div>
     </div>
   );
