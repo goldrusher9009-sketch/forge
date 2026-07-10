@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v800.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v801.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211998,5 +211998,65 @@ app.post('/api/creator/branddeals', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/creator/repurpose', requireAuth, async (req: AuthRequest, res: any) => {
   const { originalContent, sourcePlatform, targetPlatforms } = req.body;
   const prompt = `You are a content repurposing strategist. Maximize content reach through repurposing. Content: ${originalContent}. Source: ${sourcePlatform}. Targets: ${targetPlatforms}. Respond in JSON: { repurposing_plan: string[], platform_adaptations: string[], format_transformations: string[], scheduling_sequence: string[], seo_opportunities: string[], distribution_checklist: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/supplychain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, supplierLocations, deliveryTarget } = req.body;
+  const prompt = `You are a supply chain optimization expert. Optimize this supply chain. Product: ${productType}. Suppliers: ${supplierLocations}. Target: ${deliveryTarget}. Respond in JSON: { supply_chain_map: string, bottlenecks: string[], optimization_strategies: string[], supplier_diversification: string[], cost_reduction: string[], resilience_measures: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/inventory', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productCatalog, demandPattern, warehouseCapacity } = req.body;
+  const prompt = `You are an inventory management expert. Design an optimal inventory system. Products: ${productCatalog}. Demand: ${demandPattern}. Capacity: ${warehouseCapacity}. Respond in JSON: { inventory_model: string, reorder_points: string[], safety_stock: string[], abc_classification: string[], warehouse_layout: string[], kpi_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/freight', requireAuth, async (req: AuthRequest, res: any) => {
+  const { shipmentVolume, currentCarriers, shippingBudget } = req.body;
+  const prompt = `You are a freight optimization expert. Reduce shipping costs and improve reliability. Volume: ${shipmentVolume}. Carriers: ${currentCarriers}. Budget: ${shippingBudget}. Respond in JSON: { carrier_assessment: string, route_optimization: string[], mode_shift_opportunities: string[], consolidation_strategy: string[], contract_negotiation: string[], cost_savings_estimate: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/warehouse', requireAuth, async (req: AuthRequest, res: any) => {
+  const { warehouseSize, productTypes, throughputGoal } = req.body;
+  const prompt = `You are a warehouse design expert. Optimize warehouse layout and operations. Size: ${warehouseSize}. Products: ${productTypes}. Throughput: ${throughputGoal}. Respond in JSON: { layout_design: string, storage_system: string[], pick_path_optimization: string[], equipment_recommendations: string[], labor_planning: string[], technology_stack: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/demandforecast', requireAuth, async (req: AuthRequest, res: any) => {
+  const { historicalSales, seasonalFactors, forecastHorizon } = req.body;
+  const prompt = `You are a demand forecasting expert. Build an accurate demand forecast. History: ${historicalSales}. Factors: ${seasonalFactors}. Horizon: ${forecastHorizon}. Respond in JSON: { forecast_methodology: string, demand_drivers: string[], seasonal_adjustments: string[], forecast_accuracy_metrics: string[], scenario_planning: string[], adjustment_triggers: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/vendor', requireAuth, async (req: AuthRequest, res: any) => {
+  const { vendorCount, spendCategories, performanceIssues } = req.body;
+  const prompt = `You are a vendor management expert. Design a vendor management program. Vendors: ${vendorCount}. Categories: ${spendCategories}. Issues: ${performanceIssues}. Respond in JSON: { vendor_segmentation: string, scorecard_metrics: string[], onboarding_process: string[], performance_review: string[], risk_management: string[], cost_reduction_levers: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/lastmile', requireAuth, async (req: AuthRequest, res: any) => {
+  const { deliveryZones, dailyVolume, deliveryConstraints } = req.body;
+  const prompt = `You are a last mile delivery optimization expert. Optimize last mile logistics. Zones: ${deliveryZones}. Volume: ${dailyVolume}. Constraints: ${deliveryConstraints}. Respond in JSON: { route_optimization: string, vehicle_mix: string[], delivery_time_slots: string[], driver_performance: string[], failed_delivery_reduction: string[], technology_solutions: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/reverselogistics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { returnRate, productCategory, dispositionStrategy } = req.body;
+  const prompt = `You are a reverse logistics expert. Design an efficient returns management system. Returns: ${returnRate}. Products: ${productCategory}. Disposition: ${dispositionStrategy}. Respond in JSON: { returns_policy: string, processing_workflow: string[], disposition_matrix: string[], cost_recovery: string[], customer_experience: string[], data_utilization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/coldchain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productType, temperatureReqs, distributionNetwork } = req.body;
+  const prompt = `You are a cold chain logistics expert. Design a compliant cold chain system. Product: ${productType}. Temperature: ${temperatureReqs}. Network: ${distributionNetwork}. Respond in JSON: { cold_chain_design: string, temperature_monitoring: string[], packaging_solutions: string[], carrier_requirements: string[], compliance_framework: string[], risk_mitigation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/logistics/customs', requireAuth, async (req: AuthRequest, res: any) => {
+  const { importExportCountries, productHsCodes, tradeVolume } = req.body;
+  const prompt = `You are a customs and trade compliance expert. Design a trade compliance program. Countries: ${importExportCountries}. Products: ${productHsCodes}. Volume: ${tradeVolume}. Respond in JSON: { compliance_framework: string, documentation_requirements: string[], duty_optimization: string[], free_trade_agreements: string[], customs_broker_strategy: string[], audit_readiness: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
