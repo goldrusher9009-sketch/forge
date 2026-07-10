@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v840.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v841.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -214398,5 +214398,65 @@ app.post('/api/travel/travelcontent', requireAuth, async (req: AuthRequest, res:
 app.post('/api/travel/sustravel', requireAuth, async (req: AuthRequest, res: any) => {
   const { businessType, sustainability, travelerSegment } = req.body;
   const prompt = `You are a sustainable tourism expert. Build a sustainable tourism strategy. Business: ${businessType}. Practices: ${sustainability}. Travelers: ${travelerSegment}. Respond in JSON: { sustainability_strategy: string, environmental_initiatives: string[], community_impact: string[], certification_pathway: string[], marketing_approach: string[], traveler_education: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devops/cicd', requireAuth, async (req: AuthRequest, res: any) => {
+  const { techStack, deployTarget, pipelineGoals } = req.body;
+  const prompt = `You are a CI/CD expert. Design a CI/CD pipeline. Stack: ${techStack}. Target: ${deployTarget}. Goals: ${pipelineGoals}. Respond in JSON: { pipeline_design: string, stages: string[], quality_gates: string[], toolchain: string[], branching_strategy: string[], deployment_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devops/iac', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cloudProvider, infraComponents, iacGoals } = req.body;
+  const prompt = `You are an IaC expert (Terraform/Pulumi/CDK). Design infrastructure as code. Cloud: ${cloudProvider}. Components: ${infraComponents}. Goals: ${iacGoals}. Respond in JSON: { iac_strategy: string, toolchain_recommendation: string[], module_structure: string[], state_management: string[], drift_detection: string[], security_controls: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devops/k8s', requireAuth, async (req: AuthRequest, res: any) => {
+  const { appWorkloads, clusterScale, k8sGoals } = req.body;
+  const prompt = `You are a Kubernetes architecture expert. Design a K8s architecture. Workloads: ${appWorkloads}. Scale: ${clusterScale}. Goals: ${k8sGoals}. Respond in JSON: { k8s_architecture: string, cluster_design: string[], workload_patterns: string[], networking_model: string[], security_hardening: string[], cost_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devops/observability', requireAuth, async (req: AuthRequest, res: any) => {
+  const { systemType, currentStack, obsGoals } = req.body;
+  const prompt = `You are an observability expert. Design an observability stack. System: ${systemType}. Current: ${currentStack}. Goals: ${obsGoals}. Respond in JSON: { observability_strategy: string, metrics_approach: string[], logging_pipeline: string[], tracing_design: string[], alerting_framework: string[], slo_definition: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devops/platform', requireAuth, async (req: AuthRequest, res: any) => {
+  const { orgSize, devExperience, platformGoals } = req.body;
+  const prompt = `You are a platform engineering expert. Build an internal developer platform strategy. Org: ${orgSize}. Pain: ${devExperience}. Goals: ${platformGoals}. Respond in JSON: { platform_strategy: string, idp_components: string[], self_service_catalog: string[], golden_paths: string[], developer_experience: string[], adoption_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devops/sre', requireAuth, async (req: AuthRequest, res: any) => {
+  const { serviceType, currentReliability, sreGoals } = req.body;
+  const prompt = `You are an SRE expert. Build an SRE practice. Service: ${serviceType}. Reliability: ${currentReliability}. Goals: ${sreGoals}. Respond in JSON: { sre_framework: string, slo_design: string[], error_budget_policy: string[], toil_reduction: string[], incident_management: string[], reliability_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devops/gitops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentDeployment, targetEnvironments, gitopsGoals } = req.body;
+  const prompt = `You are a GitOps expert. Design a GitOps strategy. Deployment: ${currentDeployment}. Environments: ${targetEnvironments}. Goals: ${gitopsGoals}. Respond in JSON: { gitops_strategy: string, toolchain: string[], repository_structure: string[], sync_mechanism: string[], rollback_strategy: string[], progressive_delivery: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devops/devsecops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { appType, securityRequirements, complianceNeeds } = req.body;
+  const prompt = `You are a DevSecOps expert. Design a secure pipeline. App: ${appType}. Security: ${securityRequirements}. Compliance: ${complianceNeeds}. Respond in JSON: { devsecops_strategy: string, sast_sca_tools: string[], secret_management: string[], container_security: string[], policy_as_code: string[], compliance_automation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devops/cloudcost', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cloudProvider, currentSpend, costGoals } = req.body;
+  const prompt = `You are a cloud cost optimization expert. Optimize cloud costs. Provider: ${cloudProvider}. Spend: ${currentSpend}. Goals: ${costGoals}. Respond in JSON: { cost_strategy: string, quick_wins: string[], rightsizing_plan: string[], reserved_capacity: string[], architectural_improvements: string[], finops_practices: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devops/dr', requireAuth, async (req: AuthRequest, res: any) => {
+  const { systemCriticality, rtoRpo, cloudEnvironment } = req.body;
+  const prompt = `You are a disaster recovery expert. Build a DR plan. Criticality: ${systemCriticality}. RTO/RPO: ${rtoRpo}. Environment: ${cloudEnvironment}. Respond in JSON: { dr_strategy: string, backup_architecture: string[], failover_procedures: string[], testing_framework: string[], runbook_structure: string[], recovery_validation: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

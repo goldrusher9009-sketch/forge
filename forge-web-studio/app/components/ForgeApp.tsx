@@ -604,6 +604,16 @@ ForgeTab_eventplanning3517,
 ForgeTab_luxurytravel3518,
 ForgeTab_travelcontent3519,
 ForgeTab_sustainabletravel3520,
+ForgeTab_cicdpipeline3521,
+ForgeTab_infraascode3522,
+ForgeTab_kubernetesarch3523,
+ForgeTab_observability3524,
+ForgeTab_platformengineering3525,
+ForgeTab_siterelability3526,
+ForgeTab_gitopsstrategy3527,
+ForgeTab_devsecopspipeline3528,
+ForgeTab_cloudcostopt3529,
+ForgeTab_disasterrecovery3530,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58101,6 +58111,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'luxurytravel3518' && <ForgeTab_luxurytravel3518 />}
               {(mainTab as string) === 'travelcontent3519' && <ForgeTab_travelcontent3519 />}
               {(mainTab as string) === 'sustainabletravel3520' && <ForgeTab_sustainabletravel3520 />}
+              {(mainTab as string) === 'cicdpipeline3521' && <ForgeTab_cicdpipeline3521 />}
+              {(mainTab as string) === 'infraascode3522' && <ForgeTab_infraascode3522 />}
+              {(mainTab as string) === 'kubernetesarch3523' && <ForgeTab_kubernetesarch3523 />}
+              {(mainTab as string) === 'observability3524' && <ForgeTab_observability3524 />}
+              {(mainTab as string) === 'platformengineering3525' && <ForgeTab_platformengineering3525 />}
+              {(mainTab as string) === 'siterelability3526' && <ForgeTab_siterelability3526 />}
+              {(mainTab as string) === 'gitopsstrategy3527' && <ForgeTab_gitopsstrategy3527 />}
+              {(mainTab as string) === 'devsecopspipeline3528' && <ForgeTab_devsecopspipeline3528 />}
+              {(mainTab as string) === 'cloudcostopt3529' && <ForgeTab_cloudcostopt3529 />}
+              {(mainTab as string) === 'disasterrecovery3530' && <ForgeTab_disasterrecovery3530 />}
       </div>
     </div>
   );
