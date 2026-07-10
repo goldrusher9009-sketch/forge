@@ -244,6 +244,16 @@ ForgeTab_capbudgeting3147,
 ForgeTab_mnavaluation3148,
 ForgeTab_budgetplanning3149,
 ForgeTab_investorreport3150,
+ForgeTab_salespipeline3151,
+ForgeTab_coldoutreach3152,
+ForgeTab_salesscript3153,
+ForgeTab_proposalwriter3154,
+ForgeTab_objectionhandler3155,
+ForgeTab_accountplanning3156,
+ForgeTab_salesforecast3157,
+ForgeTab_salesenablement3158,
+ForgeTab_channelpartner3159,
+ForgeTab_revenueops3160,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57381,6 +57391,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'mnavaluation3148' && <ForgeTab_mnavaluation3148 />}
               {(mainTab as string) === 'budgetplanning3149' && <ForgeTab_budgetplanning3149 />}
               {(mainTab as string) === 'investorreport3150' && <ForgeTab_investorreport3150 />}
+              {(mainTab as string) === 'salespipeline3151' && <ForgeTab_salespipeline3151 />}
+              {(mainTab as string) === 'coldoutreach3152' && <ForgeTab_coldoutreach3152 />}
+              {(mainTab as string) === 'salesscript3153' && <ForgeTab_salesscript3153 />}
+              {(mainTab as string) === 'proposalwriter3154' && <ForgeTab_proposalwriter3154 />}
+              {(mainTab as string) === 'objectionhandler3155' && <ForgeTab_objectionhandler3155 />}
+              {(mainTab as string) === 'accountplanning3156' && <ForgeTab_accountplanning3156 />}
+              {(mainTab as string) === 'salesforecast3157' && <ForgeTab_salesforecast3157 />}
+              {(mainTab as string) === 'salesenablement3158' && <ForgeTab_salesenablement3158 />}
+              {(mainTab as string) === 'channelpartner3159' && <ForgeTab_channelpartner3159 />}
+              {(mainTab as string) === 'revenueops3160' && <ForgeTab_revenueops3160 />}
       </div>
     </div>
   );
