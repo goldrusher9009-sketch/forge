@@ -74,6 +74,16 @@ ForgeTab_gitflowops2977,
 ForgeTab_devsecops2978,
 ForgeTab_cloudcostops2979,
 ForgeTab_platformeng2980,
+ForgeTab_dataengstrategy2981,
+ForgeTab_datawarehouse2982,
+ForgeTab_etlpipeline2983,
+ForgeTab_streamprocessing2984,
+ForgeTab_datalakehouse2985,
+ForgeTab_mlops2986,
+ForgeTab_datagovernance2987,
+ForgeTab_analyticsplatform2988,
+ForgeTab_dataqualityeng2989,
+ForgeTab_realtimeanalytics2990,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -57041,6 +57051,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'devsecops2978' && <ForgeTab_devsecops2978 />}
               {(mainTab as string) === 'cloudcostops2979' && <ForgeTab_cloudcostops2979 />}
               {(mainTab as string) === 'platformeng2980' && <ForgeTab_platformeng2980 />}
+              {(mainTab as string) === 'dataengstrategy2981' && <ForgeTab_dataengstrategy2981 />}
+              {(mainTab as string) === 'datawarehouse2982' && <ForgeTab_datawarehouse2982 />}
+              {(mainTab as string) === 'etlpipeline2983' && <ForgeTab_etlpipeline2983 />}
+              {(mainTab as string) === 'streamprocessing2984' && <ForgeTab_streamprocessing2984 />}
+              {(mainTab as string) === 'datalakehouse2985' && <ForgeTab_datalakehouse2985 />}
+              {(mainTab as string) === 'mlops2986' && <ForgeTab_mlops2986 />}
+              {(mainTab as string) === 'datagovernance2987' && <ForgeTab_datagovernance2987 />}
+              {(mainTab as string) === 'analyticsplatform2988' && <ForgeTab_analyticsplatform2988 />}
+              {(mainTab as string) === 'dataqualityeng2989' && <ForgeTab_dataqualityeng2989 />}
+              {(mainTab as string) === 'realtimeanalytics2990' && <ForgeTab_realtimeanalytics2990 />}
       </div>
     </div>
   );

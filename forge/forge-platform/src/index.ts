@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v787.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v788.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -211457,5 +211457,65 @@ app.post('/api/devops/cloudcost', requireAuth, async (req: AuthRequest, res: any
 app.post('/api/devops/platformeng', requireAuth, async (req: AuthRequest, res: any) => {
   const { devCount, platformGoal, existingTools } = req.body;
   const prompt = `You are a platform engineering expert. Design an internal developer platform. Dev count: ${devCount}. Goal: ${platformGoal}. Existing tools: ${existingTools}. Respond in JSON: { platform_architecture: string, golden_paths: string[], self_service_capabilities: string[], developer_experience: string[], adoption_strategy: string[], success_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dataeng/strategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dataVolume, dataSource, analyticsGoal } = req.body;
+  const prompt = `You are a data engineering expert. Design a data engineering strategy. Volume: ${dataVolume}. Sources: ${dataSource}. Goal: ${analyticsGoal}. Respond in JSON: { architecture_pattern: string, ingestion_strategy: string[], storage_design: string[], processing_framework: string[], data_quality: string[], team_structure: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dataeng/warehouse', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessDomain, queryPatterns, warehousePlatform } = req.body;
+  const prompt = `You are a data warehouse architect. Design an optimal data warehouse. Domain: ${businessDomain}. Queries: ${queryPatterns}. Platform: ${warehousePlatform}. Respond in JSON: { schema_design: string, fact_tables: string[], dimension_tables: string[], partitioning_strategy: string[], optimization_tips: string[], migration_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dataeng/etl', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sourceSystem, targetSystem, transformationNeeds } = req.body;
+  const prompt = `You are an ETL pipeline expert. Design a robust ETL pipeline. Source: ${sourceSystem}. Target: ${targetSystem}. Transforms: ${transformationNeeds}. Respond in JSON: { pipeline_architecture: string, extraction_strategy: string[], transformation_rules: string[], loading_approach: string[], error_handling: string[], monitoring_setup: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dataeng/streaming', requireAuth, async (req: AuthRequest, res: any) => {
+  const { eventSource, processingLatency, outputTarget } = req.body;
+  const prompt = `You are a stream processing expert. Design a real-time stream processing system. Events: ${eventSource}. Latency: ${processingLatency}. Output: ${outputTarget}. Respond in JSON: { streaming_architecture: string, technology_stack: string[], windowing_strategy: string[], state_management: string[], fault_tolerance: string[], scaling_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dataeng/lakehouse', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dataTypes, userPersonas, governanceNeeds } = req.body;
+  const prompt = `You are a data lakehouse architect. Design a modern data lakehouse. Data types: ${dataTypes}. Users: ${userPersonas}. Governance: ${governanceNeeds}. Respond in JSON: { lakehouse_design: string, storage_layers: string[], table_formats: string[], access_patterns: string[], catalog_strategy: string[], governance_controls: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dataeng/mlops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mlFramework, modelCount, deploymentTarget } = req.body;
+  const prompt = `You are an MLOps expert. Design an MLOps platform. Framework: ${mlFramework}. Models: ${modelCount}. Deploy target: ${deploymentTarget}. Respond in JSON: { mlops_architecture: string, experiment_tracking: string[], model_registry: string[], serving_strategy: string[], monitoring_approach: string[], retraining_pipeline: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dataeng/governance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dataAssets, regulatoryReqs, orgSize } = req.body;
+  const prompt = `You are a data governance expert. Build a data governance program. Assets: ${dataAssets}. Regulations: ${regulatoryReqs}. Org size: ${orgSize}. Respond in JSON: { governance_framework: string, data_catalog: string[], lineage_tracking: string[], quality_rules: string[], access_policies: string[], stewardship_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dataeng/analytics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { businessQuestions, dataTeamSize, selfServiceGoal } = req.body;
+  const prompt = `You are an analytics platform expert. Design a business analytics platform. Questions: ${businessQuestions}. Team: ${dataTeamSize}. Self-service: ${selfServiceGoal}. Respond in JSON: { platform_design: string, bi_tool_selection: string[], metric_framework: string[], self_service_layers: string[], training_plan: string[], success_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dataeng/dataquality', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dataProduct, qualityDimensions, impactArea } = req.body;
+  const prompt = `You are a data quality engineering expert. Build a data quality program. Product: ${dataProduct}. Dimensions: ${qualityDimensions}. Impact: ${impactArea}. Respond in JSON: { quality_framework: string, profiling_approach: string[], validation_rules: string[], monitoring_setup: string[], remediation_process: string[], quality_scorecard: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dataeng/realtimeanalytics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { metricTypes, updateFrequency, dashboardUsers } = req.body;
+  const prompt = `You are a real-time analytics expert. Design a real-time analytics system. Metrics: ${metricTypes}. Frequency: ${updateFrequency}. Users: ${dashboardUsers}. Respond in JSON: { system_architecture: string, data_pipeline: string[], storage_technology: string[], query_engine: string[], visualization_layer: string[], alerting_system: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
