@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v934.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v935.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -220038,5 +220038,65 @@ app.post('/api/altinvestments/quant', requireAuth, async (req: AuthRequest, res:
 app.post('/api/altinvestments/wealthmgmt', requireAuth, async (req: AuthRequest, res: any) => {
   const { wmType, currentWMState, wmGoals } = req.body;
   const prompt = `You are a wealth management strategy expert. Build a wealth management strategy. Type: ${wmType}. State: ${currentWMState}. Goals: ${wmGoals}. Respond in JSON: { wealth_strategy: string, service_model: string[], investment_approach: string[], planning_framework: string[], digital_transformation: string[], growth_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/aistrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiStratType, currentAIState, aiStratGoals } = req.body;
+  const prompt = `You are an enterprise AI strategy expert. Build an AI strategy. Type: ${aiStratType}. State: ${currentAIState}. Goals: ${aiStratGoals}. Respond in JSON: { ai_strategy: string, use_case_portfolio: string[], data_infrastructure: string[], governance_framework: string[], talent_model: string[], scaling_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/digitaltx', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dxType, currentDXState, dxGoals } = req.body;
+  const prompt = `You are a digital transformation strategy expert. Build a digital transformation strategy. Type: ${dxType}. State: ${currentDXState}. Goals: ${dxGoals}. Respond in JSON: { dx_strategy: string, transformation_roadmap: string[], technology_architecture: string[], change_management: string[], talent_upskilling: string[], roi_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/cloud', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cloudType, currentCloudState, cloudGoals } = req.body;
+  const prompt = `You are a cloud strategy expert. Build a cloud strategy. Type: ${cloudType}. State: ${currentCloudState}. Goals: ${cloudGoals}. Respond in JSON: { cloud_strategy: string, migration_plan: string[], architecture_design: string[], finops_framework: string[], security_controls: string[], modernization_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/datapipeline', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dataType, currentDataState, dataGoals } = req.body;
+  const prompt = `You are a data and analytics platform strategy expert. Build a data strategy. Type: ${dataType}. State: ${currentDataState}. Goals: ${dataGoals}. Respond in JSON: { data_strategy: string, architecture_blueprint: string[], data_governance: string[], self_service_analytics: string[], ai_data_foundation: string[], implementation_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/aigovernance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiGovType, currentAIGovState, aiGovGoals } = req.body;
+  const prompt = `You are an AI governance and responsible AI expert. Build an AI governance framework. Type: ${aiGovType}. State: ${currentAIGovState}. Goals: ${aiGovGoals}. Respond in JSON: { ai_governance: string, risk_framework: string[], bias_mitigation: string[], explainability_program: string[], regulatory_compliance: string[], audit_process: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/genaiproduct', requireAuth, async (req: AuthRequest, res: any) => {
+  const { genaiType, currentGenAIState, genaiGoals } = req.body;
+  const prompt = `You are a generative AI product strategy expert. Build a GenAI product strategy. Type: ${genaiType}. State: ${currentGenAIState}. Goals: ${genaiGoals}. Respond in JSON: { genai_strategy: string, model_selection: string[], rag_architecture: string[], agent_design: string[], safety_framework: string[], user_adoption: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/mlops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mlopsType, currentMLOpsState, mlopsGoals } = req.body;
+  const prompt = `You are an MLOps platform strategy expert. Build an MLOps strategy. Type: ${mlopsType}. State: ${currentMLOpsState}. Goals: ${mlopsGoals}. Respond in JSON: { mlops_strategy: string, platform_architecture: string[], deployment_pipeline: string[], monitoring_framework: string[], feature_engineering: string[], governance_controls: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/automation', requireAuth, async (req: AuthRequest, res: any) => {
+  const { autoType, currentAutoState, autoGoals } = req.body;
+  const prompt = `You are an intelligent automation strategy expert. Build an automation strategy. Type: ${autoType}. State: ${currentAutoState}. Goals: ${autoGoals}. Respond in JSON: { automation_strategy: string, process_prioritization: string[], technology_stack: string[], implementation_roadmap: string[], governance_model: string[], roi_tracking: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/datascience', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dsType, currentDSState, dsGoals } = req.body;
+  const prompt = `You are a data science and machine learning strategy expert. Build a DS/ML strategy. Type: ${dsType}. State: ${currentDSState}. Goals: ${dsGoals}. Respond in JSON: { ds_strategy: string, model_portfolio: string[], experimentation_framework: string[], feature_engineering: string[], deployment_pipeline: string[], business_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/aitransition', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiChangeType, currentAIChangeState, aiChangeGoals } = req.body;
+  const prompt = `You are an AI change management and workforce transition expert. Build an AI transition strategy. Type: ${aiChangeType}. State: ${currentAIChangeState}. Goals: ${aiChangeGoals}. Respond in JSON: { ai_transition_strategy: string, workforce_assessment: string[], upskilling_program: string[], job_redesign: string[], change_communication: string[], culture_transformation: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
