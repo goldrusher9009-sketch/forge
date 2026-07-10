@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v920.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v921.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -219198,5 +219198,65 @@ app.post('/api/insurisk/mga', requireAuth, async (req: AuthRequest, res: any) =>
 app.post('/api/insurisk/enterpriserisk', requireAuth, async (req: AuthRequest, res: any) => {
   const { orgType, currentERMState, ermGoals } = req.body;
   const prompt = `You are an enterprise risk management strategy expert. Build an ERM strategy. Org: ${orgType}. ERM: ${currentERMState}. Goals: ${ermGoals}. Respond in JSON: { erm_strategy: string, framework_design: string[], risk_appetite: string[], risk_culture: string[], board_reporting: string[], crisis_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industry40/advmfg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mfgType, currentMfgState, mfgGoals } = req.body;
+  const prompt = `You are an advanced manufacturing strategy expert. Build an advanced manufacturing strategy. Type: ${mfgType}. State: ${currentMfgState}. Goals: ${mfgGoals}. Respond in JSON: { manufacturing_strategy: string, technology_roadmap: string[], automation_plan: string[], quality_framework: string[], sustainability_integration: string[], digital_twin: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industry40/ind40', requireAuth, async (req: AuthRequest, res: any) => {
+  const { industryType, currentDigitalState, i40Goals } = req.body;
+  const prompt = `You are an Industry 4.0 strategy expert. Build an Industry 4.0 strategy. Industry: ${industryType}. State: ${currentDigitalState}. Goals: ${i40Goals}. Respond in JSON: { industry40_strategy: string, digital_transformation_roadmap: string[], iiot_architecture: string[], ai_ml_use_cases: string[], change_management: string[], roi_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industry40/robotics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { roboticsType, currentAutoState, roboticsGoals } = req.body;
+  const prompt = `You are a robotics and automation strategy expert. Build a robotics strategy. Type: ${roboticsType}. State: ${currentAutoState}. Goals: ${roboticsGoals}. Respond in JSON: { robotics_strategy: string, automation_roadmap: string[], cobot_integration: string[], ai_vision_system: string[], workforce_upskilling: string[], roi_calculation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industry40/digitaltwin', requireAuth, async (req: AuthRequest, res: any) => {
+  const { twinType, currentTwinState, twinGoals } = req.body;
+  const prompt = `You are a digital twin strategy expert. Build a digital twin strategy. Type: ${twinType}. State: ${currentTwinState}. Goals: ${twinGoals}. Respond in JSON: { digital_twin_strategy: string, data_architecture: string[], physics_model: string[], ai_ml_integration: string[], use_case_prioritization: string[], implementation_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industry40/predmaint', requireAuth, async (req: AuthRequest, res: any) => {
+  const { assetType, currentMaintState, maintGoals } = req.body;
+  const prompt = `You are a predictive maintenance strategy expert. Build a predictive maintenance strategy. Asset: ${assetType}. State: ${currentMaintState}. Goals: ${maintGoals}. Respond in JSON: { predictive_maintenance_strategy: string, sensor_architecture: string[], ai_analytics_platform: string[], condition_monitoring: string[], cmms_integration: string[], roi_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industry40/smartfactory', requireAuth, async (req: AuthRequest, res: any) => {
+  const { factoryType, currentSmartState, smartGoals } = req.body;
+  const prompt = `You are a smart factory strategy expert. Build a smart factory strategy. Type: ${factoryType}. State: ${currentSmartState}. Goals: ${smartGoals}. Respond in JSON: { smart_factory_strategy: string, connectivity_architecture: string[], oee_optimization: string[], mes_integration: string[], worker_augmentation: string[], scalability_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industry40/addmfg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { addType, currentAddState, addGoals } = req.body;
+  const prompt = `You are an additive manufacturing strategy expert. Build an AM strategy. Type: ${addType}. State: ${currentAddState}. Goals: ${addGoals}. Respond in JSON: { am_strategy: string, technology_selection: string[], material_development: string[], quality_assurance: string[], supply_chain_integration: string[], serial_production_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industry40/quality', requireAuth, async (req: AuthRequest, res: any) => {
+  const { qualityType, currentQualityState, qualityGoals } = req.body;
+  const prompt = `You are a quality management strategy expert. Build a quality management strategy. Type: ${qualityType}. State: ${currentQualityState}. Goals: ${qualityGoals}. Respond in JSON: { quality_strategy: string, quality_system_design: string[], ai_inspection: string[], six_sigma_roadmap: string[], supplier_quality: string[], certification_pathway: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industry40/sc40', requireAuth, async (req: AuthRequest, res: any) => {
+  const { scType, currentSCState, sc40Goals } = req.body;
+  const prompt = `You are a Supply Chain 4.0 strategy expert. Build a SC 4.0 strategy. Type: ${scType}. State: ${currentSCState}. Goals: ${sc40Goals}. Respond in JSON: { sc40_strategy: string, visibility_platform: string[], ai_demand_planning: string[], automation_roadmap: string[], resilience_framework: string[], sustainability_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industry40/leandigital', requireAuth, async (req: AuthRequest, res: any) => {
+  const { leanType, currentLeanState, leanGoals } = req.body;
+  const prompt = `You are a Lean and digital transformation strategy expert. Build a lean digital strategy. Type: ${leanType}. State: ${currentLeanState}. Goals: ${leanGoals}. Respond in JSON: { lean_digital_strategy: string, vsm_digital: string[], waste_elimination_ai: string[], digital_kaizen: string[], flow_optimization: string[], continuous_improvement_platform: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

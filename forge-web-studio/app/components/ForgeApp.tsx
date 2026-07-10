@@ -1404,6 +1404,16 @@ ForgeTab_reinsurancestrategy4317,
 ForgeTab_insuranceanalytics4318,
 ForgeTab_mgastrategy4319,
 ForgeTab_enterpriserisk4320,
+ForgeTab_advancedmanufacturing4321,
+ForgeTab_industry40strategy4322,
+ForgeTab_roboticsautomation4323,
+ForgeTab_digitaltwin4324,
+ForgeTab_predictivemaintenance4325,
+ForgeTab_smartfactory4326,
+ForgeTab_addmfgstrategy4327,
+ForgeTab_qualitymanagement4328,
+ForgeTab_supplychain404329,
+ForgeTab_leandigital4330,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59701,6 +59711,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'insuranceanalytics4318' && <ForgeTab_insuranceanalytics4318 />}
               {(mainTab as string) === 'mgastrategy4319' && <ForgeTab_mgastrategy4319 />}
               {(mainTab as string) === 'enterpriserisk4320' && <ForgeTab_enterpriserisk4320 />}
+              {(mainTab as string) === 'advancedmanufacturing4321' && <ForgeTab_advancedmanufacturing4321 />}
+              {(mainTab as string) === 'industry40strategy4322' && <ForgeTab_industry40strategy4322 />}
+              {(mainTab as string) === 'roboticsautomation4323' && <ForgeTab_roboticsautomation4323 />}
+              {(mainTab as string) === 'digitaltwin4324' && <ForgeTab_digitaltwin4324 />}
+              {(mainTab as string) === 'predictivemaintenance4325' && <ForgeTab_predictivemaintenance4325 />}
+              {(mainTab as string) === 'smartfactory4326' && <ForgeTab_smartfactory4326 />}
+              {(mainTab as string) === 'addmfgstrategy4327' && <ForgeTab_addmfgstrategy4327 />}
+              {(mainTab as string) === 'qualitymanagement4328' && <ForgeTab_qualitymanagement4328 />}
+              {(mainTab as string) === 'supplychain404329' && <ForgeTab_supplychain404329 />}
+              {(mainTab as string) === 'leandigital4330' && <ForgeTab_leandigital4330 />}
       </div>
     </div>
   );
