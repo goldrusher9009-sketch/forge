@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v858.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v859.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -215478,5 +215478,65 @@ app.post('/api/saas/venturebuilder', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/saas/apimonetize', requireAuth, async (req: AuthRequest, res: any) => {
   const { apiType, targetDevelopers, apiGoals } = req.body;
   const prompt = `You are an API business strategy expert. Build an API monetization strategy. API: ${apiType}. Developers: ${targetDevelopers}. Goals: ${apiGoals}. Respond in JSON: { api_strategy: string, pricing_model: string[], developer_experience: string[], documentation: string[], partner_ecosystem: string[], growth_levers: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consumertech/consumerapp', requireAuth, async (req: AuthRequest, res: any) => {
+  const { appCategory, targetUsers, appGoals } = req.body;
+  const prompt = `You are a consumer app strategy expert. Build a consumer app strategy. Category: ${appCategory}. Users: ${targetUsers}. Goals: ${appGoals}. Respond in JSON: { app_strategy: string, user_acquisition: string[], retention_mechanics: string[], monetization_model: string[], viral_growth: string[], product_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consumertech/mcommerce', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productCategory, targetShoppers, mcommerceGoals } = req.body;
+  const prompt = `You are a mobile commerce expert. Build an mCommerce strategy. Category: ${productCategory}. Shoppers: ${targetShoppers}. Goals: ${mcommerceGoals}. Respond in JSON: { mcommerce_strategy: string, app_experience: string[], checkout_optimization: string[], personalization: string[], loyalty_program: string[], push_notification: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consumertech/socialgrowth', requireAuth, async (req: AuthRequest, res: any) => {
+  const { platform, currentMetrics, socialGoals } = req.body;
+  const prompt = `You are a social media growth expert. Build a social growth strategy. Platform: ${platform}. Metrics: ${currentMetrics}. Goals: ${socialGoals}. Respond in JSON: { growth_strategy: string, content_pillars: string[], posting_schedule: string[], engagement_tactics: string[], algorithm_optimization: string[], collaboration_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consumertech/appmonetize', requireAuth, async (req: AuthRequest, res: any) => {
+  const { appType, userBase, monetizeGoals } = req.body;
+  const prompt = `You are an app monetization expert. Build an app monetization strategy. App: ${appType}. Users: ${userBase}. Goals: ${monetizeGoals}. Respond in JSON: { monetization_strategy: string, revenue_models: string[], in_app_purchases: string[], subscription_design: string[], ad_integration: string[], premium_features: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consumertech/aso', requireAuth, async (req: AuthRequest, res: any) => {
+  const { appCategory, targetKeywords, asoGoals } = req.body;
+  const prompt = `You are an App Store Optimization expert. Build an ASO strategy. Category: ${appCategory}. Keywords: ${targetKeywords}. Goals: ${asoGoals}. Respond in JSON: { aso_strategy: string, keyword_strategy: string[], title_description: string[], visual_assets: string[], rating_reviews: string[], localization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consumertech/useracquisition', requireAuth, async (req: AuthRequest, res: any) => {
+  const { appType, targetAudience, uaGoals } = req.body;
+  const prompt = `You are a user acquisition expert. Build a UA strategy. App: ${appType}. Audience: ${targetAudience}. Goals: ${uaGoals}. Respond in JSON: { ua_strategy: string, channel_mix: string[], creative_strategy: string[], targeting_approach: string[], budget_allocation: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consumertech/appretention', requireAuth, async (req: AuthRequest, res: any) => {
+  const { appCategory, currentRetention, retentionGoals } = req.body;
+  const prompt = `You are an app retention expert. Build a retention strategy. Category: ${appCategory}. Retention: ${currentRetention}. Goals: ${retentionGoals}. Respond in JSON: { retention_strategy: string, onboarding_optimization: string[], habit_loops: string[], push_notification: string[], reengagement_campaigns: string[], feature_unlocks: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consumertech/wearable', requireAuth, async (req: AuthRequest, res: any) => {
+  const { wearableType, targetUsers, wearableGoals } = req.body;
+  const prompt = `You are a wearable technology expert. Build a wearable tech strategy. Type: ${wearableType}. Users: ${targetUsers}. Goals: ${wearableGoals}. Respond in JSON: { wearable_strategy: string, hardware_design: string[], software_platform: string[], health_integration: string[], ecosystem_partners: string[], subscription_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consumertech/smarthome', requireAuth, async (req: AuthRequest, res: any) => {
+  const { productCategory, targetHomeowners, smarthomeGoals } = req.body;
+  const prompt = `You are a smart home product expert. Build a smart home strategy. Product: ${productCategory}. Homeowners: ${targetHomeowners}. Goals: ${smarthomeGoals}. Respond in JSON: { smart_home_strategy: string, product_design: string[], platform_integration: string[], voice_assistant: string[], retailer_strategy: string[], subscription_services: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consumertech/consumerfintech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fintechProduct, targetConsumers, fintechAppGoals } = req.body;
+  const prompt = `You are a consumer fintech app expert. Build a consumer fintech strategy. Product: ${fintechProduct}. Consumers: ${targetConsumers}. Goals: ${fintechAppGoals}. Respond in JSON: { fintech_strategy: string, product_design: string[], trust_building: string[], regulatory_compliance: string[], monetization_model: string[], growth_loops: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

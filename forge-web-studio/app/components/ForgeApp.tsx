@@ -784,6 +784,16 @@ ForgeTab_saaspartner3697,
 ForgeTab_saasmarketing3698,
 ForgeTab_venturebuilder3699,
 ForgeTab_apimonetize3700,
+ForgeTab_consumerapp3701,
+ForgeTab_mobilecommerce3702,
+ForgeTab_socialmediagrowth3703,
+ForgeTab_appmonetization3704,
+ForgeTab_appstoreoptimize3705,
+ForgeTab_useracquisition3706,
+ForgeTab_appretention3707,
+ForgeTab_wearabletech3708,
+ForgeTab_smarthome3709,
+ForgeTab_consumerfintech3710,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -58461,6 +58471,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'saasmarketing3698' && <ForgeTab_saasmarketing3698 />}
               {(mainTab as string) === 'venturebuilder3699' && <ForgeTab_venturebuilder3699 />}
               {(mainTab as string) === 'apimonetize3700' && <ForgeTab_apimonetize3700 />}
+              {(mainTab as string) === 'consumerapp3701' && <ForgeTab_consumerapp3701 />}
+              {(mainTab as string) === 'mobilecommerce3702' && <ForgeTab_mobilecommerce3702 />}
+              {(mainTab as string) === 'socialmediagrowth3703' && <ForgeTab_socialmediagrowth3703 />}
+              {(mainTab as string) === 'appmonetization3704' && <ForgeTab_appmonetization3704 />}
+              {(mainTab as string) === 'appstoreoptimize3705' && <ForgeTab_appstoreoptimize3705 />}
+              {(mainTab as string) === 'useracquisition3706' && <ForgeTab_useracquisition3706 />}
+              {(mainTab as string) === 'appretention3707' && <ForgeTab_appretention3707 />}
+              {(mainTab as string) === 'wearabletech3708' && <ForgeTab_wearabletech3708 />}
+              {(mainTab as string) === 'smarthome3709' && <ForgeTab_smarthome3709 />}
+              {(mainTab as string) === 'consumerfintech3710' && <ForgeTab_consumerfintech3710 />}
       </div>
     </div>
   );
