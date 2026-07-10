@@ -5629,7 +5629,7 @@ export function ForgeTab_teammeeting174() {
   const [loading, setLoading] = React.useState(false);
   const API = (window as any).FORGE_API || '';
   const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/productivity/team-meeting-design', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({team,cadence})}); const d = await r.json(); setResult(d.design||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
-  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🗓️ Team Meeting Designer</h2><p style={{color:'#888',marginBottom:'1.5rem'}}>Design a meeting cadence your team will not dread — the right meetings, the right frequency, and how to run each one well.</p><div style={{display:'grid',gap:'1rem'}}><textarea value={team} onChange={e=>setTeam(e.target.value)} placeholder="Team: size, function, how distributed, current meeting load, what is working or not..." rows={2} style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem',resize:'vertical'}} /><input value={cadence} onChange={e=>setCadence(e.target.value)} placeholder="Desired cadence (e.g. design a full weekly cadence, fix our daily standup, plan a quarterly offsite)" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!team||!cadence} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Designing...':'Design Meetings'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🗓️ Team Meeting Designer</h2><p style={{color:'#888',marginBottom:'1.5rem'}}>Design a meeting cadence your team will not dread — the right meetings, the right frequency, and how to run each one well.</p><div style={{display:'grid',gap:'1rem'}}><textarea value={team} onChange={e=>setTeam(e.target.value)} placeholder="Team: size, dept, how distributed, current meeting load, what is working or not..." rows={2} style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem',resize:'vertical'}} /><input value={cadence} onChange={e=>setCadence(e.target.value)} placeholder="Desired cadence (e.g. design a full weekly cadence, fix our daily standup, plan a quarterly offsite)" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!team||!cadence} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Designing...':'Design Meetings'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
 }
 
 export function ForgeTab_competitorintel174() {
@@ -6489,7 +6489,7 @@ export function ForgeTab_hrcompensation191() {
   const [loading, setLoading] = React.useState(false);
   const API = (window as any).FORGE_API || '';
   const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/hr/comp-benchmarking', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({role,market})}); const d = await r.json(); setResult(d.benchmark||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
-  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>📏 Comp Benchmarking Guide</h2><p style={{color:'#888',marginBottom:'1.5rem'}}>Benchmark compensation for any role — market rates by level, location, and company stage, with a framework for building a comp philosophy that attracts talent without blowing your budget.</p><div style={{display:'grid',gap:'1rem'}}><textarea value={role} onChange={e=>setRole(e.target.value)} placeholder="Role: title, level (IC3/IC4/Staff, junior/mid/senior), function, key responsibilities, tech stack if engineering..." rows={2} style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem',resize:'vertical'}} /><textarea value={market} onChange={e=>setMarket(e.target.value)} placeholder="Market context: company stage, location (SF/NYC/remote), funding level, how comp-competitive you want to be (50th/75th/90th percentile)..." rows={2} style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem',resize:'vertical'}} /><button onClick={run} disabled={loading||!role||!market} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Benchmarking...':'Benchmark Comp'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>📏 Comp Benchmarking Guide</h2><p style={{color:'#888',marginBottom:'1.5rem'}}>Benchmark compensation for any role — market rates by level, location, and company stage, with a framework for building a comp philosophy that attracts talent without blowing your budget.</p><div style={{display:'grid',gap:'1rem'}}><textarea value={role} onChange={e=>setRole(e.target.value)} placeholder="Role: title, level (IC3/IC4/Staff, junior/mid/senior), dept, key responsibilities, tech stack if engineering..." rows={2} style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem',resize:'vertical'}} /><textarea value={market} onChange={e=>setMarket(e.target.value)} placeholder="Market context: company stage, location (SF/NYC/remote), funding level, how comp-competitive you want to be (50th/75th/90th percentile)..." rows={2} style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem',resize:'vertical'}} /><button onClick={run} disabled={loading||!role||!market} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Benchmarking...':'Benchmark Comp'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
 }
 
 export function ForgeTab_devdataengineering192() {
@@ -9068,7 +9068,7 @@ export function ForgeTab_productroadmappresentation243() {
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const API = (window as any).FORGE_API || '';
-  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/product/roadmap-presentation', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({roadmap,audience})}); const d = await r.json(); setResult(d.presentation||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false));} };
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/product/roadmap-presentation', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({roadmap,audience})}); const d = await r.json(); setResult(d.presentation||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
   return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🗓️ Roadmap Presentation Builder</h2><p style={{color:'#888',marginBottom:'1.5rem'}}>Build the roadmap presentation that generates excitement without creating promises you will regret — the vision framing that connects features to outcomes, the priority explanation that shows you thought hard rather than just listing things, and the now/next/later structure that is honest about uncertainty.</p><div style={{display:'grid',gap:'1rem'}}><textarea value={roadmap} onChange={e=>setRoadmap(e.target.value)} placeholder="Roadmap: what you are building, the strategic priorities behind it, what is in now vs next vs later, what you are NOT doing and why, key dependencies or risks, what is most uncertain..." rows={2} style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem',resize:'vertical'}} /><input value={audience} onChange={e=>setAudience(e.target.value)} placeholder="Audience: internal team, customers, investors, board — and what they care most about" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!roadmap||!audience} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Building...':'Build Roadmap Presentation'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
 }
 
@@ -10828,14 +10828,14 @@ export function ForgeTab_marketinginfluencer275() {
 }
 
 export function ForgeTab_hrteamstructure275() {
-  const [function, setFunction] = React.useState('');
+  const [dept, setDept] = React.useState('');
   const [headcount, setHeadcount] = React.useState('');
   const [stage, setStage] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const API = (window as any).FORGE_API || '';
-  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/hr/team-structure', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({function, headcount, stage})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
-  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>👥 Team Structure</h2><div style={{display:'grid',gap:'1rem'}}><input value={function} onChange={e=>setFunction(e.target.value)} placeholder="Function" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={headcount} onChange={e=>setHeadcount(e.target.value)} placeholder="Headcount" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={stage} onChange={e=>setStage(e.target.value)} placeholder="Stage" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!function||!headcount||!stage} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/hr/team-structure', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({dept, headcount, stage})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>👥 Team Structure</h2><div style={{display:'grid',gap:'1rem'}}><input value={dept} onChange={e=>setDept(e.target.value)} placeholder="Function" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={headcount} onChange={e=>setHeadcount(e.target.value)} placeholder="Headcount" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={stage} onChange={e=>setStage(e.target.value)} placeholder="Stage" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!dept||!headcount||!stage} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
 }
 
 export function ForgeTab_investorcapitaltable276() {
@@ -14251,12 +14251,12 @@ export function ForgeTab_hrpeopleops337() {
 export function ForgeTab_investorsyndicates338() {
   const [stage, setStage] = React.useState('');
   const [lead, setLead] = React.useState('');
-  const [co-investors, setCo-investors] = React.useState('');
+  const [coinvestors, setCoinvestors] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const API = (window as any).FORGE_API || '';
-  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/investor/syndicate-building', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({stage, lead, co-investors})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
-  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>👥 Syndicate Build</h2><div style={{display:'grid',gap:'1rem'}}><input value={stage} onChange={e=>setStage(e.target.value)} placeholder="Stage" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={lead} onChange={e=>setLead(e.target.value)} placeholder="Lead" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={co-investors} onChange={e=>setCo-investors(e.target.value)} placeholder="Co-Investors" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!stage||!lead||!co-investors} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/investor/syndicate-building', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({stage, lead, coinvestors})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>👥 Syndicate Build</h2><div style={{display:'grid',gap:'1rem'}}><input value={stage} onChange={e=>setStage(e.target.value)} placeholder="Stage" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={lead} onChange={e=>setLead(e.target.value)} placeholder="Lead" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><input value={coinvestors} onChange={e=>setCoinvestors(e.target.value)} placeholder="Co-Investors" style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:8,padding:'0.75rem'}} /><button onClick={run} disabled={loading||!stage||!lead||!coinvestors} style={{padding:'0.75rem 2rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',opacity:loading?0.6:1}}>{loading?'Running...':'Generate'}</button></div>{result&&<div style={{marginTop:'1.5rem',background:'#1a1a2e',padding:'1.5rem',borderRadius:8,border:'1px solid #333',whiteSpace:'pre-wrap',lineHeight:1.7}}>{result}</div>}</div>);
 }
 
 export function ForgeTab_devtypescript338() {
@@ -35899,7 +35899,7 @@ export function ForgeTab_productcrossfunctional953() {
 
 export function ForgeTab_productdigitaltransform954() {
   const [company, setCompany] = React.useState('');
-  const [function, setFunction] = React.useState('');
+  const [dept, setDept] = React.useState('');
   const [barrier, setBarrier] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -35907,7 +35907,7 @@ export function ForgeTab_productdigitaltransform954() {
   const run = async () => {
     setLoading(true); setResult('');
     try {
-      const r = await fetch(API+'/api/strategy/digital-transform', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({company, function, barrier})});
+      const r = await fetch(API+'/api/strategy/digital-transform', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({company, dept, barrier})});
       const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
     } catch(e:any){setResult(e.message);} finally{setLoading(false);}
   };
@@ -35916,7 +35916,7 @@ export function ForgeTab_productdigitaltransform954() {
       <h2>🔃 Digital Transformation Lead</h2>
       <div style={{display:'grid',gap:'1rem'}}>
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="company" value={company} onChange={e=>setCompany(e.target.value)} />
-        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={function} onChange={e=>setFunction(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={dept} onChange={e=>setDept(e.target.value)} />
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="barrier" value={barrier} onChange={e=>setBarrier(e.target.value)} />
         <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
       </div>
@@ -41220,14 +41220,14 @@ export function ForgeTab_productpricingexper1143() {
 export function ForgeTab_productcapexmodel1144() {
   const [project, setProject] = React.useState('');
   const [investment, setInvestment] = React.useState('');
-  const [return, setReturn] = React.useState('');
+  const [roi, setRoi] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const API = (window as any).FORGE_API || '';
   const run = async () => {
     setLoading(true); setResult('');
     try {
-      const r = await fetch(API+'/api/finance/capex-planning', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({project, investment, return})});
+      const r = await fetch(API+'/api/finance/capex-planning', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({project, investment, roi})});
       const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
     } catch(e:any){setResult(e.message);} finally{setLoading(false);}
   };
@@ -41237,7 +41237,7 @@ export function ForgeTab_productcapexmodel1144() {
       <div style={{display:'grid',gap:'1rem'}}>
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="project" value={project} onChange={e=>setProject(e.target.value)} />
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="investment" value={investment} onChange={e=>setInvestment(e.target.value)} />
-        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="return" value={return} onChange={e=>setReturn(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="return" value={roi} onChange={e=>setRoi(e.target.value)} />
         <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
       </div>
       {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
@@ -44103,7 +44103,7 @@ export function ForgeTab_productgrowthexper1246() {
 
 export function ForgeTab_productbizops1247() {
   const [company, setCompany] = React.useState('');
-  const [function, setFunction] = React.useState('');
+  const [dept, setDept] = React.useState('');
   const [metric, setMetric] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -44111,7 +44111,7 @@ export function ForgeTab_productbizops1247() {
   const run = async () => {
     setLoading(true); setResult('');
     try {
-      const r = await fetch(API+'/api/ops/bizops', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({company, function, metric})});
+      const r = await fetch(API+'/api/ops/bizops', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({company, dept, metric})});
       const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
     } catch(e:any){setResult(e.message);} finally{setLoading(false);}
   };
@@ -44120,7 +44120,7 @@ export function ForgeTab_productbizops1247() {
       <h2>⚡ BizOps Designer</h2>
       <div style={{display:'grid',gap:'1rem'}}>
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="company" value={company} onChange={e=>setCompany(e.target.value)} />
-        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={function} onChange={e=>setFunction(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={dept} onChange={e=>setDept(e.target.value)} />
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="metric" value={metric} onChange={e=>setMetric(e.target.value)} />
         <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
       </div>
@@ -44468,14 +44468,14 @@ export function ForgeTab_productproductcoach1259() {
 export function ForgeTab_productstartupops1260() {
   const [startup, setStartup] = React.useState('');
   const [stage, setStage] = React.useState('');
-  const [function, setFunction] = React.useState('');
+  const [dept, setDept] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const API = (window as any).FORGE_API || '';
   const run = async () => {
     setLoading(true); setResult('');
     try {
-      const r = await fetch(API+'/api/ops/startup-operations', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({startup, stage, function})});
+      const r = await fetch(API+'/api/ops/startup-operations', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({startup, stage, dept})});
       const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
     } catch(e:any){setResult(e.message);} finally{setLoading(false);}
   };
@@ -44485,7 +44485,7 @@ export function ForgeTab_productstartupops1260() {
       <div style={{display:'grid',gap:'1rem'}}>
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="startup" value={startup} onChange={e=>setStartup(e.target.value)} />
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="stage" value={stage} onChange={e=>setStage(e.target.value)} />
-        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={function} onChange={e=>setFunction(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={dept} onChange={e=>setDept(e.target.value)} />
         <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
       </div>
       {result&&<div style={{marginTop:'1rem',padding:'1rem',background:'#f5f5f5',borderRadius:4,whiteSpace:'pre-wrap'}}>{result}</div>}
@@ -46035,7 +46035,7 @@ export function ForgeTab_productcategorydesign1315() {
 
 export function ForgeTab_productopexcell1316() {
   const [company, setCompany] = React.useState('');
-  const [function, setFunction] = React.useState('');
+  const [dept, setDept] = React.useState('');
   const [standard, setStandard] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -46043,7 +46043,7 @@ export function ForgeTab_productopexcell1316() {
   const run = async () => {
     setLoading(true); setResult('');
     try {
-      const r = await fetch(API+'/api/ops/operational-excellence', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({company, function, standard})});
+      const r = await fetch(API+'/api/ops/operational-excellence', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({company, dept, standard})});
       const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
     } catch(e:any){setResult(e.message);} finally{setLoading(false);}
   };
@@ -46052,7 +46052,7 @@ export function ForgeTab_productopexcell1316() {
       <h2>⚙ Operational Excellence Pro</h2>
       <div style={{display:'grid',gap:'1rem'}}>
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="company" value={company} onChange={e=>setCompany(e.target.value)} />
-        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={function} onChange={e=>setFunction(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={dept} onChange={e=>setDept(e.target.value)} />
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="standard" value={standard} onChange={e=>setStandard(e.target.value)} />
         <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
       </div>
@@ -56171,7 +56171,7 @@ export function ForgeTab_producttransitionmgmt1687() {
 
 export function ForgeTab_productfractionalexec1688() {
   const [executive, setExecutive] = React.useState('');
-  const [function, setFunction] = React.useState('');
+  const [dept, setDept] = React.useState('');
   const [companies, setCompanies] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -56179,7 +56179,7 @@ export function ForgeTab_productfractionalexec1688() {
   const run = async () => {
     setLoading(true); setResult('');
     try {
-      const r = await fetch(API+'/api/career/fractional-exec', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"executive": executive, "function": function, "companies": companies})});
+      const r = await fetch(API+'/api/career/fractional-exec', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"executive": executive, "function": dept, "companies": companies})});
       const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
     } catch(e:any){setResult(e.message);} finally{setLoading(false);}
   };
@@ -56188,7 +56188,7 @@ export function ForgeTab_productfractionalexec1688() {
       <h2>👔 Fractional Executive Expert</h2>
       <div style={{display:'grid',gap:'1rem'}}>
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="executive" value={executive} onChange={e=>setExecutive(e.target.value)} />
-        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={function} onChange={e=>setFunction(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={dept} onChange={e=>setDept(e.target.value)} />
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="companies" value={companies} onChange={e=>setCompanies(e.target.value)} />
         <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
       </div>
@@ -62527,7 +62527,7 @@ export function ForgeTab_productbrandmanagement1914() {
 
 export function ForgeTab_productoutsourcing1915() {
   const [organization, setOrganization] = React.useState('');
-  const [function, setFunction] = React.useState('');
+  const [dept, setDept] = React.useState('');
   const [goals, setGoals] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -62535,7 +62535,7 @@ export function ForgeTab_productoutsourcing1915() {
   const run = async () => {
     setLoading(true); setResult('');
     try {
-      const r = await fetch(API+'/api/strategy/outsourcing', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"organization": organization, "function": function, "goals": goals})});
+      const r = await fetch(API+'/api/strategy/outsourcing', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"organization": organization, "function": dept, "goals": goals})});
       const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
     } catch(e:any){setResult(e.message);} finally{setLoading(false);}
   };
@@ -62544,7 +62544,7 @@ export function ForgeTab_productoutsourcing1915() {
       <h2>O Outsourcing Strategy Expert</h2>
       <div style={{display:'grid',gap:'1rem'}}>
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="organization" value={organization} onChange={e=>setOrganization(e.target.value)} />
-        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={function} onChange={e=>setFunction(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={dept} onChange={e=>setDept(e.target.value)} />
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="goals" value={goals} onChange={e=>setGoals(e.target.value)} />
         <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
       </div>
@@ -64039,7 +64039,7 @@ export function ForgeTab_productmedtech1968() {
 
 export function ForgeTab_productvirtualassistant1969() {
   const [organization, setOrganization] = React.useState('');
-  const [function, setFunction] = React.useState('');
+  const [dept, setDept] = React.useState('');
   const [users, setUsers] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -64047,7 +64047,7 @@ export function ForgeTab_productvirtualassistant1969() {
   const run = async () => {
     setLoading(true); setResult('');
     try {
-      const r = await fetch(API+'/api/strategy/virtual-assistant', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"organization": organization, "function": function, "users": users})});
+      const r = await fetch(API+'/api/strategy/virtual-assistant', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"organization": organization, "function": dept, "users": users})});
       const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
     } catch(e:any){setResult(e.message);} finally{setLoading(false);}
   };
@@ -64056,7 +64056,7 @@ export function ForgeTab_productvirtualassistant1969() {
       <h2>W Virtual Assistant Expert</h2>
       <div style={{display:'grid',gap:'1rem'}}>
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="organization" value={organization} onChange={e=>setOrganization(e.target.value)} />
-        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={function} onChange={e=>setFunction(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={dept} onChange={e=>setDept(e.target.value)} />
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="users" value={users} onChange={e=>setUsers(e.target.value)} />
         <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
       </div>
@@ -69863,7 +69863,7 @@ export function ForgeTab_productcybersecops2176() {
 
 export function ForgeTab_productscaleup2177() {
   const [startup, setStartup] = React.useState('');
-  const [function, setFunction] = React.useState('');
+  const [dept, setDept] = React.useState('');
   const [bottleneck, setBottleneck] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -69871,7 +69871,7 @@ export function ForgeTab_productscaleup2177() {
   const run = async () => {
     setLoading(true); setResult('');
     try {
-      const r = await fetch(API+'/api/strategy/scale-up', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"startup": startup, "function": function, "bottleneck": bottleneck})});
+      const r = await fetch(API+'/api/strategy/scale-up', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"startup": startup, "function": dept, "bottleneck": bottleneck})});
       const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
     } catch(e:any){setResult(e.message);} finally{setLoading(false);}
   };
@@ -69880,7 +69880,7 @@ export function ForgeTab_productscaleup2177() {
       <h2>S Scale-Up Operations Expert</h2>
       <div style={{display:'grid',gap:'1rem'}}>
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="startup" value={startup} onChange={e=>setStartup(e.target.value)} />
-        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={function} onChange={e=>setFunction(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={dept} onChange={e=>setDept(e.target.value)} />
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="bottleneck" value={bottleneck} onChange={e=>setBottleneck(e.target.value)} />
         <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
       </div>
@@ -70283,7 +70283,7 @@ export function ForgeTab_productmarketentry2191() {
 
 export function ForgeTab_productfractionalcxo2192() {
   const [company, setCompany] = React.useState('');
-  const [function, setFunction] = React.useState('');
+  const [dept, setDept] = React.useState('');
   const [stage, setStage] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -70291,7 +70291,7 @@ export function ForgeTab_productfractionalcxo2192() {
   const run = async () => {
     setLoading(true); setResult('');
     try {
-      const r = await fetch(API+'/api/strategy/fractional-exec', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"company": company, "function": function, "stage": stage})});
+      const r = await fetch(API+'/api/strategy/fractional-exec', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"company": company, "function": dept, "stage": stage})});
       const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
     } catch(e:any){setResult(e.message);} finally{setLoading(false);}
   };
@@ -70300,7 +70300,7 @@ export function ForgeTab_productfractionalcxo2192() {
       <h2>F Fractional Executive Expert</h2>
       <div style={{display:'grid',gap:'1rem'}}>
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="company" value={company} onChange={e=>setCompany(e.target.value)} />
-        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={function} onChange={e=>setFunction(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="function" value={dept} onChange={e=>setDept(e.target.value)} />
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="stage" value={stage} onChange={e=>setStage(e.target.value)} />
         <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
       </div>
@@ -87923,7 +87923,7 @@ export function ForgeTab_productlegalstrategy2821() {
 
 export function ForgeTab_productlitigationstrategy2822() {
   const [counsel, setCounsel] = React.useState('');
-  const [case, setCase] = React.useState('');
+  const [caseRef, setCaseRef] = React.useState('');
   const [parties, setParties] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -87931,7 +87931,7 @@ export function ForgeTab_productlitigationstrategy2822() {
   const run = async () => {
     setLoading(true); setResult('');
     try {
-      const r = await fetch(API+'/api/legal/litigation', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"counsel": counsel, "case": case, "parties": parties})});
+      const r = await fetch(API+'/api/legal/litigation', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"counsel": counsel, "case": caseRef, "parties": parties})});
       const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
     } catch(e:any){setResult(e.message);} finally{setLoading(false);}
   };
@@ -87940,7 +87940,7 @@ export function ForgeTab_productlitigationstrategy2822() {
       <h2>L Litigation Strategy Expert</h2>
       <div style={{display:'grid',gap:'1rem'}}>
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="counsel" value={counsel} onChange={e=>setCounsel(e.target.value)} />
-        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="case" value={case} onChange={e=>setCase(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="case" value={caseRef} onChange={e=>setCaseRef(e.target.value)} />
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="parties" value={parties} onChange={e=>setParties(e.target.value)} />
         <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
       </div>
@@ -88147,7 +88147,7 @@ export function ForgeTab_productantitrust2829() {
 
 export function ForgeTab_productcomplexlitigation2830() {
   const [firm, setFirm] = React.useState('');
-  const [case, setCase] = React.useState('');
+  const [caseRef, setCaseRef] = React.useState('');
   const [complexity, setComplexity] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -88155,7 +88155,7 @@ export function ForgeTab_productcomplexlitigation2830() {
   const run = async () => {
     setLoading(true); setResult('');
     try {
-      const r = await fetch(API+'/api/legal/complexlit', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"firm": firm, "case": case, "complexity": complexity})});
+      const r = await fetch(API+'/api/legal/complexlit', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"firm": firm, "case": caseRef, "complexity": complexity})});
       const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d));
     } catch(e:any){setResult(e.message);} finally{setLoading(false);}
   };
@@ -88164,7 +88164,7 @@ export function ForgeTab_productcomplexlitigation2830() {
       <h2>C Complex Litigation Expert</h2>
       <div style={{display:'grid',gap:'1rem'}}>
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="firm" value={firm} onChange={e=>setFirm(e.target.value)} />
-        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="case" value={case} onChange={e=>setCase(e.target.value)} />
+        <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="case" value={caseRef} onChange={e=>setCaseRef(e.target.value)} />
         <input style={{padding:'0.5rem',borderRadius:4,border:'1px solid #ccc'}} placeholder="complexity" value={complexity} onChange={e=>setComplexity(e.target.value)} />
         <button onClick={run} disabled={loading} style={{padding:'0.75rem',background:'#6c63ff',color:'#fff',border:'none',borderRadius:4,cursor:'pointer'}}>{loading?'Running...':'Generate'}</button>
       </div>
