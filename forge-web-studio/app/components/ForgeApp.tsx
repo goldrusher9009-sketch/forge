@@ -1284,6 +1284,16 @@ ForgeTab_operationalexcellence4197,
 ForgeTab_enterprisearch4198,
 ForgeTab_supplychain4199,
 ForgeTab_corporatestrategy4200,
+ForgeTab_venturecapital4201,
+ForgeTab_startuplaunch4202,
+ForgeTab_fundraising4203,
+ForgeTab_productmarketfit4204,
+ForgeTab_startupscaling4205,
+ForgeTab_startupmetrics4206,
+ForgeTab_acceleratorincubator4207,
+ForgeTab_exitstrategy4208,
+ForgeTab_founderleadership4209,
+ForgeTab_startuptalent4210,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59461,6 +59471,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'enterprisearch4198' && <ForgeTab_enterprisearch4198 />}
               {(mainTab as string) === 'supplychain4199' && <ForgeTab_supplychain4199 />}
               {(mainTab as string) === 'corporatestrategy4200' && <ForgeTab_corporatestrategy4200 />}
+              {(mainTab as string) === 'venturecapital4201' && <ForgeTab_venturecapital4201 />}
+              {(mainTab as string) === 'startuplaunch4202' && <ForgeTab_startuplaunch4202 />}
+              {(mainTab as string) === 'fundraising4203' && <ForgeTab_fundraising4203 />}
+              {(mainTab as string) === 'productmarketfit4204' && <ForgeTab_productmarketfit4204 />}
+              {(mainTab as string) === 'startupscaling4205' && <ForgeTab_startupscaling4205 />}
+              {(mainTab as string) === 'startupmetrics4206' && <ForgeTab_startupmetrics4206 />}
+              {(mainTab as string) === 'acceleratorincubator4207' && <ForgeTab_acceleratorincubator4207 />}
+              {(mainTab as string) === 'exitstrategy4208' && <ForgeTab_exitstrategy4208 />}
+              {(mainTab as string) === 'founderleadership4209' && <ForgeTab_founderleadership4209 />}
+              {(mainTab as string) === 'startuptalent4210' && <ForgeTab_startuptalent4210 />}
       </div>
     </div>
   );

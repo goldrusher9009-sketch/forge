@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v908.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v909.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -218478,5 +218478,65 @@ app.post('/api/entbiz/supplychain', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/entbiz/corpstrat', requireAuth, async (req: AuthRequest, res: any) => {
   const { companyType, currentPosition, corpGoals } = req.body;
   const prompt = `You are a corporate strategy expert. Build a corporate strategy. Company: ${companyType}. Position: ${currentPosition}. Goals: ${corpGoals}. Respond in JSON: { corporate_strategy: string, strategic_priorities: string[], portfolio_management: string[], ma_strategy: string[], competitive_positioning: string[], value_creation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/vcstartup/vc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { vcType, fundSize, vcGoals } = req.body;
+  const prompt = `You are a venture capital strategy expert. Build a VC strategy. Type: ${vcType}. Fund: ${fundSize}. Goals: ${vcGoals}. Respond in JSON: { vc_strategy: string, investment_thesis: string[], deal_sourcing: string[], portfolio_management: string[], value_add_model: string[], fund_operations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/vcstartup/startuplaw', requireAuth, async (req: AuthRequest, res: any) => {
+  const { startupType, founderBackground, launchGoals } = req.body;
+  const prompt = `You are a startup launch strategy expert. Build a startup launch strategy. Type: ${startupType}. Founder: ${founderBackground}. Goals: ${launchGoals}. Respond in JSON: { startup_strategy: string, mvp_definition: string[], customer_discovery: string[], go_to_market: string[], fundraising_approach: string[], team_building: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/vcstartup/fundraise', requireAuth, async (req: AuthRequest, res: any) => {
+  const { startupStage, currentMetrics, fundraiseGoals } = req.body;
+  const prompt = `You are a startup fundraising strategy expert. Build a fundraising strategy. Stage: ${startupStage}. Metrics: ${currentMetrics}. Goals: ${fundraiseGoals}. Respond in JSON: { fundraising_strategy: string, materials_preparation: string[], investor_targeting: string[], narrative_framework: string[], diligence_preparation: string[], negotiation_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/vcstartup/pmf', requireAuth, async (req: AuthRequest, res: any) => {
+  const { startupType, currentPMFState, pmfGoals } = req.body;
+  const prompt = `You are a product-market fit strategy expert. Build a PMF strategy. Type: ${startupType}. State: ${currentPMFState}. Goals: ${pmfGoals}. Respond in JSON: { pmf_strategy: string, customer_segmentation: string[], retention_analysis: string[], feedback_loops: string[], icp_definition: string[], pivot_or_persist: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/vcstartup/scale', requireAuth, async (req: AuthRequest, res: any) => {
+  const { startupType, currentScale, scalingGoals } = req.body;
+  const prompt = `You are a startup scaling strategy expert. Build a scaling strategy. Type: ${startupType}. Scale: ${currentScale}. Goals: ${scalingGoals}. Respond in JSON: { scaling_strategy: string, revenue_acceleration: string[], team_structure: string[], operational_systems: string[], culture_codification: string[], international_expansion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/vcstartup/startupkpi', requireAuth, async (req: AuthRequest, res: any) => {
+  const { bizModel, currentMetricsState, metricsGoals } = req.body;
+  const prompt = `You are a startup metrics strategy expert. Build a metrics framework. Model: ${bizModel}. State: ${currentMetricsState}. Goals: ${metricsGoals}. Respond in JSON: { metrics_framework: string, north_star_metric: string[], unit_economics: string[], cohort_analysis: string[], board_reporting: string[], data_infrastructure: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/vcstartup/accel', requireAuth, async (req: AuthRequest, res: any) => {
+  const { accelType, cohortFocus, accelGoals } = req.body;
+  const prompt = `You are an accelerator strategy expert. Build an accelerator strategy. Type: ${accelType}. Focus: ${cohortFocus}. Goals: ${accelGoals}. Respond in JSON: { accelerator_strategy: string, program_design: string[], selection_criteria: string[], mentor_network: string[], corporate_partnerships: string[], alumni_community: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/vcstartup/exit', requireAuth, async (req: AuthRequest, res: any) => {
+  const { startupType, currentValuation, exitGoals } = req.body;
+  const prompt = `You are a startup exit strategy expert. Build an exit strategy. Type: ${startupType}. Valuation: ${currentValuation}. Goals: ${exitGoals}. Respond in JSON: { exit_strategy: string, ipo_readiness: string[], ma_preparation: string[], potential_acquirers: string[], valuation_drivers: string[], timeline_milestones: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/vcstartup/founder', requireAuth, async (req: AuthRequest, res: any) => {
+  const { founderStage, companySize, leaderGoals } = req.body;
+  const prompt = `You are a founder leadership strategy expert. Build a founder leadership strategy. Stage: ${founderStage}. Company: ${companySize}. Goals: ${leaderGoals}. Respond in JSON: { founder_strategy: string, leadership_evolution: string[], team_building: string[], board_management: string[], culture_setting: string[], personal_development: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/vcstartup/startuphr', requireAuth, async (req: AuthRequest, res: any) => {
+  const { startupStage, currentTeamSize, talentGoals } = req.body;
+  const prompt = `You are a startup talent strategy expert. Build a startup talent strategy. Stage: ${startupStage}. Team: ${currentTeamSize}. Goals: ${talentGoals}. Respond in JSON: { talent_strategy: string, hiring_plan: string[], culture_design: string[], compensation_framework: string[], performance_system: string[], retention_programs: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
