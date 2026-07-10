@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v801.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v802.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -212058,5 +212058,65 @@ app.post('/api/logistics/coldchain', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/logistics/customs', requireAuth, async (req: AuthRequest, res: any) => {
   const { importExportCountries, productHsCodes, tradeVolume } = req.body;
   const prompt = `You are a customs and trade compliance expert. Design a trade compliance program. Countries: ${importExportCountries}. Products: ${productHsCodes}. Volume: ${tradeVolume}. Respond in JSON: { compliance_framework: string, documentation_requirements: string[], duty_optimization: string[], free_trade_agreements: string[], customs_broker_strategy: string[], audit_readiness: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/talentacq', requireAuth, async (req: AuthRequest, res: any) => {
+  const { roleToFill, companyStage, hiringTimeline } = req.body;
+  const prompt = `You are a talent acquisition expert. Design a full hiring strategy for this role. Role: ${roleToFill}. Stage: ${companyStage}. Timeline: ${hiringTimeline}. Respond in JSON: { sourcing_strategy: string[], job_description_angles: string[], screening_criteria: string[], interview_process: string[], candidate_experience: string[], offer_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/engagement', requireAuth, async (req: AuthRequest, res: any) => {
+  const { teamSize, currentEngagementScore, topChallenges } = req.body;
+  const prompt = `You are an employee engagement expert. Design a comprehensive engagement program. Team: ${teamSize}. Score: ${currentEngagementScore}. Challenges: ${topChallenges}. Respond in JSON: { engagement_framework: string, quick_wins: string[], culture_initiatives: string[], recognition_program: string[], feedback_loops: string[], measurement_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/perfmgmt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { companySize, currentProcess, performanceGoals } = req.body;
+  const prompt = `You are a performance management expert. Design a modern performance system. Company: ${companySize}. Current: ${currentProcess}. Goals: ${performanceGoals}. Respond in JSON: { performance_framework: string, goal_setting_method: string[], review_cadence: string[], rating_calibration: string[], feedback_culture: string[], compensation_linkage: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/learning', requireAuth, async (req: AuthRequest, res: any) => {
+  const { skillGaps, learningBudget, preferredFormats } = req.body;
+  const prompt = `You are an L&D program designer. Design a comprehensive learning program. Gaps: ${skillGaps}. Budget: ${learningBudget}. Formats: ${preferredFormats}. Respond in JSON: { learning_architecture: string, program_catalog: string[], delivery_methods: string[], measurement_strategy: string[], vendor_recommendations: string[], implementation_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/compdesign', requireAuth, async (req: AuthRequest, res: any) => {
+  const { jobFamilies, marketPosition, totalBudget } = req.body;
+  const prompt = `You are a compensation strategy expert. Design a competitive compensation framework. Jobs: ${jobFamilies}. Position: ${marketPosition}. Budget: ${totalBudget}. Respond in JSON: { compensation_philosophy: string, pay_band_structure: string[], variable_pay_design: string[], equity_program: string[], benefits_strategy: string[], pay_equity_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/succession', requireAuth, async (req: AuthRequest, res: any) => {
+  const { criticalRoles, organizationSize, planningHorizon } = req.body;
+  const prompt = `You are a succession planning expert. Design a succession planning program. Roles: ${criticalRoles}. Size: ${organizationSize}. Horizon: ${planningHorizon}. Respond in JSON: { succession_framework: string, talent_identification: string[], development_pipeline: string[], readiness_assessment: string[], risk_mitigation: string[], implementation_timeline: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/dei', requireAuth, async (req: AuthRequest, res: any) => {
+  const { currentDiversityData, industryBenchmarks, deiGoals } = req.body;
+  const prompt = `You are a DEI strategy expert. Design a meaningful DEI program. Current: ${currentDiversityData}. Benchmarks: ${industryBenchmarks}. Goals: ${deiGoals}. Respond in JSON: { dei_strategy: string, representation_goals: string[], hiring_initiatives: string[], inclusion_programs: string[], measurement_framework: string[], accountability_structure: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/hrpolicy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { policyType, companySize, jurisdictions } = req.body;
+  const prompt = `You are an HR policy expert. Draft a comprehensive HR policy. Type: ${policyType}. Company: ${companySize}. Jurisdictions: ${jurisdictions}. Respond in JSON: { policy_statement: string, scope_coverage: string[], key_provisions: string[], manager_responsibilities: string[], employee_rights: string[], compliance_requirements: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/offboarding', requireAuth, async (req: AuthRequest, res: any) => {
+  const { departureType, employeeRole, transitionTimeline } = req.body;
+  const prompt = `You are an HR offboarding expert. Design a professional offboarding process. Type: ${departureType}. Role: ${employeeRole}. Timeline: ${transitionTimeline}. Respond in JSON: { offboarding_checklist: string[], knowledge_transfer: string[], access_revocation: string[], final_pay_compliance: string[], exit_interview: string[], alumni_relationship: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/hr/hranalytics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hrMetrics, workforce_size, analyticsGoal } = req.body;
+  const prompt = `You are an HR analytics expert. Design an HR analytics program. Metrics: ${hrMetrics}. Workforce: ${workforce_size}. Goal: ${analyticsGoal}. Respond in JSON: { analytics_framework: string, key_metrics: string[], data_sources: string[], predictive_models: string[], dashboard_design: string[], action_triggers: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
