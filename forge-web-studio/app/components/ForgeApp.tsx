@@ -1334,6 +1334,16 @@ ForgeTab_smartbuilding4247,
 ForgeTab_realestatemarketplace4248,
 ForgeTab_propertymanagement4249,
 ForgeTab_realestateesg4250,
+ForgeTab_agritechstrategy4251,
+ForgeTab_foodtechstrategy4252,
+ForgeTab_alternativeprotein4253,
+ForgeTab_foodsupplychain4254,
+ForgeTab_verticalfarming4255,
+ForgeTab_fooddelivery4256,
+ForgeTab_cpgstrategy4257,
+ForgeTab_restauranttechstrategy4258,
+ForgeTab_sustainableagriculture4259,
+ForgeTab_aquatechstrategy4260,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -59561,6 +59571,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'realestatemarketplace4248' && <ForgeTab_realestatemarketplace4248 />}
               {(mainTab as string) === 'propertymanagement4249' && <ForgeTab_propertymanagement4249 />}
               {(mainTab as string) === 'realestateesg4250' && <ForgeTab_realestateesg4250 />}
+              {(mainTab as string) === 'agritechstrategy4251' && <ForgeTab_agritechstrategy4251 />}
+              {(mainTab as string) === 'foodtechstrategy4252' && <ForgeTab_foodtechstrategy4252 />}
+              {(mainTab as string) === 'alternativeprotein4253' && <ForgeTab_alternativeprotein4253 />}
+              {(mainTab as string) === 'foodsupplychain4254' && <ForgeTab_foodsupplychain4254 />}
+              {(mainTab as string) === 'verticalfarming4255' && <ForgeTab_verticalfarming4255 />}
+              {(mainTab as string) === 'fooddelivery4256' && <ForgeTab_fooddelivery4256 />}
+              {(mainTab as string) === 'cpgstrategy4257' && <ForgeTab_cpgstrategy4257 />}
+              {(mainTab as string) === 'restauranttechstrategy4258' && <ForgeTab_restauranttechstrategy4258 />}
+              {(mainTab as string) === 'sustainableagriculture4259' && <ForgeTab_sustainableagriculture4259 />}
+              {(mainTab as string) === 'aquatechstrategy4260' && <ForgeTab_aquatechstrategy4260 />}
       </div>
     </div>
   );
