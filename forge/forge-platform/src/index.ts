@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1034.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1035.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -226038,5 +226038,65 @@ app.post('/api/altinvest/impact', requireAuth, async (req: AuthRequest, res: any
 app.post('/api/altinvest/assetalloc', requireAuth, async (req: AuthRequest, res: any) => {
   const { allocType, currentAllocState, allocGoals } = req.body;
   const prompt = `You are an asset allocation and portfolio construction strategy expert. Build an asset allocation strategy. Type: ${allocType}. State: ${currentAllocState}. Goals: ${allocGoals}. Respond in JSON: { allocation_strategy: string, strategic_allocation: string[], factor_tilts: string[], alternatives_exposure: string[], risk_budgeting: string[], rebalancing_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/lifesci/biopharma', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pharmaType, currentPharmaState, pharmaGoals } = req.body;
+  const prompt = `You are a biopharma and drug development strategy expert. Build a biopharma strategy. Type: ${pharmaType}. State: ${currentPharmaState}. Goals: ${pharmaGoals}. Respond in JSON: { biopharma_strategy: string, pipeline_prioritization: string[], clinical_development: string[], regulatory_pathway: string[], commercial_preparation: string[], bd_licensing: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/lifesci/medtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { medtechType, currentMedtechState, medtechGoals } = req.body;
+  const prompt = `You are a medical device and MedTech strategy expert. Build a MedTech strategy. Type: ${medtechType}. State: ${currentMedtechState}. Goals: ${medtechGoals}. Respond in JSON: { medtech_strategy: string, regulatory_pathway: string[], reimbursement_strategy: string[], commercial_model: string[], ai_integration: string[], portfolio_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/lifesci/hospital', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hospitalType, currentHospitalState, hospitalGoals } = req.body;
+  const prompt = `You are a hospital and health system strategy expert. Build a health system strategy. Type: ${hospitalType}. State: ${currentHospitalState}. Goals: ${hospitalGoals}. Respond in JSON: { health_system_strategy: string, service_line_portfolio: string[], value_based_care: string[], physician_strategy: string[], digital_transformation: string[], workforce_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/lifesci/healthins', requireAuth, async (req: AuthRequest, res: any) => {
+  const { healthInsType, currentHealthInsState, healthInsGoals } = req.body;
+  const prompt = `You are a health insurance and managed care strategy expert. Build a managed care strategy. Type: ${healthInsType}. State: ${currentHealthInsState}. Goals: ${healthInsGoals}. Respond in JSON: { managed_care_strategy: string, product_portfolio: string[], risk_management: string[], value_based_contracts: string[], stars_quality: string[], vertical_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/lifesci/biotech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { biotechType, currentBiotechState, biotechGoals } = req.body;
+  const prompt = `You are a biotech and platform science strategy expert. Build a biotech strategy. Type: ${biotechType}. State: ${currentBiotechState}. Goals: ${biotechGoals}. Respond in JSON: { biotech_strategy: string, platform_differentiation: string[], pipeline_strategy: string[], financing_roadmap: string[], partnership_framework: string[], cmc_development: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/lifesci/hcit', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hcitType, currentHCITState, hcitGoals } = req.body;
+  const prompt = `You are a healthcare IT and clinical informatics strategy expert. Build an HCIT strategy. Type: ${hcitType}. State: ${currentHCITState}. Goals: ${hcitGoals}. Respond in JSON: { hcit_strategy: string, interoperability_plan: string[], ai_clinical_tools: string[], fhir_implementation: string[], revenue_cycle_optimization: string[], cybersecurity_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/lifesci/pharmamfg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pharmaMfgType, currentPharmaMfgState, pharmaMfgGoals } = req.body;
+  const prompt = `You are a pharmaceutical manufacturing and supply chain strategy expert. Build a pharma manufacturing strategy. Type: ${pharmaMfgType}. State: ${currentPharmaMfgState}. Goals: ${pharmaMfgGoals}. Respond in JSON: { pharma_mfg_strategy: string, capacity_plan: string[], gmp_compliance: string[], cdmo_strategy: string[], automation_roadmap: string[], supply_chain_resilience: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/lifesci/hcpe', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hcpeType, currentHCPEState, hcpeGoals } = req.body;
+  const prompt = `You are a healthcare private equity and investment strategy expert. Build an HC PE strategy. Type: ${hcpeType}. State: ${currentHCPEState}. Goals: ${hcpeGoals}. Respond in JSON: { hcpe_strategy: string, platform_thesis: string[], value_creation_plan: string[], reimbursement_risk: string[], regulatory_compliance: string[], exit_pathway: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/lifesci/precision', requireAuth, async (req: AuthRequest, res: any) => {
+  const { precisionType, currentPrecisionState, precisionGoals } = req.body;
+  const prompt = `You are a precision medicine and genomics strategy expert. Build a precision medicine strategy. Type: ${precisionType}. State: ${currentPrecisionState}. Goals: ${precisionGoals}. Respond in JSON: { precision_medicine_strategy: string, biomarker_development: string[], cdx_pathway: string[], reimbursement_strategy: string[], ai_genomics: string[], real_world_evidence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/lifesci/mentalhealth', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mentalType, currentMentalState, mentalGoals } = req.body;
+  const prompt = `You are a mental health and behavioral health strategy expert. Build a behavioral health strategy. Type: ${mentalType}. State: ${currentMentalState}. Goals: ${mentalGoals}. Respond in JSON: { behavioral_health_strategy: string, access_expansion: string[], payer_contracting: string[], digital_therapy_program: string[], workforce_development: string[], outcomes_measurement: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
