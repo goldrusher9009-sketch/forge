@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v955.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v956.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -221298,5 +221298,65 @@ app.post('/api/finservices/esgfin', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/finservices/riskfin', requireAuth, async (req: AuthRequest, res: any) => {
   const { riskType, currentRiskState, riskGoals } = req.body;
   const prompt = `You are a financial risk management expert. Build a risk management strategy. Type: ${riskType}. State: ${currentRiskState}. Goals: ${riskGoals}. Respond in JSON: { risk_strategy: string, framework_enhancement: string[], capital_optimization: string[], stress_testing: string[], climate_risk_program: string[], ai_risk_models: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/defsec/defense', requireAuth, async (req: AuthRequest, res: any) => {
+  const { defType, currentDefState, defGoals } = req.body;
+  const prompt = `You are a defense strategy expert. Build a defense industry strategy. Type: ${defType}. State: ${currentDefState}. Goals: ${defGoals}. Respond in JSON: { defense_strategy: string, capture_management: string[], technology_investment: string[], international_program: string[], ai_autonomy: string[], budget_positioning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/defsec/cyberdef', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cdType, currentCDState, cdGoals } = req.body;
+  const prompt = `You are a cyber defense strategy expert. Build a cyber defense strategy. Type: ${cdType}. State: ${currentCDState}. Goals: ${cdGoals}. Respond in JSON: { cyber_defense_strategy: string, zero_trust_roadmap: string[], threat_intelligence: string[], ot_security: string[], ai_detection: string[], incident_response: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/defsec/intel', requireAuth, async (req: AuthRequest, res: any) => {
+  const { intType, currentIntState, intGoals } = req.body;
+  const prompt = `You are an intelligence and geopolitical risk strategy expert. Build an intelligence strategy. Type: ${intType}. State: ${currentIntState}. Goals: ${intGoals}. Respond in JSON: { intelligence_strategy: string, geopolitical_monitoring: string[], competitive_intelligence: string[], risk_scenarios: string[], early_warning_system: string[], crisis_response: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/defsec/govtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gtType, currentGTState, gtGoals } = req.body;
+  const prompt = `You are a government technology strategy expert. Build a govtech strategy. Type: ${gtType}. State: ${currentGTState}. Goals: ${gtGoals}. Respond in JSON: { govtech_strategy: string, modernization_roadmap: string[], cloud_migration: string[], ai_government: string[], citizen_experience: string[], cybersecurity_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/defsec/space', requireAuth, async (req: AuthRequest, res: any) => {
+  const { spaceType, currentSpaceState, spaceGoals } = req.body;
+  const prompt = `You are a space economy strategy expert. Build a space strategy. Type: ${spaceType}. State: ${currentSpaceState}. Goals: ${spaceGoals}. Respond in JSON: { space_strategy: string, launch_program: string[], constellation_plan: string[], defense_program: string[], commercialization: string[], international_partnerships: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/defsec/emergtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { etType, currentETState, etGoals } = req.body;
+  const prompt = `You are an emerging technology strategy expert. Build a deep tech strategy. Type: ${etType}. State: ${currentETState}. Goals: ${etGoals}. Respond in JSON: { emerging_tech_strategy: string, trl_advancement: string[], ip_strategy: string[], commercialization_path: string[], talent_acquisition: string[], funding_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/defsec/quantum', requireAuth, async (req: AuthRequest, res: any) => {
+  const { qcType, currentQCState, qcGoals } = req.body;
+  const prompt = `You are a quantum technology strategy expert. Build a quantum strategy. Type: ${qcType}. State: ${currentQCState}. Goals: ${qcGoals}. Respond in JSON: { quantum_strategy: string, hardware_roadmap: string[], algorithm_development: string[], commercialization_plan: string[], cryptography_migration: string[], partnership_ecosystem: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/defsec/aiethics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aieType, currentAIEState, aieGoals } = req.body;
+  const prompt = `You are an AI ethics and governance strategy expert. Build an AI ethics strategy. Type: ${aieType}. State: ${currentAIEState}. Goals: ${aieGoals}. Respond in JSON: { ai_ethics_strategy: string, governance_framework: string[], risk_assessment: string[], regulatory_compliance: string[], explainability_program: string[], responsible_ai_culture: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/defsec/critinfra', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ciType, currentCIState, ciGoals } = req.body;
+  const prompt = `You are a critical infrastructure protection expert. Build a CIP strategy. Type: ${ciType}. State: ${currentCIState}. Goals: ${ciGoals}. Respond in JSON: { cip_strategy: string, threat_assessment: string[], cyber_physical_security: string[], ot_protection: string[], resilience_program: string[], incident_response: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/defsec/policy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { polType, currentPolState, polGoals } = req.body;
+  const prompt = `You are a government affairs and policy strategy expert. Build a policy advocacy strategy. Type: ${polType}. State: ${currentPolState}. Goals: ${polGoals}. Respond in JSON: { policy_strategy: string, regulatory_monitoring: string[], advocacy_program: string[], coalition_building: string[], international_engagement: string[], compliance_roadmap: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
