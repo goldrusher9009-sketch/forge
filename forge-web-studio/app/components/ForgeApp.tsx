@@ -4644,6 +4644,16 @@ ForgeTab_agritech7557,
 ForgeTab_circulareco7558,
 ForgeTab_climateadapt7559,
 ForgeTab_greenfinance7560,
+ForgeTab_defensesec7561,
+ForgeTab_aerospace7562,
+ForgeTab_cyberdefense7563,
+ForgeTab_autonomoussys7564,
+ForgeTab_spacecommerce7565,
+ForgeTab_defenseacq7566,
+ForgeTab_intelligencean7567,
+ForgeTab_militarylogistic7568,
+ForgeTab_defenseelectro7569,
+ForgeTab_missilesystems7570,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -66181,6 +66191,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'circulareco7558' && <ForgeTab_circulareco7558 />}
               {(mainTab as string) === 'climateadapt7559' && <ForgeTab_climateadapt7559 />}
               {(mainTab as string) === 'greenfinance7560' && <ForgeTab_greenfinance7560 />}
+              {(mainTab as string) === 'defensesec7561' && <ForgeTab_defensesec7561 />}
+              {(mainTab as string) === 'aerospace7562' && <ForgeTab_aerospace7562 />}
+              {(mainTab as string) === 'cyberdefense7563' && <ForgeTab_cyberdefense7563 />}
+              {(mainTab as string) === 'autonomoussys7564' && <ForgeTab_autonomoussys7564 />}
+              {(mainTab as string) === 'spacecommerce7565' && <ForgeTab_spacecommerce7565 />}
+              {(mainTab as string) === 'defenseacq7566' && <ForgeTab_defenseacq7566 />}
+              {(mainTab as string) === 'intelligencean7567' && <ForgeTab_intelligencean7567 />}
+              {(mainTab as string) === 'militarylogistic7568' && <ForgeTab_militarylogistic7568 />}
+              {(mainTab as string) === 'defenseelectro7569' && <ForgeTab_defenseelectro7569 />}
+              {(mainTab as string) === 'missilesystems7570' && <ForgeTab_missilesystems7570 />}
       </div>
     </div>
   );
