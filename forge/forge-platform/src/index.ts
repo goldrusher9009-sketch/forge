@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1128.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1129.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -231678,5 +231678,65 @@ app.post('/api/pubsector/natsec', requireAuth, async (req: AuthRequest, res: any
 app.post('/api/pubsector/civic', requireAuth, async (req: AuthRequest, res: any) => {
   const { ceType, currentCEState, ceGoals } = req.body;
   const prompt = `You are a civic engagement and democratic participation strategy expert. Build a civic engagement strategy. Type: ${ceType}. State: ${currentCEState}. Goals: ${ceGoals}. Respond in JSON: { civic_strategy: string, participation_program: string[], digital_democracy: string[], transparency_framework: string[], anti_corruption: string[], ai_civic_tools: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/personalbrand', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pbType, currentPBState, pbGoals } = req.body;
+  const prompt = `You are a personal brand and thought leadership strategy expert. Build a personal brand strategy. Type: ${pbType}. State: ${currentPBState}. Goals: ${pbGoals}. Respond in JSON: { personal_brand_strategy: string, content_pillars: string[], linkedin_playbook: string[], speaking_program: string[], book_strategy: string[], monetization_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/career', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ctType, currentCTState, ctGoals } = req.body;
+  const prompt = `You are a career transition and professional development expert. Build a career strategy. Type: ${ctType}. State: ${currentCTState}. Goals: ${ctGoals}. Respond in JSON: { career_strategy: string, transition_roadmap: string[], skill_development: string[], network_building: string[], job_search_plan: string[], salary_negotiation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/execpresence', requireAuth, async (req: AuthRequest, res: any) => {
+  const { epType, currentEPState, epGoals } = req.body;
+  const prompt = `You are an executive presence and communication skills expert. Build an executive presence strategy. Type: ${epType}. State: ${currentEPState}. Goals: ${epGoals}. Respond in JSON: { exec_presence_strategy: string, communication_framework: string[], storytelling_model: string[], speaking_program: string[], ai_communication: string[], influence_playbook: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/entrepreneur', requireAuth, async (req: AuthRequest, res: any) => {
+  const { enType, currentENState, enGoals } = req.body;
+  const prompt = `You are an entrepreneurship and founder journey strategy expert. Build an entrepreneurship strategy. Type: ${enType}. State: ${currentENState}. Goals: ${enGoals}. Respond in JSON: { entrepreneur_strategy: string, validation_framework: string[], funding_roadmap: string[], team_building: string[], go_to_market: string[], ai_founder_tools: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/networking', requireAuth, async (req: AuthRequest, res: any) => {
+  const { nwType, currentNWState, nwGoals } = req.body;
+  const prompt = `You are a professional networking and relationship strategy expert. Build a networking strategy. Type: ${nwType}. State: ${currentNWState}. Goals: ${nwGoals}. Respond in JSON: { networking_strategy: string, relationship_tiers: string[], digital_networking: string[], conference_playbook: string[], mentorship_model: string[], ai_networking_tools: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/freelance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { flType, currentFLState, flGoals } = req.body;
+  const prompt = `You are a freelance and consulting practice strategy expert. Build a freelance strategy. Type: ${flType}. State: ${currentFLState}. Goals: ${flGoals}. Respond in JSON: { freelance_strategy: string, niche_positioning: string[], client_acquisition: string[], pricing_model: string[], ai_productivity: string[], passive_income: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/negotiation', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ngType, currentNGState, ngGoals } = req.body;
+  const prompt = `You are a negotiation strategy and influence expert. Build a negotiation strategy. Type: ${ngType}. State: ${currentNGState}. Goals: ${ngGoals}. Respond in JSON: { negotiation_strategy: string, batna_analysis: string[], opening_position: string[], concession_framework: string[], cultural_adaptation: string[], ai_negotiation_tools: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/productivity', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pcType, currentPCState, pcGoals } = req.body;
+  const prompt = `You are a productivity and high performance strategy expert. Build a productivity strategy. Type: ${pcType}. State: ${currentPCState}. Goals: ${pcGoals}. Respond in JSON: { productivity_strategy: string, time_system: string[], deep_work_protocol: string[], ai_productivity_tools: string[], habit_architecture: string[], energy_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/mentoring', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mcType, currentMCState, mcGoals } = req.body;
+  const prompt = `You are a mentoring, coaching and leadership development expert. Build a coaching strategy. Type: ${mcType}. State: ${currentMCState}. Goals: ${mcGoals}. Respond in JSON: { coaching_strategy: string, coaching_framework: string[], question_bank: string[], feedback_model: string[], ai_coaching_tools: string[], program_design: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/personal/wealth', requireAuth, async (req: AuthRequest, res: any) => {
+  const { wbType, currentWBState, wbGoals } = req.body;
+  const prompt = `You are a personal wealth building and financial independence expert. Build a wealth strategy. Type: ${wbType}. State: ${currentWBState}. Goals: ${wbGoals}. Respond in JSON: { wealth_strategy: string, savings_framework: string[], investment_allocation: string[], passive_income: string[], tax_optimization: string[], fire_roadmap: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
