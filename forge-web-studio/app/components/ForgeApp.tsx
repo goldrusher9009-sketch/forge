@@ -2494,6 +2494,16 @@ ForgeTab_verticalaisaas5407,
 ForgeTab_apistrategy5408,
 ForgeTab_saasmarketplace5409,
 ForgeTab_saasgtm5410,
+ForgeTab_spacecommercial5411,
+ForgeTab_satelliteops5412,
+ForgeTab_defenseaero5413,
+ForgeTab_aviationstrategy5414,
+ForgeTab_spacepolicy5415,
+ForgeTab_earthobservation5416,
+ForgeTab_spacemfg5417,
+ForgeTab_spacesustainability5418,
+ForgeTab_spaceventure5419,
+ForgeTab_lunarplanetary5420,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -61881,6 +61891,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'apistrategy5408' && <ForgeTab_apistrategy5408 />}
               {(mainTab as string) === 'saasmarketplace5409' && <ForgeTab_saasmarketplace5409 />}
               {(mainTab as string) === 'saasgtm5410' && <ForgeTab_saasgtm5410 />}
+              {(mainTab as string) === 'spacecommercial5411' && <ForgeTab_spacecommercial5411 />}
+              {(mainTab as string) === 'satelliteops5412' && <ForgeTab_satelliteops5412 />}
+              {(mainTab as string) === 'defenseaero5413' && <ForgeTab_defenseaero5413 />}
+              {(mainTab as string) === 'aviationstrategy5414' && <ForgeTab_aviationstrategy5414 />}
+              {(mainTab as string) === 'spacepolicy5415' && <ForgeTab_spacepolicy5415 />}
+              {(mainTab as string) === 'earthobservation5416' && <ForgeTab_earthobservation5416 />}
+              {(mainTab as string) === 'spacemfg5417' && <ForgeTab_spacemfg5417 />}
+              {(mainTab as string) === 'spacesustainability5418' && <ForgeTab_spacesustainability5418 />}
+              {(mainTab as string) === 'spaceventure5419' && <ForgeTab_spaceventure5419 />}
+              {(mainTab as string) === 'lunarplanetary5420' && <ForgeTab_lunarplanetary5420 />}
       </div>
     </div>
   );

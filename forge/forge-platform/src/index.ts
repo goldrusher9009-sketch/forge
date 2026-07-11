@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1029.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1030.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -225738,5 +225738,65 @@ app.post('/api/saasent/saasmarket', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/saasent/saasgtm', requireAuth, async (req: AuthRequest, res: any) => {
   const { gtmType, currentGTMState, gtmGoals } = req.body;
   const prompt = `You are a SaaS go-to-market and growth strategy expert. Build a SaaS GTM strategy. Type: ${gtmType}. State: ${currentGTMState}. Goals: ${gtmGoals}. Respond in JSON: { saas_gtm_strategy: string, channel_mix: string[], demand_generation: string[], sales_motion: string[], international_expansion: string[], efficiency_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/spacecom', requireAuth, async (req: AuthRequest, res: any) => {
+  const { spaceType, currentSpaceState, spaceGoals } = req.body;
+  const prompt = `You are a commercial space strategy expert. Build a commercial space strategy. Type: ${spaceType}. State: ${currentSpaceState}. Goals: ${spaceGoals}. Respond in JSON: { space_strategy: string, launch_cadence: string[], reusability_plan: string[], revenue_streams: string[], regulatory_framework: string[], technology_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/satellite', requireAuth, async (req: AuthRequest, res: any) => {
+  const { satType, currentSatState, satGoals } = req.body;
+  const prompt = `You are a satellite and constellation strategy expert. Build a satellite strategy. Type: ${satType}. State: ${currentSatState}. Goals: ${satGoals}. Respond in JSON: { satellite_strategy: string, constellation_design: string[], spectrum_management: string[], ground_infrastructure: string[], revenue_model: string[], launch_partnership: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/defenseaero', requireAuth, async (req: AuthRequest, res: any) => {
+  const { defAeroType, currentDefAeroState, defAeroGoals } = req.body;
+  const prompt = `You are a defense aerospace and advanced technology strategy expert. Build a defense aero strategy. Type: ${defAeroType}. State: ${currentDefAeroState}. Goals: ${defAeroGoals}. Respond in JSON: { defense_strategy: string, program_portfolio: string[], acquisition_pathway: string[], dual_use_commercialization: string[], export_strategy: string[], technology_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/aviation', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aviationType, currentAviationState, aviationGoals } = req.body;
+  const prompt = `You are an aviation and urban air mobility strategy expert. Build an aviation strategy. Type: ${aviationType}. State: ${currentAviationState}. Goals: ${aviationGoals}. Respond in JSON: { aviation_strategy: string, fleet_evolution: string[], sustainability_plan: string[], uam_roadmap: string[], mro_optimization: string[], regulatory_certification: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/spacepol', requireAuth, async (req: AuthRequest, res: any) => {
+  const { spacePolicyType, currentSpacePolicyState, spacePolicyGoals } = req.body;
+  const prompt = `You are a space policy and regulatory strategy expert. Build a space policy strategy. Type: ${spacePolicyType}. State: ${currentSpacePolicyState}. Goals: ${spacePolicyGoals}. Respond in JSON: { space_policy_strategy: string, spectrum_approach: string[], licensing_framework: string[], debris_mitigation: string[], international_coordination: string[], advocacy_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/earthobs', requireAuth, async (req: AuthRequest, res: any) => {
+  const { eoType, currentEOState, eoGoals } = req.body;
+  const prompt = `You are an earth observation and geospatial intelligence strategy expert. Build an EO strategy. Type: ${eoType}. State: ${currentEOState}. Goals: ${eoGoals}. Respond in JSON: { eo_strategy: string, constellation_plan: string[], analytics_platform: string[], market_segments: string[], ai_geospatial: string[], data_monetization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/spacemfg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { spaceMfgType, currentSpaceMfgState, spaceMfgGoals } = req.body;
+  const prompt = `You are a space manufacturing and in-space economy strategy expert. Build a space manufacturing strategy. Type: ${spaceMfgType}. State: ${currentSpaceMfgState}. Goals: ${spaceMfgGoals}. Respond in JSON: { space_mfg_strategy: string, production_roadmap: string[], cost_reduction_plan: string[], in_space_capabilities: string[], supply_chain_resilience: string[], qualification_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/spacesust', requireAuth, async (req: AuthRequest, res: any) => {
+  const { spaceSustType, currentSpaceSustState, spaceSustGoals } = req.body;
+  const prompt = `You are a space sustainability and debris remediation strategy expert. Build a space sustainability strategy. Type: ${spaceSustType}. State: ${currentSpaceSustState}. Goals: ${spaceSustGoals}. Respond in JSON: { space_sustainability_strategy: string, debris_removal_plan: string[], collision_avoidance: string[], on_orbit_servicing: string[], regulatory_engagement: string[], commercial_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/spacevc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { spaceVCType, currentSpaceVCState, spaceVCGoals } = req.body;
+  const prompt = `You are a space venture and investment strategy expert. Build a space investment strategy. Type: ${spaceVCType}. State: ${currentSpaceVCState}. Goals: ${spaceVCGoals}. Respond in JSON: { space_investment_strategy: string, sector_thesis: string[], deal_criteria: string[], portfolio_construction: string[], exit_pathways: string[], dual_use_lens: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/spacetech/lunar', requireAuth, async (req: AuthRequest, res: any) => {
+  const { lunarType, currentLunarState, lunarGoals } = req.body;
+  const prompt = `You are a lunar and planetary exploration strategy expert. Build a lunar strategy. Type: ${lunarType}. State: ${currentLunarState}. Goals: ${lunarGoals}. Respond in JSON: { lunar_strategy: string, mission_architecture: string[], isru_roadmap: string[], international_partnerships: string[], commercial_model: string[], mars_pathfinder: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
