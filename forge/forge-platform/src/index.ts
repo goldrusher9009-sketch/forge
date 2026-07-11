@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1132.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1133.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -231918,5 +231918,65 @@ app.post('/api/cx/feedbackloop', requireAuth, async (req: AuthRequest, res: any)
 app.post('/api/cx/advocacy', requireAuth, async (req: AuthRequest, res: any) => {
   const { advType, currentAdvState, advGoals } = req.body;
   const prompt = `You are a customer advocacy and reference program expert. Build an advocacy strategy. Type: ${advType}. State: ${currentAdvState}. Goals: ${advGoals}. Respond in JSON: { advocacy_strategy: string, advocate_identification: string[], reference_program: string[], review_amplification: string[], co_marketing_model: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiproduct/aiprodstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aipType, currentAIPState, aipGoals } = req.body;
+  const prompt = `You are an AI product strategy and roadmap expert. Build an AI product strategy. Type: ${aipType}. State: ${currentAIPState}. Goals: ${aipGoals}. Respond in JSON: { ai_product_strategy: string, capability_roadmap: string[], user_adoption_plan: string[], model_selection: string[], safety_framework: string[], roi_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiproduct/genaiimpl', requireAuth, async (req: AuthRequest, res: any) => {
+  const { genaiType, currentGenAIState, genaiGoals } = req.body;
+  const prompt = `You are a generative AI implementation strategy expert. Build a GenAI implementation strategy. Type: ${genaiType}. State: ${currentGenAIState}. Goals: ${genaiGoals}. Respond in JSON: { genai_strategy: string, use_case_prioritization: string[], architecture_design: string[], model_selection: string[], governance_framework: string[], cost_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiproduct/aigov', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aigovType, currentAIGovState, aigovGoals } = req.body;
+  const prompt = `You are an AI governance and responsible AI strategy expert. Build an AI governance strategy. Type: ${aigovType}. State: ${currentAIGovState}. Goals: ${aigovGoals}. Respond in JSON: { ai_governance_strategy: string, risk_framework: string[], ethics_program: string[], compliance_roadmap: string[], bias_mitigation: string[], audit_architecture: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiproduct/mlops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mlopsType, currentMLOpsState, mlopsGoals } = req.body;
+  const prompt = `You are an MLOps and AI infrastructure strategy expert. Build an MLOps strategy. Type: ${mlopsType}. State: ${currentMLOpsState}. Goals: ${mlopsGoals}. Respond in JSON: { mlops_strategy: string, platform_architecture: string[], ci_cd_pipeline: string[], monitoring_framework: string[], feature_engineering: string[], cost_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiproduct/aibiz', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aibizType, currentAIBizState, aibizGoals } = req.body;
+  const prompt = `You are an AI business transformation and ROI strategy expert. Build an AI transformation strategy. Type: ${aibizType}. State: ${currentAIBizState}. Goals: ${aibizGoals}. Respond in JSON: { ai_transformation_strategy: string, use_case_portfolio: string[], roi_framework: string[], change_management: string[], talent_upskilling: string[], governance_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiproduct/prompteng', requireAuth, async (req: AuthRequest, res: any) => {
+  const { peType, currentPEState, peGoals } = req.body;
+  const prompt = `You are a prompt engineering and LLM optimization expert. Build a prompt engineering strategy. Type: ${peType}. State: ${currentPEState}. Goals: ${peGoals}. Respond in JSON: { prompt_strategy: string, prompt_architecture: string[], evaluation_framework: string[], optimization_techniques: string[], safety_guardrails: string[], cost_performance_balance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiproduct/aiagent', requireAuth, async (req: AuthRequest, res: any) => {
+  const { agentType, currentAgentState, agentGoals } = req.body;
+  const prompt = `You are an AI agent design and agentic systems strategy expert. Build an AI agent strategy. Type: ${agentType}. State: ${currentAgentState}. Goals: ${agentGoals}. Respond in JSON: { agent_strategy: string, architecture_design: string[], tool_integration: string[], safety_framework: string[], multi_agent_orchestration: string[], evaluation_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiproduct/aiethics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ethicsType, currentEthicsState, ethicsGoals } = req.body;
+  const prompt = `You are an AI ethics and societal impact strategy expert. Build an AI ethics strategy. Type: ${ethicsType}. State: ${currentEthicsState}. Goals: ${ethicsGoals}. Respond in JSON: { ethics_strategy: string, fairness_framework: string[], transparency_program: string[], privacy_design: string[], environmental_impact: string[], stakeholder_engagement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiproduct/aicompete', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aicompType, currentAICompState, aicompGoals } = req.body;
+  const prompt = `You are an AI competitive strategy and market positioning expert. Build an AI competitive strategy. Type: ${aicompType}. State: ${currentAICompState}. Goals: ${aicompGoals}. Respond in JSON: { ai_competitive_strategy: string, moat_building: string[], differentiation_framework: string[], partnership_model: string[], talent_strategy: string[], ecosystem_development: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aiproduct/aidatastrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aidataType, currentAIDataState, aidataGoals } = req.body;
+  const prompt = `You are an AI data strategy and foundation model expert. Build an AI data strategy. Type: ${aidataType}. State: ${currentAIDataState}. Goals: ${aidataGoals}. Respond in JSON: { ai_data_strategy: string, data_flywheel: string[], quality_framework: string[], synthetic_data_program: string[], labeling_pipeline: string[], governance_model: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
