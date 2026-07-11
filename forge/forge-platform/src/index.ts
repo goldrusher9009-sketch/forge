@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1035.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1036.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -226098,5 +226098,65 @@ app.post('/api/lifesci/precision', requireAuth, async (req: AuthRequest, res: an
 app.post('/api/lifesci/mentalhealth', requireAuth, async (req: AuthRequest, res: any) => {
   const { mentalType, currentMentalState, mentalGoals } = req.body;
   const prompt = `You are a mental health and behavioral health strategy expert. Build a behavioral health strategy. Type: ${mentalType}. State: ${currentMentalState}. Goals: ${mentalGoals}. Respond in JSON: { behavioral_health_strategy: string, access_expansion: string[], payer_contracting: string[], digital_therapy_program: string[], workforce_development: string[], outcomes_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corpma/corpstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { corpStratType, currentCorpStratState, corpStratGoals } = req.body;
+  const prompt = `You are a corporate strategy and competitive advantage expert. Build a corporate strategy. Type: ${corpStratType}. State: ${currentCorpStratState}. Goals: ${corpStratGoals}. Respond in JSON: { corporate_strategy: string, competitive_position: string[], portfolio_management: string[], growth_vectors: string[], moat_reinforcement: string[], disruption_response: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corpma/manda', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mandaType, currentMandaState, mandaGoals } = req.body;
+  const prompt = `You are an M&A strategy and deal execution expert. Build an M&A strategy. Type: ${mandaType}. State: ${currentMandaState}. Goals: ${mandaGoals}. Respond in JSON: { ma_strategy: string, deal_sourcing: string[], valuation_framework: string[], synergy_identification: string[], integration_roadmap: string[], antitrust_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corpma/pmi', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pmiType, currentPMIState, pmiGoals } = req.body;
+  const prompt = `You are a post-merger integration strategy expert. Build a PMI strategy. Type: ${pmiType}. State: ${currentPMIState}. Goals: ${pmiGoals}. Respond in JSON: { pmi_strategy: string, day1_plan: string[], synergy_tracking: string[], culture_integration: string[], systems_consolidation: string[], talent_retention: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corpma/divest', requireAuth, async (req: AuthRequest, res: any) => {
+  const { divestitureType, currentDivestitureState, divestitureGoals } = req.body;
+  const prompt = `You are a divestiture and portfolio optimization strategy expert. Build a divestiture strategy. Type: ${divestitureType}. State: ${currentDivestitureState}. Goals: ${divestitureGoals}. Respond in JSON: { divestiture_strategy: string, separation_plan: string[], valuation_optimization: string[], buyer_strategy: string[], tax_structure: string[], narrative_positioning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corpma/corpfin', requireAuth, async (req: AuthRequest, res: any) => {
+  const { corpFinType, currentCorpFinState, corpFinGoals } = req.body;
+  const prompt = `You are a corporate finance and capital structure strategy expert. Build a corporate finance strategy. Type: ${corpFinType}. State: ${currentCorpFinState}. Goals: ${corpFinGoals}. Respond in JSON: { corporate_finance_strategy: string, capital_structure: string[], dividend_policy: string[], buyback_program: string[], debt_management: string[], rating_agency_engagement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corpma/ipo', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ipoType, currentIPOState, ipoGoals } = req.body;
+  const prompt = `You are an IPO and capital markets strategy expert. Build an IPO strategy. Type: ${ipoType}. State: ${currentIPOState}. Goals: ${ipoGoals}. Respond in JSON: { ipo_strategy: string, readiness_assessment: string[], valuation_positioning: string[], investor_targeting: string[], roadshow_narrative: string[], post_ipo_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corpma/board', requireAuth, async (req: AuthRequest, res: any) => {
+  const { boardType, currentBoardState, boardGoals } = req.body;
+  const prompt = `You are a board governance and investor relations strategy expert. Build a governance strategy. Type: ${boardType}. State: ${currentBoardState}. Goals: ${boardGoals}. Respond in JSON: { governance_strategy: string, board_composition: string[], esg_governance: string[], activism_defense: string[], ir_program: string[], disclosure_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corpma/transform', requireAuth, async (req: AuthRequest, res: any) => {
+  const { transformType, currentTransformState, transformGoals } = req.body;
+  const prompt = `You are a corporate transformation and change management strategy expert. Build a transformation strategy. Type: ${transformType}. State: ${currentTransformState}. Goals: ${transformGoals}. Respond in JSON: { transformation_strategy: string, change_roadmap: string[], cost_program: string[], digital_transformation: string[], culture_change: string[], communication_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corpma/stratplan', requireAuth, async (req: AuthRequest, res: any) => {
+  const { stratPlanType, currentStratPlanState, stratPlanGoals } = req.body;
+  const prompt = `You are a strategic planning and long-range forecasting expert. Build a strategic planning process. Type: ${stratPlanType}. State: ${currentStratPlanState}. Goals: ${stratPlanGoals}. Respond in JSON: { strategic_plan: string, scenario_planning: string[], goal_framework: string[], resource_allocation: string[], execution_system: string[], review_cadence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corpma/cvc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cvcType, currentCVCState, cvcGoals } = req.body;
+  const prompt = `You are a corporate venture capital and open innovation strategy expert. Build a CVC strategy. Type: ${cvcType}. State: ${currentCVCState}. Goals: ${cvcGoals}. Respond in JSON: { cvc_strategy: string, investment_thesis: string[], ecosystem_design: string[], strategic_value_creation: string[], portfolio_management: string[], co_invest_framework: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
