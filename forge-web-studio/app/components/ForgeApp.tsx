@@ -3094,6 +3094,16 @@ ForgeTab_softwaredelivery6007,
 ForgeTab_platformengineering6008,
 ForgeTab_observabilitystack6009,
 ForgeTab_techdebtmgmt6010,
+ForgeTab_supplychain6011,
+ForgeTab_procurementstrategy6012,
+ForgeTab_logisticsops6013,
+ForgeTab_manufacturingops6014,
+ForgeTab_inventorymanagement6015,
+ForgeTab_qualitymanagement6016,
+ForgeTab_facilitymanagement6017,
+ForgeTab_fleetmanagement6018,
+ForgeTab_energymanagement6019,
+ForgeTab_erpimplementation6020,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -63081,6 +63091,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'platformengineering6008' && <ForgeTab_platformengineering6008 />}
               {(mainTab as string) === 'observabilitystack6009' && <ForgeTab_observabilitystack6009 />}
               {(mainTab as string) === 'techdebtmgmt6010' && <ForgeTab_techdebtmgmt6010 />}
+              {(mainTab as string) === 'supplychain6011' && <ForgeTab_supplychain6011 />}
+              {(mainTab as string) === 'procurementstrategy6012' && <ForgeTab_procurementstrategy6012 />}
+              {(mainTab as string) === 'logisticsops6013' && <ForgeTab_logisticsops6013 />}
+              {(mainTab as string) === 'manufacturingops6014' && <ForgeTab_manufacturingops6014 />}
+              {(mainTab as string) === 'inventorymanagement6015' && <ForgeTab_inventorymanagement6015 />}
+              {(mainTab as string) === 'qualitymanagement6016' && <ForgeTab_qualitymanagement6016 />}
+              {(mainTab as string) === 'facilitymanagement6017' && <ForgeTab_facilitymanagement6017 />}
+              {(mainTab as string) === 'fleetmanagement6018' && <ForgeTab_fleetmanagement6018 />}
+              {(mainTab as string) === 'energymanagement6019' && <ForgeTab_energymanagement6019 />}
+              {(mainTab as string) === 'erpimplementation6020' && <ForgeTab_erpimplementation6020 />}
       </div>
     </div>
   );
