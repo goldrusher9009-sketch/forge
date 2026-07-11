@@ -3404,6 +3404,16 @@ ForgeTab_photonicstech6317,
 ForgeTab_semiconductorstrat6318,
 ForgeTab_dronestrat6319,
 ForgeTab_energystoragetech6320,
+ForgeTab_aistrategist6321,
+ForgeTab_genaiops6322,
+ForgeTab_datasciencestrat6323,
+ForgeTab_dataplatformstrat6324,
+ForgeTab_cloudstrategy6325,
+ForgeTab_devopsplatform6326,
+ForgeTab_iotplatformstrat6327,
+ForgeTab_blockchainweb36328,
+ForgeTab_apiplatformstrat6329,
+ForgeTab_techarchitecture6330,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -63701,6 +63711,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'semiconductorstrat6318' && <ForgeTab_semiconductorstrat6318 />}
               {(mainTab as string) === 'dronestrat6319' && <ForgeTab_dronestrat6319 />}
               {(mainTab as string) === 'energystoragetech6320' && <ForgeTab_energystoragetech6320 />}
+              {(mainTab as string) === 'aistrategist6321' && <ForgeTab_aistrategist6321 />}
+              {(mainTab as string) === 'genaiops6322' && <ForgeTab_genaiops6322 />}
+              {(mainTab as string) === 'datasciencestrat6323' && <ForgeTab_datasciencestrat6323 />}
+              {(mainTab as string) === 'dataplatformstrat6324' && <ForgeTab_dataplatformstrat6324 />}
+              {(mainTab as string) === 'cloudstrategy6325' && <ForgeTab_cloudstrategy6325 />}
+              {(mainTab as string) === 'devopsplatform6326' && <ForgeTab_devopsplatform6326 />}
+              {(mainTab as string) === 'iotplatformstrat6327' && <ForgeTab_iotplatformstrat6327 />}
+              {(mainTab as string) === 'blockchainweb36328' && <ForgeTab_blockchainweb36328 />}
+              {(mainTab as string) === 'apiplatformstrat6329' && <ForgeTab_apiplatformstrat6329 />}
+              {(mainTab as string) === 'techarchitecture6330' && <ForgeTab_techarchitecture6330 />}
       </div>
     </div>
   );
