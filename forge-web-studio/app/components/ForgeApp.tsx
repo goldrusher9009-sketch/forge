@@ -2954,6 +2954,16 @@ ForgeTab_populationhealth5867,
 ForgeTab_healthcareopsstrategy5868,
 ForgeTab_healthcareinnovation5869,
 ForgeTab_healthcareregulatory5870,
+ForgeTab_energytransition5871,
+ForgeTab_solarstrategy5872,
+ForgeTab_energystoragestrat5873,
+ForgeTab_climatetech5874,
+ForgeTab_hydrogenstrategy5875,
+ForgeTab_evsustransport5876,
+ForgeTab_oilandgasstrategy5877,
+ForgeTab_buildingdecarbstrategy5878,
+ForgeTab_circulareconomystrat5879,
+ForgeTab_netzeroenterprise5880,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -62801,6 +62811,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'healthcareopsstrategy5868' && <ForgeTab_healthcareopsstrategy5868 />}
               {(mainTab as string) === 'healthcareinnovation5869' && <ForgeTab_healthcareinnovation5869 />}
               {(mainTab as string) === 'healthcareregulatory5870' && <ForgeTab_healthcareregulatory5870 />}
+              {(mainTab as string) === 'energytransition5871' && <ForgeTab_energytransition5871 />}
+              {(mainTab as string) === 'solarstrategy5872' && <ForgeTab_solarstrategy5872 />}
+              {(mainTab as string) === 'energystoragestrat5873' && <ForgeTab_energystoragestrat5873 />}
+              {(mainTab as string) === 'climatetech5874' && <ForgeTab_climatetech5874 />}
+              {(mainTab as string) === 'hydrogenstrategy5875' && <ForgeTab_hydrogenstrategy5875 />}
+              {(mainTab as string) === 'evsustransport5876' && <ForgeTab_evsustransport5876 />}
+              {(mainTab as string) === 'oilandgasstrategy5877' && <ForgeTab_oilandgasstrategy5877 />}
+              {(mainTab as string) === 'buildingdecarbstrategy5878' && <ForgeTab_buildingdecarbstrategy5878 />}
+              {(mainTab as string) === 'circulareconomystrat5879' && <ForgeTab_circulareconomystrat5879 />}
+              {(mainTab as string) === 'netzeroenterprise5880' && <ForgeTab_netzeroenterprise5880 />}
       </div>
     </div>
   );
