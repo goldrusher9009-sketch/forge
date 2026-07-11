@@ -3154,6 +3154,16 @@ ForgeTab_sustainablesupplychain6067,
 ForgeTab_sustainabilityreporting6068,
 ForgeTab_energytransition6069,
 ForgeTab_sustainableagriculture6070,
+ForgeTab_venturecapital6071,
+ForgeTab_startupstrategy6072,
+ForgeTab_privateequity6073,
+ForgeTab_mergersacquisitions6074,
+ForgeTab_corporatefinancestrategy6075,
+ForgeTab_ipostrategy6076,
+ForgeTab_familyoffice6077,
+ForgeTab_corporateventuring6078,
+ForgeTab_alternativeinvestments6079,
+ForgeTab_investorrelations6080,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -63201,6 +63211,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'sustainabilityreporting6068' && <ForgeTab_sustainabilityreporting6068 />}
               {(mainTab as string) === 'energytransition6069' && <ForgeTab_energytransition6069 />}
               {(mainTab as string) === 'sustainableagriculture6070' && <ForgeTab_sustainableagriculture6070 />}
+              {(mainTab as string) === 'venturecapital6071' && <ForgeTab_venturecapital6071 />}
+              {(mainTab as string) === 'startupstrategy6072' && <ForgeTab_startupstrategy6072 />}
+              {(mainTab as string) === 'privateequity6073' && <ForgeTab_privateequity6073 />}
+              {(mainTab as string) === 'mergersacquisitions6074' && <ForgeTab_mergersacquisitions6074 />}
+              {(mainTab as string) === 'corporatefinancestrategy6075' && <ForgeTab_corporatefinancestrategy6075 />}
+              {(mainTab as string) === 'ipostrategy6076' && <ForgeTab_ipostrategy6076 />}
+              {(mainTab as string) === 'familyoffice6077' && <ForgeTab_familyoffice6077 />}
+              {(mainTab as string) === 'corporateventuring6078' && <ForgeTab_corporateventuring6078 />}
+              {(mainTab as string) === 'alternativeinvestments6079' && <ForgeTab_alternativeinvestments6079 />}
+              {(mainTab as string) === 'investorrelations6080' && <ForgeTab_investorrelations6080 />}
       </div>
     </div>
   );
