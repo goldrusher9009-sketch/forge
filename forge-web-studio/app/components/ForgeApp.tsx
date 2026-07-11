@@ -4694,6 +4694,16 @@ ForgeTab_environmentallaw7607,
 ForgeTab_employmentlaw7608,
 ForgeTab_cryptolaw7609,
 ForgeTab_ailawreg7610,
+ForgeTab_privateequity7611,
+ForgeTab_venturecapital7612,
+ForgeTab_hedgefundstrat7613,
+ForgeTab_familyoffice7614,
+ForgeTab_assetmanage7615,
+ForgeTab_realassets7616,
+ForgeTab_dealstructure7617,
+ForgeTab_lprelations7618,
+ForgeTab_portfoliomgmt7619,
+ForgeTab_sovereignwealth7620,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -66281,6 +66291,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'employmentlaw7608' && <ForgeTab_employmentlaw7608 />}
               {(mainTab as string) === 'cryptolaw7609' && <ForgeTab_cryptolaw7609 />}
               {(mainTab as string) === 'ailawreg7610' && <ForgeTab_ailawreg7610 />}
+              {(mainTab as string) === 'privateequity7611' && <ForgeTab_privateequity7611 />}
+              {(mainTab as string) === 'venturecapital7612' && <ForgeTab_venturecapital7612 />}
+              {(mainTab as string) === 'hedgefundstrat7613' && <ForgeTab_hedgefundstrat7613 />}
+              {(mainTab as string) === 'familyoffice7614' && <ForgeTab_familyoffice7614 />}
+              {(mainTab as string) === 'assetmanage7615' && <ForgeTab_assetmanage7615 />}
+              {(mainTab as string) === 'realassets7616' && <ForgeTab_realassets7616 />}
+              {(mainTab as string) === 'dealstructure7617' && <ForgeTab_dealstructure7617 />}
+              {(mainTab as string) === 'lprelations7618' && <ForgeTab_lprelations7618 />}
+              {(mainTab as string) === 'portfoliomgmt7619' && <ForgeTab_portfoliomgmt7619 />}
+              {(mainTab as string) === 'sovereignwealth7620' && <ForgeTab_sovereignwealth7620 />}
       </div>
     </div>
   );
