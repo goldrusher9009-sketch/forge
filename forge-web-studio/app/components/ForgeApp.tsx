@@ -4704,6 +4704,16 @@ ForgeTab_dealstructure7617,
 ForgeTab_lprelations7618,
 ForgeTab_portfoliomgmt7619,
 ForgeTab_sovereignwealth7620,
+ForgeTab_telcostrat7621,
+ForgeTab_semiconductors7622,
+ForgeTab_cloudinfra7623,
+ForgeTab_iotplatform7624,
+ForgeTab_edgecomputing7625,
+ForgeTab_networkequip7626,
+ForgeTab_datacenterstrat7627,
+ForgeTab_cybersecstrat7628,
+ForgeTab_satellitetech7629,
+ForgeTab_photonicsrf7630,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -66301,6 +66311,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'lprelations7618' && <ForgeTab_lprelations7618 />}
               {(mainTab as string) === 'portfoliomgmt7619' && <ForgeTab_portfoliomgmt7619 />}
               {(mainTab as string) === 'sovereignwealth7620' && <ForgeTab_sovereignwealth7620 />}
+              {(mainTab as string) === 'telcostrat7621' && <ForgeTab_telcostrat7621 />}
+              {(mainTab as string) === 'semiconductors7622' && <ForgeTab_semiconductors7622 />}
+              {(mainTab as string) === 'cloudinfra7623' && <ForgeTab_cloudinfra7623 />}
+              {(mainTab as string) === 'iotplatform7624' && <ForgeTab_iotplatform7624 />}
+              {(mainTab as string) === 'edgecomputing7625' && <ForgeTab_edgecomputing7625 />}
+              {(mainTab as string) === 'networkequip7626' && <ForgeTab_networkequip7626 />}
+              {(mainTab as string) === 'datacenterstrat7627' && <ForgeTab_datacenterstrat7627 />}
+              {(mainTab as string) === 'cybersecstrat7628' && <ForgeTab_cybersecstrat7628 />}
+              {(mainTab as string) === 'satellitetech7629' && <ForgeTab_satellitetech7629 />}
+              {(mainTab as string) === 'photonicsrf7630' && <ForgeTab_photonicsrf7630 />}
       </div>
     </div>
   );
