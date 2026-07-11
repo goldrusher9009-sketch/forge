@@ -2424,6 +2424,16 @@ ForgeTab_scvisibility5337,
 ForgeTab_scsustainability5338,
 ForgeTab_coldchain5339,
 ForgeTab_reverselogistics5340,
+ForgeTab_insurtechstrategy5341,
+ForgeTab_pncinsurance5342,
+ForgeTab_lifeinsurance5343,
+ForgeTab_cyberinsurance5344,
+ForgeTab_claimsautomation5345,
+ForgeTab_embeddedinsurance5346,
+ForgeTab_insuranceprice5347,
+ForgeTab_reinsurance5348,
+ForgeTab_insuranceops5349,
+ForgeTab_parametricinsurance5350,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -61741,6 +61751,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'scsustainability5338' && <ForgeTab_scsustainability5338 />}
               {(mainTab as string) === 'coldchain5339' && <ForgeTab_coldchain5339 />}
               {(mainTab as string) === 'reverselogistics5340' && <ForgeTab_reverselogistics5340 />}
+              {(mainTab as string) === 'insurtechstrategy5341' && <ForgeTab_insurtechstrategy5341 />}
+              {(mainTab as string) === 'pncinsurance5342' && <ForgeTab_pncinsurance5342 />}
+              {(mainTab as string) === 'lifeinsurance5343' && <ForgeTab_lifeinsurance5343 />}
+              {(mainTab as string) === 'cyberinsurance5344' && <ForgeTab_cyberinsurance5344 />}
+              {(mainTab as string) === 'claimsautomation5345' && <ForgeTab_claimsautomation5345 />}
+              {(mainTab as string) === 'embeddedinsurance5346' && <ForgeTab_embeddedinsurance5346 />}
+              {(mainTab as string) === 'insuranceprice5347' && <ForgeTab_insuranceprice5347 />}
+              {(mainTab as string) === 'reinsurance5348' && <ForgeTab_reinsurance5348 />}
+              {(mainTab as string) === 'insuranceops5349' && <ForgeTab_insuranceops5349 />}
+              {(mainTab as string) === 'parametricinsurance5350' && <ForgeTab_parametricinsurance5350 />}
       </div>
     </div>
   );
