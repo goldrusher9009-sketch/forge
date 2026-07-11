@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1049.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1050.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -226938,5 +226938,65 @@ app.post('/api/industrial/supplychain2', requireAuth, async (req: AuthRequest, r
 app.post('/api/industrial/indesg', requireAuth, async (req: AuthRequest, res: any) => {
   const { indESGType, currentIndESGState, indESGGoals } = req.body;
   const prompt = `You are an industrial ESG and sustainable manufacturing strategy expert. Build an industrial ESG strategy. Type: ${indESGType}. State: ${currentIndESGState}. Goals: ${indESGGoals}. Respond in JSON: { industrial_esg_strategy: string, decarbonization_plan: string[], circular_manufacturing: string[], scope3_program: string[], water_stewardship: string[], cbam_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mediadigital/mediatech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mediaTechType, currentMediaTechState, mediaTechGoals } = req.body;
+  const prompt = `You are a media tech and digital content strategy expert. Build a media tech strategy. Type: ${mediaTechType}. State: ${currentMediaTechState}. Goals: ${mediaTechGoals}. Respond in JSON: { mediatech_strategy: string, platform_architecture: string[], personalization_engine: string[], ad_tech_stack: string[], content_operations: string[], ai_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mediadigital/digitalmedia', requireAuth, async (req: AuthRequest, res: any) => {
+  const { digMediaType, currentDigMediaState, digMediaGoals } = req.body;
+  const prompt = `You are a digital media and publishing business strategy expert. Build a digital media strategy. Type: ${digMediaType}. State: ${currentDigMediaState}. Goals: ${digMediaGoals}. Respond in JSON: { digital_media_strategy: string, subscription_model: string[], content_monetization: string[], seo_traffic: string[], social_distribution: string[], ai_content_ops: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mediadigital/contentmktg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { contentMktgType, currentContentMktgState, contentMktgGoals } = req.body;
+  const prompt = `You are a content marketing and brand publishing strategy expert. Build a content marketing strategy. Type: ${contentMktgType}. State: ${currentContentMktgState}. Goals: ${contentMktgGoals}. Respond in JSON: { content_strategy: string, content_pillars: string[], seo_program: string[], distribution_channels: string[], ai_content_ops: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mediadigital/adtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { adTechType, currentAdTechState, adTechGoals } = req.body;
+  const prompt = `You are an ad tech and programmatic advertising strategy expert. Build an ad tech strategy. Type: ${adTechType}. State: ${currentAdTechState}. Goals: ${adTechGoals}. Respond in JSON: { adtech_strategy: string, programmatic_stack: string[], identity_solution: string[], cookieless_program: string[], retail_media: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mediadigital/socialmedia', requireAuth, async (req: AuthRequest, res: any) => {
+  const { socialType, currentSocialState, socialGoals } = req.body;
+  const prompt = `You are a social media and community strategy expert. Build a social media strategy. Type: ${socialType}. State: ${currentSocialState}. Goals: ${socialGoals}. Respond in JSON: { social_strategy: string, channel_mix: string[], content_calendar: string[], community_building: string[], influencer_program: string[], conversion_funnel: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mediadigital/videostrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { videoStratType, currentVideoStratState, videoStratGoals } = req.body;
+  const prompt = `You are a video strategy and production operations expert. Build a video strategy. Type: ${videoStratType}. State: ${currentVideoStratState}. Goals: ${videoStratGoals}. Respond in JSON: { video_strategy: string, production_pipeline: string[], distribution_plan: string[], monetization_model: string[], ai_production: string[], performance_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mediadigital/searchseo', requireAuth, async (req: AuthRequest, res: any) => {
+  const { searchSEOType, currentSearchSEOState, searchSEOGoals } = req.body;
+  const prompt = `You are a search and SEO strategy expert. Build an SEO strategy. Type: ${searchSEOType}. State: ${currentSearchSEOState}. Goals: ${searchSEOGoals}. Respond in JSON: { seo_strategy: string, technical_seo: string[], content_program: string[], ai_search_optimization: string[], link_building: string[], international_seo: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mediadigital/influencer', requireAuth, async (req: AuthRequest, res: any) => {
+  const { influencerType, currentInfluencerState, influencerGoals } = req.body;
+  const prompt = `You are an influencer and creator marketing strategy expert. Build an influencer strategy. Type: ${influencerType}. State: ${currentInfluencerState}. Goals: ${influencerGoals}. Respond in JSON: { influencer_strategy: string, tier_selection: string[], creator_program: string[], campaign_mechanics: string[], ugc_program: string[], measurement_attribution: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mediadigital/emailmktg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { emailMktgType, currentEmailMktgState, emailMktgGoals } = req.body;
+  const prompt = `You are an email marketing and CRM strategy expert. Build an email marketing strategy. Type: ${emailMktgType}. State: ${currentEmailMktgState}. Goals: ${emailMktgGoals}. Respond in JSON: { email_strategy: string, lifecycle_program: string[], segmentation_model: string[], ai_personalization: string[], deliverability_plan: string[], automation_flows: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mediadigital/perfmktg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { perfMktgType, currentPerfMktgState, perfMktgGoals } = req.body;
+  const prompt = `You are a performance marketing and paid media strategy expert. Build a performance marketing strategy. Type: ${perfMktgType}. State: ${currentPerfMktgState}. Goals: ${perfMktgGoals}. Respond in JSON: { performance_strategy: string, channel_allocation: string[], bidding_optimization: string[], creative_testing: string[], attribution_model: string[], ai_automation: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
