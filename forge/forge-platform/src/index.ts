@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v956.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v957.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -221358,5 +221358,65 @@ app.post('/api/defsec/critinfra', requireAuth, async (req: AuthRequest, res: any
 app.post('/api/defsec/policy', requireAuth, async (req: AuthRequest, res: any) => {
   const { polType, currentPolState, polGoals } = req.body;
   const prompt = `You are a government affairs and policy strategy expert. Build a policy advocacy strategy. Type: ${polType}. State: ${currentPolState}. Goals: ${polGoals}. Respond in JSON: { policy_strategy: string, regulatory_monitoring: string[], advocacy_program: string[], coalition_building: string[], international_engagement: string[], compliance_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalecon/trade', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tradeType, currentTradeState, tradeGoals } = req.body;
+  const prompt = `You are a global trade strategy expert. Build an international trade strategy. Type: ${tradeType}. State: ${currentTradeState}. Goals: ${tradeGoals}. Respond in JSON: { trade_strategy: string, market_prioritization: string[], fta_utilization: string[], supply_chain_resilience: string[], trade_finance: string[], customs_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalecon/emerging', requireAuth, async (req: AuthRequest, res: any) => {
+  const { emType, currentEMState, emGoals } = req.body;
+  const prompt = `You are an emerging markets strategy expert. Build an emerging markets strategy. Type: ${emType}. State: ${currentEMState}. Goals: ${emGoals}. Respond in JSON: { emerging_markets_strategy: string, market_entry_plan: string[], localization_program: string[], partnership_model: string[], regulatory_navigation: string[], risk_mitigation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalecon/supplychain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { scType, currentSCState, scGoals } = req.body;
+  const prompt = `You are a global supply chain strategy expert. Build a supply chain resilience strategy. Type: ${scType}. State: ${currentSCState}. Goals: ${scGoals}. Respond in JSON: { supply_chain_strategy: string, resilience_program: string[], nearshoring_plan: string[], digital_visibility: string[], sustainability_sourcing: string[], risk_mitigation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalecon/ecodev', requireAuth, async (req: AuthRequest, res: any) => {
+  const { edType, currentEDState, edGoals } = req.body;
+  const prompt = `You are an economic development strategy expert. Build an economic development strategy. Type: ${edType}. State: ${currentEDState}. Goals: ${edGoals}. Respond in JSON: { economic_development_strategy: string, fdi_attraction: string[], cluster_development: string[], infrastructure_investment: string[], workforce_program: string[], startup_ecosystem: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalecon/georisk', requireAuth, async (req: AuthRequest, res: any) => {
+  const { grType, currentGRState, grGoals } = req.body;
+  const prompt = `You are a geopolitical risk strategy expert. Build a geopolitical resilience strategy. Type: ${grType}. State: ${currentGRState}. Goals: ${grGoals}. Respond in JSON: { geopolitical_strategy: string, risk_assessment: string[], scenario_planning: string[], geographic_diversification: string[], supply_chain_adjustment: string[], regulatory_compliance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalecon/fdi', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fdiType, currentFDIState, fdiGoals } = req.body;
+  const prompt = `You are an FDI attraction strategy expert. Build an investment promotion strategy. Type: ${fdiType}. State: ${currentFDIState}. Goals: ${fdiGoals}. Respond in JSON: { fdi_strategy: string, investment_promotion: string[], incentive_design: string[], regulatory_reform: string[], sector_targeting: string[], aftercare_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalecon/tradefinance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tfType, currentTFState, tfGoals } = req.body;
+  const prompt = `You are a trade finance strategy expert. Build a trade finance strategy. Type: ${tfType}. State: ${currentTFState}. Goals: ${tfGoals}. Respond in JSON: { trade_finance_strategy: string, product_innovation: string[], digital_transformation: string[], risk_management: string[], sme_access: string[], international_expansion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalecon/customs', requireAuth, async (req: AuthRequest, res: any) => {
+  const { custType, currentCustState, custGoals } = req.body;
+  const prompt = `You are a customs and trade compliance strategy expert. Build a customs strategy. Type: ${custType}. State: ${currentCustState}. Goals: ${custGoals}. Respond in JSON: { customs_strategy: string, compliance_program: string[], aeo_certification: string[], digital_customs: string[], duty_optimization: string[], logistics_efficiency: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalecon/infrafinance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ifType, currentIFState, ifGoals } = req.body;
+  const prompt = `You are an infrastructure finance strategy expert. Build an infrastructure financing strategy. Type: ${ifType}. State: ${currentIFState}. Goals: ${ifGoals}. Respond in JSON: { infra_finance_strategy: string, ppp_structuring: string[], green_financing: string[], blended_finance: string[], dfi_partnership: string[], project_pipeline: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalecon/susdev', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sdType, currentSDState, sdGoals } = req.body;
+  const prompt = `You are a sustainable development strategy expert. Build an ESG impact strategy. Type: ${sdType}. State: ${currentSDState}. Goals: ${sdGoals}. Respond in JSON: { sustainable_dev_strategy: string, sdg_alignment: string[], climate_program: string[], social_impact: string[], biodiversity_plan: string[], impact_measurement: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
