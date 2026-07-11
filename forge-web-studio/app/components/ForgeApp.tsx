@@ -3204,6 +3204,16 @@ ForgeTab_deianalytics6117,
 ForgeTab_hrtransformation6118,
 ForgeTab_skillsbasedorg6119,
 ForgeTab_recruitmentstrategy6120,
+ForgeTab_customersuccess6121,
+ForgeTab_netscore6122,
+ForgeTab_accountmanagement6123,
+ForgeTab_onboardingdesign6124,
+ForgeTab_churnprevention6125,
+ForgeTab_expansionrevenue6126,
+ForgeTab_customerhealth6127,
+ForgeTab_voicecustomer6128,
+ForgeTab_csoperations6129,
+ForgeTab_communitygrowth6130,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -63301,6 +63311,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'hrtransformation6118' && <ForgeTab_hrtransformation6118 />}
               {(mainTab as string) === 'skillsbasedorg6119' && <ForgeTab_skillsbasedorg6119 />}
               {(mainTab as string) === 'recruitmentstrategy6120' && <ForgeTab_recruitmentstrategy6120 />}
+              {(mainTab as string) === 'customersuccess6121' && <ForgeTab_customersuccess6121 />}
+              {(mainTab as string) === 'netscore6122' && <ForgeTab_netscore6122 />}
+              {(mainTab as string) === 'accountmanagement6123' && <ForgeTab_accountmanagement6123 />}
+              {(mainTab as string) === 'onboardingdesign6124' && <ForgeTab_onboardingdesign6124 />}
+              {(mainTab as string) === 'churnprevention6125' && <ForgeTab_churnprevention6125 />}
+              {(mainTab as string) === 'expansionrevenue6126' && <ForgeTab_expansionrevenue6126 />}
+              {(mainTab as string) === 'customerhealth6127' && <ForgeTab_customerhealth6127 />}
+              {(mainTab as string) === 'voicecustomer6128' && <ForgeTab_voicecustomer6128 />}
+              {(mainTab as string) === 'csoperations6129' && <ForgeTab_csoperations6129 />}
+              {(mainTab as string) === 'communitygrowth6130' && <ForgeTab_communitygrowth6130 />}
       </div>
     </div>
   );

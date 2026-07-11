@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1100.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1101.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -229998,5 +229998,65 @@ app.post('/api/humancapital/skillsorg', requireAuth, async (req: AuthRequest, re
 app.post('/api/humancapital/recruiting', requireAuth, async (req: AuthRequest, res: any) => {
   const { recType, currentRecState, recGoals } = req.body;
   const prompt = `You are a recruitment strategy and talent acquisition expert. Build a talent acquisition strategy. Type: ${recType}. State: ${currentRecState}. Goals: ${recGoals}. Respond in JSON: { recruitment_strategy: string, sourcing_channels: string[], employer_brand: string[], ai_recruiting: string[], diversity_hiring: string[], candidate_experience: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/cxsuccess', requireAuth, async (req: AuthRequest, res: any) => {
+  const { csType, currentCSState, csGoals } = req.body;
+  const prompt = `You are a customer success strategy expert. Build a CS strategy. Type: ${csType}. State: ${currentCSState}. Goals: ${csGoals}. Respond in JSON: { cs_strategy: string, onboarding_program: string[], health_scoring: string[], expansion_playbook: string[], churn_prevention: string[], digital_cs: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/nps', requireAuth, async (req: AuthRequest, res: any) => {
+  const { npsType, currentNPSState, npsGoals } = req.body;
+  const prompt = `You are an NPS and customer loyalty expert. Build an NPS improvement strategy. Type: ${npsType}. State: ${currentNPSState}. Goals: ${npsGoals}. Respond in JSON: { nps_strategy: string, survey_design: string[], driver_analysis: string[], inner_loop: string[], outer_loop: string[], action_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/acctmgmt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { amType, currentAMState, amGoals } = req.body;
+  const prompt = `You are a strategic account management expert. Build an account management strategy. Type: ${amType}. State: ${currentAMState}. Goals: ${amGoals}. Respond in JSON: { account_strategy: string, segmentation_model: string[], qbr_framework: string[], expansion_playbook: string[], executive_engagement: string[], risk_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/onboarding', requireAuth, async (req: AuthRequest, res: any) => {
+  const { obType, currentOBState, obGoals } = req.body;
+  const prompt = `You are a customer onboarding and time-to-value expert. Build an onboarding program. Type: ${obType}. State: ${currentOBState}. Goals: ${obGoals}. Respond in JSON: { onboarding_program: string, journey_design: string[], milestone_framework: string[], automation_plan: string[], measurement_metrics: string[], product_led_motion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/churn', requireAuth, async (req: AuthRequest, res: any) => {
+  const { churnType, currentChurnState, churnGoals } = req.body;
+  const prompt = `You are a churn prevention and renewal strategy expert. Build a churn prevention strategy. Type: ${churnType}. State: ${currentChurnState}. Goals: ${churnGoals}. Respond in JSON: { churn_strategy: string, health_scoring: string[], early_warning: string[], rescue_playbooks: string[], renewal_process: string[], win_back_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/expansion', requireAuth, async (req: AuthRequest, res: any) => {
+  const { expType, currentExpState, expGoals } = req.body;
+  const prompt = `You are an expansion revenue and upsell strategy expert. Build an expansion strategy. Type: ${expType}. State: ${currentExpState}. Goals: ${expGoals}. Respond in JSON: { expansion_strategy: string, opportunity_identification: string[], playbook_design: string[], product_led_expansion: string[], cs_sales_alignment: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/healthscore', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hsType, currentHSState, hsGoals } = req.body;
+  const prompt = `You are a customer health scoring and risk intelligence expert. Build a health scoring strategy. Type: ${hsType}. State: ${currentHSState}. Goals: ${hsGoals}. Respond in JSON: { health_strategy: string, scoring_model: string[], leading_indicators: string[], ai_prediction: string[], action_triggers: string[], churn_correlation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/voc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { vocType, currentVOCState, vocGoals } = req.body;
+  const prompt = `You are a voice of customer and feedback strategy expert. Build a VoC program. Type: ${vocType}. State: ${currentVOCState}. Goals: ${vocGoals}. Respond in JSON: { voc_strategy: string, listening_program: string[], analysis_framework: string[], closed_loop_process: string[], ai_sentiment: string[], stakeholder_reporting: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/csops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { csopsType, currentCSOPSState, csopsGoals } = req.body;
+  const prompt = `You are a customer success operations expert. Build a CS operations strategy. Type: ${csopsType}. State: ${currentCSOPSState}. Goals: ${csopsGoals}. Respond in JSON: { cs_ops_strategy: string, tech_stack: string[], automation_roadmap: string[], capacity_model: string[], data_strategy: string[], reporting_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/customersuccess/community', requireAuth, async (req: AuthRequest, res: any) => {
+  const { commType, currentCommState, commGoals } = req.body;
+  const prompt = `You are a customer community and advocacy strategy expert. Build a community strategy. Type: ${commType}. State: ${currentCommState}. Goals: ${commGoals}. Respond in JSON: { community_strategy: string, platform_design: string[], engagement_programs: string[], advocacy_program: string[], content_engine: string[], measurement_framework: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
