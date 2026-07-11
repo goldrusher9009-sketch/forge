@@ -2074,6 +2074,16 @@ ForgeTab_fleetmanagement4987,
 ForgeTab_autodealer4988,
 ForgeTab_automotivemfg4989,
 ForgeTab_charginginfra4990,
+ForgeTab_emergingmarkets4991,
+ForgeTab_chinastrategy4992,
+ForgeTab_indiastrategy4993,
+ForgeTab_africamarket4994,
+ForgeTab_latamarket4995,
+ForgeTab_menastrategy4996,
+ForgeTab_globaltrade4997,
+ForgeTab_geopolitrisk4998,
+ForgeTab_crossborderm4999,
+ForgeTab_globalstrategy5000,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -61041,6 +61051,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'autodealer4988' && <ForgeTab_autodealer4988 />}
               {(mainTab as string) === 'automotivemfg4989' && <ForgeTab_automotivemfg4989 />}
               {(mainTab as string) === 'charginginfra4990' && <ForgeTab_charginginfra4990 />}
+              {(mainTab as string) === 'emergingmarkets4991' && <ForgeTab_emergingmarkets4991 />}
+              {(mainTab as string) === 'chinastrategy4992' && <ForgeTab_chinastrategy4992 />}
+              {(mainTab as string) === 'indiastrategy4993' && <ForgeTab_indiastrategy4993 />}
+              {(mainTab as string) === 'africamarket4994' && <ForgeTab_africamarket4994 />}
+              {(mainTab as string) === 'latamarket4995' && <ForgeTab_latamarket4995 />}
+              {(mainTab as string) === 'menastrategy4996' && <ForgeTab_menastrategy4996 />}
+              {(mainTab as string) === 'globaltrade4997' && <ForgeTab_globaltrade4997 />}
+              {(mainTab as string) === 'geopolitrisk4998' && <ForgeTab_geopolitrisk4998 />}
+              {(mainTab as string) === 'crossborderm4999' && <ForgeTab_crossborderm4999 />}
+              {(mainTab as string) === 'globalstrategy5000' && <ForgeTab_globalstrategy5000 />}
       </div>
     </div>
   );
