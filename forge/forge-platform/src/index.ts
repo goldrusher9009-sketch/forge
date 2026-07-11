@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1086.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1087.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -229158,5 +229158,65 @@ app.post('/api/productgrowth/partnerships', requireAuth, async (req: AuthRequest
 app.post('/api/productgrowth/contentmkt', requireAuth, async (req: AuthRequest, res: any) => {
   const { contentMktType, currentContentMktState, contentMktGoals } = req.body;
   const prompt = `You are a content marketing and demand generation strategy expert. Build a content marketing strategy. Type: ${contentMktType}. State: ${currentContentMktState}. Goals: ${contentMktGoals}. Respond in JSON: { content_strategy: string, content_pillars: string[], seo_program: string[], distribution_channels: string[], abm_integration: string[], ai_content_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalops/legaltech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { legaltechType, currentLegaltechState, legaltechGoals } = req.body;
+  const prompt = `You are a legal technology and legal ops strategy expert. Build a legal tech strategy. Type: ${legaltechType}. State: ${currentLegaltechState}. Goals: ${legaltechGoals}. Respond in JSON: { legaltech_strategy: string, clm_implementation: string[], ai_integration: string[], legal_ops_model: string[], spend_management: string[], self_service_legal: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalops/iprights', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ipType, currentIPState, ipGoals } = req.body;
+  const prompt = `You are an intellectual property and patent strategy expert. Build an IP strategy. Type: ${ipType}. State: ${currentIPState}. Goals: ${ipGoals}. Respond in JSON: { ip_strategy: string, patent_portfolio: string[], licensing_program: string[], fto_analysis: string[], ip_valuation: string[], enforcement_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalops/regulatory', requireAuth, async (req: AuthRequest, res: any) => {
+  const { regType, currentRegState, regGoals } = req.body;
+  const prompt = `You are a regulatory affairs and compliance strategy expert. Build a regulatory strategy. Type: ${regType}. State: ${currentRegState}. Goals: ${regGoals}. Respond in JSON: { regulatory_strategy: string, approval_pathway: string[], compliance_framework: string[], regulatory_intelligence: string[], lobbying_positions: string[], international_harmonization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalops/litigation', requireAuth, async (req: AuthRequest, res: any) => {
+  const { litigType, currentLitigState, litigGoals } = req.body;
+  const prompt = `You are a litigation and dispute resolution strategy expert. Build a litigation strategy. Type: ${litigType}. State: ${currentLitigState}. Goals: ${litigGoals}. Respond in JSON: { litigation_strategy: string, case_assessment: string[], resolution_pathway: string[], discovery_plan: string[], cost_management: string[], risk_assessment: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalops/employment', requireAuth, async (req: AuthRequest, res: any) => {
+  const { empLawType, currentEmpLawState, empLawGoals } = req.body;
+  const prompt = `You are an employment law and HR compliance strategy expert. Build an employment compliance strategy. Type: ${empLawType}. State: ${currentEmpLawState}. Goals: ${empLawGoals}. Respond in JSON: { employment_strategy: string, classification_framework: string[], discrimination_prevention: string[], wage_compliance: string[], global_mobility: string[], union_relations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalops/contracts', requireAuth, async (req: AuthRequest, res: any) => {
+  const { clmType, currentCLMState, clmGoals } = req.body;
+  const prompt = `You are a contract management and CLM strategy expert. Build a CLM strategy. Type: ${clmType}. State: ${currentCLMState}. Goals: ${clmGoals}. Respond in JSON: { clm_strategy: string, template_library: string[], ai_review_process: string[], playbook_design: string[], obligation_tracking: string[], renewal_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalops/privacylaw', requireAuth, async (req: AuthRequest, res: any) => {
+  const { privLawType, currentPrivLawState, privLawGoals } = req.body;
+  const prompt = `You are a privacy law and data protection strategy expert. Build a privacy legal strategy. Type: ${privLawType}. State: ${currentPrivLawState}. Goals: ${privLawGoals}. Respond in JSON: { privacy_strategy: string, gdpr_compliance: string[], ccpa_program: string[], breach_response_plan: string[], cross_border_transfers: string[], ai_privacy_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalops/antitrust', requireAuth, async (req: AuthRequest, res: any) => {
+  const { antitrustType, currentAntitrustState, antitrustGoals } = req.body;
+  const prompt = `You are an antitrust and competition law strategy expert. Build an antitrust strategy. Type: ${antitrustType}. State: ${currentAntitrustState}. Goals: ${antitrustGoals}. Respond in JSON: { antitrust_strategy: string, merger_clearance: string[], compliance_program: string[], market_position_defense: string[], eu_strategy: string[], platform_regulation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalops/securities', requireAuth, async (req: AuthRequest, res: any) => {
+  const { secType, currentSecState, secGoals } = req.body;
+  const prompt = `You are a securities law and public company compliance expert. Build a securities compliance strategy. Type: ${secType}. State: ${currentSecState}. Goals: ${secGoals}. Respond in JSON: { securities_strategy: string, sec_reporting: string[], sox_compliance: string[], insider_trading_policy: string[], activism_defense: string[], esg_disclosure: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legalops/crossborderlaw', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cbLegalType, currentCBLegalState, cbLegalGoals } = req.body;
+  const prompt = `You are a cross-border and international legal strategy expert. Build an international legal strategy. Type: ${cbLegalType}. State: ${currentCBLegalState}. Goals: ${cbLegalGoals}. Respond in JSON: { international_legal_strategy: string, sanctions_compliance: string[], export_control: string[], fcpa_program: string[], transfer_pricing: string[], multi_jurisdiction: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
