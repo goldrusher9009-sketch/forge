@@ -2924,6 +2924,16 @@ ForgeTab_warehousingautomation5837,
 ForgeTab_supplyresillience5838,
 ForgeTab_tradecompliancestrat5839,
 ForgeTab_scmtechnology5840,
+ForgeTab_hrdigitaltransform5841,
+ForgeTab_talentacquisition5842,
+ForgeTab_learningdevelopment5843,
+ForgeTab_futureofworkstrat5844,
+ForgeTab_compensationstrategy5845,
+ForgeTab_employeeengagement5846,
+ForgeTab_performancemanagement5847,
+ForgeTab_diversityinclusion5848,
+ForgeTab_workforceplanning5849,
+ForgeTab_hroperations5850,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -62741,6 +62751,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'supplyresillience5838' && <ForgeTab_supplyresillience5838 />}
               {(mainTab as string) === 'tradecompliancestrat5839' && <ForgeTab_tradecompliancestrat5839 />}
               {(mainTab as string) === 'scmtechnology5840' && <ForgeTab_scmtechnology5840 />}
+              {(mainTab as string) === 'hrdigitaltransform5841' && <ForgeTab_hrdigitaltransform5841 />}
+              {(mainTab as string) === 'talentacquisition5842' && <ForgeTab_talentacquisition5842 />}
+              {(mainTab as string) === 'learningdevelopment5843' && <ForgeTab_learningdevelopment5843 />}
+              {(mainTab as string) === 'futureofworkstrat5844' && <ForgeTab_futureofworkstrat5844 />}
+              {(mainTab as string) === 'compensationstrategy5845' && <ForgeTab_compensationstrategy5845 />}
+              {(mainTab as string) === 'employeeengagement5846' && <ForgeTab_employeeengagement5846 />}
+              {(mainTab as string) === 'performancemanagement5847' && <ForgeTab_performancemanagement5847 />}
+              {(mainTab as string) === 'diversityinclusion5848' && <ForgeTab_diversityinclusion5848 />}
+              {(mainTab as string) === 'workforceplanning5849' && <ForgeTab_workforceplanning5849 />}
+              {(mainTab as string) === 'hroperations5850' && <ForgeTab_hroperations5850 />}
       </div>
     </div>
   );
