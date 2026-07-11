@@ -1924,6 +1924,16 @@ ForgeTab_performancemgmt4837,
 ForgeTab_employeeexperience4838,
 ForgeTab_successionplanning4839,
 ForgeTab_workforceanalytics4840,
+ForgeTab_manufacturingstrat4841,
+ForgeTab_industry404842,
+ForgeTab_supplychain4843,
+ForgeTab_qualitymanagement4844,
+ForgeTab_automotivemfg4845,
+ForgeTab_aerospacemfg4846,
+ForgeTab_industrialautomation4847,
+ForgeTab_pharmamanufacturing4848,
+ForgeTab_maintenancestrat4849,
+ForgeTab_energyindustrial4850,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -60741,6 +60751,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'employeeexperience4838' && <ForgeTab_employeeexperience4838 />}
               {(mainTab as string) === 'successionplanning4839' && <ForgeTab_successionplanning4839 />}
               {(mainTab as string) === 'workforceanalytics4840' && <ForgeTab_workforceanalytics4840 />}
+              {(mainTab as string) === 'manufacturingstrat4841' && <ForgeTab_manufacturingstrat4841 />}
+              {(mainTab as string) === 'industry404842' && <ForgeTab_industry404842 />}
+              {(mainTab as string) === 'supplychain4843' && <ForgeTab_supplychain4843 />}
+              {(mainTab as string) === 'qualitymanagement4844' && <ForgeTab_qualitymanagement4844 />}
+              {(mainTab as string) === 'automotivemfg4845' && <ForgeTab_automotivemfg4845 />}
+              {(mainTab as string) === 'aerospacemfg4846' && <ForgeTab_aerospacemfg4846 />}
+              {(mainTab as string) === 'industrialautomation4847' && <ForgeTab_industrialautomation4847 />}
+              {(mainTab as string) === 'pharmamanufacturing4848' && <ForgeTab_pharmamanufacturing4848 />}
+              {(mainTab as string) === 'maintenancestrat4849' && <ForgeTab_maintenancestrat4849 />}
+              {(mainTab as string) === 'energyindustrial4850' && <ForgeTab_energyindustrial4850 />}
       </div>
     </div>
   );
