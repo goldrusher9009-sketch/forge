@@ -2984,6 +2984,16 @@ ForgeTab_corporatecommunication5897,
 ForgeTab_legalstrategy5898,
 ForgeTab_familybusiness5899,
 ForgeTab_startupstrategy5900,
+ForgeTab_geopoliticalstrat5901,
+ForgeTab_globaltradestrat5902,
+ForgeTab_emergingmarkets5903,
+ForgeTab_chinastrategy5904,
+ForgeTab_indiastrategy5905,
+ForgeTab_africamarket5906,
+ForgeTab_latamarket5907,
+ForgeTab_middleeaststrat5908,
+ForgeTab_emeabusiness5909,
+ForgeTab_apacstrategy5910,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -62861,6 +62871,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'legalstrategy5898' && <ForgeTab_legalstrategy5898 />}
               {(mainTab as string) === 'familybusiness5899' && <ForgeTab_familybusiness5899 />}
               {(mainTab as string) === 'startupstrategy5900' && <ForgeTab_startupstrategy5900 />}
+              {(mainTab as string) === 'geopoliticalstrat5901' && <ForgeTab_geopoliticalstrat5901 />}
+              {(mainTab as string) === 'globaltradestrat5902' && <ForgeTab_globaltradestrat5902 />}
+              {(mainTab as string) === 'emergingmarkets5903' && <ForgeTab_emergingmarkets5903 />}
+              {(mainTab as string) === 'chinastrategy5904' && <ForgeTab_chinastrategy5904 />}
+              {(mainTab as string) === 'indiastrategy5905' && <ForgeTab_indiastrategy5905 />}
+              {(mainTab as string) === 'africamarket5906' && <ForgeTab_africamarket5906 />}
+              {(mainTab as string) === 'latamarket5907' && <ForgeTab_latamarket5907 />}
+              {(mainTab as string) === 'middleeaststrat5908' && <ForgeTab_middleeaststrat5908 />}
+              {(mainTab as string) === 'emeabusiness5909' && <ForgeTab_emeabusiness5909 />}
+              {(mainTab as string) === 'apacstrategy5910' && <ForgeTab_apacstrategy5910 />}
       </div>
     </div>
   );
