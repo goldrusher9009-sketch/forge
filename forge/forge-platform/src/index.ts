@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1013.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1014.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -224778,5 +224778,65 @@ app.post('/api/aiml/aiagents', requireAuth, async (req: AuthRequest, res: any) =
 app.post('/api/aiml/aihw', requireAuth, async (req: AuthRequest, res: any) => {
   const { aihwType, currentAIHWState, aihwGoals } = req.body;
   const prompt = `You are an AI hardware and infrastructure strategy expert. Build an AI hardware strategy. Type: ${aihwType}. State: ${currentAIHWState}. Goals: ${aihwGoals}. Respond in JSON: { ai_hardware_strategy: string, compute_architecture: string[], inference_optimization: string[], custom_silicon: string[], power_efficiency: string[], cost_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investment/pe', requireAuth, async (req: AuthRequest, res: any) => {
+  const { peType, currentPEState, peGoals } = req.body;
+  const prompt = `You are a private equity strategy and deal sourcing expert. Build a PE strategy. Type: ${peType}. State: ${currentPEState}. Goals: ${peGoals}. Respond in JSON: { pe_strategy: string, deal_sourcing: string[], investment_thesis: string[], value_creation: string[], portfolio_management: string[], exit_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investment/vc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { vcType, currentVCState, vcGoals } = req.body;
+  const prompt = `You are a venture capital strategy and portfolio expert. Build a VC strategy. Type: ${vcType}. State: ${currentVCState}. Goals: ${vcGoals}. Respond in JSON: { vc_strategy: string, investment_thesis: string[], sourcing_network: string[], portfolio_support: string[], reserve_strategy: string[], fund_economics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investment/ma', requireAuth, async (req: AuthRequest, res: any) => {
+  const { maType, currentMAState, maGoals } = req.body;
+  const prompt = `You are an M&A strategy and deal execution expert. Build an M&A strategy. Type: ${maType}. State: ${currentMAState}. Goals: ${maGoals}. Respond in JSON: { ma_strategy: string, deal_pipeline: string[], diligence_framework: string[], valuation_approach: string[], integration_playbook: string[], synergy_realization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investment/portval', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pvcType, currentPVCState, pvcGoals } = req.body;
+  const prompt = `You are a portfolio value creation and operational excellence expert. Build a value creation plan. Type: ${pvcType}. State: ${currentPVCState}. Goals: ${pvcGoals}. Respond in JSON: { value_creation_plan: string, revenue_acceleration: string[], margin_improvement: string[], digital_transformation: string[], talent_strategy: string[], exit_preparation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investment/hedge', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hfType, currentHFState, hfGoals } = req.body;
+  const prompt = `You are a hedge fund strategy and alpha generation expert. Build a hedge fund strategy. Type: ${hfType}. State: ${currentHFState}. Goals: ${hfGoals}. Respond in JSON: { hedge_fund_strategy: string, alpha_generation: string[], risk_framework: string[], portfolio_construction: string[], investor_relations: string[], operational_excellence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investment/familyoffice', requireAuth, async (req: AuthRequest, res: any) => {
+  const { foType, currentFOState, foGoals } = req.body;
+  const prompt = `You are a family office investment strategy expert. Build a family office strategy. Type: ${foType}. State: ${currentFOState}. Goals: ${foGoals}. Respond in JSON: { family_office_strategy: string, asset_allocation: string[], direct_investment: string[], governance_structure: string[], succession_planning: string[], impact_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investment/fof', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fofType, currentFOFState, fofGoals } = req.body;
+  const prompt = `You are a fund of funds and alternative investments strategy expert. Build a fund of funds strategy. Type: ${fofType}. State: ${currentFOFState}. Goals: ${fofGoals}. Respond in JSON: { fof_strategy: string, manager_selection: string[], portfolio_construction: string[], co_investment: string[], secondary_strategy: string[], reporting_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investment/exit', requireAuth, async (req: AuthRequest, res: any) => {
+  const { exitType, currentExitState, exitGoals } = req.body;
+  const prompt = `You are an exit strategy and IPO/M&A readiness expert. Build an exit strategy. Type: ${exitType}. State: ${currentExitState}. Goals: ${exitGoals}. Respond in JSON: { exit_strategy: string, valuation_maximization: string[], ipo_readiness: string[], buyer_landscape: string[], data_room_preparation: string[], timeline_milestones: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investment/lpraise', requireAuth, async (req: AuthRequest, res: any) => {
+  const { lprType, currentLPRState, lprGoals } = req.body;
+  const prompt = `You are an LP capital raise and investor relations strategy expert. Build a capital raise strategy. Type: ${lprType}. State: ${currentLPRState}. Goals: ${lprGoals}. Respond in JSON: { capital_raise_strategy: string, target_lp_profile: string[], fundraising_narrative: string[], ddq_preparation: string[], roadshow_plan: string[], ongoing_ir: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/investment/dd', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ddType, currentDDState, ddGoals } = req.body;
+  const prompt = `You are an investment due diligence strategy and framework expert. Build a due diligence framework. Type: ${ddType}. State: ${currentDDState}. Goals: ${ddGoals}. Respond in JSON: { due_diligence_framework: string, commercial_dd: string[], financial_dd: string[], tech_dd: string[], esg_dd: string[], red_flag_prioritization: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
