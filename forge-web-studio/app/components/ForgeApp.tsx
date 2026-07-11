@@ -4454,6 +4454,16 @@ ForgeTab_k12education7367,
 ForgeTab_highereducation7368,
 ForgeTab_languagelearning7369,
 ForgeTab_codingbootcamp7370,
+ForgeTab_agritechstrategy7371,
+ForgeTab_precisionagriculture7372,
+ForgeTab_verticalfarming7373,
+ForgeTab_alternativeprotein7374,
+ForgeTab_foodtechplatform7375,
+ForgeTab_agrifoodsupplychain7376,
+ForgeTab_regenerativeag7377,
+ForgeTab_aquaculture7378,
+ForgeTab_agrifinance7379,
+ForgeTab_foodsecurity7380,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -65801,6 +65811,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'highereducation7368' && <ForgeTab_highereducation7368 />}
               {(mainTab as string) === 'languagelearning7369' && <ForgeTab_languagelearning7369 />}
               {(mainTab as string) === 'codingbootcamp7370' && <ForgeTab_codingbootcamp7370 />}
+              {(mainTab as string) === 'agritechstrategy7371' && <ForgeTab_agritechstrategy7371 />}
+              {(mainTab as string) === 'precisionagriculture7372' && <ForgeTab_precisionagriculture7372 />}
+              {(mainTab as string) === 'verticalfarming7373' && <ForgeTab_verticalfarming7373 />}
+              {(mainTab as string) === 'alternativeprotein7374' && <ForgeTab_alternativeprotein7374 />}
+              {(mainTab as string) === 'foodtechplatform7375' && <ForgeTab_foodtechplatform7375 />}
+              {(mainTab as string) === 'agrifoodsupplychain7376' && <ForgeTab_agrifoodsupplychain7376 />}
+              {(mainTab as string) === 'regenerativeag7377' && <ForgeTab_regenerativeag7377 />}
+              {(mainTab as string) === 'aquaculture7378' && <ForgeTab_aquaculture7378 />}
+              {(mainTab as string) === 'agrifinance7379' && <ForgeTab_agrifinance7379 />}
+              {(mainTab as string) === 'foodsecurity7380' && <ForgeTab_foodsecurity7380 />}
       </div>
     </div>
   );
