@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1025.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1026.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -225498,5 +225498,65 @@ app.post('/api/cleantech/grid', requireAuth, async (req: AuthRequest, res: any) 
 app.post('/api/cleantech/cleantechvc', requireAuth, async (req: AuthRequest, res: any) => {
   const { ctVCType, currentCTVCState, ctVCGoals } = req.body;
   const prompt = `You are a CleanTech venture and climate finance strategy expert. Build a climate finance strategy. Type: ${ctVCType}. State: ${currentCTVCState}. Goals: ${ctVCGoals}. Respond in JSON: { climate_finance_strategy: string, portfolio_construction: string[], green_financing: string[], ira_incentives: string[], carbon_credits: string[], exit_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travelhospitality/traveltech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { travelTechType, currentTravelTechState, travelTechGoals } = req.body;
+  const prompt = `You are a travel technology and digital transformation strategy expert. Build a travel tech strategy. Type: ${travelTechType}. State: ${currentTravelTechState}. Goals: ${travelTechGoals}. Respond in JSON: { travel_tech_strategy: string, platform_architecture: string[], ai_personalization: string[], direct_channel: string[], loyalty_technology: string[], revenue_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travelhospitality/hotel', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hotelType, currentHotelState, hotelGoals } = req.body;
+  const prompt = `You are a hotel and hospitality strategy expert. Build a hotel strategy. Type: ${hotelType}. State: ${currentHotelState}. Goals: ${hotelGoals}. Respond in JSON: { hotel_strategy: string, revenue_optimization: string[], direct_booking: string[], guest_experience: string[], f_and_b_strategy: string[], sustainability_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travelhospitality/airline', requireAuth, async (req: AuthRequest, res: any) => {
+  const { airlineType, currentAirlineState, airlineGoals } = req.body;
+  const prompt = `You are an airline strategy and commercial excellence expert. Build an airline strategy. Type: ${airlineType}. State: ${currentAirlineState}. Goals: ${airlineGoals}. Respond in JSON: { airline_strategy: string, network_planning: string[], ancillary_revenue: string[], loyalty_program: string[], ndc_retailing: string[], sustainability_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travelhospitality/ota', requireAuth, async (req: AuthRequest, res: any) => {
+  const { otaType, currentOTAState, otaGoals } = req.body;
+  const prompt = `You are an online travel agency and metasearch strategy expert. Build an OTA strategy. Type: ${otaType}. State: ${currentOTAState}. Goals: ${otaGoals}. Respond in JSON: { ota_strategy: string, supply_partnerships: string[], ai_personalization: string[], customer_acquisition: string[], loyalty_program: string[], b2b_expansion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travelhospitality/hotelpms', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pmsType, currentPMSState, pmsGoals } = req.body;
+  const prompt = `You are a hotel PMS and revenue management strategy expert. Build a hotel tech strategy. Type: ${pmsType}. State: ${currentPMSState}. Goals: ${pmsGoals}. Respond in JSON: { hotel_tech_strategy: string, pms_modernization: string[], revenue_management_ai: string[], channel_optimization: string[], direct_booking: string[], integration_architecture: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travelhospitality/tourism', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tourismType, currentTourismState, tourismGoals } = req.body;
+  const prompt = `You are a destination and tourism strategy expert. Build a tourism strategy. Type: ${tourismType}. State: ${currentTourismState}. Goals: ${tourismGoals}. Respond in JSON: { tourism_strategy: string, destination_positioning: string[], visitor_experience: string[], sustainable_tourism: string[], digital_marketing: string[], mice_development: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travelhospitality/cruise', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cruiseType, currentCruiseState, cruiseGoals } = req.body;
+  const prompt = `You are a cruise line and maritime hospitality strategy expert. Build a cruise strategy. Type: ${cruiseType}. State: ${currentCruiseState}. Goals: ${cruiseGoals}. Respond in JSON: { cruise_strategy: string, fleet_deployment: string[], revenue_optimization: string[], sustainability_program: string[], digital_guest_experience: string[], port_destination: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travelhospitality/exptravel', requireAuth, async (req: AuthRequest, res: any) => {
+  const { expType, currentExpState, expGoals } = req.body;
+  const prompt = `You are an experiential travel and adventure tourism strategy expert. Build an experiential travel strategy. Type: ${expType}. State: ${currentExpState}. Goals: ${expGoals}. Respond in JSON: { experiential_strategy: string, product_design: string[], community_building: string[], premium_positioning: string[], sustainability_framework: string[], scale_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travelhospitality/str', requireAuth, async (req: AuthRequest, res: any) => {
+  const { strType, currentSTRState, strGoals } = req.body;
+  const prompt = `You are a short-term rental and vacation rental strategy expert. Build an STR strategy. Type: ${strType}. State: ${currentSTRState}. Goals: ${strGoals}. Respond in JSON: { str_strategy: string, property_optimization: string[], direct_booking: string[], automation_tech: string[], guest_experience: string[], regulatory_compliance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/travelhospitality/travloyal', requireAuth, async (req: AuthRequest, res: any) => {
+  const { loyalTravType, currentLoyalTravState, loyalTravGoals } = req.body;
+  const prompt = `You are a travel loyalty and frequent traveler program strategy expert. Build a travel loyalty strategy. Type: ${loyalTravType}. State: ${currentLoyalTravState}. Goals: ${loyalTravGoals}. Respond in JSON: { travel_loyalty_strategy: string, program_design: string[], co_brand_partnerships: string[], ai_personalization: string[], lifestyle_expansion: string[], engagement_framework: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
