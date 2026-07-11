@@ -1634,6 +1634,16 @@ ForgeTab_learninganalytics4547,
 ForgeTab_gamification4548,
 ForgeTab_aiineducation4549,
 ForgeTab_credentialing4550,
+ForgeTab_cybersecstrat4551,
+ForgeTab_cloudsecurity4552,
+ForgeTab_zerotrust4553,
+ForgeTab_incidentresponse4554,
+ForgeTab_securitycompliance4555,
+ForgeTab_threatintel4556,
+ForgeTab_appsecurity4557,
+ForgeTab_identityaccess4558,
+ForgeTab_otsecurity4559,
+ForgeTab_cyberriskquant4560,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -60161,6 +60171,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'gamification4548' && <ForgeTab_gamification4548 />}
               {(mainTab as string) === 'aiineducation4549' && <ForgeTab_aiineducation4549 />}
               {(mainTab as string) === 'credentialing4550' && <ForgeTab_credentialing4550 />}
+              {(mainTab as string) === 'cybersecstrat4551' && <ForgeTab_cybersecstrat4551 />}
+              {(mainTab as string) === 'cloudsecurity4552' && <ForgeTab_cloudsecurity4552 />}
+              {(mainTab as string) === 'zerotrust4553' && <ForgeTab_zerotrust4553 />}
+              {(mainTab as string) === 'incidentresponse4554' && <ForgeTab_incidentresponse4554 />}
+              {(mainTab as string) === 'securitycompliance4555' && <ForgeTab_securitycompliance4555 />}
+              {(mainTab as string) === 'threatintel4556' && <ForgeTab_threatintel4556 />}
+              {(mainTab as string) === 'appsecurity4557' && <ForgeTab_appsecurity4557 />}
+              {(mainTab as string) === 'identityaccess4558' && <ForgeTab_identityaccess4558 />}
+              {(mainTab as string) === 'otsecurity4559' && <ForgeTab_otsecurity4559 />}
+              {(mainTab as string) === 'cyberriskquant4560' && <ForgeTab_cyberriskquant4560 />}
       </div>
     </div>
   );
