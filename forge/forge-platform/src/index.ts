@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1032.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1033.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -225918,5 +225918,65 @@ app.post('/api/climatedeep/sustainag', requireAuth, async (req: AuthRequest, res
 app.post('/api/climatedeep/climatepol', requireAuth, async (req: AuthRequest, res: any) => {
   const { climatePolicyType, currentClimatePolicyState, climatePolicyGoals } = req.body;
   const prompt = `You are a climate policy and carbon market strategy expert. Build a climate policy strategy. Type: ${climatePolicyType}. State: ${currentClimatePolicyState}. Goals: ${climatePolicyGoals}. Respond in JSON: { climate_policy_strategy: string, regulatory_positioning: string[], carbon_market_approach: string[], advocacy_plan: string[], transition_risk_management: string[], international_engagement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalstrat/geopolitics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { geoType, currentGeoState, geoGoals } = req.body;
+  const prompt = `You are a geopolitical risk and global strategy expert. Build a geopolitical strategy. Type: ${geoType}. State: ${currentGeoState}. Goals: ${geoGoals}. Respond in JSON: { geopolitical_strategy: string, risk_assessment: string[], exposure_mapping: string[], mitigation_playbook: string[], scenario_planning: string[], resilience_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalstrat/macro', requireAuth, async (req: AuthRequest, res: any) => {
+  const { macroType, currentMacroState, macroGoals } = req.body;
+  const prompt = `You are a global macro and economic strategy expert. Build a global macro strategy. Type: ${macroType}. State: ${currentMacroState}. Goals: ${macroGoals}. Respond in JSON: { macro_strategy: string, inflation_positioning: string[], rate_sensitivity: string[], currency_exposure: string[], commodity_allocation: string[], recession_playbook: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalstrat/emerging', requireAuth, async (req: AuthRequest, res: any) => {
+  const { emType, currentEMState, emGoals } = req.body;
+  const prompt = `You are an emerging markets strategy expert. Build an emerging markets strategy. Type: ${emType}. State: ${currentEMState}. Goals: ${emGoals}. Respond in JSON: { em_strategy: string, market_entry_approach: string[], partnership_model: string[], regulatory_navigation: string[], currency_risk: string[], growth_playbook: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalstrat/supplychain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { scType, currentSCState, scGoals } = req.body;
+  const prompt = `You are a supply chain and trade strategy expert. Build a supply chain strategy. Type: ${scType}. State: ${currentSCState}. Goals: ${scGoals}. Respond in JSON: { supply_chain_strategy: string, resilience_design: string[], nearshoring_plan: string[], digital_visibility: string[], trade_compliance: string[], ai_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalstrat/swf', requireAuth, async (req: AuthRequest, res: any) => {
+  const { swfType, currentSWFState, swfGoals } = req.body;
+  const prompt = `You are a sovereign wealth and long-term capital strategy expert. Build an SWF strategy. Type: ${swfType}. State: ${currentSWFState}. Goals: ${swfGoals}. Respond in JSON: { swf_strategy: string, asset_allocation: string[], alternatives_program: string[], esg_integration: string[], co_investment_framework: string[], governance_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalstrat/tradepol', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tradeType, currentTradeState, tradeGoals } = req.body;
+  const prompt = `You are a trade policy and international commerce strategy expert. Build a trade strategy. Type: ${tradeType}. State: ${currentTradeState}. Goals: ${tradeGoals}. Respond in JSON: { trade_strategy: string, market_access_plan: string[], tariff_mitigation: string[], export_controls_compliance: string[], fta_utilization: string[], sanctions_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalstrat/diplomacy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dipType, currentDipState, dipGoals } = req.body;
+  const prompt = `You are a diplomatic and government affairs strategy expert. Build a government affairs strategy. Type: ${dipType}. State: ${currentDipState}. Goals: ${dipGoals}. Respond in JSON: { government_affairs_strategy: string, stakeholder_mapping: string[], legislative_engagement: string[], regulatory_navigation: string[], coalition_building: string[], crisis_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalstrat/nationcomp', requireAuth, async (req: AuthRequest, res: any) => {
+  const { natCompType, currentNatCompState, natCompGoals } = req.body;
+  const prompt = `You are a national competitiveness and industrial policy strategy expert. Build an industrial policy strategy. Type: ${natCompType}. State: ${currentNatCompState}. Goals: ${natCompGoals}. Respond in JSON: { industrial_policy_strategy: string, incentive_capture: string[], domestic_manufacturing: string[], critical_minerals: string[], workforce_development: string[], export_promotion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalstrat/sanctions', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sanctionsType, currentSanctionsState, sanctionsGoals } = req.body;
+  const prompt = `You are a sanctions compliance and export control strategy expert. Build a sanctions compliance strategy. Type: ${sanctionsType}. State: ${currentSanctionsState}. Goals: ${sanctionsGoals}. Respond in JSON: { sanctions_strategy: string, screening_framework: string[], licensing_program: string[], third_party_risk: string[], dual_use_controls: string[], program_enhancement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalstrat/globalrisk', requireAuth, async (req: AuthRequest, res: any) => {
+  const { riskIntType, currentRiskIntState, riskIntGoals } = req.body;
+  const prompt = `You are a global risk intelligence and scenario planning expert. Build a global risk strategy. Type: ${riskIntType}. State: ${currentRiskIntState}. Goals: ${riskIntGoals}. Respond in JSON: { global_risk_strategy: string, risk_taxonomy: string[], scenario_analysis: string[], early_warning_system: string[], resilience_framework: string[], board_reporting: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
