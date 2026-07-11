@@ -3714,6 +3714,16 @@ ForgeTab_augmentedreality6627,
 ForgeTab_aimodelbuilder6628,
 ForgeTab_blockchainweb36629,
 ForgeTab_semiconductorstrategy6630,
+ForgeTab_globaltrade6631,
+ForgeTab_emergingmarkets6632,
+ForgeTab_geopoliticalrisk6633,
+ForgeTab_crossborderma6634,
+ForgeTab_transferpricing6635,
+ForgeTab_globaloperations6636,
+ForgeTab_culturaldiplomacy6637,
+ForgeTab_globalmarketing6638,
+ForgeTab_exportfinance6639,
+ForgeTab_regulatoryaffairs6640,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -64321,6 +64331,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'aimodelbuilder6628' && <ForgeTab_aimodelbuilder6628 />}
               {(mainTab as string) === 'blockchainweb36629' && <ForgeTab_blockchainweb36629 />}
               {(mainTab as string) === 'semiconductorstrategy6630' && <ForgeTab_semiconductorstrategy6630 />}
+              {(mainTab as string) === 'globaltrade6631' && <ForgeTab_globaltrade6631 />}
+              {(mainTab as string) === 'emergingmarkets6632' && <ForgeTab_emergingmarkets6632 />}
+              {(mainTab as string) === 'geopoliticalrisk6633' && <ForgeTab_geopoliticalrisk6633 />}
+              {(mainTab as string) === 'crossborderma6634' && <ForgeTab_crossborderma6634 />}
+              {(mainTab as string) === 'transferpricing6635' && <ForgeTab_transferpricing6635 />}
+              {(mainTab as string) === 'globaloperations6636' && <ForgeTab_globaloperations6636 />}
+              {(mainTab as string) === 'culturaldiplomacy6637' && <ForgeTab_culturaldiplomacy6637 />}
+              {(mainTab as string) === 'globalmarketing6638' && <ForgeTab_globalmarketing6638 />}
+              {(mainTab as string) === 'exportfinance6639' && <ForgeTab_exportfinance6639 />}
+              {(mainTab as string) === 'regulatoryaffairs6640' && <ForgeTab_regulatoryaffairs6640 />}
       </div>
     </div>
   );

@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1151.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1152.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -233058,5 +233058,65 @@ app.post('/api/deeptech/blockchain', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/deeptech/semiconductor', requireAuth, async (req: AuthRequest, res: any) => {
   const { semType, currentSEMState, semGoals } = req.body;
   const prompt = `You are a semiconductor and chip technology strategy expert. Build a semiconductor strategy. Type: ${semType}. State: ${currentSEMState}. Goals: ${semGoals}. Respond in JSON: { semiconductor_strategy: string, technology_roadmap: string[], ai_chip_development: string[], supply_chain_resilience: string[], ecosystem_partnerships: string[], geopolitical_risk: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/globaltrade', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gtType, currentGTState, gtGoals } = req.body;
+  const prompt = `You are a global trade and international business strategy expert. Build a global trade strategy. Type: ${gtType}. State: ${currentGTState}. Goals: ${gtGoals}. Respond in JSON: { global_trade_strategy: string, market_prioritization: string[], fta_utilization: string[], customs_compliance: string[], trade_finance: string[], digital_trade: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/emergmkt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { emType, currentEMState, emGoals } = req.body;
+  const prompt = `You are an emerging markets strategy and growth expert. Build an emerging markets strategy. Type: ${emType}. State: ${currentEMState}. Goals: ${emGoals}. Respond in JSON: { emerging_markets_strategy: string, market_entry_plan: string[], localization_approach: string[], distribution_model: string[], regulatory_navigation: string[], partnership_ecosystem: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/georisk', requireAuth, async (req: AuthRequest, res: any) => {
+  const { grType, currentGRState, grGoals } = req.body;
+  const prompt = `You are a geopolitical risk and business resilience strategy expert. Build a geopolitical risk strategy. Type: ${grType}. State: ${currentGRState}. Goals: ${grGoals}. Respond in JSON: { geopolitical_risk_strategy: string, risk_assessment: string[], supply_chain_diversification: string[], sanctions_compliance: string[], scenario_planning: string[], resilience_measures: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/crossborderma', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cbmaType, currentCBMAState, cbmaGoals } = req.body;
+  const prompt = `You are a cross-border M&A and international expansion strategy expert. Build a cross-border M&A strategy. Type: ${cbmaType}. State: ${currentCBMAState}. Goals: ${cbmaGoals}. Respond in JSON: { cross_border_strategy: string, target_screening: string[], deal_structuring: string[], regulatory_approval: string[], integration_plan: string[], cultural_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/transferprice', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tpType, currentTPState, tpGoals } = req.body;
+  const prompt = `You are a transfer pricing and international tax strategy expert. Build a transfer pricing strategy. Type: ${tpType}. State: ${currentTPState}. Goals: ${tpGoals}. Respond in JSON: { transfer_pricing_strategy: string, pillar_two_compliance: string[], ip_structuring: string[], documentation_framework: string[], apa_strategy: string[], dispute_resolution: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/globalops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { goType, currentGOState, goGoals } = req.body;
+  const prompt = `You are a global operations and international supply chain strategy expert. Build a global operations strategy. Type: ${goType}. State: ${currentGOState}. Goals: ${goGoals}. Respond in JSON: { global_operations_strategy: string, footprint_optimization: string[], nearshoring_plan: string[], digital_supply_chain: string[], resilience_measures: string[], sustainability_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/cultdiplom', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cdType, currentCDState, cdGoals } = req.body;
+  const prompt = `You are a cross-cultural management and international HR strategy expert. Build a cross-cultural strategy. Type: ${cdType}. State: ${currentCDState}. Goals: ${cdGoals}. Respond in JSON: { cross_cultural_strategy: string, cultural_intelligence: string[], leadership_development: string[], expatriate_program: string[], integration_approach: string[], dei_global: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/globalmktg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gmType, currentGMState, gmGoals } = req.body;
+  const prompt = `You are a global marketing and international brand strategy expert. Build a global marketing strategy. Type: ${gmType}. State: ${currentGMState}. Goals: ${gmGoals}. Respond in JSON: { global_marketing_strategy: string, brand_localization: string[], digital_channels: string[], pricing_strategy: string[], regional_adaptation: string[], influencer_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/exportfin', requireAuth, async (req: AuthRequest, res: any) => {
+  const { efType, currentEFState, efGoals } = req.body;
+  const prompt = `You are an export finance and trade finance strategy expert. Build an export finance strategy. Type: ${efType}. State: ${currentEFState}. Goals: ${efGoals}. Respond in JSON: { export_finance_strategy: string, instrument_mix: string[], eca_utilization: string[], supply_chain_finance: string[], risk_mitigation: string[], digital_trade_finance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/intlbiz/regaffairs', requireAuth, async (req: AuthRequest, res: any) => {
+  const { raType, currentRAState, raGoals } = req.body;
+  const prompt = `You are a global regulatory affairs and market access strategy expert. Build a regulatory affairs strategy. Type: ${raType}. State: ${currentRAState}. Goals: ${raGoals}. Respond in JSON: { regulatory_strategy: string, submission_roadmap: string[], harmonization_approach: string[], ai_regulatory_tools: string[], post_market_surveillance: string[], market_access: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
