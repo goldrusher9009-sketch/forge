@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1069.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1070.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -228138,5 +228138,65 @@ app.post('/api/saasgrowth/saasfunding', requireAuth, async (req: AuthRequest, re
 app.post('/api/saasgrowth/saasai', requireAuth, async (req: AuthRequest, res: any) => {
   const { saasAIType, currentSaasAIState, saasAIGoals } = req.body;
   const prompt = `You are an AI-powered SaaS product strategy expert. Build a SaaS AI product strategy. Type: ${saasAIType}. State: ${currentSaasAIState}. Goals: ${saasAIGoals}. Respond in JSON: { saas_ai_strategy: string, feature_roadmap: string[], copilot_design: string[], agent_program: string[], ai_pricing_model: string[], trust_safety: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devexperience/devrel', requireAuth, async (req: AuthRequest, res: any) => {
+  const { devrelType, currentDevRelState, devrelGoals } = req.body;
+  const prompt = `You are a developer relations and community strategy expert. Build a DevRel strategy. Type: ${devrelType}. State: ${currentDevRelState}. Goals: ${devrelGoals}. Respond in JSON: { devrel_strategy: string, community_program: string[], content_engine: string[], event_program: string[], oss_strategy: string[], metrics_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devexperience/apifirst', requireAuth, async (req: AuthRequest, res: any) => {
+  const { apiType, currentAPIState, apiGoals } = req.body;
+  const prompt = `You are an API-first and platform strategy expert. Build an API strategy. Type: ${apiType}. State: ${currentAPIState}. Goals: ${apiGoals}. Respond in JSON: { api_strategy: string, api_design: string[], developer_onboarding: string[], platform_ecosystem: string[], monetization_model: string[], marketplace_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devexperience/docs', requireAuth, async (req: AuthRequest, res: any) => {
+  const { docsType, currentDocsState, docsGoals } = req.body;
+  const prompt = `You are a technical documentation and developer experience strategy expert. Build a docs strategy. Type: ${docsType}. State: ${currentDocsState}. Goals: ${docsGoals}. Respond in JSON: { docs_strategy: string, information_architecture: string[], interactive_demos: string[], ai_search: string[], feedback_loop: string[], dx_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devexperience/opensource', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ossType, currentOSSState, ossGoals } = req.body;
+  const prompt = `You are an open source strategy and community expert. Build an OSS strategy. Type: ${ossType}. State: ${currentOSSState}. Goals: ${ossGoals}. Respond in JSON: { oss_strategy: string, project_governance: string[], contributor_program: string[], commercial_model: string[], foundation_path: string[], community_health: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devexperience/sdk', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sdkType, currentSDKState, sdkGoals } = req.body;
+  const prompt = `You are an SDK and developer tooling strategy expert. Build an SDK strategy. Type: ${sdkType}. State: ${currentSDKState}. Goals: ${sdkGoals}. Respond in JSON: { sdk_strategy: string, sdk_design: string[], dx_principles: string[], testing_framework: string[], ai_integration: string[], adoption_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devexperience/freemium', requireAuth, async (req: AuthRequest, res: any) => {
+  const { freemiumType, currentFreemiumState, freemiumGoals } = req.body;
+  const prompt = `You are a freemium and free-tier product strategy expert. Build a freemium strategy. Type: ${freemiumType}. State: ${currentFreemiumState}. Goals: ${freemiumGoals}. Respond in JSON: { freemium_strategy: string, tier_design: string[], conversion_funnel: string[], activation_milestones: string[], viral_mechanics: string[], enterprise_motion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devexperience/communitygrowth', requireAuth, async (req: AuthRequest, res: any) => {
+  const { communityType, currentCommunityState, communityGoals } = req.body;
+  const prompt = `You are a community-led growth strategy expert. Build a community growth strategy. Type: ${communityType}. State: ${currentCommunityState}. Goals: ${communityGoals}. Respond in JSON: { community_strategy: string, platform_choice: string[], engagement_programs: string[], champions_program: string[], content_flywheel: string[], revenue_impact: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devexperience/devmarketing', requireAuth, async (req: AuthRequest, res: any) => {
+  const { devmktType, currentDevMktState, devmktGoals } = req.body;
+  const prompt = `You are a developer marketing and awareness strategy expert. Build a developer marketing strategy. Type: ${devmktType}. State: ${currentDevMktState}. Goals: ${devmktGoals}. Respond in JSON: { devmarketing_strategy: string, content_pillars: string[], seo_program: string[], events_strategy: string[], influencer_program: string[], newsletter_engine: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devexperience/selfserve', requireAuth, async (req: AuthRequest, res: any) => {
+  const { selfserveType, currentSelfServeState, selfserveGoals } = req.body;
+  const prompt = `You are a self-serve onboarding and product activation strategy expert. Build a self-serve strategy. Type: ${selfserveType}. State: ${currentSelfServeState}. Goals: ${selfserveGoals}. Respond in JSON: { self_serve_strategy: string, onboarding_flow: string[], time_to_value: string[], activation_checklist: string[], ai_guidance: string[], nurture_sequence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/devexperience/plgenterprise', requireAuth, async (req: AuthRequest, res: any) => {
+  const { plgEnterpriseType, currentPLGEnterpriseState, plgEnterpriseGoals } = req.body;
+  const prompt = `You are a PLG-to-enterprise (bottom-up sales) strategy expert. Build a PLG enterprise strategy. Type: ${plgEnterpriseType}. State: ${currentPLGEnterpriseState}. Goals: ${plgEnterpriseGoals}. Respond in JSON: { plg_enterprise_strategy: string, pql_model: string[], champion_program: string[], enterprise_motion: string[], security_compliance: string[], expansion_playbook: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

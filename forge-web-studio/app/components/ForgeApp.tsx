@@ -2894,6 +2894,16 @@ ForgeTab_saaspartnerstrategy5807,
 ForgeTab_saasretention5808,
 ForgeTab_saasfunding5809,
 ForgeTab_saasaiproduct5810,
+ForgeTab_devrelstrategy5811,
+ForgeTab_apifirststrategy5812,
+ForgeTab_documentationstrategy5813,
+ForgeTab_opensourcestrategy5814,
+ForgeTab_sdkstrategy5815,
+ForgeTab_freemiumstrategy5816,
+ForgeTab_communitycoretrategy5817,
+ForgeTab_developermarketstrategy5818,
+ForgeTab_selfserveonboarding5819,
+ForgeTab_plgenterprise5820,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -62681,6 +62691,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'saasretention5808' && <ForgeTab_saasretention5808 />}
               {(mainTab as string) === 'saasfunding5809' && <ForgeTab_saasfunding5809 />}
               {(mainTab as string) === 'saasaiproduct5810' && <ForgeTab_saasaiproduct5810 />}
+              {(mainTab as string) === 'devrelstrategy5811' && <ForgeTab_devrelstrategy5811 />}
+              {(mainTab as string) === 'apifirststrategy5812' && <ForgeTab_apifirststrategy5812 />}
+              {(mainTab as string) === 'documentationstrategy5813' && <ForgeTab_documentationstrategy5813 />}
+              {(mainTab as string) === 'opensourcestrategy5814' && <ForgeTab_opensourcestrategy5814 />}
+              {(mainTab as string) === 'sdkstrategy5815' && <ForgeTab_sdkstrategy5815 />}
+              {(mainTab as string) === 'freemiumstrategy5816' && <ForgeTab_freemiumstrategy5816 />}
+              {(mainTab as string) === 'communitycoretrategy5817' && <ForgeTab_communitycoretrategy5817 />}
+              {(mainTab as string) === 'developermarketstrategy5818' && <ForgeTab_developermarketstrategy5818 />}
+              {(mainTab as string) === 'selfserveonboarding5819' && <ForgeTab_selfserveonboarding5819 />}
+              {(mainTab as string) === 'plgenterprise5820' && <ForgeTab_plgenterprise5820 />}
       </div>
     </div>
   );
