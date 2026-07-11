@@ -3504,6 +3504,16 @@ ForgeTab_revopsstrat6417,
 ForgeTab_plgstrategy6418,
 ForgeTab_demanddgen6419,
 ForgeTab_pricingpackaging6420,
+ForgeTab_contentmarketing6421,
+ForgeTab_socialmediastrat6422,
+ForgeTab_influencermktg6423,
+ForgeTab_emailmarketing6424,
+ForgeTab_paidmediamktg6425,
+ForgeTab_brandstrategy26426,
+ForgeTab_growthmktg6427,
+ForgeTab_eventmarketing6428,
+ForgeTab_productmarketing6429,
+ForgeTab_prcomms6430,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -63901,6 +63911,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'plgstrategy6418' && <ForgeTab_plgstrategy6418 />}
               {(mainTab as string) === 'demanddgen6419' && <ForgeTab_demanddgen6419 />}
               {(mainTab as string) === 'pricingpackaging6420' && <ForgeTab_pricingpackaging6420 />}
+              {(mainTab as string) === 'contentmarketing6421' && <ForgeTab_contentmarketing6421 />}
+              {(mainTab as string) === 'socialmediastrat6422' && <ForgeTab_socialmediastrat6422 />}
+              {(mainTab as string) === 'influencermktg6423' && <ForgeTab_influencermktg6423 />}
+              {(mainTab as string) === 'emailmarketing6424' && <ForgeTab_emailmarketing6424 />}
+              {(mainTab as string) === 'paidmediamktg6425' && <ForgeTab_paidmediamktg6425 />}
+              {(mainTab as string) === 'brandstrategy26426' && <ForgeTab_brandstrategy26426 />}
+              {(mainTab as string) === 'growthmktg6427' && <ForgeTab_growthmktg6427 />}
+              {(mainTab as string) === 'eventmarketing6428' && <ForgeTab_eventmarketing6428 />}
+              {(mainTab as string) === 'productmarketing6429' && <ForgeTab_productmarketing6429 />}
+              {(mainTab as string) === 'prcomms6430' && <ForgeTab_prcomms6430 />}
       </div>
     </div>
   );
