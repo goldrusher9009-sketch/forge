@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1058.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1059.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -227478,5 +227478,65 @@ app.post('/api/manda/turnaround', requireAuth, async (req: AuthRequest, res: any
 app.post('/api/manda/ipo', requireAuth, async (req: AuthRequest, res: any) => {
   const { ipoType, currentIPOState, ipoGoals } = req.body;
   const prompt = `You are an IPO strategy and equity capital markets expert. Build an IPO strategy. Type: ${ipoType}. State: ${currentIPOState}. Goals: ${ipoGoals}. Respond in JSON: { ipo_strategy: string, readiness_assessment: string[], valuation_framework: string[], underwriter_selection: string[], investor_positioning: string[], post_ipo_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/compliancetech/regtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { regTechType, currentRegTechState, regTechGoals } = req.body;
+  const prompt = `You are a RegTech and compliance technology strategy expert. Build a RegTech strategy. Type: ${regTechType}. State: ${currentRegTechState}. Goals: ${regTechGoals}. Respond in JSON: { regtech_strategy: string, aml_kyc_program: string[], ai_compliance: string[], reporting_automation: string[], esg_reporting: string[], cost_reduction: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/compliancetech/aml', requireAuth, async (req: AuthRequest, res: any) => {
+  const { amlType, currentAMLState, amlGoals } = req.body;
+  const prompt = `You are an AML and financial crime compliance strategy expert. Build an AML strategy. Type: ${amlType}. State: ${currentAMLState}. Goals: ${amlGoals}. Respond in JSON: { aml_strategy: string, transaction_monitoring: string[], kyc_cdd_program: string[], sanctions_program: string[], crypto_aml: string[], ai_ml_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/compliancetech/privacy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { privacyType, currentPrivacyState, privacyGoals } = req.body;
+  const prompt = `You are a privacy and data protection compliance strategy expert. Build a privacy compliance strategy. Type: ${privacyType}. State: ${currentPrivacyState}. Goals: ${privacyGoals}. Respond in JSON: { privacy_strategy: string, gdpr_program: string[], data_mapping: string[], dsr_automation: string[], ai_act_compliance: string[], privacy_by_design: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/compliancetech/aigov', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiGovType, currentAIGovState, aiGovGoals } = req.body;
+  const prompt = `You are an AI governance and responsible AI strategy expert. Build an AI governance strategy. Type: ${aiGovType}. State: ${currentAIGovState}. Goals: ${aiGovGoals}. Respond in JSON: { ai_governance_strategy: string, eu_ai_act: string[], bias_fairness: string[], model_risk: string[], explainability: string[], governance_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/compliancetech/esgcompliance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { esgCompType, currentESGCompState, esgCompGoals } = req.body;
+  const prompt = `You are an ESG reporting and sustainability compliance strategy expert. Build an ESG compliance strategy. Type: ${esgCompType}. State: ${currentESGCompState}. Goals: ${esgCompGoals}. Respond in JSON: { esg_compliance_strategy: string, csrd_program: string[], tcfd_disclosure: string[], scope3_reporting: string[], double_materiality: string[], assurance_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/compliancetech/riskmanage', requireAuth, async (req: AuthRequest, res: any) => {
+  const { riskMgmtType, currentRiskMgmtState, riskMgmtGoals } = req.body;
+  const prompt = `You are an enterprise risk management and GRC strategy expert. Build an ERM strategy. Type: ${riskMgmtType}. State: ${currentRiskMgmtState}. Goals: ${riskMgmtGoals}. Respond in JSON: { erm_strategy: string, risk_framework: string[], third_party_risk: string[], ai_risk: string[], cyber_risk: string[], risk_quantification: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/compliancetech/finreg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { finRegType, currentFinRegState, finRegGoals } = req.body;
+  const prompt = `You are a financial regulatory compliance strategy expert. Build a financial regulatory strategy. Type: ${finRegType}. State: ${currentFinRegState}. Goals: ${finRegGoals}. Respond in JSON: { financial_reg_strategy: string, capital_adequacy: string[], dora_program: string[], mica_compliance: string[], stress_testing: string[], regulatory_automation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/compliancetech/cryptoreg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cryptoRegType, currentCryptoRegState, cryptoRegGoals } = req.body;
+  const prompt = `You are a crypto and digital assets regulatory compliance strategy expert. Build a crypto regulatory strategy. Type: ${cryptoRegType}. State: ${currentCryptoRegState}. Goals: ${cryptoRegGoals}. Respond in JSON: { crypto_reg_strategy: string, mica_program: string[], sec_cftc_strategy: string[], aml_travel_rule: string[], stablecoin_compliance: string[], defi_governance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/compliancetech/conduct', requireAuth, async (req: AuthRequest, res: any) => {
+  const { conductType, currentConductState, conductGoals } = req.body;
+  const prompt = `You are a conduct risk and culture compliance strategy expert. Build a conduct risk strategy. Type: ${conductType}. State: ${currentConductState}. Goals: ${conductGoals}. Respond in JSON: { conduct_strategy: string, culture_program: string[], whistleblower_system: string[], smcr_framework: string[], market_abuse_controls: string[], ai_surveillance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/compliancetech/tprm', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tprmType, currentTPRMState, tprmGoals } = req.body;
+  const prompt = `You are a third-party risk management and vendor compliance strategy expert. Build a TPRM strategy. Type: ${tprmType}. State: ${currentTPRMState}. Goals: ${tprmGoals}. Respond in JSON: { tprm_strategy: string, vendor_inventory: string[], risk_tiering: string[], ai_cloud_risk: string[], esg_supplier: string[], fourth_party_program: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

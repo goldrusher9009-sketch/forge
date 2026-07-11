@@ -2784,6 +2784,16 @@ ForgeTab_investorrelations5697,
 ForgeTab_jointventure5698,
 ForgeTab_turnaround5699,
 ForgeTab_ipovaluation5700,
+ForgeTab_regtechstrategy5701,
+ForgeTab_amlcompliance5702,
+ForgeTab_privacycompliance5703,
+ForgeTab_aigovernance5704,
+ForgeTab_esgcompliance5705,
+ForgeTab_riskmanagement5706,
+ForgeTab_financialreg5707,
+ForgeTab_cryptoregulation5708,
+ForgeTab_conductriskesg5709,
+ForgeTab_thirdpartyrisk5710,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -62461,6 +62471,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'jointventure5698' && <ForgeTab_jointventure5698 />}
               {(mainTab as string) === 'turnaround5699' && <ForgeTab_turnaround5699 />}
               {(mainTab as string) === 'ipovaluation5700' && <ForgeTab_ipovaluation5700 />}
+              {(mainTab as string) === 'regtechstrategy5701' && <ForgeTab_regtechstrategy5701 />}
+              {(mainTab as string) === 'amlcompliance5702' && <ForgeTab_amlcompliance5702 />}
+              {(mainTab as string) === 'privacycompliance5703' && <ForgeTab_privacycompliance5703 />}
+              {(mainTab as string) === 'aigovernance5704' && <ForgeTab_aigovernance5704 />}
+              {(mainTab as string) === 'esgcompliance5705' && <ForgeTab_esgcompliance5705 />}
+              {(mainTab as string) === 'riskmanagement5706' && <ForgeTab_riskmanagement5706 />}
+              {(mainTab as string) === 'financialreg5707' && <ForgeTab_financialreg5707 />}
+              {(mainTab as string) === 'cryptoregulation5708' && <ForgeTab_cryptoregulation5708 />}
+              {(mainTab as string) === 'conductriskesg5709' && <ForgeTab_conductriskesg5709 />}
+              {(mainTab as string) === 'thirdpartyrisk5710' && <ForgeTab_thirdpartyrisk5710 />}
       </div>
     </div>
   );
