@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1156.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1157.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -233358,5 +233358,65 @@ app.post('/api/aerodef/c4isr', requireAuth, async (req: AuthRequest, res: any) =
 app.post('/api/aerodef/definnov', requireAuth, async (req: AuthRequest, res: any) => {
   const { diType, currentDIState, diGoals } = req.body;
   const prompt = `You are a defense innovation and DIU/DARPA strategy expert. Build a defense innovation strategy. Type: ${diType}. State: ${currentDIState}. Goals: ${diGoals}. Respond in JSON: { defense_innovation_strategy: string, osd_engagement: string[], darpa_program: string[], diu_commercialization: string[], technology_transition: string[], dual_use_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/transportstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tmType, currentTMState, tmGoals } = req.body;
+  const prompt = `You are a transportation and mobility strategy expert. Build a transportation strategy. Type: ${tmType}. State: ${currentTMState}. Goals: ${tmGoals}. Respond in JSON: { transport_strategy: string, modal_optimization: string[], electrification_plan: string[], autonomous_roadmap: string[], digital_transformation: string[], sustainability_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/autooem', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aoType, currentAOState, aoGoals } = req.body;
+  const prompt = `You are an automotive OEM strategy and EV transition expert. Build an automotive strategy. Type: ${aoType}. State: ${currentAOState}. Goals: ${aoGoals}. Respond in JSON: { automotive_strategy: string, ev_transition: string[], sdv_roadmap: string[], software_monetization: string[], autonomous_plan: string[], cost_competitiveness: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/logisticsstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { lsType, currentLSState, lsGoals } = req.body;
+  const prompt = `You are a logistics and supply chain network strategy expert. Build a logistics strategy. Type: ${lsType}. State: ${currentLSState}. Goals: ${lsGoals}. Respond in JSON: { logistics_strategy: string, network_optimization: string[], automation_roadmap: string[], last_mile_design: string[], digital_platform: string[], sustainability_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/urbanmob', requireAuth, async (req: AuthRequest, res: any) => {
+  const { umType, currentUMState, umGoals } = req.body;
+  const prompt = `You are an urban mobility and smart city transport expert. Build an urban mobility strategy. Type: ${umType}. State: ${currentUMState}. Goals: ${umGoals}. Respond in JSON: { urban_mobility_strategy: string, maas_platform: string[], public_transit: string[], micromobility_program: string[], autonomous_integration: string[], equity_access: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/maritime', requireAuth, async (req: AuthRequest, res: any) => {
+  const { msType, currentMSState, msGoals } = req.body;
+  const prompt = `You are a maritime and shipping strategy expert. Build a maritime strategy. Type: ${msType}. State: ${currentMSState}. Goals: ${msGoals}. Respond in JSON: { maritime_strategy: string, decarbonization_roadmap: string[], alternative_fuels: string[], digital_transformation: string[], autonomous_vessels: string[], port_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/trucking', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tfType, currentTFState, tfGoals } = req.body;
+  const prompt = `You are a trucking and freight strategy expert. Build a trucking strategy. Type: ${tfType}. State: ${currentTFState}. Goals: ${tfGoals}. Respond in JSON: { trucking_strategy: string, fleet_electrification: string[], autonomous_roadmap: string[], digital_brokerage: string[], driver_strategy: string[], cost_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/railstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { rsType, currentRSState, rsGoals } = req.body;
+  const prompt = `You are a rail and high-speed rail strategy expert. Build a rail strategy. Type: ${rsType}. State: ${currentRSState}. Goals: ${rsGoals}. Respond in JSON: { rail_strategy: string, network_expansion: string[], electrification_plan: string[], digital_operations: string[], intermodal_integration: string[], ridership_growth: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/autonomousveh', requireAuth, async (req: AuthRequest, res: any) => {
+  const { avType, currentAVState, avGoals } = req.body;
+  const prompt = `You are an autonomous vehicles and AV strategy expert. Build an AV strategy. Type: ${avType}. State: ${currentAVState}. Goals: ${avGoals}. Respond in JSON: { av_strategy: string, technology_roadmap: string[], safety_program: string[], regulatory_pathway: string[], commercialization_plan: string[], partnership_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/airlines', requireAuth, async (req: AuthRequest, res: any) => {
+  const { alType, currentALState, alGoals } = req.body;
+  const prompt = `You are an airlines and aviation strategy expert. Build an airline strategy. Type: ${alType}. State: ${currentALState}. Goals: ${alGoals}. Respond in JSON: { airline_strategy: string, network_optimization: string[], revenue_management: string[], saf_program: string[], loyalty_evolution: string[], fleet_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/infrainvest', requireAuth, async (req: AuthRequest, res: any) => {
+  const { iiType, currentIIState, iiGoals } = req.body;
+  const prompt = `You are an infrastructure investment and PPP strategy expert. Build an infrastructure strategy. Type: ${iiType}. State: ${currentIIState}. Goals: ${iiGoals}. Respond in JSON: { infrastructure_strategy: string, ppp_structuring: string[], federal_funding: string[], digital_integration: string[], resilience_investment: string[], esg_framework: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
