@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1092.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1093.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -229518,5 +229518,65 @@ app.post('/api/healthlifesci/biotech', requireAuth, async (req: AuthRequest, res
 app.post('/api/healthlifesci/globalhealthpol', requireAuth, async (req: AuthRequest, res: any) => {
   const { ghpType, currentGHPState, ghpGoals } = req.body;
   const prompt = `You are a global health policy and access strategy expert. Build a global health strategy. Type: ${ghpType}. State: ${currentGHPState}. Goals: ${ghpGoals}. Respond in JSON: { global_health_strategy: string, access_framework: string[], uhc_pathway: string[], pricing_strategy: string[], pandemic_preparedness: string[], health_equity: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/redev', requireAuth, async (req: AuthRequest, res: any) => {
+  const { reType, currentREState, reGoals } = req.body;
+  const prompt = `You are a real estate development and investment strategy expert. Build a real estate strategy. Type: ${reType}. State: ${currentREState}. Goals: ${reGoals}. Respond in JSON: { real_estate_strategy: string, development_pipeline: string[], investment_thesis: string[], financing_structure: string[], esg_sustainability: string[], proptech_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/proptech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { proptechType, currentProptechState, proptechGoals } = req.body;
+  const prompt = `You are a proptech and real estate technology expert. Build a proptech strategy. Type: ${proptechType}. State: ${currentProptechState}. Goals: ${proptechGoals}. Respond in JSON: { proptech_strategy: string, smart_building: string[], ai_leasing: string[], digital_twin: string[], esg_technology: string[], tenant_experience: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/refinance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { reFinType, currentReFinState, reFinGoals } = req.body;
+  const prompt = `You are a real estate finance and capital markets expert. Build a real estate finance strategy. Type: ${reFinType}. State: ${currentReFinState}. Goals: ${reFinGoals}. Respond in JSON: { re_finance_strategy: string, capital_stack: string[], debt_optimization: string[], equity_structure: string[], reit_strategy: string[], exit_planning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/assetmgmt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { amType, currentAMState, amGoals } = req.body;
+  const prompt = `You are a real estate asset management expert. Build an asset management strategy. Type: ${amType}. State: ${currentAMState}. Goals: ${amGoals}. Respond in JSON: { asset_management_strategy: string, noi_optimization: string[], leasing_program: string[], capex_plan: string[], esg_integration: string[], value_add_initiatives: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/construction', requireAuth, async (req: AuthRequest, res: any) => {
+  const { constType, currentConstState, constGoals } = req.body;
+  const prompt = `You are a construction project management and delivery expert. Build a construction strategy. Type: ${constType}. State: ${currentConstState}. Goals: ${constGoals}. Respond in JSON: { construction_strategy: string, project_delivery: string[], cost_control: string[], bim_technology: string[], lean_construction: string[], safety_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/hospitality', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hospType, currentHospState, hospGoals } = req.body;
+  const prompt = `You are a hospitality and hotel real estate strategy expert. Build a hospitality strategy. Type: ${hospType}. State: ${currentHospState}. Goals: ${hospGoals}. Respond in JSON: { hospitality_strategy: string, revpar_optimization: string[], brand_strategy: string[], renovation_plan: string[], tech_integration: string[], sustainability_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/urbanplan', requireAuth, async (req: AuthRequest, res: any) => {
+  const { urbanType, currentUrbanState, urbanGoals } = req.body;
+  const prompt = `You are an urban planning and smart cities strategy expert. Build an urban planning strategy. Type: ${urbanType}. State: ${currentUrbanState}. Goals: ${urbanGoals}. Respond in JSON: { urban_strategy: string, smart_city_plan: string[], transit_development: string[], housing_program: string[], climate_resilience: string[], equity_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/reitesg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { reESGType, currentREESGState, reESGGoals } = req.body;
+  const prompt = `You are a real estate ESG and sustainability strategy expert. Build a real estate ESG strategy. Type: ${reESGType}. State: ${currentREESGState}. Goals: ${reESGGoals}. Respond in JSON: { re_esg_strategy: string, net_zero_pathway: string[], green_certification: string[], gresb_improvement: string[], green_financing: string[], social_value: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/retailre', requireAuth, async (req: AuthRequest, res: any) => {
+  const { retailREType, currentRetailREState, retailREGoals } = req.body;
+  const prompt = `You are a retail real estate and mixed-use strategy expert. Build a retail RE strategy. Type: ${retailREType}. State: ${currentRetailREState}. Goals: ${retailREGoals}. Respond in JSON: { retail_re_strategy: string, mixed_use_conversion: string[], tenant_mix: string[], experiential_leasing: string[], redevelopment_plan: string[], technology_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/realestate/infra', requireAuth, async (req: AuthRequest, res: any) => {
+  const { infraType, currentInfraState, infraGoals } = req.body;
+  const prompt = `You are an infrastructure investment and project finance expert. Build an infrastructure investment strategy. Type: ${infraType}. State: ${currentInfraState}. Goals: ${infraGoals}. Respond in JSON: { infrastructure_strategy: string, project_pipeline: string[], financing_structure: string[], ppp_framework: string[], climate_investment: string[], risk_allocation: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
