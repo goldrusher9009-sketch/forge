@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1106.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1107.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -230358,5 +230358,65 @@ app.post('/api/legalcompliance/aicomp', requireAuth, async (req: AuthRequest, re
 app.post('/api/legalcompliance/corpgov', requireAuth, async (req: AuthRequest, res: any) => {
   const { cgType, currentCGState, cgGoals } = req.body;
   const prompt = `You are a corporate governance and board strategy expert. Build a governance framework. Type: ${cgType}. State: ${currentCGState}. Goals: ${cgGoals}. Respond in JSON: { governance_strategy: string, board_design: string[], committee_structure: string[], esg_oversight: string[], risk_framework: string[], shareholder_relations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/financeaccounting/corpfin', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cfType, currentCFState, cfGoals } = req.body;
+  const prompt = `You are a corporate finance and capital allocation expert. Build a corporate finance strategy. Type: ${cfType}. State: ${currentCFState}. Goals: ${cfGoals}. Respond in JSON: { finance_strategy: string, capital_allocation: string[], wacc_optimization: string[], valuation_framework: string[], ma_criteria: string[], shareholder_returns: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/financeaccounting/fpa', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fpaType, currentFPAState, fpaGoals } = req.body;
+  const prompt = `You are an FP&A and financial planning strategy expert. Build an FP&A strategy. Type: ${fpaType}. State: ${currentFPAState}. Goals: ${fpaGoals}. Respond in JSON: { fpa_strategy: string, planning_model: string[], forecast_methodology: string[], xpa_integration: string[], ai_analytics: string[], reporting_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/financeaccounting/ir', requireAuth, async (req: AuthRequest, res: any) => {
+  const { irType, currentIRState, irGoals } = req.body;
+  const prompt = `You are an investor relations and capital markets expert. Build an IR strategy. Type: ${irType}. State: ${currentIRState}. Goals: ${irGoals}. Respond in JSON: { ir_strategy: string, messaging_framework: string[], earnings_program: string[], esg_disclosure: string[], activist_defense: string[], road_show_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/financeaccounting/treasury', requireAuth, async (req: AuthRequest, res: any) => {
+  const { treType, currentTreState, treGoals } = req.body;
+  const prompt = `You are a treasury and cash management strategy expert. Build a treasury strategy. Type: ${treType}. State: ${currentTreState}. Goals: ${treGoals}. Respond in JSON: { treasury_strategy: string, cash_management: string[], fx_hedging: string[], working_capital: string[], debt_management: string[], payment_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/financeaccounting/accounting', requireAuth, async (req: AuthRequest, res: any) => {
+  const { accType, currentAccState, accGoals } = req.body;
+  const prompt = `You are an accounting policy and financial reporting expert. Build an accounting strategy. Type: ${accType}. State: ${currentAccState}. Goals: ${accGoals}. Respond in JSON: { accounting_strategy: string, policy_framework: string[], close_optimization: string[], automation_roadmap: string[], audit_readiness: string[], disclosure_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/financeaccounting/esgfin', requireAuth, async (req: AuthRequest, res: any) => {
+  const { esgfType, currentESGFState, esgfGoals } = req.body;
+  const prompt = `You are an ESG finance and sustainability reporting expert. Build an ESG finance strategy. Type: ${esgfType}. State: ${currentESGFState}. Goals: ${esgfGoals}. Respond in JSON: { esg_finance_strategy: string, reporting_framework: string[], scope3_approach: string[], green_financing: string[], rating_improvement: string[], board_reporting: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/financeaccounting/mafin', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mafType, currentMAFState, mafGoals } = req.body;
+  const prompt = `You are an M&A finance and valuation strategy expert. Build an M&A finance strategy. Type: ${mafType}. State: ${currentMAFState}. Goals: ${mafGoals}. Respond in JSON: { ma_finance_strategy: string, valuation_model: string[], synergy_framework: string[], deal_structure: string[], financing_approach: string[], integration_finance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/financeaccounting/privatecredit', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pcType, currentPCState, pcGoals } = req.body;
+  const prompt = `You are a private credit and alternative lending strategy expert. Build a private credit strategy. Type: ${pcType}. State: ${currentPCState}. Goals: ${pcGoals}. Respond in JSON: { credit_strategy: string, origination_approach: string[], underwriting_framework: string[], portfolio_construction: string[], risk_management: string[], default_playbook: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/financeaccounting/corptax', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ctType, currentCTState, ctGoals } = req.body;
+  const prompt = `You are a corporate tax strategy and planning expert. Build a corporate tax strategy. Type: ${ctType}. State: ${currentCTState}. Goals: ${ctGoals}. Respond in JSON: { tax_strategy: string, etr_management: string[], transfer_pricing: string[], pillar_two_response: string[], rd_tax_credits: string[], ma_tax_structuring: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/financeaccounting/intaudit', requireAuth, async (req: AuthRequest, res: any) => {
+  const { iaType, currentIAState, iaGoals } = req.body;
+  const prompt = `You are an internal audit and risk assurance strategy expert. Build an internal audit strategy. Type: ${iaType}. State: ${currentIAState}. Goals: ${iaGoals}. Respond in JSON: { audit_strategy: string, risk_assessment: string[], data_analytics: string[], ai_audit_tools: string[], continuous_monitoring: string[], reporting_framework: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
