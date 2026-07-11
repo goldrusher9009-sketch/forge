@@ -3234,6 +3234,16 @@ ForgeTab_computerVision6147,
 ForgeTab_aiagentstrategy6148,
 ForgeTab_recommendationsystems6149,
 ForgeTab_datascience6150,
+ForgeTab_cloudarchitecture6151,
+ForgeTab_devopsplatform6152,
+ForgeTab_dataarchitecture6153,
+ForgeTab_cybersecurityarch6154,
+ForgeTab_apiplatform6155,
+ForgeTab_siteReliability6156,
+ForgeTab_finopsstrategy6157,
+ForgeTab_enterprisearchitecture6158,
+ForgeTab_observabilityplatform6159,
+ForgeTab_platformengineering6160,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -63361,6 +63371,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'aiagentstrategy6148' && <ForgeTab_aiagentstrategy6148 />}
               {(mainTab as string) === 'recommendationsystems6149' && <ForgeTab_recommendationsystems6149 />}
               {(mainTab as string) === 'datascience6150' && <ForgeTab_datascience6150 />}
+              {(mainTab as string) === 'cloudarchitecture6151' && <ForgeTab_cloudarchitecture6151 />}
+              {(mainTab as string) === 'devopsplatform6152' && <ForgeTab_devopsplatform6152 />}
+              {(mainTab as string) === 'dataarchitecture6153' && <ForgeTab_dataarchitecture6153 />}
+              {(mainTab as string) === 'cybersecurityarch6154' && <ForgeTab_cybersecurityarch6154 />}
+              {(mainTab as string) === 'apiplatform6155' && <ForgeTab_apiplatform6155 />}
+              {(mainTab as string) === 'siteReliability6156' && <ForgeTab_siteReliability6156 />}
+              {(mainTab as string) === 'finopsstrategy6157' && <ForgeTab_finopsstrategy6157 />}
+              {(mainTab as string) === 'enterprisearchitecture6158' && <ForgeTab_enterprisearchitecture6158 />}
+              {(mainTab as string) === 'observabilityplatform6159' && <ForgeTab_observabilityplatform6159 />}
+              {(mainTab as string) === 'platformengineering6160' && <ForgeTab_platformengineering6160 />}
       </div>
     </div>
   );
