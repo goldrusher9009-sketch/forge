@@ -3694,6 +3694,16 @@ ForgeTab_gigeconomytech6607,
 ForgeTab_learningdevtech6608,
 ForgeTab_deistrategy6609,
 ForgeTab_workplacetech6610,
+ForgeTab_privateequity6611,
+ForgeTab_venturecapital6612,
+ForgeTab_hedgefund6613,
+ForgeTab_assetmanagement6614,
+ForgeTab_familyoffice6615,
+ForgeTab_sovereignwealth6616,
+ForgeTab_investmentbanking6617,
+ForgeTab_wealthmanagement6618,
+ForgeTab_privatecredit6619,
+ForgeTab_impactinvesting6620,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -64281,6 +64291,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'learningdevtech6608' && <ForgeTab_learningdevtech6608 />}
               {(mainTab as string) === 'deistrategy6609' && <ForgeTab_deistrategy6609 />}
               {(mainTab as string) === 'workplacetech6610' && <ForgeTab_workplacetech6610 />}
+              {(mainTab as string) === 'privateequity6611' && <ForgeTab_privateequity6611 />}
+              {(mainTab as string) === 'venturecapital6612' && <ForgeTab_venturecapital6612 />}
+              {(mainTab as string) === 'hedgefund6613' && <ForgeTab_hedgefund6613 />}
+              {(mainTab as string) === 'assetmanagement6614' && <ForgeTab_assetmanagement6614 />}
+              {(mainTab as string) === 'familyoffice6615' && <ForgeTab_familyoffice6615 />}
+              {(mainTab as string) === 'sovereignwealth6616' && <ForgeTab_sovereignwealth6616 />}
+              {(mainTab as string) === 'investmentbanking6617' && <ForgeTab_investmentbanking6617 />}
+              {(mainTab as string) === 'wealthmanagement6618' && <ForgeTab_wealthmanagement6618 />}
+              {(mainTab as string) === 'privatecredit6619' && <ForgeTab_privatecredit6619 />}
+              {(mainTab as string) === 'impactinvesting6620' && <ForgeTab_impactinvesting6620 />}
       </div>
     </div>
   );
