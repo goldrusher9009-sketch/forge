@@ -2064,6 +2064,16 @@ ForgeTab_aviationsafety4977,
 ForgeTab_spacepolicy4978,
 ForgeTab_MROstrategy4979,
 ForgeTab_evtolstrat4980,
+ForgeTab_automotivestr4981,
+ForgeTab_evstrategy4982,
+ForgeTab_mobilitystrat4983,
+ForgeTab_autosoftware4984,
+ForgeTab_autosupplychain4985,
+ForgeTab_autonomousveh4986,
+ForgeTab_fleetmanagement4987,
+ForgeTab_autodealer4988,
+ForgeTab_automotivemfg4989,
+ForgeTab_charginginfra4990,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -61021,6 +61031,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'spacepolicy4978' && <ForgeTab_spacepolicy4978 />}
               {(mainTab as string) === 'MROstrategy4979' && <ForgeTab_MROstrategy4979 />}
               {(mainTab as string) === 'evtolstrat4980' && <ForgeTab_evtolstrat4980 />}
+              {(mainTab as string) === 'automotivestr4981' && <ForgeTab_automotivestr4981 />}
+              {(mainTab as string) === 'evstrategy4982' && <ForgeTab_evstrategy4982 />}
+              {(mainTab as string) === 'mobilitystrat4983' && <ForgeTab_mobilitystrat4983 />}
+              {(mainTab as string) === 'autosoftware4984' && <ForgeTab_autosoftware4984 />}
+              {(mainTab as string) === 'autosupplychain4985' && <ForgeTab_autosupplychain4985 />}
+              {(mainTab as string) === 'autonomousveh4986' && <ForgeTab_autonomousveh4986 />}
+              {(mainTab as string) === 'fleetmanagement4987' && <ForgeTab_fleetmanagement4987 />}
+              {(mainTab as string) === 'autodealer4988' && <ForgeTab_autodealer4988 />}
+              {(mainTab as string) === 'automotivemfg4989' && <ForgeTab_automotivemfg4989 />}
+              {(mainTab as string) === 'charginginfra4990' && <ForgeTab_charginginfra4990 />}
       </div>
     </div>
   );
