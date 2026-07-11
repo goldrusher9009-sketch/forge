@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v966.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v967.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -221958,5 +221958,65 @@ app.post('/api/proptech/remartech', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/proptech/fractionalre', requireAuth, async (req: AuthRequest, res: any) => {
   const { frType, currentFRState, frGoals } = req.body;
   const prompt = `You are a fractional real estate strategy expert. Build an alternative ownership strategy. Type: ${frType}. State: ${currentFRState}. Goals: ${frGoals}. Respond in JSON: { fractional_re_strategy: string, ownership_model: string[], regulatory_program: string[], investor_acquisition: string[], liquidity_mechanism: string[], platform_technology: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/startup', requireAuth, async (req: AuthRequest, res: any) => {
+  const { stType, currentSTState, stGoals } = req.body;
+  const prompt = `You are a startup strategy advisor. Build a comprehensive startup strategy. Type: ${stType}. State: ${currentSTState}. Goals: ${stGoals}. Respond in JSON: { startup_strategy: string, pmf_program: string[], fundraising_plan: string[], growth_roadmap: string[], team_building: string[], exit_optionality: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/vc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { vcType, currentVCState, vcGoals } = req.body;
+  const prompt = `You are a venture capital strategy expert. Build a VC investment strategy. Type: ${vcType}. State: ${currentVCState}. Goals: ${vcGoals}. Respond in JSON: { vc_strategy: string, investment_thesis: string[], deal_sourcing: string[], portfolio_management: string[], lp_program: string[], exit_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/fundraising', requireAuth, async (req: AuthRequest, res: any) => {
+  const { frType, currentFRState, frGoals } = req.body;
+  const prompt = `You are a startup fundraising strategy expert. Build a fundraising strategy. Type: ${frType}. State: ${currentFRState}. Goals: ${frGoals}. Respond in JSON: { fundraising_strategy: string, investor_targeting: string[], pitch_narrative: string[], metrics_story: string[], diligence_prep: string[], term_sheet_guidance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/founderops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { foType, currentFOState, foGoals } = req.body;
+  const prompt = `You are a founder coaching and operating systems expert. Build a founder operating strategy. Type: ${foType}. State: ${currentFOState}. Goals: ${foGoals}. Respond in JSON: { founder_strategy: string, operating_system: string[], leadership_development: string[], board_management: string[], co_founder_dynamics: string[], scaling_playbook: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/startupgtm', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gtmType, currentGTMState, gtmGoals } = req.body;
+  const prompt = `You are a startup go-to-market strategy expert. Build a startup GTM strategy. Type: ${gtmType}. State: ${currentGTMState}. Goals: ${gtmGoals}. Respond in JSON: { gtm_strategy: string, channel_mix: string[], pmf_validation: string[], growth_engine: string[], enterprise_motion: string[], efficiency_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/accelerator', requireAuth, async (req: AuthRequest, res: any) => {
+  const { accType, currentAccState, accGoals } = req.body;
+  const prompt = `You are a startup accelerator strategy expert. Build an accelerator program strategy. Type: ${accType}. State: ${currentAccState}. Goals: ${accGoals}. Respond in JSON: { accelerator_strategy: string, program_design: string[], cohort_selection: string[], curriculum_framework: string[], mentor_network: string[], outcome_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/startuphire', requireAuth, async (req: AuthRequest, res: any) => {
+  const { shType, currentSHState, shGoals } = req.body;
+  const prompt = `You are a startup talent strategy expert. Build a team building strategy. Type: ${shType}. State: ${currentSHState}. Goals: ${shGoals}. Respond in JSON: { startup_talent_strategy: string, hiring_playbook: string[], equity_compensation: string[], culture_program: string[], exec_recruitment: string[], remote_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/pmf', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pmfType, currentPMFState, pmfGoals } = req.body;
+  const prompt = `You are a product-market fit strategy expert. Build a PMF validation strategy. Type: ${pmfType}. State: ${currentPMFState}. Goals: ${pmfGoals}. Respond in JSON: { pmf_strategy: string, icp_definition: string[], validation_program: string[], retention_analysis: string[], pivot_framework: string[], scaling_signals: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/deeptech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dtType, currentDTState, dtGoals } = req.body;
+  const prompt = `You are a deep tech startup strategy expert. Build a deep tech commercialization strategy. Type: ${dtType}. State: ${currentDTState}. Goals: ${dtGoals}. Respond in JSON: { deep_tech_strategy: string, trl_roadmap: string[], ip_program: string[], government_grants: string[], pilot_program: string[], commercialization_path: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/startup/startupops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { soType, currentSOState, soGoals } = req.body;
+  const prompt = `You are a startup operations expert. Build a startup scaling operations strategy. Type: ${soType}. State: ${currentSOState}. Goals: ${soGoals}. Respond in JSON: { startup_ops_strategy: string, process_framework: string[], toolstack_design: string[], finance_program: string[], international_expansion: string[], compliance_roadmap: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
