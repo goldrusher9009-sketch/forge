@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1052.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1053.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -227118,5 +227118,65 @@ app.post('/api/cleanenergy/nuclear', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/cleanenergy/cleantechvc', requireAuth, async (req: AuthRequest, res: any) => {
   const { ctVCType, currentCTVCState, ctVCGoals } = req.body;
   const prompt = `You are a cleantech venture and project finance strategy expert. Build a cleantech finance strategy. Type: ${ctVCType}. State: ${currentCTVCState}. Goals: ${ctVCGoals}. Respond in JSON: { cleantech_finance_strategy: string, ira_monetization: string[], tax_equity_structure: string[], project_finance: string[], green_bonds: string[], portfolio_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cyberdigital/cybersec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cyberSecType, currentCyberSecState, cyberSecGoals } = req.body;
+  const prompt = `You are a cybersecurity strategy and digital trust expert. Build a cybersecurity strategy. Type: ${cyberSecType}. State: ${currentCyberSecState}. Goals: ${cyberSecGoals}. Respond in JSON: { cybersecurity_strategy: string, zero_trust_roadmap: string[], soc_modernization: string[], threat_intelligence: string[], cloud_security: string[], ai_security: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cyberdigital/zerotrust', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ztType, currentZTState, ztGoals } = req.body;
+  const prompt = `You are a zero trust architecture and implementation strategy expert. Build a zero trust strategy. Type: ${ztType}. State: ${currentZTState}. Goals: ${ztGoals}. Respond in JSON: { zero_trust_strategy: string, identity_program: string[], network_segmentation: string[], sase_implementation: string[], device_security: string[], phased_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cyberdigital/cloudsec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cloudSecType, currentCloudSecState, cloudSecGoals } = req.body;
+  const prompt = `You are a cloud security and DevSecOps strategy expert. Build a cloud security strategy. Type: ${cloudSecType}. State: ${currentCloudSecState}. Goals: ${cloudSecGoals}. Respond in JSON: { cloud_security_strategy: string, cnapp_implementation: string[], devsecops_pipeline: string[], posture_management: string[], container_security: string[], compliance_automation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cyberdigital/ransomware', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ransomType, currentRansomState, ransomGoals } = req.body;
+  const prompt = `You are a ransomware defense and incident response strategy expert. Build a ransomware defense strategy. Type: ${ransomType}. State: ${currentRansomState}. Goals: ${ransomGoals}. Respond in JSON: { ransomware_strategy: string, prevention_controls: string[], detection_program: string[], ir_playbook: string[], backup_architecture: string[], insurance_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cyberdigital/iam', requireAuth, async (req: AuthRequest, res: any) => {
+  const { iamType, currentIAMState, iamGoals } = req.body;
+  const prompt = `You are an identity and access management strategy expert. Build an IAM strategy. Type: ${iamType}. State: ${currentIAMState}. Goals: ${iamGoals}. Respond in JSON: { iam_strategy: string, passwordless_program: string[], pam_implementation: string[], ciam_platform: string[], governance_framework: string[], compliance_automation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cyberdigital/threathunt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { threatType, currentThreatState, threatGoals } = req.body;
+  const prompt = `You are a threat intelligence and threat hunting strategy expert. Build a threat intelligence strategy. Type: ${threatType}. State: ${currentThreatState}. Goals: ${threatGoals}. Respond in JSON: { threat_intel_strategy: string, cti_program: string[], siem_modernization: string[], soar_automation: string[], threat_hunting: string[], ai_detection: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cyberdigital/datasec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dataSecType, currentDataSecState, dataSecGoals } = req.body;
+  const prompt = `You are a data security and privacy strategy expert. Build a data security strategy. Type: ${dataSecType}. State: ${currentDataSecState}. Goals: ${dataSecGoals}. Respond in JSON: { data_security_strategy: string, data_classification: string[], dlp_program: string[], privacy_compliance: string[], dspm_implementation: string[], ai_data_governance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cyberdigital/otsec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { otSecType, currentOTSecState, otSecGoals } = req.body;
+  const prompt = `You are an OT/ICS and industrial cybersecurity strategy expert. Build an OT security strategy. Type: ${otSecType}. State: ${currentOTSecState}. Goals: ${otSecGoals}. Respond in JSON: { ot_security_strategy: string, asset_management: string[], network_segmentation: string[], monitoring_detection: string[], incident_response: string[], it_ot_convergence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cyberdigital/secgrc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { secGRCType, currentSecGRCState, secGRCGoals } = req.body;
+  const prompt = `You are a security GRC and compliance strategy expert. Build a security GRC strategy. Type: ${secGRCType}. State: ${currentSecGRCState}. Goals: ${secGRCGoals}. Respond in JSON: { sec_grc_strategy: string, compliance_roadmap: string[], risk_quantification: string[], audit_automation: string[], board_reporting: string[], continuous_compliance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cyberdigital/aisec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiSecType, currentAISecState, aiSecGoals } = req.body;
+  const prompt = `You are an AI security and machine learning security strategy expert. Build an AI security strategy. Type: ${aiSecType}. State: ${currentAISecState}. Goals: ${aiSecGoals}. Respond in JSON: { ai_security_strategy: string, llm_security: string[], prompt_injection_defense: string[], model_governance: string[], deepfake_detection: string[], ai_red_teaming: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
