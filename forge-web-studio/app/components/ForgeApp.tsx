@@ -4414,6 +4414,16 @@ ForgeTab_ircomms7327,
 ForgeTab_boardgov7328,
 ForgeTab_businesstransform7329,
 ForgeTab_strategicplan7330,
+ForgeTab_hrtech7331,
+ForgeTab_talentacq7332,
+ForgeTab_learningdev7333,
+ForgeTab_compbenefits7334,
+ForgeTab_deiinclusion7335,
+ForgeTab_workplacedesign7336,
+ForgeTab_employeeexp7337,
+ForgeTab_workforceplan7338,
+ForgeTab_peopleanalytics7339,
+ForgeTab_executiveleader7340,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -65721,6 +65731,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'boardgov7328' && <ForgeTab_boardgov7328 />}
               {(mainTab as string) === 'businesstransform7329' && <ForgeTab_businesstransform7329 />}
               {(mainTab as string) === 'strategicplan7330' && <ForgeTab_strategicplan7330 />}
+              {(mainTab as string) === 'hrtech7331' && <ForgeTab_hrtech7331 />}
+              {(mainTab as string) === 'talentacq7332' && <ForgeTab_talentacq7332 />}
+              {(mainTab as string) === 'learningdev7333' && <ForgeTab_learningdev7333 />}
+              {(mainTab as string) === 'compbenefits7334' && <ForgeTab_compbenefits7334 />}
+              {(mainTab as string) === 'deiinclusion7335' && <ForgeTab_deiinclusion7335 />}
+              {(mainTab as string) === 'workplacedesign7336' && <ForgeTab_workplacedesign7336 />}
+              {(mainTab as string) === 'employeeexp7337' && <ForgeTab_employeeexp7337 />}
+              {(mainTab as string) === 'workforceplan7338' && <ForgeTab_workforceplan7338 />}
+              {(mainTab as string) === 'peopleanalytics7339' && <ForgeTab_peopleanalytics7339 />}
+              {(mainTab as string) === 'executiveleader7340' && <ForgeTab_executiveleader7340 />}
       </div>
     </div>
   );
