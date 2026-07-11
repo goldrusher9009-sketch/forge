@@ -2484,6 +2484,16 @@ ForgeTab_cryptostrategy5397,
 ForgeTab_lendingtech5398,
 ForgeTab_regtech5399,
 ForgeTab_openbankingstrat5400,
+ForgeTab_saastrategy5401,
+ForgeTab_ainativersoftware5402,
+ForgeTab_enterprisesales5403,
+ForgeTab_customersuccess5404,
+ForgeTab_productgrowth5405,
+ForgeTab_saaspricingest5406,
+ForgeTab_verticalaisaas5407,
+ForgeTab_apistrategy5408,
+ForgeTab_saasmarketplace5409,
+ForgeTab_saasgtm5410,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -61861,6 +61871,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'lendingtech5398' && <ForgeTab_lendingtech5398 />}
               {(mainTab as string) === 'regtech5399' && <ForgeTab_regtech5399 />}
               {(mainTab as string) === 'openbankingstrat5400' && <ForgeTab_openbankingstrat5400 />}
+              {(mainTab as string) === 'saastrategy5401' && <ForgeTab_saastrategy5401 />}
+              {(mainTab as string) === 'ainativersoftware5402' && <ForgeTab_ainativersoftware5402 />}
+              {(mainTab as string) === 'enterprisesales5403' && <ForgeTab_enterprisesales5403 />}
+              {(mainTab as string) === 'customersuccess5404' && <ForgeTab_customersuccess5404 />}
+              {(mainTab as string) === 'productgrowth5405' && <ForgeTab_productgrowth5405 />}
+              {(mainTab as string) === 'saaspricingest5406' && <ForgeTab_saaspricingest5406 />}
+              {(mainTab as string) === 'verticalaisaas5407' && <ForgeTab_verticalaisaas5407 />}
+              {(mainTab as string) === 'apistrategy5408' && <ForgeTab_apistrategy5408 />}
+              {(mainTab as string) === 'saasmarketplace5409' && <ForgeTab_saasmarketplace5409 />}
+              {(mainTab as string) === 'saasgtm5410' && <ForgeTab_saasgtm5410 />}
       </div>
     </div>
   );
