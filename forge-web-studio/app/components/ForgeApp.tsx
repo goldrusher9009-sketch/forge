@@ -4484,6 +4484,16 @@ ForgeTab_populationhealth7397,
 ForgeTab_healthcareai7398,
 ForgeTab_genomicsprecion7399,
 ForgeTab_healthcareops7400,
+ForgeTab_energystrategy7401,
+ForgeTab_gridmodernization7402,
+ForgeTab_energystorage7403,
+ForgeTab_hydrogeneconomy7404,
+ForgeTab_oilgastransition7405,
+ForgeTab_energydigital7406,
+ForgeTab_utilityregulatory7407,
+ForgeTab_nuclearstrategy7408,
+ForgeTab_demandresponse7409,
+ForgeTab_energymarkets7410,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -65861,6 +65871,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'healthcareai7398' && <ForgeTab_healthcareai7398 />}
               {(mainTab as string) === 'genomicsprecion7399' && <ForgeTab_genomicsprecion7399 />}
               {(mainTab as string) === 'healthcareops7400' && <ForgeTab_healthcareops7400 />}
+              {(mainTab as string) === 'energystrategy7401' && <ForgeTab_energystrategy7401 />}
+              {(mainTab as string) === 'gridmodernization7402' && <ForgeTab_gridmodernization7402 />}
+              {(mainTab as string) === 'energystorage7403' && <ForgeTab_energystorage7403 />}
+              {(mainTab as string) === 'hydrogeneconomy7404' && <ForgeTab_hydrogeneconomy7404 />}
+              {(mainTab as string) === 'oilgastransition7405' && <ForgeTab_oilgastransition7405 />}
+              {(mainTab as string) === 'energydigital7406' && <ForgeTab_energydigital7406 />}
+              {(mainTab as string) === 'utilityregulatory7407' && <ForgeTab_utilityregulatory7407 />}
+              {(mainTab as string) === 'nuclearstrategy7408' && <ForgeTab_nuclearstrategy7408 />}
+              {(mainTab as string) === 'demandresponse7409' && <ForgeTab_demandresponse7409 />}
+              {(mainTab as string) === 'energymarkets7410' && <ForgeTab_energymarkets7410 />}
       </div>
     </div>
   );
