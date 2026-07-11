@@ -3784,6 +3784,16 @@ ForgeTab_fintechstrategy6697,
 ForgeTab_cryptofinance6698,
 ForgeTab_alternativeinvest6699,
 ForgeTab_riskmanagement6700,
+ForgeTab_aiplatformstrat6701,
+ForgeTab_generativeaistrat6702,
+ForgeTab_dataengineering6703,
+ForgeTab_computervisonstrat6704,
+ForgeTab_nlpstrategy6705,
+ForgeTab_aieducorp6706,
+ForgeTab_aigovernance6707,
+ForgeTab_predictiveanalytics6708,
+ForgeTab_aiproductstrat6709,
+ForgeTab_cloudaistrategy6710,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -64461,6 +64471,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'cryptofinance6698' && <ForgeTab_cryptofinance6698 />}
               {(mainTab as string) === 'alternativeinvest6699' && <ForgeTab_alternativeinvest6699 />}
               {(mainTab as string) === 'riskmanagement6700' && <ForgeTab_riskmanagement6700 />}
+              {(mainTab as string) === 'aiplatformstrat6701' && <ForgeTab_aiplatformstrat6701 />}
+              {(mainTab as string) === 'generativeaistrat6702' && <ForgeTab_generativeaistrat6702 />}
+              {(mainTab as string) === 'dataengineering6703' && <ForgeTab_dataengineering6703 />}
+              {(mainTab as string) === 'computervisonstrat6704' && <ForgeTab_computervisonstrat6704 />}
+              {(mainTab as string) === 'nlpstrategy6705' && <ForgeTab_nlpstrategy6705 />}
+              {(mainTab as string) === 'aieducorp6706' && <ForgeTab_aieducorp6706 />}
+              {(mainTab as string) === 'aigovernance6707' && <ForgeTab_aigovernance6707 />}
+              {(mainTab as string) === 'predictiveanalytics6708' && <ForgeTab_predictiveanalytics6708 />}
+              {(mainTab as string) === 'aiproductstrat6709' && <ForgeTab_aiproductstrat6709 />}
+              {(mainTab as string) === 'cloudaistrategy6710' && <ForgeTab_cloudaistrategy6710 />}
       </div>
     </div>
   );
