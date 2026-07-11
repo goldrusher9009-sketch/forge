@@ -1884,6 +1884,16 @@ ForgeTab_brandstrategy4797,
 ForgeTab_influencermark4798,
 ForgeTab_abmstrategy4799,
 ForgeTab_communitymarketing4800,
+ForgeTab_datastrategy4801,
+ForgeTab_businessintelligence4802,
+ForgeTab_dataengineering4803,
+ForgeTab_datagovernance4804,
+ForgeTab_aimlplatform4805,
+ForgeTab_realtimeanalytics4806,
+ForgeTab_customeranalytics4807,
+ForgeTab_productanalytics4808,
+ForgeTab_financialanalytics4809,
+ForgeTab_databricksstrat4810,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -60661,6 +60671,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'influencermark4798' && <ForgeTab_influencermark4798 />}
               {(mainTab as string) === 'abmstrategy4799' && <ForgeTab_abmstrategy4799 />}
               {(mainTab as string) === 'communitymarketing4800' && <ForgeTab_communitymarketing4800 />}
+              {(mainTab as string) === 'datastrategy4801' && <ForgeTab_datastrategy4801 />}
+              {(mainTab as string) === 'businessintelligence4802' && <ForgeTab_businessintelligence4802 />}
+              {(mainTab as string) === 'dataengineering4803' && <ForgeTab_dataengineering4803 />}
+              {(mainTab as string) === 'datagovernance4804' && <ForgeTab_datagovernance4804 />}
+              {(mainTab as string) === 'aimlplatform4805' && <ForgeTab_aimlplatform4805 />}
+              {(mainTab as string) === 'realtimeanalytics4806' && <ForgeTab_realtimeanalytics4806 />}
+              {(mainTab as string) === 'customeranalytics4807' && <ForgeTab_customeranalytics4807 />}
+              {(mainTab as string) === 'productanalytics4808' && <ForgeTab_productanalytics4808 />}
+              {(mainTab as string) === 'financialanalytics4809' && <ForgeTab_financialanalytics4809 />}
+              {(mainTab as string) === 'databricksstrat4810' && <ForgeTab_databricksstrat4810 />}
       </div>
     </div>
   );
