@@ -2754,6 +2754,16 @@ ForgeTab_customscompliance5667,
 ForgeTab_coldchain5668,
 ForgeTab_supplychaindigital5669,
 ForgeTab_reverselogistics5670,
+ForgeTab_hrtechstrategy5671,
+ForgeTab_futureofwork5672,
+ForgeTab_talentacqstrat5673,
+ForgeTab_learninddevelopment5674,
+ForgeTab_compensationstrat5675,
+ForgeTab_employeeexperience5676,
+ForgeTab_workforceplanning5677,
+ForgeTab_deistrategy5678,
+ForgeTab_executiveleadership5679,
+ForgeTab_gigeconomy5680,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -62401,6 +62411,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'coldchain5668' && <ForgeTab_coldchain5668 />}
               {(mainTab as string) === 'supplychaindigital5669' && <ForgeTab_supplychaindigital5669 />}
               {(mainTab as string) === 'reverselogistics5670' && <ForgeTab_reverselogistics5670 />}
+              {(mainTab as string) === 'hrtechstrategy5671' && <ForgeTab_hrtechstrategy5671 />}
+              {(mainTab as string) === 'futureofwork5672' && <ForgeTab_futureofwork5672 />}
+              {(mainTab as string) === 'talentacqstrat5673' && <ForgeTab_talentacqstrat5673 />}
+              {(mainTab as string) === 'learninddevelopment5674' && <ForgeTab_learninddevelopment5674 />}
+              {(mainTab as string) === 'compensationstrat5675' && <ForgeTab_compensationstrat5675 />}
+              {(mainTab as string) === 'employeeexperience5676' && <ForgeTab_employeeexperience5676 />}
+              {(mainTab as string) === 'workforceplanning5677' && <ForgeTab_workforceplanning5677 />}
+              {(mainTab as string) === 'deistrategy5678' && <ForgeTab_deistrategy5678 />}
+              {(mainTab as string) === 'executiveleadership5679' && <ForgeTab_executiveleadership5679 />}
+              {(mainTab as string) === 'gigeconomy5680' && <ForgeTab_gigeconomy5680 />}
       </div>
     </div>
   );

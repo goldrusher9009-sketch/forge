@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1055.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1056.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -227298,5 +227298,65 @@ app.post('/api/tradelogistics/scdigital', requireAuth, async (req: AuthRequest, 
 app.post('/api/tradelogistics/reverselogist', requireAuth, async (req: AuthRequest, res: any) => {
   const { rvLogType, currentRVLogState, rvLogGoals } = req.body;
   const prompt = `You are a reverse logistics and returns management strategy expert. Build a reverse logistics strategy. Type: ${rvLogType}. State: ${currentRVLogState}. Goals: ${rvLogGoals}. Respond in JSON: { reverse_logistics_strategy: string, returns_prevention: string[], recovery_optimization: string[], refurbishment_program: string[], circular_model: string[], ai_triage: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futureofwork/hrtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hrTechType, currentHRTechState, hrTechGoals } = req.body;
+  const prompt = `You are an HR tech and people analytics strategy expert. Build an HR tech strategy. Type: ${hrTechType}. State: ${currentHRTechState}. Goals: ${hrTechGoals}. Respond in JSON: { hrtech_strategy: string, ai_recruiting: string[], workforce_planning: string[], people_analytics: string[], skills_platform: string[], dei_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futureofwork/futureofwork', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fowType, currentFOWState, fowGoals } = req.body;
+  const prompt = `You are a future of work and hybrid work strategy expert. Build a future of work strategy. Type: ${fowType}. State: ${currentFOWState}. Goals: ${fowGoals}. Respond in JSON: { future_of_work_strategy: string, hybrid_model: string[], productivity_tools: string[], culture_program: string[], real_estate_optimization: string[], upskilling_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futureofwork/talentacq', requireAuth, async (req: AuthRequest, res: any) => {
+  const { talAcqType, currentTalAcqState, talAcqGoals } = req.body;
+  const prompt = `You are a talent acquisition and employer brand strategy expert. Build a talent acquisition strategy. Type: ${talAcqType}. State: ${currentTalAcqState}. Goals: ${talAcqGoals}. Respond in JSON: { talent_acq_strategy: string, employer_brand: string[], ai_recruiting: string[], diversity_sourcing: string[], candidate_experience: string[], metrics_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futureofwork/lnd', requireAuth, async (req: AuthRequest, res: any) => {
+  const { lndType, currentLNDState, lndGoals } = req.body;
+  const prompt = `You are a learning and development strategy and skills academy expert. Build an L&D strategy. Type: ${lndType}. State: ${currentLNDState}. Goals: ${lndGoals}. Respond in JSON: { lnd_strategy: string, skills_academy: string[], ai_learning: string[], leadership_program: string[], lxp_implementation: string[], roi_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futureofwork/compensation', requireAuth, async (req: AuthRequest, res: any) => {
+  const { compType, currentCompState, compGoals } = req.body;
+  const prompt = `You are a compensation and total rewards strategy expert. Build a compensation strategy. Type: ${compType}. State: ${currentCompState}. Goals: ${compGoals}. Respond in JSON: { compensation_strategy: string, pay_framework: string[], equity_program: string[], pay_equity: string[], skills_based_pay: string[], global_comp: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futureofwork/eex', requireAuth, async (req: AuthRequest, res: any) => {
+  const { eexType, currentEEXState, eexGoals } = req.body;
+  const prompt = `You are an employee experience and engagement strategy expert. Build an employee experience strategy. Type: ${eexType}. State: ${currentEEXState}. Goals: ${eexGoals}. Respond in JSON: { eex_strategy: string, engagement_program: string[], wellbeing_design: string[], dei_initiatives: string[], recognition_system: string[], manager_effectiveness: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futureofwork/wfplanning', requireAuth, async (req: AuthRequest, res: any) => {
+  const { wfPlanType, currentWFPlanState, wfPlanGoals } = req.body;
+  const prompt = `You are a workforce planning and skills architecture strategy expert. Build a workforce planning strategy. Type: ${wfPlanType}. State: ${currentWFPlanState}. Goals: ${wfPlanGoals}. Respond in JSON: { workforce_planning_strategy: string, skills_architecture: string[], succession_planning: string[], ai_augmentation: string[], contingent_workforce: string[], scenario_modeling: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futureofwork/dei', requireAuth, async (req: AuthRequest, res: any) => {
+  const { deiType, currentDEIState, deiGoals } = req.body;
+  const prompt = `You are a DEI strategy and inclusive culture expert. Build a DEI strategy. Type: ${deiType}. State: ${currentDEIState}. Goals: ${deiGoals}. Respond in JSON: { dei_strategy: string, representation_goals: string[], pay_equity_program: string[], inclusion_initiatives: string[], erg_framework: string[], measurement_reporting: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futureofwork/execleadership', requireAuth, async (req: AuthRequest, res: any) => {
+  const { execLdType, currentExecLdState, execLdGoals } = req.body;
+  const prompt = `You are an executive leadership and C-suite development strategy expert. Build an executive leadership strategy. Type: ${execLdType}. State: ${currentExecLdState}. Goals: ${execLdGoals}. Respond in JSON: { exec_leadership_strategy: string, succession_pipeline: string[], ceo_development: string[], board_effectiveness: string[], coaching_program: string[], dei_leadership: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futureofwork/gigwork', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gigType, currentGigState, gigGoals } = req.body;
+  const prompt = `You are a gig economy and contingent workforce strategy expert. Build a contingent workforce strategy. Type: ${gigType}. State: ${currentGigState}. Goals: ${gigGoals}. Respond in JSON: { gig_strategy: string, ic_compliance: string[], msp_vms_program: string[], platform_integration: string[], skills_access: string[], cost_optimization: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
