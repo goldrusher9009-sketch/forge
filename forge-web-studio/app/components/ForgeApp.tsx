@@ -4614,6 +4614,16 @@ ForgeTab_pharmacmcstrat7527,
 ForgeTab_digitalhealth7528,
 ForgeTab_pharmacommercial7529,
 ForgeTab_aidrug7530,
+ForgeTab_socialmedia7531,
+ForgeTab_marketplacetech7532,
+ForgeTab_gamingindustry7533,
+ForgeTab_metaversestrat7534,
+ForgeTab_consumersub7535,
+ForgeTab_superapps7536,
+ForgeTab_voiceai7537,
+ForgeTab_smartdevices7538,
+ForgeTab_searchplatform7539,
+ForgeTab_consumerai7540,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -66121,6 +66131,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'digitalhealth7528' && <ForgeTab_digitalhealth7528 />}
               {(mainTab as string) === 'pharmacommercial7529' && <ForgeTab_pharmacommercial7529 />}
               {(mainTab as string) === 'aidrug7530' && <ForgeTab_aidrug7530 />}
+              {(mainTab as string) === 'socialmedia7531' && <ForgeTab_socialmedia7531 />}
+              {(mainTab as string) === 'marketplacetech7532' && <ForgeTab_marketplacetech7532 />}
+              {(mainTab as string) === 'gamingindustry7533' && <ForgeTab_gamingindustry7533 />}
+              {(mainTab as string) === 'metaversestrat7534' && <ForgeTab_metaversestrat7534 />}
+              {(mainTab as string) === 'consumersub7535' && <ForgeTab_consumersub7535 />}
+              {(mainTab as string) === 'superapps7536' && <ForgeTab_superapps7536 />}
+              {(mainTab as string) === 'voiceai7537' && <ForgeTab_voiceai7537 />}
+              {(mainTab as string) === 'smartdevices7538' && <ForgeTab_smartdevices7538 />}
+              {(mainTab as string) === 'searchplatform7539' && <ForgeTab_searchplatform7539 />}
+              {(mainTab as string) === 'consumerai7540' && <ForgeTab_consumerai7540 />}
       </div>
     </div>
   );
