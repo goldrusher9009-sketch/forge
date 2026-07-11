@@ -3014,6 +3014,16 @@ ForgeTab_synbioagri5927,
 ForgeTab_arvrxrstrat5928,
 ForgeTab_blockchainweb35929,
 ForgeTab_iotedgetech5930,
+ForgeTab_wealthmgmt5931,
+ForgeTab_pevcstrategy5932,
+ForgeTab_hedgefundstrat5933,
+ForgeTab_insurancestrat5934,
+ForgeTab_pensionasset5935,
+ForgeTab_fintechstrategy5936,
+ForgeTab_cryptoassetstrat5937,
+ForgeTab_realassetstrat5938,
+ForgeTab_taxstrategyplan5939,
+ForgeTab_impactinvesting5940,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -62921,6 +62931,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'arvrxrstrat5928' && <ForgeTab_arvrxrstrat5928 />}
               {(mainTab as string) === 'blockchainweb35929' && <ForgeTab_blockchainweb35929 />}
               {(mainTab as string) === 'iotedgetech5930' && <ForgeTab_iotedgetech5930 />}
+              {(mainTab as string) === 'wealthmgmt5931' && <ForgeTab_wealthmgmt5931 />}
+              {(mainTab as string) === 'pevcstrategy5932' && <ForgeTab_pevcstrategy5932 />}
+              {(mainTab as string) === 'hedgefundstrat5933' && <ForgeTab_hedgefundstrat5933 />}
+              {(mainTab as string) === 'insurancestrat5934' && <ForgeTab_insurancestrat5934 />}
+              {(mainTab as string) === 'pensionasset5935' && <ForgeTab_pensionasset5935 />}
+              {(mainTab as string) === 'fintechstrategy5936' && <ForgeTab_fintechstrategy5936 />}
+              {(mainTab as string) === 'cryptoassetstrat5937' && <ForgeTab_cryptoassetstrat5937 />}
+              {(mainTab as string) === 'realassetstrat5938' && <ForgeTab_realassetstrat5938 />}
+              {(mainTab as string) === 'taxstrategyplan5939' && <ForgeTab_taxstrategyplan5939 />}
+              {(mainTab as string) === 'impactinvesting5940' && <ForgeTab_impactinvesting5940 />}
       </div>
     </div>
   );
