@@ -4794,6 +4794,16 @@ ForgeTab_changemanagement7707,
 ForgeTab_hroperations7708,
 ForgeTab_wellbeingstrat7709,
 ForgeTab_globalhr7710,
+ForgeTab_financecontrol7711,
+ForgeTab_treasurystrat7712,
+ForgeTab_taxstrategy7713,
+ForgeTab_fpastrat7714,
+ForgeTab_internalaudit7715,
+ForgeTab_procurestrat7716,
+ForgeTab_workingcapital7717,
+ForgeTab_riskmanagement7718,
+ForgeTab_insurancestrat7719,
+ForgeTab_esgfinance7720,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -66481,6 +66491,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'hroperations7708' && <ForgeTab_hroperations7708 />}
               {(mainTab as string) === 'wellbeingstrat7709' && <ForgeTab_wellbeingstrat7709 />}
               {(mainTab as string) === 'globalhr7710' && <ForgeTab_globalhr7710 />}
+              {(mainTab as string) === 'financecontrol7711' && <ForgeTab_financecontrol7711 />}
+              {(mainTab as string) === 'treasurystrat7712' && <ForgeTab_treasurystrat7712 />}
+              {(mainTab as string) === 'taxstrategy7713' && <ForgeTab_taxstrategy7713 />}
+              {(mainTab as string) === 'fpastrat7714' && <ForgeTab_fpastrat7714 />}
+              {(mainTab as string) === 'internalaudit7715' && <ForgeTab_internalaudit7715 />}
+              {(mainTab as string) === 'procurestrat7716' && <ForgeTab_procurestrat7716 />}
+              {(mainTab as string) === 'workingcapital7717' && <ForgeTab_workingcapital7717 />}
+              {(mainTab as string) === 'riskmanagement7718' && <ForgeTab_riskmanagement7718 />}
+              {(mainTab as string) === 'insurancestrat7719' && <ForgeTab_insurancestrat7719 />}
+              {(mainTab as string) === 'esgfinance7720' && <ForgeTab_esgfinance7720 />}
       </div>
     </div>
   );
