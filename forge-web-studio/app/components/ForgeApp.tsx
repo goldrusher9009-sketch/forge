@@ -3874,6 +3874,16 @@ ForgeTab_advocacypolicy6787,
 ForgeTab_globaldev6788,
 ForgeTab_deijustice6789,
 ForgeTab_ngooperations6790,
+ForgeTab_vcstrategy6791,
+ForgeTab_startupstrategy6792,
+ForgeTab_pitchdeckstrat6793,
+ForgeTab_duediligence6794,
+ForgeTab_startupcfo6795,
+ForgeTab_acceleratorstrat6796,
+ForgeTab_portfoliomgmt6797,
+ForgeTab_lprelations6798,
+ForgeTab_exitstrategy6799,
+ForgeTab_ecosystembuilder6800,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -64641,6 +64651,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'globaldev6788' && <ForgeTab_globaldev6788 />}
               {(mainTab as string) === 'deijustice6789' && <ForgeTab_deijustice6789 />}
               {(mainTab as string) === 'ngooperations6790' && <ForgeTab_ngooperations6790 />}
+              {(mainTab as string) === 'vcstrategy6791' && <ForgeTab_vcstrategy6791 />}
+              {(mainTab as string) === 'startupstrategy6792' && <ForgeTab_startupstrategy6792 />}
+              {(mainTab as string) === 'pitchdeckstrat6793' && <ForgeTab_pitchdeckstrat6793 />}
+              {(mainTab as string) === 'duediligence6794' && <ForgeTab_duediligence6794 />}
+              {(mainTab as string) === 'startupcfo6795' && <ForgeTab_startupcfo6795 />}
+              {(mainTab as string) === 'acceleratorstrat6796' && <ForgeTab_acceleratorstrat6796 />}
+              {(mainTab as string) === 'portfoliomgmt6797' && <ForgeTab_portfoliomgmt6797 />}
+              {(mainTab as string) === 'lprelations6798' && <ForgeTab_lprelations6798 />}
+              {(mainTab as string) === 'exitstrategy6799' && <ForgeTab_exitstrategy6799 />}
+              {(mainTab as string) === 'ecosystembuilder6800' && <ForgeTab_ecosystembuilder6800 />}
       </div>
     </div>
   );
