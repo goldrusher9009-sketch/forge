@@ -3964,6 +3964,16 @@ ForgeTab_l2scaling6877,
 ForgeTab_web3gaming6878,
 ForgeTab_cryptoregstrat6879,
 ForgeTab_cryptofundstrat6880,
+ForgeTab_medtechstrat6881,
+ForgeTab_roboticsurgery6882,
+ForgeTab_aimeddiag6883,
+ForgeTab_wearableshealth6884,
+ForgeTab_telemedstrat6885,
+ForgeTab_pointofcarediag6886,
+ForgeTab_neurotechwellness6887,
+ForgeTab_orthobiologics6888,
+ForgeTab_healthitplatform6889,
+ForgeTab_mentalhealth6890,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -64821,6 +64831,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'web3gaming6878' && <ForgeTab_web3gaming6878 />}
               {(mainTab as string) === 'cryptoregstrat6879' && <ForgeTab_cryptoregstrat6879 />}
               {(mainTab as string) === 'cryptofundstrat6880' && <ForgeTab_cryptofundstrat6880 />}
+              {(mainTab as string) === 'medtechstrat6881' && <ForgeTab_medtechstrat6881 />}
+              {(mainTab as string) === 'roboticsurgery6882' && <ForgeTab_roboticsurgery6882 />}
+              {(mainTab as string) === 'aimeddiag6883' && <ForgeTab_aimeddiag6883 />}
+              {(mainTab as string) === 'wearableshealth6884' && <ForgeTab_wearableshealth6884 />}
+              {(mainTab as string) === 'telemedstrat6885' && <ForgeTab_telemedstrat6885 />}
+              {(mainTab as string) === 'pointofcarediag6886' && <ForgeTab_pointofcarediag6886 />}
+              {(mainTab as string) === 'neurotechwellness6887' && <ForgeTab_neurotechwellness6887 />}
+              {(mainTab as string) === 'orthobiologics6888' && <ForgeTab_orthobiologics6888 />}
+              {(mainTab as string) === 'healthitplatform6889' && <ForgeTab_healthitplatform6889 />}
+              {(mainTab as string) === 'mentalhealth6890' && <ForgeTab_mentalhealth6890 />}
       </div>
     </div>
   );
