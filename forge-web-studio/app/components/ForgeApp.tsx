@@ -2914,6 +2914,16 @@ ForgeTab_identityaccess5827,
 ForgeTab_securityoperations5828,
 ForgeTab_supplychain5829,
 ForgeTab_cyberbusiness5830,
+ForgeTab_supplychaindigital5831,
+ForgeTab_logisticsstrategy5832,
+ForgeTab_procurementstrategy5833,
+ForgeTab_manufacturingstrategy5834,
+ForgeTab_inventoryoptimization5835,
+ForgeTab_sustainablesupplychain5836,
+ForgeTab_warehousingautomation5837,
+ForgeTab_supplyresillience5838,
+ForgeTab_tradecompliancestrat5839,
+ForgeTab_scmtechnology5840,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -62721,6 +62731,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'securityoperations5828' && <ForgeTab_securityoperations5828 />}
               {(mainTab as string) === 'supplychain5829' && <ForgeTab_supplychain5829 />}
               {(mainTab as string) === 'cyberbusiness5830' && <ForgeTab_cyberbusiness5830 />}
+              {(mainTab as string) === 'supplychaindigital5831' && <ForgeTab_supplychaindigital5831 />}
+              {(mainTab as string) === 'logisticsstrategy5832' && <ForgeTab_logisticsstrategy5832 />}
+              {(mainTab as string) === 'procurementstrategy5833' && <ForgeTab_procurementstrategy5833 />}
+              {(mainTab as string) === 'manufacturingstrategy5834' && <ForgeTab_manufacturingstrategy5834 />}
+              {(mainTab as string) === 'inventoryoptimization5835' && <ForgeTab_inventoryoptimization5835 />}
+              {(mainTab as string) === 'sustainablesupplychain5836' && <ForgeTab_sustainablesupplychain5836 />}
+              {(mainTab as string) === 'warehousingautomation5837' && <ForgeTab_warehousingautomation5837 />}
+              {(mainTab as string) === 'supplyresillience5838' && <ForgeTab_supplyresillience5838 />}
+              {(mainTab as string) === 'tradecompliancestrat5839' && <ForgeTab_tradecompliancestrat5839 />}
+              {(mainTab as string) === 'scmtechnology5840' && <ForgeTab_scmtechnology5840 />}
       </div>
     </div>
   );
