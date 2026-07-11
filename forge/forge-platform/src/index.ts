@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1009.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1010.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -224538,5 +224538,65 @@ app.post('/api/industry4/contractmfg', requireAuth, async (req: AuthRequest, res
 app.post('/api/industry4/mesdigital', requireAuth, async (req: AuthRequest, res: any) => {
   const { mesType, currentMESState, mesGoals } = req.body;
   const prompt = `You are a manufacturing execution and digital factory strategy expert. Build an MES strategy. Type: ${mesType}. State: ${currentMESState}. Goals: ${mesGoals}. Respond in JSON: { mes_strategy: string, system_architecture: string[], integration_roadmap: string[], real_time_visibility: string[], ai_analytics: string[], roi_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecom/telco', requireAuth, async (req: AuthRequest, res: any) => {
+  const { telcoType, currentTelcoState, telcoGoals } = req.body;
+  const prompt = `You are a telecommunications strategy expert. Build a telecom strategy. Type: ${telcoType}. State: ${currentTelcoState}. Goals: ${telcoGoals}. Respond in JSON: { telco_strategy: string, network_investment: string[], product_portfolio: string[], enterprise_b2b: string[], churn_reduction: string[], digital_transformation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecom/fiveg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fivegType, currentFivegState, fivegGoals } = req.body;
+  const prompt = `You are a 5G strategy and deployment expert. Build a 5G strategy. Type: ${fivegType}. State: ${currentFivegState}. Goals: ${fivegGoals}. Respond in JSON: { fiveg_strategy: string, deployment_roadmap: string[], use_case_portfolio: string[], enterprise_private_5g: string[], monetization_model: string[], edge_computing: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecom/fiber', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fiberType, currentFiberState, fiberGoals } = req.body;
+  const prompt = `You are a fiber and broadband infrastructure strategy expert. Build a fiber strategy. Type: ${fiberType}. State: ${currentFiberState}. Goals: ${fiberGoals}. Respond in JSON: { fiber_strategy: string, network_design: string[], construction_roadmap: string[], take_rate_plan: string[], wholesale_model: string[], financial_returns: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecom/satcom', requireAuth, async (req: AuthRequest, res: any) => {
+  const { satcomType, currentSatcomState, satcomGoals } = req.body;
+  const prompt = `You are a satellite communications strategy expert. Build a satellite strategy. Type: ${satcomType}. State: ${currentSatcomState}. Goals: ${satcomGoals}. Respond in JSON: { satcom_strategy: string, constellation_design: string[], ground_segment: string[], market_entry: string[], partnership_model: string[], regulatory_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecom/iotcon', requireAuth, async (req: AuthRequest, res: any) => {
+  const { iotconType, currentIotconState, iotconGoals } = req.body;
+  const prompt = `You are an IoT connectivity and platform strategy expert. Build an IoT connectivity strategy. Type: ${iotconType}. State: ${currentIotconState}. Goals: ${iotconGoals}. Respond in JSON: { iot_strategy: string, connectivity_architecture: string[], platform_services: string[], device_management: string[], data_monetization: string[], vertical_markets: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecom/tower', requireAuth, async (req: AuthRequest, res: any) => {
+  const { towerType, currentTowerState, towerGoals } = req.body;
+  const prompt = `You are a tower and infrastructure towerco strategy expert. Build a tower strategy. Type: ${towerType}. State: ${currentTowerState}. Goals: ${towerGoals}. Respond in JSON: { tower_strategy: string, portfolio_expansion: string[], tenancy_improvement: string[], small_cell_das: string[], fiber_integration: string[], financial_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecom/enttelco', requireAuth, async (req: AuthRequest, res: any) => {
+  const { etType, currentETState, etGoals } = req.body;
+  const prompt = `You are an enterprise telecommunications and UCaaS strategy expert. Build an enterprise telecom strategy. Type: ${etType}. State: ${currentETState}. Goals: ${etGoals}. Respond in JSON: { enterprise_telecom_strategy: string, product_portfolio: string[], sd_wan_sase: string[], private_5g_ucaas: string[], customer_migration: string[], channel_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecom/mvno', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mvnoType, currentMVNOState, mvnoGoals } = req.body;
+  const prompt = `You are an MVNO and wireless reseller strategy expert. Build an MVNO strategy. Type: ${mvnoType}. State: ${currentMVNOState}. Goals: ${mvnoGoals}. Respond in JSON: { mvno_strategy: string, target_segment: string[], product_design: string[], network_economics: string[], churn_plan: string[], growth_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecom/spectrum', requireAuth, async (req: AuthRequest, res: any) => {
+  const { specType, currentSpecState, specGoals } = req.body;
+  const prompt = `You are a spectrum strategy and regulatory affairs expert. Build a spectrum strategy. Type: ${specType}. State: ${currentSpecState}. Goals: ${specGoals}. Respond in JSON: { spectrum_strategy: string, portfolio_assessment: string[], auction_approach: string[], sharing_framework: string[], private_network_use: string[], regulatory_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecom/telcodigital', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tdigType, currentTdigState, tdigGoals } = req.body;
+  const prompt = `You are a telecom digital transformation and BSS/OSS strategy expert. Build a telecom digital transformation strategy. Type: ${tdigType}. State: ${currentTdigState}. Goals: ${tdigGoals}. Respond in JSON: { digital_transformation_strategy: string, bss_oss_modernization: string[], cloud_native_network: string[], ai_automation: string[], open_ran: string[], developer_ecosystem: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

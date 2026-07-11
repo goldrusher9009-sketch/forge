@@ -2294,6 +2294,16 @@ ForgeTab_energymanufacture5207,
 ForgeTab_qualitymfg5208,
 ForgeTab_contractmfg5209,
 ForgeTab_mesdigi5210,
+ForgeTab_telcostrategy5211,
+ForgeTab_fivegstrategy5212,
+ForgeTab_fiberstrategy5213,
+ForgeTab_satcomstrategy5214,
+ForgeTab_iotconnect5215,
+ForgeTab_towerinfra5216,
+ForgeTab_enterprisetelco5217,
+ForgeTab_mvnostrategy5218,
+ForgeTab_spectrumsrategy5219,
+ForgeTab_telecomdigi5220,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -61481,6 +61491,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'qualitymfg5208' && <ForgeTab_qualitymfg5208 />}
               {(mainTab as string) === 'contractmfg5209' && <ForgeTab_contractmfg5209 />}
               {(mainTab as string) === 'mesdigi5210' && <ForgeTab_mesdigi5210 />}
+              {(mainTab as string) === 'telcostrategy5211' && <ForgeTab_telcostrategy5211 />}
+              {(mainTab as string) === 'fivegstrategy5212' && <ForgeTab_fivegstrategy5212 />}
+              {(mainTab as string) === 'fiberstrategy5213' && <ForgeTab_fiberstrategy5213 />}
+              {(mainTab as string) === 'satcomstrategy5214' && <ForgeTab_satcomstrategy5214 />}
+              {(mainTab as string) === 'iotconnect5215' && <ForgeTab_iotconnect5215 />}
+              {(mainTab as string) === 'towerinfra5216' && <ForgeTab_towerinfra5216 />}
+              {(mainTab as string) === 'enterprisetelco5217' && <ForgeTab_enterprisetelco5217 />}
+              {(mainTab as string) === 'mvnostrategy5218' && <ForgeTab_mvnostrategy5218 />}
+              {(mainTab as string) === 'spectrumsrategy5219' && <ForgeTab_spectrumsrategy5219 />}
+              {(mainTab as string) === 'telecomdigi5220' && <ForgeTab_telecomdigi5220 />}
       </div>
     </div>
   );
