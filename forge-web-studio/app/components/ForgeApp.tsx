@@ -4224,6 +4224,16 @@ ForgeTab_productionplan7137,
 ForgeTab_workforcemfg7138,
 ForgeTab_sustainablemfg7139,
 ForgeTab_mfgdigitaltransform7140,
+ForgeTab_aerostrat7141,
+ForgeTab_defensestrat7142,
+ForgeTab_spacestrat7143,
+ForgeTab_uavstrat7144,
+ForgeTab_mrostrat7145,
+ForgeTab_satstrat7146,
+ForgeTab_propulsiontech7147,
+ForgeTab_aerodefacq7148,
+ForgeTab_counteruas7149,
+ForgeTab_aeromfgstrat7150,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -65341,6 +65351,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'workforcemfg7138' && <ForgeTab_workforcemfg7138 />}
               {(mainTab as string) === 'sustainablemfg7139' && <ForgeTab_sustainablemfg7139 />}
               {(mainTab as string) === 'mfgdigitaltransform7140' && <ForgeTab_mfgdigitaltransform7140 />}
+              {(mainTab as string) === 'aerostrat7141' && <ForgeTab_aerostrat7141 />}
+              {(mainTab as string) === 'defensestrat7142' && <ForgeTab_defensestrat7142 />}
+              {(mainTab as string) === 'spacestrat7143' && <ForgeTab_spacestrat7143 />}
+              {(mainTab as string) === 'uavstrat7144' && <ForgeTab_uavstrat7144 />}
+              {(mainTab as string) === 'mrostrat7145' && <ForgeTab_mrostrat7145 />}
+              {(mainTab as string) === 'satstrat7146' && <ForgeTab_satstrat7146 />}
+              {(mainTab as string) === 'propulsiontech7147' && <ForgeTab_propulsiontech7147 />}
+              {(mainTab as string) === 'aerodefacq7148' && <ForgeTab_aerodefacq7148 />}
+              {(mainTab as string) === 'counteruas7149' && <ForgeTab_counteruas7149 />}
+              {(mainTab as string) === 'aeromfgstrat7150' && <ForgeTab_aeromfgstrat7150 />}
       </div>
     </div>
   );
