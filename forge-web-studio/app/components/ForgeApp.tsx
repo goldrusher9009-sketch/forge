@@ -1944,6 +1944,16 @@ ForgeTab_educationsystem4857,
 ForgeTab_infrastructurestrat4858,
 ForgeTab_govprocurement4859,
 ForgeTab_govaiethics4860,
+ForgeTab_biotechstrat4861,
+ForgeTab_clinicaldevelopment4862,
+ForgeTab_regulatorymedical4863,
+ForgeTab_marketaccess4864,
+ForgeTab_meddevicestrat4865,
+ForgeTab_biopharmacommercial4866,
+ForgeTab_genomicsai4867,
+ForgeTab_lifesciencemanufacturing4868,
+ForgeTab_healthcareai4869,
+ForgeTab_lifesciencemanda4870,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -60781,6 +60791,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'infrastructurestrat4858' && <ForgeTab_infrastructurestrat4858 />}
               {(mainTab as string) === 'govprocurement4859' && <ForgeTab_govprocurement4859 />}
               {(mainTab as string) === 'govaiethics4860' && <ForgeTab_govaiethics4860 />}
+              {(mainTab as string) === 'biotechstrat4861' && <ForgeTab_biotechstrat4861 />}
+              {(mainTab as string) === 'clinicaldevelopment4862' && <ForgeTab_clinicaldevelopment4862 />}
+              {(mainTab as string) === 'regulatorymedical4863' && <ForgeTab_regulatorymedical4863 />}
+              {(mainTab as string) === 'marketaccess4864' && <ForgeTab_marketaccess4864 />}
+              {(mainTab as string) === 'meddevicestrat4865' && <ForgeTab_meddevicestrat4865 />}
+              {(mainTab as string) === 'biopharmacommercial4866' && <ForgeTab_biopharmacommercial4866 />}
+              {(mainTab as string) === 'genomicsai4867' && <ForgeTab_genomicsai4867 />}
+              {(mainTab as string) === 'lifesciencemanufacturing4868' && <ForgeTab_lifesciencemanufacturing4868 />}
+              {(mainTab as string) === 'healthcareai4869' && <ForgeTab_healthcareai4869 />}
+              {(mainTab as string) === 'lifesciencemanda4870' && <ForgeTab_lifesciencemanda4870 />}
       </div>
     </div>
   );
