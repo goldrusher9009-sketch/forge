@@ -3104,6 +3104,16 @@ ForgeTab_facilitymanagement6017,
 ForgeTab_fleetmanagement6018,
 ForgeTab_energymanagement6019,
 ForgeTab_erpimplementation6020,
+ForgeTab_cybersecurity6021,
+ForgeTab_riskmanagement6022,
+ForgeTab_compliancestrategy6023,
+ForgeTab_fraudprevention6024,
+ForgeTab_businesscontinuity6025,
+ForgeTab_datagovernance6026,
+ForgeTab_insurancestrategy6027,
+ForgeTab_auditmanagement6028,
+ForgeTab_privacystrategy6029,
+ForgeTab_geopoliticalrisk6030,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -63101,6 +63111,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'fleetmanagement6018' && <ForgeTab_fleetmanagement6018 />}
               {(mainTab as string) === 'energymanagement6019' && <ForgeTab_energymanagement6019 />}
               {(mainTab as string) === 'erpimplementation6020' && <ForgeTab_erpimplementation6020 />}
+              {(mainTab as string) === 'cybersecurity6021' && <ForgeTab_cybersecurity6021 />}
+              {(mainTab as string) === 'riskmanagement6022' && <ForgeTab_riskmanagement6022 />}
+              {(mainTab as string) === 'compliancestrategy6023' && <ForgeTab_compliancestrategy6023 />}
+              {(mainTab as string) === 'fraudprevention6024' && <ForgeTab_fraudprevention6024 />}
+              {(mainTab as string) === 'businesscontinuity6025' && <ForgeTab_businesscontinuity6025 />}
+              {(mainTab as string) === 'datagovernance6026' && <ForgeTab_datagovernance6026 />}
+              {(mainTab as string) === 'insurancestrategy6027' && <ForgeTab_insurancestrategy6027 />}
+              {(mainTab as string) === 'auditmanagement6028' && <ForgeTab_auditmanagement6028 />}
+              {(mainTab as string) === 'privacystrategy6029' && <ForgeTab_privacystrategy6029 />}
+              {(mainTab as string) === 'geopoliticalrisk6030' && <ForgeTab_geopoliticalrisk6030 />}
       </div>
     </div>
   );
