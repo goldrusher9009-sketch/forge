@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1037.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1038.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -226218,5 +226218,65 @@ app.post('/api/cyberrisk/cyberins', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/cyberrisk/aicyber', requireAuth, async (req: AuthRequest, res: any) => {
   const { aiSecType, currentAISecState, aiSecGoals } = req.body;
   const prompt = `You are an AI security and machine learning risk strategy expert. Build an AI security strategy. Type: ${aiSecType}. State: ${currentAISecState}. Goals: ${aiSecGoals}. Respond in JSON: { ai_security_strategy: string, model_protection: string[], adversarial_defense: string[], llm_security: string[], ai_governance: string[], red_team_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/opex/lean', requireAuth, async (req: AuthRequest, res: any) => {
+  const { leanType, currentLeanState, leanGoals } = req.body;
+  const prompt = `You are a lean operations and continuous improvement strategy expert. Build a lean strategy. Type: ${leanType}. State: ${currentLeanState}. Goals: ${leanGoals}. Respond in JSON: { lean_strategy: string, waste_elimination: string[], vsm_improvement: string[], kaizen_program: string[], measurement_framework: string[], digital_lean: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/opex/mfgstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mfgType, currentMfgState, mfgGoals } = req.body;
+  const prompt = `You are a manufacturing excellence and smart factory strategy expert. Build a manufacturing strategy. Type: ${mfgType}. State: ${currentMfgState}. Goals: ${mfgGoals}. Respond in JSON: { manufacturing_strategy: string, industry4_roadmap: string[], quality_system: string[], automation_plan: string[], digital_twin: string[], sustainability_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/opex/procurement', requireAuth, async (req: AuthRequest, res: any) => {
+  const { procType, currentProcState, procGoals } = req.body;
+  const prompt = `You are a strategic procurement and sourcing strategy expert. Build a procurement strategy. Type: ${procType}. State: ${currentProcState}. Goals: ${procGoals}. Respond in JSON: { procurement_strategy: string, category_management: string[], supplier_relationship: string[], digital_procurement: string[], risk_mitigation: string[], sustainability_sourcing: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/opex/quality', requireAuth, async (req: AuthRequest, res: any) => {
+  const { qualityType, currentQualityState, qualityGoals } = req.body;
+  const prompt = `You are a quality management and zero-defect strategy expert. Build a quality strategy. Type: ${qualityType}. State: ${currentQualityState}. Goals: ${qualityGoals}. Respond in JSON: { quality_strategy: string, defect_reduction: string[], spc_implementation: string[], supplier_quality: string[], design_quality: string[], certification_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/opex/logops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { logType, currentLogState, logGoals } = req.body;
+  const prompt = `You are a logistics and distribution operations strategy expert. Build a logistics strategy. Type: ${logType}. State: ${currentLogState}. Goals: ${logGoals}. Respond in JSON: { logistics_strategy: string, network_design: string[], warehouse_automation: string[], last_mile_optimization: string[], 3pl_management: string[], reverse_logistics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/opex/sharedsvcs', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ssType, currentSSState, ssGoals } = req.body;
+  const prompt = `You are a shared services and GBS strategy expert. Build a shared services strategy. Type: ${ssType}. State: ${currentSSState}. Goals: ${ssGoals}. Respond in JSON: { shared_services_strategy: string, scope_definition: string[], automation_roadmap: string[], location_strategy: string[], governance_model: string[], performance_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/opex/digxtrans', requireAuth, async (req: AuthRequest, res: any) => {
+  const { digXType, currentDigXState, digXGoals } = req.body;
+  const prompt = `You are a digital transformation and Industry 4.0 strategy expert. Build a digital transformation strategy. Type: ${digXType}. State: ${currentDigXState}. Goals: ${digXGoals}. Respond in JSON: { digital_transformation_strategy: string, platform_architecture: string[], ai_automation: string[], data_foundation: string[], change_management: string[], roi_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/opex/costred', requireAuth, async (req: AuthRequest, res: any) => {
+  const { costRedType, currentCostRedState, costRedGoals } = req.body;
+  const prompt = `You are a cost reduction and operational efficiency strategy expert. Build a cost reduction strategy. Type: ${costRedType}. State: ${currentCostRedState}. Goals: ${costRedGoals}. Respond in JSON: { cost_reduction_strategy: string, savings_identification: string[], zbb_approach: string[], procurement_savings: string[], automation_program: string[], structural_redesign: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/opex/sustainops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sustainOpsType, currentSustainOpsState, sustainOpsGoals } = req.body;
+  const prompt = `You are a sustainable operations and ESG implementation strategy expert. Build a sustainable operations strategy. Type: ${sustainOpsType}. State: ${currentSustainOpsState}. Goals: ${sustainOpsGoals}. Respond in JSON: { sustainable_ops_strategy: string, decarbonization_roadmap: string[], scope3_reduction: string[], circular_operations: string[], reporting_framework: string[], supplier_engagement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/opex/entarch', requireAuth, async (req: AuthRequest, res: any) => {
+  const { eaType, currentEAState, eaGoals } = req.body;
+  const prompt = `You are an enterprise architecture and technology strategy expert. Build an EA strategy. Type: ${eaType}. State: ${currentEAState}. Goals: ${eaGoals}. Respond in JSON: { enterprise_architecture: string, current_state_assessment: string[], target_architecture: string[], migration_roadmap: string[], api_strategy: string[], governance_framework: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

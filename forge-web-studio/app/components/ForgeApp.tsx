@@ -2574,6 +2574,16 @@ ForgeTab_idaccessmgmt5487,
 ForgeTab_supplychainsec5488,
 ForgeTab_cyberinsurance5489,
 ForgeTab_aicybersec5490,
+ForgeTab_leanopex5491,
+ForgeTab_manufacturingstrat5492,
+ForgeTab_procurementstrat5493,
+ForgeTab_qualitymgmt5494,
+ForgeTab_logisticsops5495,
+ForgeTab_sharedservices5496,
+ForgeTab_digitaltransform5497,
+ForgeTab_costreduction5498,
+ForgeTab_sustainableops5499,
+ForgeTab_enterprisearch5500,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -62041,6 +62051,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'supplychainsec5488' && <ForgeTab_supplychainsec5488 />}
               {(mainTab as string) === 'cyberinsurance5489' && <ForgeTab_cyberinsurance5489 />}
               {(mainTab as string) === 'aicybersec5490' && <ForgeTab_aicybersec5490 />}
+              {(mainTab as string) === 'leanopex5491' && <ForgeTab_leanopex5491 />}
+              {(mainTab as string) === 'manufacturingstrat5492' && <ForgeTab_manufacturingstrat5492 />}
+              {(mainTab as string) === 'procurementstrat5493' && <ForgeTab_procurementstrat5493 />}
+              {(mainTab as string) === 'qualitymgmt5494' && <ForgeTab_qualitymgmt5494 />}
+              {(mainTab as string) === 'logisticsops5495' && <ForgeTab_logisticsops5495 />}
+              {(mainTab as string) === 'sharedservices5496' && <ForgeTab_sharedservices5496 />}
+              {(mainTab as string) === 'digitaltransform5497' && <ForgeTab_digitaltransform5497 />}
+              {(mainTab as string) === 'costreduction5498' && <ForgeTab_costreduction5498 />}
+              {(mainTab as string) === 'sustainableops5499' && <ForgeTab_sustainableops5499 />}
+              {(mainTab as string) === 'enterprisearch5500' && <ForgeTab_enterprisearch5500 />}
       </div>
     </div>
   );
