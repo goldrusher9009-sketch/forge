@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1031.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1032.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -225858,5 +225858,65 @@ app.post('/api/deeptech/airesearch', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/deeptech/fusion', requireAuth, async (req: AuthRequest, res: any) => {
   const { fusionType, currentFusionState, fusionGoals } = req.body;
   const prompt = `You are a fusion energy and advanced energy technology strategy expert. Build a fusion strategy. Type: ${fusionType}. State: ${currentFusionState}. Goals: ${fusionGoals}. Respond in JSON: { fusion_strategy: string, plasma_roadmap: string[], materials_development: string[], regulatory_framework: string[], financing_model: string[], commercial_timeline: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatedeep/climate', requireAuth, async (req: AuthRequest, res: any) => {
+  const { climateType, currentClimateState, climateGoals } = req.body;
+  const prompt = `You are a climate technology and carbon strategy expert. Build a climate tech strategy. Type: ${climateType}. State: ${currentClimateState}. Goals: ${climateGoals}. Respond in JSON: { climate_strategy: string, carbon_removal_pathway: string[], mrv_framework: string[], market_development: string[], policy_engagement: string[], cost_reduction_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatedeep/energystor', requireAuth, async (req: AuthRequest, res: any) => {
+  const { storageType, currentStorageState, storageGoals } = req.body;
+  const prompt = `You are an energy storage and battery technology strategy expert. Build an energy storage strategy. Type: ${storageType}. State: ${currentStorageState}. Goals: ${storageGoals}. Respond in JSON: { storage_strategy: string, technology_roadmap: string[], manufacturing_scale: string[], market_applications: string[], supply_chain: string[], recycling_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatedeep/solarwind', requireAuth, async (req: AuthRequest, res: any) => {
+  const { renewableType, currentRenewableState, renewableGoals } = req.body;
+  const prompt = `You are a solar and wind energy strategy expert. Build a renewable energy strategy. Type: ${renewableType}. State: ${currentRenewableState}. Goals: ${renewableGoals}. Respond in JSON: { renewable_strategy: string, project_pipeline: string[], grid_integration: string[], ppa_structure: string[], supply_chain_resilience: string[], international_markets: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatedeep/hydrogen', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hydrogenType, currentHydrogenState, hydrogenGoals } = req.body;
+  const prompt = `You are a green hydrogen and power-to-X strategy expert. Build a green hydrogen strategy. Type: ${hydrogenType}. State: ${currentHydrogenState}. Goals: ${hydrogenGoals}. Respond in JSON: { hydrogen_strategy: string, production_pathway: string[], end_market_priority: string[], electrolyzer_roadmap: string[], offtake_strategy: string[], regulatory_incentives: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatedeep/circular', requireAuth, async (req: AuthRequest, res: any) => {
+  const { circularType, currentCircularState, circularGoals } = req.body;
+  const prompt = `You are a circular economy and industrial ecology strategy expert. Build a circular economy strategy. Type: ${circularType}. State: ${currentCircularState}. Goals: ${circularGoals}. Respond in JSON: { circular_strategy: string, material_flows: string[], product_redesign: string[], business_model_innovation: string[], regulatory_compliance: string[], industrial_symbiosis: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatedeep/esg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { esgType, currentESGState, esgGoals } = req.body;
+  const prompt = `You are an ESG investing and sustainable finance strategy expert. Build an ESG strategy. Type: ${esgType}. State: ${currentESGState}. Goals: ${esgGoals}. Respond in JSON: { esg_strategy: string, portfolio_decarbonization: string[], reporting_framework: string[], engagement_program: string[], impact_measurement: string[], regulatory_compliance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatedeep/smartgrid', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gridType, currentGridState, gridGoals } = req.body;
+  const prompt = `You are a smart grid and energy transition strategy expert. Build a smart grid strategy. Type: ${gridType}. State: ${currentGridState}. Goals: ${gridGoals}. Respond in JSON: { grid_strategy: string, der_integration: string[], flexibility_market: string[], ev_charging_network: string[], cybersecurity_framework: string[], ai_grid_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatedeep/greenbuilding', requireAuth, async (req: AuthRequest, res: any) => {
+  const { buildingType, currentBuildingState, buildingGoals } = req.body;
+  const prompt = `You are a sustainable buildings and net-zero real estate strategy expert. Build a green building strategy. Type: ${buildingType}. State: ${currentBuildingState}. Goals: ${buildingGoals}. Respond in JSON: { green_building_strategy: string, energy_efficiency_plan: string[], embodied_carbon: string[], electrification_roadmap: string[], retrofit_program: string[], certification_pathway: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatedeep/sustainag', requireAuth, async (req: AuthRequest, res: any) => {
+  const { agType, currentAgState, agGoals } = req.body;
+  const prompt = `You are a sustainable agriculture and food systems strategy expert. Build a sustainable ag strategy. Type: ${agType}. State: ${currentAgState}. Goals: ${agGoals}. Respond in JSON: { sustainable_ag_strategy: string, regenerative_practices: string[], carbon_sequestration: string[], supply_chain_transformation: string[], certification_program: string[], consumer_communication: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climatedeep/climatepol', requireAuth, async (req: AuthRequest, res: any) => {
+  const { climatePolicyType, currentClimatePolicyState, climatePolicyGoals } = req.body;
+  const prompt = `You are a climate policy and carbon market strategy expert. Build a climate policy strategy. Type: ${climatePolicyType}. State: ${currentClimatePolicyState}. Goals: ${climatePolicyGoals}. Respond in JSON: { climate_policy_strategy: string, regulatory_positioning: string[], carbon_market_approach: string[], advocacy_plan: string[], transition_risk_management: string[], international_engagement: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
