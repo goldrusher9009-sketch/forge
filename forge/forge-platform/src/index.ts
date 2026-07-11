@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1142.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1143.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -232518,5 +232518,65 @@ app.post('/api/industrial/industmfg', requireAuth, async (req: AuthRequest, res:
 app.post('/api/industrial/defensetech', requireAuth, async (req: AuthRequest, res: any) => {
   const { dtechType, currentDTechState, dtechGoals } = req.body;
   const prompt = `You are a defense technology and national security strategy expert. Build a defense tech strategy. Type: ${dtechType}. State: ${currentDTechState}. Goals: ${dtechGoals}. Respond in JSON: { defense_tech_strategy: string, capability_roadmap: string[], ai_autonomous_systems: string[], space_cyber_program: string[], alliance_partnerships: string[], dual_use_commercialization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/govpublic/govdigital', requireAuth, async (req: AuthRequest, res: any) => {
+  const { govType, currentGovState, govGoals } = req.body;
+  const prompt = `You are a government digital transformation strategy expert. Build a gov digital strategy. Type: ${govType}. State: ${currentGovState}. Goals: ${govGoals}. Respond in JSON: { gov_digital_strategy: string, citizen_service_transformation: string[], ai_government: string[], data_governance: string[], cybersecurity_framework: string[], interoperability_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/govpublic/publicsafety', requireAuth, async (req: AuthRequest, res: any) => {
+  const { safetyType, currentSafetyState, safetyGoals } = req.body;
+  const prompt = `You are a public safety and law enforcement strategy expert. Build a public safety strategy. Type: ${safetyType}. State: ${currentSafetyState}. Goals: ${safetyGoals}. Respond in JSON: { public_safety_strategy: string, crime_prevention: string[], technology_adoption: string[], community_policing: string[], mental_health_integration: string[], data_analytics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/govpublic/pubhealth', requireAuth, async (req: AuthRequest, res: any) => {
+  const { phType, currentPHState, phGoals } = req.body;
+  const prompt = `You are a public health and epidemiology strategy expert. Build a public health strategy. Type: ${phType}. State: ${currentPHState}. Goals: ${phGoals}. Respond in JSON: { public_health_strategy: string, disease_surveillance: string[], prevention_programs: string[], health_equity: string[], emergency_preparedness: string[], data_analytics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/govpublic/smartcity', requireAuth, async (req: AuthRequest, res: any) => {
+  const { scType, currentSCState, scGoals } = req.body;
+  const prompt = `You are a smart city and urban innovation strategy expert. Build a smart city strategy. Type: ${scType}. State: ${currentSCState}. Goals: ${scGoals}. Respond in JSON: { smart_city_strategy: string, iot_infrastructure: string[], mobility_solutions: string[], energy_management: string[], citizen_engagement: string[], climate_resilience: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/govpublic/govproc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { procType, currentProcState, procGoals } = req.body;
+  const prompt = `You are a government procurement and contracting strategy expert. Build a gov procurement strategy. Type: ${procType}. State: ${currentProcState}. Goals: ${procGoals}. Respond in JSON: { procurement_strategy: string, acquisition_reform: string[], vendor_diversity: string[], technology_procurement: string[], transparency_measures: string[], sustainability_requirements: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/govpublic/pubedu', requireAuth, async (req: AuthRequest, res: any) => {
+  const { eduType, currentEduState, eduGoals } = req.body;
+  const prompt = `You are a public education policy and reform strategy expert. Build an education strategy. Type: ${eduType}. State: ${currentEduState}. Goals: ${eduGoals}. Respond in JSON: { education_strategy: string, achievement_gap_plan: string[], teacher_development: string[], curriculum_innovation: string[], technology_integration: string[], funding_reform: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/govpublic/socserv', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ssType, currentSSState, ssGoals } = req.body;
+  const prompt = `You are a social services and human services strategy expert. Build a social services strategy. Type: ${ssType}. State: ${currentSSState}. Goals: ${ssGoals}. Respond in JSON: { social_services_strategy: string, prevention_programs: string[], service_integration: string[], digital_transformation: string[], equity_initiatives: string[], outcome_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/govpublic/govfin', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gfType, currentGFState, gfGoals } = req.body;
+  const prompt = `You are a government finance and public budgeting strategy expert. Build a gov finance strategy. Type: ${gfType}. State: ${currentGFState}. Goals: ${gfGoals}. Respond in JSON: { gov_finance_strategy: string, fiscal_sustainability: string[], revenue_optimization: string[], spending_efficiency: string[], pension_reform: string[], transparency_initiatives: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/govpublic/regpolicy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { regType, currentRegState, regGoals } = req.body;
+  const prompt = `You are a regulatory policy and government affairs strategy expert. Build a regulatory strategy. Type: ${regType}. State: ${currentRegState}. Goals: ${regGoals}. Respond in JSON: { regulatory_strategy: string, reform_priorities: string[], ai_regulation: string[], enforcement_modernization: string[], international_coordination: string[], stakeholder_engagement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/govpublic/deflog', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dlType, currentDLState, dlGoals } = req.body;
+  const prompt = `You are a defense logistics and military operations strategy expert. Build a defense logistics strategy. Type: ${dlType}. State: ${currentDLState}. Goals: ${dlGoals}. Respond in JSON: { defense_logistics_strategy: string, readiness_improvement: string[], ai_autonomous_systems: string[], supply_chain_resilience: string[], predictive_maintenance: string[], joint_operations: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
