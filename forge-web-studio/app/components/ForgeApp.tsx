@@ -1994,6 +1994,16 @@ ForgeTab_greenhydrogen4907,
 ForgeTab_energyretail4908,
 ForgeTab_energydigital4909,
 ForgeTab_energytransition4910,
+ForgeTab_nonprofitstrat4911,
+ForgeTab_impactinvesting4912,
+ForgeTab_socialenterprise4913,
+ForgeTab_philanthropystrat4914,
+ForgeTab_fundraisingstrat4915,
+ForgeTab_communitydev4916,
+ForgeTab_educationnonprofit4917,
+ForgeTab_healthnonprofit4918,
+ForgeTab_environmentalorg4919,
+ForgeTab_disasterrelief4920,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -60881,6 +60891,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'energyretail4908' && <ForgeTab_energyretail4908 />}
               {(mainTab as string) === 'energydigital4909' && <ForgeTab_energydigital4909 />}
               {(mainTab as string) === 'energytransition4910' && <ForgeTab_energytransition4910 />}
+              {(mainTab as string) === 'nonprofitstrat4911' && <ForgeTab_nonprofitstrat4911 />}
+              {(mainTab as string) === 'impactinvesting4912' && <ForgeTab_impactinvesting4912 />}
+              {(mainTab as string) === 'socialenterprise4913' && <ForgeTab_socialenterprise4913 />}
+              {(mainTab as string) === 'philanthropystrat4914' && <ForgeTab_philanthropystrat4914 />}
+              {(mainTab as string) === 'fundraisingstrat4915' && <ForgeTab_fundraisingstrat4915 />}
+              {(mainTab as string) === 'communitydev4916' && <ForgeTab_communitydev4916 />}
+              {(mainTab as string) === 'educationnonprofit4917' && <ForgeTab_educationnonprofit4917 />}
+              {(mainTab as string) === 'healthnonprofit4918' && <ForgeTab_healthnonprofit4918 />}
+              {(mainTab as string) === 'environmentalorg4919' && <ForgeTab_environmentalorg4919 />}
+              {(mainTab as string) === 'disasterrelief4920' && <ForgeTab_disasterrelief4920 />}
       </div>
     </div>
   );

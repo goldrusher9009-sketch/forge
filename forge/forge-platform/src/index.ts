@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v979.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v980.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -222738,5 +222738,65 @@ app.post('/api/energyutil/energydigital', requireAuth, async (req: AuthRequest, 
 app.post('/api/energyutil/entrans', requireAuth, async (req: AuthRequest, res: any) => {
   const { etType, currentETState, etGoals } = req.body;
   const prompt = `You are an energy transition strategy expert. Build a sector decarbonization strategy. Type: ${etType}. State: ${currentETState}. Goals: ${etGoals}. Respond in JSON: { transition_strategy: string, decarbonization_pathway: string[], electrification_plan: string[], hydrogen_integration: string[], ccus_program: string[], financing_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/nonprofitstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { npType, currentNPState, npGoals } = req.body;
+  const prompt = `You are a nonprofit strategy expert. Build a comprehensive nonprofit strategy. Type: ${npType}. State: ${currentNPState}. Goals: ${npGoals}. Respond in JSON: { nonprofit_strategy: string, revenue_diversification: string[], program_impact: string[], organizational_capacity: string[], digital_transformation: string[], advocacy_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/impactinvest', requireAuth, async (req: AuthRequest, res: any) => {
+  const { impactType, currentImpactState, impactGoals } = req.body;
+  const prompt = `You are an impact investing and ESG strategy expert. Build an impact strategy. Type: ${impactType}. State: ${currentImpactState}. Goals: ${impactGoals}. Respond in JSON: { impact_strategy: string, esg_framework: string[], impact_measurement: string[], sdg_alignment: string[], blended_finance: string[], reporting_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/socialent', requireAuth, async (req: AuthRequest, res: any) => {
+  const { seType, currentSEState, seGoals } = req.body;
+  const prompt = `You are a social enterprise strategy expert. Build a social enterprise strategy. Type: ${seType}. State: ${currentSEState}. Goals: ${seGoals}. Respond in JSON: { social_enterprise_strategy: string, revenue_model: string[], impact_metrics: string[], scaling_approach: string[], financing_structure: string[], stakeholder_engagement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/philanthropy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { philType, currentPhilState, philGoals } = req.body;
+  const prompt = `You are a philanthropy and foundation strategy expert. Build a foundation strategy. Type: ${philType}. State: ${currentPhilState}. Goals: ${philGoals}. Respond in JSON: { foundation_strategy: string, grantmaking_approach: string[], impact_focus: string[], pri_mri_program: string[], collaboration_model: string[], learning_evaluation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/fundraising', requireAuth, async (req: AuthRequest, res: any) => {
+  const { frType, currentFRState, frGoals } = req.body;
+  const prompt = `You are a nonprofit fundraising strategy expert. Build a fundraising strategy. Type: ${frType}. State: ${currentFRState}. Goals: ${frGoals}. Respond in JSON: { fundraising_strategy: string, major_gifts_program: string[], donor_retention: string[], digital_fundraising: string[], planned_giving: string[], corporate_partnerships: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/commdev', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cdType, currentCDState, cdGoals } = req.body;
+  const prompt = `You are a community development strategy expert. Build a place-based community strategy. Type: ${cdType}. State: ${currentCDState}. Goals: ${cdGoals}. Respond in JSON: { community_strategy: string, needs_assessment: string[], asset_mapping: string[], housing_program: string[], economic_development: string[], equity_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/ednonprofit', requireAuth, async (req: AuthRequest, res: any) => {
+  const { enType, currentENState, enGoals } = req.body;
+  const prompt = `You are an education nonprofit strategy expert. Build an education nonprofit strategy. Type: ${enType}. State: ${currentENState}. Goals: ${enGoals}. Respond in JSON: { education_strategy: string, program_model: string[], student_outcomes: string[], equity_approach: string[], funding_model: string[], scaling_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/healthnp', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hnType, currentHNState, hnGoals } = req.body;
+  const prompt = `You are a health nonprofit strategy expert. Build a community health strategy. Type: ${hnType}. State: ${currentHNState}. Goals: ${hnGoals}. Respond in JSON: { health_strategy: string, access_program: string[], outcomes_framework: string[], equity_approach: string[], funding_model: string[], technology_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/envorg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { envType, currentEnvState, envGoals } = req.body;
+  const prompt = `You are an environmental nonprofit strategy expert. Build an environmental strategy. Type: ${envType}. State: ${currentEnvState}. Goals: ${envGoals}. Respond in JSON: { environmental_strategy: string, conservation_program: string[], climate_advocacy: string[], environmental_justice: string[], corporate_engagement: string[], coalition_building: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/nonprofit/disaster', requireAuth, async (req: AuthRequest, res: any) => {
+  const { drType, currentDRState, drGoals } = req.body;
+  const prompt = `You are a disaster relief and humanitarian strategy expert. Build a humanitarian aid strategy. Type: ${drType}. State: ${currentDRState}. Goals: ${drGoals}. Respond in JSON: { relief_strategy: string, response_capacity: string[], preparedness_plan: string[], localization_approach: string[], coordination_framework: string[], technology_program: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
