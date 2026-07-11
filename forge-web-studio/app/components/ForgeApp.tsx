@@ -4504,6 +4504,16 @@ ForgeTab_aviationstrategy7417,
 ForgeTab_maritimeshipping7418,
 ForgeTab_railmobility7419,
 ForgeTab_mobilityplatform7420,
+ForgeTab_manufacturingstrat7421,
+ForgeTab_industry407422,
+ForgeTab_supplyresilience7423,
+ForgeTab_additivemanufacture7424,
+ForgeTab_roboticsautomation7425,
+ForgeTab_semiconductorstrat7426,
+ForgeTab_aerospacestrategy7427,
+ForgeTab_leanopex7428,
+ForgeTab_manufacturingai7429,
+ForgeTab_sustainablemfg7430,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -65901,6 +65911,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'maritimeshipping7418' && <ForgeTab_maritimeshipping7418 />}
               {(mainTab as string) === 'railmobility7419' && <ForgeTab_railmobility7419 />}
               {(mainTab as string) === 'mobilityplatform7420' && <ForgeTab_mobilityplatform7420 />}
+              {(mainTab as string) === 'manufacturingstrat7421' && <ForgeTab_manufacturingstrat7421 />}
+              {(mainTab as string) === 'industry407422' && <ForgeTab_industry407422 />}
+              {(mainTab as string) === 'supplyresilience7423' && <ForgeTab_supplyresilience7423 />}
+              {(mainTab as string) === 'additivemanufacture7424' && <ForgeTab_additivemanufacture7424 />}
+              {(mainTab as string) === 'roboticsautomation7425' && <ForgeTab_roboticsautomation7425 />}
+              {(mainTab as string) === 'semiconductorstrat7426' && <ForgeTab_semiconductorstrat7426 />}
+              {(mainTab as string) === 'aerospacestrategy7427' && <ForgeTab_aerospacestrategy7427 />}
+              {(mainTab as string) === 'leanopex7428' && <ForgeTab_leanopex7428 />}
+              {(mainTab as string) === 'manufacturingai7429' && <ForgeTab_manufacturingai7429 />}
+              {(mainTab as string) === 'sustainablemfg7430' && <ForgeTab_sustainablemfg7430 />}
       </div>
     </div>
   );
