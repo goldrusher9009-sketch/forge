@@ -2324,6 +2324,16 @@ ForgeTab_rwastrategy5237,
 ForgeTab_blockchainenterprise5238,
 ForgeTab_cryptoregulatory5239,
 ForgeTab_layer2strategy5240,
+ForgeTab_aistrategy5241,
+ForgeTab_llmstrategy5242,
+ForgeTab_mlplatform5243,
+ForgeTab_computervision5244,
+ForgeTab_nlpstrategy5245,
+ForgeTab_aigovernance5246,
+ForgeTab_aidatastrategy5247,
+ForgeTab_aisaas5248,
+ForgeTab_aiagents5249,
+ForgeTab_aihardware5250,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -61541,6 +61551,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'blockchainenterprise5238' && <ForgeTab_blockchainenterprise5238 />}
               {(mainTab as string) === 'cryptoregulatory5239' && <ForgeTab_cryptoregulatory5239 />}
               {(mainTab as string) === 'layer2strategy5240' && <ForgeTab_layer2strategy5240 />}
+              {(mainTab as string) === 'aistrategy5241' && <ForgeTab_aistrategy5241 />}
+              {(mainTab as string) === 'llmstrategy5242' && <ForgeTab_llmstrategy5242 />}
+              {(mainTab as string) === 'mlplatform5243' && <ForgeTab_mlplatform5243 />}
+              {(mainTab as string) === 'computervision5244' && <ForgeTab_computervision5244 />}
+              {(mainTab as string) === 'nlpstrategy5245' && <ForgeTab_nlpstrategy5245 />}
+              {(mainTab as string) === 'aigovernance5246' && <ForgeTab_aigovernance5246 />}
+              {(mainTab as string) === 'aidatastrategy5247' && <ForgeTab_aidatastrategy5247 />}
+              {(mainTab as string) === 'aisaas5248' && <ForgeTab_aisaas5248 />}
+              {(mainTab as string) === 'aiagents5249' && <ForgeTab_aiagents5249 />}
+              {(mainTab as string) === 'aihardware5250' && <ForgeTab_aihardware5250 />}
       </div>
     </div>
   );
