@@ -2014,6 +2014,16 @@ ForgeTab_commercialRE4927,
 ForgeTab_realestatedev4928,
 ForgeTab_smartbuilding4929,
 ForgeTab_realestatefin4930,
+ForgeTab_hospitalitystrat4931,
+ForgeTab_travelstrategy4932,
+ForgeTab_restaurantstrat4933,
+ForgeTab_airlinestrat4934,
+ForgeTab_cruisestrat4935,
+ForgeTab_destinationmgmt4936,
+ForgeTab_shorttermrental4937,
+ForgeTab_wellnesstravel4938,
+ForgeTab_eventsvenue4939,
+ForgeTab_traveltech4940,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -60921,6 +60931,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'realestatedev4928' && <ForgeTab_realestatedev4928 />}
               {(mainTab as string) === 'smartbuilding4929' && <ForgeTab_smartbuilding4929 />}
               {(mainTab as string) === 'realestatefin4930' && <ForgeTab_realestatefin4930 />}
+              {(mainTab as string) === 'hospitalitystrat4931' && <ForgeTab_hospitalitystrat4931 />}
+              {(mainTab as string) === 'travelstrategy4932' && <ForgeTab_travelstrategy4932 />}
+              {(mainTab as string) === 'restaurantstrat4933' && <ForgeTab_restaurantstrat4933 />}
+              {(mainTab as string) === 'airlinestrat4934' && <ForgeTab_airlinestrat4934 />}
+              {(mainTab as string) === 'cruisestrat4935' && <ForgeTab_cruisestrat4935 />}
+              {(mainTab as string) === 'destinationmgmt4936' && <ForgeTab_destinationmgmt4936 />}
+              {(mainTab as string) === 'shorttermrental4937' && <ForgeTab_shorttermrental4937 />}
+              {(mainTab as string) === 'wellnesstravel4938' && <ForgeTab_wellnesstravel4938 />}
+              {(mainTab as string) === 'eventsvenue4939' && <ForgeTab_eventsvenue4939 />}
+              {(mainTab as string) === 'traveltech4940' && <ForgeTab_traveltech4940 />}
       </div>
     </div>
   );
