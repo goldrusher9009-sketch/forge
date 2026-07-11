@@ -3514,6 +3514,16 @@ ForgeTab_growthmktg6427,
 ForgeTab_eventmarketing6428,
 ForgeTab_productmarketing6429,
 ForgeTab_prcomms6430,
+ForgeTab_customerinsights6431,
+ForgeTab_userresearch6432,
+ForgeTab_communitystrategy6433,
+ForgeTab_npsimprovement6434,
+ForgeTab_b2bcxstrategy6435,
+ForgeTab_personalization6436,
+ForgeTab_onboardingstrategy6437,
+ForgeTab_churnprevention6438,
+ForgeTab_feedbackloops6439,
+ForgeTab_customeradvocacy6440,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -63921,6 +63931,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'eventmarketing6428' && <ForgeTab_eventmarketing6428 />}
               {(mainTab as string) === 'productmarketing6429' && <ForgeTab_productmarketing6429 />}
               {(mainTab as string) === 'prcomms6430' && <ForgeTab_prcomms6430 />}
+              {(mainTab as string) === 'customerinsights6431' && <ForgeTab_customerinsights6431 />}
+              {(mainTab as string) === 'userresearch6432' && <ForgeTab_userresearch6432 />}
+              {(mainTab as string) === 'communitystrategy6433' && <ForgeTab_communitystrategy6433 />}
+              {(mainTab as string) === 'npsimprovement6434' && <ForgeTab_npsimprovement6434 />}
+              {(mainTab as string) === 'b2bcxstrategy6435' && <ForgeTab_b2bcxstrategy6435 />}
+              {(mainTab as string) === 'personalization6436' && <ForgeTab_personalization6436 />}
+              {(mainTab as string) === 'onboardingstrategy6437' && <ForgeTab_onboardingstrategy6437 />}
+              {(mainTab as string) === 'churnprevention6438' && <ForgeTab_churnprevention6438 />}
+              {(mainTab as string) === 'feedbackloops6439' && <ForgeTab_feedbackloops6439 />}
+              {(mainTab as string) === 'customeradvocacy6440' && <ForgeTab_customeradvocacy6440 />}
       </div>
     </div>
   );

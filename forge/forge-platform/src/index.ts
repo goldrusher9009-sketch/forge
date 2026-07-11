@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1131.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1132.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -231858,5 +231858,65 @@ app.post('/api/marketing/productmktg', requireAuth, async (req: AuthRequest, res
 app.post('/api/marketing/prcomms', requireAuth, async (req: AuthRequest, res: any) => {
   const { prType, currentPRState, prGoals } = req.body;
   const prompt = `You are a PR and communications strategy expert. Build a PR strategy. Type: ${prType}. State: ${currentPRState}. Goals: ${prGoals}. Respond in JSON: { pr_strategy: string, media_relations: string[], thought_leadership: string[], crisis_playbook: string[], analyst_program: string[], ai_pr_tools: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/custinsights', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ciType, currentCIState, ciGoals } = req.body;
+  const prompt = `You are a customer insights and analytics strategy expert. Build a customer insights strategy. Type: ${ciType}. State: ${currentCIState}. Goals: ${ciGoals}. Respond in JSON: { insights_strategy: string, data_collection: string[], segmentation_model: string[], analytics_framework: string[], ai_prediction: string[], action_planning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/userresearch', requireAuth, async (req: AuthRequest, res: any) => {
+  const { urType, currentURState, urGoals } = req.body;
+  const prompt = `You are a user research and UX strategy expert. Build a UX research strategy. Type: ${urType}. State: ${currentURState}. Goals: ${urGoals}. Respond in JSON: { ux_strategy: string, research_methods: string[], usability_framework: string[], accessibility_plan: string[], insight_operationalization: string[], ai_ux_tools: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/community', requireAuth, async (req: AuthRequest, res: any) => {
+  const { comType, currentComState, comGoals } = req.body;
+  const prompt = `You are a community building and engagement strategy expert. Build a community strategy. Type: ${comType}. State: ${currentComState}. Goals: ${comGoals}. Respond in JSON: { community_strategy: string, platform_selection: string[], programming_design: string[], moderation_model: string[], advocacy_program: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/npsstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { npsType, currentNPSScore, npsGoals } = req.body;
+  const prompt = `You are an NPS and customer satisfaction improvement expert. Build a satisfaction improvement strategy. Type: ${npsType}. Current: ${currentNPSScore}. Goals: ${npsGoals}. Respond in JSON: { satisfaction_strategy: string, detractor_recovery: string[], closed_loop_program: string[], cultural_shift: string[], ai_sentiment: string[], measurement_cadence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/b2bcx', requireAuth, async (req: AuthRequest, res: any) => {
+  const { b2bcxType, currentB2BCXState, b2bcxGoals } = req.body;
+  const prompt = `You are a B2B customer experience and account management expert. Build a B2B CX strategy. Type: ${b2bcxType}. State: ${currentB2BCXState}. Goals: ${b2bcxGoals}. Respond in JSON: { b2b_cx_strategy: string, account_tiering: string[], health_score_model: string[], ebr_qbr_program: string[], expansion_playbook: string[], ai_cs_tools: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/personalize', requireAuth, async (req: AuthRequest, res: any) => {
+  const { persType, currentPersState, persGoals } = req.body;
+  const prompt = `You are a personalization and recommendation engine strategy expert. Build a personalization strategy. Type: ${persType}. State: ${currentPersState}. Goals: ${persGoals}. Respond in JSON: { personalization_strategy: string, data_foundation: string[], algorithm_design: string[], cross_channel_delivery: string[], privacy_framework: string[], measurement_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/onboarding', requireAuth, async (req: AuthRequest, res: any) => {
+  const { onbType, currentOnbState, onbGoals } = req.body;
+  const prompt = `You are a customer onboarding and activation strategy expert. Build an onboarding strategy. Type: ${onbType}. State: ${currentOnbState}. Goals: ${onbGoals}. Respond in JSON: { onboarding_strategy: string, activation_framework: string[], aha_moment_design: string[], automation_program: string[], enterprise_track: string[], measurement_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/churnprev', requireAuth, async (req: AuthRequest, res: any) => {
+  const { churnType, currentChurnRate, churnGoals } = req.body;
+  const prompt = `You are a churn prevention and retention strategy expert. Build a churn prevention strategy. Type: ${churnType}. Current rate: ${currentChurnRate}. Goals: ${churnGoals}. Respond in JSON: { churn_strategy: string, predictive_model: string[], early_warning_system: string[], intervention_playbooks: string[], win_back_program: string[], ai_retention_tools: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/feedbackloop', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fbloopType, currentFBState, fbloopGoals } = req.body;
+  const prompt = `You are a customer feedback loop and VoC program expert. Build a feedback loop strategy. Type: ${fbloopType}. State: ${currentFBState}. Goals: ${fbloopGoals}. Respond in JSON: { voc_strategy: string, listening_architecture: string[], action_management: string[], closed_loop_design: string[], product_influence: string[], governance_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cx/advocacy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { advType, currentAdvState, advGoals } = req.body;
+  const prompt = `You are a customer advocacy and reference program expert. Build an advocacy strategy. Type: ${advType}. State: ${currentAdvState}. Goals: ${advGoals}. Respond in JSON: { advocacy_strategy: string, advocate_identification: string[], reference_program: string[], review_amplification: string[], co_marketing_model: string[], measurement_framework: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
