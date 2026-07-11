@@ -2184,6 +2184,16 @@ ForgeTab_appsecu5097,
 ForgeTab_otsecurity5098,
 ForgeTab_privacystrat5099,
 ForgeTab_supplychain5100,
+ForgeTab_datastrategy5101,
+ForgeTab_mlopsplatform5102,
+ForgeTab_aistrategy5103,
+ForgeTab_cloudinfra5104,
+ForgeTab_datagovernance5105,
+ForgeTab_analyticsbi5106,
+ForgeTab_genaiplatform5107,
+ForgeTab_datamesh5108,
+ForgeTab_realtimedatastream5109,
+ForgeTab_dataplatform5110,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -61261,6 +61271,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'otsecurity5098' && <ForgeTab_otsecurity5098 />}
               {(mainTab as string) === 'privacystrat5099' && <ForgeTab_privacystrat5099 />}
               {(mainTab as string) === 'supplychain5100' && <ForgeTab_supplychain5100 />}
+              {(mainTab as string) === 'datastrategy5101' && <ForgeTab_datastrategy5101 />}
+              {(mainTab as string) === 'mlopsplatform5102' && <ForgeTab_mlopsplatform5102 />}
+              {(mainTab as string) === 'aistrategy5103' && <ForgeTab_aistrategy5103 />}
+              {(mainTab as string) === 'cloudinfra5104' && <ForgeTab_cloudinfra5104 />}
+              {(mainTab as string) === 'datagovernance5105' && <ForgeTab_datagovernance5105 />}
+              {(mainTab as string) === 'analyticsbi5106' && <ForgeTab_analyticsbi5106 />}
+              {(mainTab as string) === 'genaiplatform5107' && <ForgeTab_genaiplatform5107 />}
+              {(mainTab as string) === 'datamesh5108' && <ForgeTab_datamesh5108 />}
+              {(mainTab as string) === 'realtimedatastream5109' && <ForgeTab_realtimedatastream5109 />}
+              {(mainTab as string) === 'dataplatform5110' && <ForgeTab_dataplatform5110 />}
       </div>
     </div>
   );
