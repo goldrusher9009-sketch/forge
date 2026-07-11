@@ -1844,6 +1844,16 @@ ForgeTab_embeddedfinance4757,
 ForgeTab_regulatorytech4758,
 ForgeTab_openbankstrat4759,
 ForgeTab_lendingtech4760,
+ForgeTab_saasstrat4761,
+ForgeTab_plgstrategy4762,
+ForgeTab_enterprisesales4763,
+ForgeTab_pricingstrat4764,
+ForgeTab_customersuccessstrat4765,
+ForgeTab_ainativersaas4766,
+ForgeTab_verticalsaas4767,
+ForgeTab_saasmarketplace4768,
+ForgeTab_saasops4769,
+ForgeTab_opensourcestrat4770,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -60581,6 +60591,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'regulatorytech4758' && <ForgeTab_regulatorytech4758 />}
               {(mainTab as string) === 'openbankstrat4759' && <ForgeTab_openbankstrat4759 />}
               {(mainTab as string) === 'lendingtech4760' && <ForgeTab_lendingtech4760 />}
+              {(mainTab as string) === 'saasstrat4761' && <ForgeTab_saasstrat4761 />}
+              {(mainTab as string) === 'plgstrategy4762' && <ForgeTab_plgstrategy4762 />}
+              {(mainTab as string) === 'enterprisesales4763' && <ForgeTab_enterprisesales4763 />}
+              {(mainTab as string) === 'pricingstrat4764' && <ForgeTab_pricingstrat4764 />}
+              {(mainTab as string) === 'customersuccessstrat4765' && <ForgeTab_customersuccessstrat4765 />}
+              {(mainTab as string) === 'ainativersaas4766' && <ForgeTab_ainativersaas4766 />}
+              {(mainTab as string) === 'verticalsaas4767' && <ForgeTab_verticalsaas4767 />}
+              {(mainTab as string) === 'saasmarketplace4768' && <ForgeTab_saasmarketplace4768 />}
+              {(mainTab as string) === 'saasops4769' && <ForgeTab_saasops4769 />}
+              {(mainTab as string) === 'opensourcestrat4770' && <ForgeTab_opensourcestrat4770 />}
       </div>
     </div>
   );
