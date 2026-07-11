@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1147.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1148.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -232818,5 +232818,65 @@ app.post('/api/proptech/affordhouse', requireAuth, async (req: AuthRequest, res:
 app.post('/api/proptech/remarket', requireAuth, async (req: AuthRequest, res: any) => {
   const { rmdType, currentRMDState, rmdGoals } = req.body;
   const prompt = `You are a real estate market data and analytics strategy expert. Build a RE data strategy. Type: ${rmdType}. State: ${currentRMDState}. Goals: ${rmdGoals}. Respond in JSON: { re_data_strategy: string, avm_improvement: string[], data_partnerships: string[], ai_analytics: string[], api_platform: string[], market_expansion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/legaltech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ltechType, currentLTechState, ltechGoals } = req.body;
+  const prompt = `You are a legal technology and law firm strategy expert. Build a LegalTech strategy. Type: ${ltechType}. State: ${currentLTechState}. Goals: ${ltechGoals}. Respond in JSON: { legaltech_strategy: string, ai_legal_tools: string[], document_automation: string[], ediscovery_platform: string[], client_portal: string[], pricing_innovation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/contracttech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { clmType, currentCLMState, clmGoals } = req.body;
+  const prompt = `You are a contract lifecycle management and legal operations strategy expert. Build a CLM strategy. Type: ${clmType}. State: ${currentCLMState}. Goals: ${clmGoals}. Respond in JSON: { clm_strategy: string, contract_automation: string[], ai_risk_review: string[], playbook_development: string[], integration_plan: string[], analytics_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/compliancetech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { comptechType, currentCompTechState, comptechGoals } = req.body;
+  const prompt = `You are a compliance technology and regulatory intelligence strategy expert. Build a compliance tech strategy. Type: ${comptechType}. State: ${currentCompTechState}. Goals: ${comptechGoals}. Respond in JSON: { compliance_tech_strategy: string, automation_roadmap: string[], ai_monitoring: string[], regulatory_change_management: string[], audit_trail: string[], integration_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/ediscovery', requireAuth, async (req: AuthRequest, res: any) => {
+  const { edType, currentEDState, edGoals } = req.body;
+  const prompt = `You are an eDiscovery and litigation support technology strategy expert. Build an eDiscovery strategy. Type: ${edType}. State: ${currentEDState}. Goals: ${edGoals}. Respond in JSON: { ediscovery_strategy: string, ai_tar_implementation: string[], cost_reduction: string[], cloud_platform: string[], early_case_assessment: string[], defensibility_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/iptech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { iptechType, currentIPTechState, iptechGoals } = req.body;
+  const prompt = `You are an IP management and patent technology strategy expert. Build an IP tech strategy. Type: ${iptechType}. State: ${currentIPTechState}. Goals: ${iptechGoals}. Respond in JSON: { ip_tech_strategy: string, portfolio_management: string[], ai_patent_tools: string[], licensing_program: string[], freedom_to_operate: string[], ip_valuation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/legalresearch', requireAuth, async (req: AuthRequest, res: any) => {
+  const { lrType, currentLRState, lrGoals } = req.body;
+  const prompt = `You are a legal research technology and AI strategy expert. Build a legal research tech strategy. Type: ${lrType}. State: ${currentLRState}. Goals: ${lrGoals}. Respond in JSON: { legal_research_strategy: string, ai_research_tools: string[], brief_automation: string[], predictive_analytics: string[], regulatory_monitoring: string[], workflow_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/legalbilling', requireAuth, async (req: AuthRequest, res: any) => {
+  const { lbType, currentLBState, lbGoals } = req.body;
+  const prompt = `You are a legal billing and matter management strategy expert. Build a legal billing strategy. Type: ${lbType}. State: ${currentLBState}. Goals: ${lbGoals}. Respond in JSON: { legal_billing_strategy: string, billing_automation: string[], afa_models: string[], spend_analytics: string[], outside_counsel_management: string[], pricing_intelligence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/accessjustice', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ajType, currentAJState, ajGoals } = req.body;
+  const prompt = `You are an access to justice and legal aid technology strategy expert. Build an access to justice strategy. Type: ${ajType}. State: ${currentAJState}. Goals: ${ajGoals}. Respond in JSON: { access_justice_strategy: string, ai_legal_tools: string[], self_help_platform: string[], pro_bono_program: string[], digital_equity: string[], funding_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/courttech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ctjType, currentCTJState, ctjGoals } = req.body;
+  const prompt = `You are a court technology and judicial administration strategy expert. Build a court tech strategy. Type: ${ctjType}. State: ${currentCTJState}. Goals: ${ctjGoals}. Respond in JSON: { court_tech_strategy: string, case_management_system: string[], virtual_hearing_platform: string[], ai_tools: string[], public_access: string[], analytics_reporting: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/legalops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { lopsType, currentLOpsState, lopsGoals } = req.body;
+  const prompt = `You are a legal operations and in-house legal strategy expert. Build a legal ops strategy. Type: ${lopsType}. State: ${currentLOpsState}. Goals: ${lopsGoals}. Respond in JSON: { legal_ops_strategy: string, spend_management: string[], ai_tools_roadmap: string[], outside_counsel_management: string[], contract_operations: string[], metrics_framework: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
