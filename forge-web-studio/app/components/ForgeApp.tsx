@@ -4564,6 +4564,16 @@ ForgeTab_mortgagetech7477,
 ForgeTab_urbanplanning7478,
 ForgeTab_hospitalityre7479,
 ForgeTab_realestateesg7480,
+ForgeTab_supplychain7481,
+ForgeTab_logisticstech7482,
+ForgeTab_procurementstrat7483,
+ForgeTab_warehouseops7484,
+ForgeTab_inventorymanage7485,
+ForgeTab_tradefinance7486,
+ForgeTab_coldchainstrat7487,
+ForgeTab_reverselogistics7488,
+ForgeTab_portlogistics7489,
+ForgeTab_freighttech7490,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -66021,6 +66031,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'urbanplanning7478' && <ForgeTab_urbanplanning7478 />}
               {(mainTab as string) === 'hospitalityre7479' && <ForgeTab_hospitalityre7479 />}
               {(mainTab as string) === 'realestateesg7480' && <ForgeTab_realestateesg7480 />}
+              {(mainTab as string) === 'supplychain7481' && <ForgeTab_supplychain7481 />}
+              {(mainTab as string) === 'logisticstech7482' && <ForgeTab_logisticstech7482 />}
+              {(mainTab as string) === 'procurementstrat7483' && <ForgeTab_procurementstrat7483 />}
+              {(mainTab as string) === 'warehouseops7484' && <ForgeTab_warehouseops7484 />}
+              {(mainTab as string) === 'inventorymanage7485' && <ForgeTab_inventorymanage7485 />}
+              {(mainTab as string) === 'tradefinance7486' && <ForgeTab_tradefinance7486 />}
+              {(mainTab as string) === 'coldchainstrat7487' && <ForgeTab_coldchainstrat7487 />}
+              {(mainTab as string) === 'reverselogistics7488' && <ForgeTab_reverselogistics7488 />}
+              {(mainTab as string) === 'portlogistics7489' && <ForgeTab_portlogistics7489 />}
+              {(mainTab as string) === 'freighttech7490' && <ForgeTab_freighttech7490 />}
       </div>
     </div>
   );
