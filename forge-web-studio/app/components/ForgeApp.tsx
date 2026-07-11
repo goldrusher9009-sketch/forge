@@ -3464,6 +3464,16 @@ ForgeTab_ecosystemstrategy6377,
 ForgeTab_costoptimization6378,
 ForgeTab_portfoliomgmt6379,
 ForgeTab_leadershipstrategy6380,
+ForgeTab_consultingstrat6381,
+ForgeTab_accountingstrat6382,
+ForgeTab_taxstrategy6383,
+ForgeTab_restructuringstrat6384,
+ForgeTab_valuationstrat6385,
+ForgeTab_strategiccoms6386,
+ForgeTab_boardgovernance6387,
+ForgeTab_strategyexecution6388,
+ForgeTab_scenarioplanning6389,
+ForgeTab_ceooffice6390,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -63821,6 +63831,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'costoptimization6378' && <ForgeTab_costoptimization6378 />}
               {(mainTab as string) === 'portfoliomgmt6379' && <ForgeTab_portfoliomgmt6379 />}
               {(mainTab as string) === 'leadershipstrategy6380' && <ForgeTab_leadershipstrategy6380 />}
+              {(mainTab as string) === 'consultingstrat6381' && <ForgeTab_consultingstrat6381 />}
+              {(mainTab as string) === 'accountingstrat6382' && <ForgeTab_accountingstrat6382 />}
+              {(mainTab as string) === 'taxstrategy6383' && <ForgeTab_taxstrategy6383 />}
+              {(mainTab as string) === 'restructuringstrat6384' && <ForgeTab_restructuringstrat6384 />}
+              {(mainTab as string) === 'valuationstrat6385' && <ForgeTab_valuationstrat6385 />}
+              {(mainTab as string) === 'strategiccoms6386' && <ForgeTab_strategiccoms6386 />}
+              {(mainTab as string) === 'boardgovernance6387' && <ForgeTab_boardgovernance6387 />}
+              {(mainTab as string) === 'strategyexecution6388' && <ForgeTab_strategyexecution6388 />}
+              {(mainTab as string) === 'scenarioplanning6389' && <ForgeTab_scenarioplanning6389 />}
+              {(mainTab as string) === 'ceooffice6390' && <ForgeTab_ceooffice6390 />}
       </div>
     </div>
   );

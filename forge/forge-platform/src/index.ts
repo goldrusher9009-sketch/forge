@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1126.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1127.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -231558,5 +231558,65 @@ app.post('/api/corpstrat/portfolio', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/corpstrat/leadership', requireAuth, async (req: AuthRequest, res: any) => {
   const { ldType, currentLDState, ldGoals } = req.body;
   const prompt = `You are a leadership development and executive strategy expert. Build a leadership strategy. Type: ${ldType}. State: ${currentLDState}. Goals: ${ldGoals}. Respond in JSON: { leadership_strategy: string, succession_plan: string[], executive_development: string[], board_governance: string[], dei_leadership: string[], ai_leadership_tools: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consulting/consulting', requireAuth, async (req: AuthRequest, res: any) => {
+  const { conType, currentConState, conGoals } = req.body;
+  const prompt = `You are a management consulting strategy and delivery expert. Build a consulting strategy. Type: ${conType}. State: ${currentConState}. Goals: ${conGoals}. Respond in JSON: { consulting_strategy: string, practice_development: string[], ai_consulting: string[], talent_model: string[], thought_leadership: string[], client_development: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consulting/accounting', requireAuth, async (req: AuthRequest, res: any) => {
+  const { acType, currentACState, acGoals } = req.body;
+  const prompt = `You are an accounting and audit strategy expert. Build an accounting strategy. Type: ${acType}. State: ${currentACState}. Goals: ${acGoals}. Respond in JSON: { accounting_strategy: string, audit_innovation: string[], advisory_growth: string[], ai_automation: string[], esg_reporting: string[], talent_development: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consulting/taxstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { txType, currentTXState, txGoals } = req.body;
+  const prompt = `You are a tax strategy and transfer pricing expert. Build a tax strategy. Type: ${txType}. State: ${currentTXState}. Goals: ${txGoals}. Respond in JSON: { tax_strategy: string, etr_optimization: string[], transfer_pricing: string[], rd_credit_program: string[], pillar_two_compliance: string[], ai_tax_tools: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consulting/restructuring', requireAuth, async (req: AuthRequest, res: any) => {
+  const { rsType, currentRSState, rsGoals } = req.body;
+  const prompt = `You are a restructuring and turnaround strategy expert. Build a restructuring strategy. Type: ${rsType}. State: ${currentRSState}. Goals: ${rsGoals}. Respond in JSON: { restructuring_strategy: string, liquidity_stabilization: string[], operational_turnaround: string[], creditor_negotiation: string[], workforce_plan: string[], value_recovery: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consulting/valuation', requireAuth, async (req: AuthRequest, res: any) => {
+  const { vlType, currentVLState, vlGoals } = req.body;
+  const prompt = `You are a business valuation and due diligence strategy expert. Build a valuation strategy. Type: ${vlType}. State: ${currentVLState}. Goals: ${vlGoals}. Respond in JSON: { valuation_strategy: string, dcf_model: string[], comparable_analysis: string[], lbo_model: string[], ip_valuation: string[], ai_due_diligence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consulting/stratcoms', requireAuth, async (req: AuthRequest, res: any) => {
+  const { scType, currentSCState, scGoals } = req.body;
+  const prompt = `You are a strategic communications and corporate affairs expert. Build a strategic communications strategy. Type: ${scType}. State: ${currentSCState}. Goals: ${scGoals}. Respond in JSON: { communications_strategy: string, narrative_framework: string[], crisis_playbook: string[], investor_relations: string[], esg_communications: string[], digital_comms: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consulting/boardgov', requireAuth, async (req: AuthRequest, res: any) => {
+  const { bgType, currentBGState, bgGoals } = req.body;
+  const prompt = `You are a board governance and corporate secretary strategy expert. Build a board governance strategy. Type: ${bgType}. State: ${currentBGState}. Goals: ${bgGoals}. Respond in JSON: { board_governance: string, composition_plan: string[], committee_design: string[], esg_governance: string[], activist_preparedness: string[], ai_governance_tools: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consulting/stratexec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { seType, currentSEState, seGoals } = req.body;
+  const prompt = `You are a strategy execution and OKR management expert. Build a strategy execution framework. Type: ${seType}. State: ${currentSEState}. Goals: ${seGoals}. Respond in JSON: { execution_strategy: string, okr_design: string[], cascading_framework: string[], accountability_system: string[], ai_strategy_tools: string[], review_cadence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consulting/scenario', requireAuth, async (req: AuthRequest, res: any) => {
+  const { spType, currentSPState, spGoals } = req.body;
+  const prompt = `You are a scenario planning and strategic foresight expert. Build a scenario planning strategy. Type: ${spType}. State: ${currentSPState}. Goals: ${spGoals}. Respond in JSON: { scenario_strategy: string, driver_analysis: string[], scenario_construction: string[], implications_map: string[], strategic_options: string[], monitoring_signals: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/consulting/ceooffice', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ceoType, currentCEOState, ceoGoals } = req.body;
+  const prompt = `You are a CEO office and strategy office operations expert. Build a CEO office strategy. Type: ${ceoType}. State: ${currentCEOState}. Goals: ${ceoGoals}. Respond in JSON: { ceo_office_strategy: string, operating_model: string[], board_management: string[], strategy_rhythm: string[], ai_decision_support: string[], transformation_oversight: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
