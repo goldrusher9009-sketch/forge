@@ -4724,6 +4724,16 @@ ForgeTab_diplomaticstrat7637,
 ForgeTab_culturalintell7638,
 ForgeTab_scenarioplanning7639,
 ForgeTab_competitiveintel7640,
+ForgeTab_aithinkingos7641,
+ForgeTab_quantumcomputing7642,
+ForgeTab_syntheticbiology7643,
+ForgeTab_neurotechstrat7644,
+ForgeTab_spacetechstrat7645,
+ForgeTab_advancedmaterials7646,
+ForgeTab_roboticsauto7647,
+ForgeTab_xrstrategy7648,
+ForgeTab_fusionenergy7649,
+ForgeTab_aisafetygov7650,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -66341,6 +66351,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'culturalintell7638' && <ForgeTab_culturalintell7638 />}
               {(mainTab as string) === 'scenarioplanning7639' && <ForgeTab_scenarioplanning7639 />}
               {(mainTab as string) === 'competitiveintel7640' && <ForgeTab_competitiveintel7640 />}
+              {(mainTab as string) === 'aithinkingos7641' && <ForgeTab_aithinkingos7641 />}
+              {(mainTab as string) === 'quantumcomputing7642' && <ForgeTab_quantumcomputing7642 />}
+              {(mainTab as string) === 'syntheticbiology7643' && <ForgeTab_syntheticbiology7643 />}
+              {(mainTab as string) === 'neurotechstrat7644' && <ForgeTab_neurotechstrat7644 />}
+              {(mainTab as string) === 'spacetechstrat7645' && <ForgeTab_spacetechstrat7645 />}
+              {(mainTab as string) === 'advancedmaterials7646' && <ForgeTab_advancedmaterials7646 />}
+              {(mainTab as string) === 'roboticsauto7647' && <ForgeTab_roboticsauto7647 />}
+              {(mainTab as string) === 'xrstrategy7648' && <ForgeTab_xrstrategy7648 />}
+              {(mainTab as string) === 'fusionenergy7649' && <ForgeTab_fusionenergy7649 />}
+              {(mainTab as string) === 'aisafetygov7650' && <ForgeTab_aisafetygov7650 />}
       </div>
     </div>
   );
