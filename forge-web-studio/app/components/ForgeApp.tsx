@@ -3804,6 +3804,16 @@ ForgeTab_saascustomersuccess6717,
 ForgeTab_verticalsaas6718,
 ForgeTab_saaspricingrv6719,
 ForgeTab_saasscaleup6720,
+ForgeTab_corporatestrategy6721,
+ForgeTab_transformationstrat6722,
+ForgeTab_operationalexcel6723,
+ForgeTab_postmergerint6724,
+ForgeTab_corporategovernance6725,
+ForgeTab_strategyexecution6726,
+ForgeTab_costoptimization6727,
+ForgeTab_investorrelations6728,
+ForgeTab_growthstrategy6729,
+ForgeTab_scenarioplanning6730,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -64501,6 +64511,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'verticalsaas6718' && <ForgeTab_verticalsaas6718 />}
               {(mainTab as string) === 'saaspricingrv6719' && <ForgeTab_saaspricingrv6719 />}
               {(mainTab as string) === 'saasscaleup6720' && <ForgeTab_saasscaleup6720 />}
+              {(mainTab as string) === 'corporatestrategy6721' && <ForgeTab_corporatestrategy6721 />}
+              {(mainTab as string) === 'transformationstrat6722' && <ForgeTab_transformationstrat6722 />}
+              {(mainTab as string) === 'operationalexcel6723' && <ForgeTab_operationalexcel6723 />}
+              {(mainTab as string) === 'postmergerint6724' && <ForgeTab_postmergerint6724 />}
+              {(mainTab as string) === 'corporategovernance6725' && <ForgeTab_corporategovernance6725 />}
+              {(mainTab as string) === 'strategyexecution6726' && <ForgeTab_strategyexecution6726 />}
+              {(mainTab as string) === 'costoptimization6727' && <ForgeTab_costoptimization6727 />}
+              {(mainTab as string) === 'investorrelations6728' && <ForgeTab_investorrelations6728 />}
+              {(mainTab as string) === 'growthstrategy6729' && <ForgeTab_growthstrategy6729 />}
+              {(mainTab as string) === 'scenarioplanning6730' && <ForgeTab_scenarioplanning6730 />}
       </div>
     </div>
   );
