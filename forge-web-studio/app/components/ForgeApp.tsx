@@ -2144,6 +2144,16 @@ ForgeTab_partnerstrat5057,
 ForgeTab_b2bmarketing5058,
 ForgeTab_techstartup5059,
 ForgeTab_aistartup5060,
+ForgeTab_quantumstrat5061,
+ForgeTab_synbio5062,
+ForgeTab_advancedmat5063,
+ForgeTab_roboticsstrat5064,
+ForgeTab_photonics5065,
+ForgeTab_semiconductors5066,
+ForgeTab_nuclearenergy5067,
+ForgeTab_spacetech5068,
+ForgeTab_bioprinting5069,
+ForgeTab_deeptechwhere5070,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -61181,6 +61191,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'b2bmarketing5058' && <ForgeTab_b2bmarketing5058 />}
               {(mainTab as string) === 'techstartup5059' && <ForgeTab_techstartup5059 />}
               {(mainTab as string) === 'aistartup5060' && <ForgeTab_aistartup5060 />}
+              {(mainTab as string) === 'quantumstrat5061' && <ForgeTab_quantumstrat5061 />}
+              {(mainTab as string) === 'synbio5062' && <ForgeTab_synbio5062 />}
+              {(mainTab as string) === 'advancedmat5063' && <ForgeTab_advancedmat5063 />}
+              {(mainTab as string) === 'roboticsstrat5064' && <ForgeTab_roboticsstrat5064 />}
+              {(mainTab as string) === 'photonics5065' && <ForgeTab_photonics5065 />}
+              {(mainTab as string) === 'semiconductors5066' && <ForgeTab_semiconductors5066 />}
+              {(mainTab as string) === 'nuclearenergy5067' && <ForgeTab_nuclearenergy5067 />}
+              {(mainTab as string) === 'spacetech5068' && <ForgeTab_spacetech5068 />}
+              {(mainTab as string) === 'bioprinting5069' && <ForgeTab_bioprinting5069 />}
+              {(mainTab as string) === 'deeptechwhere5070' && <ForgeTab_deeptechwhere5070 />}
       </div>
     </div>
   );
