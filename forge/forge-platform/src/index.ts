@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1006.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1007.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -224358,5 +224358,65 @@ app.post('/api/findigital/capitalmarkets', requireAuth, async (req: AuthRequest,
 app.post('/api/findigital/fp', requireAuth, async (req: AuthRequest, res: any) => {
   const { fpType, currentFPState, fpGoals } = req.body;
   const prompt = `You are a personal finance and financial planning technology expert. Build a financial planning strategy. Type: ${fpType}. State: ${currentFPState}. Goals: ${fpGoals}. Respond in JSON: { financial_planning_strategy: string, product_design: string[], ai_personalization: string[], monetization_model: string[], b2b2c_strategy: string[], engagement_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aerodef/aerospace', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aeType, currentAEState, aeGoals } = req.body;
+  const prompt = `You are an aerospace and space strategy expert. Build an aerospace strategy. Type: ${aeType}. State: ${currentAEState}. Goals: ${aeGoals}. Respond in JSON: { aerospace_strategy: string, program_portfolio: string[], technology_roadmap: string[], supply_chain: string[], regulatory_approach: string[], growth_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aerodef/defense', requireAuth, async (req: AuthRequest, res: any) => {
+  const { defType, currentDefState, defGoals } = req.body;
+  const prompt = `You are a defense and national security strategy expert. Build a defense strategy. Type: ${defType}. State: ${currentDefState}. Goals: ${defGoals}. Respond in JSON: { defense_strategy: string, portfolio_mix: string[], capture_strategy: string[], technology_investment: string[], regulatory_compliance: string[], growth_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aerodef/aviation', requireAuth, async (req: AuthRequest, res: any) => {
+  const { avType, currentAVState, avGoals } = req.body;
+  const prompt = `You are a commercial aviation strategy expert. Build an aviation strategy. Type: ${avType}. State: ${currentAVState}. Goals: ${avGoals}. Respond in JSON: { aviation_strategy: string, network_design: string[], fleet_strategy: string[], loyalty_program: string[], cargo_expansion: string[], sustainability_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aerodef/space', requireAuth, async (req: AuthRequest, res: any) => {
+  const { spaceType, currentSpaceState, spaceGoals } = req.body;
+  const prompt = `You are a space commerce and new space strategy expert. Build a space strategy. Type: ${spaceType}. State: ${currentSpaceState}. Goals: ${spaceGoals}. Respond in JSON: { space_strategy: string, technology_roadmap: string[], market_development: string[], government_commercial_mix: string[], supply_chain: string[], financing_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aerodef/drones', requireAuth, async (req: AuthRequest, res: any) => {
+  const { droneType, currentDroneState, droneGoals } = req.body;
+  const prompt = `You are a drone and UAS strategy expert. Build a drone strategy. Type: ${droneType}. State: ${currentDroneState}. Goals: ${droneGoals}. Respond in JSON: { drone_strategy: string, regulatory_roadmap: string[], technology_platform: string[], market_application: string[], autonomy_development: string[], commercialization_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aerodef/mro', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mroType, currentMROState, mroGoals } = req.body;
+  const prompt = `You are an MRO and aviation aftermarket strategy expert. Build an MRO strategy. Type: ${mroType}. State: ${currentMROState}. Goals: ${mroGoals}. Respond in JSON: { mro_strategy: string, capacity_optimization: string[], digital_transformation: string[], predictive_maintenance: string[], parts_strategy: string[], growth_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aerodef/autonomous', requireAuth, async (req: AuthRequest, res: any) => {
+  const { autType, currentAutState, autGoals } = req.body;
+  const prompt = `You are an autonomous systems and robotics strategy expert. Build an autonomous systems strategy. Type: ${autType}. State: ${currentAutState}. Goals: ${autGoals}. Respond in JSON: { autonomous_strategy: string, technology_roadmap: string[], testing_validation: string[], regulatory_approach: string[], dual_use_model: string[], program_capture: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aerodef/defai', requireAuth, async (req: AuthRequest, res: any) => {
+  const { daiType, currentDAIState, daiGoals } = req.body;
+  const prompt = `You are a defense AI and digital warfare strategy expert. Build a defense AI strategy. Type: ${daiType}. State: ${currentDAIState}. Goals: ${daiGoals}. Respond in JSON: { defense_ai_strategy: string, capability_portfolio: string[], responsible_ai: string[], acquisition_strategy: string[], interoperability: string[], growth_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aerodef/shipbuild', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sbdType, currentSBDState, sbdGoals } = req.body;
+  const prompt = `You are a shipbuilding and naval defense strategy expert. Build a shipbuilding strategy. Type: ${sbdType}. State: ${currentSBDState}. Goals: ${sbdGoals}. Respond in JSON: { shipbuilding_strategy: string, capacity_investment: string[], workforce_development: string[], digital_shipyard: string[], autonomous_vessels: string[], program_portfolio: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aerodef/govtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gtType, currentGTState, gtGoals } = req.body;
+  const prompt = `You are a GovTech and public sector digital strategy expert. Build a GovTech strategy. Type: ${gtType}. State: ${currentGTState}. Goals: ${gtGoals}. Respond in JSON: { govtech_strategy: string, program_portfolio: string[], technology_modernization: string[], citizen_experience: string[], ai_deployment: string[], procurement_strategy: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
