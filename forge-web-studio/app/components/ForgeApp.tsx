@@ -2874,6 +2874,16 @@ ForgeTab_aibuildvsbuy5787,
 ForgeTab_aitalentstrategy5788,
 ForgeTab_edgeaistrategy5789,
 ForgeTab_airoistrategy5790,
+ForgeTab_cloudstrategy5791,
+ForgeTab_devopsstrategy5792,
+ForgeTab_databricksstrategy5793,
+ForgeTab_zerotrustsecurity5794,
+ForgeTab_finopsstrategy5795,
+ForgeTab_kubernetesplatform5796,
+ForgeTab_networkstrategy5797,
+ForgeTab_observabilitystrategy5798,
+ForgeTab_greenitinfra5799,
+ForgeTab_disasterrecovery5800,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -62641,6 +62651,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'aitalentstrategy5788' && <ForgeTab_aitalentstrategy5788 />}
               {(mainTab as string) === 'edgeaistrategy5789' && <ForgeTab_edgeaistrategy5789 />}
               {(mainTab as string) === 'airoistrategy5790' && <ForgeTab_airoistrategy5790 />}
+              {(mainTab as string) === 'cloudstrategy5791' && <ForgeTab_cloudstrategy5791 />}
+              {(mainTab as string) === 'devopsstrategy5792' && <ForgeTab_devopsstrategy5792 />}
+              {(mainTab as string) === 'databricksstrategy5793' && <ForgeTab_databricksstrategy5793 />}
+              {(mainTab as string) === 'zerotrustsecurity5794' && <ForgeTab_zerotrustsecurity5794 />}
+              {(mainTab as string) === 'finopsstrategy5795' && <ForgeTab_finopsstrategy5795 />}
+              {(mainTab as string) === 'kubernetesplatform5796' && <ForgeTab_kubernetesplatform5796 />}
+              {(mainTab as string) === 'networkstrategy5797' && <ForgeTab_networkstrategy5797 />}
+              {(mainTab as string) === 'observabilitystrategy5798' && <ForgeTab_observabilitystrategy5798 />}
+              {(mainTab as string) === 'greenitinfra5799' && <ForgeTab_greenitinfra5799 />}
+              {(mainTab as string) === 'disasterrecovery5800' && <ForgeTab_disasterrecovery5800 />}
       </div>
     </div>
   );

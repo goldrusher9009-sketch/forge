@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1067.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1068.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -228018,5 +228018,65 @@ app.post('/api/aimlops/edgeai', requireAuth, async (req: AuthRequest, res: any) 
 app.post('/api/aimlops/airoi', requireAuth, async (req: AuthRequest, res: any) => {
   const { aiROIType, currentAIROIState, aiROIGoals } = req.body;
   const prompt = `You are an AI ROI and value realization strategy expert. Build an AI ROI strategy. Type: ${aiROIType}. State: ${currentAIROIState}. Goals: ${aiROIGoals}. Respond in JSON: { ai_roi_strategy: string, measurement_framework: string[], business_case_model: string[], portfolio_management: string[], attribution_method: string[], reporting_system: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cloudinfra/cloudstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cloudType, currentCloudState, cloudGoals } = req.body;
+  const prompt = `You are a cloud strategy and multi-cloud architecture expert. Build a cloud strategy. Type: ${cloudType}. State: ${currentCloudState}. Goals: ${cloudGoals}. Respond in JSON: { cloud_strategy: string, architecture_design: string[], finops_program: string[], multi_cloud_plan: string[], security_framework: string[], sustainability_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cloudinfra/devops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { devopsType, currentDevOpsState, devopsGoals } = req.body;
+  const prompt = `You are a DevOps and platform engineering strategy expert. Build a DevOps strategy. Type: ${devopsType}. State: ${currentDevOpsState}. Goals: ${devopsGoals}. Respond in JSON: { devops_strategy: string, cicd_pipeline: string[], platform_engineering: string[], sre_program: string[], ai_devops: string[], developer_experience: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cloudinfra/dataplatform', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dataPlatType, currentDataPlatState, dataPlatGoals } = req.body;
+  const prompt = `You are a data platform and lakehouse strategy expert. Build a data platform strategy. Type: ${dataPlatType}. State: ${currentDataPlatState}. Goals: ${dataPlatGoals}. Respond in JSON: { data_platform_strategy: string, architecture_design: string[], ai_integration: string[], real_time_streaming: string[], data_mesh: string[], governance_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cloudinfra/zerotrust', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ztType, currentZTState, ztGoals } = req.body;
+  const prompt = `You are a zero trust and cloud security strategy expert. Build a zero trust strategy. Type: ${ztType}. State: ${currentZTState}. Goals: ${ztGoals}. Respond in JSON: { zero_trust_strategy: string, identity_program: string[], network_security: string[], sase_ztna: string[], data_protection: string[], compliance_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cloudinfra/finops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { finopsType, currentFinOpsState, finopsGoals } = req.body;
+  const prompt = `You are a FinOps and cloud cost optimization strategy expert. Build a FinOps strategy. Type: ${finopsType}. State: ${currentFinOpsState}. Goals: ${finopsGoals}. Respond in JSON: { finops_strategy: string, cost_visibility: string[], reserved_capacity: string[], rightsizing_program: string[], unit_economics: string[], culture_change: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cloudinfra/k8s', requireAuth, async (req: AuthRequest, res: any) => {
+  const { k8sType, currentK8sState, k8sGoals } = req.body;
+  const prompt = `You are a Kubernetes and container platform strategy expert. Build a K8s strategy. Type: ${k8sType}. State: ${currentK8sState}. Goals: ${k8sGoals}. Respond in JSON: { k8s_strategy: string, platform_design: string[], gitops_program: string[], service_mesh: string[], security_hardening: string[], cost_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cloudinfra/networking', requireAuth, async (req: AuthRequest, res: any) => {
+  const { networkType, currentNetworkState, networkGoals } = req.body;
+  const prompt = `You are a network and SD-WAN infrastructure strategy expert. Build a network strategy. Type: ${networkType}. State: ${currentNetworkState}. Goals: ${networkGoals}. Respond in JSON: { network_strategy: string, sdwan_architecture: string[], sase_integration: string[], ot_iot_program: string[], ai_networking: string[], resilience_design: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cloudinfra/observability', requireAuth, async (req: AuthRequest, res: any) => {
+  const { observType, currentObservState, observGoals } = req.body;
+  const prompt = `You are an observability and site reliability engineering strategy expert. Build an observability strategy. Type: ${observType}. State: ${currentObservState}. Goals: ${observGoals}. Respond in JSON: { observability_strategy: string, telemetry_architecture: string[], slo_framework: string[], aiops_program: string[], chaos_engineering: string[], cost_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cloudinfra/greenit', requireAuth, async (req: AuthRequest, res: any) => {
+  const { greenITType, currentGreenITState, greenITGoals } = req.body;
+  const prompt = `You are a green IT and sustainable infrastructure strategy expert. Build a green IT strategy. Type: ${greenITType}. State: ${currentGreenITState}. Goals: ${greenITGoals}. Respond in JSON: { green_it_strategy: string, data_center_efficiency: string[], renewable_energy: string[], software_efficiency: string[], scope3_program: string[], circular_hardware: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cloudinfra/disasterrec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { drType, currentDRState, drGoals } = req.body;
+  const prompt = `You are a disaster recovery and business continuity strategy expert. Build a DR/BCP strategy. Type: ${drType}. State: ${currentDRState}. Goals: ${drGoals}. Respond in JSON: { dr_bcp_strategy: string, recovery_architecture: string[], ransomware_program: string[], testing_framework: string[], automation_plan: string[], regulatory_compliance: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
