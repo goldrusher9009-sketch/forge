@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1007.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1008.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -224418,5 +224418,65 @@ app.post('/api/aerodef/shipbuild', requireAuth, async (req: AuthRequest, res: an
 app.post('/api/aerodef/govtech', requireAuth, async (req: AuthRequest, res: any) => {
   const { gtType, currentGTState, gtGoals } = req.body;
   const prompt = `You are a GovTech and public sector digital strategy expert. Build a GovTech strategy. Type: ${gtType}. State: ${currentGTState}. Goals: ${gtGoals}. Respond in JSON: { govtech_strategy: string, program_portfolio: string[], technology_modernization: string[], citizen_experience: string[], ai_deployment: string[], procurement_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/auto', requireAuth, async (req: AuthRequest, res: any) => {
+  const { autoType, currentAutoState, autoGoals } = req.body;
+  const prompt = `You are an automotive industry strategy expert. Build an automotive strategy. Type: ${autoType}. State: ${currentAutoState}. Goals: ${autoGoals}. Respond in JSON: { automotive_strategy: string, ev_transition: string[], software_defined_vehicle: string[], supply_chain: string[], go_to_market: string[], new_revenue_streams: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/mobility', requireAuth, async (req: AuthRequest, res: any) => {
+  const { maasType, currentMaaSState, maasGoals } = req.body;
+  const prompt = `You are a mobility as a service and urban mobility expert. Build a MaaS strategy. Type: ${maasType}. State: ${currentMaaSState}. Goals: ${maasGoals}. Respond in JSON: { maas_strategy: string, service_design: string[], fleet_optimization: string[], b2b_enterprise: string[], multimodal_integration: string[], profitability_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/av', requireAuth, async (req: AuthRequest, res: any) => {
+  const { avType, currentAVState, avGoals } = req.body;
+  const prompt = `You are an autonomous vehicle and ADAS strategy expert. Build an AV strategy. Type: ${avType}. State: ${currentAVState}. Goals: ${avGoals}. Respond in JSON: { av_strategy: string, technology_roadmap: string[], safety_validation: string[], regulatory_approach: string[], commercial_deployment: string[], partnership_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/electrify', requireAuth, async (req: AuthRequest, res: any) => {
+  const { veType, currentVEState, veGoals } = req.body;
+  const prompt = `You are a vehicle electrification and battery strategy expert. Build an electrification strategy. Type: ${veType}. State: ${currentVEState}. Goals: ${veGoals}. Respond in JSON: { electrification_strategy: string, battery_roadmap: string[], charging_infrastructure: string[], supply_chain_localization: string[], second_life_program: string[], grid_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/connectedcar', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ccType, currentCCState, ccGoals } = req.body;
+  const prompt = `You are a connected vehicle and automotive software strategy expert. Build a connected vehicle strategy. Type: ${ccType}. State: ${currentCCState}. Goals: ${ccGoals}. Respond in JSON: { connected_vehicle_strategy: string, software_platform: string[], data_monetization: string[], ota_program: string[], ecosystem_partnerships: string[], subscription_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/fleet', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fmType, currentFMState, fmGoals } = req.body;
+  const prompt = `You are a fleet management and telematics strategy expert. Build a fleet strategy. Type: ${fmType}. State: ${currentFMState}. Goals: ${fmGoals}. Respond in JSON: { fleet_strategy: string, electrification_plan: string[], telematics_platform: string[], route_optimization: string[], maintenance_program: string[], sustainability_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/autoretail', requireAuth, async (req: AuthRequest, res: any) => {
+  const { arType, currentARState, arGoals } = req.body;
+  const prompt = `You are an automotive retail and dealer strategy expert. Build an auto retail strategy. Type: ${arType}. State: ${currentARState}. Goals: ${arGoals}. Respond in JSON: { auto_retail_strategy: string, digital_retailing: string[], ev_readiness: string[], fi_optimization: string[], service_revenue: string[], omnichannel_experience: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/autoins', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiType, currentAIState, aiGoals } = req.body;
+  const prompt = `You are an auto insurance strategy expert. Build an auto insurance strategy. Type: ${aiType}. State: ${currentAIState}. Goals: ${aiGoals}. Respond in JSON: { auto_insurance_strategy: string, telematics_program: string[], ev_pricing: string[], claims_optimization: string[], embedded_insurance: string[], distribution_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/autosupply', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ascType, currentASCState, ascGoals } = req.body;
+  const prompt = `You are an automotive supply chain strategy expert. Build an auto supply chain strategy. Type: ${ascType}. State: ${currentASCState}. Goals: ${ascGoals}. Respond in JSON: { auto_supply_strategy: string, ev_component_roadmap: string[], nearshoring_plan: string[], semiconductor_strategy: string[], resilience_program: string[], cost_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mobility/autotech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { atType, currentATState, atGoals } = req.body;
+  const prompt = `You are an automotive technology and software-defined vehicle expert. Build an AutoTech strategy. Type: ${atType}. State: ${currentATState}. Goals: ${atGoals}. Respond in JSON: { autotech_strategy: string, sdv_architecture: string[], software_platform: string[], cybersecurity_program: string[], developer_ecosystem: string[], ai_integration: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
