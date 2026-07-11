@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v967.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v968.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -222018,5 +222018,65 @@ app.post('/api/startup/deeptech', requireAuth, async (req: AuthRequest, res: any
 app.post('/api/startup/startupops', requireAuth, async (req: AuthRequest, res: any) => {
   const { soType, currentSOState, soGoals } = req.body;
   const prompt = `You are a startup operations expert. Build a startup scaling operations strategy. Type: ${soType}. State: ${currentSOState}. Goals: ${soGoals}. Respond in JSON: { startup_ops_strategy: string, process_framework: string[], toolstack_design: string[], finance_program: string[], international_expansion: string[], compliance_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/martech/martech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mtType, currentMTState, mtGoals } = req.body;
+  const prompt = `You are a MarTech strategy expert. Build a marketing technology strategy. Type: ${mtType}. State: ${currentMTState}. Goals: ${mtGoals}. Respond in JSON: { martech_strategy: string, stack_architecture: string[], cdp_program: string[], attribution_model: string[], ai_automation: string[], data_governance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/martech/growthmark', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gmType, currentGMState, gmGoals } = req.body;
+  const prompt = `You are a growth marketing strategy expert. Build a demand generation strategy. Type: ${gmType}. State: ${currentGMState}. Goals: ${gmGoals}. Respond in JSON: { growth_marketing_strategy: string, channel_mix: string[], demand_generation: string[], abm_program: string[], content_engine: string[], efficiency_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/martech/seocontent', requireAuth, async (req: AuthRequest, res: any) => {
+  const { seoType, currentSEOState, seoGoals } = req.body;
+  const prompt = `You are an SEO and content marketing strategy expert. Build an SEO strategy. Type: ${seoType}. State: ${currentSEOState}. Goals: ${seoGoals}. Respond in JSON: { seo_strategy: string, keyword_architecture: string[], content_program: string[], technical_seo: string[], link_building: string[], ai_seo_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/martech/emailmark', requireAuth, async (req: AuthRequest, res: any) => {
+  const { emType, currentEMState, emGoals } = req.body;
+  const prompt = `You are an email marketing strategy expert. Build an email and CRM strategy. Type: ${emType}. State: ${currentEMState}. Goals: ${emGoals}. Respond in JSON: { email_strategy: string, lifecycle_program: string[], personalization_engine: string[], automation_flows: string[], deliverability_plan: string[], revenue_attribution: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/martech/socialmedia', requireAuth, async (req: AuthRequest, res: any) => {
+  const { smType, currentSMState, smGoals } = req.body;
+  const prompt = `You are a social media marketing strategy expert. Build a social media strategy. Type: ${smType}. State: ${currentSMState}. Goals: ${smGoals}. Respond in JSON: { social_media_strategy: string, platform_mix: string[], content_program: string[], creator_partnerships: string[], paid_social: string[], community_building: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/martech/paid', requireAuth, async (req: AuthRequest, res: any) => {
+  const { paType, currentPAState, paGoals } = req.body;
+  const prompt = `You are a paid acquisition strategy expert. Build a performance marketing strategy. Type: ${paType}. State: ${currentPAState}. Goals: ${paGoals}. Respond in JSON: { paid_strategy: string, channel_allocation: string[], creative_program: string[], attribution_model: string[], automation_tools: string[], privacy_adaptation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/martech/brand', requireAuth, async (req: AuthRequest, res: any) => {
+  const { bsType, currentBSState, bsGoals } = req.body;
+  const prompt = `You are a brand strategy expert. Build a brand strategy. Type: ${bsType}. State: ${currentBSState}. Goals: ${bsGoals}. Respond in JSON: { brand_strategy: string, positioning_framework: string[], visual_identity: string[], messaging_architecture: string[], awareness_program: string[], community_brand: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/martech/influencer', requireAuth, async (req: AuthRequest, res: any) => {
+  const { imType, currentIMState, imGoals } = req.body;
+  const prompt = `You are an influencer marketing strategy expert. Build a creator and influencer strategy. Type: ${imType}. State: ${currentIMState}. Goals: ${imGoals}. Respond in JSON: { influencer_strategy: string, creator_tiers: string[], ugc_program: string[], attribution_model: string[], b2b_creator: string[], ambassador_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/martech/abm', requireAuth, async (req: AuthRequest, res: any) => {
+  const { abmType, currentABMState, abmGoals } = req.body;
+  const prompt = `You are an ABM strategy expert. Build an account-based marketing strategy. Type: ${abmType}. State: ${currentABMState}. Goals: ${abmGoals}. Respond in JSON: { abm_strategy: string, account_selection: string[], personalization_program: string[], channel_orchestration: string[], sales_marketing_alignment: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/martech/community', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cmType, currentCMState, cmGoals } = req.body;
+  const prompt = `You are a community marketing strategy expert. Build a community-led growth strategy. Type: ${cmType}. State: ${currentCMState}. Goals: ${cmGoals}. Respond in JSON: { community_strategy: string, community_design: string[], engagement_program: string[], ambassador_model: string[], business_impact: string[], technology_platform: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
