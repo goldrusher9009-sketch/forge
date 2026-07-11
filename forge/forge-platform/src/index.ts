@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1136.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1137.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -232158,5 +232158,65 @@ app.post('/api/cybersec/cyberinsure', requireAuth, async (req: AuthRequest, res:
 app.post('/api/cybersec/privacy', requireAuth, async (req: AuthRequest, res: any) => {
   const { ppType, currentPPState, ppGoals } = req.body;
   const prompt = `You are a data privacy and privacy engineering strategy expert. Build a privacy program. Type: ${ppType}. State: ${currentPPState}. Goals: ${ppGoals}. Respond in JSON: { privacy_strategy: string, regulatory_alignment: string[], consent_framework: string[], privacy_by_design: string[], ai_privacy_program: string[], governance_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/scm/supplychain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { scType, currentSCState, scGoals } = req.body;
+  const prompt = `You are a supply chain strategy and network design expert. Build a supply chain strategy. Type: ${scType}. State: ${currentSCState}. Goals: ${scGoals}. Respond in JSON: { supply_chain_strategy: string, network_design: string[], sourcing_strategy: string[], resilience_program: string[], technology_roadmap: string[], sustainability_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/scm/logistics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { logType, currentLogState, logGoals } = req.body;
+  const prompt = `You are a logistics and last-mile delivery strategy expert. Build a logistics strategy. Type: ${logType}. State: ${currentLogState}. Goals: ${logGoals}. Respond in JSON: { logistics_strategy: string, network_optimization: string[], last_mile_design: string[], warehouse_automation: string[], ai_routing: string[], sustainability_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/scm/procurement', requireAuth, async (req: AuthRequest, res: any) => {
+  const { procType, currentProcState, procGoals } = req.body;
+  const prompt = `You are a strategic procurement and supplier management expert. Build a procurement strategy. Type: ${procType}. State: ${currentProcState}. Goals: ${procGoals}. Respond in JSON: { procurement_strategy: string, category_management: string[], supplier_development: string[], risk_management: string[], digital_transformation: string[], sustainability_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/scm/inventory', requireAuth, async (req: AuthRequest, res: any) => {
+  const { invType, currentInvState, invGoals } = req.body;
+  const prompt = `You are an inventory optimization and demand planning strategy expert. Build an inventory strategy. Type: ${invType}. State: ${currentInvState}. Goals: ${invGoals}. Respond in JSON: { inventory_strategy: string, demand_sensing: string[], sop_process: string[], replenishment_model: string[], ai_forecasting: string[], omnichannel_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/scm/manufacturing', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mfgType, currentMFGState, mfgGoals } = req.body;
+  const prompt = `You are a manufacturing strategy and operations excellence expert. Build a manufacturing strategy. Type: ${mfgType}. State: ${currentMFGState}. Goals: ${mfgGoals}. Respond in JSON: { manufacturing_strategy: string, lean_program: string[], industry_4_roadmap: string[], automation_plan: string[], quality_system: string[], sustainability_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/scm/tradecompliance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tcType, currentTCState, tcGoals } = req.body;
+  const prompt = `You are a trade compliance and export control strategy expert. Build a trade compliance strategy. Type: ${tcType}. State: ${currentTCState}. Goals: ${tcGoals}. Respond in JSON: { trade_compliance_strategy: string, risk_assessment: string[], classification_program: string[], sanctions_screening: string[], fta_utilization: string[], technology_platform: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/scm/scrisk', requireAuth, async (req: AuthRequest, res: any) => {
+  const { scrType, currentSCRState, scrGoals } = req.body;
+  const prompt = `You are a supply chain risk and resilience strategy expert. Build a SC risk strategy. Type: ${scrType}. State: ${currentSCRState}. Goals: ${scrGoals}. Respond in JSON: { sc_risk_strategy: string, risk_mapping: string[], resilience_program: string[], supplier_diversification: string[], visibility_platform: string[], contingency_planning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/scm/coldchain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ccType, currentCCState, ccGoals } = req.body;
+  const prompt = `You are a cold chain and temperature-controlled logistics strategy expert. Build a cold chain strategy. Type: ${ccType}. State: ${currentCCState}. Goals: ${ccGoals}. Respond in JSON: { cold_chain_strategy: string, network_design: string[], monitoring_system: string[], traceability_platform: string[], compliance_program: string[], sustainability_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/scm/reverselogistic', requireAuth, async (req: AuthRequest, res: any) => {
+  const { rlType, currentRLState, rlGoals } = req.body;
+  const prompt = `You are a reverse logistics and returns management strategy expert. Build a returns strategy. Type: ${rlType}. State: ${currentRLState}. Goals: ${rlGoals}. Respond in JSON: { returns_strategy: string, policy_design: string[], operations_model: string[], refurbishment_program: string[], sustainability_integration: string[], technology_platform: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/scm/scmtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { scmtType, currentSCMTState, scmtGoals } = req.body;
+  const prompt = `You are a supply chain technology and digital transformation strategy expert. Build a SCM technology strategy. Type: ${scmtType}. State: ${currentSCMTState}. Goals: ${scmtGoals}. Respond in JSON: { scm_technology_strategy: string, platform_architecture: string[], ai_applications: string[], digital_twin_design: string[], integration_roadmap: string[], roi_framework: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
