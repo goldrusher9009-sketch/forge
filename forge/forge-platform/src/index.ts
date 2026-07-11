@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1096.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1097.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -229758,5 +229758,65 @@ app.post('/api/ventureinvest/alts', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/ventureinvest/ir', requireAuth, async (req: AuthRequest, res: any) => {
   const { irType, currentIRState, irGoals } = req.body;
   const prompt = `You are an investor relations and capital markets communication expert. Build an IR strategy. Type: ${irType}. State: ${currentIRState}. Goals: ${irGoals}. Respond in JSON: { ir_strategy: string, equity_story: string[], earnings_communication: string[], esg_investor_engagement: string[], activism_defense: string[], sell_side_relations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futuretech/aistrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiStratType, currentAIStratState, aiStratGoals } = req.body;
+  const prompt = `You are an AI corporate strategy and transformation expert. Build a comprehensive AI strategy. Type: ${aiStratType}. State: ${currentAIStratState}. Goals: ${aiStratGoals}. Respond in JSON: { ai_strategy: string, ai_roadmap: string[], governance_framework: string[], use_case_prioritization: string[], responsible_ai: string[], competitive_positioning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futuretech/quantum', requireAuth, async (req: AuthRequest, res: any) => {
+  const { quantumType, currentQuantumState, quantumGoals } = req.body;
+  const prompt = `You are a quantum computing strategy and readiness expert. Build a quantum strategy. Type: ${quantumType}. State: ${currentQuantumState}. Goals: ${quantumGoals}. Respond in JSON: { quantum_strategy: string, readiness_roadmap: string[], use_case_pipeline: string[], post_quantum_cryptography: string[], talent_program: string[], ecosystem_partnerships: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futuretech/space', requireAuth, async (req: AuthRequest, res: any) => {
+  const { spaceType, currentSpaceState, spaceGoals } = req.body;
+  const prompt = `You are a space economy and new space strategy expert. Build a space strategy. Type: ${spaceType}. State: ${currentSpaceState}. Goals: ${spaceGoals}. Respond in JSON: { space_strategy: string, commercial_model: string[], satellite_architecture: string[], earth_observation: string[], launch_strategy: string[], regulatory_compliance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futuretech/avtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { avType, currentAVState, avGoals } = req.body;
+  const prompt = `You are an autonomous vehicle and mobility tech strategy expert. Build an AV strategy. Type: ${avType}. State: ${currentAVState}. Goals: ${avGoals}. Respond in JSON: { av_strategy: string, commercialization_roadmap: string[], safety_program: string[], regulatory_engagement: string[], fleet_deployment: string[], liability_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futuretech/metaverse', requireAuth, async (req: AuthRequest, res: any) => {
+  const { metaType, currentMetaState, metaGoals } = req.body;
+  const prompt = `You are a metaverse and immersive technology strategy expert. Build a metaverse strategy. Type: ${metaType}. State: ${currentMetaState}. Goals: ${metaGoals}. Respond in JSON: { metaverse_strategy: string, immersive_roadmap: string[], enterprise_use_cases: string[], platform_selection: string[], avatar_economy: string[], roi_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futuretech/blockchain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { chainType, currentChainState, chainGoals } = req.body;
+  const prompt = `You are an enterprise blockchain and Web3 strategy expert. Build a blockchain strategy. Type: ${chainType}. State: ${currentChainState}. Goals: ${chainGoals}. Respond in JSON: { blockchain_strategy: string, use_case_prioritization: string[], tokenization_framework: string[], technology_stack: string[], regulatory_compliance: string[], ecosystem_partnerships: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futuretech/edge', requireAuth, async (req: AuthRequest, res: any) => {
+  const { edgeType, currentEdgeState, edgeGoals } = req.body;
+  const prompt = `You are an edge computing and IoT strategy expert. Build an edge computing strategy. Type: ${edgeType}. State: ${currentEdgeState}. Goals: ${edgeGoals}. Respond in JSON: { edge_strategy: string, deployment_architecture: string[], iot_integration: string[], edge_ai: string[], 5g_enablement: string[], security_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futuretech/synbio', requireAuth, async (req: AuthRequest, res: any) => {
+  const { synbioType, currentSynbioState, synbioGoals } = req.body;
+  const prompt = `You are a synthetic biology and bioeconomy strategy expert. Build a synbio strategy. Type: ${synbioType}. State: ${currentSynbioState}. Goals: ${synbioGoals}. Respond in JSON: { synbio_strategy: string, commercialization_roadmap: string[], ip_strategy: string[], scale_up_plan: string[], regulatory_pathway: string[], partnership_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futuretech/nuclear', requireAuth, async (req: AuthRequest, res: any) => {
+  const { nucType, currentNucState, nucGoals } = req.body;
+  const prompt = `You are a nuclear energy and advanced reactor strategy expert. Build a nuclear strategy. Type: ${nucType}. State: ${currentNucState}. Goals: ${nucGoals}. Respond in JSON: { nuclear_strategy: string, technology_roadmap: string[], smr_deployment: string[], regulatory_pathway: string[], financing_model: string[], public_engagement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/futuretech/futurework', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fowType, currentFOWState, fowGoals } = req.body;
+  const prompt = `You are a future of work and workplace strategy expert. Build a future of work strategy. Type: ${fowType}. State: ${currentFOWState}. Goals: ${fowGoals}. Respond in JSON: { future_work_strategy: string, hybrid_model: string[], ai_augmentation: string[], reskilling_program: string[], wellbeing_framework: string[], culture_design: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
