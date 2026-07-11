@@ -3034,6 +3034,16 @@ ForgeTab_diversityequityinc5947,
 ForgeTab_nonprofitgov5948,
 ForgeTab_futureforecasting5949,
 ForgeTab_crisismanagement5950,
+ForgeTab_mergeracquisition5951,
+ForgeTab_postmergerint5952,
+ForgeTab_corporaterestructure5953,
+ForgeTab_ipostrategy5954,
+ForgeTab_boardgovernance5955,
+ForgeTab_growthstrategy5956,
+ForgeTab_csuiteadvisory5957,
+ForgeTab_sustainstrategy5958,
+ForgeTab_innovationculture5959,
+ForgeTab_strategicplanning5960,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -62961,6 +62971,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'nonprofitgov5948' && <ForgeTab_nonprofitgov5948 />}
               {(mainTab as string) === 'futureforecasting5949' && <ForgeTab_futureforecasting5949 />}
               {(mainTab as string) === 'crisismanagement5950' && <ForgeTab_crisismanagement5950 />}
+              {(mainTab as string) === 'mergeracquisition5951' && <ForgeTab_mergeracquisition5951 />}
+              {(mainTab as string) === 'postmergerint5952' && <ForgeTab_postmergerint5952 />}
+              {(mainTab as string) === 'corporaterestructure5953' && <ForgeTab_corporaterestructure5953 />}
+              {(mainTab as string) === 'ipostrategy5954' && <ForgeTab_ipostrategy5954 />}
+              {(mainTab as string) === 'boardgovernance5955' && <ForgeTab_boardgovernance5955 />}
+              {(mainTab as string) === 'growthstrategy5956' && <ForgeTab_growthstrategy5956 />}
+              {(mainTab as string) === 'csuiteadvisory5957' && <ForgeTab_csuiteadvisory5957 />}
+              {(mainTab as string) === 'sustainstrategy5958' && <ForgeTab_sustainstrategy5958 />}
+              {(mainTab as string) === 'innovationculture5959' && <ForgeTab_innovationculture5959 />}
+              {(mainTab as string) === 'strategicplanning5960' && <ForgeTab_strategicplanning5960 />}
       </div>
     </div>
   );
