@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1107.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1108.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -230418,5 +230418,65 @@ app.post('/api/financeaccounting/corptax', requireAuth, async (req: AuthRequest,
 app.post('/api/financeaccounting/intaudit', requireAuth, async (req: AuthRequest, res: any) => {
   const { iaType, currentIAState, iaGoals } = req.body;
   const prompt = `You are an internal audit and risk assurance strategy expert. Build an internal audit strategy. Type: ${iaType}. State: ${currentIAState}. Goals: ${iaGoals}. Respond in JSON: { audit_strategy: string, risk_assessment: string[], data_analytics: string[], ai_audit_tools: string[], continuous_monitoring: string[], reporting_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalops/global', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gsType, currentGSState, gsGoals } = req.body;
+  const prompt = `You are a global strategy and international expansion expert. Build a global strategy. Type: ${gsType}. State: ${currentGSState}. Goals: ${gsGoals}. Respond in JSON: { global_strategy: string, market_prioritization: string[], entry_mode: string[], localization_plan: string[], regulatory_approach: string[], partnership_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalops/supplychain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { scType, currentSCState, scGoals } = req.body;
+  const prompt = `You are a global supply chain and operations strategy expert. Build a supply chain strategy. Type: ${scType}. State: ${currentSCState}. Goals: ${scGoals}. Respond in JSON: { sc_strategy: string, resilience_design: string[], supplier_management: string[], nearshoring_plan: string[], digital_transformation: string[], esg_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalops/georisk', requireAuth, async (req: AuthRequest, res: any) => {
+  const { grType, currentGRState, grGoals } = req.body;
+  const prompt = `You are a geopolitical risk and country strategy expert. Build a geopolitical risk strategy. Type: ${grType}. State: ${currentGRState}. Goals: ${grGoals}. Respond in JSON: { geo_risk_strategy: string, risk_assessment: string[], scenario_planning: string[], sanctions_compliance: string[], trade_policy: string[], resilience_measures: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalops/crossculture', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cclType, currentCCLState, cclGoals } = req.body;
+  const prompt = `You are a cross-cultural leadership and global teams expert. Build a cross-cultural strategy. Type: ${cclType}. State: ${currentCCLState}. Goals: ${cclGoals}. Respond in JSON: { cross_cultural_strategy: string, leadership_model: string[], communication_framework: string[], team_building: string[], negotiation_approach: string[], dei_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalops/globaltax', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gtType, currentGTState, gtGoals } = req.body;
+  const prompt = `You are a global tax structure and transfer pricing expert. Build a global tax strategy. Type: ${gtType}. State: ${currentGTState}. Goals: ${gtGoals}. Respond in JSON: { global_tax_strategy: string, holding_structure: string[], transfer_pricing: string[], pillar_two_response: string[], ip_location: string[], vat_compliance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalops/localization', requireAuth, async (req: AuthRequest, res: any) => {
+  const { locType, currentLocState, locGoals } = req.body;
+  const prompt = `You are a product localization and market adaptation expert. Build a localization strategy. Type: ${locType}. State: ${currentLocState}. Goals: ${locGoals}. Respond in JSON: { localization_strategy: string, prioritization_framework: string[], language_approach: string[], ux_adaptation: string[], pricing_localization: string[], ai_translation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalops/emerging', requireAuth, async (req: AuthRequest, res: any) => {
+  const { emktType, currentEMktState, emktGoals } = req.body;
+  const prompt = `You are an emerging markets entry and growth strategy expert. Build an emerging market strategy. Type: ${emktType}. State: ${currentEMktState}. Goals: ${emktGoals}. Respond in JSON: { em_strategy: string, market_selection: string[], entry_approach: string[], partnership_model: string[], pricing_framework: string[], risk_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalops/globalfinops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gfoType, currentGFOState, gfoGoals } = req.body;
+  const prompt = `You are a global finance operations and treasury strategy expert. Build a global finance ops strategy. Type: ${gfoType}. State: ${currentGFOState}. Goals: ${gfoGoals}. Respond in JSON: { global_finance_strategy: string, cash_pooling: string[], fx_management: string[], intercompany_optimization: string[], shared_services: string[], payment_modernization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalops/trade', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tcType, currentTCState, tcGoals } = req.body;
+  const prompt = `You are a trade compliance and export control strategy expert. Build a trade compliance strategy. Type: ${tcType}. State: ${currentTCState}. Goals: ${tcGoals}. Respond in JSON: { trade_strategy: string, export_control_program: string[], classification_approach: string[], sanctions_compliance: string[], customs_optimization: string[], technology_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/globalops/globalscale', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gscType, currentGSCState, gscGoals } = req.body;
+  const prompt = `You are a global scalability and international operations expert. Build a global scale strategy. Type: ${gscType}. State: ${currentGSCState}. Goals: ${gscGoals}. Respond in JSON: { global_scale_strategy: string, operating_model: string[], gbs_design: string[], automation_roadmap: string[], entity_rationalization: string[], cost_reduction: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
