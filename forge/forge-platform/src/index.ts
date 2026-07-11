@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1046.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1047.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -226758,5 +226758,65 @@ app.post('/api/socialimpact/fundraising', requireAuth, async (req: AuthRequest, 
 app.post('/api/socialimpact/volunteer', requireAuth, async (req: AuthRequest, res: any) => {
   const { volType, currentVolState, volGoals } = req.body;
   const prompt = `You are a volunteer engagement and civic participation strategy expert. Build a volunteer strategy. Type: ${volType}. State: ${currentVolState}. Goals: ${volGoals}. Respond in JSON: { volunteer_strategy: string, recruitment_program: string[], skills_based_program: string[], corporate_volunteer: string[], digital_platform: string[], recognition_system: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biopharma/biotech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { biotechType, currentBiotechState, biotechGoals } = req.body;
+  const prompt = `You are a biotech strategy and drug development expert. Build a biotech strategy. Type: ${biotechType}. State: ${currentBiotechState}. Goals: ${biotechGoals}. Respond in JSON: { biotech_strategy: string, pipeline_plan: string[], clinical_roadmap: string[], bd_partnership: string[], financing_strategy: string[], ai_drug_discovery: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biopharma/pharma', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pharmaType, currentPharmaState, pharmaGoals } = req.body;
+  const prompt = `You are a pharma commercial strategy and launch excellence expert. Build a pharma strategy. Type: ${pharmaType}. State: ${currentPharmaState}. Goals: ${pharmaGoals}. Respond in JSON: { pharma_strategy: string, launch_excellence: string[], market_access: string[], payer_strategy: string[], physician_engagement: string[], lifecycle_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biopharma/clinical', requireAuth, async (req: AuthRequest, res: any) => {
+  const { clinicalType, currentClinicalState, clinicalGoals } = req.body;
+  const prompt = `You are a clinical development and trial strategy expert. Build a clinical development strategy. Type: ${clinicalType}. State: ${currentClinicalState}. Goals: ${clinicalGoals}. Respond in JSON: { clinical_strategy: string, trial_design: string[], endpoint_selection: string[], enrollment_plan: string[], regulatory_pathway: string[], biomarker_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biopharma/marketaccess', requireAuth, async (req: AuthRequest, res: any) => {
+  const { accessType, currentAccessState, accessGoals } = req.body;
+  const prompt = `You are a market access and pricing strategy expert. Build a market access strategy. Type: ${accessType}. State: ${currentAccessState}. Goals: ${accessGoals}. Respond in JSON: { market_access_strategy: string, pricing_framework: string[], hta_submission: string[], payer_strategy: string[], patient_support: string[], heor_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biopharma/meddev', requireAuth, async (req: AuthRequest, res: any) => {
+  const { medDevType, currentMedDevState, medDevGoals } = req.body;
+  const prompt = `You are a medical device and MedTech strategy expert. Build a MedTech strategy. Type: ${medDevType}. State: ${currentMedDevState}. Goals: ${medDevGoals}. Respond in JSON: { medtech_strategy: string, regulatory_pathway: string[], clinical_evidence: string[], reimbursement_plan: string[], hospital_strategy: string[], ai_medtech: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biopharma/genomics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { genomicsType, currentGenomicsState, genomicsGoals } = req.body;
+  const prompt = `You are a genomics and precision medicine strategy expert. Build a genomics strategy. Type: ${genomicsType}. State: ${currentGenomicsState}. Goals: ${genomicsGoals}. Respond in JSON: { genomics_strategy: string, precision_medicine: string[], companion_diagnostic: string[], ai_genomics: string[], reimbursement_plan: string[], pharma_partnership: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biopharma/digitalhealth', requireAuth, async (req: AuthRequest, res: any) => {
+  const { digitalHealthType, currentDigitalHealthState, digitalHealthGoals } = req.body;
+  const prompt = `You are a digital health and HealthTech strategy expert. Build a digital health strategy. Type: ${digitalHealthType}. State: ${currentDigitalHealthState}. Goals: ${digitalHealthGoals}. Respond in JSON: { digital_health_strategy: string, clinical_validation: string[], regulatory_pathway: string[], reimbursement_model: string[], ehr_integration: string[], scale_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biopharma/biopharmabd', requireAuth, async (req: AuthRequest, res: any) => {
+  const { bdType, currentBDState, bdGoals } = req.body;
+  const prompt = `You are a biopharma business development and licensing strategy expert. Build a BD strategy. Type: ${bdType}. State: ${currentBDState}. Goals: ${bdGoals}. Respond in JSON: { bd_strategy: string, deal_thesis: string[], target_identification: string[], term_sheet_framework: string[], due_diligence: string[], integration_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biopharma/heor', requireAuth, async (req: AuthRequest, res: any) => {
+  const { heorType, currentHEORState, heorGoals } = req.body;
+  const prompt = `You are a health economics and outcomes research strategy expert. Build a HEOR strategy. Type: ${heorType}. State: ${currentHEORState}. Goals: ${heorGoals}. Respond in JSON: { heor_strategy: string, evidence_generation: string[], cost_effectiveness: string[], rwe_program: string[], value_framework: string[], hta_submission: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/biopharma/pharmamfg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mfgType, currentMfgState, mfgGoals } = req.body;
+  const prompt = `You are a pharmaceutical manufacturing and CMC strategy expert. Build a pharma manufacturing strategy. Type: ${mfgType}. State: ${currentMfgState}. Goals: ${mfgGoals}. Respond in JSON: { pharma_mfg_strategy: string, technology_transfer: string[], cmo_strategy: string[], continuous_manufacturing: string[], supply_chain_resilience: string[], quality_system: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
