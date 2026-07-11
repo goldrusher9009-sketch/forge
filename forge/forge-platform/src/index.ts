@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v988.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v989.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -223278,5 +223278,65 @@ app.post('/api/globalstrat/crossborder', requireAuth, async (req: AuthRequest, r
 app.post('/api/globalstrat/globalstrat', requireAuth, async (req: AuthRequest, res: any) => {
   const { gcType, currentGCState, gcGoals } = req.body;
   const prompt = `You are a global corporate strategy expert. Build a multinational strategy. Type: ${gcType}. State: ${currentGCState}. Goals: ${gcGoals}. Respond in JSON: { global_strategy: string, portfolio_optimization: string[], regional_priorities: string[], digital_transformation: string[], talent_strategy: string[], esg_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agrifood/agritech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { agType, currentAGState, agGoals } = req.body;
+  const prompt = `You are an AgriTech strategy expert. Build a precision agriculture and food tech strategy. Type: ${agType}. State: ${currentAGState}. Goals: ${agGoals}. Respond in JSON: { agritech_strategy: string, precision_agriculture: string[], iot_sensor_program: string[], drone_program: string[], data_platform: string[], market_development: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agrifood/foodsys', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fsType, currentFSState, fsGoals } = req.body;
+  const prompt = `You are a food systems strategy expert. Build a sustainable food and agriculture strategy. Type: ${fsType}. State: ${currentFSState}. Goals: ${fsGoals}. Respond in JSON: { food_systems_strategy: string, regenerative_program: string[], carbon_farming: string[], food_waste_reduction: string[], supply_chain_sustainability: string[], biodiversity_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agrifood/altprotein', requireAuth, async (req: AuthRequest, res: any) => {
+  const { apType, currentAPState, apGoals } = req.body;
+  const prompt = `You are an alternative protein strategy expert. Build a novel foods strategy. Type: ${apType}. State: ${currentAPState}. Goals: ${apGoals}. Respond in JSON: { alt_protein_strategy: string, product_development: string[], manufacturing_scale: string[], cost_reduction: string[], regulatory_pathway: string[], market_penetration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agrifood/foodtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ftType, currentFTState, ftGoals } = req.body;
+  const prompt = `You are a food technology strategy expert. Build a FoodTech innovation strategy. Type: ${ftType}. State: ${currentFTState}. Goals: ${ftGoals}. Respond in JSON: { foodtech_strategy: string, innovation_pipeline: string[], ai_applications: string[], robotics_program: string[], personalized_nutrition: string[], sustainability_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agrifood/vertical', requireAuth, async (req: AuthRequest, res: any) => {
+  const { vfType, currentVFState, vfGoals } = req.body;
+  const prompt = `You are a vertical farming strategy expert. Build a controlled environment agriculture strategy. Type: ${vfType}. State: ${currentVFState}. Goals: ${vfGoals}. Respond in JSON: { vertical_farming_strategy: string, crop_selection: string[], energy_optimization: string[], automation_program: string[], go_to_market: string[], unit_economics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agrifood/agrimarket', requireAuth, async (req: AuthRequest, res: any) => {
+  const { amType, currentAMState, amGoals } = req.body;
+  const prompt = `You are an agricultural marketplace strategy expert. Build an agri-marketplace and finance strategy. Type: ${amType}. State: ${currentAMState}. Goals: ${amGoals}. Respond in JSON: { agri_marketplace_strategy: string, farmer_network: string[], digital_platform: string[], agri_finance: string[], input_supply: string[], data_services: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agrifood/foodsafety', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fdsType, currentFDSState, fdsGoals } = req.body;
+  const prompt = `You are a food safety strategy expert. Build a food safety and quality strategy. Type: ${fdsType}. State: ${currentFDSState}. Goals: ${fdsGoals}. Respond in JSON: { food_safety_strategy: string, haccp_program: string[], traceability_system: string[], testing_protocol: string[], compliance_framework: string[], digital_transformation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agrifood/agrisustain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { asType, currentASState, asGoals } = req.body;
+  const prompt = `You are an agricultural sustainability strategy expert. Build a farm sustainability strategy. Type: ${asType}. State: ${currentASState}. Goals: ${asGoals}. Respond in JSON: { ag_sustainability_strategy: string, carbon_program: string[], regenerative_practices: string[], water_management: string[], biodiversity_plan: string[], scope3_reduction: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agrifood/aquaculture', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aquaType, currentAquaState, aquaGoals } = req.body;
+  const prompt = `You are an aquaculture strategy expert. Build a blue food and aquaculture strategy. Type: ${aquaType}. State: ${currentAquaState}. Goals: ${aquaGoals}. Respond in JSON: { aquaculture_strategy: string, production_optimization: string[], sustainability_program: string[], technology_adoption: string[], market_development: string[], blue_economy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/agrifood/cropbio', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cbioType, currentCBioState, cbioGoals } = req.body;
+  const prompt = `You are a crop biotechnology strategy expert. Build an agricultural biotech strategy. Type: ${cbioType}. State: ${currentCBioState}. Goals: ${cbioGoals}. Respond in JSON: { agbio_strategy: string, pipeline_development: string[], regulatory_pathway: string[], ip_management: string[], licensing_model: string[], commercialization_plan: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
