@@ -4534,6 +4534,16 @@ ForgeTab_nucleartechnology7447,
 ForgeTab_neurotechnology7448,
 ForgeTab_dronestrategy7449,
 ForgeTab_oceantech7450,
+ForgeTab_govtechnology7451,
+ForgeTab_smartcity7452,
+ForgeTab_publicsector7453,
+ForgeTab_defensetech7454,
+ForgeTab_regulatorytech7455,
+ForgeTab_educationstrategy7456,
+ForgeTab_justicepolicy7457,
+ForgeTab_publichealth7458,
+ForgeTab_socialpolicy7459,
+ForgeTab_infrastructurepolicy7460,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -65961,6 +65971,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'neurotechnology7448' && <ForgeTab_neurotechnology7448 />}
               {(mainTab as string) === 'dronestrategy7449' && <ForgeTab_dronestrategy7449 />}
               {(mainTab as string) === 'oceantech7450' && <ForgeTab_oceantech7450 />}
+              {(mainTab as string) === 'govtechnology7451' && <ForgeTab_govtechnology7451 />}
+              {(mainTab as string) === 'smartcity7452' && <ForgeTab_smartcity7452 />}
+              {(mainTab as string) === 'publicsector7453' && <ForgeTab_publicsector7453 />}
+              {(mainTab as string) === 'defensetech7454' && <ForgeTab_defensetech7454 />}
+              {(mainTab as string) === 'regulatorytech7455' && <ForgeTab_regulatorytech7455 />}
+              {(mainTab as string) === 'educationstrategy7456' && <ForgeTab_educationstrategy7456 />}
+              {(mainTab as string) === 'justicepolicy7457' && <ForgeTab_justicepolicy7457 />}
+              {(mainTab as string) === 'publichealth7458' && <ForgeTab_publichealth7458 />}
+              {(mainTab as string) === 'socialpolicy7459' && <ForgeTab_socialpolicy7459 />}
+              {(mainTab as string) === 'infrastructurepolicy7460' && <ForgeTab_infrastructurepolicy7460 />}
       </div>
     </div>
   );
