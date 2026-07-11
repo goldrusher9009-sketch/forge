@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1077.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1078.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -228618,5 +228618,65 @@ app.post('/api/realestatedev/hospitality', requireAuth, async (req: AuthRequest,
 app.post('/api/realestatedev/reprivate', requireAuth, async (req: AuthRequest, res: any) => {
   const { rePEType, currentREPEState, rePEGoals } = req.body;
   const prompt = `You are a private real estate investing and fund strategy expert. Build a private RE strategy. Type: ${rePEType}. State: ${currentREPEState}. Goals: ${rePEGoals}. Respond in JSON: { re_fund_strategy: string, investment_criteria: string[], value_add_program: string[], capital_structure: string[], lp_relations: string[], exit_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corporategov/boardgovernance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { boardType, currentBoardState, boardGoals } = req.body;
+  const prompt = `You are a board governance and corporate governance strategy expert. Build a governance strategy. Type: ${boardType}. State: ${currentBoardState}. Goals: ${boardGoals}. Respond in JSON: { governance_strategy: string, board_composition: string[], committee_structure: string[], ceo_succession: string[], esg_oversight: string[], shareholder_engagement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corporategov/ceostrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ceoType, currentCEOState, ceoGoals } = req.body;
+  const prompt = `You are a CEO and C-suite leadership strategy expert. Build a CEO strategy. Type: ${ceoType}. State: ${currentCEOState}. Goals: ${ceoGoals}. Respond in JSON: { ceo_strategy: string, strategic_priorities: string[], cultural_agenda: string[], leadership_team: string[], investor_narrative: string[], transformation_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corporategov/crisismanagement', requireAuth, async (req: AuthRequest, res: any) => {
+  const { crisisType, currentCrisisState, crisisGoals } = req.body;
+  const prompt = `You are a crisis management and corporate communications strategy expert. Build a crisis strategy. Type: ${crisisType}. State: ${currentCrisisState}. Goals: ${crisisGoals}. Respond in JSON: { crisis_strategy: string, response_playbook: string[], stakeholder_communication: string[], media_strategy: string[], legal_coordination: string[], recovery_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corporategov/corpstrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { corpStratType, currentCorpStratState, corpStratGoals } = req.body;
+  const prompt = `You are a corporate strategy and business portfolio strategy expert. Build a corporate strategy. Type: ${corpStratType}. State: ${currentCorpStratState}. Goals: ${corpStratGoals}. Respond in JSON: { corporate_strategy: string, portfolio_design: string[], growth_agenda: string[], ma_divestiture: string[], digital_transformation: string[], value_creation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corporategov/regulatoryaffairs', requireAuth, async (req: AuthRequest, res: any) => {
+  const { regType, currentRegState, regGoals } = req.body;
+  const prompt = `You are a regulatory affairs and government relations strategy expert. Build a regulatory strategy. Type: ${regType}. State: ${currentRegState}. Goals: ${regGoals}. Respond in JSON: { regulatory_strategy: string, policy_agenda: string[], government_relations: string[], coalition_building: string[], ai_regulation: string[], compliance_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corporategov/stakeholder', requireAuth, async (req: AuthRequest, res: any) => {
+  const { stakeholderType, currentStakeholderState, stakeholderGoals } = req.body;
+  const prompt = `You are a stakeholder engagement and corporate affairs strategy expert. Build a stakeholder strategy. Type: ${stakeholderType}. State: ${currentStakeholderState}. Goals: ${stakeholderGoals}. Respond in JSON: { stakeholder_strategy: string, materiality_mapping: string[], engagement_program: string[], social_license: string[], esg_reporting: string[], community_investment: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corporategov/corpcommunications', requireAuth, async (req: AuthRequest, res: any) => {
+  const { commType, currentCommState, commGoals } = req.body;
+  const prompt = `You are a corporate communications and brand reputation strategy expert. Build a communications strategy. Type: ${commType}. State: ${currentCommState}. Goals: ${commGoals}. Respond in JSON: { communications_strategy: string, narrative_framework: string[], media_relations: string[], thought_leadership: string[], esg_communications: string[], executive_positioning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corporategov/legalstrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { legalStratType, currentLegalStratState, legalStratGoals } = req.body;
+  const prompt = `You are a corporate legal and general counsel strategy expert. Build a legal strategy. Type: ${legalStratType}. State: ${currentLegalStratState}. Goals: ${legalStratGoals}. Respond in JSON: { legal_strategy: string, legal_ops_transformation: string[], ai_legal: string[], ma_capability: string[], ip_strategy: string[], compliance_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corporategov/familybusiness', requireAuth, async (req: AuthRequest, res: any) => {
+  const { familyBizType, currentFamilyBizState, familyBizGoals } = req.body;
+  const prompt = `You are a family business and ownership strategy expert. Build a family business strategy. Type: ${familyBizType}. State: ${currentFamilyBizState}. Goals: ${familyBizGoals}. Respond in JSON: { family_business_strategy: string, succession_plan: string[], governance_structure: string[], professionalization: string[], exit_options: string[], family_charter: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/corporategov/startupstrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { startupType, currentStartupState, startupGoals } = req.body;
+  const prompt = `You are a startup strategy and founder-to-CEO scaling expert. Build a startup strategy. Type: ${startupType}. State: ${currentStartupState}. Goals: ${startupGoals}. Respond in JSON: { startup_strategy: string, pmf_playbook: string[], growth_model: string[], team_building: string[], fundraising_plan: string[], executive_evolution: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
