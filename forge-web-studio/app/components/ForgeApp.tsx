@@ -2994,6 +2994,16 @@ ForgeTab_latamarket5907,
 ForgeTab_middleeaststrat5908,
 ForgeTab_emeabusiness5909,
 ForgeTab_apacstrategy5910,
+ForgeTab_aiethicspolicy5911,
+ForgeTab_techregulation5912,
+ForgeTab_dataprivacystrat5913,
+ForgeTab_cybersecuritypol5914,
+ForgeTab_digitalgovstrat5915,
+ForgeTab_platformeconomics5916,
+ForgeTab_opensourcestrategist5917,
+ForgeTab_cloudstrategyarch5918,
+ForgeTab_quantumstrategy5919,
+ForgeTab_techtalentstrat5920,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -62881,6 +62891,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'middleeaststrat5908' && <ForgeTab_middleeaststrat5908 />}
               {(mainTab as string) === 'emeabusiness5909' && <ForgeTab_emeabusiness5909 />}
               {(mainTab as string) === 'apacstrategy5910' && <ForgeTab_apacstrategy5910 />}
+              {(mainTab as string) === 'aiethicspolicy5911' && <ForgeTab_aiethicspolicy5911 />}
+              {(mainTab as string) === 'techregulation5912' && <ForgeTab_techregulation5912 />}
+              {(mainTab as string) === 'dataprivacystrat5913' && <ForgeTab_dataprivacystrat5913 />}
+              {(mainTab as string) === 'cybersecuritypol5914' && <ForgeTab_cybersecuritypol5914 />}
+              {(mainTab as string) === 'digitalgovstrat5915' && <ForgeTab_digitalgovstrat5915 />}
+              {(mainTab as string) === 'platformeconomics5916' && <ForgeTab_platformeconomics5916 />}
+              {(mainTab as string) === 'opensourcestrategist5917' && <ForgeTab_opensourcestrategist5917 />}
+              {(mainTab as string) === 'cloudstrategyarch5918' && <ForgeTab_cloudstrategyarch5918 />}
+              {(mainTab as string) === 'quantumstrategy5919' && <ForgeTab_quantumstrategy5919 />}
+              {(mainTab as string) === 'techtalentstrat5920' && <ForgeTab_techtalentstrat5920 />}
       </div>
     </div>
   );
