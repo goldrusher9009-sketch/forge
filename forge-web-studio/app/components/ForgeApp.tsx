@@ -2434,6 +2434,16 @@ ForgeTab_insuranceprice5347,
 ForgeTab_reinsurance5348,
 ForgeTab_insuranceops5349,
 ForgeTab_parametricinsurance5350,
+ForgeTab_agritechstrategy5351,
+ForgeTab_verticalfarming5352,
+ForgeTab_alternativeprotein5353,
+ForgeTab_foodsafety5354,
+ForgeTab_agdataanalytics5355,
+ForgeTab_fooddeliverytech5356,
+ForgeTab_sustainableag5357,
+ForgeTab_aquaculture5358,
+ForgeTab_agrimarketplace5359,
+ForgeTab_foodinnovation5360,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -61761,6 +61771,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'reinsurance5348' && <ForgeTab_reinsurance5348 />}
               {(mainTab as string) === 'insuranceops5349' && <ForgeTab_insuranceops5349 />}
               {(mainTab as string) === 'parametricinsurance5350' && <ForgeTab_parametricinsurance5350 />}
+              {(mainTab as string) === 'agritechstrategy5351' && <ForgeTab_agritechstrategy5351 />}
+              {(mainTab as string) === 'verticalfarming5352' && <ForgeTab_verticalfarming5352 />}
+              {(mainTab as string) === 'alternativeprotein5353' && <ForgeTab_alternativeprotein5353 />}
+              {(mainTab as string) === 'foodsafety5354' && <ForgeTab_foodsafety5354 />}
+              {(mainTab as string) === 'agdataanalytics5355' && <ForgeTab_agdataanalytics5355 />}
+              {(mainTab as string) === 'fooddeliverytech5356' && <ForgeTab_fooddeliverytech5356 />}
+              {(mainTab as string) === 'sustainableag5357' && <ForgeTab_sustainableag5357 />}
+              {(mainTab as string) === 'aquaculture5358' && <ForgeTab_aquaculture5358 />}
+              {(mainTab as string) === 'agrimarketplace5359' && <ForgeTab_agrimarketplace5359 />}
+              {(mainTab as string) === 'foodinnovation5360' && <ForgeTab_foodinnovation5360 />}
       </div>
     </div>
   );
