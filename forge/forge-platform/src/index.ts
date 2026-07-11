@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1085.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1086.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -229098,5 +229098,65 @@ app.post('/api/aitransform/aifin', requireAuth, async (req: AuthRequest, res: an
 app.post('/api/aitransform/aiscm', requireAuth, async (req: AuthRequest, res: any) => {
   const { aiSCMType, currentAISCMState, aiSCMGoals } = req.body;
   const prompt = `You are an AI in supply chain and operations transformation expert. Build an AI SCM strategy. Type: ${aiSCMType}. State: ${currentAISCMState}. Goals: ${aiSCMGoals}. Respond in JSON: { ai_scm_strategy: string, demand_forecasting: string[], inventory_optimization: string[], supplier_intelligence: string[], logistics_automation: string[], digital_twin: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productgrowth/productstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { prodStratType, currentProdStratState, prodStratGoals } = req.body;
+  const prompt = `You are a product strategy and roadmap expert. Build a product strategy. Type: ${prodStratType}. State: ${currentProdStratState}. Goals: ${prodStratGoals}. Respond in JSON: { product_strategy: string, roadmap_priorities: string[], pricing_model: string[], ai_integration: string[], platform_evolution: string[], competitive_moat: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productgrowth/growtheng', requireAuth, async (req: AuthRequest, res: any) => {
+  const { growthEngType, currentGrowthEngState, growthEngGoals } = req.body;
+  const prompt = `You are a growth engineering and experimentation expert. Build a growth engineering strategy. Type: ${growthEngType}. State: ${currentGrowthEngState}. Goals: ${growthEngGoals}. Respond in JSON: { growth_strategy: string, experimentation_framework: string[], funnel_optimization: string[], virality_mechanics: string[], seo_program: string[], measurement_system: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productgrowth/userresearch', requireAuth, async (req: AuthRequest, res: any) => {
+  const { urType, currentURState, urGoals } = req.body;
+  const prompt = `You are a user research and product discovery expert. Build a user research strategy. Type: ${urType}. State: ${currentURState}. Goals: ${urGoals}. Respond in JSON: { research_strategy: string, discovery_methods: string[], jtbd_framework: string[], analytics_program: string[], insight_pipeline: string[], prioritization_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productgrowth/pricing', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pricingType, currentPricingState, pricingGoals } = req.body;
+  const prompt = `You are a pricing strategy and monetization expert. Build a pricing strategy. Type: ${pricingType}. State: ${currentPricingState}. Goals: ${pricingGoals}. Respond in JSON: { pricing_strategy: string, pricing_architecture: string[], packaging_tiers: string[], expansion_revenue: string[], ai_pricing_model: string[], churn_impact: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productgrowth/plg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { plgType, currentPLGState, plgGoals } = req.body;
+  const prompt = `You are a product-led growth strategy expert. Build a PLG strategy. Type: ${plgType}. State: ${currentPLGState}. Goals: ${plgGoals}. Respond in JSON: { plg_strategy: string, activation_design: string[], onboarding_flow: string[], pql_system: string[], viral_mechanics: string[], enterprise_expansion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productgrowth/saasmetrics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { saasMetType, currentSaasMetState, saasMetGoals } = req.body;
+  const prompt = `You are a SaaS metrics and revenue analytics expert. Build a SaaS metrics framework. Type: ${saasMetType}. State: ${currentSaasMetState}. Goals: ${saasMetGoals}. Respond in JSON: { saas_metrics_framework: string, revenue_analytics: string[], churn_analysis: string[], cohort_modeling: string[], unit_economics: string[], investor_reporting: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productgrowth/enterprisesales', requireAuth, async (req: AuthRequest, res: any) => {
+  const { entSalesType, currentEntSalesState, entSalesGoals } = req.body;
+  const prompt = `You are an enterprise sales and revenue operations expert. Build an enterprise sales strategy. Type: ${entSalesType}. State: ${currentEntSalesState}. Goals: ${entSalesGoals}. Respond in JSON: { enterprise_sales_strategy: string, sales_methodology: string[], revops_framework: string[], territory_design: string[], enablement_program: string[], forecast_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productgrowth/cssuccess', requireAuth, async (req: AuthRequest, res: any) => {
+  const { csType, currentCSState, csGoals } = req.body;
+  const prompt = `You are a customer success and expansion revenue strategy expert. Build a CS strategy. Type: ${csType}. State: ${currentCSState}. Goals: ${csGoals}. Respond in JSON: { cs_strategy: string, onboarding_program: string[], health_scoring: string[], expansion_playbook: string[], churn_prevention: string[], digital_cs_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productgrowth/partnerships', requireAuth, async (req: AuthRequest, res: any) => {
+  const { partType, currentPartState, partGoals } = req.body;
+  const prompt = `You are a partnerships and ecosystem strategy expert. Build a partnerships strategy. Type: ${partType}. State: ${currentPartState}. Goals: ${partGoals}. Respond in JSON: { partnerships_strategy: string, partner_tiers: string[], co_sell_program: string[], marketplace_presence: string[], partner_enablement: string[], ecosystem_governance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productgrowth/contentmkt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { contentMktType, currentContentMktState, contentMktGoals } = req.body;
+  const prompt = `You are a content marketing and demand generation strategy expert. Build a content marketing strategy. Type: ${contentMktType}. State: ${currentContentMktState}. Goals: ${contentMktGoals}. Respond in JSON: { content_strategy: string, content_pillars: string[], seo_program: string[], distribution_channels: string[], abm_integration: string[], ai_content_model: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
