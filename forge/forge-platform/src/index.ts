@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1109.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1110.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -230538,5 +230538,65 @@ app.post('/api/productdev/growthexp', requireAuth, async (req: AuthRequest, res:
 app.post('/api/productdev/prodops', requireAuth, async (req: AuthRequest, res: any) => {
   const { poType, currentPOState, poGoals } = req.body;
   const prompt = `You are a product operations and team excellence expert. Build a product ops strategy. Type: ${poType}. State: ${currentPOState}. Goals: ${poGoals}. Respond in JSON: { product_ops_strategy: string, ritual_design: string[], tool_stack: string[], okr_system: string[], launch_framework: string[], team_health: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/innovation/startupstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { startupType, currentStartupState, startupGoals } = req.body;
+  const prompt = `You are a startup strategy and go-to-market expert. Build a startup strategy. Type: ${startupType}. State: ${currentStartupState}. Goals: ${startupGoals}. Respond in JSON: { startup_strategy: string, gtm_plan: string[], pmf_framework: string[], team_building: string[], fundraising_roadmap: string[], growth_milestones: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/innovation/vc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { vcType, currentVCState, vcGoals } = req.body;
+  const prompt = `You are a venture capital and fundraising strategy expert. Build a fundraising strategy. Type: ${vcType}. State: ${currentVCState}. Goals: ${vcGoals}. Respond in JSON: { fundraising_strategy: string, investor_targeting: string[], pitch_narrative: string[], due_diligence_prep: string[], term_sheet_guidance: string[], post_close_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/innovation/lean', requireAuth, async (req: AuthRequest, res: any) => {
+  const { leanType, currentLeanState, leanGoals } = req.body;
+  const prompt = `You are a lean startup and hypothesis testing expert. Build a lean startup plan. Type: ${leanType}. State: ${currentLeanState}. Goals: ${leanGoals}. Respond in JSON: { lean_strategy: string, hypothesis_framework: string[], mvp_design: string[], experiment_plan: string[], pivot_criteria: string[], innovation_accounting: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/innovation/pmf', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pmfType, currentPMFState, pmfGoals } = req.body;
+  const prompt = `You are a product-market fit validation strategy expert. Build a PMF strategy. Type: ${pmfType}. State: ${currentPMFState}. Goals: ${pmfGoals}. Respond in JSON: { pmf_strategy: string, validation_framework: string[], retention_analysis: string[], icp_refinement: string[], messaging_optimization: string[], scaling_readiness: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/innovation/corpinnov', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ciType, currentCIState, ciGoals } = req.body;
+  const prompt = `You are a corporate innovation and intrapreneurship expert. Build a corporate innovation strategy. Type: ${ciType}. State: ${currentCIState}. Goals: ${ciGoals}. Respond in JSON: { innovation_strategy: string, portfolio_framework: string[], intrapreneurship_program: string[], startup_collaboration: string[], governance_model: string[], culture_change: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/innovation/designthink', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dtType, currentDTState, dtGoals } = req.body;
+  const prompt = `You are a design thinking and human-centered innovation expert. Build a design thinking plan. Type: ${dtType}. State: ${currentDTState}. Goals: ${dtGoals}. Respond in JSON: { design_thinking_plan: string, empathy_research: string[], insight_synthesis: string[], ideation_techniques: string[], prototype_strategy: string[], testing_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/innovation/incubacc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { iaType, currentIAState, iaGoals } = req.body;
+  const prompt = `You are an incubator and accelerator program strategy expert. Build a program strategy. Type: ${iaType}. State: ${currentIAState}. Goals: ${iaGoals}. Respond in JSON: { program_strategy: string, selection_criteria: string[], curriculum_design: string[], mentor_network: string[], investment_model: string[], demo_day_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/innovation/openinnov', requireAuth, async (req: AuthRequest, res: any) => {
+  const { oiType, currentOIState, oiGoals } = req.body;
+  const prompt = `You are an open innovation and ecosystem strategy expert. Build an open innovation strategy. Type: ${oiType}. State: ${currentOIState}. Goals: ${oiGoals}. Respond in JSON: { open_innovation_strategy: string, ecosystem_design: string[], crowdsourcing_model: string[], partnership_framework: string[], ip_strategy: string[], community_programs: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/innovation/pitchdeck', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pdkType, currentPDKState, pdkGoals } = req.body;
+  const prompt = `You are a pitch deck and investor narrative strategy expert. Build a pitch strategy. Type: ${pdkType}. State: ${currentPDKState}. Goals: ${pdkGoals}. Respond in JSON: { pitch_strategy: string, narrative_arc: string[], slide_structure: string[], traction_story: string[], market_sizing: string[], closing_ask: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/innovation/venturebld', requireAuth, async (req: AuthRequest, res: any) => {
+  const { vbType, currentVBState, vbGoals } = req.body;
+  const prompt = `You are a venture building and studio strategy expert. Build a venture building strategy. Type: ${vbType}. State: ${currentVBState}. Goals: ${vbGoals}. Respond in JSON: { venture_build_strategy: string, ideation_process: string[], validation_framework: string[], team_model: string[], capital_allocation: string[], exit_pathways: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
