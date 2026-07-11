@@ -4394,6 +4394,16 @@ ForgeTab_dataprivacy7307,
 ForgeTab_incidentresponse7308,
 ForgeTab_otsecurity7309,
 ForgeTab_cyberstartup7310,
+ForgeTab_emergingmarket7311,
+ForgeTab_africastrat7312,
+ForgeTab_southeasiasia7313,
+ForgeTab_latamstrat7314,
+ForgeTab_menastrat7315,
+ForgeTab_indiastrat7316,
+ForgeTab_chinastrat7317,
+ForgeTab_developfin7318,
+ForgeTab_geopoliticalbiz7319,
+ForgeTab_globalization7320,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -65681,6 +65691,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'incidentresponse7308' && <ForgeTab_incidentresponse7308 />}
               {(mainTab as string) === 'otsecurity7309' && <ForgeTab_otsecurity7309 />}
               {(mainTab as string) === 'cyberstartup7310' && <ForgeTab_cyberstartup7310 />}
+              {(mainTab as string) === 'emergingmarket7311' && <ForgeTab_emergingmarket7311 />}
+              {(mainTab as string) === 'africastrat7312' && <ForgeTab_africastrat7312 />}
+              {(mainTab as string) === 'southeasiasia7313' && <ForgeTab_southeasiasia7313 />}
+              {(mainTab as string) === 'latamstrat7314' && <ForgeTab_latamstrat7314 />}
+              {(mainTab as string) === 'menastrat7315' && <ForgeTab_menastrat7315 />}
+              {(mainTab as string) === 'indiastrat7316' && <ForgeTab_indiastrat7316 />}
+              {(mainTab as string) === 'chinastrat7317' && <ForgeTab_chinastrat7317 />}
+              {(mainTab as string) === 'developfin7318' && <ForgeTab_developfin7318 />}
+              {(mainTab as string) === 'geopoliticalbiz7319' && <ForgeTab_geopoliticalbiz7319 />}
+              {(mainTab as string) === 'globalization7320' && <ForgeTab_globalization7320 />}
       </div>
     </div>
   );
