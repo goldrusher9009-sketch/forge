@@ -4624,6 +4624,16 @@ ForgeTab_voiceai7537,
 ForgeTab_smartdevices7538,
 ForgeTab_searchplatform7539,
 ForgeTab_consumerai7540,
+ForgeTab_mgmtconsulting7541,
+ForgeTab_strategyops7542,
+ForgeTab_itconsulting7543,
+ForgeTab_accounting7544,
+ForgeTab_taxadvisory7545,
+ForgeTab_restructuring7546,
+ForgeTab_orgdesign7547,
+ForgeTab_changemngt7548,
+ForgeTab_pmooffice7549,
+ForgeTab_valuation7550,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -66141,6 +66151,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'smartdevices7538' && <ForgeTab_smartdevices7538 />}
               {(mainTab as string) === 'searchplatform7539' && <ForgeTab_searchplatform7539 />}
               {(mainTab as string) === 'consumerai7540' && <ForgeTab_consumerai7540 />}
+              {(mainTab as string) === 'mgmtconsulting7541' && <ForgeTab_mgmtconsulting7541 />}
+              {(mainTab as string) === 'strategyops7542' && <ForgeTab_strategyops7542 />}
+              {(mainTab as string) === 'itconsulting7543' && <ForgeTab_itconsulting7543 />}
+              {(mainTab as string) === 'accounting7544' && <ForgeTab_accounting7544 />}
+              {(mainTab as string) === 'taxadvisory7545' && <ForgeTab_taxadvisory7545 />}
+              {(mainTab as string) === 'restructuring7546' && <ForgeTab_restructuring7546 />}
+              {(mainTab as string) === 'orgdesign7547' && <ForgeTab_orgdesign7547 />}
+              {(mainTab as string) === 'changemngt7548' && <ForgeTab_changemngt7548 />}
+              {(mainTab as string) === 'pmooffice7549' && <ForgeTab_pmooffice7549 />}
+              {(mainTab as string) === 'valuation7550' && <ForgeTab_valuation7550 />}
       </div>
     </div>
   );
