@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1084.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1085.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -229038,5 +229038,65 @@ app.post('/api/corporate/innovationmgmt', requireAuth, async (req: AuthRequest, 
 app.post('/api/corporate/stratplanning', requireAuth, async (req: AuthRequest, res: any) => {
   const { stratPlanType, currentStratPlanState, stratPlanGoals } = req.body;
   const prompt = `You are a strategic planning and execution framework expert. Build a strategic planning framework. Type: ${stratPlanType}. State: ${currentStratPlanState}. Goals: ${stratPlanGoals}. Respond in JSON: { strategic_planning_framework: string, planning_cycle: string[], okr_design: string[], portfolio_management: string[], execution_rhythm: string[], governance_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/aibizstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiStratType, currentAIStratState, aiStratGoals } = req.body;
+  const prompt = `You are an AI business strategy and transformation expert. Build an AI strategy. Type: ${aiStratType}. State: ${currentAIStratState}. Goals: ${aiStratGoals}. Respond in JSON: { ai_strategy: string, use_case_portfolio: string[], data_strategy: string[], ai_governance: string[], talent_model: string[], roi_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/genai', requireAuth, async (req: AuthRequest, res: any) => {
+  const { genaiType, currentGenAIState, genaiGoals } = req.body;
+  const prompt = `You are a generative AI product and monetization strategy expert. Build a GenAI strategy. Type: ${genaiType}. State: ${currentGenAIState}. Goals: ${genaiGoals}. Respond in JSON: { genai_strategy: string, product_architecture: string[], monetization_model: string[], agent_framework: string[], enterprise_deployment: string[], competitive_moat: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/datainfra', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dataInfraType, currentDataInfraState, dataInfraGoals } = req.body;
+  const prompt = `You are a data and AI infrastructure strategy expert. Build a data infrastructure strategy. Type: ${dataInfraType}. State: ${currentDataInfraState}. Goals: ${dataInfraGoals}. Respond in JSON: { data_infrastructure_strategy: string, platform_architecture: string[], mlops_framework: string[], data_governance: string[], cost_optimization: string[], scale_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/aiagents', requireAuth, async (req: AuthRequest, res: any) => {
+  const { agentType, currentAgentState, agentGoals } = req.body;
+  const prompt = `You are an AI agent and agentic workflow design expert. Build an AI agent strategy. Type: ${agentType}. State: ${currentAgentState}. Goals: ${agentGoals}. Respond in JSON: { agent_strategy: string, architecture_design: string[], tool_integration: string[], safety_framework: string[], orchestration_model: string[], enterprise_deployment: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/mlops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mlopsType, currentMLOpsState, mlopsGoals } = req.body;
+  const prompt = `You are an MLOps and AI platform engineering expert. Build an MLOps strategy. Type: ${mlopsType}. State: ${currentMLOpsState}. Goals: ${mlopsGoals}. Respond in JSON: { mlops_strategy: string, platform_design: string[], cicd_pipeline: string[], monitoring_framework: string[], model_governance: string[], cost_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/aiops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiOpsType, currentAIOpsState, aiOpsGoals } = req.body;
+  const prompt = `You are an AI operations and enterprise AI deployment expert. Build an AI ops strategy. Type: ${aiOpsType}. State: ${currentAIOpsState}. Goals: ${aiOpsGoals}. Respond in JSON: { ai_ops_strategy: string, coe_design: string[], llm_ops_framework: string[], evaluation_system: string[], guardrails_governance: string[], cost_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/aicx', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiCXType, currentAICXState, aiCXGoals } = req.body;
+  const prompt = `You are an AI-powered customer experience and support strategy expert. Build an AI CX strategy. Type: ${aiCXType}. State: ${currentAICXState}. Goals: ${aiCXGoals}. Respond in JSON: { ai_cx_strategy: string, automation_roadmap: string[], nlp_implementation: string[], personalization_engine: string[], agent_assist: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/aigtm', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiGTMType, currentAIGTMState, aiGTMGoals } = req.body;
+  const prompt = `You are an AI-powered sales and marketing GTM strategy expert. Build an AI GTM strategy. Type: ${aiGTMType}. State: ${currentAIGTMState}. Goals: ${aiGTMGoals}. Respond in JSON: { ai_gtm_strategy: string, sales_automation: string[], content_generation: string[], lead_scoring_model: string[], personalization_engine: string[], revops_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/aifin', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiFinType, currentAIFinState, aiFinGoals } = req.body;
+  const prompt = `You are an AI in finance and CFO office transformation expert. Build an AI finance strategy. Type: ${aiFinType}. State: ${currentAIFinState}. Goals: ${aiFinGoals}. Respond in JSON: { ai_finance_strategy: string, fpa_automation: string[], forecasting_model: string[], anomaly_detection: string[], compliance_automation: string[], close_acceleration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/aitransform/aiscm', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiSCMType, currentAISCMState, aiSCMGoals } = req.body;
+  const prompt = `You are an AI in supply chain and operations transformation expert. Build an AI SCM strategy. Type: ${aiSCMType}. State: ${currentAISCMState}. Goals: ${aiSCMGoals}. Respond in JSON: { ai_scm_strategy: string, demand_forecasting: string[], inventory_optimization: string[], supplier_intelligence: string[], logistics_automation: string[], digital_twin: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
