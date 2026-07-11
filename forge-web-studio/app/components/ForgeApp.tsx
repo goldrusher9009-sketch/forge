@@ -4404,6 +4404,16 @@ ForgeTab_chinastrat7317,
 ForgeTab_developfin7318,
 ForgeTab_geopoliticalbiz7319,
 ForgeTab_globalization7320,
+ForgeTab_corpstrategy7321,
+ForgeTab_mastrategy7322,
+ForgeTab_postmerger7323,
+ForgeTab_privateequity7324,
+ForgeTab_venturecapital7325,
+ForgeTab_corporatefinance7326,
+ForgeTab_ircomms7327,
+ForgeTab_boardgov7328,
+ForgeTab_businesstransform7329,
+ForgeTab_strategicplan7330,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -65701,6 +65711,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'developfin7318' && <ForgeTab_developfin7318 />}
               {(mainTab as string) === 'geopoliticalbiz7319' && <ForgeTab_geopoliticalbiz7319 />}
               {(mainTab as string) === 'globalization7320' && <ForgeTab_globalization7320 />}
+              {(mainTab as string) === 'corpstrategy7321' && <ForgeTab_corpstrategy7321 />}
+              {(mainTab as string) === 'mastrategy7322' && <ForgeTab_mastrategy7322 />}
+              {(mainTab as string) === 'postmerger7323' && <ForgeTab_postmerger7323 />}
+              {(mainTab as string) === 'privateequity7324' && <ForgeTab_privateequity7324 />}
+              {(mainTab as string) === 'venturecapital7325' && <ForgeTab_venturecapital7325 />}
+              {(mainTab as string) === 'corporatefinance7326' && <ForgeTab_corporatefinance7326 />}
+              {(mainTab as string) === 'ircomms7327' && <ForgeTab_ircomms7327 />}
+              {(mainTab as string) === 'boardgov7328' && <ForgeTab_boardgov7328 />}
+              {(mainTab as string) === 'businesstransform7329' && <ForgeTab_businesstransform7329 />}
+              {(mainTab as string) === 'strategicplan7330' && <ForgeTab_strategicplan7330 />}
       </div>
     </div>
   );
