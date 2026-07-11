@@ -4744,6 +4744,16 @@ ForgeTab_dealstructuring7657,
 ForgeTab_lpgprelations7658,
 ForgeTab_portfolioops7659,
 ForgeTab_creditstrategy7660,
+ForgeTab_urbanplanning7661,
+ForgeTab_infrastructurefin7662,
+ForgeTab_transportmobility7663,
+ForgeTab_watermanagement7664,
+ForgeTab_digitaltwin7665,
+ForgeTab_constructiontech7666,
+ForgeTab_energygrid7667,
+ForgeTab_wastecircular7668,
+ForgeTab_disasterresilience7669,
+ForgeTab_publicprivate7670,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -66381,6 +66391,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'lpgprelations7658' && <ForgeTab_lpgprelations7658 />}
               {(mainTab as string) === 'portfolioops7659' && <ForgeTab_portfolioops7659 />}
               {(mainTab as string) === 'creditstrategy7660' && <ForgeTab_creditstrategy7660 />}
+              {(mainTab as string) === 'urbanplanning7661' && <ForgeTab_urbanplanning7661 />}
+              {(mainTab as string) === 'infrastructurefin7662' && <ForgeTab_infrastructurefin7662 />}
+              {(mainTab as string) === 'transportmobility7663' && <ForgeTab_transportmobility7663 />}
+              {(mainTab as string) === 'watermanagement7664' && <ForgeTab_watermanagement7664 />}
+              {(mainTab as string) === 'digitaltwin7665' && <ForgeTab_digitaltwin7665 />}
+              {(mainTab as string) === 'constructiontech7666' && <ForgeTab_constructiontech7666 />}
+              {(mainTab as string) === 'energygrid7667' && <ForgeTab_energygrid7667 />}
+              {(mainTab as string) === 'wastecircular7668' && <ForgeTab_wastecircular7668 />}
+              {(mainTab as string) === 'disasterresilience7669' && <ForgeTab_disasterresilience7669 />}
+              {(mainTab as string) === 'publicprivate7670' && <ForgeTab_publicprivate7670 />}
       </div>
     </div>
   );
