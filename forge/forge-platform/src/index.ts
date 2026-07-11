@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1088.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1089.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -229278,5 +229278,65 @@ app.post('/api/brandcomms/internalcomms', requireAuth, async (req: AuthRequest, 
 app.post('/api/brandcomms/marketingops', requireAuth, async (req: AuthRequest, res: any) => {
   const { mopsType, currentMOpsState, mopsGoals } = req.body;
   const prompt = `You are a marketing operations and MarTech stack strategy expert. Build a marketing ops strategy. Type: ${mopsType}. State: ${currentMOpsState}. Goals: ${mopsGoals}. Respond in JSON: { marketing_ops_strategy: string, martech_architecture: string[], attribution_model: string[], automation_roadmap: string[], data_foundation: string[], ai_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineeringops/devopssre', requireAuth, async (req: AuthRequest, res: any) => {
+  const { devopsType, currentDevopsState, devopsGoals } = req.body;
+  const prompt = `You are a DevOps and SRE strategy expert. Build a DevOps strategy. Type: ${devopsType}. State: ${currentDevopsState}. Goals: ${devopsGoals}. Respond in JSON: { devops_strategy: string, ci_cd_pipeline: string[], slo_framework: string[], observability_stack: string[], platform_engineering: string[], toil_reduction: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineeringops/softwarearch', requireAuth, async (req: AuthRequest, res: any) => {
+  const { archType, currentArchState, archGoals } = req.body;
+  const prompt = `You are a software architecture and system design expert. Build an architecture strategy. Type: ${archType}. State: ${currentArchState}. Goals: ${archGoals}. Respond in JSON: { architecture_strategy: string, design_principles: string[], migration_roadmap: string[], scalability_plan: string[], technology_choices: string[], technical_debt_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineeringops/engexcellence', requireAuth, async (req: AuthRequest, res: any) => {
+  const { engExType, currentEngExState, engExGoals } = req.body;
+  const prompt = `You are an engineering excellence and developer productivity expert. Build an engineering excellence strategy. Type: ${engExType}. State: ${currentEngExState}. Goals: ${engExGoals}. Respond in JSON: { engineering_excellence_strategy: string, code_quality: string[], testing_pyramid: string[], developer_experience: string[], documentation: string[], inner_source: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineeringops/apisec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { apiType, currentAPIState, apiGoals } = req.body;
+  const prompt = `You are an API design and security strategy expert. Build an API strategy. Type: ${apiType}. State: ${currentAPIState}. Goals: ${apiGoals}. Respond in JSON: { api_strategy: string, design_standards: string[], security_framework: string[], gateway_architecture: string[], developer_portal: string[], versioning_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineeringops/database', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dbType, currentDBState, dbGoals } = req.body;
+  const prompt = `You are a database and data architecture strategy expert. Build a database strategy. Type: ${dbType}. State: ${currentDBState}. Goals: ${dbGoals}. Respond in JSON: { database_strategy: string, architecture_design: string[], migration_plan: string[], performance_optimization: string[], vector_db_integration: string[], cost_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineeringops/techleadership', requireAuth, async (req: AuthRequest, res: any) => {
+  const { techLeadType, currentTechLeadState, techLeadGoals } = req.body;
+  const prompt = `You are a tech leadership and CTO strategy expert. Build a tech leadership strategy. Type: ${techLeadType}. State: ${currentTechLeadState}. Goals: ${techLeadGoals}. Respond in JSON: { tech_leadership_strategy: string, engineering_org: string[], technology_roadmap: string[], build_buy_decisions: string[], hiring_strategy: string[], culture_enablers: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineeringops/swdelivery', requireAuth, async (req: AuthRequest, res: any) => {
+  const { swDelType, currentSWDelState, swDelGoals } = req.body;
+  const prompt = `You are a software delivery and agile transformation expert. Build a delivery strategy. Type: ${swDelType}. State: ${currentSWDelState}. Goals: ${swDelGoals}. Respond in JSON: { delivery_strategy: string, agile_framework: string[], team_topology: string[], sprint_cadence: string[], portfolio_management: string[], devSecOps_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineeringops/platformeng', requireAuth, async (req: AuthRequest, res: any) => {
+  const { platformEngType, currentPlatformEngState, platformEngGoals } = req.body;
+  const prompt = `You are a platform engineering and internal developer platform expert. Build a platform engineering strategy. Type: ${platformEngType}. State: ${currentPlatformEngState}. Goals: ${platformEngGoals}. Respond in JSON: { platform_strategy: string, idp_design: string[], golden_path: string[], self_service_catalog: string[], adoption_plan: string[], cognitive_load_reduction: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineeringops/observability', requireAuth, async (req: AuthRequest, res: any) => {
+  const { observType, currentObservState, observGoals } = req.body;
+  const prompt = `You are an observability and monitoring strategy expert. Build an observability strategy. Type: ${observType}. State: ${currentObservState}. Goals: ${observGoals}. Respond in JSON: { observability_strategy: string, telemetry_stack: string[], slo_sla_framework: string[], alerting_design: string[], ai_ops_integration: string[], cost_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/engineeringops/techdebt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { techDebtType, currentTechDebtState, techDebtGoals } = req.body;
+  const prompt = `You are a technical debt management and modernization expert. Build a tech debt strategy. Type: ${techDebtType}. State: ${currentTechDebtState}. Goals: ${techDebtGoals}. Respond in JSON: { tech_debt_strategy: string, debt_inventory: string[], modernization_roadmap: string[], strangler_fig_plan: string[], investment_justification: string[], velocity_impact: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
