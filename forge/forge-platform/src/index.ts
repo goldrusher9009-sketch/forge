@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1019.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1020.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -225138,5 +225138,65 @@ app.post('/api/hrfow/hrops', requireAuth, async (req: AuthRequest, res: any) => 
 app.post('/api/hrfow/change', requireAuth, async (req: AuthRequest, res: any) => {
   const { cmType, currentCMState, cmGoals } = req.body;
   const prompt = `You are a change management and organizational transformation strategy expert. Build a change management strategy. Type: ${cmType}. State: ${currentCMState}. Goals: ${cmGoals}. Respond in JSON: { change_strategy: string, stakeholder_engagement: string[], communication_plan: string[], training_program: string[], resistance_management: string[], sustainability_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/legaltech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { legaltechType, currentLegalTechState, legaltechGoals } = req.body;
+  const prompt = `You are a legal technology and legaltech strategy expert. Build a legaltech strategy. Type: ${legaltechType}. State: ${currentLegalTechState}. Goals: ${legaltechGoals}. Respond in JSON: { legaltech_strategy: string, platform_architecture: string[], ai_automation: string[], contract_management: string[], ediscovery_framework: string[], cost_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/clm', requireAuth, async (req: AuthRequest, res: any) => {
+  const { clmType, currentCLMState, clmGoals } = req.body;
+  const prompt = `You are a contract lifecycle management strategy expert. Build a CLM strategy. Type: ${clmType}. State: ${currentCLMState}. Goals: ${clmGoals}. Respond in JSON: { clm_strategy: string, workflow_design: string[], ai_review: string[], risk_management: string[], integration_architecture: string[], analytics_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/legalai', requireAuth, async (req: AuthRequest, res: any) => {
+  const { legalAIType, currentLegalAIState, legalAIGoals } = req.body;
+  const prompt = `You are a legal AI and generative AI for law strategy expert. Build a legal AI strategy. Type: ${legalAIType}. State: ${currentLegalAIState}. Goals: ${legalAIGoals}. Respond in JSON: { legal_ai_strategy: string, use_case_roadmap: string[], governance_framework: string[], risk_management: string[], implementation_plan: string[], roi_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/ediscovery', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ediscType, currentEDiscState, ediscGoals } = req.body;
+  const prompt = `You are an e-discovery and litigation technology strategy expert. Build an e-discovery strategy. Type: ${ediscType}. State: ${currentEDiscState}. Goals: ${ediscGoals}. Respond in JSON: { ediscovery_strategy: string, technology_architecture: string[], tar_cal_framework: string[], cost_management: string[], defensibility: string[], data_governance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/legalops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { legalOpsType, currentLegalOpsState, legalOpsGoals } = req.body;
+  const prompt = `You are a legal operations and in-house legal strategy expert. Build a legal ops strategy. Type: ${legalOpsType}. State: ${currentLegalOpsState}. Goals: ${legalOpsGoals}. Respond in JSON: { legal_ops_strategy: string, spend_management: string[], technology_stack: string[], vendor_management: string[], metrics_framework: string[], efficiency_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/compliancetech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { compTechType, currentCompTechState, compTechGoals } = req.body;
+  const prompt = `You are a RegTech and compliance technology strategy expert. Build a compliance tech strategy. Type: ${compTechType}. State: ${currentCompTechState}. Goals: ${compTechGoals}. Respond in JSON: { compliance_tech_strategy: string, regulatory_automation: string[], aml_kyc_framework: string[], ai_governance: string[], audit_trail: string[], implementation_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/ip', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ipTechType, currentIPState, ipTechGoals } = req.body;
+  const prompt = `You are an IP management and patent strategy technology expert. Build an IP tech strategy. Type: ${ipTechType}. State: ${currentIPState}. Goals: ${ipTechGoals}. Respond in JSON: { ip_tech_strategy: string, portfolio_management: string[], ai_analytics: string[], licensing_framework: string[], litigation_support: string[], monetization_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/lawfirmtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { lawFirmTechType, currentLawFirmTechState, lawFirmTechGoals } = req.body;
+  const prompt = `You are a law firm technology and digital transformation strategy expert. Build a law firm tech strategy. Type: ${lawFirmTechType}. State: ${currentLawFirmTechState}. Goals: ${lawFirmTechGoals}. Respond in JSON: { lawfirm_tech_strategy: string, ai_integration: string[], knowledge_management: string[], client_experience: string[], cybersecurity_framework: string[], profitability_impact: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/privacytech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { privTechType, currentPrivTechState, privTechGoals } = req.body;
+  const prompt = `You are a privacy technology and data protection strategy expert. Build a privacy tech strategy. Type: ${privTechType}. State: ${currentPrivTechState}. Goals: ${privTechGoals}. Respond in JSON: { privacy_tech_strategy: string, gdpr_ccpa_framework: string[], consent_management: string[], dsar_automation: string[], ai_privacy_governance: string[], vendor_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legaltech/altlegal', requireAuth, async (req: AuthRequest, res: any) => {
+  const { altLegalType, currentAltLegalState, altLegalGoals } = req.body;
+  const prompt = `You are an alternative legal services and NewLaw strategy expert. Build an alternative legal strategy. Type: ${altLegalType}. State: ${currentAltLegalState}. Goals: ${altLegalGoals}. Respond in JSON: { alt_legal_strategy: string, service_model: string[], ai_integration: string[], talent_model: string[], technology_stack: string[], market_positioning: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
