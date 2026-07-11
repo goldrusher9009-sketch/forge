@@ -4114,6 +4114,16 @@ ForgeTab_cloudfinops7027,
 ForgeTab_saaspartnerchannel7028,
 ForgeTab_saasenterpriseentry7029,
 ForgeTab_saasinternatexp7030,
+ForgeTab_aiplatformstrat7031,
+ForgeTab_llmproductstrat7032,
+ForgeTab_aiagentsstrat7033,
+ForgeTab_datasciencestrat7034,
+ForgeTab_aiethicssafety7035,
+ForgeTab_aienterpriseadopt7036,
+ForgeTab_computervisionstrat7037,
+ForgeTab_nlpaisearch7038,
+ForgeTab_datasovereignty7039,
+ForgeTab_airevenuegrowth7040,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -65121,6 +65131,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'saaspartnerchannel7028' && <ForgeTab_saaspartnerchannel7028 />}
               {(mainTab as string) === 'saasenterpriseentry7029' && <ForgeTab_saasenterpriseentry7029 />}
               {(mainTab as string) === 'saasinternatexp7030' && <ForgeTab_saasinternatexp7030 />}
+              {(mainTab as string) === 'aiplatformstrat7031' && <ForgeTab_aiplatformstrat7031 />}
+              {(mainTab as string) === 'llmproductstrat7032' && <ForgeTab_llmproductstrat7032 />}
+              {(mainTab as string) === 'aiagentsstrat7033' && <ForgeTab_aiagentsstrat7033 />}
+              {(mainTab as string) === 'datasciencestrat7034' && <ForgeTab_datasciencestrat7034 />}
+              {(mainTab as string) === 'aiethicssafety7035' && <ForgeTab_aiethicssafety7035 />}
+              {(mainTab as string) === 'aienterpriseadopt7036' && <ForgeTab_aienterpriseadopt7036 />}
+              {(mainTab as string) === 'computervisionstrat7037' && <ForgeTab_computervisionstrat7037 />}
+              {(mainTab as string) === 'nlpaisearch7038' && <ForgeTab_nlpaisearch7038 />}
+              {(mainTab as string) === 'datasovereignty7039' && <ForgeTab_datasovereignty7039 />}
+              {(mainTab as string) === 'airevenuegrowth7040' && <ForgeTab_airevenuegrowth7040 />}
       </div>
     </div>
   );
