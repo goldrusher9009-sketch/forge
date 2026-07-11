@@ -4144,6 +4144,16 @@ ForgeTab_duediligence7057,
 ForgeTab_fundraising7058,
 ForgeTab_creditstrategy7059,
 ForgeTab_esgintegration7060,
+ForgeTab_globaltradestrat7061,
+ForgeTab_marketentrystrat7062,
+ForgeTab_geopoliticalrisk7063,
+ForgeTab_supplychain7064,
+ForgeTab_localizationstrat7065,
+ForgeTab_tradecompliancestrat7066,
+ForgeTab_asiapacificstrat7067,
+ForgeTab_emergingmarkets7068,
+ForgeTab_crossborderecom7069,
+ForgeTab_globalpartnerships7070,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -65181,6 +65191,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'fundraising7058' && <ForgeTab_fundraising7058 />}
               {(mainTab as string) === 'creditstrategy7059' && <ForgeTab_creditstrategy7059 />}
               {(mainTab as string) === 'esgintegration7060' && <ForgeTab_esgintegration7060 />}
+              {(mainTab as string) === 'globaltradestrat7061' && <ForgeTab_globaltradestrat7061 />}
+              {(mainTab as string) === 'marketentrystrat7062' && <ForgeTab_marketentrystrat7062 />}
+              {(mainTab as string) === 'geopoliticalrisk7063' && <ForgeTab_geopoliticalrisk7063 />}
+              {(mainTab as string) === 'supplychain7064' && <ForgeTab_supplychain7064 />}
+              {(mainTab as string) === 'localizationstrat7065' && <ForgeTab_localizationstrat7065 />}
+              {(mainTab as string) === 'tradecompliancestrat7066' && <ForgeTab_tradecompliancestrat7066 />}
+              {(mainTab as string) === 'asiapacificstrat7067' && <ForgeTab_asiapacificstrat7067 />}
+              {(mainTab as string) === 'emergingmarkets7068' && <ForgeTab_emergingmarkets7068 />}
+              {(mainTab as string) === 'crossborderecom7069' && <ForgeTab_crossborderecom7069 />}
+              {(mainTab as string) === 'globalpartnerships7070' && <ForgeTab_globalpartnerships7070 />}
       </div>
     </div>
   );
