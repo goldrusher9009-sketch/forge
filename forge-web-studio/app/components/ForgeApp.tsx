@@ -1684,6 +1684,16 @@ ForgeTab_diversityinclusion4597,
 ForgeTab_workforceplanning4598,
 ForgeTab_employeewellbeing4599,
 ForgeTab_chrostrategy4600,
+ForgeTab_corpstrategy4601,
+ForgeTab_ceoadvisory4602,
+ForgeTab_boardstrategy4603,
+ForgeTab_changemanagement4604,
+ForgeTab_innovationstrat4605,
+ForgeTab_cfofinancestrat4606,
+ForgeTab_operatingmodel4607,
+ForgeTab_cxotransform4608,
+ForgeTab_privateequitystrat4609,
+ForgeTab_familybusiness4610,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -60261,6 +60271,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'workforceplanning4598' && <ForgeTab_workforceplanning4598 />}
               {(mainTab as string) === 'employeewellbeing4599' && <ForgeTab_employeewellbeing4599 />}
               {(mainTab as string) === 'chrostrategy4600' && <ForgeTab_chrostrategy4600 />}
+              {(mainTab as string) === 'corpstrategy4601' && <ForgeTab_corpstrategy4601 />}
+              {(mainTab as string) === 'ceoadvisory4602' && <ForgeTab_ceoadvisory4602 />}
+              {(mainTab as string) === 'boardstrategy4603' && <ForgeTab_boardstrategy4603 />}
+              {(mainTab as string) === 'changemanagement4604' && <ForgeTab_changemanagement4604 />}
+              {(mainTab as string) === 'innovationstrat4605' && <ForgeTab_innovationstrat4605 />}
+              {(mainTab as string) === 'cfofinancestrat4606' && <ForgeTab_cfofinancestrat4606 />}
+              {(mainTab as string) === 'operatingmodel4607' && <ForgeTab_operatingmodel4607 />}
+              {(mainTab as string) === 'cxotransform4608' && <ForgeTab_cxotransform4608 />}
+              {(mainTab as string) === 'privateequitystrat4609' && <ForgeTab_privateequitystrat4609 />}
+              {(mainTab as string) === 'familybusiness4610' && <ForgeTab_familybusiness4610 />}
       </div>
     </div>
   );
