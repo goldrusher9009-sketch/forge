@@ -2204,6 +2204,16 @@ ForgeTab_pharmacystrategy5117,
 ForgeTab_seniorcare5118,
 ForgeTab_aiinhealth5119,
 ForgeTab_healthcarerevenue5120,
+ForgeTab_edtech5121,
+ForgeTab_highereducation5122,
+ForgeTab_corporatelearning5123,
+ForgeTab_k12education5124,
+ForgeTab_skillstraining5125,
+ForgeTab_languagelearning5126,
+ForgeTab_credentialing5127,
+ForgeTab_tutoring5128,
+ForgeTab_learningplatform5129,
+ForgeTab_stemeducation5130,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -61301,6 +61311,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'seniorcare5118' && <ForgeTab_seniorcare5118 />}
               {(mainTab as string) === 'aiinhealth5119' && <ForgeTab_aiinhealth5119 />}
               {(mainTab as string) === 'healthcarerevenue5120' && <ForgeTab_healthcarerevenue5120 />}
+              {(mainTab as string) === 'edtech5121' && <ForgeTab_edtech5121 />}
+              {(mainTab as string) === 'highereducation5122' && <ForgeTab_highereducation5122 />}
+              {(mainTab as string) === 'corporatelearning5123' && <ForgeTab_corporatelearning5123 />}
+              {(mainTab as string) === 'k12education5124' && <ForgeTab_k12education5124 />}
+              {(mainTab as string) === 'skillstraining5125' && <ForgeTab_skillstraining5125 />}
+              {(mainTab as string) === 'languagelearning5126' && <ForgeTab_languagelearning5126 />}
+              {(mainTab as string) === 'credentialing5127' && <ForgeTab_credentialing5127 />}
+              {(mainTab as string) === 'tutoring5128' && <ForgeTab_tutoring5128 />}
+              {(mainTab as string) === 'learningplatform5129' && <ForgeTab_learningplatform5129 />}
+              {(mainTab as string) === 'stemeducation5130' && <ForgeTab_stemeducation5130 />}
       </div>
     </div>
   );
