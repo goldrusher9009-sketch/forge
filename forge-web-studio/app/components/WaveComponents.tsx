@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 
@@ -144171,4 +144171,114 @@ export function ForgeTab_embedded7770() {
   const API = (window as any).FORGE_API || '';
   const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/fintech/embedded', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({embType,currentEmbState,embGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
   return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🔌 Embedded Finance Strategy Advisor</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Embedded Type (payments/lending/insurance/banking/investing)" value={embType} onChange={e=>setEmbType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current State (platform type, users, current fintech products)" value={currentEmbState} onChange={e=>setCurrentEmbState(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Goals (revenue/retention/LTV/monetization/differentiation)" value={embGoals} onChange={e=>setEmbGoals(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Embedded Finance Advisor'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_contract7771() {
+  const [contractType, setContractType] = React.useState('');
+  const [currentContractState, setCurrentContractState] = React.useState('');
+  const [contractGoals, setContractGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/legaltech/contract', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({contractType,currentContractState,contractGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>📄 Contract Analysis Advisor</h2><p>AI-powered contract review and risk identification.</p><div style={{display:'flex',flexDirection:'column',gap:'1rem',marginTop:'1.5rem'}}><input placeholder="Contract type (NDA, SaaS, Employment...)" value={contractType} onChange={e=>setContractType(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Current contract state" value={currentContractState} onChange={e=>setCurrentContractState(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Contract goals" value={contractGoals} onChange={e=>setContractGoals(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><button onClick={run} disabled={loading} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,cursor:'pointer'}}>{loading?'Analyzing...':'Analyze Contract'}</button></div>{result&&<pre style={{marginTop:'1.5rem',padding:'1rem',background:'#0f0f1a',borderRadius:8,whiteSpace:'pre-wrap',color:'#a78bfa'}}>{typeof result==='string'?result:JSON.stringify(result,null,2)}</pre>}</div>);
+}
+
+export function ForgeTab_compliance7772() {
+  const [compType, setCompType] = React.useState('');
+  const [currentCompState, setCurrentCompState] = React.useState('');
+  const [compGoals, setCompGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/legaltech/compliance', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({compType,currentCompState,compGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>⚖️ Legal Compliance Advisor</h2><p>Build robust compliance programs and frameworks.</p><div style={{display:'flex',flexDirection:'column',gap:'1rem',marginTop:'1.5rem'}}><input placeholder="Compliance type (GDPR, SOX, HIPAA...)" value={compType} onChange={e=>setCompType(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Current compliance state" value={currentCompState} onChange={e=>setCurrentCompState(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Compliance goals" value={compGoals} onChange={e=>setCompGoals(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><button onClick={run} disabled={loading} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,cursor:'pointer'}}>{loading?'Analyzing...':'Build Compliance Plan'}</button></div>{result&&<pre style={{marginTop:'1.5rem',padding:'1rem',background:'#0f0f1a',borderRadius:8,whiteSpace:'pre-wrap',color:'#a78bfa'}}>{typeof result==='string'?result:JSON.stringify(result,null,2)}</pre>}</div>);
+}
+
+export function ForgeTab_litigation7773() {
+  const [litType, setLitType] = React.useState('');
+  const [currentLitState, setCurrentLitState] = React.useState('');
+  const [litGoals, setLitGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/legaltech/litigation', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({litType,currentLitState,litGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🏛️ Litigation Strategy Advisor</h2><p>Develop winning litigation and case management strategies.</p><div style={{display:'flex',flexDirection:'column',gap:'1rem',marginTop:'1.5rem'}}><input placeholder="Litigation type (Commercial, Employment, IP...)" value={litType} onChange={e=>setLitType(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Current case state" value={currentLitState} onChange={e=>setCurrentLitState(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Litigation goals" value={litGoals} onChange={e=>setLitGoals(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><button onClick={run} disabled={loading} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,cursor:'pointer'}}>{loading?'Analyzing...':'Build Strategy'}</button></div>{result&&<pre style={{marginTop:'1.5rem',padding:'1rem',background:'#0f0f1a',borderRadius:8,whiteSpace:'pre-wrap',color:'#a78bfa'}}>{typeof result==='string'?result:JSON.stringify(result,null,2)}</pre>}</div>);
+}
+
+export function ForgeTab_ip7774() {
+  const [ipType, setIpType] = React.useState('');
+  const [currentIpState, setCurrentIpState] = React.useState('');
+  const [ipGoals, setIpGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/legaltech/ip', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({ipType,currentIpState,ipGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>💡 IP Strategy Advisor</h2><p>Protect and monetize intellectual property assets.</p><div style={{display:'flex',flexDirection:'column',gap:'1rem',marginTop:'1.5rem'}}><input placeholder="IP type (Patent, Trademark, Copyright, Trade Secret...)" value={ipType} onChange={e=>setIpType(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Current IP state" value={currentIpState} onChange={e=>setCurrentIpState(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="IP goals" value={ipGoals} onChange={e=>setIpGoals(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><button onClick={run} disabled={loading} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,cursor:'pointer'}}>{loading?'Analyzing...':'Build IP Strategy'}</button></div>{result&&<pre style={{marginTop:'1.5rem',padding:'1rem',background:'#0f0f1a',borderRadius:8,whiteSpace:'pre-wrap',color:'#a78bfa'}}>{typeof result==='string'?result:JSON.stringify(result,null,2)}</pre>}</div>);
+}
+
+export function ForgeTab_governance7775() {
+  const [govType, setGovType] = React.useState('');
+  const [currentGovState, setCurrentGovState] = React.useState('');
+  const [govGoals, setGovGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/legaltech/governance', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({govType,currentGovState,govGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🏢 Corporate Governance Advisor</h2><p>Strengthen board structure and corporate oversight.</p><div style={{display:'flex',flexDirection:'column',gap:'1rem',marginTop:'1.5rem'}}><input placeholder="Governance type (Public, Private, Nonprofit...)" value={govType} onChange={e=>setGovType(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Current governance state" value={currentGovState} onChange={e=>setCurrentGovState(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Governance goals" value={govGoals} onChange={e=>setGovGoals(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><button onClick={run} disabled={loading} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,cursor:'pointer'}}>{loading?'Analyzing...':'Improve Governance'}</button></div>{result&&<pre style={{marginTop:'1.5rem',padding:'1rem',background:'#0f0f1a',borderRadius:8,whiteSpace:'pre-wrap',color:'#a78bfa'}}>{typeof result==='string'?result:JSON.stringify(result,null,2)}</pre>}</div>);
+}
+
+export function ForgeTab_employment7776() {
+  const [empType, setEmpType] = React.useState('');
+  const [currentEmpState, setCurrentEmpState] = React.useState('');
+  const [empGoals, setEmpGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/legaltech/employment', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({empType,currentEmpState,empGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>👔 Employment Law Advisor</h2><p>Navigate employment law compliance and HR legal matters.</p><div style={{display:'flex',flexDirection:'column',gap:'1rem',marginTop:'1.5rem'}}><input placeholder="Employment matter type (Termination, Discrimination, Wage...)" value={empType} onChange={e=>setEmpType(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Current employment state" value={currentEmpState} onChange={e=>setCurrentEmpState(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Employment goals" value={empGoals} onChange={e=>setEmpGoals(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><button onClick={run} disabled={loading} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,cursor:'pointer'}}>{loading?'Analyzing...':'Get Legal Guidance'}</button></div>{result&&<pre style={{marginTop:'1.5rem',padding:'1rem',background:'#0f0f1a',borderRadius:8,whiteSpace:'pre-wrap',color:'#a78bfa'}}>{typeof result==='string'?result:JSON.stringify(result,null,2)}</pre>}</div>);
+}
+
+export function ForgeTab_regulatory7777() {
+  const [regType, setRegType] = React.useState('');
+  const [currentRegState, setCurrentRegState] = React.useState('');
+  const [regGoals, setRegGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/legaltech/regulatory', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({regType,currentRegState,regGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>📋 Regulatory Affairs Advisor</h2><p>Navigate complex regulatory landscapes and government relations.</p><div style={{display:'flex',flexDirection:'column',gap:'1rem',marginTop:'1.5rem'}}><input placeholder="Regulatory type (FDA, SEC, EPA, FTC...)" value={regType} onChange={e=>setRegType(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Current regulatory state" value={currentRegState} onChange={e=>setCurrentRegState(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Regulatory goals" value={regGoals} onChange={e=>setRegGoals(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><button onClick={run} disabled={loading} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,cursor:'pointer'}}>{loading?'Analyzing...':'Navigate Regulations'}</button></div>{result&&<pre style={{marginTop:'1.5rem',padding:'1rem',background:'#0f0f1a',borderRadius:8,whiteSpace:'pre-wrap',color:'#a78bfa'}}>{typeof result==='string'?result:JSON.stringify(result,null,2)}</pre>}</div>);
+}
+
+export function ForgeTab_dispute7778() {
+  const [disputeType, setDisputeType] = React.useState('');
+  const [currentDisputeState, setCurrentDisputeState] = React.useState('');
+  const [disputeGoals, setDisputeGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/legaltech/dispute', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({disputeType,currentDisputeState,disputeGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🤝 Dispute Resolution Advisor</h2><p>Resolve disputes efficiently through mediation and arbitration.</p><div style={{display:'flex',flexDirection:'column',gap:'1rem',marginTop:'1.5rem'}}><input placeholder="Dispute type (Commercial, Consumer, Labor...)" value={disputeType} onChange={e=>setDisputeType(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Current dispute state" value={currentDisputeState} onChange={e=>setCurrentDisputeState(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Resolution goals" value={disputeGoals} onChange={e=>setDisputeGoals(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><button onClick={run} disabled={loading} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,cursor:'pointer'}}>{loading?'Analyzing...':'Resolve Dispute'}</button></div>{result&&<pre style={{marginTop:'1.5rem',padding:'1rem',background:'#0f0f1a',borderRadius:8,whiteSpace:'pre-wrap',color:'#a78bfa'}}>{typeof result==='string'?result:JSON.stringify(result,null,2)}</pre>}</div>);
+}
+
+export function ForgeTab_legalresearch7779() {
+  const [researchType, setResearchType] = React.useState('');
+  const [currentResearchState, setCurrentResearchState] = React.useState('');
+  const [researchGoals, setResearchGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/legaltech/research', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({researchType,currentResearchState,researchGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🔍 Legal Research Advisor</h2><p>Comprehensive case law and statutory research analysis.</p><div style={{display:'flex',flexDirection:'column',gap:'1rem',marginTop:'1.5rem'}}><input placeholder="Research type (Case Law, Statute, Regulation...)" value={researchType} onChange={e=>setResearchType(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Current research state" value={currentResearchState} onChange={e=>setCurrentResearchState(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Research goals" value={researchGoals} onChange={e=>setResearchGoals(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><button onClick={run} disabled={loading} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,cursor:'pointer'}}>{loading?'Researching...':'Research Law'}</button></div>{result&&<pre style={{marginTop:'1.5rem',padding:'1rem',background:'#0f0f1a',borderRadius:8,whiteSpace:'pre-wrap',color:'#a78bfa'}}>{typeof result==='string'?result:JSON.stringify(result,null,2)}</pre>}</div>);
+}
+
+export function ForgeTab_legalops7780() {
+  const [opsType, setOpsType] = React.useState('');
+  const [currentOpsState, setCurrentOpsState] = React.useState('');
+  const [opsGoals, setOpsGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/legaltech/legalops', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({opsType,currentOpsState,opsGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>⚙️ Legal Operations Advisor</h2><p>Optimize legal department efficiency and technology stack.</p><div style={{display:'flex',flexDirection:'column',gap:'1rem',marginTop:'1.5rem'}}><input placeholder="Legal ops type (Process, Technology, Vendor...)" value={opsType} onChange={e=>setOpsType(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Current legal ops state" value={currentOpsState} onChange={e=>setCurrentOpsState(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><input placeholder="Legal ops goals" value={opsGoals} onChange={e=>setOpsGoals(e.target.value)} style={{padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a2e',color:'#fff'}} /><button onClick={run} disabled={loading} style={{padding:'0.75rem 2rem',background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,cursor:'pointer'}}>{loading?'Analyzing...':'Optimize Legal Ops'}</button></div>{result&&<pre style={{marginTop:'1.5rem',padding:'1rem',background:'#0f0f1a',borderRadius:8,whiteSpace:'pre-wrap',color:'#a78bfa'}}>{typeof result==='string'?result:JSON.stringify(result,null,2)}</pre>}</div>);
 }
