@@ -4574,6 +4574,16 @@ ForgeTab_coldchainstrat7487,
 ForgeTab_reverselogistics7488,
 ForgeTab_portlogistics7489,
 ForgeTab_freighttech7490,
+ForgeTab_aigovernance7491,
+ForgeTab_datastrategy7492,
+ForgeTab_privacytech7493,
+ForgeTab_trustsafety7494,
+ForgeTab_identitytech7495,
+ForgeTab_aiproductstrat7496,
+ForgeTab_llmops7497,
+ForgeTab_airegulation7498,
+ForgeTab_genaimonetize7499,
+ForgeTab_aisafety7500,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -66041,6 +66051,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'reverselogistics7488' && <ForgeTab_reverselogistics7488 />}
               {(mainTab as string) === 'portlogistics7489' && <ForgeTab_portlogistics7489 />}
               {(mainTab as string) === 'freighttech7490' && <ForgeTab_freighttech7490 />}
+              {(mainTab as string) === 'aigovernance7491' && <ForgeTab_aigovernance7491 />}
+              {(mainTab as string) === 'datastrategy7492' && <ForgeTab_datastrategy7492 />}
+              {(mainTab as string) === 'privacytech7493' && <ForgeTab_privacytech7493 />}
+              {(mainTab as string) === 'trustsafety7494' && <ForgeTab_trustsafety7494 />}
+              {(mainTab as string) === 'identitytech7495' && <ForgeTab_identitytech7495 />}
+              {(mainTab as string) === 'aiproductstrat7496' && <ForgeTab_aiproductstrat7496 />}
+              {(mainTab as string) === 'llmops7497' && <ForgeTab_llmops7497 />}
+              {(mainTab as string) === 'airegulation7498' && <ForgeTab_airegulation7498 />}
+              {(mainTab as string) === 'genaimonetize7499' && <ForgeTab_genaimonetize7499 />}
+              {(mainTab as string) === 'aisafety7500' && <ForgeTab_aisafety7500 />}
       </div>
     </div>
   );
