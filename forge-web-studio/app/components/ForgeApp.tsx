@@ -4494,6 +4494,16 @@ ForgeTab_utilityregulatory7407,
 ForgeTab_nuclearstrategy7408,
 ForgeTab_demandresponse7409,
 ForgeTab_energymarkets7410,
+ForgeTab_mobilitystrategy7411,
+ForgeTab_evstrategy7412,
+ForgeTab_autonomousvehicle7413,
+ForgeTab_logisticstechstrat7414,
+ForgeTab_rideshareplatform7415,
+ForgeTab_micromobility7416,
+ForgeTab_aviationstrategy7417,
+ForgeTab_maritimeshipping7418,
+ForgeTab_railmobility7419,
+ForgeTab_mobilityplatform7420,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -65881,6 +65891,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'nuclearstrategy7408' && <ForgeTab_nuclearstrategy7408 />}
               {(mainTab as string) === 'demandresponse7409' && <ForgeTab_demandresponse7409 />}
               {(mainTab as string) === 'energymarkets7410' && <ForgeTab_energymarkets7410 />}
+              {(mainTab as string) === 'mobilitystrategy7411' && <ForgeTab_mobilitystrategy7411 />}
+              {(mainTab as string) === 'evstrategy7412' && <ForgeTab_evstrategy7412 />}
+              {(mainTab as string) === 'autonomousvehicle7413' && <ForgeTab_autonomousvehicle7413 />}
+              {(mainTab as string) === 'logisticstechstrat7414' && <ForgeTab_logisticstechstrat7414 />}
+              {(mainTab as string) === 'rideshareplatform7415' && <ForgeTab_rideshareplatform7415 />}
+              {(mainTab as string) === 'micromobility7416' && <ForgeTab_micromobility7416 />}
+              {(mainTab as string) === 'aviationstrategy7417' && <ForgeTab_aviationstrategy7417 />}
+              {(mainTab as string) === 'maritimeshipping7418' && <ForgeTab_maritimeshipping7418 />}
+              {(mainTab as string) === 'railmobility7419' && <ForgeTab_railmobility7419 />}
+              {(mainTab as string) === 'mobilityplatform7420' && <ForgeTab_mobilityplatform7420 />}
       </div>
     </div>
   );
