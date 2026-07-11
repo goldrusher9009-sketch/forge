@@ -2054,6 +2054,16 @@ ForgeTab_skillseconomy4967,
 ForgeTab_educationpolicy4968,
 ForgeTab_aieducation4969,
 ForgeTab_stemstrategy4970,
+ForgeTab_aerospacedef4971,
+ForgeTab_spaceeconomy4972,
+ForgeTab_defensestrat4973,
+ForgeTab_satellitestrat4974,
+ForgeTab_uavdrones4975,
+ForgeTab_defensetech4976,
+ForgeTab_aviationsafety4977,
+ForgeTab_spacepolicy4978,
+ForgeTab_MROstrategy4979,
+ForgeTab_evtolstrat4980,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -61001,6 +61011,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'educationpolicy4968' && <ForgeTab_educationpolicy4968 />}
               {(mainTab as string) === 'aieducation4969' && <ForgeTab_aieducation4969 />}
               {(mainTab as string) === 'stemstrategy4970' && <ForgeTab_stemstrategy4970 />}
+              {(mainTab as string) === 'aerospacedef4971' && <ForgeTab_aerospacedef4971 />}
+              {(mainTab as string) === 'spaceeconomy4972' && <ForgeTab_spaceeconomy4972 />}
+              {(mainTab as string) === 'defensestrat4973' && <ForgeTab_defensestrat4973 />}
+              {(mainTab as string) === 'satellitestrat4974' && <ForgeTab_satellitestrat4974 />}
+              {(mainTab as string) === 'uavdrones4975' && <ForgeTab_uavdrones4975 />}
+              {(mainTab as string) === 'defensetech4976' && <ForgeTab_defensetech4976 />}
+              {(mainTab as string) === 'aviationsafety4977' && <ForgeTab_aviationsafety4977 />}
+              {(mainTab as string) === 'spacepolicy4978' && <ForgeTab_spacepolicy4978 />}
+              {(mainTab as string) === 'MROstrategy4979' && <ForgeTab_MROstrategy4979 />}
+              {(mainTab as string) === 'evtolstrat4980' && <ForgeTab_evtolstrat4980 />}
       </div>
     </div>
   );
