@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1004.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1005.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -224238,5 +224238,65 @@ app.post('/api/logistics/sctech', requireAuth, async (req: AuthRequest, res: any
 app.post('/api/logistics/freight', requireAuth, async (req: AuthRequest, res: any) => {
   const { fmType, currentFMState, fmGoals } = req.body;
   const prompt = `You are a freight management and carrier strategy expert. Build a freight strategy. Type: ${fmType}. State: ${currentFMState}. Goals: ${fmGoals}. Respond in JSON: { freight_strategy: string, carrier_portfolio: string[], mode_optimization: string[], spot_contract_balance: string[], sustainability_program: string[], technology_stack: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurtech/insurance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { insType, currentInsState, insGoals } = req.body;
+  const prompt = `You are an insurance strategy and underwriting expert. Build an insurance strategy. Type: ${insType}. State: ${currentInsState}. Goals: ${insGoals}. Respond in JSON: { insurance_strategy: string, underwriting_model: string[], pricing_sophistication: string[], distribution_strategy: string[], claims_optimization: string[], digital_transformation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurtech/insurtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { itType, currentITState, itGoals } = req.body;
+  const prompt = `You are an InsurTech strategy expert. Build an InsurTech strategy. Type: ${itType}. State: ${currentITState}. Goals: ${itGoals}. Respond in JSON: { insurtech_strategy: string, product_design: string[], technology_platform: string[], distribution_model: string[], reinsurance_strategy: string[], growth_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurtech/claims', requireAuth, async (req: AuthRequest, res: any) => {
+  const { claimType, currentClaimState, claimGoals } = req.body;
+  const prompt = `You are a claims management strategy expert. Build a claims strategy. Type: ${claimType}. State: ${currentClaimState}. Goals: ${claimGoals}. Respond in JSON: { claims_strategy: string, process_automation: string[], fraud_detection: string[], customer_experience: string[], severity_management: string[], ai_triage: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurtech/actuarial', requireAuth, async (req: AuthRequest, res: any) => {
+  const { actType, currentActState, actGoals } = req.body;
+  const prompt = `You are an actuarial and insurance pricing strategy expert. Build an actuarial strategy. Type: ${actType}. State: ${currentActState}. Goals: ${actGoals}. Respond in JSON: { actuarial_strategy: string, pricing_model: string[], predictive_analytics: string[], catastrophe_modeling: string[], reserve_framework: string[], ai_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurtech/reinsurance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { reiType, currentREIState, reiGoals } = req.body;
+  const prompt = `You are a reinsurance and risk transfer strategy expert. Build a reinsurance strategy. Type: ${reiType}. State: ${currentREIState}. Goals: ${reiGoals}. Respond in JSON: { reinsurance_strategy: string, program_structure: string[], cat_protection: string[], ils_capital: string[], parametric_solution: string[], emerging_risk: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurtech/insdist', requireAuth, async (req: AuthRequest, res: any) => {
+  const { distType, currentDistState, distGoals } = req.body;
+  const prompt = `You are an insurance distribution strategy expert. Build an insurance distribution strategy. Type: ${distType}. State: ${currentDistState}. Goals: ${distGoals}. Respond in JSON: { distribution_strategy: string, channel_mix: string[], digital_capabilities: string[], embedded_insurance: string[], retention_program: string[], growth_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurtech/cyberins', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cyberInsType, currentCyberInsState, cyberInsGoals } = req.body;
+  const prompt = `You are a cyber insurance strategy expert. Build a cyber insurance strategy. Type: ${cyberInsType}. State: ${currentCyberInsState}. Goals: ${cyberInsGoals}. Respond in JSON: { cyber_insurance_strategy: string, underwriting_framework: string[], pricing_model: string[], loss_prevention: string[], aggregation_management: string[], product_innovation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurtech/climaterisk', requireAuth, async (req: AuthRequest, res: any) => {
+  const { crType, currentCRState, crGoals } = req.body;
+  const prompt = `You are a climate risk and catastrophe insurance strategy expert. Build a climate risk strategy. Type: ${crType}. State: ${currentCRState}. Goals: ${crGoals}. Respond in JSON: { climate_risk_strategy: string, exposure_management: string[], parametric_innovation: string[], tcfd_alignment: string[], cat_modeling: string[], resilience_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurtech/life', requireAuth, async (req: AuthRequest, res: any) => {
+  const { laType, currentLAState, laGoals } = req.body;
+  const prompt = `You are a life insurance and annuity strategy expert. Build a life insurance strategy. Type: ${laType}. State: ${currentLAState}. Goals: ${laGoals}. Respond in JSON: { life_strategy: string, product_portfolio: string[], digital_distribution: string[], underwriting_innovation: string[], persistency_program: string[], expense_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/insurtech/insdigital', requireAuth, async (req: AuthRequest, res: any) => {
+  const { idType, currentIDState, idGoals } = req.body;
+  const prompt = `You are an insurance digital transformation strategy expert. Build a digital transformation strategy. Type: ${idType}. State: ${currentIDState}. Goals: ${idGoals}. Respond in JSON: { digital_strategy: string, core_modernization: string[], ai_program: string[], customer_experience: string[], api_ecosystem: string[], cost_transformation: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
