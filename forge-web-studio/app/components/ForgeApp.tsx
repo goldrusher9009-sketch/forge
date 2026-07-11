@@ -3594,6 +3594,16 @@ ForgeTab_workforceplan6507,
 ForgeTab_learningdevelopment6508,
 ForgeTab_culturechange6509,
 ForgeTab_futurework6510,
+ForgeTab_fintechwallet6511,
+ForgeTab_embeddedfinance6512,
+ForgeTab_cryptoweb36513,
+ForgeTab_wealthtech6514,
+ForgeTab_insurtech6515,
+ForgeTab_openbanking6516,
+ForgeTab_regulatorytech6517,
+ForgeTab_lendingtech6518,
+ForgeTab_paymentsinnovation6519,
+ForgeTab_neobanking6520,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -64081,6 +64091,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'learningdevelopment6508' && <ForgeTab_learningdevelopment6508 />}
               {(mainTab as string) === 'culturechange6509' && <ForgeTab_culturechange6509 />}
               {(mainTab as string) === 'futurework6510' && <ForgeTab_futurework6510 />}
+              {(mainTab as string) === 'fintechwallet6511' && <ForgeTab_fintechwallet6511 />}
+              {(mainTab as string) === 'embeddedfinance6512' && <ForgeTab_embeddedfinance6512 />}
+              {(mainTab as string) === 'cryptoweb36513' && <ForgeTab_cryptoweb36513 />}
+              {(mainTab as string) === 'wealthtech6514' && <ForgeTab_wealthtech6514 />}
+              {(mainTab as string) === 'insurtech6515' && <ForgeTab_insurtech6515 />}
+              {(mainTab as string) === 'openbanking6516' && <ForgeTab_openbanking6516 />}
+              {(mainTab as string) === 'regulatorytech6517' && <ForgeTab_regulatorytech6517 />}
+              {(mainTab as string) === 'lendingtech6518' && <ForgeTab_lendingtech6518 />}
+              {(mainTab as string) === 'paymentsinnovation6519' && <ForgeTab_paymentsinnovation6519 />}
+              {(mainTab as string) === 'neobanking6520' && <ForgeTab_neobanking6520 />}
       </div>
     </div>
   );
