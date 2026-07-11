@@ -4134,6 +4134,16 @@ ForgeTab_capitalallocation7047,
 ForgeTab_corpdevelopment7048,
 ForgeTab_divestitures7049,
 ForgeTab_boardgovernance7050,
+ForgeTab_pestrategy7051,
+ForgeTab_hedgefundstrat7052,
+ForgeTab_vcstrategy7053,
+ForgeTab_familyoffice7054,
+ForgeTab_assetallocation7055,
+ForgeTab_realassets7056,
+ForgeTab_duediligence7057,
+ForgeTab_fundraising7058,
+ForgeTab_creditstrategy7059,
+ForgeTab_esgintegration7060,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -65161,6 +65171,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'corpdevelopment7048' && <ForgeTab_corpdevelopment7048 />}
               {(mainTab as string) === 'divestitures7049' && <ForgeTab_divestitures7049 />}
               {(mainTab as string) === 'boardgovernance7050' && <ForgeTab_boardgovernance7050 />}
+              {(mainTab as string) === 'pestrategy7051' && <ForgeTab_pestrategy7051 />}
+              {(mainTab as string) === 'hedgefundstrat7052' && <ForgeTab_hedgefundstrat7052 />}
+              {(mainTab as string) === 'vcstrategy7053' && <ForgeTab_vcstrategy7053 />}
+              {(mainTab as string) === 'familyoffice7054' && <ForgeTab_familyoffice7054 />}
+              {(mainTab as string) === 'assetallocation7055' && <ForgeTab_assetallocation7055 />}
+              {(mainTab as string) === 'realassets7056' && <ForgeTab_realassets7056 />}
+              {(mainTab as string) === 'duediligence7057' && <ForgeTab_duediligence7057 />}
+              {(mainTab as string) === 'fundraising7058' && <ForgeTab_fundraising7058 />}
+              {(mainTab as string) === 'creditstrategy7059' && <ForgeTab_creditstrategy7059 />}
+              {(mainTab as string) === 'esgintegration7060' && <ForgeTab_esgintegration7060 />}
       </div>
     </div>
   );
