@@ -3354,6 +3354,16 @@ ForgeTab_compliancesecurity6267,
 ForgeTab_appsecurity6268,
 ForgeTab_aisecurity6269,
 ForgeTab_incidentresponse6270,
+ForgeTab_fintechstrat6271,
+ForgeTab_paymentstrat6272,
+ForgeTab_wealthtech6273,
+ForgeTab_insurtech6274,
+ForgeTab_neobankstrat6275,
+ForgeTab_cryptoweb36276,
+ForgeTab_embeddedfinance6277,
+ForgeTab_regtechstrat6278,
+ForgeTab_openbanking6279,
+ForgeTab_tradingtech6280,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -63601,6 +63611,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'appsecurity6268' && <ForgeTab_appsecurity6268 />}
               {(mainTab as string) === 'aisecurity6269' && <ForgeTab_aisecurity6269 />}
               {(mainTab as string) === 'incidentresponse6270' && <ForgeTab_incidentresponse6270 />}
+              {(mainTab as string) === 'fintechstrat6271' && <ForgeTab_fintechstrat6271 />}
+              {(mainTab as string) === 'paymentstrat6272' && <ForgeTab_paymentstrat6272 />}
+              {(mainTab as string) === 'wealthtech6273' && <ForgeTab_wealthtech6273 />}
+              {(mainTab as string) === 'insurtech6274' && <ForgeTab_insurtech6274 />}
+              {(mainTab as string) === 'neobankstrat6275' && <ForgeTab_neobankstrat6275 />}
+              {(mainTab as string) === 'cryptoweb36276' && <ForgeTab_cryptoweb36276 />}
+              {(mainTab as string) === 'embeddedfinance6277' && <ForgeTab_embeddedfinance6277 />}
+              {(mainTab as string) === 'regtechstrat6278' && <ForgeTab_regtechstrat6278 />}
+              {(mainTab as string) === 'openbanking6279' && <ForgeTab_openbanking6279 />}
+              {(mainTab as string) === 'tradingtech6280' && <ForgeTab_tradingtech6280 />}
       </div>
     </div>
   );
