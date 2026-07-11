@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1143.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1144.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -232578,5 +232578,65 @@ app.post('/api/govpublic/regpolicy', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/govpublic/deflog', requireAuth, async (req: AuthRequest, res: any) => {
   const { dlType, currentDLState, dlGoals } = req.body;
   const prompt = `You are a defense logistics and military operations strategy expert. Build a defense logistics strategy. Type: ${dlType}. State: ${currentDLState}. Goals: ${dlGoals}. Respond in JSON: { defense_logistics_strategy: string, readiness_improvement: string[], ai_autonomous_systems: string[], supply_chain_resilience: string[], predictive_maintenance: string[], joint_operations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climate/climatetech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ctType, currentCTState, ctGoals } = req.body;
+  const prompt = `You are a climate technology and clean energy strategy expert. Build a climate tech strategy. Type: ${ctType}. State: ${currentCTState}. Goals: ${ctGoals}. Respond in JSON: { climate_tech_strategy: string, technology_roadmap: string[], scale_up_plan: string[], grid_integration: string[], policy_landscape: string[], finance_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climate/carbonmkt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cmType, currentCMState, cmGoals } = req.body;
+  const prompt = `You are a carbon markets and climate finance strategy expert. Build a carbon market strategy. Type: ${cmType}. State: ${currentCMState}. Goals: ${cmGoals}. Respond in JSON: { carbon_strategy: string, portfolio_construction: string[], credit_quality: string[], reporting_framework: string[], net_zero_pathway: string[], biodiversity_cobenefits: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climate/watertech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { wtType, currentWTState, wtGoals } = req.body;
+  const prompt = `You are a water technology and resource management strategy expert. Build a water strategy. Type: ${wtType}. State: ${currentWTState}. Goals: ${wtGoals}. Respond in JSON: { water_strategy: string, efficiency_programs: string[], technology_roadmap: string[], circular_water: string[], digital_monitoring: string[], resilience_planning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climate/circular', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ceType, currentCEState, ceGoals } = req.body;
+  const prompt = `You are a circular economy and waste management strategy expert. Build a circular economy strategy. Type: ${ceType}. State: ${currentCEState}. Goals: ${ceGoals}. Respond in JSON: { circular_strategy: string, product_redesign: string[], take_back_program: string[], recycling_infrastructure: string[], epr_compliance: string[], waste_to_value: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climate/sustainagri', requireAuth, async (req: AuthRequest, res: any) => {
+  const { saType, currentSAState, saGoals } = req.body;
+  const prompt = `You are a sustainable agriculture and food systems strategy expert. Build a sustainable agri strategy. Type: ${saType}. State: ${currentSAState}. Goals: ${saGoals}. Respond in JSON: { sustainable_agri_strategy: string, soil_carbon_program: string[], regenerative_transition: string[], water_management: string[], biodiversity_plan: string[], food_waste_reduction: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climate/biodiversity', requireAuth, async (req: AuthRequest, res: any) => {
+  const { bioType, currentBioState, bioGoals } = req.body;
+  const prompt = `You are a biodiversity and nature-based solutions strategy expert. Build a biodiversity strategy. Type: ${bioType}. State: ${currentBioState}. Goals: ${bioGoals}. Respond in JSON: { biodiversity_strategy: string, tnfd_alignment: string[], nature_positive: string[], supply_chain_deforestation: string[], restoration_investment: string[], ecosystem_services: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climate/sustainbuild', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sbType, currentSBState, sbGoals } = req.body;
+  const prompt = `You are a sustainable buildings and green real estate strategy expert. Build a sustainable buildings strategy. Type: ${sbType}. State: ${currentSBState}. Goals: ${sbGoals}. Respond in JSON: { sustainable_buildings_strategy: string, net_zero_roadmap: string[], retrofit_program: string[], embodied_carbon: string[], green_financing: string[], smart_building_tech: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climate/climaterisk', requireAuth, async (req: AuthRequest, res: any) => {
+  const { crType, currentCRState, crGoals } = req.body;
+  const prompt = `You are a climate risk and physical risk management strategy expert. Build a climate risk strategy. Type: ${crType}. State: ${currentCRState}. Goals: ${crGoals}. Respond in JSON: { climate_risk_strategy: string, physical_risk_assessment: string[], transition_risk: string[], tcfd_disclosure: string[], adaptation_measures: string[], resilience_investments: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climate/sustainsc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sscType, currentSSCState, sscGoals } = req.body;
+  const prompt = `You are a sustainable supply chain and Scope 3 emissions strategy expert. Build a sustainable supply chain strategy. Type: ${sscType}. State: ${currentSSCState}. Goals: ${sscGoals}. Respond in JSON: { sustainable_sc_strategy: string, scope3_reduction: string[], supplier_engagement: string[], traceability_program: string[], deforestation_policy: string[], sbti_alignment: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/climate/esginteg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { esgType, currentESGState, esgGoals } = req.body;
+  const prompt = `You are an ESG integration and sustainability reporting strategy expert. Build an ESG strategy. Type: ${esgType}. State: ${currentESGState}. Goals: ${esgGoals}. Respond in JSON: { esg_strategy: string, reporting_framework: string[], materiality_assessment: string[], governance_structure: string[], data_quality: string[], investor_communication: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
