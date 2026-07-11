@@ -1664,6 +1664,16 @@ ForgeTab_openbankingstrat4577,
 ForgeTab_digitallending4578,
 ForgeTab_regtech4579,
 ForgeTab_cbdcstrat4580,
+ForgeTab_supplychaindigital4581,
+ForgeTab_logisticsstrat4582,
+ForgeTab_warehousing4583,
+ForgeTab_procurementsrc4584,
+ForgeTab_inventorymgmt4585,
+ForgeTab_coldchain4586,
+ForgeTab_portscustoms4587,
+ForgeTab_nearshorestrat4588,
+ForgeTab_ecommfulfill4589,
+ForgeTab_scvisibility4590,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -60221,6 +60231,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'digitallending4578' && <ForgeTab_digitallending4578 />}
               {(mainTab as string) === 'regtech4579' && <ForgeTab_regtech4579 />}
               {(mainTab as string) === 'cbdcstrat4580' && <ForgeTab_cbdcstrat4580 />}
+              {(mainTab as string) === 'supplychaindigital4581' && <ForgeTab_supplychaindigital4581 />}
+              {(mainTab as string) === 'logisticsstrat4582' && <ForgeTab_logisticsstrat4582 />}
+              {(mainTab as string) === 'warehousing4583' && <ForgeTab_warehousing4583 />}
+              {(mainTab as string) === 'procurementsrc4584' && <ForgeTab_procurementsrc4584 />}
+              {(mainTab as string) === 'inventorymgmt4585' && <ForgeTab_inventorymgmt4585 />}
+              {(mainTab as string) === 'coldchain4586' && <ForgeTab_coldchain4586 />}
+              {(mainTab as string) === 'portscustoms4587' && <ForgeTab_portscustoms4587 />}
+              {(mainTab as string) === 'nearshorestrat4588' && <ForgeTab_nearshorestrat4588 />}
+              {(mainTab as string) === 'ecommfulfill4589' && <ForgeTab_ecommfulfill4589 />}
+              {(mainTab as string) === 'scvisibility4590' && <ForgeTab_scvisibility4590 />}
       </div>
     </div>
   );
