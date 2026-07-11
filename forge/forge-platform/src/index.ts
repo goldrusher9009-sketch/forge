@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1141.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1142.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -232458,5 +232458,65 @@ app.post('/api/energy/nuclear', requireAuth, async (req: AuthRequest, res: any) 
 app.post('/api/energy/energydigital', requireAuth, async (req: AuthRequest, res: any) => {
   const { edType, currentEDState, edGoals } = req.body;
   const prompt = `You are an energy digital transformation and smart grid strategy expert. Build an energy digital strategy. Type: ${edType}. State: ${currentEDState}. Goals: ${edGoals}. Respond in JSON: { energy_digital_strategy: string, platform_architecture: string[], ai_applications: string[], digital_twin_program: string[], cybersecurity_framework: string[], roi_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industrial/aerospace', requireAuth, async (req: AuthRequest, res: any) => {
+  const { adType, currentADState, adGoals } = req.body;
+  const prompt = `You are an aerospace and defense strategy expert. Build an A&D strategy. Type: ${adType}. State: ${currentADState}. Goals: ${adGoals}. Respond in JSON: { aerospace_strategy: string, program_portfolio: string[], technology_investment: string[], supply_chain_resilience: string[], digital_transformation: string[], international_expansion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industrial/automotive', requireAuth, async (req: AuthRequest, res: any) => {
+  const { amType, currentAMState, amGoals } = req.body;
+  const prompt = `You are an automotive and mobility strategy expert. Build an automotive strategy. Type: ${amType}. State: ${currentAMState}. Goals: ${amGoals}. Respond in JSON: { automotive_strategy: string, ev_transition: string[], software_platform: string[], adas_roadmap: string[], supply_chain_strategy: string[], mobility_services: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industrial/chemicals', requireAuth, async (req: AuthRequest, res: any) => {
+  const { chemType, currentChemState, chemGoals } = req.body;
+  const prompt = `You are a chemicals and materials strategy expert. Build a chemicals strategy. Type: ${chemType}. State: ${currentChemState}. Goals: ${chemGoals}. Respond in JSON: { chemicals_strategy: string, portfolio_evolution: string[], bio_based_transition: string[], sustainability_program: string[], digital_transformation: string[], m_and_a_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industrial/mining', requireAuth, async (req: AuthRequest, res: any) => {
+  const { minType, currentMinState, minGoals } = req.body;
+  const prompt = `You are a mining and natural resources strategy expert. Build a mining strategy. Type: ${minType}. State: ${currentMinState}. Goals: ${minGoals}. Respond in JSON: { mining_strategy: string, portfolio_management: string[], critical_minerals_plan: string[], decarbonization_roadmap: string[], digital_transformation: string[], community_relations: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industrial/industserv', requireAuth, async (req: AuthRequest, res: any) => {
+  const { isType, currentISState, isGoals } = req.body;
+  const prompt = `You are an industrial services and maintenance strategy expert. Build an industrial services strategy. Type: ${isType}. State: ${currentISState}. Goals: ${isGoals}. Respond in JSON: { industrial_services_strategy: string, aftermarket_expansion: string[], predictive_maintenance: string[], digital_service_platform: string[], iot_integration: string[], subscription_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industrial/agribiz', requireAuth, async (req: AuthRequest, res: any) => {
+  const { agType, currentAGState, agGoals } = req.body;
+  const prompt = `You are an agribusiness and agricultural technology strategy expert. Build an agribusiness strategy. Type: ${agType}. State: ${currentAGState}. Goals: ${agGoals}. Respond in JSON: { agribusiness_strategy: string, precision_ag_roadmap: string[], sustainability_program: string[], agtech_adoption: string[], supply_chain_strategy: string[], innovation_pipeline: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industrial/contech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ctechType, currentCTechState, ctechGoals } = req.body;
+  const prompt = `You are a construction technology and smart building strategy expert. Build a ConTech strategy. Type: ${ctechType}. State: ${currentCTechState}. Goals: ${ctechGoals}. Respond in JSON: { contech_strategy: string, technology_roadmap: string[], modular_prefab: string[], digital_twin_program: string[], safety_innovation: string[], sustainability_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industrial/transport', requireAuth, async (req: AuthRequest, res: any) => {
+  const { transType, currentTransState, transGoals } = req.body;
+  const prompt = `You are a transportation infrastructure and mobility strategy expert. Build a transport strategy. Type: ${transType}. State: ${currentTransState}. Goals: ${transGoals}. Respond in JSON: { transport_strategy: string, asset_management: string[], digital_transformation: string[], ev_infrastructure: string[], ppp_framework: string[], sustainability_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industrial/industmfg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { imfgType, currentIMFGState, imfgGoals } = req.body;
+  const prompt = `You are an industrial manufacturing and Industry 4.0 strategy expert. Build an industrial manufacturing strategy. Type: ${imfgType}. State: ${currentIMFGState}. Goals: ${imfgGoals}. Respond in JSON: { industrial_mfg_strategy: string, industry_4_roadmap: string[], automation_plan: string[], quality_system: string[], reshoring_strategy: string[], sustainability_integration: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/industrial/defensetech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dtechType, currentDTechState, dtechGoals } = req.body;
+  const prompt = `You are a defense technology and national security strategy expert. Build a defense tech strategy. Type: ${dtechType}. State: ${currentDTechState}. Goals: ${dtechGoals}. Respond in JSON: { defense_tech_strategy: string, capability_roadmap: string[], ai_autonomous_systems: string[], space_cyber_program: string[], alliance_partnerships: string[], dual_use_commercialization: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
