@@ -1744,6 +1744,16 @@ ForgeTab_payerstrat4657,
 ForgeTab_biopharmamanuf4658,
 ForgeTab_regulatorystrat4659,
 ForgeTab_pharmalaunch4660,
+ForgeTab_bankingstrat4661,
+ForgeTab_wealthmgmt4662,
+ForgeTab_assetmgmt4663,
+ForgeTab_insurancestrat4664,
+ForgeTab_fintechstrat4665,
+ForgeTab_capitalmarkets4666,
+ForgeTab_paymentsstrat4667,
+ForgeTab_cryptostrat4668,
+ForgeTab_esgfinance4669,
+ForgeTab_riskmanagement4670,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -60381,6 +60391,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'biopharmamanuf4658' && <ForgeTab_biopharmamanuf4658 />}
               {(mainTab as string) === 'regulatorystrat4659' && <ForgeTab_regulatorystrat4659 />}
               {(mainTab as string) === 'pharmalaunch4660' && <ForgeTab_pharmalaunch4660 />}
+              {(mainTab as string) === 'bankingstrat4661' && <ForgeTab_bankingstrat4661 />}
+              {(mainTab as string) === 'wealthmgmt4662' && <ForgeTab_wealthmgmt4662 />}
+              {(mainTab as string) === 'assetmgmt4663' && <ForgeTab_assetmgmt4663 />}
+              {(mainTab as string) === 'insurancestrat4664' && <ForgeTab_insurancestrat4664 />}
+              {(mainTab as string) === 'fintechstrat4665' && <ForgeTab_fintechstrat4665 />}
+              {(mainTab as string) === 'capitalmarkets4666' && <ForgeTab_capitalmarkets4666 />}
+              {(mainTab as string) === 'paymentsstrat4667' && <ForgeTab_paymentsstrat4667 />}
+              {(mainTab as string) === 'cryptostrat4668' && <ForgeTab_cryptostrat4668 />}
+              {(mainTab as string) === 'esgfinance4669' && <ForgeTab_esgfinance4669 />}
+              {(mainTab as string) === 'riskmanagement4670' && <ForgeTab_riskmanagement4670 />}
       </div>
     </div>
   );

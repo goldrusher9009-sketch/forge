@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v954.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v955.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -221238,5 +221238,65 @@ app.post('/api/lifescience/regulatory', requireAuth, async (req: AuthRequest, re
 app.post('/api/lifescience/pharmalaw', requireAuth, async (req: AuthRequest, res: any) => {
   const { launchType, currentLaunchState, launchGoals } = req.body;
   const prompt = `You are a pharmaceutical launch excellence expert. Build a drug launch strategy. Type: ${launchType}. State: ${currentLaunchState}. Goals: ${launchGoals}. Respond in JSON: { launch_strategy: string, market_access: string[], medical_affairs: string[], hcp_engagement: string[], patient_services: string[], commercial_execution: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finservices/banking', requireAuth, async (req: AuthRequest, res: any) => {
+  const { bankType, currentBankState, bankGoals } = req.body;
+  const prompt = `You are a banking strategy expert. Build a banking strategy. Type: ${bankType}. State: ${currentBankState}. Goals: ${bankGoals}. Respond in JSON: { banking_strategy: string, revenue_diversification: string[], digital_transformation: string[], credit_quality: string[], cost_efficiency: string[], customer_growth: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finservices/wealth', requireAuth, async (req: AuthRequest, res: any) => {
+  const { wmType, currentWMState, wmGoals } = req.body;
+  const prompt = `You are a wealth management strategy expert. Build a wealth management strategy. Type: ${wmType}. State: ${currentWMState}. Goals: ${wmGoals}. Respond in JSON: { wealth_strategy: string, aum_growth: string[], client_experience: string[], investment_platform: string[], alternatives_program: string[], next_gen_engagement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finservices/assetmgmt', requireAuth, async (req: AuthRequest, res: any) => {
+  const { amType, currentAMState, amGoals } = req.body;
+  const prompt = `You are an asset management strategy expert. Build an investment strategy. Type: ${amType}. State: ${currentAMState}. Goals: ${amGoals}. Respond in JSON: { asset_mgmt_strategy: string, investment_edge: string[], distribution_growth: string[], product_innovation: string[], data_ai_integration: string[], fee_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finservices/insurance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { insType, currentInsState, insGoals } = req.body;
+  const prompt = `You are an insurance strategy expert. Build an insurance strategy. Type: ${insType}. State: ${currentInsState}. Goals: ${insGoals}. Respond in JSON: { insurance_strategy: string, underwriting_excellence: string[], digital_distribution: string[], ai_pricing: string[], customer_experience: string[], portfolio_optimization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finservices/fintech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ftType, currentFTState, ftGoals } = req.body;
+  const prompt = `You are a fintech strategy expert. Build a fintech growth strategy. Type: ${ftType}. State: ${currentFTState}. Goals: ${ftGoals}. Respond in JSON: { fintech_strategy: string, product_growth: string[], unit_economics: string[], regulatory_path: string[], partnership_ecosystem: string[], international_expansion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finservices/capmarkets', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cmType, currentCMState, cmGoals } = req.body;
+  const prompt = `You are a capital markets strategy expert. Build a capital markets strategy. Type: ${cmType}. State: ${currentCMState}. Goals: ${cmGoals}. Respond in JSON: { capital_markets_strategy: string, product_leadership: string[], electronic_trading: string[], client_coverage: string[], technology_investment: string[], sustainability_finance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finservices/payments', requireAuth, async (req: AuthRequest, res: any) => {
+  const { payType, currentPaymState, paymGoals } = req.body;
+  const prompt = `You are a payments strategy expert. Build a payments strategy. Type: ${payType}. State: ${currentPaymState}. Goals: ${paymGoals}. Respond in JSON: { payments_strategy: string, volume_growth: string[], product_innovation: string[], fraud_management: string[], cross_border_expansion: string[], ecosystem_strategy: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finservices/crypto', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cryptType, currentCryptState, cryptGoals } = req.body;
+  const prompt = `You are a crypto and digital assets strategy expert. Build a digital assets strategy. Type: ${cryptType}. State: ${currentCryptState}. Goals: ${cryptGoals}. Respond in JSON: { crypto_strategy: string, regulatory_compliance: string[], institutional_offering: string[], tokenization_program: string[], defi_integration: string[], custody_solution: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finservices/esgfin', requireAuth, async (req: AuthRequest, res: any) => {
+  const { esgfType, currentESGFState, esgfGoals } = req.body;
+  const prompt = `You are an ESG finance strategy expert. Build a sustainable finance strategy. Type: ${esgfType}. State: ${currentESGFState}. Goals: ${esgfGoals}. Respond in JSON: { esg_finance_strategy: string, green_product_suite: string[], impact_measurement: string[], regulatory_compliance: string[], data_reporting: string[], client_education: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/finservices/riskfin', requireAuth, async (req: AuthRequest, res: any) => {
+  const { riskType, currentRiskState, riskGoals } = req.body;
+  const prompt = `You are a financial risk management expert. Build a risk management strategy. Type: ${riskType}. State: ${currentRiskState}. Goals: ${riskGoals}. Respond in JSON: { risk_strategy: string, framework_enhancement: string[], capital_optimization: string[], stress_testing: string[], climate_risk_program: string[], ai_risk_models: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
