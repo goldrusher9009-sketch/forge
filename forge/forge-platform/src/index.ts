@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v990.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v991.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -223398,5 +223398,65 @@ app.post('/api/web3crypto/gameweb3', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/web3crypto/cryptovc', requireAuth, async (req: AuthRequest, res: any) => {
   const { cvcType, currentCVCState, cvcGoals } = req.body;
   const prompt = `You are a crypto venture capital strategy expert. Build a Web3 investment strategy. Type: ${cvcType}. State: ${currentCVCState}. Goals: ${cvcGoals}. Respond in JSON: { crypto_vc_strategy: string, investment_thesis: string[], deal_flow: string[], portfolio_management: string[], liquid_token_strategy: string[], ecosystem_development: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthwellness/mentalhealth', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mhType, currentMHState, mhGoals } = req.body;
+  const prompt = `You are a mental health technology strategy expert. Build a digital mental health strategy. Type: ${mhType}. State: ${currentMHState}. Goals: ${mhGoals}. Respond in JSON: { mental_health_strategy: string, clinical_program: string[], platform_features: string[], payer_pathway: string[], employer_channel: string[], outcome_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthwellness/wellness', requireAuth, async (req: AuthRequest, res: any) => {
+  const { wellType, currentWellState, wellGoals } = req.body;
+  const prompt = `You are a wellness platform strategy expert. Build a preventive health strategy. Type: ${wellType}. State: ${currentWellState}. Goals: ${wellGoals}. Respond in JSON: { wellness_strategy: string, content_programs: string[], personalization_engine: string[], b2b_channel: string[], wearable_integration: string[], outcome_metrics: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthwellness/dtx', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dtxType, currentDTxState, dtxGoals } = req.body;
+  const prompt = `You are a digital therapeutics strategy expert. Build a DTx strategy. Type: ${dtxType}. State: ${currentDTxState}. Goals: ${dtxGoals}. Respond in JSON: { dtx_strategy: string, regulatory_pathway: string[], clinical_evidence: string[], payer_strategy: string[], pharma_partnership: string[], commercialization_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthwellness/corpwellness', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cwType, currentCWState, cwGoals } = req.body;
+  const prompt = `You are a corporate wellness strategy expert. Build an employee health strategy. Type: ${cwType}. State: ${currentCWState}. Goals: ${cwGoals}. Respond in JSON: { corporate_wellness_strategy: string, program_design: string[], mental_health_focus: string[], financial_wellness: string[], engagement_plan: string[], roi_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthwellness/fitness', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fitType, currentFitState, fitGoals } = req.body;
+  const prompt = `You are a fitness business strategy expert. Build a fitness strategy. Type: ${fitType}. State: ${currentFitState}. Goals: ${fitGoals}. Respond in JSON: { fitness_strategy: string, product_mix: string[], digital_platform: string[], b2b_corporate: string[], member_retention: string[], revenue_diversification: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthwellness/sleeptech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sleepType, currentSleepState, sleepGoals } = req.body;
+  const prompt = `You are a sleep technology strategy expert. Build a sleep health strategy. Type: ${sleepType}. State: ${currentSleepState}. Goals: ${sleepGoals}. Respond in JSON: { sleep_strategy: string, clinical_validation: string[], product_roadmap: string[], b2b_channel: string[], payer_pathway: string[], consumer_growth: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthwellness/nutritech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { nutriType, currentNutriState, nutriGoals } = req.body;
+  const prompt = `You are a nutrition technology strategy expert. Build a personalized nutrition strategy. Type: ${nutriType}. State: ${currentNutriState}. Goals: ${nutriGoals}. Respond in JSON: { nutrition_strategy: string, personalization_approach: string[], product_development: string[], clinical_validation: string[], b2b_channel: string[], subscription_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthwellness/longevity', requireAuth, async (req: AuthRequest, res: any) => {
+  const { longType, currentLongState, longGoals } = req.body;
+  const prompt = `You are a longevity and healthy aging strategy expert. Build a longevity health strategy. Type: ${longType}. State: ${currentLongState}. Goals: ${longGoals}. Respond in JSON: { longevity_strategy: string, biomarker_program: string[], preventive_protocol: string[], clinical_offering: string[], consumer_education: string[], revenue_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthwellness/sudheal', requireAuth, async (req: AuthRequest, res: any) => {
+  const { sudType, currentSUDState, sudGoals } = req.body;
+  const prompt = `You are a substance use and addiction treatment strategy expert. Build a SUD treatment strategy. Type: ${sudType}. State: ${currentSUDState}. Goals: ${sudGoals}. Respond in JSON: { sud_strategy: string, treatment_model: string[], telehealth_program: string[], payer_contracting: string[], outcome_measurement: string[], scale_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/healthwellness/womenshealth', requireAuth, async (req: AuthRequest, res: any) => {
+  const { whType, currentWHState, whGoals } = req.body;
+  const prompt = `You are a women's health and FemTech strategy expert. Build a women's health strategy. Type: ${whType}. State: ${currentWHState}. Goals: ${whGoals}. Respond in JSON: { womens_health_strategy: string, clinical_program: string[], product_roadmap: string[], employer_channel: string[], payer_pathway: string[], community_building: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
