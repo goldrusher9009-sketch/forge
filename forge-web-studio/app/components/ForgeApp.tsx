@@ -3684,6 +3684,16 @@ ForgeTab_legalbilling6597,
 ForgeTab_accessjustice6598,
 ForgeTab_courttech6599,
 ForgeTab_legalops6600,
+ForgeTab_futureofwork6601,
+ForgeTab_hrtechplatform6602,
+ForgeTab_talentacquistech6603,
+ForgeTab_employeeexperience6604,
+ForgeTab_workforceanalytics6605,
+ForgeTab_compensationtech6606,
+ForgeTab_gigeconomytech6607,
+ForgeTab_learningdevtech6608,
+ForgeTab_deistrategy6609,
+ForgeTab_workplacetech6610,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -64261,6 +64271,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'accessjustice6598' && <ForgeTab_accessjustice6598 />}
               {(mainTab as string) === 'courttech6599' && <ForgeTab_courttech6599 />}
               {(mainTab as string) === 'legalops6600' && <ForgeTab_legalops6600 />}
+              {(mainTab as string) === 'futureofwork6601' && <ForgeTab_futureofwork6601 />}
+              {(mainTab as string) === 'hrtechplatform6602' && <ForgeTab_hrtechplatform6602 />}
+              {(mainTab as string) === 'talentacquistech6603' && <ForgeTab_talentacquistech6603 />}
+              {(mainTab as string) === 'employeeexperience6604' && <ForgeTab_employeeexperience6604 />}
+              {(mainTab as string) === 'workforceanalytics6605' && <ForgeTab_workforceanalytics6605 />}
+              {(mainTab as string) === 'compensationtech6606' && <ForgeTab_compensationtech6606 />}
+              {(mainTab as string) === 'gigeconomytech6607' && <ForgeTab_gigeconomytech6607 />}
+              {(mainTab as string) === 'learningdevtech6608' && <ForgeTab_learningdevtech6608 />}
+              {(mainTab as string) === 'deistrategy6609' && <ForgeTab_deistrategy6609 />}
+              {(mainTab as string) === 'workplacetech6610' && <ForgeTab_workplacetech6610 />}
       </div>
     </div>
   );

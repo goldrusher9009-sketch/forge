@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1148.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1149.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -232878,5 +232878,65 @@ app.post('/api/legaltech/courttech', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/legaltech/legalops', requireAuth, async (req: AuthRequest, res: any) => {
   const { lopsType, currentLOpsState, lopsGoals } = req.body;
   const prompt = `You are a legal operations and in-house legal strategy expert. Build a legal ops strategy. Type: ${lopsType}. State: ${currentLOpsState}. Goals: ${lopsGoals}. Respond in JSON: { legal_ops_strategy: string, spend_management: string[], ai_tools_roadmap: string[], outside_counsel_management: string[], contract_operations: string[], metrics_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/worktech/futwork', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fowType, currentFOWState, fowGoals } = req.body;
+  const prompt = `You are a future of work and workforce transformation strategy expert. Build a future of work strategy. Type: ${fowType}. State: ${currentFOWState}. Goals: ${fowGoals}. Respond in JSON: { future_of_work_strategy: string, hybrid_model: string[], ai_augmentation: string[], reskilling_program: string[], talent_attraction: string[], culture_innovation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/worktech/hrtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { hrtechType, currentHRTechState, hrtechGoals } = req.body;
+  const prompt = `You are an HR technology platform and people analytics strategy expert. Build an HR tech strategy. Type: ${hrtechType}. State: ${currentHRTechState}. Goals: ${hrtechGoals}. Respond in JSON: { hr_tech_strategy: string, platform_consolidation: string[], ai_people_analytics: string[], employee_experience: string[], automation_roadmap: string[], workforce_planning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/worktech/talenttech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tatType, currentTATState, tatGoals } = req.body;
+  const prompt = `You are a talent acquisition technology and recruiting strategy expert. Build a talent acquisition tech strategy. Type: ${tatType}. State: ${currentTATState}. Goals: ${tatGoals}. Respond in JSON: { talent_acquisition_strategy: string, ai_screening: string[], candidate_experience: string[], dei_sourcing: string[], employer_branding: string[], assessment_platform: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/worktech/empexp', requireAuth, async (req: AuthRequest, res: any) => {
+  const { eeType, currentEEState, eeGoals } = req.body;
+  const prompt = `You are an employee experience and engagement technology strategy expert. Build an employee experience strategy. Type: ${eeType}. State: ${currentEEState}. Goals: ${eeGoals}. Respond in JSON: { employee_experience_strategy: string, engagement_platform: string[], onboarding_journey: string[], recognition_program: string[], wellbeing_initiatives: string[], manager_effectiveness: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/worktech/workanalytics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { waType, currentWAState, waGoals } = req.body;
+  const prompt = `You are a workforce analytics and people data strategy expert. Build a workforce analytics strategy. Type: ${waType}. State: ${currentWAState}. Goals: ${waGoals}. Respond in JSON: { workforce_analytics_strategy: string, data_infrastructure: string[], predictive_models: string[], dei_analytics: string[], skills_intelligence: string[], reporting_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/worktech/comptech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { compType, currentCompState, compGoals } = req.body;
+  const prompt = `You are a compensation technology and total rewards strategy expert. Build a compensation tech strategy. Type: ${compType}. State: ${currentCompState}. Goals: ${compGoals}. Respond in JSON: { compensation_strategy: string, pay_equity_plan: string[], benchmarking_methodology: string[], total_rewards_design: string[], equity_program: string[], transparency_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/worktech/gigtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { gigType, currentGIGState, gigGoals } = req.body;
+  const prompt = `You are a gig economy and contingent workforce technology strategy expert. Build a gig/contingent workforce strategy. Type: ${gigType}. State: ${currentGIGState}. Goals: ${gigGoals}. Respond in JSON: { gig_workforce_strategy: string, vms_platform: string[], ic_compliance: string[], direct_sourcing: string[], spend_analytics: string[], global_expansion: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/worktech/lndtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { lndType, currentLNDState, lndGoals } = req.body;
+  const prompt = `You are a learning and development technology strategy expert. Build an L&D tech strategy. Type: ${lndType}. State: ${currentLNDState}. Goals: ${lndGoals}. Respond in JSON: { lnd_tech_strategy: string, skills_taxonomy: string[], lxp_platform: string[], ai_coaching: string[], content_strategy: string[], measurement_roi: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/worktech/deitech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { deiType, currentDEIState, deiGoals } = req.body;
+  const prompt = `You are a DEI technology and inclusive workplace strategy expert. Build a DEI strategy. Type: ${deiType}. State: ${currentDEIState}. Goals: ${deiGoals}. Respond in JSON: { dei_strategy: string, data_measurement: string[], sourcing_programs: string[], pay_equity_audit: string[], belonging_initiatives: string[], supplier_diversity: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/worktech/workplacetech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { wptType, currentWPTState, wptGoals } = req.body;
+  const prompt = `You are a workplace technology and digital workplace strategy expert. Build a digital workplace strategy. Type: ${wptType}. State: ${currentWPTState}. Goals: ${wptGoals}. Respond in JSON: { digital_workplace_strategy: string, platform_consolidation: string[], ai_workplace_tools: string[], hybrid_support: string[], adoption_program: string[], security_compliance: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
