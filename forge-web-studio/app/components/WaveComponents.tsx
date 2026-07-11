@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 
@@ -143731,4 +143731,114 @@ export function ForgeTab_ci7730() {
   const API = (window as any).FORGE_API || '';
   const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/opsexcellence/ci', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({ciType,currentCIState,ciGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
   return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🔄 Continuous Improvement Program Advisor</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="CI Type (Kaizen/Lean/Six Sigma/TQM/Agile/DevOps)" value={ciType} onChange={e=>setCiType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current State (CI maturity, culture, existing programs)" value={currentCIState} onChange={e=>setCurrentCIState(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Goals (culture/speed/savings/innovation/engagement)" value={ciGoals} onChange={e=>setCiGoals(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run CI Program Advisor'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_recruit7731() {
+  const [recruitType, setRecruitType] = React.useState('');
+  const [currentRecruitState, setCurrentRecruitState] = React.useState('');
+  const [recruitGoals, setRecruitGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/hrtech/recruit', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({recruitType,currentRecruitState,recruitGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🎯 Talent Acquisition Strategy Advisor</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Recruitment Type (tech/sales/executive/volume/specialist)" value={recruitType} onChange={e=>setRecruitType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current State (ATS, time-to-hire, quality of hire)" value={currentRecruitState} onChange={e=>setCurrentRecruitState(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Goals (speed/quality/cost/diversity/employer brand)" value={recruitGoals} onChange={e=>setRecruitGoals(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Talent Acquisition Advisor'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_onboarding7732() {
+  const [onbType, setOnbType] = React.useState('');
+  const [currentOnbState, setCurrentOnbState] = React.useState('');
+  const [onbGoals, setOnbGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/hrtech/onboarding', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({onbType,currentOnbState,onbGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🚀 Employee Onboarding Program Advisor</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Onboarding Type (remote/hybrid/office/executive/technical)" value={onbType} onChange={e=>setOnbType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current State (ramp time, retention at 90d, satisfaction)" value={currentOnbState} onChange={e=>setCurrentOnbState(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Goals (engagement/productivity/retention/culture)" value={onbGoals} onChange={e=>setOnbGoals(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Onboarding Advisor'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_learning7733() {
+  const [lmsType, setLmsType] = React.useState('');
+  const [currentLMSState, setCurrentLMSState] = React.useState('');
+  const [lmsGoals, setLmsGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/hrtech/learning', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({lmsType,currentLMSState,lmsGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>📚 Learning & Development Strategy Advisor</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="L&D Type (technical/leadership/compliance/sales/soft-skills)" value={lmsType} onChange={e=>setLmsType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current State (LMS platform, completion rates, budget)" value={currentLMSState} onChange={e=>setCurrentLMSState(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Goals (skill gaps/engagement/ROI/career development)" value={lmsGoals} onChange={e=>setLmsGoals(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run L&D Advisor'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_performance7734() {
+  const [perfType, setPerfType] = React.useState('');
+  const [currentPerfState, setCurrentPerfState] = React.useState('');
+  const [perfGoals, setPerfGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/hrtech/performance', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({perfType,currentPerfState,perfGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>📊 Performance Management Advisor</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Perf Type (OKR/SMART/continuous/360/agile)" value={perfType} onChange={e=>setPerfType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current State (annual review cycle, rating distribution)" value={currentPerfState} onChange={e=>setCurrentPerfState(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Goals (fairness/development/accountability/succession)" value={perfGoals} onChange={e=>setPerfGoals(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Performance Management Advisor'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_compensation7735() {
+  const [compType, setCompType] = React.useState('');
+  const [currentCompState, setCurrentCompState] = React.useState('');
+  const [compGoals, setCompGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/hrtech/compensation', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({compType,currentCompState,compGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>💰 Total Rewards & Compensation Advisor</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Comp Type (startup/enterprise/tech/sales/executive)" value={compType} onChange={e=>setCompType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current State (pay bands, equity pool, benefits cost)" value={currentCompState} onChange={e=>setCurrentCompState(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Goals (competitiveness/equity/retention/compliance)" value={compGoals} onChange={e=>setCompGoals(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Compensation Advisor'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_hris7736() {
+  const [hrisType, setHrisType] = React.useState('');
+  const [currentHRISState, setCurrentHRISState] = React.useState('');
+  const [hrisGoals, setHrisGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/hrtech/hris', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({hrisType,currentHRISState,hrisGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🖥️ HRIS Strategy & Implementation Advisor</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="HRIS Type (Workday/SAP/Oracle/BambooHR/Rippling)" value={hrisType} onChange={e=>setHrisType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current State (legacy system, data quality, user adoption)" value={currentHRISState} onChange={e=>setCurrentHRISState(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Goals (automation/self-service/compliance/analytics)" value={hrisGoals} onChange={e=>setHrisGoals(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run HRIS Advisor'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_engagement7737() {
+  const [engType, setEngType] = React.useState('');
+  const [currentEngState, setCurrentEngState] = React.useState('');
+  const [engGoals, setEngGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/hrtech/engagement', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({engType,currentEngState,engGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>❤️ Employee Engagement & Culture Advisor</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Engagement Type (pulse/annual/DEI/culture/wellness)" value={engType} onChange={e=>setEngType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current State (eNPS score, turnover rate, survey participation)" value={currentEngState} onChange={e=>setCurrentEngState(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Goals (retention/satisfaction/culture/inclusion)" value={engGoals} onChange={e=>setEngGoals(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Engagement Advisor'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_hranalytics7738() {
+  const [haType, setHaType] = React.useState('');
+  const [currentHAState, setCurrentHAState] = React.useState('');
+  const [haGoals, setHaGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/hrtech/analytics', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({haType,currentHAState,haGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>📈 People Analytics & Workforce Intelligence Advisor</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Analytics Type (attrition/performance/DEI/workforce-planning/cost)" value={haType} onChange={e=>setHaType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current State (data sources, reporting maturity, tools)" value={currentHAState} onChange={e=>setCurrentHAState(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Goals (predictive/descriptive/prescriptive/real-time)" value={haGoals} onChange={e=>setHaGoals(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run People Analytics Advisor'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_hrcompliancetool7739() {
+  const [hcType, setHcType] = React.useState('');
+  const [currentHCState, setCurrentHCState] = React.useState('');
+  const [hcGoals, setHcGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/hrtech/compliance', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({hcType,currentHCState,hcGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>⚖️ HR Compliance & Employment Law Advisor</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Compliance Type (FLSA/FMLA/ADA/EEO/GDPR/OSHA)" value={hcType} onChange={e=>setHcType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current State (audit findings, risk areas, jurisdictions)" value={currentHCState} onChange={e=>setCurrentHCState(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Goals (risk reduction/audit-readiness/training/policy)" value={hcGoals} onChange={e=>setHcGoals(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run HR Compliance Advisor'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
+}
+
+export function ForgeTab_orgdesign7740() {
+  const [odType, setOdType] = React.useState('');
+  const [currentODState, setCurrentODState] = React.useState('');
+  const [odGoals, setOdGoals] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const API = (window as any).FORGE_API || '';
+  const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/hrtech/orgdesign', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({odType,currentODState,odGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
+  return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>🏗️ Organizational Design Advisor</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="Org Type (flat/hierarchical/matrix/agile/hybrid)" value={odType} onChange={e=>setOdType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current State (headcount, layers, span of control, pain points)" value={currentODState} onChange={e=>setCurrentODState(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Goals (agility/efficiency/growth/collaboration/cost)" value={odGoals} onChange={e=>setOdGoals(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Org Design Advisor'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
 }

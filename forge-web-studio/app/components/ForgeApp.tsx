@@ -4814,6 +4814,16 @@ ForgeTab_digitalops7727,
 ForgeTab_costredux7728,
 ForgeTab_kpistrat7729,
 ForgeTab_ci7730,
+ForgeTab_recruit7731,
+ForgeTab_onboarding7732,
+ForgeTab_learning7733,
+ForgeTab_performance7734,
+ForgeTab_compensation7735,
+ForgeTab_hris7736,
+ForgeTab_engagement7737,
+ForgeTab_hranalytics7738,
+ForgeTab_hrcompliancetool7739,
+ForgeTab_orgdesign7740,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -66521,6 +66531,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'costredux7728' && <ForgeTab_costredux7728 />}
               {(mainTab as string) === 'kpistrat7729' && <ForgeTab_kpistrat7729 />}
               {(mainTab as string) === 'ci7730' && <ForgeTab_ci7730 />}
+              {(mainTab as string) === 'recruit7731' && <ForgeTab_recruit7731 />}
+              {(mainTab as string) === 'onboarding7732' && <ForgeTab_onboarding7732 />}
+              {(mainTab as string) === 'learning7733' && <ForgeTab_learning7733 />}
+              {(mainTab as string) === 'performance7734' && <ForgeTab_performance7734 />}
+              {(mainTab as string) === 'compensation7735' && <ForgeTab_compensation7735 />}
+              {(mainTab as string) === 'hris7736' && <ForgeTab_hris7736 />}
+              {(mainTab as string) === 'engagement7737' && <ForgeTab_engagement7737 />}
+              {(mainTab as string) === 'hranalytics7738' && <ForgeTab_hranalytics7738 />}
+              {(mainTab as string) === 'hrcompliancetool7739' && <ForgeTab_hrcompliancetool7739 />}
+              {(mainTab as string) === 'orgdesign7740' && <ForgeTab_orgdesign7740 />}
       </div>
     </div>
   );
