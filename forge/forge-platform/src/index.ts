@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1057.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1058.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -227418,5 +227418,65 @@ app.post('/api/digitalhealth/hospital', requireAuth, async (req: AuthRequest, re
 app.post('/api/digitalhealth/genomics', requireAuth, async (req: AuthRequest, res: any) => {
   const { genomicsType, currentGenomicsState, genomicsGoals } = req.body;
   const prompt = `You are a genomics and precision medicine strategy expert. Build a genomics strategy. Type: ${genomicsType}. State: ${currentGenomicsState}. Goals: ${genomicsGoals}. Respond in JSON: { genomics_strategy: string, test_portfolio: string[], reimbursement_program: string[], ai_interpretation: string[], biobank_program: string[], precision_medicine: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/manda/corpstrategy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { corpStratType, currentCorpStratState, corpStratGoals } = req.body;
+  const prompt = `You are a corporate strategy and growth planning expert. Build a corporate strategy. Type: ${corpStratType}. State: ${currentCorpStratState}. Goals: ${corpStratGoals}. Respond in JSON: { corporate_strategy: string, growth_drivers: string[], portfolio_optimization: string[], capital_allocation: string[], digital_transformation: string[], shareholder_value: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/manda/mna', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mnaType, currentMNAState, mnaGoals } = req.body;
+  const prompt = `You are an M&A advisory and deal execution strategy expert. Build an M&A strategy. Type: ${mnaType}. State: ${currentMNAState}. Goals: ${mnaGoals}. Respond in JSON: { mna_strategy: string, deal_origination: string[], due_diligence: string[], valuation_approach: string[], synergy_capture: string[], integration_playbook: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/manda/pmi', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pmiType, currentPMIState, pmiGoals } = req.body;
+  const prompt = `You are a post-merger integration and value capture strategy expert. Build a PMI strategy. Type: ${pmiType}. State: ${currentPMIState}. Goals: ${pmiGoals}. Respond in JSON: { pmi_strategy: string, day1_readiness: string[], synergy_program: string[], culture_integration: string[], technology_integration: string[], talent_retention: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/manda/divest', requireAuth, async (req: AuthRequest, res: any) => {
+  const { divestType, currentDivestState, divestGoals } = req.body;
+  const prompt = `You are a divestitures and portfolio restructuring strategy expert. Build a divestiture strategy. Type: ${divestType}. State: ${currentDivestState}. Goals: ${divestGoals}. Respond in JSON: { divestiture_strategy: string, portfolio_assessment: string[], preparation_plan: string[], valuation_optimization: string[], buyer_strategy: string[], stranded_cost_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/manda/boardgov', requireAuth, async (req: AuthRequest, res: any) => {
+  const { boardType, currentBoardState, boardGoals } = req.body;
+  const prompt = `You are a board governance and stakeholder management strategy expert. Build a board governance strategy. Type: ${boardType}. State: ${currentBoardState}. Goals: ${boardGoals}. Respond in JSON: { board_governance_strategy: string, composition_plan: string[], activist_defense: string[], esg_oversight: string[], succession_planning: string[], stakeholder_engagement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/manda/corpfinance', requireAuth, async (req: AuthRequest, res: any) => {
+  const { corpFinType, currentCorpFinState, corpFinGoals } = req.body;
+  const prompt = `You are a corporate finance and capital structure strategy expert. Build a corporate finance strategy. Type: ${corpFinType}. State: ${currentCorpFinState}. Goals: ${corpFinGoals}. Respond in JSON: { corporate_finance_strategy: string, capital_structure: string[], debt_optimization: string[], shareholder_return: string[], fx_hedging: string[], esg_financing: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/manda/ir', requireAuth, async (req: AuthRequest, res: any) => {
+  const { irType, currentIRState, irGoals } = req.body;
+  const prompt = `You are an investor relations and capital markets strategy expert. Build an IR strategy. Type: ${irType}. State: ${currentIRState}. Goals: ${irGoals}. Respond in JSON: { ir_strategy: string, investor_targeting: string[], messaging_framework: string[], esg_disclosure: string[], activist_preparation: string[], capital_markets_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/manda/jv', requireAuth, async (req: AuthRequest, res: any) => {
+  const { jvType, currentJVState, jvGoals } = req.body;
+  const prompt = `You are a joint venture and strategic alliances strategy expert. Build a JV/alliance strategy. Type: ${jvType}. State: ${currentJVState}. Goals: ${jvGoals}. Respond in JSON: { jv_alliance_strategy: string, partner_selection: string[], governance_framework: string[], ip_protection: string[], performance_management: string[], exit_planning: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/manda/turnaround', requireAuth, async (req: AuthRequest, res: any) => {
+  const { turnaroundType, currentTurnaroundState, turnaroundGoals } = req.body;
+  const prompt = `You are a corporate turnaround and restructuring strategy expert. Build a turnaround strategy. Type: ${turnaroundType}. State: ${currentTurnaroundState}. Goals: ${turnaroundGoals}. Respond in JSON: { turnaround_strategy: string, stabilization_plan: string[], cost_program: string[], revenue_recovery: string[], balance_sheet_restructuring: string[], lender_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/manda/ipo', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ipoType, currentIPOState, ipoGoals } = req.body;
+  const prompt = `You are an IPO strategy and equity capital markets expert. Build an IPO strategy. Type: ${ipoType}. State: ${currentIPOState}. Goals: ${ipoGoals}. Respond in JSON: { ipo_strategy: string, readiness_assessment: string[], valuation_framework: string[], underwriter_selection: string[], investor_positioning: string[], post_ipo_program: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
