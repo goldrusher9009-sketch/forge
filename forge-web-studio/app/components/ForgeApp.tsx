@@ -3944,6 +3944,16 @@ ForgeTab_spacetourism6857,
 ForgeTab_launchtechstrat6858,
 ForgeTab_spaceinfra6859,
 ForgeTab_aerodefensemfg6860,
+ForgeTab_agritechstrat6861,
+ForgeTab_verticalfarm6862,
+ForgeTab_altprotein6863,
+ForgeTab_foodtechstrat6864,
+ForgeTab_foodsupplychain6865,
+ForgeTab_agfinancestrat6866,
+ForgeTab_sustainableag6867,
+ForgeTab_foodretailstrat6868,
+ForgeTab_aquaculture6869,
+ForgeTab_agdatastrat6870,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -64781,6 +64791,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'launchtechstrat6858' && <ForgeTab_launchtechstrat6858 />}
               {(mainTab as string) === 'spaceinfra6859' && <ForgeTab_spaceinfra6859 />}
               {(mainTab as string) === 'aerodefensemfg6860' && <ForgeTab_aerodefensemfg6860 />}
+              {(mainTab as string) === 'agritechstrat6861' && <ForgeTab_agritechstrat6861 />}
+              {(mainTab as string) === 'verticalfarm6862' && <ForgeTab_verticalfarm6862 />}
+              {(mainTab as string) === 'altprotein6863' && <ForgeTab_altprotein6863 />}
+              {(mainTab as string) === 'foodtechstrat6864' && <ForgeTab_foodtechstrat6864 />}
+              {(mainTab as string) === 'foodsupplychain6865' && <ForgeTab_foodsupplychain6865 />}
+              {(mainTab as string) === 'agfinancestrat6866' && <ForgeTab_agfinancestrat6866 />}
+              {(mainTab as string) === 'sustainableag6867' && <ForgeTab_sustainableag6867 />}
+              {(mainTab as string) === 'foodretailstrat6868' && <ForgeTab_foodretailstrat6868 />}
+              {(mainTab as string) === 'aquaculture6869' && <ForgeTab_aquaculture6869 />}
+              {(mainTab as string) === 'agdatastrat6870' && <ForgeTab_agdatastrat6870 />}
       </div>
     </div>
   );
