@@ -2044,6 +2044,16 @@ ForgeTab_actuarialstrat4957,
 ForgeTab_captivemgmt4958,
 ForgeTab_climaterisk4959,
 ForgeTab_benefitsstrat4960,
+ForgeTab_edtechstrat4961,
+ForgeTab_higheredstrat4962,
+ForgeTab_corporatelearning4963,
+ForgeTab_k12education4964,
+ForgeTab_futureofwork4965,
+ForgeTab_onlinelearning4966,
+ForgeTab_skillseconomy4967,
+ForgeTab_educationpolicy4968,
+ForgeTab_aieducation4969,
+ForgeTab_stemstrategy4970,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -60981,6 +60991,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'captivemgmt4958' && <ForgeTab_captivemgmt4958 />}
               {(mainTab as string) === 'climaterisk4959' && <ForgeTab_climaterisk4959 />}
               {(mainTab as string) === 'benefitsstrat4960' && <ForgeTab_benefitsstrat4960 />}
+              {(mainTab as string) === 'edtechstrat4961' && <ForgeTab_edtechstrat4961 />}
+              {(mainTab as string) === 'higheredstrat4962' && <ForgeTab_higheredstrat4962 />}
+              {(mainTab as string) === 'corporatelearning4963' && <ForgeTab_corporatelearning4963 />}
+              {(mainTab as string) === 'k12education4964' && <ForgeTab_k12education4964 />}
+              {(mainTab as string) === 'futureofwork4965' && <ForgeTab_futureofwork4965 />}
+              {(mainTab as string) === 'onlinelearning4966' && <ForgeTab_onlinelearning4966 />}
+              {(mainTab as string) === 'skillseconomy4967' && <ForgeTab_skillseconomy4967 />}
+              {(mainTab as string) === 'educationpolicy4968' && <ForgeTab_educationpolicy4968 />}
+              {(mainTab as string) === 'aieducation4969' && <ForgeTab_aieducation4969 />}
+              {(mainTab as string) === 'stemstrategy4970' && <ForgeTab_stemstrategy4970 />}
       </div>
     </div>
   );

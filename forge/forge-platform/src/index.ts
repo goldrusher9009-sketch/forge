@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v984.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v985.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -223038,5 +223038,65 @@ app.post('/api/insurancerisk/climaterisk', requireAuth, async (req: AuthRequest,
 app.post('/api/insurancerisk/benefits', requireAuth, async (req: AuthRequest, res: any) => {
   const { benType, currentBenState, benGoals } = req.body;
   const prompt = `You are an employee benefits strategy expert. Build a group insurance and benefits strategy. Type: ${benType}. State: ${currentBenState}. Goals: ${benGoals}. Respond in JSON: { benefits_strategy: string, cost_management: string[], self_funded_program: string[], wellness_integration: string[], mental_health_benefits: string[], voluntary_benefits: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/edufuture/edtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { edtType, currentEDTState, edtGoals } = req.body;
+  const prompt = `You are an EdTech strategy expert. Build a digital learning strategy. Type: ${edtType}. State: ${currentEDTState}. Goals: ${edtGoals}. Respond in JSON: { edtech_strategy: string, learning_design: string[], ai_personalization: string[], engagement_program: string[], revenue_model: string[], partnership_ecosystem: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/edufuture/highered', requireAuth, async (req: AuthRequest, res: any) => {
+  const { heType, currentHEState, heGoals } = req.body;
+  const prompt = `You are a higher education strategy expert. Build a university transformation strategy. Type: ${heType}. State: ${currentHEState}. Goals: ${heGoals}. Respond in JSON: { higher_ed_strategy: string, enrollment_plan: string[], academic_portfolio: string[], online_expansion: string[], workforce_alignment: string[], financial_sustainability: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/edufuture/corplearn', requireAuth, async (req: AuthRequest, res: any) => {
+  const { clType, currentCLState, clGoals } = req.body;
+  const prompt = `You are a corporate learning strategy expert. Build an L&D and talent development strategy. Type: ${clType}. State: ${currentCLState}. Goals: ${clGoals}. Respond in JSON: { learning_strategy: string, skills_framework: string[], ai_personalization: string[], leadership_development: string[], measurement_framework: string[], technology_stack: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/edufuture/k12', requireAuth, async (req: AuthRequest, res: any) => {
+  const { k12Type, currentK12State, k12Goals } = req.body;
+  const prompt = `You are a K-12 education strategy expert. Build a school system strategy. Type: ${k12Type}. State: ${currentK12State}. Goals: ${k12Goals}. Respond in JSON: { k12_strategy: string, academic_program: string[], technology_integration: string[], teacher_development: string[], equity_program: string[], community_engagement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/edufuture/futureofwork', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fowType, currentFOWState, fowGoals } = req.body;
+  const prompt = `You are a future of work strategy expert. Build a workforce transformation strategy. Type: ${fowType}. State: ${currentFOWState}. Goals: ${fowGoals}. Respond in JSON: { future_of_work_strategy: string, workforce_planning: string[], skills_transformation: string[], hybrid_work: string[], ai_augmentation: string[], culture_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/edufuture/onlinelearn', requireAuth, async (req: AuthRequest, res: any) => {
+  const { olType, currentOLState, olGoals } = req.body;
+  const prompt = `You are an online learning strategy expert. Build a digital education strategy. Type: ${olType}. State: ${currentOLState}. Goals: ${olGoals}. Respond in JSON: { online_strategy: string, curriculum_design: string[], engagement_model: string[], credential_program: string[], employer_partnerships: string[], technology_platform: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/edufuture/skills', requireAuth, async (req: AuthRequest, res: any) => {
+  const { seType, currentSEState, seGoals } = req.body;
+  const prompt = `You are a skills economy strategy expert. Build a workforce skills development strategy. Type: ${seType}. State: ${currentSEState}. Goals: ${seGoals}. Respond in JSON: { skills_strategy: string, training_program: string[], employer_partnership: string[], credential_pathway: string[], funding_model: string[], impact_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/edufuture/edpolicy', requireAuth, async (req: AuthRequest, res: any) => {
+  const { epType, currentEPState, epGoals } = req.body;
+  const prompt = `You are an education policy strategy expert. Build an education reform and policy strategy. Type: ${epType}. State: ${currentEPState}. Goals: ${epGoals}. Respond in JSON: { education_policy: string, reform_agenda: string[], stakeholder_engagement: string[], funding_strategy: string[], equity_framework: string[], implementation_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/edufuture/aiedu', requireAuth, async (req: AuthRequest, res: any) => {
+  const { aiEduType, currentAIEduState, aiEduGoals } = req.body;
+  const prompt = `You are an AI in education strategy expert. Build an AI learning innovation strategy. Type: ${aiEduType}. State: ${currentAIEduState}. Goals: ${aiEduGoals}. Respond in JSON: { ai_edu_strategy: string, ai_tutoring: string[], adaptive_learning: string[], teacher_augmentation: string[], assessment_innovation: string[], ethics_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/edufuture/stem', requireAuth, async (req: AuthRequest, res: any) => {
+  const { stemType, currentSTEMState, stemGoals } = req.body;
+  const prompt = `You are a STEM education strategy expert. Build a STEM pipeline and innovation strategy. Type: ${stemType}. State: ${currentSTEMState}. Goals: ${stemGoals}. Respond in JSON: { stem_strategy: string, pipeline_development: string[], diversity_program: string[], industry_partnership: string[], research_program: string[], curriculum_innovation: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
