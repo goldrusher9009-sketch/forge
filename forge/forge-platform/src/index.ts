@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v952.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v953.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -221118,5 +221118,65 @@ app.post('/api/transport/urbanmob', requireAuth, async (req: AuthRequest, res: a
 app.post('/api/transport/evmob', requireAuth, async (req: AuthRequest, res: any) => {
   const { evmType, currentEVMState, evmGoals } = req.body;
   const prompt = `You are an EV strategy expert. Build an automotive electrification strategy. Type: ${evmType}. State: ${currentEVMState}. Goals: ${evmGoals}. Respond in JSON: { ev_strategy: string, product_roadmap: string[], battery_strategy: string[], charging_ecosystem: string[], software_defined_vehicle: string[], global_market_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecomedia/telecom', requireAuth, async (req: AuthRequest, res: any) => {
+  const { telType, currentTelState, telGoals } = req.body;
+  const prompt = `You are a telecom strategy expert. Build a telecommunications strategy. Type: ${telType}. State: ${currentTelState}. Goals: ${telGoals}. Respond in JSON: { telecom_strategy: string, network_investment: string[], revenue_growth: string[], churn_reduction: string[], b2b_expansion: string[], technology_roadmap: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecomedia/fiveg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { fivegType, currentFivegState, fivegGoals } = req.body;
+  const prompt = `You are a 5G strategy expert. Build a 5G monetization strategy. Type: ${fivegType}. State: ${currentFivegState}. Goals: ${fivegGoals}. Respond in JSON: { fiveg_strategy: string, network_deployment: string[], enterprise_use_cases: string[], private_network: string[], edge_computing: string[], monetization_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecomedia/satellite', requireAuth, async (req: AuthRequest, res: any) => {
+  const { satType, currentSatState, satGoals } = req.body;
+  const prompt = `You are a satellite communications strategy expert. Build a satellite strategy. Type: ${satType}. State: ${currentSatState}. Goals: ${satGoals}. Respond in JSON: { satellite_strategy: string, constellation_plan: string[], technology_development: string[], market_segments: string[], launch_strategy: string[], partnership_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecomedia/edge', requireAuth, async (req: AuthRequest, res: any) => {
+  const { edgeType, currentEdgeState, edgeGoals } = req.body;
+  const prompt = `You are an edge computing strategy expert. Build an edge computing strategy. Type: ${edgeType}. State: ${currentEdgeState}. Goals: ${edgeGoals}. Respond in JSON: { edge_strategy: string, infrastructure_deployment: string[], ai_inference: string[], use_case_prioritization: string[], security_architecture: string[], monetization_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecomedia/streamtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { stType, currentSTState, stGoals } = req.body;
+  const prompt = `You are a streaming technology strategy expert. Build a streaming tech strategy. Type: ${stType}. State: ${currentSTState}. Goals: ${stGoals}. Respond in JSON: { streaming_tech_strategy: string, cdn_architecture: string[], encoding_optimization: string[], quality_improvement: string[], ai_personalization: string[], cost_reduction: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecomedia/adtech', requireAuth, async (req: AuthRequest, res: any) => {
+  const { atType, currentATState, atGoals } = req.body;
+  const prompt = `You are an AdTech strategy expert. Build an AdTech strategy. Type: ${atType}. State: ${currentATState}. Goals: ${atGoals}. Respond in JSON: { adtech_strategy: string, data_strategy: string[], identity_solution: string[], ctv_programmatic: string[], measurement_framework: string[], privacy_compliance: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecomedia/iot', requireAuth, async (req: AuthRequest, res: any) => {
+  const { iotType, currentIotState, iotGoals } = req.body;
+  const prompt = `You are an IoT platform strategy expert. Build an IoT strategy. Type: ${iotType}. State: ${currentIotState}. Goals: ${iotGoals}. Respond in JSON: { iot_strategy: string, platform_architecture: string[], connectivity_plan: string[], security_framework: string[], ai_analytics: string[], monetization_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecomedia/cloudinfra', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cloudType, currentCloudState, cloudGoals } = req.body;
+  const prompt = `You are a cloud infrastructure strategy expert. Build a cloud strategy. Type: ${cloudType}. State: ${currentCloudState}. Goals: ${cloudGoals}. Respond in JSON: { cloud_strategy: string, architecture_design: string[], cost_optimization: string[], security_framework: string[], migration_plan: string[], ai_platform: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecomedia/cybersec', requireAuth, async (req: AuthRequest, res: any) => {
+  const { csType, currentCSState, csGoals } = req.body;
+  const prompt = `You are a cybersecurity strategy expert. Build a cybersecurity strategy. Type: ${csType}. State: ${currentCSState}. Goals: ${csGoals}. Respond in JSON: { cybersecurity_strategy: string, zero_trust_roadmap: string[], soc_program: string[], ai_security: string[], compliance_framework: string[], incident_response: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/telecomedia/datastrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { dsType, currentDSState, dsGoals } = req.body;
+  const prompt = `You are a data strategy expert. Build a modern data strategy. Type: ${dsType}. State: ${currentDSState}. Goals: ${dsGoals}. Respond in JSON: { data_strategy: string, platform_architecture: string[], governance_framework: string[], ai_ml_program: string[], data_monetization: string[], self_serve_analytics: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

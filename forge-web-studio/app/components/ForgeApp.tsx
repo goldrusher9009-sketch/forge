@@ -1724,6 +1724,16 @@ ForgeTab_fleetmanagement4637,
 ForgeTab_maritimestrat4638,
 ForgeTab_urbanmobility4639,
 ForgeTab_evmobility4640,
+ForgeTab_telecomstrat4641,
+ForgeTab_fivegstrategy4642,
+ForgeTab_satellitestrat4643,
+ForgeTab_edgecomputing4644,
+ForgeTab_streamingtech4645,
+ForgeTab_adtechstrat4646,
+ForgeTab_iotplatform4647,
+ForgeTab_cloudinfra4648,
+ForgeTab_cybersecstrat4649,
+ForgeTab_datastrategy4650,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -60341,6 +60351,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'maritimestrat4638' && <ForgeTab_maritimestrat4638 />}
               {(mainTab as string) === 'urbanmobility4639' && <ForgeTab_urbanmobility4639 />}
               {(mainTab as string) === 'evmobility4640' && <ForgeTab_evmobility4640 />}
+              {(mainTab as string) === 'telecomstrat4641' && <ForgeTab_telecomstrat4641 />}
+              {(mainTab as string) === 'fivegstrategy4642' && <ForgeTab_fivegstrategy4642 />}
+              {(mainTab as string) === 'satellitestrat4643' && <ForgeTab_satellitestrat4643 />}
+              {(mainTab as string) === 'edgecomputing4644' && <ForgeTab_edgecomputing4644 />}
+              {(mainTab as string) === 'streamingtech4645' && <ForgeTab_streamingtech4645 />}
+              {(mainTab as string) === 'adtechstrat4646' && <ForgeTab_adtechstrat4646 />}
+              {(mainTab as string) === 'iotplatform4647' && <ForgeTab_iotplatform4647 />}
+              {(mainTab as string) === 'cloudinfra4648' && <ForgeTab_cloudinfra4648 />}
+              {(mainTab as string) === 'cybersecstrat4649' && <ForgeTab_cybersecstrat4649 />}
+              {(mainTab as string) === 'datastrategy4650' && <ForgeTab_datastrategy4650 />}
       </div>
     </div>
   );
