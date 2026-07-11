@@ -2804,6 +2804,16 @@ ForgeTab_realestateinvest5717,
 ForgeTab_propertymgmt5718,
 ForgeTab_urbanplanning5719,
 ForgeTab_realestateesg5720,
+ForgeTab_edtechstrategy5721,
+ForgeTab_onlinelearning5722,
+ForgeTab_corporatelearning5723,
+ForgeTab_skillscredential5724,
+ForgeTab_higheredstrategy5725,
+ForgeTab_k12edtech5726,
+ForgeTab_vocationaltech5727,
+ForgeTab_aitutorstrategy5728,
+ForgeTab_learninganalytics5729,
+ForgeTab_edtechmarketplace5730,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -62501,6 +62511,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'propertymgmt5718' && <ForgeTab_propertymgmt5718 />}
               {(mainTab as string) === 'urbanplanning5719' && <ForgeTab_urbanplanning5719 />}
               {(mainTab as string) === 'realestateesg5720' && <ForgeTab_realestateesg5720 />}
+              {(mainTab as string) === 'edtechstrategy5721' && <ForgeTab_edtechstrategy5721 />}
+              {(mainTab as string) === 'onlinelearning5722' && <ForgeTab_onlinelearning5722 />}
+              {(mainTab as string) === 'corporatelearning5723' && <ForgeTab_corporatelearning5723 />}
+              {(mainTab as string) === 'skillscredential5724' && <ForgeTab_skillscredential5724 />}
+              {(mainTab as string) === 'higheredstrategy5725' && <ForgeTab_higheredstrategy5725 />}
+              {(mainTab as string) === 'k12edtech5726' && <ForgeTab_k12edtech5726 />}
+              {(mainTab as string) === 'vocationaltech5727' && <ForgeTab_vocationaltech5727 />}
+              {(mainTab as string) === 'aitutorstrategy5728' && <ForgeTab_aitutorstrategy5728 />}
+              {(mainTab as string) === 'learninganalytics5729' && <ForgeTab_learninganalytics5729 />}
+              {(mainTab as string) === 'edtechmarketplace5730' && <ForgeTab_edtechmarketplace5730 />}
       </div>
     </div>
   );
