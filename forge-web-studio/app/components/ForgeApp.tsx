@@ -3434,6 +3434,16 @@ ForgeTab_corporatefinance6347,
 ForgeTab_riskmanagement6348,
 ForgeTab_treasurystrategy6349,
 ForgeTab_insurancestrategy6350,
+ForgeTab_travelstrategy6351,
+ForgeTab_hospitalitystrat6352,
+ForgeTab_restaurantops6353,
+ForgeTab_eventmanagement6354,
+ForgeTab_cruisestrategy6355,
+ForgeTab_airlinestrategy6356,
+ForgeTab_destinationmktg6357,
+ForgeTab_revenuemanagement6358,
+ForgeTab_sharedeconomy6359,
+ForgeTab_wellnesstravel6360,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -63761,6 +63771,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'riskmanagement6348' && <ForgeTab_riskmanagement6348 />}
               {(mainTab as string) === 'treasurystrategy6349' && <ForgeTab_treasurystrategy6349 />}
               {(mainTab as string) === 'insurancestrategy6350' && <ForgeTab_insurancestrategy6350 />}
+              {(mainTab as string) === 'travelstrategy6351' && <ForgeTab_travelstrategy6351 />}
+              {(mainTab as string) === 'hospitalitystrat6352' && <ForgeTab_hospitalitystrat6352 />}
+              {(mainTab as string) === 'restaurantops6353' && <ForgeTab_restaurantops6353 />}
+              {(mainTab as string) === 'eventmanagement6354' && <ForgeTab_eventmanagement6354 />}
+              {(mainTab as string) === 'cruisestrategy6355' && <ForgeTab_cruisestrategy6355 />}
+              {(mainTab as string) === 'airlinestrategy6356' && <ForgeTab_airlinestrategy6356 />}
+              {(mainTab as string) === 'destinationmktg6357' && <ForgeTab_destinationmktg6357 />}
+              {(mainTab as string) === 'revenuemanagement6358' && <ForgeTab_revenuemanagement6358 />}
+              {(mainTab as string) === 'sharedeconomy6359' && <ForgeTab_sharedeconomy6359 />}
+              {(mainTab as string) === 'wellnesstravel6360' && <ForgeTab_wellnesstravel6360 />}
       </div>
     </div>
   );
