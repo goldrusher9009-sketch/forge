@@ -4874,6 +4874,16 @@ ForgeTab_smartbuilding7787,
 ForgeTab_sustainability7788,
 ForgeTab_reit7789,
 ForgeTab_proptechmarketplace7790,
+ForgeTab_precision7791,
+ForgeTab_cropmanagement7792,
+ForgeTab_agrisupplychain7793,
+ForgeTab_irrigation7794,
+ForgeTab_livestock7795,
+ForgeTab_agridrone7796,
+ForgeTab_soilhealth7797,
+ForgeTab_marketaccess7798,
+ForgeTab_climatesmart7799,
+ForgeTab_verticalfarming7800,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -66641,6 +66651,16 @@ export default function ForgeApp() {
       {(mainTab as string) === 'sustainability7788' && <ForgeTab_sustainability7788 />}
       {(mainTab as string) === 'reit7789' && <ForgeTab_reit7789 />}
       {(mainTab as string) === 'proptechmarketplace7790' && <ForgeTab_proptechmarketplace7790 />}
+      {(mainTab as string) === 'precision7791' && <ForgeTab_precision7791 />}
+      {(mainTab as string) === 'cropmanagement7792' && <ForgeTab_cropmanagement7792 />}
+      {(mainTab as string) === 'agrisupplychain7793' && <ForgeTab_agrisupplychain7793 />}
+      {(mainTab as string) === 'irrigation7794' && <ForgeTab_irrigation7794 />}
+      {(mainTab as string) === 'livestock7795' && <ForgeTab_livestock7795 />}
+      {(mainTab as string) === 'agridrone7796' && <ForgeTab_agridrone7796 />}
+      {(mainTab as string) === 'soilhealth7797' && <ForgeTab_soilhealth7797 />}
+      {(mainTab as string) === 'marketaccess7798' && <ForgeTab_marketaccess7798 />}
+      {(mainTab as string) === 'climatesmart7799' && <ForgeTab_climatesmart7799 />}
+      {(mainTab as string) === 'verticalfarming7800' && <ForgeTab_verticalfarming7800 />}
       </div>
     </div>
   );
