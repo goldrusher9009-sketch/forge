@@ -3174,6 +3174,16 @@ ForgeTab_edgecomputing6087,
 ForgeTab_syntheticbiology6088,
 ForgeTab_nuclearenergy6089,
 ForgeTab_futureworkstrategy6090,
+ForgeTab_cxocoaching6091,
+ForgeTab_boardgovernance6092,
+ForgeTab_changemanagement6093,
+ForgeTab_orgdesign6094,
+ForgeTab_strategyexecution6095,
+ForgeTab_crisisleadership6096,
+ForgeTab_successionplanning6097,
+ForgeTab_innovationstrategy6098,
+ForgeTab_pricingstrategy6099,
+ForgeTab_businessmodeldesign6100,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -63241,6 +63251,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'syntheticbiology6088' && <ForgeTab_syntheticbiology6088 />}
               {(mainTab as string) === 'nuclearenergy6089' && <ForgeTab_nuclearenergy6089 />}
               {(mainTab as string) === 'futureworkstrategy6090' && <ForgeTab_futureworkstrategy6090 />}
+              {(mainTab as string) === 'cxocoaching6091' && <ForgeTab_cxocoaching6091 />}
+              {(mainTab as string) === 'boardgovernance6092' && <ForgeTab_boardgovernance6092 />}
+              {(mainTab as string) === 'changemanagement6093' && <ForgeTab_changemanagement6093 />}
+              {(mainTab as string) === 'orgdesign6094' && <ForgeTab_orgdesign6094 />}
+              {(mainTab as string) === 'strategyexecution6095' && <ForgeTab_strategyexecution6095 />}
+              {(mainTab as string) === 'crisisleadership6096' && <ForgeTab_crisisleadership6096 />}
+              {(mainTab as string) === 'successionplanning6097' && <ForgeTab_successionplanning6097 />}
+              {(mainTab as string) === 'innovationstrategy6098' && <ForgeTab_innovationstrategy6098 />}
+              {(mainTab as string) === 'pricingstrategy6099' && <ForgeTab_pricingstrategy6099 />}
+              {(mainTab as string) === 'businessmodeldesign6100' && <ForgeTab_businessmodeldesign6100 />}
       </div>
     </div>
   );
