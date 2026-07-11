@@ -4554,6 +4554,16 @@ ForgeTab_insurtech7467,
 ForgeTab_paymentstrategy7468,
 ForgeTab_cbdc7469,
 ForgeTab_openbankingstrat7470,
+ForgeTab_proptech7471,
+ForgeTab_commercialre7472,
+ForgeTab_residentialre7473,
+ForgeTab_realestateinvest7474,
+ForgeTab_constructiontech7475,
+ForgeTab_smartbuilding7476,
+ForgeTab_mortgagetech7477,
+ForgeTab_urbanplanning7478,
+ForgeTab_hospitalityre7479,
+ForgeTab_realestateesg7480,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -66001,6 +66011,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'paymentstrategy7468' && <ForgeTab_paymentstrategy7468 />}
               {(mainTab as string) === 'cbdc7469' && <ForgeTab_cbdc7469 />}
               {(mainTab as string) === 'openbankingstrat7470' && <ForgeTab_openbankingstrat7470 />}
+              {(mainTab as string) === 'proptech7471' && <ForgeTab_proptech7471 />}
+              {(mainTab as string) === 'commercialre7472' && <ForgeTab_commercialre7472 />}
+              {(mainTab as string) === 'residentialre7473' && <ForgeTab_residentialre7473 />}
+              {(mainTab as string) === 'realestateinvest7474' && <ForgeTab_realestateinvest7474 />}
+              {(mainTab as string) === 'constructiontech7475' && <ForgeTab_constructiontech7475 />}
+              {(mainTab as string) === 'smartbuilding7476' && <ForgeTab_smartbuilding7476 />}
+              {(mainTab as string) === 'mortgagetech7477' && <ForgeTab_mortgagetech7477 />}
+              {(mainTab as string) === 'urbanplanning7478' && <ForgeTab_urbanplanning7478 />}
+              {(mainTab as string) === 'hospitalityre7479' && <ForgeTab_hospitalityre7479 />}
+              {(mainTab as string) === 'realestateesg7480' && <ForgeTab_realestateesg7480 />}
       </div>
     </div>
   );
