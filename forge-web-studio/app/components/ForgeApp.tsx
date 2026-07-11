@@ -3414,6 +3414,16 @@ ForgeTab_iotplatformstrat6327,
 ForgeTab_blockchainweb36328,
 ForgeTab_apiplatformstrat6329,
 ForgeTab_techarchitecture6330,
+ForgeTab_legaltechstrat6331,
+ForgeTab_hrtechstrat6332,
+ForgeTab_procurementtech6333,
+ForgeTab_erpstrategy6334,
+ForgeTab_cxtech6335,
+ForgeTab_marketingtech6336,
+ForgeTab_salestechstrat6337,
+ForgeTab_financetechstrat6338,
+ForgeTab_supplychaintech6339,
+ForgeTab_itgovernance6340,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -63721,6 +63731,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'blockchainweb36328' && <ForgeTab_blockchainweb36328 />}
               {(mainTab as string) === 'apiplatformstrat6329' && <ForgeTab_apiplatformstrat6329 />}
               {(mainTab as string) === 'techarchitecture6330' && <ForgeTab_techarchitecture6330 />}
+              {(mainTab as string) === 'legaltechstrat6331' && <ForgeTab_legaltechstrat6331 />}
+              {(mainTab as string) === 'hrtechstrat6332' && <ForgeTab_hrtechstrat6332 />}
+              {(mainTab as string) === 'procurementtech6333' && <ForgeTab_procurementtech6333 />}
+              {(mainTab as string) === 'erpstrategy6334' && <ForgeTab_erpstrategy6334 />}
+              {(mainTab as string) === 'cxtech6335' && <ForgeTab_cxtech6335 />}
+              {(mainTab as string) === 'marketingtech6336' && <ForgeTab_marketingtech6336 />}
+              {(mainTab as string) === 'salestechstrat6337' && <ForgeTab_salestechstrat6337 />}
+              {(mainTab as string) === 'financetechstrat6338' && <ForgeTab_financetechstrat6338 />}
+              {(mainTab as string) === 'supplychaintech6339' && <ForgeTab_supplychaintech6339 />}
+              {(mainTab as string) === 'itgovernance6340' && <ForgeTab_itgovernance6340 />}
       </div>
     </div>
   );
