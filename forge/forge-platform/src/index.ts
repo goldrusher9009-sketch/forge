@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1108.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1109.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -230478,5 +230478,65 @@ app.post('/api/globalops/trade', requireAuth, async (req: AuthRequest, res: any)
 app.post('/api/globalops/globalscale', requireAuth, async (req: AuthRequest, res: any) => {
   const { gscType, currentGSCState, gscGoals } = req.body;
   const prompt = `You are a global scalability and international operations expert. Build a global scale strategy. Type: ${gscType}. State: ${currentGSCState}. Goals: ${gscGoals}. Respond in JSON: { global_scale_strategy: string, operating_model: string[], gbs_design: string[], automation_roadmap: string[], entity_rationalization: string[], cost_reduction: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productdev/proddisc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pdType, currentPDState, pdGoals } = req.body;
+  const prompt = `You are a product discovery and customer research expert. Build a product discovery strategy. Type: ${pdType}. State: ${currentPDState}. Goals: ${pdGoals}. Respond in JSON: { discovery_strategy: string, research_methods: string[], insight_synthesis: string[], assumption_testing: string[], continuous_discovery: string[], decision_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productdev/roadmap', requireAuth, async (req: AuthRequest, res: any) => {
+  const { rmType, currentRMState, rmGoals } = req.body;
+  const prompt = `You are a product roadmap and prioritization strategy expert. Build a roadmap strategy. Type: ${rmType}. State: ${currentRMState}. Goals: ${rmGoals}. Respond in JSON: { roadmap_strategy: string, prioritization_framework: string[], stakeholder_alignment: string[], okr_linkage: string[], capacity_planning: string[], communication_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productdev/prodmetrics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { pmtrType, currentPMtrState, pmtrGoals } = req.body;
+  const prompt = `You are a product metrics and analytics strategy expert. Build a product metrics strategy. Type: ${pmtrType}. State: ${currentPMtrState}. Goals: ${pmtrGoals}. Respond in JSON: { metrics_strategy: string, north_star_definition: string[], metric_hierarchy: string[], experimentation_framework: string[], ai_analytics: string[], reporting_cadence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productdev/plgstrat', requireAuth, async (req: AuthRequest, res: any) => {
+  const { plgsType, currentPLGSState, plgsGoals } = req.body;
+  const prompt = `You are a product-led growth product strategy expert. Build a PLG product strategy. Type: ${plgsType}. State: ${currentPLGSState}. Goals: ${plgsGoals}. Respond in JSON: { plg_product_strategy: string, activation_design: string[], aha_moment: string[], growth_loops: string[], expansion_triggers: string[], ai_personalization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productdev/apiprod', requireAuth, async (req: AuthRequest, res: any) => {
+  const { apipType, currentAPIpState, apipGoals } = req.body;
+  const prompt = `You are an API product and developer experience strategy expert. Build an API product strategy. Type: ${apipType}. State: ${currentAPIpState}. Goals: ${apipGoals}. Respond in JSON: { api_product_strategy: string, developer_experience: string[], documentation_design: string[], monetization_model: string[], sdk_roadmap: string[], community_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productdev/mobileprod', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mpType, currentMPState, mpGoals } = req.body;
+  const prompt = `You are a mobile product strategy and app growth expert. Build a mobile product strategy. Type: ${mpType}. State: ${currentMPState}. Goals: ${mpGoals}. Respond in JSON: { mobile_strategy: string, onboarding_design: string[], retention_mechanics: string[], push_strategy: string[], aso_plan: string[], monetization_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productdev/platprod', requireAuth, async (req: AuthRequest, res: any) => {
+  const { ppType, currentPPState, ppGoals } = req.body;
+  const prompt = `You are a platform product strategy and ecosystem design expert. Build a platform strategy. Type: ${ppType}. State: ${currentPPState}. Goals: ${ppGoals}. Respond in JSON: { platform_strategy: string, ecosystem_design: string[], network_effects: string[], governance_model: string[], monetization_approach: string[], trust_safety: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productdev/uxdesign', requireAuth, async (req: AuthRequest, res: any) => {
+  const { uxType, currentUXState, uxGoals } = req.body;
+  const prompt = `You are a UX design strategy and design system expert. Build a UX strategy. Type: ${uxType}. State: ${currentUXState}. Goals: ${uxGoals}. Respond in JSON: { ux_strategy: string, design_system: string[], research_program: string[], ai_ux_approach: string[], accessibility_plan: string[], design_ops: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productdev/growthexp', requireAuth, async (req: AuthRequest, res: any) => {
+  const { geType, currentGEState, geGoals } = req.body;
+  const prompt = `You are a growth experimentation and A/B testing strategy expert. Build an experimentation strategy. Type: ${geType}. State: ${currentGEState}. Goals: ${geGoals}. Respond in JSON: { experimentation_strategy: string, infrastructure_design: string[], statistical_approach: string[], idea_generation: string[], culture_building: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/productdev/prodops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { poType, currentPOState, poGoals } = req.body;
+  const prompt = `You are a product operations and team excellence expert. Build a product ops strategy. Type: ${poType}. State: ${currentPOState}. Goals: ${poGoals}. Respond in JSON: { product_ops_strategy: string, ritual_design: string[], tool_stack: string[], okr_system: string[], launch_framework: string[], team_health: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
