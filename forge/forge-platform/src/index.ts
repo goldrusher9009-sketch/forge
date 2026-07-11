@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v989.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v990.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -223338,5 +223338,65 @@ app.post('/api/agrifood/aquaculture', requireAuth, async (req: AuthRequest, res:
 app.post('/api/agrifood/cropbio', requireAuth, async (req: AuthRequest, res: any) => {
   const { cbioType, currentCBioState, cbioGoals } = req.body;
   const prompt = `You are a crop biotechnology strategy expert. Build an agricultural biotech strategy. Type: ${cbioType}. State: ${currentCBioState}. Goals: ${cbioGoals}. Respond in JSON: { agbio_strategy: string, pipeline_development: string[], regulatory_pathway: string[], ip_management: string[], licensing_model: string[], commercialization_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3crypto/crypto', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cryptoType, currentCryptoState, cryptoGoals } = req.body;
+  const prompt = `You are a cryptocurrency and Web3 strategy expert. Build a crypto strategy. Type: ${cryptoType}. State: ${currentCryptoState}. Goals: ${cryptoGoals}. Respond in JSON: { crypto_strategy: string, protocol_design: string[], tokenomics: string[], defi_features: string[], community_governance: string[], regulatory_approach: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3crypto/defi', requireAuth, async (req: AuthRequest, res: any) => {
+  const { defiType, currentDeFiState, defiGoals } = req.body;
+  const prompt = `You are a DeFi protocol strategy expert. Build a DeFi strategy. Type: ${defiType}. State: ${currentDeFiState}. Goals: ${defiGoals}. Respond in JSON: { defi_strategy: string, liquidity_design: string[], yield_optimization: string[], security_framework: string[], cross_chain_expansion: string[], revenue_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3crypto/nfts', requireAuth, async (req: AuthRequest, res: any) => {
+  const { nftType, currentNFTState, nftGoals } = req.body;
+  const prompt = `You are an NFT and digital assets strategy expert. Build an NFT strategy. Type: ${nftType}. State: ${currentNFTState}. Goals: ${nftGoals}. Respond in JSON: { nft_strategy: string, collection_design: string[], utility_features: string[], community_building: string[], marketplace_approach: string[], ip_monetization: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3crypto/blockchain', requireAuth, async (req: AuthRequest, res: any) => {
+  const { chainType, currentChainState, chainGoals } = req.body;
+  const prompt = `You are a blockchain infrastructure strategy expert. Build a blockchain strategy. Type: ${chainType}. State: ${currentChainState}. Goals: ${chainGoals}. Respond in JSON: { blockchain_strategy: string, consensus_design: string[], developer_ecosystem: string[], interoperability: string[], performance_optimization: string[], security_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3crypto/daos', requireAuth, async (req: AuthRequest, res: any) => {
+  const { daoType, currentDAOState, daoGoals } = req.body;
+  const prompt = `You are a DAO governance strategy expert. Build a DAO strategy. Type: ${daoType}. State: ${currentDAOState}. Goals: ${daoGoals}. Respond in JSON: { dao_strategy: string, governance_design: string[], treasury_management: string[], contributor_incentives: string[], legal_structure: string[], participation_growth: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3crypto/tokenomics', requireAuth, async (req: AuthRequest, res: any) => {
+  const { tokenType, currentTokenState, tokenGoals } = req.body;
+  const prompt = `You are a tokenomics design expert. Build a token strategy. Type: ${tokenType}. State: ${currentTokenState}. Goals: ${tokenGoals}. Respond in JSON: { tokenomics_strategy: string, distribution_model: string[], emission_schedule: string[], value_capture: string[], governance_rights: string[], market_making: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3crypto/exchange', requireAuth, async (req: AuthRequest, res: any) => {
+  const { exchType, currentExchState, exchGoals } = req.body;
+  const prompt = `You are a crypto exchange strategy expert. Build a trading platform strategy. Type: ${exchType}. State: ${currentExchState}. Goals: ${exchGoals}. Respond in JSON: { exchange_strategy: string, product_roadmap: string[], liquidity_strategy: string[], compliance_framework: string[], institutional_offering: string[], revenue_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3crypto/cryptoreg', requireAuth, async (req: AuthRequest, res: any) => {
+  const { regType, currentRegState, regGoals } = req.body;
+  const prompt = `You are a crypto regulatory strategy expert. Build a compliance strategy. Type: ${regType}. State: ${currentRegState}. Goals: ${regGoals}. Respond in JSON: { regulatory_strategy: string, compliance_framework: string[], licensing_roadmap: string[], aml_kyc_program: string[], jurisdictional_plan: string[], risk_management: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3crypto/gameweb3', requireAuth, async (req: AuthRequest, res: any) => {
+  const { w3gType, currentW3GState, w3gGoals } = req.body;
+  const prompt = `You are a Web3 gaming strategy expert. Build a blockchain gaming strategy. Type: ${w3gType}. State: ${currentW3GState}. Goals: ${w3gGoals}. Respond in JSON: { web3_gaming_strategy: string, token_economy: string[], nft_integration: string[], player_acquisition: string[], guild_ecosystem: string[], sustainability_model: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/web3crypto/cryptovc', requireAuth, async (req: AuthRequest, res: any) => {
+  const { cvcType, currentCVCState, cvcGoals } = req.body;
+  const prompt = `You are a crypto venture capital strategy expert. Build a Web3 investment strategy. Type: ${cvcType}. State: ${currentCVCState}. Goals: ${cvcGoals}. Respond in JSON: { crypto_vc_strategy: string, investment_thesis: string[], deal_flow: string[], portfolio_management: string[], liquid_token_strategy: string[], ecosystem_development: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

@@ -2094,6 +2094,16 @@ ForgeTab_foodsafety5007,
 ForgeTab_agrisustain5008,
 ForgeTab_aquaculture5009,
 ForgeTab_cropbiotech5010,
+ForgeTab_cryptostrategy5011,
+ForgeTab_defiprotocol5012,
+ForgeTab_nftstrategy5013,
+ForgeTab_blockchaininfra5014,
+ForgeTab_daostrategy5015,
+ForgeTab_tokenomics5016,
+ForgeTab_cryptoexchange5017,
+ForgeTab_cryptoregulation5018,
+ForgeTab_web3gaming5019,
+ForgeTab_cryptoventure5020,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -61081,6 +61091,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'agrisustain5008' && <ForgeTab_agrisustain5008 />}
               {(mainTab as string) === 'aquaculture5009' && <ForgeTab_aquaculture5009 />}
               {(mainTab as string) === 'cropbiotech5010' && <ForgeTab_cropbiotech5010 />}
+              {(mainTab as string) === 'cryptostrategy5011' && <ForgeTab_cryptostrategy5011 />}
+              {(mainTab as string) === 'defiprotocol5012' && <ForgeTab_defiprotocol5012 />}
+              {(mainTab as string) === 'nftstrategy5013' && <ForgeTab_nftstrategy5013 />}
+              {(mainTab as string) === 'blockchaininfra5014' && <ForgeTab_blockchaininfra5014 />}
+              {(mainTab as string) === 'daostrategy5015' && <ForgeTab_daostrategy5015 />}
+              {(mainTab as string) === 'tokenomics5016' && <ForgeTab_tokenomics5016 />}
+              {(mainTab as string) === 'cryptoexchange5017' && <ForgeTab_cryptoexchange5017 />}
+              {(mainTab as string) === 'cryptoregulation5018' && <ForgeTab_cryptoregulation5018 />}
+              {(mainTab as string) === 'web3gaming5019' && <ForgeTab_web3gaming5019 />}
+              {(mainTab as string) === 'cryptoventure5020' && <ForgeTab_cryptoventure5020 />}
       </div>
     </div>
   );
