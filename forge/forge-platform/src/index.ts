@@ -171,7 +171,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1087.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1088.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -229218,5 +229218,65 @@ app.post('/api/legalops/securities', requireAuth, async (req: AuthRequest, res: 
 app.post('/api/legalops/crossborderlaw', requireAuth, async (req: AuthRequest, res: any) => {
   const { cbLegalType, currentCBLegalState, cbLegalGoals } = req.body;
   const prompt = `You are a cross-border and international legal strategy expert. Build an international legal strategy. Type: ${cbLegalType}. State: ${currentCBLegalState}. Goals: ${cbLegalGoals}. Respond in JSON: { international_legal_strategy: string, sanctions_compliance: string[], export_control: string[], fcpa_program: string[], transfer_pricing: string[], multi_jurisdiction: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brandcomms/brand', requireAuth, async (req: AuthRequest, res: any) => {
+  const { brandStratType, currentBrandStratState, brandStratGoals } = req.body;
+  const prompt = `You are a brand strategy and brand architecture expert. Build a brand strategy. Type: ${brandStratType}. State: ${currentBrandStratState}. Goals: ${brandStratGoals}. Respond in JSON: { brand_strategy: string, brand_architecture: string[], positioning_statement: string[], visual_identity: string[], brand_governance: string[], global_adaptation: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brandcomms/corpcomms', requireAuth, async (req: AuthRequest, res: any) => {
+  const { commsType, currentCommsState, commsGoals } = req.body;
+  const prompt = `You are a corporate communications and PR strategy expert. Build a comms strategy. Type: ${commsType}. State: ${currentCommsState}. Goals: ${commsGoals}. Respond in JSON: { comms_strategy: string, media_relations: string[], investor_communications: string[], thought_leadership: string[], crisis_communications: string[], digital_presence: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brandcomms/narrative', requireAuth, async (req: AuthRequest, res: any) => {
+  const { narrativeType, currentNarrativeState, narrativeGoals } = req.body;
+  const prompt = `You are a narrative and messaging strategy expert. Build a narrative strategy. Type: ${narrativeType}. State: ${currentNarrativeState}. Goals: ${narrativeGoals}. Respond in JSON: { narrative_strategy: string, core_story: string[], audience_messaging: string[], proof_points: string[], media_hooks: string[], distribution_plan: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brandcomms/execcomms', requireAuth, async (req: AuthRequest, res: any) => {
+  const { execCommsType, currentExecCommsState, execCommsGoals } = req.body;
+  const prompt = `You are an executive communications and thought leadership expert. Build an executive comms strategy. Type: ${execCommsType}. State: ${currentExecCommsState}. Goals: ${execCommsGoals}. Respond in JSON: { exec_comms_strategy: string, thought_leadership_platform: string[], speaking_roadmap: string[], linkedin_program: string[], media_playbook: string[], content_calendar: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brandcomms/socialmedia', requireAuth, async (req: AuthRequest, res: any) => {
+  const { socialType, currentSocialState, socialGoals } = req.body;
+  const prompt = `You are a social media and digital brand strategy expert. Build a social media strategy. Type: ${socialType}. State: ${currentSocialState}. Goals: ${socialGoals}. Respond in JSON: { social_strategy: string, platform_playbook: string[], content_calendar: string[], community_building: string[], creator_program: string[], paid_amplification: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brandcomms/events', requireAuth, async (req: AuthRequest, res: any) => {
+  const { eventsType, currentEventsState, eventsGoals } = req.body;
+  const prompt = `You are an events and brand experience strategy expert. Build an events strategy. Type: ${eventsType}. State: ${currentEventsState}. Goals: ${eventsGoals}. Respond in JSON: { events_strategy: string, flagship_event: string[], trade_show_plan: string[], virtual_hybrid: string[], executive_program: string[], roi_measurement: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brandcomms/reputation', requireAuth, async (req: AuthRequest, res: any) => {
+  const { repType, currentRepState, repGoals } = req.body;
+  const prompt = `You are a reputation management and brand recovery expert. Build a reputation strategy. Type: ${repType}. State: ${currentRepState}. Goals: ${repGoals}. Respond in JSON: { reputation_strategy: string, monitoring_program: string[], crisis_response: string[], review_management: string[], media_rehabilitation: string[], trust_rebuilding: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brandcomms/empbrand', requireAuth, async (req: AuthRequest, res: any) => {
+  const { empBrandType, currentEmpBrandState, empBrandGoals } = req.body;
+  const prompt = `You are an employer branding and talent attraction strategy expert. Build an employer brand strategy. Type: ${empBrandType}. State: ${currentEmpBrandState}. Goals: ${empBrandGoals}. Respond in JSON: { employer_brand_strategy: string, evp_design: string[], candidate_experience: string[], social_presence: string[], dei_narrative: string[], campus_program: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brandcomms/internalcomms', requireAuth, async (req: AuthRequest, res: any) => {
+  const { internalCommsType, currentInternalCommsState, internalCommsGoals } = req.body;
+  const prompt = `You are an internal communications and culture strategy expert. Build an internal comms strategy. Type: ${internalCommsType}. State: ${currentInternalCommsState}. Goals: ${internalCommsGoals}. Respond in JSON: { internal_comms_strategy: string, all_hands_design: string[], change_management: string[], digital_channels: string[], culture_reinforcement: string[], measurement_framework: string[] }`;
+  try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brandcomms/marketingops', requireAuth, async (req: AuthRequest, res: any) => {
+  const { mopsType, currentMOpsState, mopsGoals } = req.body;
+  const prompt = `You are a marketing operations and MarTech stack strategy expert. Build a marketing ops strategy. Type: ${mopsType}. State: ${currentMOpsState}. Goals: ${mopsGoals}. Respond in JSON: { marketing_ops_strategy: string, martech_architecture: string[], attribution_model: string[], automation_roadmap: string[], data_foundation: string[], ai_integration: string[] }`;
   try { const result = await callUserLLM(req, prompt); res.json({ result }); } catch(e:any) { res.status(500).json({ error: e.message }); }
 });

@@ -3074,6 +3074,16 @@ ForgeTab_privacylegal5987,
 ForgeTab_antitrustcomp5988,
 ForgeTab_securitiescompliance5989,
 ForgeTab_crossborderlegal5990,
+ForgeTab_brandstrategy5991,
+ForgeTab_corporatecomms5992,
+ForgeTab_narrativemessaging5993,
+ForgeTab_executivecomms5994,
+ForgeTab_socialmediastrat5995,
+ForgeTab_eventsexperience5996,
+ForgeTab_reputationmgmt5997,
+ForgeTab_employerbranding5998,
+ForgeTab_internalcomms5999,
+ForgeTab_marketingops6000,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -63041,6 +63051,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'antitrustcomp5988' && <ForgeTab_antitrustcomp5988 />}
               {(mainTab as string) === 'securitiescompliance5989' && <ForgeTab_securitiescompliance5989 />}
               {(mainTab as string) === 'crossborderlegal5990' && <ForgeTab_crossborderlegal5990 />}
+              {(mainTab as string) === 'brandstrategy5991' && <ForgeTab_brandstrategy5991 />}
+              {(mainTab as string) === 'corporatecomms5992' && <ForgeTab_corporatecomms5992 />}
+              {(mainTab as string) === 'narrativemessaging5993' && <ForgeTab_narrativemessaging5993 />}
+              {(mainTab as string) === 'executivecomms5994' && <ForgeTab_executivecomms5994 />}
+              {(mainTab as string) === 'socialmediastrat5995' && <ForgeTab_socialmediastrat5995 />}
+              {(mainTab as string) === 'eventsexperience5996' && <ForgeTab_eventsexperience5996 />}
+              {(mainTab as string) === 'reputationmgmt5997' && <ForgeTab_reputationmgmt5997 />}
+              {(mainTab as string) === 'employerbranding5998' && <ForgeTab_employerbranding5998 />}
+              {(mainTab as string) === 'internalcomms5999' && <ForgeTab_internalcomms5999 />}
+              {(mainTab as string) === 'marketingops6000' && <ForgeTab_marketingops6000 />}
       </div>
     </div>
   );
