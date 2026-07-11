@@ -1974,6 +1974,16 @@ ForgeTab_cybersecuritystrat4887,
 ForgeTab_iotstrat4888,
 ForgeTab_adtechstrat4889,
 ForgeTab_edgecomputing4890,
+ForgeTab_consultingstrat4891,
+ForgeTab_lawfirmstrat4892,
+ForgeTab_accountingfirmstrat4893,
+ForgeTab_recruitingstrat4894,
+ForgeTab_itconsultingstrat4895,
+ForgeTab_designconsulting4896,
+ForgeTab_prcommsstrat4897,
+ForgeTab_freelanceplatform4898,
+ForgeTab_managedservices4899,
+ForgeTab_boutiqueconsulting4900,
 } from './WaveComponents';
 
 // --- CSS injected once for animations ----------------------------------------
@@ -60841,6 +60851,16 @@ export default function ForgeApp() {
               {(mainTab as string) === 'iotstrat4888' && <ForgeTab_iotstrat4888 />}
               {(mainTab as string) === 'adtechstrat4889' && <ForgeTab_adtechstrat4889 />}
               {(mainTab as string) === 'edgecomputing4890' && <ForgeTab_edgecomputing4890 />}
+              {(mainTab as string) === 'consultingstrat4891' && <ForgeTab_consultingstrat4891 />}
+              {(mainTab as string) === 'lawfirmstrat4892' && <ForgeTab_lawfirmstrat4892 />}
+              {(mainTab as string) === 'accountingfirmstrat4893' && <ForgeTab_accountingfirmstrat4893 />}
+              {(mainTab as string) === 'recruitingstrat4894' && <ForgeTab_recruitingstrat4894 />}
+              {(mainTab as string) === 'itconsultingstrat4895' && <ForgeTab_itconsultingstrat4895 />}
+              {(mainTab as string) === 'designconsulting4896' && <ForgeTab_designconsulting4896 />}
+              {(mainTab as string) === 'prcommsstrat4897' && <ForgeTab_prcommsstrat4897 />}
+              {(mainTab as string) === 'freelanceplatform4898' && <ForgeTab_freelanceplatform4898 />}
+              {(mainTab as string) === 'managedservices4899' && <ForgeTab_managedservices4899 />}
+              {(mainTab as string) === 'boutiqueconsulting4900' && <ForgeTab_boutiqueconsulting4900 />}
       </div>
     </div>
   );
