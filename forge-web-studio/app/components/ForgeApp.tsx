@@ -40305,42 +40305,6 @@ export default function ForgeApp() {
           </div>
         )}
 
-        {/* Intelligence Tab */}
-        {mainTab === 'intelligence' && (
-          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
-            <div style={{ maxWidth:860, margin:'0 auto' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-                <span style={{ fontSize:36 }}>🧠</span>
-                <div>
-                  <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Intelligence Layer</h1>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Memory graph, context, and knowledge nodes.</p>
-                </div>
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:24 }}>
-                {[{icon:'🧠',label:'Intelligence Score',value:'--',color:'var(--fg-orange)'},{icon:'💡',label:'Memory Nodes',value:igNodes.length.toString(),color:'#6366f1'},{icon:'🔗',label:'Connections',value:(igNodes.length*2).toString(),color:'#22c55e'}].map(s => (
-                  <div key={s.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, textAlign:'center' }}>
-                    <div style={{ fontSize:28, marginBottom:6 }}>{s.icon}</div>
-                    <div style={{ fontSize:26, fontWeight:800, color:s.color, marginBottom:4 }}>{s.value}</div>
-                    <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
-                <div style={{ fontSize:13, fontWeight:600, color:'var(--fg-text)', marginBottom:12 }}>Knowledge Graph</div>
-                {igNodes.length === 0 ? (
-                  <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)', fontSize:13 }}>No intelligence data yet. Start chatting to build your knowledge graph.</div>
-                ) : (
-                  <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-                    {igNodes.map((n:any, i:number) => (
-                      <div key={i} style={{ padding:'6px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border2)', borderRadius:20, fontSize:12, color:'var(--fg-text2)' }}>{n.label || n.id || String(n).slice(0,40)}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* ── DEEP RESEARCH ──────────────────────────────────────── */}
         {(mainTab as string) === 'forgedeepresearch' && <ForgeTab_forgedeepresearch />}
 
