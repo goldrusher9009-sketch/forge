@@ -1,4 +1,3 @@
-error: improper chunk offset(s) 61b3c and 88a94
 ﻿// Forge AI Workspace v6.62 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
