@@ -7560,7 +7560,6 @@ function ForgeTab_speechwriter() {
           const [about, setAbout] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!occasion || !about) return;
@@ -7603,7 +7602,6 @@ function ForgeTab_pricenegotiator() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [tab, setTab] = React.useState<'script'|'tactics'>('script');
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const negotiate = async () => {
             if (!item || !currentPrice) return;
@@ -7657,7 +7655,6 @@ function ForgeTab_emailroastv2() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [view, setView] = React.useState<'roast'|'rewrite'>('roast');
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const roast = async () => {
             if (!emailText.trim()) return;
@@ -7706,7 +7703,6 @@ function ForgeTab_startupnamer() {
           const [style, setStyle] = React.useState('modern');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!desc.trim()) return;
@@ -7756,7 +7752,6 @@ function ForgeTab_coverlettergen() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [copied, setCopied] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!jobTitle || !company) return;
@@ -7805,7 +7800,6 @@ function ForgeTab_interviewcoach() {
           const [feedback, setFeedback] = React.useState<any>(null);
           const [fbLoading, setFbLoading] = React.useState(false);
           const [mode, setMode] = React.useState<'questions'|'practice'>('questions');
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!role) return;
@@ -7885,7 +7879,6 @@ function ForgeTab_colddmwriter() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [copied, setCopied] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const write = async () => {
             if (!targetName || !goal) return;
@@ -7935,7 +7928,6 @@ function ForgeTab_fitnessplanner() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [activeDay, setActiveDay] = React.useState(0);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!goal) return;
@@ -7994,7 +7986,6 @@ function ForgeTab_recipegen2() {
           const [time, setTime] = React.useState(30);
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!ingredients.trim()) return;
@@ -8055,7 +8046,6 @@ function ForgeTab_travelplanner() {
           const [loading, setLoading] = React.useState(false);
           const [activeDay, setActiveDay] = React.useState(0);
           const [view, setView] = React.useState<'itinerary'|'practical'|'tips'>('itinerary');
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const plan = async () => {
             if (!dest) return;
@@ -8127,7 +8117,6 @@ function ForgeTab_apologyletter() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [copied, setCopied] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const write = async () => {
             if (!situation) return;
@@ -8170,7 +8159,6 @@ function ForgeTab_leasereview() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [tab, setTab] = React.useState<'overview'|'redflags'|'terms'>('overview');
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const review = async () => {
             if (!leaseText.trim()) return;
@@ -8213,7 +8201,6 @@ function ForgeTab_booksummarizer() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [activeIdea, setActiveIdea] = React.useState(0);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const summarize = async () => {
             if (!title) return;
@@ -8274,7 +8261,6 @@ function ForgeTab_quizgen() {
           const [score, setScore] = React.useState(0);
           const [finished, setFinished] = React.useState(false);
           const [answers, setAnswers] = React.useState<{q:number,correct:boolean}[]>([]);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!topic) return;
@@ -8353,7 +8339,6 @@ function ForgeTab_salaryneg() {
           const [loading, setLoading] = React.useState(false);
           const [tab, setTab] = React.useState<'script'|'email'|'strategy'>('script');
           const [copied, setCopied] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const negotiate = async () => {
             if (!role || !offer) return;
@@ -8421,7 +8406,6 @@ function ForgeTab_breakupletter() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [copied, setCopied] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const write = async () => {
             if (!reason) return;
@@ -8472,7 +8456,6 @@ function ForgeTab_bizplan() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [section, setSection] = React.useState<'overview'|'milestones'|'gtm'>('overview');
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!idea) return;
@@ -8539,7 +8522,6 @@ function ForgeTab_viralhooks() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [copied, setCopied] = React.useState<number|null>(null);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!topic) return;
@@ -8590,7 +8572,6 @@ function ForgeTab_dreaminterp() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [view, setView] = React.useState<'symbols'|'analysis'|'journal'>('analysis');
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const interpret = async () => {
             if (!dream.trim()) return;
@@ -8651,7 +8632,6 @@ function ForgeTab_roastgen() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [copied, setCopied] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!subject) return;
@@ -8694,7 +8674,6 @@ function ForgeTab_futureself() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [copied, setCopied] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const write = async () => {
             if (!situation) return;
@@ -8737,7 +8716,6 @@ function ForgeTab_resumebullets() {
           const [industry, setIndustry] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const rewrite = async () => {
             if (!bullets) return;
@@ -8789,7 +8767,6 @@ function ForgeTab_meetingbuilder() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [copied, setCopied] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const build = async () => {
             if (!meetType || !goal) return;
@@ -8843,7 +8820,6 @@ function ForgeTab_gratitudereflect() {
           const [context, setContext] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const reflect = async () => {
             if (!entries) return;
@@ -8895,7 +8871,6 @@ function ForgeTab_coldpitch() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [copied, setCopied] = React.useState<number|null>(null);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!product || !target) return;
@@ -8949,7 +8924,6 @@ function ForgeTab_moodtracker() {
           const [history, setHistory] = React.useState<any[]>([]);
           const [view, setView] = React.useState<'log'|'history'>('log');
           const [loading, setLoading] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           React.useEffect(() => { fetch(API+'/api/mood/history',{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()).then(d=>setHistory(Array.isArray(d)?d:[])).catch(()=>{}); }, []);
           const log = async () => {
@@ -9009,7 +8983,6 @@ function ForgeTab_habitjournal() {
           const [difficulty, setDifficulty] = React.useState('normal');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const log = async () => {
             if (!habit) return;
@@ -9057,7 +9030,6 @@ function ForgeTab_lifegoals() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [section, setSection] = React.useState<'plan'|'milestones'|'actions'>('plan');
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const plan = async () => {
             if (!goal) return;
@@ -9122,7 +9094,6 @@ function ForgeTab_standupwriter() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [copied, setCopied] = React.useState<string|null>(null);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const write = async () => {
             if (!yesterday || !today) return;
@@ -9171,7 +9142,6 @@ function ForgeTab_conflictresolve() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [tab, setTab] = React.useState<'script'|'paths'|'insight'>('insight');
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const resolve = async () => {
             if (!situation) return;
@@ -9234,7 +9204,6 @@ function ForgeTab_priceanchor() {
           const [customerType, setCustomerType] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!product || !currentPrice) return;
@@ -9285,7 +9254,6 @@ function ForgeTab_linkedinbio() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [copied, setCopied] = React.useState<string|null>(null);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!role) return;
@@ -9334,7 +9302,6 @@ function ForgeTab_failurecv() {
           const [loading, setLoading] = React.useState(false);
           const [view, setView] = React.useState<'resume'|'entries'>('resume');
           const [copied, setCopied] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!failures) return;
@@ -9387,7 +9354,6 @@ function ForgeTab_morningritual() {
           const [current, setCurrent] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const build = async () => {
             if (!goals) return;
@@ -9437,7 +9403,6 @@ function ForgeTab_apologytext() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [copied, setCopied] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const write = async () => {
             if (!situation) return;
@@ -9483,7 +9448,6 @@ function ForgeTab_excusegen() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [copied, setCopied] = React.useState<number|null>(null);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!situation) return;
@@ -9536,7 +9500,6 @@ function ForgeTab_ventmode() {
           const [wantReframe, setWantReframe] = React.useState(true);
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const express = async () => {
             if (!vent.trim()) return;
@@ -9590,7 +9553,6 @@ function ForgeTab_personalbrand() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [section, setSection] = React.useState<'brand'|'content'|'platforms'|'plan'>('brand');
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const build = async () => {
             if (!expertise || !audience) return;
@@ -9655,7 +9617,6 @@ function ForgeTab_weeklyreview() {
           const [priorities, setPriorities] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
-          const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!wins && !struggles) return;
@@ -64890,140 +64851,4 @@ export default function ForgeApp() {
               {(mainTab as string) === 'digitaltwin7665' && <ForgeTab_digitaltwin7665 />}
               {(mainTab as string) === 'constructiontech7666' && <ForgeTab_constructiontech7666 />}
               {(mainTab as string) === 'energygrid7667' && <ForgeTab_energygrid7667 />}
-              {(mainTab as string) === 'wastecircular7668' && <ForgeTab_wastecircular7668 />}
-              {(mainTab as string) === 'disasterresilience7669' && <ForgeTab_disasterresilience7669 />}
-              {(mainTab as string) === 'publicprivate7670' && <ForgeTab_publicprivate7670 />}
-              {(mainTab as string) === 'pharmaceuticals7671' && <ForgeTab_pharmaceuticals7671 />}
-              {(mainTab as string) === 'meddevicestrat7672' && <ForgeTab_meddevicestrat7672 />}
-              {(mainTab as string) === 'biotech7673' && <ForgeTab_biotech7673 />}
-              {(mainTab as string) === 'healthcareprovider7674' && <ForgeTab_healthcareprovider7674 />}
-              {(mainTab as string) === 'payerstrategy7675' && <ForgeTab_payerstrategy7675 />}
-              {(mainTab as string) === 'drugpricingstrat7676' && <ForgeTab_drugpricingstrat7676 />}
-              {(mainTab as string) === 'genomicsstrat7677' && <ForgeTab_genomicsstrat7677 />}
-              {(mainTab as string) === 'clinicalops7678' && <ForgeTab_clinicalops7678 />}
-              {(mainTab as string) === 'regulatoryaffairs7679' && <ForgeTab_regulatoryaffairs7679 />}
-              {(mainTab as string) === 'healthcareai7680' && <ForgeTab_healthcareai7680 />}
-              {(mainTab as string) === 'edtechstrat7681' && <ForgeTab_edtechstrat7681 />}
-              {(mainTab as string) === 'highereducation7682' && <ForgeTab_highereducation7682 />}
-              {(mainTab as string) === 'workforceskills7683' && <ForgeTab_workforceskills7683 />}
-              {(mainTab as string) === 'k12education7684' && <ForgeTab_k12education7684 />}
-              {(mainTab as string) === 'corporatelearning7685' && <ForgeTab_corporatelearning7685 />}
-              {(mainTab as string) === 'futureofwork7686' && <ForgeTab_futureofwork7686 />}
-              {(mainTab as string) === 'credentialstrat7687' && <ForgeTab_credentialstrat7687 />}
-              {(mainTab as string) === 'educationpolicy7688' && <ForgeTab_educationpolicy7688 />}
-              {(mainTab as string) === 'studentsuccess7689' && <ForgeTab_studentsuccess7689 />}
-              {(mainTab as string) === 'elearningdesign7690' && <ForgeTab_elearningdesign7690 />}
-              {(mainTab as string) === 'corporatestrategy7691' && <ForgeTab_corporatestrategy7691 />}
-              {(mainTab as string) === 'growthstrategy7692' && <ForgeTab_growthstrategy7692 />}
-              {(mainTab as string) === 'turnaround7693' && <ForgeTab_turnaround7693 />}
-              {(mainTab as string) === 'costoptimization7694' && <ForgeTab_costoptimization7694 />}
-              {(mainTab as string) === 'businessportfolio7695' && <ForgeTab_businessportfolio7695 />}
-              {(mainTab as string) === 'innovationstrat7696' && <ForgeTab_innovationstrat7696 />}
-              {(mainTab as string) === 'cxotransform7697' && <ForgeTab_cxotransform7697 />}
-              {(mainTab as string) === 'boardgovernance7698' && <ForgeTab_boardgovernance7698 />}
-              {(mainTab as string) === 'strategicplanning7699' && <ForgeTab_strategicplanning7699 />}
-              {(mainTab as string) === 'mergersintegration7700' && <ForgeTab_mergersintegration7700 />}
-              {(mainTab as string) === 'talentacquisition7701' && <ForgeTab_talentacquisition7701 />}
-              {(mainTab as string) === 'compensationbenefits7702' && <ForgeTab_compensationbenefits7702 />}
-              {(mainTab as string) === 'hrdigital7703' && <ForgeTab_hrdigital7703 />}
-              {(mainTab as string) === 'diversityinclusion7704' && <ForgeTab_diversityinclusion7704 />}
-              {(mainTab as string) === 'employeeengagement7705' && <ForgeTab_employeeengagement7705 />}
-              {(mainTab as string) === 'successionplanning7706' && <ForgeTab_successionplanning7706 />}
-              {(mainTab as string) === 'changemanagement7707' && <ForgeTab_changemanagement7707 />}
-              {(mainTab as string) === 'hroperations7708' && <ForgeTab_hroperations7708 />}
-              {(mainTab as string) === 'wellbeingstrat7709' && <ForgeTab_wellbeingstrat7709 />}
-              {(mainTab as string) === 'globalhr7710' && <ForgeTab_globalhr7710 />}
-              {(mainTab as string) === 'financecontrol7711' && <ForgeTab_financecontrol7711 />}
-              {(mainTab as string) === 'treasurystrat7712' && <ForgeTab_treasurystrat7712 />}
-              {(mainTab as string) === 'taxstrategy7713' && <ForgeTab_taxstrategy7713 />}
-              {(mainTab as string) === 'fpastrat7714' && <ForgeTab_fpastrat7714 />}
-              {(mainTab as string) === 'internalaudit7715' && <ForgeTab_internalaudit7715 />}
-              {(mainTab as string) === 'procurestrat7716' && <ForgeTab_procurestrat7716 />}
-              {(mainTab as string) === 'workingcapital7717' && <ForgeTab_workingcapital7717 />}
-              {(mainTab as string) === 'riskmanagement7718' && <ForgeTab_riskmanagement7718 />}
-              {(mainTab as string) === 'insurancestrat7719' && <ForgeTab_insurancestrat7719 />}
-              {(mainTab as string) === 'esgfinance7720' && <ForgeTab_esgfinance7720 />}
-              {(mainTab as string) === 'processopt7721' && <ForgeTab_processopt7721 />}
-              {(mainTab as string) === 'lean7722' && <ForgeTab_lean7722 />}
-              {(mainTab as string) === 'sixsigma7723' && <ForgeTab_sixsigma7723 />}
-              {(mainTab as string) === 'scexcellence7724' && <ForgeTab_scexcellence7724 />}
-              {(mainTab as string) === 'qualitymgmt7725' && <ForgeTab_qualitymgmt7725 />}
-              {(mainTab as string) === 'erp7726' && <ForgeTab_erp7726 />}
-              {(mainTab as string) === 'digitalops7727' && <ForgeTab_digitalops7727 />}
-              {(mainTab as string) === 'costredux7728' && <ForgeTab_costredux7728 />}
-              {(mainTab as string) === 'kpistrat7729' && <ForgeTab_kpistrat7729 />}
-              {(mainTab as string) === 'ci7730' && <ForgeTab_ci7730 />}
-              {(mainTab as string) === 'recruit7731' && <ForgeTab_recruit7731 />}
-              {(mainTab as string) === 'onboarding7732' && <ForgeTab_onboarding7732 />}
-              {(mainTab as string) === 'learning7733' && <ForgeTab_learning7733 />}
-              {(mainTab as string) === 'performance7734' && <ForgeTab_performance7734 />}
-              {(mainTab as string) === 'compensation7735' && <ForgeTab_compensation7735 />}
-              {(mainTab as string) === 'hris7736' && <ForgeTab_hris7736 />}
-              {(mainTab as string) === 'engagement7737' && <ForgeTab_engagement7737 />}
-              {(mainTab as string) === 'hranalytics7738' && <ForgeTab_hranalytics7738 />}
-              {(mainTab as string) === 'hrcompliancetool7739' && <ForgeTab_hrcompliancetool7739 />}
-              {(mainTab as string) === 'orgdesign7740' && <ForgeTab_orgdesign7740 />}
-              {(mainTab as string) === 'curriculum7741' && <ForgeTab_curriculum7741 />}
-              {(mainTab as string) === 'adaptive7742' && <ForgeTab_adaptive7742 />}
-              {(mainTab as string) === 'studentanalytics7743' && <ForgeTab_studentanalytics7743 />}
-              {(mainTab as string) === 'lmsadmin7744' && <ForgeTab_lmsadmin7744 />}
-              {(mainTab as string) === 'assessment7745' && <ForgeTab_assessment7745 />}
-              {(mainTab as string) === 'gamification7746' && <ForgeTab_gamification7746 />}
-              {(mainTab as string) === 'specialed7747' && <ForgeTab_specialed7747 />}
-              {(mainTab as string) === 'corporatetraining7748' && <ForgeTab_corporatetraining7748 />}
-              {(mainTab as string) === 'mooc7749' && <ForgeTab_mooc7749 />}
-              {(mainTab as string) === 'microlearning7750' && <ForgeTab_microlearning7750 />}
-              {(mainTab as string) === 'telemedicine7751' && <ForgeTab_telemedicine7751 />}
-              {(mainTab as string) === 'ehr7752' && <ForgeTab_ehr7752 />}
-              {(mainTab as string) === 'clinicaldecision7753' && <ForgeTab_clinicaldecision7753 />}
-              {(mainTab as string) === 'patientengagement7754' && <ForgeTab_patientengagement7754 />}
-              {(mainTab as string) === 'digitaltherapeutics7755' && <ForgeTab_digitaltherapeutics7755 />}
-              {(mainTab as string) === 'remotemonitoring7756' && <ForgeTab_remotemonitoring7756 />}
-              {(mainTab as string) === 'healthanalytics7757' && <ForgeTab_healthanalytics7757 />}
-              {(mainTab as string) === 'populationhealth7758' && <ForgeTab_populationhealth7758 />}
-              {(mainTab as string) === 'carecoordination7759' && <ForgeTab_carecoordination7759 />}
-              {(mainTab as string) === 'valuebasedcare7760' && <ForgeTab_valuebasedcare7760 />}
-              {(mainTab as string) === 'payments7761' && <ForgeTab_payments7761 />}
-              {(mainTab as string) === 'openbanking7762' && <ForgeTab_openbanking7762 />}
-              {(mainTab as string) === 'regtech7763' && <ForgeTab_regtech7763 />}
-              {(mainTab as string) === 'insurtech7764' && <ForgeTab_insurtech7764 />}
-              {(mainTab as string) === 'wealthtech7765' && <ForgeTab_wealthtech7765 />}
-              {(mainTab as string) === 'lending7766' && <ForgeTab_lending7766 />}
-              {(mainTab as string) === 'crypto7767' && <ForgeTab_crypto7767 />}
-              {(mainTab as string) === 'neobank7768' && <ForgeTab_neobank7768 />}
-              {(mainTab as string) === 'fraud7769' && <ForgeTab_fraud7769 />}
-              {(mainTab as string) === 'embedded7770' && <ForgeTab_embedded7770 />}
-      {(mainTab as string) === 'contract7771' && <ForgeTab_contract7771 />}
-      {(mainTab as string) === 'compliance7772' && <ForgeTab_compliance7772 />}
-      {(mainTab as string) === 'litigation7773' && <ForgeTab_litigation7773 />}
-      {(mainTab as string) === 'ip7774' && <ForgeTab_ip7774 />}
-      {(mainTab as string) === 'governance7775' && <ForgeTab_governance7775 />}
-      {(mainTab as string) === 'employment7776' && <ForgeTab_employment7776 />}
-      {(mainTab as string) === 'regulatory7777' && <ForgeTab_regulatory7777 />}
-      {(mainTab as string) === 'dispute7778' && <ForgeTab_dispute7778 />}
-      {(mainTab as string) === 'legalresearch7779' && <ForgeTab_legalresearch7779 />}
-      {(mainTab as string) === 'legalops7780' && <ForgeTab_legalops7780 />}
-      {(mainTab as string) === 'valuation7781' && <ForgeTab_valuation7781 />}
-      {(mainTab as string) === 'acquisition7782' && <ForgeTab_acquisition7782 />}
-      {(mainTab as string) === 'development7783' && <ForgeTab_development7783 />}
-      {(mainTab as string) === 'propertymanagement7784' && <ForgeTab_propertymanagement7784 />}
-      {(mainTab as string) === 'realestatefinance7785' && <ForgeTab_realestatefinance7785 />}
-      {(mainTab as string) === 'leasing7786' && <ForgeTab_leasing7786 />}
-      {(mainTab as string) === 'smartbuilding7787' && <ForgeTab_smartbuilding7787 />}
-      {(mainTab as string) === 'sustainability7788' && <ForgeTab_sustainability7788 />}
-      {(mainTab as string) === 'reit7789' && <ForgeTab_reit7789 />}
-      {(mainTab as string) === 'proptechmarketplace7790' && <ForgeTab_proptechmarketplace7790 />}
-      {(mainTab as string) === 'precision7791' && <ForgeTab_precision7791 />}
-      {(mainTab as string) === 'cropmanagement7792' && <ForgeTab_cropmanagement7792 />}
-      {(mainTab as string) === 'agrisupplychain7793' && <ForgeTab_agrisupplychain7793 />}
-      {(mainTab as string) === 'irrigation7794' && <ForgeTab_irrigation7794 />}
-      {(mainTab as string) === 'livestock7795' && <ForgeTab_livestock7795 />}
-      {(mainTab as string) === 'agridrone7796' && <ForgeTab_agridrone7796 />}
-      {(mainTab as string) === 'soilhealth7797' && <ForgeTab_soilhealth7797 />}
-      {(mainTab as string) === 'marketaccess7798' && <ForgeTab_marketaccess7798 />}
-      {(mainTab as string) === 'climatesmart7799' && <ForgeTab_climatesmart7799 />}
-      {(mainTab as string) === 'verticalfarming7800' && <ForgeTab_verticalfarming7800 />}
-      </div>
-    </div>
-  );
-}
+              {(mainTab as string) === 'wast
