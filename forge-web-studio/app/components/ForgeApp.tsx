@@ -5035,7 +5035,7 @@ h1,h2,h3,h4 { font-family: var(--fg-font-display); letter-spacing: -0.02em; font
 }
 `;
 
-const API = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://forge-production-2692.up.railway.app/api';
+const API = (process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app') + '/api';
 
 // --- Code preview helpers (module-level to avoid TSX parser confusion with < chars) --
 function extractCodeBlock(content: string): { code: string; isHtml: boolean; lang: string; suggestedFilename: string } | null {
