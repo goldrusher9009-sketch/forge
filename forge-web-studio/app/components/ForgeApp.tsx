@@ -42434,221 +42434,6 @@ export default function ForgeApp() {
             ))}</div>
           </div>
         )}
-        {mainTab === 'apiversioning' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128225; API Versioning</h2>
-            <p className="text-gray-400 mb-4">Track API versions with deprecation timelines, breaking changes, and migration guides.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/api-versioning?workspace_id=1',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setApiVersioning(d&&d.rows?d:{rows:[],deprecated_count:0,active_count:0});}} className="px-4 py-2 bg-blue-700 rounded text-white mb-4">Load Versions</button>
-            {(apiVersioning.active_count>0||apiVersioning.deprecated_count>0) && (
-              <div className="flex gap-3 mb-4 text-xs">
-                <div className="bg-green-900/30 border border-green-700 rounded p-2 text-center flex-1"><div className="text-lg font-bold text-green-300">{apiVersioning.active_count}</div><div className="text-gray-400">Active</div></div>
-                {apiVersioning.deprecated_count>0 && <div className="bg-orange-900/30 border border-orange-700 rounded p-2 text-center flex-1"><div className="text-lg font-bold text-orange-300">{apiVersioning.deprecated_count}</div><div className="text-gray-400">Deprecated</div></div>}
-              </div>
-            )}
-            <div className="space-y-3">{(apiVersioning.rows||[]).map((v:any)=>(
-              <div key={v.id} className={`rounded p-4 border-l-4 ${v.status==='active'?'border-green-500 bg-gray-800':v.status==='deprecated'?'border-orange-500 bg-orange-900/10':'border-red-500 bg-red-900/10'}`}>
-                <div className="flex justify-between items-start mb-1">
-                  <div>
-                    <div className="font-bold">{v.api_name} <span className="font-mono text-blue-300">v{v.version}</span></div>
-                    <div className="text-xs text-gray-400">{v.endpoint_count} endpoints{v.release_date?` · released ${v.release_date}`:''}</div>
-                  </div>
-                  <span className={`text-xs px-1.5 py-0.5 rounded flex-shrink-0 ml-2 ${v.status==='active'?'bg-green-800':v.status==='deprecated'?'bg-orange-800':'bg-red-800'}`}>{v.status}</span>
-                </div>
-                {v.deprecation_date && <div className="text-xs text-orange-400">Deprecated: {v.deprecation_date}{v.sunset_date?` · Sunset: ${v.sunset_date}`:''}</div>}
-                {v.breaking_changes && <div className="text-xs text-red-400 mt-1">&#9888; {v.breaking_changes.slice(0,80)}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'elevatorpitch' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#127908; Elevator Pitch AI</h2>
-            <p className="text-gray-400 mb-4">Generate timed elevator pitches with hook, narrative, and CTA tuned to audience and tone.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/elevator-pitch',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setElevatorPitch(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-600 rounded text-white mb-4">Load Pitches</button>
-            <div className="space-y-4">{elevatorPitch.map((p:any)=>(
-              <div key={p.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <div className="font-bold text-orange-300">{p.product_name}</div>
-                    <div className="text-xs text-gray-400">{p.duration_sec}s · {p.tone} · for {p.target_audience} · {p.word_count}w</div>
-                  </div>
-                  <div className="text-xs text-gray-500 flex-shrink-0 ml-2">{p.created_at?.slice(0,10)}</div>
-                </div>
-                {p.hook && <div className="bg-orange-900/40 border border-orange-700 rounded p-2 mb-2 text-center font-bold text-orange-200 italic">"{p.hook}"</div>}
-                {p.generated_pitch && <div className="text-xs text-gray-300 bg-gray-900 rounded p-2 mb-2 max-h-24 overflow-y-auto leading-relaxed">{p.generated_pitch.slice(0,200)}</div>}
-                {p.cta && <div className="text-xs text-green-300 border-t border-gray-700 pt-2">CTA: {p.cta}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'fastingv2' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#9201; Fasting Tracker v2</h2>
-            <p className="text-gray-400 mb-4">Advanced fasting log with protocol tracking, HRV, ketones, and completion rate analytics.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/fasting-v2',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setFastingV2(d&&d.rows?d:{rows:[],completion_rate:0,avg_hours:0,total_fasts:0});}} className="px-4 py-2 bg-amber-600 rounded text-white mb-4">Load Fasts</button>
-            {fastingV2.total_fasts>0 && (
-              <div className="grid grid-cols-3 gap-2 mb-4 text-xs text-center">
-                <div className="bg-amber-900/30 rounded p-2"><div className="text-xl font-bold text-amber-300">{fastingV2.total_fasts}</div><div className="text-gray-400">Total</div></div>
-                <div className="bg-green-900/30 rounded p-2"><div className="text-xl font-bold text-green-300">{fastingV2.completion_rate}%</div><div className="text-gray-400">Complete</div></div>
-                <div className="bg-blue-900/30 rounded p-2"><div className="text-xl font-bold text-blue-300">{fastingV2.avg_hours}h</div><div className="text-gray-400">Avg Hours</div></div>
-              </div>
-            )}
-            <div className="space-y-3">{(fastingV2.rows||[]).map((f:any)=>(
-              <div key={f.id} className={`rounded p-4 border-l-4 ${f.completed?'border-green-500 bg-gray-800':'border-gray-600 bg-gray-900 opacity-70'}`}>
-                <div className="flex justify-between items-start mb-1">
-                  <div>
-                    <div className="font-semibold">{f.fast_date} · <span className="text-amber-300">{f.protocol}</span></div>
-                    <div className="text-xs text-gray-400">{f.start_time}{f.end_time?` → ${f.end_time}`:' → ongoing'}</div>
-                  </div>
-                  <div className="flex gap-2 flex-shrink-0 ml-2 text-center text-xs">
-                    <div><div className={`text-lg font-bold ${f.completed?'text-green-300':'text-gray-400'}`}>{f.actual_hours||f.target_hours}h</div><div className="text-gray-500">{f.completed?'done':'target'}</div></div>
-                    {f.energy_level && <div><div className={`text-lg font-bold ${f.energy_level>=7?'text-yellow-300':f.energy_level>=4?'text-orange-300':'text-red-300'}`}>{f.energy_level}</div><div className="text-gray-500">Energy</div></div>}
-                  </div>
-                </div>
-                <div className="flex gap-3 text-xs text-gray-500">
-                  {f.weight_kg && <span>Weight: {f.weight_kg}kg</span>}
-                  {f.ketones_mmol && <span>Ketones: {f.ketones_mmol}mmol</span>}
-                  {f.hunger_level && <span>Hunger: {f.hunger_level}/10</span>}
-                </div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'localizationkeys' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#127757; Localization Keys</h2>
-            <p className="text-gray-400 mb-4">Manage i18n translation keys with base values, translated values, and namespace organization.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/localization-keys?workspace_id=1',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setLocalizationKeys(d&&d.rows?d:{rows:[],namespace_count:0,key_count:0});}} className="px-4 py-2 bg-teal-600 rounded text-white mb-4">Load Keys</button>
-            {localizationKeys.key_count>0 && <div className="text-xs text-gray-400 mb-3">{localizationKeys.key_count} keys · {localizationKeys.namespace_count} namespaces</div>}
-            <div className="space-y-2">{(localizationKeys.rows||[]).map((k:any)=>(
-              <div key={k.id} className="bg-gray-800 rounded p-3">
-                <div className="flex justify-between items-start mb-1">
-                  <div className="min-w-0">
-                    <div className="flex gap-2 items-center mb-0.5">
-                      <span className="text-xs bg-teal-800 px-1.5 rounded font-mono">{k.namespace}</span>
-                      <span className="font-mono text-sm text-teal-300 truncate">{k.key_name}</span>
-                    </div>
-                    <div className="text-sm text-gray-200">{k.base_value.slice(0,60)}{k.base_value.length>60?'...':''}</div>
-                  </div>
-                  <div className="flex gap-1 flex-shrink-0 ml-2 text-xs">
-                    <span className="text-gray-500">{k.base_language.toUpperCase()}</span>
-                    {k.translated_values && <span className="text-green-400">+trans</span>}
-                  </div>
-                </div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'gratitudechallenges' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#11088; Gratitude Challenges</h2>
-            <p className="text-gray-400 mb-4">Run timed gratitude challenge programs with streak tracking and completion percentage.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/gratitude-challenges',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setGratitudeChallenges(d&&d.rows?d:{rows:[],active_count:0,avg_completion:0});}} className="px-4 py-2 bg-yellow-500 rounded text-black font-semibold mb-4">Load Challenges</button>
-            {(gratitudeChallenges.active_count>0||gratitudeChallenges.avg_completion>0) && (
-              <div className="grid grid-cols-2 gap-3 mb-4 text-xs text-center">
-                <div className="bg-yellow-900/30 rounded p-2"><div className="text-xl font-bold text-yellow-300">{gratitudeChallenges.active_count}</div><div className="text-gray-400">Active</div></div>
-                <div className="bg-green-900/30 rounded p-2"><div className="text-xl font-bold text-green-300">{gratitudeChallenges.avg_completion}%</div><div className="text-gray-400">Avg Completion</div></div>
-              </div>
-            )}
-            <div className="space-y-4">{(gratitudeChallenges.rows||[]).map((c:any)=>(
-              <div key={c.id} className={`rounded p-4 border ${c.active?'bg-gray-800 border-gray-600':'bg-gray-900 border-gray-800 opacity-60'}`}>
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <div className="font-bold text-yellow-300">{c.challenge_name}</div>
-                    <div className="text-xs text-gray-400">{c.duration_days}d challenge · started {c.start_date}</div>
-                  </div>
-                  <div className="flex gap-3 flex-shrink-0 ml-2 text-center text-xs">
-                    <div><div className="text-lg font-bold text-orange-300">{c.current_streak}</div><div className="text-gray-500">Streak</div></div>
-                    <div><div className="text-lg font-bold text-green-300">{c.completion_pct}%</div><div className="text-gray-500">Done</div></div>
-                  </div>
-                </div>
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div className="h-2 rounded-full bg-yellow-500" style={{width:`${Math.min(c.completion_pct||0,100)}%`}}></div>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">{c.entries_logged}/{c.duration_days} entries</div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'releaseblockers' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128167; Release Blockers</h2>
-            <p className="text-gray-400 mb-4">Track blockers by release version with severity, owner, and resolution status.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/release-blockers?workspace_id=1',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setReleaseBlockers(d&&d.rows?d:{rows:[],open_count:0,critical_count:0});}} className="px-4 py-2 bg-red-700 rounded text-white mb-4">Load Blockers</button>
-            {(releaseBlockers.open_count>0||releaseBlockers.critical_count>0) && (
-              <div className="flex gap-3 mb-4 text-xs">
-                {releaseBlockers.open_count>0 && <div className="bg-orange-900/40 border border-orange-700 rounded p-2 text-center flex-1"><div className="text-xl font-bold text-orange-300">{releaseBlockers.open_count}</div><div className="text-gray-400">Open</div></div>}
-                {releaseBlockers.critical_count>0 && <div className="bg-red-900/40 border border-red-700 rounded p-2 text-center flex-1"><div className="text-xl font-bold text-red-300">{releaseBlockers.critical_count}</div><div className="text-gray-400">Critical</div></div>}
-              </div>
-            )}
-            <div className="space-y-3">{(releaseBlockers.rows||[]).map((b:any)=>(
-              <div key={b.id} className={`rounded p-4 border-l-4 ${b.severity==='critical'?'border-red-500 bg-red-900/20':b.severity==='high'?'border-orange-500 bg-orange-900/20':'border-yellow-500 bg-gray-800'}`}>
-                <div className="flex justify-between items-start mb-1">
-                  <div>
-                    <div className="font-bold">{b.blocker_title}</div>
-                    <div className="text-xs text-gray-400">{b.release_version}{b.owner?` · ${b.owner}`:''}{b.linked_ticket?` · ${b.linked_ticket}`:''}</div>
-                  </div>
-                  <div className="flex gap-1 flex-shrink-0 ml-2 text-xs">
-                    <span className={`px-1.5 py-0.5 rounded ${b.severity==='critical'?'bg-red-800':b.severity==='high'?'bg-orange-800':'bg-yellow-700'}`}>{b.severity}</span>
-                    <span className={`px-1.5 py-0.5 rounded ${b.status==='resolved'?'bg-green-800':b.status==='in-progress'?'bg-blue-800':'bg-gray-600'}`}>{b.status}</span>
-                  </div>
-                </div>
-                {b.target_release_date && <div className="text-xs text-gray-500">Target: {b.target_release_date}</div>}
-                {b.resolution_notes && <div className="text-xs text-green-400 mt-1">&#10003; {b.resolution_notes.slice(0,80)}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'brandstory' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128214; Brand Story AI</h2>
-            <p className="text-gray-400 mb-4">Generate authentic brand stories with hook lines for origin, mission, and customer-focused narratives.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/brand-story',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setBrandStory(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Stories</button>
-            <div className="space-y-4">{brandStory.map((s:any)=>(
-              <div key={s.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <div className="font-bold text-indigo-300">{s.company_name}</div>
-                    <div className="text-xs text-gray-400">{s.story_type} · {s.tone}{s.industry?` · ${s.industry}`:''} · {s.word_count}w</div>
-                  </div>
-                  <div className="text-xs text-gray-500 flex-shrink-0 ml-2">{s.created_at?.slice(0,10)}</div>
-                </div>
-                {s.hook_line && <div className="bg-indigo-900/40 border border-indigo-700 rounded p-2 mb-2 text-center font-bold text-indigo-200 italic">"{s.hook_line}"</div>}
-                {s.generated_story && <div className="text-xs text-gray-300 bg-gray-900 rounded p-2 max-h-32 overflow-y-auto leading-relaxed">{s.generated_story.slice(0,250)}{s.generated_story.length>250?'...':''}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'recoverylog' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#127947; Recovery Log</h2>
-            <p className="text-gray-400 mb-4">Track post-workout recovery: sleep, HRV, soreness, energy levels, and nutrition quality.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/recovery-log',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setRecoveryLog(d&&d.rows?d:{rows:[],avg_sleep:0,avg_energy:0});}} className="px-4 py-2 bg-cyan-600 rounded text-white mb-4">Load Recovery</button>
-            {(recoveryLog.avg_sleep>0||recoveryLog.avg_energy>0) && (
-              <div className="grid grid-cols-2 gap-3 mb-4 text-xs text-center">
-                <div className="bg-blue-900/30 rounded p-2"><div className="text-xl font-bold text-blue-300">{recoveryLog.avg_sleep}h</div><div className="text-gray-400">Avg Sleep</div></div>
-                <div className="bg-yellow-900/30 rounded p-2"><div className="text-xl font-bold text-yellow-300">{recoveryLog.avg_energy}/10</div><div className="text-gray-400">Avg Energy</div></div>
-              </div>
-            )}
-            <div className="space-y-3">{(recoveryLog.rows||[]).map((r:any)=>(
-              <div key={r.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <div className="font-semibold">{r.log_date}</div>
-                    <div className="text-xs text-gray-400">{r.recovery_type}{r.activities?` · ${r.activities.slice(0,40)}`:''}</div>
-                  </div>
-                  <div className="flex gap-2 flex-shrink-0 ml-2 text-center text-xs">
-                    {r.sleep_hours && <div><div className="text-lg font-bold text-blue-300">{r.sleep_hours}h</div><div className="text-gray-500">Sleep</div></div>}
-                    {r.energy_level && <div><div className={`text-lg font-bold ${r.energy_level>=8?'text-green-300':r.energy_level>=5?'text-yellow-300':'text-red-300'}`}>{r.energy_level}</div><div className="text-gray-500">Energy</div></div>}
-                    {r.soreness_level && <div><div className={`text-lg font-bold ${r.soreness_level<=3?'text-green-300':r.soreness_level<=6?'text-yellow-300':'text-red-300'}`}>{r.soreness_level}</div><div className="text-gray-500">Soreness</div></div>}
-                    {r.hrv_score && <div><div className="text-lg font-bold text-purple-300">{r.hrv_score}</div><div className="text-gray-500">HRV</div></div>}
-                  </div>
-                </div>
-                {r.notes && <div className="text-xs text-gray-500">{r.notes.slice(0,80)}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
         {mainTab === 'permmatrix' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-4">&#128273; Permission Matrix</h2>
@@ -42991,29 +42776,6 @@ export default function ForgeApp() {
                 </div>
                 {c.description && <div className="text-sm text-gray-300 mb-2">{c.description.slice(0,120)}</div>}
                 {c.breaking_changes && <div className="text-xs text-red-400 border border-red-900 rounded p-1.5">&#9888; Breaking: {c.breaking_changes.slice(0,80)}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'interviewcoach' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#127908; Interview Coach AI</h2>
-            <p className="text-gray-400 mb-4">Practice interview answers and get AI scoring with strengths, improvements, and a model answer.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/interview-coach',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setInterviewCoach(d&&d.rows?d:{rows:[],avg_score:0});}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Sessions</button>
-            {interviewCoach.avg_score>0 && <div className="bg-blue-900/30 rounded p-3 mb-4 text-center text-blue-300">Avg Score: <span className="text-2xl font-bold">{interviewCoach.avg_score}</span>/10</div>}
-            <div className="space-y-4">{(interviewCoach.rows||[]).map((s:any)=>(
-              <div key={s.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <div className="font-bold text-blue-300">{s.job_title}{s.company?` @ ${s.company}`:''}</div>
-                    <div className="text-xs text-gray-400">{s.interview_type} · {s.created_at?.slice(0,10)}</div>
-                  </div>
-                  <div className={`text-2xl font-bold flex-shrink-0 ml-2 ${(s.score||0)>=8?'text-green-300':(s.score||0)>=6?'text-yellow-300':'text-red-300'}`}>{s.score||0}<span className="text-sm text-gray-500">/10</span></div>
-                </div>
-                <div className="text-xs text-gray-400 italic mb-2 border-l-2 border-gray-600 pl-2">Q: {s.question.slice(0,80)}{s.question.length>80?'...':''}</div>
-                {s.strengths && <div className="text-xs text-green-400 mb-1">&#10003; {s.strengths.slice(0,100)}</div>}
-                {s.improvements && <div className="text-xs text-yellow-400 mb-1">&#9651; {s.improvements.slice(0,100)}</div>}
-                {s.model_answer && <div className="text-xs text-blue-300 bg-blue-900/20 rounded p-2 mt-2 border border-blue-900">Model: {s.model_answer.slice(0,120)}</div>}
               </div>
             ))}</div>
           </div>
@@ -44144,138 +43906,6 @@ export default function ForgeApp() {
             ))}</div>
           </div>
         )}
-        {mainTab === 'digitaldetox' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128245; Digital Detox Planner</h2>
-            <p className="text-gray-400 mb-4">Plan screen-free periods and track your detox streaks.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/digital-detox',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setDigitalDetox(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-700 rounded text-white mb-4">Load Detox Plans</button>
-            <div className="space-y-4">{digitalDetox.map((d:any)=>(
-              <div key={d.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <div className="font-bold text-green-300">{d.detox_name}</div>
-                    <div className="text-xs text-gray-400">{d.start_date} → {d.end_date}</div>
-                  </div>
-                  <div className="flex gap-2 flex-shrink-0 ml-2 text-xs">
-                    {d.completed ? <span className="bg-green-700 px-1.5 py-0.5 rounded">&#10003; done</span> : <span className="bg-blue-800 px-1.5 py-0.5 rounded">active</span>}
-                    {d.streak_days>0 && <span className="text-orange-300">&#128293; {d.streak_days}d</span>}
-                  </div>
-                </div>
-                <div className="flex gap-3 text-xs text-gray-400">
-                  <span>Screen limit: {d.daily_screen_limit_hr}h/day</span>
-                  {d.check_in_mood>0 && <span>Mood: {d.check_in_mood}/10</span>}
-                </div>
-                {d.apps_to_limit && <div className="text-xs text-red-300 mt-1">Limiting: {d.apps_to_limit}</div>}
-                {d.activities_to_replace && <div className="text-xs text-green-400 mt-1">Replacing with: {d.activities_to_replace.slice(0,80)}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'experimentlog' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#129514; Experiment Log</h2>
-            <p className="text-gray-400 mb-4">Track workspace experiments with hypotheses, metrics, and results.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/experiment-log',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setExperimentLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Experiments</button>
-            <div className="space-y-4">{experimentLog.map((e:any)=>(
-              <div key={e.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <div className="font-bold">{e.experiment_name}</div>
-                    <div className="text-xs text-gray-400 mt-1 italic">{e.hypothesis.slice(0,80)}</div>
-                  </div>
-                  <div className="flex gap-2 flex-shrink-0 ml-2 text-xs">
-                    <span className={`px-1.5 py-0.5 rounded ${e.result==='winner'?'bg-green-700':e.result==='loser'?'bg-red-800':e.result==='running'?'bg-blue-700':e.result==='inconclusive'?'bg-yellow-700':'bg-gray-600'}`}>{e.result}</span>
-                  </div>
-                </div>
-                <div className="flex gap-4 text-xs text-gray-400 mb-2">
-                  <span>Metric: <span className="text-blue-300">{e.metric}</span></span>
-                  {e.baseline_value!=null && <span>Base: {e.baseline_value}</span>}
-                  {e.target_value!=null && <span>Target: {e.target_value}</span>}
-                  {e.actual_value!=null && <span className="text-green-300">Actual: {e.actual_value}</span>}
-                </div>
-                {e.confidence_pct && <div className="text-xs text-gray-500">{e.confidence_pct}% confidence{e.sample_size?` · n={e.sample_size}`:''}</div>}
-                {e.learnings && <div className="text-xs text-yellow-300 mt-2">&#128161; {e.learnings.slice(0,100)}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'objectionhandler' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#129309; Objection Handler AI</h2>
-            <p className="text-gray-400 mb-4">Get AI-crafted responses to common sales objections.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/objection-handler',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setObjectionHandler(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-600 rounded text-white mb-4">Load Objections</button>
-            <div className="space-y-4">{objectionHandler.map((o:any)=>(
-              <div key={o.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-semibold text-red-300">"{o.objection.slice(0,60)}{o.objection.length>60?'...':''}"</div>
-                  <div className="text-xs text-gray-500 flex-shrink-0 ml-2">{o.created_at?.slice(0,10)}</div>
-                </div>
-                <div className="flex gap-2 text-xs mb-2">
-                  <span className="bg-gray-700 px-1.5 py-0.5 rounded">{o.customer_type}</span>
-                  <span className="bg-gray-700 px-1.5 py-0.5 rounded">{o.tone}</span>
-                </div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'languagegoals' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128483; Language Goals</h2>
-            <p className="text-gray-400 mb-4">Track language learning goals, streaks, and practice time.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/language-goals',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setLanguageGoals(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Languages</button>
-            <div className="space-y-4">{languageGoals.map((l:any)=>(
-              <div key={l.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <div className="font-bold text-blue-300 text-lg">{l.language}</div>
-                    <div className="text-xs text-gray-400">{l.current_level} → {l.target_level}</div>
-                  </div>
-                  <div className="flex gap-2 flex-shrink-0 ml-2 text-xs items-center">
-                    <span className="text-orange-300 font-bold">&#128293; {l.streak_days}</span>
-                    <span className="text-gray-500">days</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-xs text-center">
-                  <div><div className="text-white font-bold">{l.total_minutes}</div><div className="text-gray-500">min total</div></div>
-                  <div><div className="text-white font-bold">{l.vocab_learned}</div><div className="text-gray-500">words</div></div>
-                  <div><div className="text-white font-bold">{l.daily_practice_min}</div><div className="text-gray-500">min/day goal</div></div>
-                </div>
-                <div className="flex gap-3 text-xs text-gray-500 mt-2">
-                  <span>{l.study_method}</span>
-                  {l.exam_goal && <span>Exam: {l.exam_goal}</span>}
-                  {l.target_date && <span>By: {l.target_date}</span>}
-                </div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'productmetrics' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128202; Product Metrics</h2>
-            <p className="text-gray-400 mb-4">Daily/weekly product KPIs — DAU, MRR, NPS, signups, and more.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/product-metrics',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setProductMetrics(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Metrics</button>
-            {productMetrics.length>0 && (
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="bg-indigo-900/40 rounded p-3 text-center"><div className="text-2xl font-bold text-indigo-300">${(productMetrics[0].mrr||0).toLocaleString()}</div><div className="text-xs text-gray-400">MRR (latest)</div></div>
-                <div className="bg-green-900/40 rounded p-3 text-center"><div className="text-2xl font-bold text-green-300">{productMetrics[0].dau||0}</div><div className="text-xs text-gray-400">DAU (latest)</div></div>
-              </div>
-            )}
-            <div className="space-y-3">{productMetrics.map((m:any)=>(
-              <div key={m.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-semibold">{m.metric_date}</div>
-                  <div className="text-xs text-gray-500 flex-shrink-0 ml-2">{m.uptime_pct}% uptime</div>
-                </div>
-                <div className="grid grid-cols-4 gap-2 text-xs text-center">
-                  <div><div className="font-bold text-blue-300">{m.dau}</div><div className="text-gray-500">DAU</div></div>
-                  <div><div className="font-bold text-green-300">${(m.mrr||0).toLocaleString()}</div><div className="text-gray-500">MRR</div></div>
-                  <div><div className="font-bold text-yellow-300">{m.new_signups}</div><div className="text-gray-500">Signups</div></div>
-                  <div><div className="font-bold text-purple-300">{m.nps_score??'—'}</div><div className="text-gray-500">NPS</div></div>
-                </div>
-              </div>
-            ))}</div>
-          </div>
-        )}
         {mainTab === 'habitstacking' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-4">&#128279; Habit Stacking</h2>
@@ -44476,41 +44106,6 @@ export default function ForgeApp() {
                   <div className="bg-gray-700 rounded p-1"><div className="font-bold text-blue-300">{p.clarity_score}</div><div className="text-gray-400">Clarity</div></div>
                   <div className="bg-gray-700 rounded p-1"><div className="font-bold text-purple-300">{p.hook_score}</div><div className="text-gray-400">Hook</div></div>
                   <div className="bg-gray-700 rounded p-1"><div className="font-bold text-yellow-300">{p.credibility_score||'—'}</div><div className="text-gray-400">Cred</div></div>
-                </div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'fitracker' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#127958; Financial Independence Tracker</h2>
-            <p className="text-gray-400 mb-4">Track your FI number, net worth, and progress to financial independence.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/fi-tracker',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setFiTracker(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-600 rounded text-white mb-4">Load FI Snapshots</button>
-            {fiTracker.length>0 && (
-              <div className="bg-green-900/30 border border-green-800 rounded p-4 mb-4">
-                <div className="text-xs text-gray-400 mb-1">Latest Snapshot</div>
-                <div className="flex justify-between items-center">
-                  <div><div className="text-3xl font-bold text-green-300">{fiTracker[0].fi_pct||0}%</div><div className="text-xs text-gray-400">FI Progress</div></div>
-                  <div className="text-right"><div className="text-lg font-bold text-white">${(fiTracker[0].fi_number||0).toLocaleString()}</div><div className="text-xs text-gray-400">FI Number (25x)</div></div>
-                </div>
-                <div className="w-full bg-gray-700 rounded-full h-3 mt-2">
-                  <div className="bg-green-500 h-3 rounded-full transition-all" style={{width:`${Math.min(fiTracker[0].fi_pct||0,100)}%`}}></div>
-                </div>
-              </div>
-            )}
-            <div className="space-y-3">{fiTracker.map((f:any)=>(
-              <div key={f.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-semibold">{f.snapshot_date}</div>
-                  <div className="flex gap-2 flex-shrink-0 ml-2 text-xs">
-                    <span className="text-green-300 font-bold">{f.fi_pct||0}%</span>
-                    <span className="text-gray-500">of FI</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-xs text-center">
-                  <div><div className="text-white">${(f.current_net_worth||0).toLocaleString()}</div><div className="text-gray-500">Net Worth</div></div>
-                  <div><div className="text-yellow-300">${(f.monthly_expenses||0).toLocaleString()}</div><div className="text-gray-500">Monthly Spend</div></div>
-                  <div><div className="text-blue-300">{f.savings_rate_pct||0}%</div><div className="text-gray-500">Savings Rate</div></div>
                 </div>
               </div>
             ))}</div>
@@ -46049,32 +45644,6 @@ export default function ForgeApp() {
             ))}</div>
           </div>
         )}
-        {mainTab === 'localization' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#127760; Localization</h2>
-            <p className="text-gray-400 mb-4">Workspace string translations across EN, ES, FR, DE, PT, JA.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/localization',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setLocalization(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-teal-600 rounded text-white mb-4">Load Strings</button>
-            <div className="space-y-2">{localization.map((l:any)=>(
-              <div key={l.id} className="bg-gray-800 rounded p-3">
-                <div className="flex justify-between items-start mb-1">
-                  <div className="font-mono text-xs text-teal-300">{l.string_key}</div>
-                  <div className="flex gap-2 flex-shrink-0 ml-2 text-xs">
-                    <span className="bg-gray-700 px-1 rounded">{l.category}</span>
-                    <span className={`px-1 rounded ${l.status==='approved'?'bg-green-800':'bg-gray-600'}`}>{l.status}</span>
-                  </div>
-                </div>
-                <div className="text-sm text-gray-200 mb-1">{l.locale_en}</div>
-                <div className="grid grid-cols-3 gap-1 text-xs text-gray-500">
-                  {l.locale_es && <span>ES: {l.locale_es.slice(0,20)}</span>}
-                  {l.locale_fr && <span>FR: {l.locale_fr.slice(0,20)}</span>}
-                  {l.locale_de && <span>DE: {l.locale_de.slice(0,20)}</span>}
-                  {l.locale_pt && <span>PT: {l.locale_pt.slice(0,20)}</span>}
-                  {l.locale_ja && <span>JA: {l.locale_ja.slice(0,20)}</span>}
-                </div>
-              </div>
-            ))}</div>
-          </div>
-        )}
         {mainTab === 'coverletter' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-4">&#128232; Cover Letters</h2>
@@ -47372,27 +46941,6 @@ export default function ForgeApp() {
             ))}</div>
           </div>
         )}
-        {mainTab === 'resumebuilder' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128196; Resume Builder</h2>
-            <p className="text-gray-400 mb-4">Build and store polished resumes for different target roles.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/resume-builder',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setResumes(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Resumes</button>
-            <div className="space-y-4">{resumes.map((r:any)=>(
-              <div key={r.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-bold text-indigo-300">{r.full_name}</div>
-                    {r.target_role && <div className="text-sm text-gray-300 mt-0.5">&#127919; {r.target_role}</div>}
-                  </div>
-                  <div className="flex gap-2 flex-shrink-0 ml-2 text-xs">
-                    <span className="bg-gray-700 px-1.5 py-0.5 rounded">{r.format}</span>
-                    <span className="text-gray-500">{r.created_at?.slice(0,10)}</span>
-                  </div>
-                </div>
-              </div>
-            ))}</div>
-          </div>
-        )}
         {mainTab === 'portfolio' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-4">&#128450; Project Portfolio</h2>
@@ -47484,24 +47032,6 @@ export default function ForgeApp() {
                   <span>Target: {o.target_value}{o.unit} ({o.progress_pct||0}%)</span>
                 </div>
                 {o.owner && <div className="text-xs text-gray-500 mt-1">Owner: {o.owner}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'pitchdeck' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128240; Pitch Deck Builder</h2>
-            <p className="text-gray-400 mb-4">Generate structured pitch deck outlines for investor presentations.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/pitch-deck',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setPitchDecks(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Decks</button>
-            <div className="space-y-4">{pitchDecks.map((p:any)=>(
-              <div key={p.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-bold text-purple-300">{p.startup_name}</div>
-                    {p.tagline && <div className="text-sm text-gray-300 italic mt-1">{p.tagline}</div>}
-                  </div>
-                  <div className="text-xs text-gray-500 flex-shrink-0 ml-2">{p.created_at?.slice(0,10)}</div>
-                </div>
               </div>
             ))}</div>
           </div>
@@ -48010,40 +47540,6 @@ export default function ForgeApp() {
             ))}</div>
           </div>
         )}
-        {mainTab === 'meetingagenda' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128198; Meeting Agendas</h2>
-            <p className="text-gray-400 mb-4">Generate structured meeting agendas with goals and time slots.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/meeting-agendas',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setMeetingAgendas(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Agendas</button>
-            <div className="space-y-4">{meetingAgendas.map((m:any)=>(
-              <div key={m.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-bold">{m.meeting_title}</div>
-                  <div className="text-xs text-gray-400 flex-shrink-0 ml-2">{m.duration_min}min</div>
-                </div>
-                <div className="text-xs text-indigo-400 mb-2">{m.meeting_type}{m.attendees?` · ${m.attendees}`:''}</div>
-                {m.generated_agenda && <pre className="text-xs text-gray-300 whitespace-pre-wrap bg-gray-900 rounded p-2 max-h-32 overflow-auto">{m.generated_agenda.slice(0,350)}</pre>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'journalprompts' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128221; Journal Prompts</h2>
-            <p className="text-gray-400 mb-4">Daily reflection prompts to spark deeper thinking and self-awareness.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/journal-prompts',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setJournalPrompts(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-600 rounded text-white mb-4">Load Prompts</button>
-            <div className="space-y-3">{journalPrompts.map((p:any)=>(
-              <div key={p.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-semibold text-yellow-300">{p.prompt_text}</div>
-                  {p.favorite===1 && <span className="text-yellow-400 flex-shrink-0 ml-2">★</span>}
-                </div>
-                <div className="text-xs text-gray-500 mb-2">{p.category}</div>
-                {p.response && <div className="text-sm text-gray-300 italic border-l-2 border-yellow-700 pl-3">{p.response.slice(0,150)}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
         {mainTab === 'capacityplan' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-4">&#128200; Capacity Planner</h2>
@@ -48174,41 +47670,6 @@ export default function ForgeApp() {
             ))}</div>
           </div>
         )}
-        {mainTab === 'vendorcontracts' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128196; Vendor Contracts</h2>
-            <p className="text-gray-400 mb-4">Track SaaS subscriptions and vendor contracts with renewal alerts.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/vendor-contracts',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setVendorContracts(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Contracts</button>
-            <div className="space-y-2">{vendorContracts.map((v:any)=>(
-              <div key={v.id} className="bg-gray-800 rounded p-3 flex justify-between items-start">
-                <div>
-                  <div className="font-semibold">{v.vendor_name}</div>
-                  <div className="text-xs text-gray-400">{v.contract_type}{v.owner?` · ${v.owner}`:''}</div>
-                  {v.renewal_date && <div className="text-xs text-yellow-400">Renews: {v.renewal_date}{v.auto_renews?' (auto)':''}</div>}
-                </div>
-                <div className="text-right">
-                  <div className="font-bold text-white">${(v.annual_value||0).toLocaleString()}/yr</div>
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${v.status==='active'?'bg-green-700':'bg-gray-600'}`}>{v.status}</span>
-                </div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'pressrelease' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128240; Press Releases</h2>
-            <p className="text-gray-400 mb-4">AI-generated press releases for product launches and announcements.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/press-releases',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setPressReleases(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-gray-600 rounded text-white mb-4">Load Releases</button>
-            <div className="space-y-4">{pressReleases.map((p:any)=>(
-              <div key={p.id} className="bg-gray-800 rounded p-4">
-                <div className="font-bold text-lg mb-1">{p.headline}</div>
-                {p.subheadline && <div className="text-sm text-gray-400 mb-2 italic">{p.subheadline}</div>}
-                <div className="text-xs text-gray-500 mb-2">{p.company_name}</div>
-                {p.generated_release && <pre className="text-xs text-gray-300 whitespace-pre-wrap bg-gray-900 rounded p-2 overflow-auto max-h-40">{p.generated_release.slice(0,400)}</pre>}
-              </div>
-            ))}</div>
-          </div>
-        )}
         {mainTab === 'workoutlog' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-4">&#127947; Workout Log</h2>
@@ -48225,26 +47686,6 @@ export default function ForgeApp() {
                   {w.calories_burned>0 && <div className="text-orange-400">{w.calories_burned} cal</div>}
                   {w.rating && <div className="text-yellow-400">{'★'.repeat(w.rating)}</div>}
                 </div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'interviewqs' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128172; Interview Questions</h2>
-            <p className="text-gray-400 mb-4">Curated interview questions by role, type, and difficulty.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/interview-questions',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setInterviewQs(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Questions</button>
-            <div className="space-y-3">{interviewQs.map((q:any)=>(
-              <div key={q.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-semibold text-sm flex-1">{q.question}</div>
-                  <div className="flex gap-1 flex-shrink-0 ml-2">
-                    <span className="text-xs bg-indigo-900 px-1.5 py-0.5 rounded">{q.question_type}</span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded ${q.difficulty==='hard'?'bg-red-800':q.difficulty==='medium'?'bg-yellow-800':'bg-green-800'}`}>{q.difficulty}</span>
-                  </div>
-                </div>
-                <div className="text-xs text-indigo-400 mb-1">{q.role}</div>
-                {q.ideal_answer && <div className="text-xs text-gray-400 mt-1"><span className="text-green-400">Ideal: </span>{q.ideal_answer.slice(0,120)}</div>}
               </div>
             ))}</div>
           </div>
@@ -48364,23 +47805,6 @@ export default function ForgeApp() {
                   {s.interruptions>0 && <div className="text-xs text-yellow-500">{s.interruptions} interruptions</div>}
                 </div>
                 {s.focus_score && <div className={`text-2xl font-bold ${s.focus_score>=8?'text-green-400':s.focus_score>=5?'text-yellow-400':'text-red-400'}`}>{s.focus_score}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'archdiagrams' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128506; Architecture Diagrams</h2>
-            <p className="text-gray-400 mb-4">Store and organize system architecture diagrams and Mermaid charts.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/architecture-diagrams',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setArchDiagrams(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Diagrams</button>
-            <div className="space-y-3">{archDiagrams.map((d:any)=>(
-              <div key={d.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-semibold">{d.diagram_name}</div>
-                  <span className="text-xs text-indigo-400 bg-indigo-900 px-2 py-0.5 rounded">{d.diagram_type}</span>
-                </div>
-                {d.content && <div className="text-sm text-gray-400 mb-2">{d.content.slice(0,120)}</div>}
-                {d.mermaid_source && <pre className="text-xs text-green-400 bg-gray-900 rounded p-2 overflow-x-auto">{d.mermaid_source.slice(0,200)}</pre>}
               </div>
             ))}</div>
           </div>
@@ -48571,22 +47995,6 @@ export default function ForgeApp() {
             ))}</div>
           </div>
         )}
-        {mainTab === 'gratitudev2' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128155; Gratitude Journal</h2>
-            <p className="text-gray-400 mb-4">Daily gratitude practice to boost wellbeing and positivity.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/gratitude',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setGratitudeV2(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-500 rounded text-white mb-4">Load Journal</button>
-            <div className="space-y-3">{gratitudeV2.map((g:any)=>(
-              <div key={g.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-1">
-                  <div className="font-semibold text-yellow-300">{g.grateful_for}</div>
-                  <span className="text-xs text-gray-500">{g.entry_date}</span>
-                </div>
-                {g.why_grateful && <div className="text-sm text-gray-400 italic">{g.why_grateful}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
         {mainTab === 'meetingtmpls' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-4">&#128197; Meeting Templates</h2>
@@ -48619,38 +48027,6 @@ export default function ForgeApp() {
                     {q.favorite===1 && <span className="text-yellow-400 text-sm">★</span>}
                   </div>
                 </div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'deptracker' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128230; Dependency Tracker</h2>
-            <p className="text-gray-400 mb-4">Monitor package versions and outdated dependencies.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/dependencies',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setDependencies(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-orange-600 rounded text-white mb-4">Load Dependencies</button>
-            <div className="space-y-2">{dependencies.map((d:any)=>(
-              <div key={d.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
-                <div>
-                  <div className="font-mono font-semibold">{d.package_name}</div>
-                  <div className="text-xs text-gray-400">{d.ecosystem} &mdash; {d.current_version}{d.latest_version && d.latest_version !== d.current_version ? <span className="text-yellow-400"> → {d.latest_version}</span> : ''}</div>
-                </div>
-                <span className={`text-xs px-2 py-0.5 rounded ${d.risk_level==='high'?'bg-red-700':d.risk_level==='medium'?'bg-yellow-700':'bg-gray-600'}`}>{d.risk_level}</span>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'personas' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#129489; Persona Builder</h2>
-            <p className="text-gray-400 mb-4">Build detailed user personas to guide product decisions.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/personas',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setPersonas(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Personas</button>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{personas.map((p:any)=>(
-              <div key={p.id} className="bg-gray-800 rounded p-4">
-                <div className="font-bold text-lg text-indigo-300 mb-1">{p.persona_name}</div>
-                {p.job_title && <div className="text-sm text-gray-400">{p.job_title}{p.age_range?` &middot; ${p.age_range}`:''}</div>}
-                {p.goals && <div className="text-xs text-green-400 mt-2">&#9650; {p.goals.slice(0,80)}</div>}
-                {p.pain_points && <div className="text-xs text-red-400 mt-1">&#9660; {p.pain_points.slice(0,80)}</div>}
-                {p.quote && <div className="text-xs text-gray-300 italic mt-2">"{p.quote}"</div>}
               </div>
             ))}</div>
           </div>
@@ -48778,22 +48154,6 @@ export default function ForgeApp() {
                   {s.description && <div className="text-xs text-gray-500 mt-1">{s.description.slice(0,80)}</div>}
                 </div>
                 <span className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${s.status==='active'?'bg-green-700':'bg-gray-600'}`}>{s.status}</span>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'affirmations' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#10024; Affirmations</h2>
-            <p className="text-gray-400 mb-4">Daily positive affirmations to build a growth mindset.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/affirmations',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setAffirmations(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-500 rounded text-white mb-4">Load Affirmations</button>
-            <div className="space-y-2">{affirmations.map((a:any)=>(
-              <div key={a.id} className="bg-gray-800 rounded p-4 flex items-start gap-3">
-                <span className="text-yellow-400 text-lg flex-shrink-0">{a.favorite?'★':'☆'}</span>
-                <div>
-                  <div className="text-gray-200 italic">"{a.affirmation}"</div>
-                  <div className="text-xs text-gray-500 mt-1">{a.category}</div>
-                </div>
               </div>
             ))}</div>
           </div>
@@ -49036,25 +48396,6 @@ export default function ForgeApp() {
             ))}</div>
           </div>
         )}
-        {mainTab === 'lifegoals' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#127775; Life Goals</h2>
-            <p className="text-gray-400 mb-4">Define and track your long-term life goals.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/life-goals',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setLifeGoals(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-600 rounded text-white mb-4">Load Goals</button>
-            <div className="space-y-3">{lifeGoals.map((g:any)=>(
-              <div key={g.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-semibold">{g.goal_title}</div>
-                  <span className="text-xs text-gray-400">{g.timeframe} &mdash; {g.category}</span>
-                </div>
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div className="bg-yellow-500 h-2 rounded-full" style={{width:`${g.progress_pct||0}%`}}></div>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">{g.progress_pct||0}% complete</div>
-              </div>
-            ))}</div>
-          </div>
-        )}
         {mainTab === 'meetingactions' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-4">&#128203; Meeting Action Items</h2>
@@ -49203,22 +48544,6 @@ export default function ForgeApp() {
             ))}</div>
           </div>
         )}
-        {mainTab === 'pomodoro' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#127813; Pomodoro Log</h2>
-            <p className="text-gray-400 mb-4">Track your focused work sessions with pomodoro technique.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/pomodoro',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setPomodoroLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-600 rounded text-white mb-4">Load Sessions</button>
-            <div className="space-y-2">{pomodoroLog.map((p:any)=>(
-              <div key={p.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
-                <div>
-                  <div className="font-semibold">{p.task_label||'Focus session'}</div>
-                  <div className="text-xs text-gray-400">{p.duration_min} min &mdash; {new Date(p.started_at).toLocaleDateString()}</div>
-                </div>
-                <span className={`text-xs px-2 py-0.5 rounded ${p.completed?'bg-green-700':'bg-gray-600'}`}>{p.completed?'Done':'Interrupted'}</span>
-              </div>
-            ))}</div>
-          </div>
-        )}
         {mainTab === 'designtokens' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-4">&#127912; Design Tokens</h2>
@@ -49312,20 +48637,6 @@ export default function ForgeApp() {
                 </div>
                 {a.context && <div className="text-xs text-gray-400 mt-1">Context: {a.context}</div>}
                 {a.decision && <div className="text-xs text-gray-300 mt-1">Decision: {a.decision}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'pitchdeck' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128202; Pitch Deck Builder</h2>
-            <p className="text-gray-400 mb-4">Build structured pitch decks for your startup or project.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/pitch-decks',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setPitchDecks(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-600 rounded text-white mb-4">Load Decks</button>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{pitchDecks.map((p:any)=>(
-              <div key={p.id} className="bg-gray-800 rounded p-4">
-                <div className="font-semibold text-lg">{p.deck_name}</div>
-                {p.company && <div className="text-sm text-purple-400">{p.company}</div>}
-                <div className="text-xs text-gray-500 mt-1">{new Date(p.created_at).toLocaleDateString()}</div>
               </div>
             ))}</div>
           </div>
@@ -49426,19 +48737,6 @@ export default function ForgeApp() {
             ))}</div>
           </div>
         )}
-        {mainTab === 'accesslog' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128274; Access Log</h2>
-            <p className="text-gray-400 mb-4">Audit trail of user actions across workspace resources.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/access-log',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setAccessLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-gray-600 rounded text-white mb-4">Load Log</button>
-            <div className="space-y-1">{accessLog.map((a:any)=>(
-              <div key={a.id} className="bg-gray-800 rounded p-2 flex justify-between items-center text-sm">
-                <div><span className="text-blue-400">{a.action}</span>{a.resource && <span className="text-gray-400"> &rarr; {a.resource}</span>}</div>
-                <span className="text-xs text-gray-500">{new Date(a.created_at).toLocaleTimeString()}</span>
-              </div>
-            ))}</div>
-          </div>
-        )}
         {mainTab === 'focussess' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-4">&#127919; Focus Sessions</h2>
@@ -49448,47 +48746,6 @@ export default function ForgeApp() {
               <div key={f.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
                 <div><div className="font-semibold">{f.task_name}</div><div className="text-xs text-gray-400">{f.duration_min}min &mdash; {f.interruptions} interruptions</div></div>
                 <span className={`text-xs px-2 py-0.5 rounded ${f.completed?'bg-green-900 text-green-300':'bg-yellow-900 text-yellow-300'}`}>{f.completed?'Done':'Active'}</span>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'capacityplan' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128202; Capacity Planning</h2>
-            <p className="text-gray-400 mb-4">Plan team capacity vs allocation per sprint or period.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/capacity-planning',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setCapacityPlans(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-700 rounded text-white mb-4">Load Plans</button>
-            <div className="space-y-3">{capacityPlans.map((c:any)=>(
-              <div key={c.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between"><span className="font-bold">{c.period}</span><span className="text-xs text-gray-400">{c.team_size} people &mdash; {c.buffer_pct}% buffer</span></div>
-                <div className="text-sm text-gray-300 mt-1">{c.allocated_hrs}h allocated / {c.available_hrs}h available</div>
-                <div className="mt-2 h-1.5 bg-gray-700 rounded"><div className="h-1.5 rounded bg-blue-500" style={{width:`${Math.min(c.available_hrs>0?c.allocated_hrs/c.available_hrs*100:0,100)}%`}}></div></div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'interviewprep' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128084; Interview Prep</h2>
-            <p className="text-gray-400 mb-4">Practice interview questions organized by role and category.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/interview-prep',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setInterviewPrep(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Questions</button>
-            <div className="space-y-3">{interviewPrep.map((q:any)=>(
-              <div key={q.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between"><span className="font-semibold">{q.question}</span><span className="text-xs text-gray-400">Confidence: {q.confidence}/5</span></div>
-                <div className="text-xs text-purple-400 mt-1">{q.role}{q.company?` @ ${q.company}`:''} &mdash; {q.category}</div>
-                {q.answer && <div className="text-sm text-gray-300 mt-2 bg-gray-900 p-2 rounded">{q.answer}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'meditationlog' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#129496; Meditation Log</h2>
-            <p className="text-gray-400 mb-4">Track meditation sessions with mood before/after comparison.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/meditation-log',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setMeditationLog(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-teal-600 rounded text-white mb-4">Load Log</button>
-            <div className="space-y-2">{meditationLog.map((m:any)=>(
-              <div key={m.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
-                <div><div className="font-semibold">{m.log_date} &mdash; {m.technique}</div><div className="text-xs text-gray-400">{m.duration_min}min</div></div>
-                <div className="text-right"><div className="text-xs text-gray-400">Mood</div><div className="text-sm">{m.mood_before} &#8594; <span className="text-green-400">{m.mood_after}</span></div></div>
               </div>
             ))}</div>
           </div>
@@ -49507,22 +48764,6 @@ export default function ForgeApp() {
                   <div><span className="text-blue-400">&#8594; Opportunity:</span> <span className="text-gray-300">{c.opportunity}</span></div>
                   <div><span className="text-yellow-400">&#9888; Threat:</span> <span className="text-gray-300">{c.threat}</span></div>
                 </div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'visionboard' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#127775; Vision Board</h2>
-            <p className="text-gray-400 mb-4">Visualize and track your life goals with progress.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/vision-board',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setVisionBoard(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-600 rounded text-white mb-4">Load Board</button>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{visionBoard.map((v:any)=>(
-              <div key={v.id} className="bg-gray-800 rounded p-4">
-                <div className="font-bold">{v.goal}</div>
-                <div className="text-xs text-yellow-400 mt-1">{v.category}{v.target_date?` &mdash; by ${v.target_date}`:''}</div>
-                <div className="mt-2 h-2 bg-gray-700 rounded"><div className="h-2 rounded bg-yellow-500" style={{width:`${v.progress_pct}%`}}></div></div>
-                <div className="text-xs text-gray-400 mt-1">{v.progress_pct}% complete</div>
-                {v.affirmation && <div className="text-xs text-gray-500 italic mt-1">{v.affirmation}</div>}
               </div>
             ))}</div>
           </div>
@@ -49572,22 +48813,6 @@ export default function ForgeApp() {
             ))}</div>
           </div>
         )}
-        {mainTab === 'techradar' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128752;&#65039; Tech Radar</h2>
-            <p className="text-gray-400 mb-4">Track technology adoption across adopt, trial, assess, and hold rings.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/tech-radar',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setTechRadar(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-700 rounded text-white mb-4">Load Radar</button>
-            <div className="space-y-2">{techRadar.map((t:any)=>(
-              <div key={t.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
-                <div><div className="font-semibold">{t.technology}</div><div className="text-xs text-gray-400">{t.quadrant} &mdash; {t.ring}</div></div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400">{t.votes} votes</span>
-                  <button onClick={async()=>{await fetch(`/api/tech-radar/${t.id}/vote`,{method:'PATCH',headers:{Authorization:'Bearer '+token}});}} className="text-xs px-2 py-1 bg-indigo-700 rounded">+1</button>
-                </div>
-              </div>
-            ))}</div>
-          </div>
-        )}
         {mainTab === 'contactbook' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-4">&#128215; Contacts</h2>
@@ -49597,19 +48822,6 @@ export default function ForgeApp() {
               <div key={c.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
                 <div><div className="font-semibold">{c.name}</div><div className="text-xs text-gray-400">{c.role}{c.company?` @ ${c.company}`:''}</div>{c.email&&<div className="text-xs text-blue-400">{c.email}</div>}</div>
                 <button onClick={async()=>{await fetch(`/api/contacts/${c.id}/touch`,{method:'PATCH',headers:{Authorization:'Bearer '+token}});}} className="text-xs px-2 py-1 bg-gray-600 rounded">Touched</button>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'releasecal' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128197; Release Calendar</h2>
-            <p className="text-gray-400 mb-4">Upcoming releases with versions, scope, and owners.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/release-calendar',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setReleaseCal(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-green-700 rounded text-white mb-4">Load Releases</button>
-            <div className="space-y-2">{releaseCal.map((r:any)=>(
-              <div key={r.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
-                <div><div className="font-semibold">{r.release_name}</div><div className="text-xs text-gray-400">{r.release_date} &mdash; {r.scope}{r.version?` v${r.version}`:''}</div></div>
-                <span className={`text-xs px-2 py-0.5 rounded ${r.status==='released'?'bg-green-900 text-green-300':'bg-yellow-900 text-yellow-300'}`}>{r.status}</span>
               </div>
             ))}</div>
           </div>
@@ -49662,47 +48874,6 @@ export default function ForgeApp() {
             ))}</div>
           </div>
         )}
-        {mainTab === 'readingnotes' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128214; Reading Notes</h2>
-            <p className="text-gray-400 mb-4">Capture highlights and notes from books, articles, and papers.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/reading-notes',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setReadingNotes(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-yellow-700 rounded text-white mb-4">Load Notes</button>
-            <div className="space-y-3">{readingNotes.map((n:any)=>(
-              <div key={n.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between"><span className="font-bold">{n.source_title}</span><span className="text-xs text-gray-400">{n.source_type}</span></div>
-                <div className="text-sm text-gray-300 mt-2">{n.note}</div>
-                {n.highlight && <div className="text-xs text-yellow-400 mt-1 italic">&ldquo;{n.highlight}&rdquo;</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'featureflags' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128169; Feature Flags</h2>
-            <p className="text-gray-400 mb-4">Toggle features per environment with rollout percentage control.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/feature-flags',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setFeatureFlags(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-red-700 rounded text-white mb-4">Load Flags</button>
-            <div className="space-y-2">{featureFlags.map((f:any)=>(
-              <div key={f.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
-                <div><div className="font-mono text-sm font-bold">{f.flag_key}</div><div className="text-xs text-gray-400">{f.environment} &mdash; {f.rollout_pct}% rollout</div></div>
-                <button onClick={async()=>{await fetch(`/api/feature-flags/${f.flag_key}/toggle`,{method:'PATCH',headers:{Authorization:'Bearer '+token}});const r=await fetch(API+'/feature-flags',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setFeatureFlags(Array.isArray(d)?d:[]);}} className={`px-3 py-1 rounded text-sm font-bold ${f.flag_value?'bg-green-700 text-white':'bg-gray-600 text-gray-300'}`}>{f.flag_value?'ON':'OFF'}</button>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'storygen' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128172; Story Generator</h2>
-            <p className="text-gray-400 mb-4">AI-generated story starters and creative writing prompts.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/stories',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setStories(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-purple-700 rounded text-white mb-4">Load Stories</button>
-            <div className="space-y-3">{stories.map((s:any)=>(
-              <div key={s.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between"><span className="font-bold">{s.title}</span><span className="text-xs text-purple-400">{s.genre}</span></div>
-                <div className="text-sm text-gray-400 mt-1 italic">{s.premise}</div>
-                <div className="text-xs text-gray-500 mt-1">{s.word_count} words</div>
-              </div>
-            ))}</div>
-          </div>
-        )}
         {mainTab === 'gratitudelog' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-4">&#128591; Gratitude Log</h2>
@@ -49712,19 +48883,6 @@ export default function ForgeApp() {
               <div key={g.id} className="bg-gray-800 rounded p-3">
                 <div className="text-sm font-semibold text-pink-300">{g.log_date} &mdash; {g.category}</div>
                 <div className="text-sm text-gray-300 mt-1">{g.entry}</div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'slatracker' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128200; SLA Tracker</h2>
-            <p className="text-gray-400 mb-4">Monitor service level agreements and uptime targets.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/sla-tracker',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setSlaTracker(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-teal-700 rounded text-white mb-4">Load SLAs</button>
-            <div className="space-y-2">{slaTracker.map((s:any)=>(
-              <div key={s.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
-                <div><div className="font-semibold">{s.service_name}</div><div className="text-xs text-gray-400">{s.period} &mdash; target {s.sla_target_pct}%</div></div>
-                <div className="text-right"><div className={`font-bold ${s.actual_uptime_pct>=s.sla_target_pct?'text-green-400':'text-red-400'}`}>{s.actual_uptime_pct}%</div><div className={`text-xs ${s.status==='meeting'?'text-green-400':'text-red-400'}`}>{s.status}</div></div>
               </div>
             ))}</div>
           </div>
@@ -49752,47 +48910,6 @@ export default function ForgeApp() {
                 <div className="flex justify-between"><span className="font-bold">{m.meeting_title}</span><span className="text-xs text-gray-400">{m.meeting_date}</span></div>
                 <div className="text-sm text-gray-300 mt-2">{m.notes}</div>
                 {m.action_items && <div className="text-xs text-yellow-400 mt-1">Actions: {m.action_items}</div>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'resumebuilder' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128196; Resume Builder</h2>
-            <p className="text-gray-400 mb-4">Build tailored resumes for different roles.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/resumes',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setResumes(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-indigo-600 rounded text-white mb-4">Load Resumes</button>
-            <div className="space-y-3">{resumes.map((r:any)=>(
-              <div key={r.id} className="bg-gray-800 rounded p-4">
-                <div className="font-bold">{r.resume_name}</div>
-                <div className="text-sm text-purple-400">Target: {r.target_role}</div>
-                <div className="text-sm text-gray-400 mt-1">{r.summary}</div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'bucketlist' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#129315; Bucket List</h2>
-            <p className="text-gray-400 mb-4">Track life goals and experiences to accomplish.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/bucket-list',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setBucketList(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-rose-600 rounded text-white mb-4">Load List</button>
-            <div className="space-y-2">{bucketList.map((b:any)=>(
-              <div key={b.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
-                <div><div className={`font-semibold ${b.completed?'line-through text-gray-500':''}`}>{b.item}</div><div className="text-xs text-gray-400">{b.category}{b.target_year?` &mdash; by ${b.target_year}`:''}</div></div>
-                {!b.completed && <button onClick={async()=>{await fetch(`/api/bucket-list/${b.id}/complete`,{method:'PATCH',headers:{Authorization:'Bearer '+token}});}} className="text-xs px-2 py-1 bg-green-700 rounded text-white">Done</button>}
-                {b.completed && <span className="text-green-400 text-lg">&#10003;</span>}
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'depmap' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128506;&#65039; Dependency Map</h2>
-            <p className="text-gray-400 mb-4">Track service dependencies and health across environments.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/dependency-map',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setDepMap(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-gray-600 rounded text-white mb-4">Load Services</button>
-            <div className="space-y-2">{depMap.map((s:any)=>(
-              <div key={s.id} className="bg-gray-800 rounded p-3 flex justify-between items-center">
-                <div><div className="font-semibold">{s.service_name}</div><div className="text-xs text-gray-400">{s.env}{s.version?` v${s.version}`:''}</div></div>
-                <span className={`text-xs px-2 py-0.5 rounded ${s.status==='healthy'?'bg-green-900 text-green-300':'bg-red-900 text-red-300'}`}>{s.status}</span>
               </div>
             ))}</div>
           </div>
@@ -49875,48 +48992,8 @@ export default function ForgeApp() {
         )}
 
         {/* Changelog tab */}
-        {mainTab === 'changelog' && (
-          <div style={{ padding:24, maxWidth:700 }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-              <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:0 }}>📜 Workspace Changelog</h2>
-              <button onClick={loadChangelog} style={{ padding:'8px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Load</button>
-            </div>
-            {!changelog ? (
-              <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)' }}>
-                <div style={{ fontSize:40, marginBottom:12 }}>📜</div>
-                <button onClick={loadChangelog} style={{ padding:'10px 24px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:14 }}>Load Changelog</button>
-              </div>
-            ) : (
-              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                {changelog.entries?.map((entry: any, i: number) => (
-                  <div key={i} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:16 }}>
-                    <div style={{ display:'flex', gap:12, alignItems:'center', marginBottom:8 }}>
-                      <span style={{ fontSize:14, fontWeight:700, color:'var(--fg-orange,#ff1f35)' }}>{entry.version}</span>
-                      {entry.date && <span style={{ fontSize:12, color:'var(--fg-text3)' }}>{entry.date}</span>}
-                    </div>
-                    <div style={{ fontSize:13, color:'var(--fg-text2)', whiteSpace:'pre-wrap', lineHeight:1.5 }}>{entry.summary}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Flashcards tab */}
-        {mainTab === 'journal' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128211; Journal</h2>
-            <p className="text-gray-400 mb-4">Private journaling with mood tracking and tags.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/journal?all=1',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setJournal(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-amber-700 rounded text-white mb-4">Load Entries</button>
-            <div className="space-y-3">{journal.map((j:any)=>(
-              <div key={j.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between"><span className="font-bold">{j.title}</span><span className="text-xs text-gray-400">{j.entry_date}</span></div>
-                <div className="text-sm text-gray-300 mt-2 line-clamp-3">{j.content}</div>
-                <div className="text-xs text-amber-400 mt-1">Mood: {j.mood}</div>
-              </div>
-            ))}</div>
-          </div>
-        )}
         {mainTab === 'vendors' && (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-4">&#127978; Vendors</h2>
@@ -49956,20 +49033,6 @@ export default function ForgeApp() {
                   <div key={i} className="w-6 h-6 rounded-full" style={{backgroundColor:c.trim()}}></div>
                 ))}</div>
                 <div className="text-sm text-gray-400 mt-2">{m.description}</div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'changelog' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128221; Changelog</h2>
-            <p className="text-gray-400 mb-4">Product and workspace release notes by version.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/changelogs',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setChangelogs(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-gray-600 rounded text-white mb-4">Load Changelog</button>
-            <div className="space-y-4">{changelogs.map((c:any)=>(
-              <div key={c.id} className="bg-gray-800 rounded p-4">
-                <div className="flex justify-between items-center"><span className="font-bold text-green-400">v{c.version}</span><span className="text-xs text-gray-400">{c.release_date}</span></div>
-                <div className="text-sm text-gray-300 mt-1">{c.summary}</div>
-                {c.breaking_changes && c.breaking_changes !== 'none' && <div className="text-xs text-red-400 mt-1">&#9888; Breaking: {c.breaking_changes}</div>}
               </div>
             ))}</div>
           </div>
@@ -50040,22 +49103,6 @@ export default function ForgeApp() {
                   <div><div className="text-xs text-green-400 mb-1">&#9989; Went Well</div><div className="text-sm text-gray-300">{r.went_well}</div></div>
                   <div><div className="text-xs text-yellow-400 mb-1">&#9889; To Improve</div><div className="text-sm text-gray-300">{r.to_improve}</div></div>
                 </div>
-              </div>
-            ))}</div>
-          </div>
-        )}
-        {mainTab === 'portfolio' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">&#128188; Portfolio</h2>
-            <p className="text-gray-400 mb-4">Showcase projects with tech stack, URLs, and descriptions.</p>
-            <button onClick={async()=>{const r=await fetch(API+'/portfolio',{headers:{Authorization:'Bearer '+token}});const d=await r.json();setPortfolio(Array.isArray(d)?d:[]);}} className="px-4 py-2 bg-blue-600 rounded text-white mb-4">Load Portfolio</button>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{portfolio.map((p:any)=>(
-              <div key={p.id} className="bg-gray-800 rounded p-4">
-                <div className="font-bold text-lg">{p.title}</div>
-                <div className="text-sm text-gray-400 mt-1">{p.description}</div>
-                <div className="text-xs text-purple-400 mt-2">{p.tech_stack}</div>
-                {p.url && <a href={p.url} target="_blank" rel="noreferrer" className="text-xs text-blue-400 mt-1 block">{p.url}</a>}
-                {p.featured ? <span className="text-xs text-yellow-400 mt-1 block">&#11088; Featured</span> : null}
               </div>
             ))}</div>
           </div>
@@ -50254,63 +49301,6 @@ export default function ForgeApp() {
                 <div className="text-xs text-gray-500">{new Date(k.created_at).toLocaleDateString()}</div>
               </div>
             ))}</div>
-          </div>
-        )}
-        {mainTab === 'flashcards' && (
-          <div style={{ padding:24, maxWidth:680 }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-              <h2 style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)', margin:0 }}>🃏 Flashcards</h2>
-              <div style={{ display:'flex', gap:8 }}>
-                <button onClick={() => { setShowCardForm(v => !v); }} style={{ padding:'7px 14px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>+ Card</button>
-                <button onClick={() => loadFlashcards(activeDeck)} style={{ padding:'7px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻</button>
-              </div>
-            </div>
-            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-              {['default', ...flashDecks.filter(d => d !== 'default')].map(deck => (
-                <button key={deck} onClick={() => { setActiveDeck(deck); loadFlashcards(deck); }} style={{ padding:'5px 12px', borderRadius:20, border: activeDeck === deck ? 'none' : '1px solid var(--fg-border)', background: activeDeck === deck ? 'var(--fg-orange,#ff1f35)' : 'var(--fg-bg3)', color: activeDeck === deck ? '#fff' : 'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>{deck}</button>
-              ))}
-            </div>
-            {showCardForm && (
-              <div style={{ background:'var(--fg-bg2)', borderRadius:10, padding:14, marginBottom:16, display:'flex', flexDirection:'column', gap:8 }}>
-                <input value={newCard.front} onChange={e => setNewCard(p => ({ ...p, front: e.target.value }))} placeholder="Front (question)" style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
-                <textarea value={newCard.back} onChange={e => setNewCard(p => ({ ...p, back: e.target.value }))} placeholder="Back (answer)" rows={2} style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13, resize:'none', fontFamily:'inherit' }} />
-                <input value={newCard.deck} onChange={e => setNewCard(p => ({ ...p, deck: e.target.value }))} placeholder="Deck name" style={{ padding:'8px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:13 }} />
-                <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={addFlashcard} style={{ padding:'7px 16px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13 }}>Save</button>
-                  <button onClick={() => setShowCardForm(false)} style={{ padding:'7px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>Cancel</button>
-                </div>
-              </div>
-            )}
-            {reviewCard ? (
-              <div style={{ textAlign:'center' }}>
-                <div style={{ background:'var(--fg-bg2)', borderRadius:16, padding:32, marginBottom:16, minHeight:140, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column' }}>
-                  <div style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:12 }}>FRONT</div>
-                  <div style={{ fontSize:18, color:'var(--fg-text)', fontWeight:600, lineHeight:1.4 }}>{reviewCard.front}</div>
-                  {showCardBack && (
-                    <>
-                      <div style={{ width:'100%', height:1, background:'var(--fg-border)', margin:'16px 0' }} />
-                      <div style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:8 }}>BACK</div>
-                      <div style={{ fontSize:15, color:'var(--fg-text2)', lineHeight:1.5 }}>{reviewCard.back}</div>
-                    </>
-                  )}
-                </div>
-                {!showCardBack ? (
-                  <button onClick={() => setShowCardBack(true)} style={{ padding:'10px 28px', borderRadius:10, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:14, fontWeight:600 }}>Reveal Answer</button>
-                ) : (
-                  <div style={{ display:'flex', gap:10, justifyContent:'center' }}>
-                    {[['Again',0,'#ef4444'],['Hard',2,'#f97316'],['Good',4,'#22c55e'],['Easy',5,'#3b82f6']].map(([label,q,color]) => (
-                      <button key={label as string} onClick={() => reviewFlashcard(Number(q))} style={{ padding:'8px 18px', borderRadius:8, border:'none', background: color as string, color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>{label as string}</button>
-                    ))}
-                  </div>
-                )}
-                <div style={{ marginTop:12, fontSize:12, color:'var(--fg-text3)' }}>{flashcards.length} card{flashcards.length !== 1 ? 's' : ''} in deck</div>
-              </div>
-            ) : (
-              <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>
-                <div style={{ fontSize:40, marginBottom:12 }}>🃏</div>
-                <div>No cards to review. Add some above or load a deck.</div>
-              </div>
-            )}
           </div>
         )}
 
@@ -51245,40 +50235,6 @@ export default function ForgeApp() {
           ))}
         </div>
       )}
-      {mainTab==='learningpaths' && (
-        <div style={{padding:16}}>
-          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128756; Learning Paths</h3>
-          <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
-            <input placeholder="Title" value={newLpTitle} onChange={e=>setNewLpTitle(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:120}}/>
-            <input placeholder="Topic" value={newLpTopic} onChange={e=>setNewLpTopic(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
-            <button onClick={async()=>{if(!newLpTitle||!newLpTopic)return;await fetch(API+'/user-learning-paths',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newLpTitle,topic:newLpTopic,steps:newLpSteps.split(',').map((s:string)=>s.trim())})});const r=await fetch(API+'/user-learning-paths',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setUserLearningPaths(await r.json());setNewLpTitle('');setNewLpTopic('');setNewLpSteps('Step 1,Step 2,Step 3');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
-          </div>
-          <input placeholder="Steps (comma-separated)" value={newLpSteps} onChange={e=>setNewLpSteps(e.target.value)} style={{width:'100%',padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',marginBottom:12,boxSizing:'border-box'}}/>
-          {userLearningPaths.length===0&&<button onClick={async()=>{const r=await fetch(API+'/user-learning-paths',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setUserLearningPaths(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
-          {userLearningPaths.map((p:any)=>{
-            let steps:string[]=[]; try{steps=JSON.parse(p.steps||'[]');}catch(e){}
-            return(
-            <div key={p.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)',opacity:p.completed?0.6:1}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                <div>
-                  <span style={{fontWeight:600}}>{p.title}</span>
-                  <span style={{fontSize:11,color:'var(--fg-text2)',background:'var(--bg3)',padding:'2px 6px',borderRadius:4,marginLeft:8}}>{p.topic}</span>
-                  <span style={{fontSize:11,color:'var(--fg-text2)',marginLeft:8}}>{p.current_step}/{steps.length} steps</span>
-                </div>
-                <div style={{display:'flex',gap:6}}>
-                  {!p.completed&&<button onClick={async()=>{const res=await fetch(API+'/user-learning-paths/${p.id}/advance',{method:'PUT',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});const data=await res.json();setUserLearningPaths((prev:any)=>prev.map((x:any)=>x.id===p.id?{...x,current_step:data.current_step,completed:data.completed}:x));}} style={{padding:'2px 6px',background:'#16a34a',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Next Step</button>}
-                  <button onClick={async()=>{await fetch(API+'/user-learning-paths/${p.id}',{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setUserLearningPaths((prev:any)=>prev.filter((x:any)=>x.id!==p.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
-                </div>
-              </div>
-              <div style={{background:'var(--bg3)',borderRadius:4,height:6,overflow:'hidden'}}>
-                <div style={{width:(steps.length>0?(p.current_step/steps.length)*100:0)+'%',height:'100%',background:'var(--fg-orange)',borderRadius:4,transition:'width 0.3s'}}/>
-              </div>
-              {steps.length>0&&<div style={{fontSize:11,color:'var(--fg-text2)',marginTop:4}}>Current: {steps[p.current_step]||'Complete &#9989;'}</div>}
-            </div>
-            );
-          })}
-        </div>
-      )}
       {mainTab==='threadhighlights' && (
         <div style={{padding:16}}>
           <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128396; Thread Highlights</h3>
@@ -51663,24 +50619,6 @@ export default function ForgeApp() {
           ))}
         </div>
       )}
-      {mainTab==='threadhighlights' && (
-        <div style={{padding:16}}>
-          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128396; Thread Highlights</h3>
-          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
-            <input placeholder="Thread ID..." value={newThThread} onChange={e=>setNewThThread(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
-            <input placeholder="Highlight text..." value={newThText} onChange={e=>setNewThText(e.target.value)} style={{flex:2,minWidth:180,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
-            <input type="color" value={newThColor} onChange={e=>setNewThColor(e.target.value)} style={{width:44,padding:'2px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,cursor:'pointer'}}/>
-            <button onClick={async()=>{if(!newThThread||!newThText)return;await fetch(API+'/thread-highlights',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({thread_id:newThThread,highlight_text:newThText,color:newThColor})});const r=await fetch(API+'/thread-highlights',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setThreadHighlights(await r.json());setNewThThread('');setNewThText('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Highlight</button>
-          </div>
-          {threadHighlights.length===0&&<p style={{color:'var(--fg-muted)',fontSize:13}}>No highlights.</p>}
-          {threadHighlights.map((hl:any)=>(
-            <div key={hl.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center',borderLeft:'3px solid '+(hl.color||'#ffeb3b')}}>
-              <div><span style={{fontSize:13,background:hl.color+'33',padding:'2px 6px',borderRadius:4}}>{hl.highlight_text.slice(0,80)}</span><div style={{fontSize:11,color:'var(--fg-muted)',marginTop:2}}>Thread: {hl.thread_id}</div></div>
-              <button onClick={async()=>{await fetch(API+'/thread-highlights/${hl.id}',{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setThreadHighlights(threadHighlights.filter((x:any)=>x.id!==hl.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button>
-            </div>
-          ))}
-        </div>
-      )}
       {mainTab==='userjournal' && (
         <div style={{padding:16}}>
           <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128221; Journal</h3>
@@ -51777,25 +50715,6 @@ export default function ForgeApp() {
           </div>
           {threadPolls.length===0&&<p style={{color:'var(--fg-muted)',fontSize:13}}>No polls.</p>}
           {threadPolls.map((pl:any)=>{const opts=JSON.parse(pl.options_json||'[]');const votes=JSON.parse(pl.votes_json||'{}');const total=Object.values(votes).reduce((a:any,b:any)=>a+b,0) as number;return(<div key={pl.id} style={{background:'var(--bg2)',borderRadius:8,padding:12,marginBottom:8}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}><span style={{fontWeight:600,fontSize:13}}>&#128202; {pl.question}</span><button onClick={async()=>{await fetch(API+'/thread-polls/${pl.id}',{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setThreadPolls(threadPolls.filter((x:any)=>x.id!==pl.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button></div>{opts.map((opt:string)=>{const cnt=(votes[opt]||0);const pct=total>0?Math.round(cnt/total*100):0;return(<div key={opt} style={{marginBottom:4}}><div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:2}}><span>{opt}</span><span>{cnt} ({pct}%)</span></div><div style={{height:6,background:'var(--bg3)',borderRadius:3}}><div style={{height:'100%',width:pct+'%',background:'var(--fg-orange)',borderRadius:3}}/></div><button onClick={async()=>{await fetch(API+'/thread-polls/${pl.id}/vote',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({option:opt})});const r=await fetch(API+'/thread-polls',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setThreadPolls(await r.json());}} style={{marginTop:2,padding:'2px 8px',fontSize:11,background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:4,color:'var(--fg-text)',cursor:'pointer'}}>Vote</button></div>);})}</div>);})}
-        </div>
-      )}
-      {mainTab==='usertimeblocks' && (
-        <div style={{padding:16}}>
-          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128337; Time Blocks</h3>
-          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
-            <input placeholder="Label..." value={newTbLabel} onChange={e=>setNewTbLabel(e.target.value)} style={{flex:1,minWidth:140,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
-            <input type="time" value={newTbStart} onChange={e=>setNewTbStart(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
-            <input type="time" value={newTbEnd} onChange={e=>setNewTbEnd(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
-            <input placeholder="Category..." value={newTbCategory} onChange={e=>setNewTbCategory(e.target.value)} style={{width:110,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
-            <button onClick={async()=>{if(!newTbLabel||!newTbStart||!newTbEnd)return;await fetch(API+'/user-time-blocks',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({label:newTbLabel,start_time:newTbStart,end_time:newTbEnd,category:newTbCategory})});const r=await fetch(API+'/user-time-blocks',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setUserTimeBlocks(await r.json());setNewTbLabel('');setNewTbStart('');setNewTbEnd('');setNewTbCategory('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Block</button>
-          </div>
-          {userTimeBlocks.length===0&&<p style={{color:'var(--fg-muted)',fontSize:13}}>No time blocks.</p>}
-          {userTimeBlocks.map((tb:any)=>(
-            <div key={tb.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center',borderLeft:'3px solid '+(tb.color||'var(--fg-orange)')}}>
-              <div><span style={{fontWeight:600,fontSize:13}}>&#128337; {tb.label}</span><span style={{fontSize:12,color:'var(--fg-muted)',marginLeft:8}}>{tb.start_time} &#8594; {tb.end_time}</span>{tb.category&&<span style={{fontSize:11,marginLeft:8,padding:'2px 6px',borderRadius:10,background:'var(--bg3)',color:'var(--fg-muted)'}}>{tb.category}</span>}</div>
-              <button onClick={async()=>{await fetch(API+'/user-time-blocks/${tb.id}',{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setUserTimeBlocks(userTimeBlocks.filter((x:any)=>x.id!==tb.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button>
-            </div>
-          ))}
         </div>
       )}
       {mainTab==='aicritiquelog' && (
@@ -52085,27 +51004,6 @@ export default function ForgeApp() {
             <div key={bk.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <div><span style={{fontWeight:600,fontSize:13}}>&#128278; {bk.thread_id}</span>{bk.label&&<span style={{fontSize:12,marginLeft:8,padding:'2px 8px',borderRadius:12,background:'var(--bg3)',color:'var(--fg-muted)'}}>{bk.label}</span>}{bk.note&&<div style={{fontSize:12,color:'var(--fg-muted)'}}>{bk.note}</div>}</div>
               <button onClick={async()=>{await fetch(API+'/thread-bookmarks-v2/${bk.thread_id}',{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setThreadBookmarksV2(threadBookmarksV2.filter((x:any)=>x.id!==bk.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button>
-            </div>
-          ))}
-        </div>
-      )}
-      {mainTab==='usermoodlog' && (
-        <div style={{padding:16}}>
-          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#128522; Mood Log</h3>
-          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
-            <select value={newMlMood} onChange={e=>setNewMlMood(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
-              <option value="">-- mood --</option><option value="great">&#128515; Great</option><option value="good">&#128512; Good</option><option value="okay">&#128528; Okay</option><option value="bad">&#128532; Bad</option><option value="terrible">&#128552; Terrible</option>
-            </select>
-            <input type="range" min={1} max={10} value={newMlEnergy} onChange={e=>setNewMlEnergy(Number(e.target.value))} style={{width:100,accentColor:'var(--fg-orange)'}}/>
-            <span style={{fontSize:13,color:'var(--fg-muted)',alignSelf:'center'}}>Energy: {newMlEnergy}</span>
-            <input placeholder="Note..." value={newMlNote} onChange={e=>setNewMlNote(e.target.value)} style={{flex:1,minWidth:160,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
-            <button onClick={async()=>{if(!newMlMood)return;await fetch(API+'/user-mood-log',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({mood:newMlMood,energy:newMlEnergy,note:newMlNote})});const r=await fetch(API+'/user-mood-log',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setUserMoodLog(await r.json());setNewMlMood('');setNewMlNote('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Log</button>
-          </div>
-          {userMoodLog.length===0&&<p style={{color:'var(--fg-muted)',fontSize:13}}>No mood entries yet.</p>}
-          {userMoodLog.map((ml:any)=>(
-            <div key={ml.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <div><span style={{fontSize:13,fontWeight:600}}>{ml.mood}</span><span style={{fontSize:12,color:'var(--fg-muted)',marginLeft:8}}>&#9889; {ml.energy}/10</span>{ml.note&&<span style={{fontSize:12,color:'var(--fg-muted)',marginLeft:8}}>{ml.note}</span>}</div>
-              <button onClick={async()=>{await fetch(API+'/user-mood-log/${ml.id}',{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setUserMoodLog(userMoodLog.filter((x:any)=>x.id!==ml.id));}} style={{background:'none',border:'none',color:'var(--fg-muted)',cursor:'pointer',fontSize:16}}>&#10005;</button>
             </div>
           ))}
         </div>
@@ -52825,38 +51723,6 @@ export default function ForgeApp() {
           ))}
         </div>
       )}
-      {mainTab==='aiknowledgegaps' && (
-        <div style={{padding:16}}>
-          <h3 style={{margin:'0 0 12px',fontSize:16}}>&#129329; AI Knowledge Gaps</h3>
-          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
-            <input placeholder="Domain" value={newKgDomain} onChange={e=>setNewKgDomain(e.target.value)} style={{width:120,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}/>
-            <input placeholder="Gap description" value={newKgGap} onChange={e=>setNewKgGap(e.target.value)} style={{flex:1,padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',minWidth:160}}/>
-            <select value={newKgSeverity} onChange={e=>setNewKgSeverity(e.target.value)} style={{padding:'6px 10px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)'}}>
-              {['low','medium','high','critical'].map(s=><option key={s} value={s}>{s}</option>)}
-            </select>
-            <button onClick={async()=>{if(!newKgDomain||!newKgGap)return;await fetch(API+'/ai-knowledge-gaps',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({domain:newKgDomain,gap:newKgGap,severity:newKgSeverity})});const r=await fetch(API+'/ai-knowledge-gaps',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledgeGaps(await r.json());setNewKgDomain('');setNewKgGap('');}} style={{padding:'6px 14px',background:'var(--fg-orange)',border:'none',borderRadius:6,color:'#fff',cursor:'pointer'}}>Add</button>
-          </div>
-          {aiKnowledgeGaps.length===0&&<button onClick={async()=>{const r=await fetch(API+'/ai-knowledge-gaps',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledgeGaps(await r.json());}} style={{padding:'6px 14px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,color:'var(--fg-text)',cursor:'pointer',marginBottom:8}}>Load</button>}
-          {aiKnowledgeGaps.map((g:any)=>{
-            const sColors:any={low:'#6b7280',medium:'#f59e0b',high:'#f97316',critical:'#dc2626'};
-            return(
-            <div key={g.id} style={{background:'var(--bg2)',borderRadius:8,padding:10,marginBottom:8,border:'1px solid var(--border)',opacity:g.resolved?0.5:1}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <div>
-                  <span style={{fontWeight:600,textDecoration:g.resolved?'line-through':'none'}}>{g.gap}</span>
-                  <span style={{fontSize:11,padding:'2px 6px',borderRadius:4,background:sColors[g.severity],color:'#fff',marginLeft:8}}>{g.severity}</span>
-                  <span style={{fontSize:11,color:'var(--fg-text2)',background:'var(--bg3)',padding:'2px 6px',borderRadius:4,marginLeft:6}}>{g.domain}</span>
-                </div>
-                <div style={{display:'flex',gap:6}}>
-                  {!g.resolved&&<button onClick={async()=>{await fetch(API+'/ai-knowledge-gaps/${g.id}/resolve',{method:'PUT',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledgeGaps((p:any)=>p.map((x:any)=>x.id===g.id?{...x,resolved:1}:x));}} style={{padding:'2px 6px',background:'#16a34a',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Resolve</button>}
-                  <button onClick={async()=>{await fetch(API+'/ai-knowledge-gaps/${g.id}',{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setAiKnowledgeGaps((p:any)=>p.filter((x:any)=>x.id!==g.id));}} style={{padding:'2px 6px',background:'#dc2626',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:11}}>Del</button>
-                </div>
-              </div>
-            </div>
-            );
-          })}
-        </div>
-      )}
       {mainTab==='aiwftriggers' && (
         <div style={{padding:16}}>
           <h3 style={{margin:'0 0 12px',fontSize:16}}>&#9889; Workflow Triggers</h3>
@@ -53224,36 +52090,6 @@ export default function ForgeApp() {
           </div>
         </div>
       )}
-      {mainTab==='wsmilestones' && (
-        <div className="p-4 space-y-4">
-          <h2 className="text-xl font-bold">&#127937; Workspace Milestones</h2>
-          <div className="flex gap-2 flex-wrap">
-            <input value={newMsTitle} onChange={e=>setNewMsTitle(e.target.value)} placeholder="Milestone title" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
-            <input value={newMsDate} onChange={e=>setNewMsDate(e.target.value)} type="date" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
-          </div>
-          <div className="flex gap-2">
-            <input value={newMsDesc} onChange={e=>setNewMsDesc(e.target.value)} placeholder="Description" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
-            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newMsTitle)return;await fetch(API+'/workspace-milestones',{method:'POST',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({title:newMsTitle,description:newMsDesc,target_date:newMsDate})});const r=await fetch(API+'/workspace-milestones',{headers:{Authorization:'Bearer '+tok}});setWsMilestones(await r.json());setNewMsTitle('');setNewMsDesc('');setNewMsDate('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Add</button>
-            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch(API+'/workspace-milestones',{headers:{Authorization:'Bearer '+tok}});setWsMilestones(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
-          </div>
-          <div className="space-y-2">
-            {wsMilestones.map((m:any)=>(
-              <div key={m.id} className="rounded p-3" style={{background:m.completed?'rgba(34,197,94,0.06)':'var(--fg-bg-card)',border:'1px solid var(--fg-border)',opacity:m.completed?0.7:1}}>
-                <div className="flex justify-between items-center">
-                  <div><span className="text-sm font-semibold" style={{color:'var(--fg-text)'}}>{m.pinned?'&#128204; ':''}{m.completed?'&#9989; ':''}{m.title}</span>{m.target_date&&<span className="ml-2 text-xs" style={{color:'var(--fg-text3)'}}>{m.target_date}</span>}</div>
-                  <div className="flex gap-1">
-                    {!m.completed&&<button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(API+'/workspace-milestones/${m.id}/complete',{method:'PUT',headers:{Authorization:'Bearer '+tok}});setWsMilestones(wsMilestones.map((x:any)=>x.id===m.id?{...x,completed:1}:x));}} style={{background:'rgba(34,197,94,0.15)',color:'#4ade80',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Done</button>}
-                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(API+'/workspace-milestones/${m.id}/pin',{method:'PUT',headers:{Authorization:'Bearer '+tok}});setWsMilestones(wsMilestones.map((x:any)=>x.id===m.id?{...x,pinned:1-x.pinned}:x));}} style={{background:'var(--fg-bg3)',color:'var(--fg-text3)',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>&#128204;</button>
-                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(API+'/workspace-milestones/${m.id}',{method:'DELETE',headers:{Authorization:'Bearer '+tok}});setWsMilestones(wsMilestones.filter((x:any)=>x.id!==m.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
-                  </div>
-                </div>
-                {m.description&&<p className="text-xs mt-1" style={{color:'var(--fg-text2)'}}>{m.description}</p>}
-              </div>
-            ))}
-            {wsMilestones.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No milestones.</div>}
-          </div>
-        </div>
-      )}
       {mainTab==='aictxsnaps' && (
         <div className="p-4 space-y-4">
           <h2 className="text-xl font-bold">&#128248; Context Snapshots</h2>
@@ -53281,63 +52117,6 @@ export default function ForgeApp() {
               </div>
             ))}
             {aiCtxSnapshots.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No snapshots saved.</div>}
-          </div>
-        </div>
-      )}
-      {mainTab==='threadcollabs' && (
-        <div className="p-4 space-y-4">
-          <h2 className="text-xl font-bold">&#128101; Thread Collaborators</h2>
-          <div className="flex gap-2 flex-wrap">
-            <input value={newTcThread} onChange={e=>setNewTcThread(e.target.value)} placeholder="Thread ID" className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)',width:110}} />
-            <input value={newTcCollab} onChange={e=>setNewTcCollab(e.target.value)} placeholder="@username or email" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
-            <select value={newTcRole} onChange={e=>setNewTcRole(e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
-              {['viewer','commenter','editor'].map(r=><option key={r} value={r}>{r}</option>)}
-            </select>
-            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok||!newTcCollab||!newTcThread)return;await fetch(API+'/thread-collaborators',{method:'POST',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({thread_id:newTcThread,collaborator:newTcCollab,role:newTcRole})});const r=await fetch(API+'/thread-collaborators',{headers:{Authorization:'Bearer '+tok}});setThreadCollabs(await r.json());setNewTcCollab('');setNewTcThread('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>Invite</button>
-            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch(API+'/thread-collaborators',{headers:{Authorization:'Bearer '+tok}});setThreadCollabs(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
-          </div>
-          <div className="space-y-2">
-            {threadCollabs.map((c:any)=>(
-              <div key={c.id} className="rounded p-3 flex justify-between items-center" style={{background:'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
-                <div>
-                  <span className="text-sm font-semibold" style={{color:'#818cf8'}}>@{c.collaborator}</span>
-                  <span className="ml-2 text-xs px-2 py-0.5 rounded" style={{background:'rgba(99,102,241,0.15)',color:'#a5b4fc'}}>{c.role}</span>
-                  {c.thread_id&&<span className="ml-2 text-xs" style={{color:'var(--fg-text3)'}}>#{c.thread_id}</span>}
-                </div>
-                <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(API+'/thread-collaborators/${c.id}',{method:'DELETE',headers:{Authorization:'Bearer '+tok}});setThreadCollabs(threadCollabs.filter((x:any)=>x.id!==c.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Remove</button>
-              </div>
-            ))}
-            {threadCollabs.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No collaborators.</div>}
-          </div>
-        </div>
-      )}
-      {mainTab==='focussessions' && (
-        <div className="p-4 space-y-4">
-          <h2 className="text-xl font-bold">&#127919; Focus Sessions</h2>
-          <div className="flex gap-2 flex-wrap">
-            <input value={newFsLabel} onChange={e=>setNewFsLabel(e.target.value)} placeholder="What are you focusing on?" className="border rounded px-2 py-1 text-sm flex-1" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}} />
-            <select value={newFsDuration} onChange={e=>setNewFsDuration(+e.target.value)} className="border rounded px-2 py-1 text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',borderColor:'var(--fg-border)'}}>
-              {[15,25,45,60,90].map(d=><option key={d} value={d}>{d} min</option>)}
-            </select>
-            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;await fetch(API+'/user-focus-sessions',{method:'POST',headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({label:newFsLabel,duration_min:newFsDuration})});const r=await fetch(API+'/user-focus-sessions',{headers:{Authorization:'Bearer '+tok}});setFocusSessions(await r.json());setNewFsLabel('');}} className="px-3 py-1 rounded text-sm font-medium" style={{background:'var(--fg-orange)',color:'#fff'}}>&#9654; Start</button>
-            <button onClick={async()=>{const tok=localStorage.getItem('forge_token');if(!tok)return;const r=await fetch(API+'/user-focus-sessions',{headers:{Authorization:'Bearer '+tok}});setFocusSessions(await r.json());}} className="px-3 py-1 rounded text-sm" style={{background:'var(--fg-bg-card)',color:'var(--fg-text)',border:'1px solid var(--fg-border)'}}>Load</button>
-          </div>
-          <div className="space-y-2">
-            {focusSessions.map((s:any)=>(
-              <div key={s.id} className="rounded p-3" style={{background:s.completed?'rgba(34,197,94,0.06)':'var(--fg-bg-card)',border:'1px solid var(--fg-border)'}}>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <span className="text-sm font-semibold" style={{color:'var(--fg-text)'}}>{s.completed?'&#9989; ':'&#9201; '}{s.label||'Focus session'}</span>
-                    <span className="ml-2 text-xs" style={{color:'var(--fg-text3)'}}>{s.duration_min}min</span>
-                  </div>
-                  <div className="flex gap-1">
-                    {!s.completed&&<button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(API+'/user-focus-sessions/${s.id}/complete',{method:'PUT',headers:{Authorization:'Bearer '+tok}});setFocusSessions(focusSessions.map((x:any)=>x.id===s.id?{...x,completed:1}:x));}} style={{background:'rgba(34,197,94,0.15)',color:'#4ade80',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Complete</button>}
-                    <button onClick={async()=>{const tok=localStorage.getItem('forge_token');await fetch(API+'/user-focus-sessions/${s.id}',{method:'DELETE',headers:{Authorization:'Bearer '+tok}});setFocusSessions(focusSessions.filter((x:any)=>x.id!==s.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 7px',cursor:'pointer',fontSize:11}}>Del</button>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {focusSessions.length===0&&<div className="text-center py-8" style={{color:'var(--fg-text3)'}}>No focus sessions. Start one above!</div>}
           </div>
         </div>
       )}
@@ -53840,31 +52619,6 @@ export default function ForgeApp() {
           </div>
         </div>
       )}
-      {mainTab==='wsintegrations' && (
-        <div className="p-4 space-y-4">
-          <h2 className="text-xl font-bold">🔌 Workspace Integrations</h2>
-          <div className="flex gap-2 flex-wrap">
-            <input className="border p-2 rounded flex-1" placeholder="Integration name" value={newWiName} onChange={e=>setNewWiName(e.target.value)}/>
-            <select className="border p-2 rounded" value={newWiType} onChange={e=>setNewWiType(e.target.value)}>
-              <option value="webhook">Webhook</option><option value="api">API</option><option value="slack">Slack</option><option value="github">GitHub</option><option value="zapier">Zapier</option>
-            </select>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch(API+'/workspace-integrations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:newWiName,integration_type:newWiType})}).then(r=>r.json()).then(d=>{setWsIntegrations(p=>[d,...p]);setNewWiName('');})}>Connect</button>
-          </div>
-          <button className="text-sm underline" onClick={()=>fetch(API+'/workspace-integrations').then(r=>r.json()).then(setWsIntegrations)}>Load</button>
-          {wsIntegrations.map(x=>(
-            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
-              <div>
-                <div className="font-semibold">{x.name} <span className="text-xs bg-blue-100 text-blue-700 px-1 rounded">{x.integration_type}</span></div>
-                <div className="text-xs text-gray-500">Last sync: {x.last_sync||'Never'}</div>
-              </div>
-              <div className="flex gap-2">
-                <button className="bg-green-600 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-integrations/${x.id}/sync`,{method:'PUT'}).then(()=>fetch(API+'/workspace-integrations').then(r=>r.json()).then(setWsIntegrations))}>Sync</button>
-                <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-integrations/${x.id}`,{method:'DELETE'}).then(()=>setWsIntegrations(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
 {mainTab==='aievalsb53' && (
         <div className="p-4 space-y-4">
           <h2 className="text-xl font-bold">📝 AI Evaluations</h2>
@@ -54053,31 +52807,6 @@ export default function ForgeApp() {
             <div key={x.id} className="border p-3 rounded flex justify-between items-center">
               <div><div className="text-sm">{x.source_type} #{x.source_id}</div><div className="text-xs text-gray-500">{x.embedding_model} · {x.dimension}d</div></div>
               <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/ai-embeddings-meta/${x.id}`,{method:'DELETE'}).then(()=>setEmbeddingsMeta(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
-            </div>
-          ))}
-        </div>
-      )}
-      {mainTab==='wsshortcuts' && (
-        <div className="p-4 space-y-4">
-          <h2 className="text-xl font-bold">⌨️ Workspace Shortcuts</h2>
-          <div className="flex gap-2 flex-wrap">
-            <input className="border p-2 rounded w-32" placeholder="Key (e.g. Ctrl+K)" value={newWsKey} onChange={e=>setNewWsKey(e.target.value)}/>
-            <input className="border p-2 rounded flex-1" placeholder="Action" value={newWsAction} onChange={e=>setNewWsAction(e.target.value)}/>
-            <input className="border p-2 rounded flex-1" placeholder="Description" value={newWsDesc} onChange={e=>setNewWsDesc(e.target.value)}/>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={()=>fetch(API+'/workspace-shortcuts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({shortcut_key:newWsKey,action:newWsAction,description:newWsDesc})}).then(r=>r.json()).then(d=>{setWsShortcuts(p=>[d,...p]);setNewWsKey('');setNewWsAction('');setNewWsDesc('');})}>Add</button>
-          </div>
-          <button className="text-sm underline" onClick={()=>fetch(API+'/workspace-shortcuts').then(r=>r.json()).then(setWsShortcuts)}>Load</button>
-          {wsShortcuts.map(x=>(
-            <div key={x.id} className="border p-3 rounded flex justify-between items-center">
-              <div>
-                <kbd className="bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded text-sm font-mono">{x.shortcut_key}</kbd>
-                <span className="ml-2 text-sm">{x.action}</span>
-                {x.description&&<div className="text-xs text-gray-500">{x.description}</div>}
-              </div>
-              <div className="flex gap-2">
-                <button className="bg-yellow-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-shortcuts/${x.id}/toggle`,{method:'PUT'}).then(()=>fetch(API+'/workspace-shortcuts').then(r=>r.json()).then(setWsShortcuts))}>{x.active?'On':'Off'}</button>
-                <button className="bg-red-500 text-white px-2 py-1 rounded text-xs" onClick={()=>fetch(`/api/workspace-shortcuts/${x.id}`,{method:'DELETE'}).then(()=>setWsShortcuts(p=>p.filter(i=>i.id!==x.id)))}>✕</button>
-              </div>
             </div>
           ))}
         </div>
@@ -54309,33 +53038,6 @@ export default function ForgeApp() {
           ))}
         </div>
       )}
-{mainTab==='sprintboard' && (
-  <div style={{padding:24}}>
-    <h2 style={{color:'#f1f5f9',marginBottom:16}}>🏃 Sprint Board</h2>
-    <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
-      <input value={newSpSprint} onChange={e=>setNewSpSprint(e.target.value)} placeholder="Sprint (e.g. Sprint-1)" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
-      <input value={newSpTitleB49} onChange={e=>setNewSpTitleB49(e.target.value)} placeholder="Task title" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:2}}/>
-      <input type="number" value={newSpPoints} min={1} max={13} onChange={e=>setNewSpPoints(Number(e.target.value))} style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,width:60}}/>
-      <button onClick={async()=>{if(!newSpSprint||!newSpTitleB49)return;await fetch(API+'/sprint-items',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({sprint:newSpSprint,title:newSpTitleB49,points:newSpPoints})});setNewSpTitleB49('');const r=await fetch(API+'/sprint-items',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setSprintItems(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Add</button>
-      <button onClick={async()=>{const r=await fetch(API+'/sprint-items',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setSprintItems(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
-    </div>
-    {(['todo','in_progress','done'] as string[]).map(status=>(
-      <div key={status} style={{marginBottom:16}}>
-        <div style={{color:'#94a3b8',fontSize:12,fontWeight:700,marginBottom:8,textTransform:'uppercase'}}>{status.replace('_',' ')}</div>
-        {sprintItems.filter((i:any)=>i.status===status).map((item:any)=>(
-          <div key={item.id} style={{background:'#1e293b',borderRadius:8,padding:10,marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <span style={{color:'#f1f5f9',fontSize:13}}>{item.title} <span style={{color:'#6366f1',fontSize:11}}>{item.sprint}</span></span>
-            <div style={{display:'flex',gap:4}}>
-              {status!=='in_progress' && <button onClick={async()=>{await fetch(`/api/sprint-items/${item.id}/status`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({status:'in_progress'})});const r=await fetch(API+'/sprint-items',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setSprintItems(await r.json());}} style={{background:'#1e3a5f',color:'#93c5fd',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:10}}>▶</button>}
-              {status!=='done' && <button onClick={async()=>{await fetch(`/api/sprint-items/${item.id}/status`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({status:'done'})});const r=await fetch(API+'/sprint-items',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setSprintItems(await r.json());}} style={{background:'#14532d',color:'#86efac',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:10}}>✓</button>}
-              <button onClick={async()=>{await fetch(`/api/sprint-items/${item.id}`,{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setSprintItems(sprintItems.filter((x:any)=>x.id!==item.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:10}}>✕</button>
-            </div>
-          </div>
-        ))}
-      </div>
-    ))}
-  </div>
-)}
 {mainTab==='aisumv2' && (
   <div style={{padding:24}}>
     <h2 style={{color:'#f1f5f9',marginBottom:16}}>📋 AI Summaries V2</h2>
@@ -54744,33 +53446,6 @@ export default function ForgeApp() {
     ))}
   </div>
 )}
-{mainTab==='wsmilestones' && (
-  <div style={{padding:24}}>
-    <h2 style={{color:'#f1f5f9',marginBottom:16}}>🏆 Workspace Milestones</h2>
-    <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap'}}>
-      <input value={newWmTitle} onChange={e=>setNewWmTitle(e.target.value)} placeholder="Milestone title" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
-      <input value={newWmDue} onChange={e=>setNewWmDue(e.target.value)} type="date" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13}}/>
-    </div>
-    <input value={newWmDesc} onChange={e=>setNewWmDesc(e.target.value)} placeholder="Description" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,width:'100%',boxSizing:'border-box',marginBottom:8}}/>
-    <div style={{display:'flex',gap:8,marginBottom:16}}>
-      <button onClick={async()=>{if(!newWmTitle)return;await fetch(API+'/workspace-milestones',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newWmTitle,description:newWmDesc,due_date:newWmDue})});setNewWmTitle('');setNewWmDesc('');setNewWmDue('');const r=await fetch(API+'/workspace-milestones',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setWsMilestones(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Add</button>
-      <button onClick={async()=>{const r=await fetch(API+'/workspace-milestones',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setWsMilestones(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
-    </div>
-    {wsMilestones.map((m:any)=>(
-      <div key={m.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <div>
-          <div style={{color:'#f1f5f9',fontWeight:600}}>{m.achieved?'🏆 ':''}{m.title}</div>
-          {m.description && <div style={{color:'#64748b',fontSize:12,marginTop:2}}>{m.description}</div>}
-          {m.due_date && <div style={{color:'#94a3b8',fontSize:11,marginTop:2}}>Due: {m.due_date}</div>}
-        </div>
-        <div style={{display:'flex',gap:6}}>
-          {!m.achieved && <button onClick={async()=>{await fetch(`/api/workspace-milestones/${m.id}/achieve`,{method:'PUT',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});const r=await fetch(API+'/workspace-milestones',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setWsMilestones(await r.json());}} style={{background:'#713f12',color:'#fde68a',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Achieve</button>}
-          <button onClick={async()=>{await fetch(`/api/workspace-milestones/${m.id}`,{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setWsMilestones(wsMilestones.filter((x:any)=>x.id!==m.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
-        </div>
-      </div>
-    ))}
-  </div>
-)}
 {mainTab==='agentruns' && (
   <div style={{padding:24}}>
     <h2 style={{color:'#f1f5f9',marginBottom:16}}>🤖 Agent Runs</h2>
@@ -55148,27 +53823,6 @@ export default function ForgeApp() {
     </div>
   </div>
 )}
-{mainTab==='userbadges' && (
-  <div style={{padding:'24px'}}>
-    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>🏅 User Badges</h2>
-    <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
-      <input placeholder="Badge emoji (e.g. 🔥)" value={newUbBadge} onChange={e=>setNewUbBadge(e.target.value)} style={{width:'90px',padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',fontSize:'18px',textAlign:'center'}} />
-      <input placeholder="Label..." value={newUbLabel} onChange={e=>setNewUbLabel(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
-      <button onClick={async()=>{if(!newUbBadge||!newUbLabel)return;const r=await fetch(API+'/user-badges',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({badge:newUbBadge,label:newUbLabel})});if(r.ok){setNewUbBadge('');setNewUbLabel('');const rb=await fetch(API+'/user-badges',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setUserBadges(await rb.json());}else{alert('Badge already earned!');}}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Earn</button>
-      <button onClick={async()=>{const r=await fetch(API+'/user-badges',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setUserBadges(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
-    </div>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:'12px'}}>
-      {userBadges.map((b:any)=>(
-        <div key={b.id} style={{background:'#1f2937',borderRadius:'8px',padding:'16px',textAlign:'center',position:'relative'}}>
-          <div style={{fontSize:'36px',marginBottom:'6px'}}>{b.badge}</div>
-          <div style={{color:'#f9fafb',fontWeight:'bold',fontSize:'13px'}}>{b.label}</div>
-          <div style={{color:'#6b7280',fontSize:'10px',marginTop:'4px'}}>{b.earned_at?.slice(0,10)}</div>
-          <button onClick={async()=>{await fetch(API+'/user-badges/${b.id}',{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setUserBadges(userBadges.filter((x:any)=>x.id!==b.id));}} style={{position:'absolute',top:'4px',right:'4px',background:'none',border:'none',color:'#6b7280',cursor:'pointer',fontSize:'14px'}}>✕</button>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
 {mainTab==='chatmem' && (
   <div style={{padding:'24px'}}>
     <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>🧠 AI Chat Memory</h2>
@@ -55469,38 +54123,6 @@ export default function ForgeApp() {
     </div>
   </div>
 )}
-{mainTab==='wsgoals' && (
-  <div style={{padding:'24px'}}>
-    <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>🎯 Workspace Goals</h2>
-    <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
-      <input placeholder="Goal title..." value={newWgTitle} onChange={e=>setNewWgTitle(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
-      <input placeholder="Description" value={newWgDesc} onChange={e=>setNewWgDesc(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
-      <input type="date" value={newWgDate} onChange={e=>setNewWgDate(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
-      <button onClick={async()=>{if(!newWgTitle)return;await fetch(API+'/workspace-goals',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newWgTitle,description:newWgDesc,target_date:newWgDate})});setNewWgTitle('');setNewWgDesc('');setNewWgDate('');const r=await fetch(API+'/workspace-goals',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setWsGoals(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
-      <button onClick={async()=>{const r=await fetch(API+'/workspace-goals',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setWsGoals(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
-    </div>
-    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-      {wsGoals.map((g:any)=>(
-        <div key={g.id} style={{background:'#1f2937',borderRadius:'8px',padding:'12px'}}>
-          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
-            <div>
-              <div style={{color:'#f9fafb',fontWeight:'bold'}}>{g.title}</div>
-              <div style={{color:'#9ca3af',fontSize:'12px'}}>{g.description} · due {g.target_date||'no date'}</div>
-            </div>
-            <button onClick={async()=>{await fetch(API+'/workspace-goals/${g.id}',{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setWsGoals(wsGoals.filter((x:any)=>x.id!==g.id));}} style={{background:'#7f1d1d',border:'none',color:'#fca5a5',cursor:'pointer',borderRadius:'4px',padding:'4px 8px'}}>Del</button>
-          </div>
-          <div style={{background:'#374151',borderRadius:'4px',height:'8px',overflow:'hidden'}}>
-            <div style={{background:'#6366f1',height:'100%',width:g.progress+'%',transition:'width 0.3s'}} />
-          </div>
-          <div style={{display:'flex',alignItems:'center',gap:'8px',marginTop:'6px'}}>
-            <input type="range" min="0" max="100" value={g.progress} onChange={async(e)=>{const v=parseInt(e.target.value);await fetch(API+'/workspace-goals/${g.id}/progress',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({progress:v,status:v>=100?'completed':'active'})});setWsGoals(wsGoals.map((x:any)=>x.id===g.id?{...x,progress:v}:x));}} style={{flex:1}} />
-            <span style={{color:'#9ca3af',fontSize:'12px'}}>{g.progress}%</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
 {mainTab==='codesnipv2' && (
   <div style={{padding:'24px'}}>
     <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>💻 Code Snippets v2</h2>
@@ -55722,36 +54344,6 @@ export default function ForgeApp() {
         <button onClick={async()=>{await fetch(API+'/user-profile-v2',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({display_name:upv2Name,bio:upv2Bio,avatar_emoji:upv2Emoji,timezone:upv2Tz})});alert('Profile saved!');}} style={{padding:'10px 20px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer',fontWeight:'bold'}}>Save Profile</button>
       </div>
     )}
-  </div>
-)}
-{mainTab==='meetingnotes' && (
-  <div style={{padding:'24px'}}>
-    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>📅 Meeting Notes</h2>
-    <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px',background:'#1f2937',padding:'12px',borderRadius:'8px',border:'1px solid #374151'}}>
-      <div style={{display:'flex',gap:'8px'}}>
-        <input placeholder="Title" value={newMnTitle} onChange={e=>setNewMnTitle(e.target.value)} style={{flex:2,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}} />
-        <input type="date" value={newMnDate} onChange={e=>setNewMnDate(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}} />
-      </div>
-      <input placeholder="Attendees (comma separated)" value={newMnAttendees} onChange={e=>setNewMnAttendees(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb'}} />
-      <textarea placeholder="Meeting notes..." value={newMnNotes} onChange={e=>setNewMnNotes(e.target.value)} rows={5} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#111827',color:'#f9fafb',resize:'vertical'}} />
-      <button onClick={async()=>{if(!newMnTitle||!newMnNotes)return;const attendees=newMnAttendees.split(',').map((s:string)=>s.trim()).filter(Boolean);await fetch(API+'/meeting-notes',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({title:newMnTitle,notes:newMnNotes,attendees,meeting_date:newMnDate})});setNewMnTitle('');setNewMnNotes('');setNewMnDate('');setNewMnAttendees('');const r=await fetch(API+'/meeting-notes',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setMeetingNotes(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Save Notes</button>
-    </div>
-    <button onClick={async()=>{const r=await fetch(API+'/meeting-notes',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setMeetingNotes(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer',marginBottom:'12px'}}>Load</button>
-    <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
-      {meetingNotes.map((m:any)=>(
-        <div key={m.id} style={{background:'#1f2937',borderRadius:'10px',padding:'14px',border:'1px solid #374151'}}>
-          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
-            <div>
-              <span style={{fontWeight:700,color:'#f9fafb'}}>{m.title}</span>
-              {m.meeting_date&&<span style={{color:'#9ca3af',fontSize:'12px',marginLeft:'8px'}}>{m.meeting_date}</span>}
-            </div>
-            <button onClick={async()=>{await fetch(API+'/meeting-notes/${m.id}',{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setMeetingNotes(meetingNotes.filter((x:any)=>x.id!==m.id));}} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'4px',padding:'2px 8px',cursor:'pointer'}}>Del</button>
-          </div>
-          {m.attendees&&JSON.parse(m.attendees).length>0&&<div style={{color:'#9ca3af',fontSize:'12px',marginBottom:'6px'}}>👥 {JSON.parse(m.attendees).join(', ')}</div>}
-          <div style={{color:'#d1d5db',fontSize:'13px',whiteSpace:'pre-wrap'}}>{m.notes.substring(0,300)}{m.notes.length>300?'...':''}</div>
-        </div>
-      ))}
-    </div>
   </div>
 )}
 
@@ -55983,28 +54575,6 @@ export default function ForgeApp() {
 )}
 
 {/* Thread Labels tab */}
-{mainTab==='threadlabels' && (
-  <div style={{padding:'24px'}}>
-    <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>🏷️ Thread Labels</h2>
-    <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
-      <input placeholder="Thread ID" value={newTlThread} onChange={e=>setNewTlThread(e.target.value)} style={{width:'100px',padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
-      <input placeholder="Label" value={newTlLabel} onChange={e=>setNewTlLabel(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'120px'}} />
-      <input type="color" value={newTlColor} onChange={e=>setNewTlColor(e.target.value)} style={{width:'40px',height:'36px',border:'none',borderRadius:'4px',cursor:'pointer'}} />
-      <button onClick={async()=>{if(!newTlThread||!newTlLabel)return;await fetch(API+'/thread-labels',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({thread_id:newTlThread,label:newTlLabel,color:newTlColor})});setNewTlThread('');setNewTlLabel('');const r=await fetch(API+'/thread-labels',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setThreadLabelsB37(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
-      <button onClick={async()=>{const r=await fetch(API+'/thread-labels',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setThreadLabelsB37(await r.json());}} style={{padding:'8px 16px',background:'#374151',color:'#f9fafb',border:'none',borderRadius:'6px',cursor:'pointer'}}>Load</button>
-    </div>
-    <div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>
-      {threadLabelsB37.map((lbl:any)=>(
-        <div key={lbl.id} style={{display:'flex',alignItems:'center',gap:'6px',padding:'4px 12px',borderRadius:'20px',border:'1.5px solid '+lbl.color,background:'#1f2937'}}>
-          <div style={{width:'8px',height:'8px',borderRadius:'50%',background:lbl.color}} />
-          <span style={{color:'#f9fafb',fontSize:'13px'}}>{lbl.label}</span>
-          <span style={{color:'#6b7280',fontSize:'11px'}}>#{lbl.thread_id}</span>
-          <button onClick={async()=>{await fetch(API+'/thread-labels/${lbl.id}',{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}});setThreadLabelsB37(threadLabelsB37.filter((x:any)=>x.id!==lbl.id));}} style={{background:'transparent',color:'#6b7280',border:'none',cursor:'pointer',fontSize:'14px',lineHeight:1}}>×</button>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
 
 {/* Collab Rooms tab */}
 {mainTab==='collabrooms' && (
@@ -56473,41 +55043,6 @@ export default function ForgeApp() {
         )}
 
         {/* Insight Cards tab */}
-        {mainTab==='insightcards' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>💎 Insight Cards</div>
-            <div style={{ display:'flex', gap:8, marginBottom:8, flexWrap:'wrap' }}>
-              <input value={newIcTitleB44} onChange={e=>setNewIcTitleB44(e.target.value)} placeholder="Insight title..." style={{ flex:1, minWidth:140, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <select value={newIcCatB44} onChange={e=>setNewIcCatB44(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
-                {['general','product','engineering','marketing','personal','research'].map(ct=><option key={ct} value={ct}>{ct}</option>)}
-              </select>
-            </div>
-            <textarea value={newIcInsightB44} onChange={e=>setNewIcInsightB44(e.target.value)} placeholder="The insight or key learning..." rows={3} style={{ width:'100%', padding:'10px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box', fontFamily:'inherit' }} />
-            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
-              <button onClick={async()=>{ if(!newIcTitleB44.trim()||!newIcInsightB44.trim()) return; await fetch(API+'/insight-cards',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('token')},body:JSON.stringify({title:newIcTitleB44,insight:newIcInsightB44,category:newIcCatB44})}); setNewIcTitleB44(''); setNewIcInsightB44(''); const r=await fetch(API+'/insight-cards',{headers:{Authorization:'Bearer '+localStorage.getItem('token')}}); setInsightCardsB44(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Save</button>
-              <button onClick={async()=>{ const r=await fetch(API+'/insight-cards',{headers:{Authorization:'Bearer '+localStorage.getItem('token')}}); setInsightCardsB44(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
-              <button onClick={async()=>{ const r=await fetch(API+'/insight-cards?starred=1',{headers:{Authorization:'Bearer '+localStorage.getItem('token')}}); setInsightCardsB44(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>⭐ Starred</button>
-            </div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:10 }}>
-              {insightCardsB44.map((card:any)=>(
-                <div key={card.id} style={{ background:'var(--bg-card)', border:`1px solid ${card.starred?'#f59e0b':'var(--border)'}`, borderRadius:10, padding:14 }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
-                    <div>
-                      <div style={{ color:'var(--fg-text)', fontWeight:600, fontSize:14 }}>{card.title}</div>
-                      <div style={{ color:'var(--accent)', fontSize:11 }}>{card.category}</div>
-                    </div>
-                    <div style={{ display:'flex', gap:4 }}>
-                      <button onClick={async()=>{ await fetch(`/api/insight-cards/${card.id}/star`,{method:'PUT',headers:{Authorization:'Bearer '+localStorage.getItem('token')}}); const r=await fetch(API+'/insight-cards',{headers:{Authorization:'Bearer '+localStorage.getItem('token')}}); setInsightCardsB44(await r.json()); }} style={{ padding:'3px 7px', background:card.starred?'#f59e0b22':'var(--bg-input)', border:`1px solid ${card.starred?'#f59e0b':'var(--border)'}`, borderRadius:5, color:card.starred?'#f59e0b':'var(--fg-text3)', cursor:'pointer', fontSize:13 }}>⭐</button>
-                      <button onClick={async()=>{ await fetch(`/api/insight-cards/${card.id}`,{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('token')}}); setInsightCardsB44(insightCardsB44.filter((x:any)=>x.id!==card.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
-                    </div>
-                  </div>
-                  <div style={{ color:'var(--fg-text2)', fontSize:13, lineHeight:1.5 }}>{card.insight}</div>
-                </div>
-              ))}
-              {insightCardsB44.length===0 && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:32, gridColumn:'1/-1' }}>No insights yet. Capture key learnings as insight cards.</div>}
-            </div>
-          </div>
-        )}
 
         {/* Goals v2 tab */}
         {mainTab==='goalsv2' && (
@@ -56716,41 +55251,6 @@ export default function ForgeApp() {
         )}
 
         {/* Workspace Announcements tab */}
-        {mainTab==='wsannounce' && (
-          <div style={{ padding:24 }}>
-            <div style={{ color:'var(--fg-text)', fontSize:20, fontWeight:700, marginBottom:16 }}>📢 Announcements</div>
-            <div style={{ display:'flex', gap:8, marginBottom:8, flexWrap:'wrap' }}>
-              <input value={newAnnTitle} onChange={e=>setNewAnnTitle(e.target.value)} placeholder="Announcement title..." style={{ flex:1, minWidth:150, padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:14 }} />
-              <select value={newAnnPriority} onChange={e=>setNewAnnPriority(e.target.value)} style={{ padding:'8px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
-                <option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option>
-              </select>
-            </div>
-            <textarea value={newAnnBody} onChange={e=>setNewAnnBody(e.target.value)} placeholder="Announcement body..." rows={3} style={{ width:'100%', padding:'10px 12px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box', fontFamily:'inherit' }} />
-            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
-              <button onClick={async()=>{ if(!newAnnTitle.trim()||!newAnnBody.trim()) return; await fetch(API+'/workspace-announcements',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('token')},body:JSON.stringify({title:newAnnTitle,body:newAnnBody,priority:newAnnPriority})}); setNewAnnTitle(''); setNewAnnBody(''); const r=await fetch(API+'/workspace-announcements',{headers:{Authorization:'Bearer '+localStorage.getItem('token')}}); setWsAnnouncementsB47(await r.json()); }} style={{ padding:'8px 16px', background:'var(--accent)', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:13 }}>Post</button>
-              <button onClick={async()=>{ const r=await fetch(API+'/workspace-announcements',{headers:{Authorization:'Bearer '+localStorage.getItem('token')}}); setWsAnnouncementsB47(await r.json()); }} style={{ padding:'8px 14px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text)', cursor:'pointer', fontSize:13 }}>Load</button>
-            </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {wsAnnouncementsB47.map((a:any)=>{
-                const prioColor:any={'low':'#6b7280','normal':'var(--accent)','high':'#f59e0b','urgent':'#ef4444'};
-                return (
-                  <div key={a.id} style={{ background:'var(--bg-card)', border:`2px solid ${prioColor[a.priority]||'var(--border)'}`, borderRadius:10, padding:14 }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
-                      <div>
-                        <span style={{ color:'var(--fg-text)', fontWeight:600 }}>{a.title}</span>
-                        <span style={{ marginLeft:8, padding:'1px 7px', background:prioColor[a.priority]+'33', color:prioColor[a.priority], borderRadius:10, fontSize:10, fontWeight:600 }}>{a.priority.toUpperCase()}</span>
-                      </div>
-                      <div style={{ display:'flex', gap:4 }}>
-                        <button onClick={async()=>{ await fetch(API+'/workspace-announcements/'+a.id+'/dismiss',{method:'PUT',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:5, color:'var(--fg-text)', cursor:'pointer', fontSize:11 }}>Dismiss</button>
-                        <button onClick={async()=>{ await fetch(API+'/workspace-announcements/'+a.id,{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 8px', background:'#7f1d1d', border:'none', borderRadius:5, color:'#fca5a5', cursor:'pointer', fontSize:11 }}>Delete</button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* ── WAVE 19: Health & Wellness AI ─────────────────────── */}
         {(mainTab as string) === 'symptomcheck' && <ForgeTab_symptomcheck />}
@@ -66629,3 +65129,4 @@ export default function ForgeApp() {
     </div>
   );
 }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
