@@ -2967,8 +2967,6 @@ export function ForgeTab_riskmatrix121() {
 function ForgeTab_proddesc120() {
   const [product, setProduct] = React.useState('');
   const [audience, setAudience] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [result, setResult] = React.useState('');
   const API = process.env.NEXT_PUBLIC_API_BASE_URL||'https://forge-production-2692.up.railway.app/api';
   const token = typeof window!=='undefined'?localStorage.getItem('forge_token')||'':'';
   const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/ecom/product-description', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({product,audience})}); const d = await r.json(); setResult(d.result||JSON.stringify(d)); } catch(e:any){setResult('Error: '+e.message);} setLoading(false); };
@@ -2978,8 +2976,6 @@ function ForgeTab_proddesc120() {
 function ForgeTab_essayoutline120() {
   const [topic, setTopic] = React.useState('');
   const [type, setType] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [result, setResult] = React.useState('');
   const API = process.env.NEXT_PUBLIC_API_BASE_URL||'https://forge-production-2692.up.railway.app/api';
   const token = typeof window!=='undefined'?localStorage.getItem('forge_token')||'':'';
   const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/writing/essay-outline', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({topic,type})}); const d = await r.json(); setResult(d.result||JSON.stringify(d)); } catch(e:any){setResult('Error: '+e.message);} setLoading(false); };
@@ -2987,10 +2983,7 @@ function ForgeTab_essayoutline120() {
 }
 
 function ForgeTab_researchsum120() {
-  const [topic, setTopic] = React.useState('');
   const [sources, setSources] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [result, setResult] = React.useState('');
   const API = process.env.NEXT_PUBLIC_API_BASE_URL||'https://forge-production-2692.up.railway.app/api';
   const token = typeof window!=='undefined'?localStorage.getItem('forge_token')||'':'';
   const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/research/summarizer', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({topic,sources})}); const d = await r.json(); setResult(d.result||JSON.stringify(d)); } catch(e:any){setResult('Error: '+e.message);} setLoading(false); };
@@ -3000,8 +2993,6 @@ function ForgeTab_researchsum120() {
 function ForgeTab_focusplan120() {
   const [tasks, setTasks] = React.useState('');
   const [hours, setHours] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [result, setResult] = React.useState('');
   const API = process.env.NEXT_PUBLIC_API_BASE_URL||'https://forge-production-2692.up.railway.app/api';
   const token = typeof window!=='undefined'?localStorage.getItem('forge_token')||'':'';
   const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/productivity/focus-plan', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({tasks,hours})}); const d = await r.json(); setResult(d.result||JSON.stringify(d)); } catch(e:any){setResult('Error: '+e.message);} setLoading(false); };
@@ -3011,8 +3002,6 @@ function ForgeTab_focusplan120() {
 function ForgeTab_expensereport120() {
   const [expenses, setExpenses] = React.useState('');
   const [purpose, setPurpose] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [result, setResult] = React.useState('');
   const API = process.env.NEXT_PUBLIC_API_BASE_URL||'https://forge-production-2692.up.railway.app/api';
   const token = typeof window!=='undefined'?localStorage.getItem('forge_token')||'':'';
   const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/finance/expense-report', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({expenses,purpose})}); const d = await r.json(); setResult(d.result||JSON.stringify(d)); } catch(e:any){setResult('Error: '+e.message);} setLoading(false); };
@@ -12293,7 +12282,6 @@ export function ForgeTab_devsecurityarchitect302() {
 export function ForgeTab_marketingcaseStudy302() {
   const [customer, setCustomer] = React.useState('');
   const [challenge, setChallenge] = React.useState('');
-  const [result, setResult] = React.useState('');
   const [result, setResult] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const API = (window as any).FORGE_API || '';
