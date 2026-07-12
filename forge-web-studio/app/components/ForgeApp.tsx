@@ -5476,8 +5476,6 @@ function computeDiff(oldText: string, newText: string): string {
 function ForgeTab_keyhealth() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [health, setHealth] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [probedAt, setProbedAt] = React.useState('');
@@ -5557,8 +5555,6 @@ function ForgeTab_keyhealth() {
 function ForgeTab_leads() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-                const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
                 const [leads, setLeads] = React.useState<any[]>([]);
                 const [total, setTotal] = React.useState(0);
                 const [loading, setLoading] = React.useState(false);
@@ -5615,8 +5611,6 @@ function ForgeTab_leads() {
 function ForgeTab_hermes() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [goal, setGoal] = React.useState('');
           const [runId, setRunId] = React.useState<string|null>(null);
           const [steps, setSteps] = React.useState<any[]>([]);
@@ -5866,8 +5860,6 @@ function ForgeTab_hermes() {
 function ForgeTab_forgedeepresearch() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [topic, setTopic] = React.useState('');
           const [depth, setDepth] = React.useState('standard');
           const [running, setRunning] = React.useState(false);
@@ -5951,8 +5943,6 @@ function ForgeTab_forgedeepresearch() {
 function ForgeTab_studymode() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [topic, setTopic] = React.useState('');
           const [mode, setMode] = React.useState('flashcards');
           const [loading, setLoading] = React.useState(false);
@@ -6026,8 +6016,6 @@ function ForgeTab_studymode() {
 function ForgeTab_voicemode() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [listening, setListening] = React.useState(false);
           const [speaking, setSpeaking] = React.useState(false);
           const [transcript, setTranscript] = React.useState('');
@@ -6100,8 +6088,6 @@ function ForgeTab_voicemode() {
 function ForgeTab_forgecanvas() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [prompt, setPrompt] = React.useState('');
           const [docType, setDocType] = React.useState('document');
           const [content, setContent] = React.useState('');
@@ -6162,8 +6148,6 @@ function ForgeTab_forgecanvas() {
 function ForgeTab_forgeshop() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [query, setQuery] = React.useState('');
           const [budget, setBudget] = React.useState('');
           const [category, setCategory] = React.useState('General');
@@ -6215,8 +6199,6 @@ function ForgeTab_forgeshop() {
 function ForgeTab_forgememory() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [memories, setMemories] = React.useState<any[]>([]);
           const [key, setKey] = React.useState('');
           const [value, setValue] = React.useState('');
@@ -6275,8 +6257,6 @@ function ForgeTab_forgememory() {
 function ForgeTab_forgeauto2() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [goal, setGoal] = React.useState('');
           const [running, setRunning] = React.useState(false);
           const [phase, setPhase] = React.useState('');
@@ -6414,8 +6394,6 @@ function ForgeTab_forgeauto2() {
 function ForgeTab_dreamlog() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [log, setLog] = React.useState<any[]>([]);
           const [brief, setBrief] = React.useState('');
           const [suggesting, setSuggesting] = React.useState(false);
@@ -6485,8 +6463,6 @@ function ForgeTab_dreamlog() {
 function ForgeTab_forgeiq() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [iq, setIq] = React.useState<any>(null);
           const [history, setHistory] = React.useState<any[]>([]);
           const [loading, setLoading] = React.useState(false);
@@ -6542,8 +6518,6 @@ function ForgeTab_forgeiq() {
 function ForgeTab_promptopt() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [prompt, setPrompt] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
@@ -6595,8 +6569,6 @@ function ForgeTab_promptopt() {
 function ForgeTab_shadowmode() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [prompt, setPrompt] = React.useState('');
           const [modelA, setModelA] = React.useState('claude-3-5-sonnet-20241022');
           const [modelB, setModelB] = React.useState('gpt-4o');
@@ -6663,8 +6635,6 @@ function ForgeTab_shadowmode() {
 function ForgeTab_debate2() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [topic, setTopic] = React.useState('');
           const [rounds, setRounds] = React.useState(3);
           const [result, setResult] = React.useState<any>(null);
@@ -6708,8 +6678,6 @@ function ForgeTab_debate2() {
 function ForgeTab_timecapsule() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [msg, setMsg] = React.useState('');
           const [deliverAt, setDeliverAt] = React.useState('');
           const [capsules, setCapsules] = React.useState<any[]>([]);
@@ -6755,8 +6723,6 @@ function ForgeTab_timecapsule() {
 function ForgeTab_codeexplain() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [code, setCode] = React.useState('');
           const [lang, setLang] = React.useState('auto');
           const [result, setResult] = React.useState<any>(null);
@@ -6811,8 +6777,6 @@ function ForgeTab_codeexplain() {
 function ForgeTab_ideavalidator() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [idea, setIdea] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
@@ -6882,8 +6846,6 @@ function ForgeTab_ideavalidator() {
 function ForgeTab_tonerewriter() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [text, setText] = React.useState('');
           const [tone, setTone] = React.useState('professional');
           const [result, setResult] = React.useState<any>(null);
@@ -6933,8 +6895,6 @@ function ForgeTab_tonerewriter() {
 function ForgeTab_resumebuilder() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [experience, setExperience] = React.useState('');
           const [jobDesc, setJobDesc] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
@@ -7001,8 +6961,6 @@ function ForgeTab_resumebuilder() {
 function ForgeTab_emailnegotiator() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [original, setOriginal] = React.useState('');
           const [context, setContext] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
@@ -7058,8 +7016,6 @@ function ForgeTab_emailnegotiator() {
 function ForgeTab_storygen2() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [premise, setPremise] = React.useState('');
           const [genre, setGenre] = React.useState('fantasy');
           const [storyId, setStoryId] = React.useState<string|null>(null);
@@ -7113,8 +7069,6 @@ function ForgeTab_storygen2() {
 function ForgeTab_meetingsum() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [transcript, setTranscript] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
@@ -7174,8 +7128,6 @@ function ForgeTab_meetingsum() {
 function ForgeTab_competitorspy() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [company, setCompany] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
@@ -7241,8 +7193,6 @@ function ForgeTab_competitorspy() {
 function ForgeTab_ailawyer() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [doc, setDoc] = React.useState('');
           const [docType, setDocType] = React.useState('contract');
           const [result, setResult] = React.useState<any>(null);
@@ -7315,8 +7265,6 @@ function ForgeTab_ailawyer() {
 function ForgeTab_financeadvisor() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [situation, setSituation] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
@@ -7381,8 +7329,6 @@ function ForgeTab_financeadvisor() {
 function ForgeTab_languagetutor() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [language, setLanguage] = React.useState('Spanish');
           const [level, setLevel] = React.useState('beginner');
           const [topic, setTopic] = React.useState('');
@@ -7477,8 +7423,6 @@ function ForgeTab_languagetutor() {
 function ForgeTab_flashcardgen() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [topic, setTopic] = React.useState('');
           const [count, setCount] = React.useState(10);
           const [difficulty, setDifficulty] = React.useState('medium');
@@ -7554,8 +7498,6 @@ function ForgeTab_flashcardgen() {
 function ForgeTab_linkedinopt() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [topic, setTopic] = React.useState('');
           const [angle, setAngle] = React.useState('thought-leadership');
           const [about, setAbout] = React.useState('');
@@ -10443,8 +10385,6 @@ function ForgeTab_lovelanguage() {
 function ForgeTab_forgeoperator() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [goal, setGoal] = React.useState('');
           const [sessionId, setSessionId] = React.useState<string|null>(null);
           const [status, setStatus] = React.useState<'idle'|'running'|'done'|'error'>('idle');
@@ -10722,8 +10662,6 @@ function ForgeTab_forgeoperator() {
 function ForgeTab_passport() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [pp, setPp] = React.useState<any>(null);
           const [ppLoad, setPpLoad] = React.useState(true);
           const [ppEdit, setPpEdit] = React.useState(false);
@@ -10909,8 +10847,6 @@ function ForgeTab_passport() {
 function ForgeTab_symptomcheck() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [symptoms, setSymptoms] = React.useState('');
           const [duration, setDuration] = React.useState('');
           const [age, setAge] = React.useState('');
@@ -10959,8 +10895,6 @@ function ForgeTab_symptomcheck() {
 function ForgeTab_sleepopt() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [issues, setIssues] = React.useState('');
           const [schedule, setSchedule] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
@@ -11007,8 +10941,6 @@ function ForgeTab_sleepopt() {
 function ForgeTab_stressdecode() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [desc, setDesc] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
@@ -11050,8 +10982,6 @@ function ForgeTab_stressdecode() {
 function ForgeTab_workoutgen() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [goal, setGoal] = React.useState('');
           const [equipment, setEquipment] = React.useState('bodyweight only');
           const [time, setTime] = React.useState('45');
@@ -11091,8 +11021,6 @@ function ForgeTab_workoutgen() {
 function ForgeTab_nutricoach() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [goal, setGoal] = React.useState('');
           const [restrictions, setRestrictions] = React.useState('');
           const [calories, setCalories] = React.useState('2000');
@@ -11127,8 +11055,6 @@ function ForgeTab_nutricoach() {
 function ForgeTab_willgen() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [name, setName] = React.useState('');
           const [state, setState] = React.useState('');
           const [assets, setAssets] = React.useState('');
@@ -11164,8 +11090,6 @@ function ForgeTab_willgen() {
 function ForgeTab_leaseanalyze() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [leaseText, setLeaseText] = React.useState('');
           const [rent, setRent] = React.useState('');
           const [state, setState] = React.useState('');
@@ -11196,8 +11120,6 @@ function ForgeTab_leaseanalyze() {
 function ForgeTab_disputeletter() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [company, setCompany] = React.useState('');
           const [amount, setAmount] = React.useState('');
           const [description, setDescription] = React.useState('');
@@ -11234,8 +11156,6 @@ function ForgeTab_disputeletter() {
 function ForgeTab_tosdecode() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [tosText, setTosText] = React.useState('');
           const [service, setService] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
@@ -11265,8 +11185,6 @@ function ForgeTab_tosdecode() {
 function ForgeTab_foiarequest() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [agency, setAgency] = React.useState('');
           const [records, setRecords] = React.useState('');
           const [yourName, setYourName] = React.useState('');
@@ -11301,8 +11219,6 @@ function ForgeTab_foiarequest() {
 function ForgeTab_plottwist() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [summary, setSummary] = React.useState('');
           const [genre, setGenre] = React.useState('thriller');
           const [situation, setSituation] = React.useState('');
@@ -11334,8 +11250,6 @@ function ForgeTab_plottwist() {
 function ForgeTab_charcreate() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [role, setRole] = React.useState('protagonist');
           const [genre, setGenre] = React.useState('');
           const [seeds, setSeeds] = React.useState('');
@@ -11374,8 +11288,6 @@ function ForgeTab_charcreate() {
 function ForgeTab_worldbuild() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [genre, setGenre] = React.useState('fantasy');
           const [premise, setPremise] = React.useState('');
           const [magicLevel, setMagicLevel] = React.useState('low magic');
@@ -11409,8 +11321,6 @@ function ForgeTab_worldbuild() {
 function ForgeTab_dialoguecoach() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [dialogue, setDialogue] = React.useState('');
           const [context, setContext] = React.useState('');
           const [goal, setGoal] = React.useState('create tension');
@@ -11447,8 +11357,6 @@ function ForgeTab_dialoguecoach() {
 function ForgeTab_bookblurb() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [title, setTitle] = React.useState('');
           const [genre, setGenre] = React.useState('');
           const [protagonist, setProtagonist] = React.useState('');
@@ -11483,8 +11391,6 @@ function ForgeTab_bookblurb() {
 function ForgeTab_perfreview() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [role, setRole] = React.useState('');
           const [achievements, setAchievements] = React.useState('');
           const [growth, setGrowth] = React.useState('');
@@ -11514,8 +11420,6 @@ function ForgeTab_perfreview() {
 function ForgeTab_salaryresearch() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [role, setRole] = React.useState('');
           const [yearsExp, setYearsExp] = React.useState('');
           const [location, setLocation] = React.useState('');
@@ -11561,8 +11465,6 @@ function ForgeTab_salaryresearch() {
 function ForgeTab_offercompare() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [offers, setOffers] = React.useState([{name:'Offer A',base:'',equity:'',bonus:'',pto:'',remote:'',notes:''},{name:'Offer B',base:'',equity:'',bonus:'',pto:'',remote:'',notes:''}]);
           const [priorities, setPriorities] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
@@ -11591,8 +11493,6 @@ function ForgeTab_offercompare() {
 function ForgeTab_careerpivot() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [current, setCurrent] = React.useState('');
           const [target, setTarget] = React.useState('');
           const [skills, setSkills] = React.useState('');
@@ -11633,8 +11533,6 @@ function ForgeTab_careerpivot() {
 function ForgeTab_linkedinmsg() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [background, setBackground] = React.useState('');
           const [targetPerson, setTargetPerson] = React.useState('');
           const [targetCompany, setTargetCompany] = React.useState('');
