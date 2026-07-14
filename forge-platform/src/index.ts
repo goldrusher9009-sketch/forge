@@ -188481,4 +188481,131 @@ app.post('/api/marketing/landing-page-audit', requireAuth, async (req: AuthReque
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
+// ── Missing routes patch ──
+
+// GET /api/keys/health
+
+// ── Missing routes patch ──
+
+// GET /api/keys/health
+app.get('/api/keys/health', requireAuth, (req: AuthRequest, res) => {
+  try {
+    const uid = req.user!.id;
+    const providers = ['anthropic','openai','gemini','groq','mistral','openrouter'];
+    const health: Record<string,boolean> = {};
+    for (const p of providers) {
+      const row = db.prepare('SELECT key_value FROM user_api_keys WHERE user_id=? AND provider=?').get(uid, p) as any;
+      if (!row) { const pk = db.prepare('SELECT key_value FROM platform_api_keys WHERE provider=?').get(p) as any; health[p] = !!(pk?.key_value); }
+      else { health[p] = !!(row.key_value); }
+    }
+    res.json({ success: true, health });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Admin leads
+app.get('/api/admin/leads', requireAuth, (req: AuthRequest, res) => {
+  try {
+    const limit = parseInt((req.query.limit as string)||'100',10);
+    res.json({ success: true, leads: db.prepare('SELECT id,email,plan,created_at FROM users ORDER BY created_at DESC LIMIT ?').all(limit) });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/admin/leads/:id', requireAuth, (req: AuthRequest, res) => {
+  try { db.prepare('DELETE FROM users WHERE id=?').run(req.params.id); res.json({ success: true }); }
+  catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/admin/leads/export', requireAuth, (req: AuthRequest, res) => {
+  try {
+    const rows = db.prepare('SELECT id,email,plan,created_at FROM users ORDER BY created_at DESC').all() as any[];
+    const csv = ['id,email,plan,created_at',...rows.map((r:any)=>`${r.id},${r.email},${r.plan||'free'},${r.created_at}`)].join('\n');
+    res.setHeader('Content-Type','text/csv'); res.setHeader('Content-Disposition','attachment; filename=leads.csv'); res.send(csv);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
+// Hermes runs table
+try { db.exec(`CREATE TABLE IF NOT EXISTS hermes_runs (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, goal TEXT, status TEXT DEFAULT 'pending', output TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch(_){}
+
+app.get('/api/hermes/runs', requireAuth, (req: AuthRequest, res) => {
+  try { res.json({ success:true, runs: db.prepare('SELECT * FROM hermes_runs WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(req.user!.id) }); }
+  catch(e:any){ res.status(500).json({ error:e.message }); }
+});
+app.post('/api/hermes/run', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { goal } = req.body; const id = uuidv4();
+    db.prepare('INSERT INTO hermes_runs (id,user_id,goal,status) VALUES (?,?,?,?)').run(id, req.user!.id, goal||'', 'running');
+    callLLM(req.user!.id, `Complete this goal as an autonomous agent:\n\n${goal}`, 'You are Hermes, an autonomous AI agent.')
+      .then((r:any) => db.prepare('UPDATE hermes_runs SET status=?,output=?,updated_at=CURRENT_TIMESTAMP WHERE id=?').run('complete',r,id))
+      .catch((e:any) => db.prepare('UPDATE hermes_runs SET status=?,output=?,updated_at=CURRENT_TIMESTAMP WHERE id=?').run('error',e.message,id));
+    res.json({ success:true, id, status:'running' });
+  } catch(e:any){ res.status(500).json({ error:e.message }); }
+});
+app.get('/api/hermes/run/:id', requireAuth, (req: AuthRequest, res) => {
+  try {
+    const run = db.prepare('SELECT * FROM hermes_runs WHERE id=? AND user_id=?').get(req.params.id, req.user!.id);
+    if (!run) { res.status(404).json({ error:'Not found' }); return; }
+    res.json({ success:true, run });
+  } catch(e:any){ res.status(500).json({ error:e.message }); }
+});
+app.post('/api/hermes/cancel/:id', requireAuth, (req: AuthRequest, res) => {
+  try { db.prepare('UPDATE hermes_runs SET status=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?').run('cancelled',req.params.id,req.user!.id); res.json({ success:true }); }
+  catch(e:any){ res.status(500).json({ error:e.message }); }
+});
+app.get('/api/hermes/stream/:id', (req: any, res: any) => {
+  res.setHeader('Content-Type','text/event-stream'); res.setHeader('Cache-Control','no-cache'); res.setHeader('X-Accel-Buffering','no'); res.flushHeaders();
+  const send = (d:object) => { try { res.write(`data: ${JSON.stringify(d)}\n\n`); } catch(_){} };
+  const poll = setInterval(() => {
+    const run = db.prepare('SELECT status,output FROM hermes_runs WHERE id=?').get(req.params.id) as any;
+    if (!run) { send({type:'error',message:'Not found'}); clearInterval(poll); res.end(); return; }
+    if (['complete','error','cancelled'].includes(run.status)) { send({type:'result',status:run.status,output:run.output}); clearInterval(poll); res.end(); }
+    else { send({type:'ping',status:run.status}); }
+  }, 2000);
+  req.on('close', () => clearInterval(poll));
+});
+app.get('/api/hermes/file/:runId/:filename', requireAuth, (_req: AuthRequest, res: any) => { res.status(404).json({ error:'File storage not configured' }); });
+
+// Operator sessions table
+try { db.exec(`CREATE TABLE IF NOT EXISTS operator_sessions (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, task TEXT, status TEXT DEFAULT 'pending', result TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch(_){}
+
+app.get('/api/operator/sessions', requireAuth, (req: AuthRequest, res) => {
+  try { res.json({ success:true, sessions: db.prepare('SELECT * FROM operator_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 20').all(req.user!.id) }); }
+  catch(e:any){ res.status(500).json({ error:e.message }); }
+});
+app.post('/api/operator/run', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { task, url } = req.body; const id = uuidv4();
+    db.prepare('INSERT INTO operator_sessions (id,user_id,task,status) VALUES (?,?,?,?)').run(id, req.user!.id, task||'', 'running');
+    callLLM(req.user!.id, `Plan browser automation for:\nTask: ${task}\nURL: ${url||'not specified'}`, 'You are ForgeOperator.')
+      .then((r:any) => db.prepare('UPDATE operator_sessions SET status=?,result=? WHERE id=?').run('complete',r,id))
+      .catch((e:any) => db.prepare('UPDATE operator_sessions SET status=?,result=? WHERE id=?').run('error',e.message,id));
+    res.json({ success:true, id, status:'running' });
+  } catch(e:any){ res.status(500).json({ error:e.message }); }
+});
+app.get('/api/operator/session/:id', requireAuth, (req: AuthRequest, res) => {
+  try {
+    const s = db.prepare('SELECT * FROM operator_sessions WHERE id=? AND user_id=?').get(req.params.id, req.user!.id);
+    if (!s) { res.status(404).json({ error:'Not found' }); return; }
+    res.json({ success:true, session:s });
+  } catch(e:any){ res.status(500).json({ error:e.message }); }
+});
+app.get('/api/operator/stream/:id', (req: any, res: any) => {
+  res.setHeader('Content-Type','text/event-stream'); res.setHeader('Cache-Control','no-cache'); res.setHeader('X-Accel-Buffering','no'); res.flushHeaders();
+  const send = (d:object) => { try { res.write(`data: ${JSON.stringify(d)}\n\n`); } catch(_){} };
+  const poll = setInterval(() => {
+    const s = db.prepare('SELECT status,result FROM operator_sessions WHERE id=?').get(req.params.id) as any;
+    if (!s) { send({type:'error',message:'Not found'}); clearInterval(poll); res.end(); return; }
+    if (['complete','error'].includes(s.status)) { send({type:'result',status:s.status,result:s.result}); clearInterval(poll); res.end(); }
+    else { send({type:'ping',status:s.status}); }
+  }, 2000);
+  req.on('close', () => clearInterval(poll));
+});
+
+// Thread writing assist
+app.post('/api/threads/:id/writing-assist', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { text, mode } = req.body;
+    const prompt = mode==='improve' ? `Improve this text:\n\n${text}` : `Continue writing from:\n\n${text}`;
+    const result = await callLLM(req.user!.id, prompt, 'You are a writing assistant.');
+    res.json({ success:true, result });
+  } catch(e:any){ res.status(500).json({ error:e.message }); }
+});
+
 app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));

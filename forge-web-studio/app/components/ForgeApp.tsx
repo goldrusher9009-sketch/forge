@@ -1,4 +1,4 @@
-﻿// Forge AI Workspace v6.62 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
+// Forge AI Workspace v6.62 -- ForgeAuto ForgeMulti ForgeASI MVP Builder Intelligence Agent Swarm + React hooks crash fix
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { OnboardingFlow } from './OnboardingFlow';
@@ -26465,7 +26465,7 @@ export default function ForgeApp() {
   useEffect(() => {
     if (mainTab === 'brief' && user && !briefData && !briefLoading) {
       setBriefLoading(true); setBriefError('');
-      fetch(API+'/brief', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+      fetch(API+'/api/brief', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
         .then(r => r.json()).then(d => { setBriefData(d); setBriefLoading(false); })
         .catch(() => { setBriefError('Failed to load morning brief.'); setBriefLoading(false); });
     }
@@ -40270,7 +40270,7 @@ export default function ForgeApp() {
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Morning Brief</h1>
                   <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Your daily Forge snapshot — streaks, changes, and top action.</p>
                 </div>
-                <button onClick={() => { setBriefData(null); setBriefLoading(true); setBriefError(''); fetch(API+'/brief',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}}).then(r=>r.json()).then(d=>{setBriefData(d);setBriefLoading(false);}).catch(()=>{setBriefError('Failed.');setBriefLoading(false);}); }} style={{ marginLeft:'auto', padding:'6px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>↻ Refresh</button>
+                <button onClick={() => { setBriefData(null); setBriefLoading(true); setBriefError(''); fetch(API+'/api/brief',{headers:{Authorization:'Bearer '+localStorage.getItem('forge_token')}}).then(r=>r.json()).then(d=>{setBriefData(d);setBriefLoading(false);}).catch(()=>{setBriefError('Failed.');setBriefLoading(false);}); }} style={{ marginLeft:'auto', padding:'6px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg2)', color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>↻ Refresh</button>
               </div>
               {briefLoading && <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)', fontSize:14 }}>Loading…</div>}
               {briefError && <div style={{ textAlign:'center', padding:40, color:'#f87171', fontSize:13 }}>{briefError}</div>}
