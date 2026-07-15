@@ -143401,3 +143401,2990 @@ export function ForgeTab_talentacquisition7701() {
   const run = async () => { setLoading(true); setResult(''); try { const r = await fetch(API+'/api/peoplehr/talent', {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('forge_token')||'')},body:JSON.stringify({"taType": taType, "currentTAState": currentTAState, "taGoals": taGoals})}); const d = await r.json(); setResult(d.result||d.response||d.content||d.error||JSON.stringify(d)); } catch(e:any){setResult(e.message);} finally{setLoading(false);} };
   return (<div style={{padding:'2rem',maxWidth:800,margin:'0 auto'}}><h2>👔 Talent Acquisition & HR Strategy Advisor</h2><div style={{display:'grid',gap:'1rem',marginBottom:'1rem'}}><input placeholder="TA Type (tech/executive/volume/campus/specialized)" value={taType} onChange={e=>setTaType(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Current TA State & Metrics" value={currentTAState} onChange={e=>setCurrentTAState(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/><input placeholder="Goals (time-to-hire/quality/diversity/cost)" value={taGoals} onChange={e=>setTaGoals(e.target.value)} style={{padding:'0.5rem',borderRadius:6,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}/></div><button onClick={run} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',padding:'0.6rem 1.5rem',borderRadius:6,cursor:'pointer'}}>{loading ? 'Running...' : 'Run Talent Acquisition Advisor'}</button>{result && <pre style={{marginTop:'1rem',background:'#111',padding:'1rem',borderRadius:8,overflowX:'auto',whiteSpace:'pre-wrap'}}>{result}</pre>}</div>);
 }
+
+
+// === AUTO-GENERATED STUBS FOR MISSING COMPONENTS ===
+
+export function ForgeTab_abstats113() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_abvariants110() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_accessibilityux2998() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_acquisition7782() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_activelisten() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_adaptive7742() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_adcopy110() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_adcopy94() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_affiliateprog106() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_agridrone7796() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_agrisupplychain7793() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_ailawyer() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_analogymkr73() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_analyticsplatform2988() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_angermanage() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_anxietytoolkit() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_apichangelog111() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_apidoc102() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_apidocgen() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_apologycraft() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_apologyletter() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_apologytext() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_appreci72() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_appsec2964() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_appstore100() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_assertive69() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_assessment7745() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_attachcoach() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_attractbuild() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_atttrain88() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_audgrow87() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_backlinkstrat115() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_bedtimestory() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_bedtimestory67() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_behaviordecode() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_biohackopt() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_biooptimizer() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_biooptimizer119() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_biowrite87() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_bizmodelai() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_bizplan() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_boarddeck107() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_bookblurb() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_booksummarizer() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_booktitle70() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_boundaryscripts() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_boundaryset() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_brandidentity3000() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_brandstory98() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_brandvoice65() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_breakeven102() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_breakupanalyze() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_breakupletter() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_budgetbuilder() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_budgetplanner118() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_bugreport104() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_burnletter() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_burnoutcheck() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_captable109() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_captiongen() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_carbonaudit() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_carbonfp86() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_carecoordination7759() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_careerbrand() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_careergap77() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_careermap() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_careerpivot() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_casestudy110() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_cashflowfx118() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_cbtexercise() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_challengebuilder() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_changelog100() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_changemanagement7707() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_charbuild() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_charcreate() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_charcreate79() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_charforge() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_charismav2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_charnames70() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_chorechart() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_chorechart67() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_churnanalyze() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_churnpredictor106() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_ci7730() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_cicdpipeline2972() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_climact86() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_climateexplain() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_climatesmart7799() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_clinicaldecision7753() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_cloudcostops2979() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_cloudsec2963() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_codeexplain() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_codereviewer() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_codetutor97() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_cofoundermatch() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_cogbias80() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_cogenhance() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_cohortanalyzer113() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_colddmwriter() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_coldemail99() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_coldloom94() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_coldpitch() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_coldsequence109() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_coldtherapy() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_collegeadvise() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_collegeprep() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_collegeprep67() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_communitypost119() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_compensation7735() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_compensationbenefits7702() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_competitordive() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_competitorspy() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_competitorteardown102() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_complaintwrite() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_compliance117() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_compliance7772() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_compliancecheck2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_complimenteng() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_complimentengine() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_conceptdecode() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_conceptmap() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_conflictmed() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_conflictresolve() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_conflmed72() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_conflmed89() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_containerorchestration2974() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_contcal87() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_contentcal115() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_contentcal24() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_contentrepurpose103() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_contract7771() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_contractanalyze() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_contractanalyzer97() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_contractdraft() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_contractdraft2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_contractrisk117() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_contrdec85() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_conversionux2999() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_convhack() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_cookingcoach() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_copingtoolkit() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_corporatetraining7748() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_costredux7728() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_coverlettergen() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_creditcoach() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_creditcoach68() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_crisiscomms108() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_criticalthink() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_cropmanagement7792() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_crypto7767() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_curriculum7741() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_custavatr() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_custpersona2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_cyberstrategy2961() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_dataengstrategy2981() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_datagovernance2987() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_datalakehouse2985() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_datapipe112() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_dataqualityeng2989() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_datastory104() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_datawarehouse2982() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_debate2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_debateprep14() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_debateprep60() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_debateprep98() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_debtdest90() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_debtpayoff() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_debtplan98() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_debtstrat() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_debtstrat68() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_decfat88() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_decisionmatrix97() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_decisionoracle() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_decisionspeed() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_deepwork71() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_deepworkplan() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_deepworkplan2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_delegcoach82() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_demandltr85() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_designsystem2992() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_development7783() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_devopsstrategy2971() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_devsecops2978() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_dialogpol() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_dialogsharp() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_dialogue79() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_dialoguecoach() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_diffconv81() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_difficultconv2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_difficultconvo() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_digitalops7727() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_digitaltherapeutics7755() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_dispute7778() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_disputeletter() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_disputeletter2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_diversityinclusion7704() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_dreaminterp() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_dreamlog() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_duediligence108() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_ecodiet86() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_ecohabits() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_ehr7752() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_emailnegotiator() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_emailroastv2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_emailseqbuilder() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_emailsequence105() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_emailsubject103() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_emailzero() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_embedded7770() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_emergfund78() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_emotiondecode() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_emotionmap97() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_empathy81() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_employeeengagement7705() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_employment7776() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_energyaudit95() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_energymapper() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_energyopt75() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_engagement7737() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_erp7726() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_esgfinance7720() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_essayoutline120() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_estateplan() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_etlpipeline2983() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_eulogywriter() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_examprep() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_excusegen() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_execpres77() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_execpres92() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_execpresence() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_exitplanner() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_expdes91() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_expensereport120() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_experimentdesign() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_failurecv() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_familymeeting() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_familymtg() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_famlegacy72() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_fammeet84() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_famval84() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_fantasyadv() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_fbkcultr92() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_featureflag111() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_feedbackanalyzer102() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_feedbackcraft() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_feynman73() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_financeadvisor() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_financecontrol7711() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_financeoptimizer97() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_firecalc() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_firecalc90() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_fireplan78() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_firstdate() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_fitnessplanner() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_flashcardgen() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_flavorprofile() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_flowoptimize() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_flowstate88() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_focuscoach80() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_focusplan120() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_foiarequest() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_forgeauto2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_forgecanvas() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_forgedeepresearch() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_forgeiq() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_forgememory() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_forgeoperator() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_forgeshop() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_fpastrat7714() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_fraud7769() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_fundingcalc118() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_fundraise74() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_funnelbuilder113() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_futureself() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_gamification7746() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_gdprcheck117() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_gitcommitgen() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_gitflowops2977() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_globalhr7710() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_governance7775() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_grantprop100() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_grantproposal() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_grantwrite() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_grantwriter107() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_gratitudereflect() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_grc2969() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_greenhome() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_greenhome86() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_griefcoach() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_growthhack() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_gtmplan() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_gtmplanner107() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_guthealth75() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_habitdesigner() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_habitdna96() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_habitjournal() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_habitstack() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_habitstack98() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_hashtagstrat() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_headlineanalyzer115() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_healthanalytics7757() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_hermes() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_hiringfunnel107() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_homebuy() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_homerenovate() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_homevaluate() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_hormoneopt75() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_hranalytics7738() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_hrcompliancetool7739() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_hrdigital7703() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_hris7736() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_hroperations7708() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_hypogen91() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_hypothesisbuild() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_ideavalidator() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_identitysec2965() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_iife() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_inboxzero71() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_incidentresponse2968() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_inflame75() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_influencebuild() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_informationarch2996() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_infraascode2973() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_injuryadv() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_innerchild() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_innercritic() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_insaudit78() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_instacap119() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_insuranceaudit() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_insurancestrat7719() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_insurtech7764() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_internalaudit7715() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_interviewcoach() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_investanalyze() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_investdecode() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_investdecode68() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_investedu90() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_investexplain() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_investoremail() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_investorupd109() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_investorupdate104() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_investpitch() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_investthesis() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_invoicegen118() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_ip7774() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_irrigation7794() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_jobdesc102() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_jobdesc116() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_jobscout96() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_journeymap108() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_jtbd114() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_keyhealth() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_knowconn73() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_kpidesign82() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_kpistrat7729() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_labinterpreter() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_landingcopy104() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_landlordadvise() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_languagetutor() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_launchstrat() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_leadcoach92() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_leads() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_lean7722() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_learning7733() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_learningstyle() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_leaseanalyze() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_leasereview() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_leasing7786() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_legacyletter() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_legalcontract109() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_legaldraft99() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_legalease95() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_legalops7780() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_legalresearch7779() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_lending7766() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_lessonplan() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_lifegoals() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_linkedinbio() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_linkedinco100() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_linkedincont77() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_linkedinmsg() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_linkedinopt() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_linkedinrewrite() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_litigation7773() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_litmap() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_litrev91() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_livestock7795() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_lmsadmin7744() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_loadtest111() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_localintel() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_longev83() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_longevityprotocol() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_lovelang() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_lovelang81() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_lovelanguage() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_ltvpredictor113() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_lyriccraft() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_lyricwrite() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_manifestowriter() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_marketaccess7798() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_marketanalyze() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mealplan() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mealplanv2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_meetcost71() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_meetdesign82() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_meetingactions99() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_meetingai116() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_meetingaudit() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_meetingbuilder() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_meetingopt() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_meetingsum() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_meetkill93() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_memoirdraft() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_memtrain80() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mentalclr80() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mentalgame() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mentalmodels() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mentalperf() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mentenrg88() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mentmodel73() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_metatag115() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_microlearning7750() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mindmapgen98() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mindsetcoach() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mlexp112() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mlops2986() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_moatanalyzer107() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_moatbuild() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_modelsel112() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_monetize87() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_moneymind() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_moneymind78() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mooc7749() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_moodtracker() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_morningritual() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mortgagecalc() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mortgageexp() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_motiondesign2997() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_musicpitch() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_musictheory() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mvpdesign() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_mvpscoper97() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_ndareview2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_negotiationsim() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_neighborscout() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_neighborscout2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_neobank7768() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_netcoach89() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_netmsg69() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_networksec2962() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_netwrkstrat() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_netwrth90() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_newsletter110() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_newsletterarch96() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_newsletterdraft() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_nichefinder103() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_northstar114() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_nutricoach() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_objectionhandler103() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_observability2976() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_offercompare() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_offerneg() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_okrbuilder() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_okrgen114() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_okrgenerator105() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_onboardflow101() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_onboarding116() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_onboarding7732() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_openbanking7762() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_orgdesign7740() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_packingopt() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_paperdec91() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_paperdecode() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_parentadvice() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_parentadvise() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_parentcoach84() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_parentingcoach() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_partnerpropose() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_partnershipgen106() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_passiveincome() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_passport() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_patientengagement7754() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_payments7761() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pbrand87() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_peakstate80() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pentest2970() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_performance7734() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_perfrev116() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_perfreview() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_perfreview63() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_perfreview77() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_persona114() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_personabuilder105() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_personalbrand() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_personalceo() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_persuasionscript() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_phlauncher106() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pitchcoach93() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pitchdeckbuild() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pitchdeckbuilder98() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pitchfeedback103() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pitchscorer108() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pivotadv74() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pkmdesign() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_platformeng2980() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_playlistcurate() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_plothole70() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_plottwist() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_plottwist79() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_plottwistai() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_plotweave() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pmfcheck74() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_podcastguest97() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_podcastpitch() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_podcastscript109() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_podplan76() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_poemcrafter() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_policydecode() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_populationhealth7758() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_practicesched() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_prddraft99() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_precision7791() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pressrelease101() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_prevhealth75() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_priceanchor() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pricenegotiator() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pricingmodel() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pricingpage95() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pricingstrat() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pricingstrat114() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pricingstrategy() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pricingtier101() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_privacypol117() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_procautopsy93() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_procbust() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_procbust71() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_procbust88() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_processopt7721() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_procurestrat7716() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_proddesc120() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_prodnamer() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_productlaunch95() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_productupdate98() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_promotioncase() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_promotionmap() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_prompteng112() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_promptopt() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_propertymanagement7784() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_proptechmarketplace7790() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_pubspeak69() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_qualitymgmt7725() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_quizgen() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_realestatefinance7785() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_realtimeanalytics2990() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_recipegen2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_recipeinvent() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_reconnect72() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_recoveryplan() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_recovopt83() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_recruit7731() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_reengage() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_referralprog106() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_regexbuilder() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_regtech7763() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_regulatory7777() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_reit7789() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_relaudit() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_relaudit64() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_relaudit81() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_remotemonitoring7756() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_renovationplan() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_rentanalyze() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_repurpose76() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_researchsum120() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_researchsynth() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_resiliencebuild() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_resumebuilder() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_resumebullets() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_retentiondash113() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_retrofacilitator105() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_revenuemodel108() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_reviewrespond97() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_revmodel() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_rightsexp85() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_rightsexplain() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_riskmanagement7718() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_roastgen() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_salarybench() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_salaryneg() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_salaryresearch() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_salespage96() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_salesscript104() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_salestorytelling207() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_satiregen() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_scenewrite() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_scexcellence7724() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sciexp91() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_screenplayscene() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_screentime84() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_scriptwriter94() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_secondbrain93() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_secondbrainai() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_secretadmirer() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_selfcareplan() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_seobrief99() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_seooptimizer115() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_seowriter94() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_shadowmode() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_shortstoryai() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sidehust90() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sidehustle() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sitereleng2975() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sixsigma7723() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_skillgap97() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_skillroadmap() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sleeparch() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sleepopt() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sleepopt66() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_smallclaimscoach() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_smalltalk69() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_smalltalk81() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_smartbuilding7787() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_smclaim85() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_socianx72() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_socianx89() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_socops2967() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_socraticlearn() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_socstyle89() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_soilhealth7797() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_solotravel() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sopgen82() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sopwriter105() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sopwriter116() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_speakingprep98() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_specialed7747() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_speechwriter() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_speedread73() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sportanalyze() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sqloptimizer() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_standupwriter() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_startuplegal74() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_startupnamer() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_startupvalidate() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_storygen2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_storyout79() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_storyteller95() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_storyworld() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_stratthk92() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_streamprocessing2984() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_stressdec83() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_stressdecode() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_stressmgr() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_studentanalytics7743() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_studymode() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_studyplan() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_subjectlines() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_successionplanning7706() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_supplementstack() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_suppstack() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_suppstack83() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sustainability7788() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sustainplan() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_sustliv86() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_symptomcheck() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_taxestimator118() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_taxloss78() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_taxopt68() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_taxoptimize() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_taxstrat62() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_taxstrategy() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_taxstrategy7713() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_teachassist() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_teammot92() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_teamretro96() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_techdoc111() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_teencomm84() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_telemedicine7751() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_tenright85() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_termsdecode2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_textcoach() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_therapyjournal98() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_therapyletter() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_threadgen94() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_threadwriter101() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_threatintel2966() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_threatmodel111() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_thumbconcept76() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_tiktokhook76() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_tiktokscript119() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_timeauditor() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_timeblock71() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_timecapsule() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_tonerewriter() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_tosbuilder117() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_tosdecode() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_trainingplan() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_traumaedu() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_travelbudget() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_travelplanner() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_treasurystrat7712() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_triparchitect() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_trustbld89() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_twitterbio98() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_uniteco74() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_usabilitytesting2995() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_userresearch2993() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_uxaudit101() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_uxstrategy2991() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_valuation7781() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_valuebasedcare7760() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_vectordb112() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_ventmode() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_verticalfarming7800() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_villainorigin() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_viralformula97() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_viralhook119() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_viralhooks() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_viralideagen93() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_viralthread() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_vo2max83() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_vo2train() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_voicemode() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_wealthgap() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_wealthmap() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_wealthmap68() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_wealthtech7765() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_webinarscript110() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_weeklyplanner() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_weeklyreview() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_welcomeseq() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_wellbeingstrat7709() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_wfoptim82() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_willgen() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_winepair() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_wireframing2994() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_workbound77() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_workingcapital7717() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_workoutdesign() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_workoutgen() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_worldbuild() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_worldbuild2() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_worldbuild79() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_worldbuildai() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_writeprompt70() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_ytscript100() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
+
+export function ForgeTab_ytscript76() {
+  return <div style={{padding:'2rem',textAlign:'center',color:'#888'}}>Coming soon</div>;
+}
