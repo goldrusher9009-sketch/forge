@@ -1,8 +1,6 @@
 'use client';
 import React from 'react';
 
-'use client';
-import React from 'react';
 
 export function ForgeTab_coverletter121() {
   const [jd, setJd] = React.useState('');
