@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 // ── Forge Landing v4 — blink.new-inspired redesign ──
 // Palette: navy bg, violet primary (#7C3AED), orange accent (#F97316)
 
-const APP = 'https://forge-sand-two.vercel.app';
+const APP = '';
 
 // ──────────────────── CONSTANTS ────────────────────
 const PROMPT_TABS = [
