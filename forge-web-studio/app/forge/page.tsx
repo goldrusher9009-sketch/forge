@@ -1,5 +1,11 @@
-import ForgeApp from '@/app/components/ForgeApp';
+'use client';
+import dynamic from 'next/dynamic';
 
-export default function Home() {
+const ForgeApp = dynamic(() => import('@/app/components/ForgeApp'), {
+  ssr: false,
+  loading: () => null,
+});
+
+export default function ForgePage() {
   return <ForgeApp />;
 }
