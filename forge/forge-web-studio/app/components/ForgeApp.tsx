@@ -17148,7 +17148,7 @@ function ForgeTab_ndareview2() {
                 </div>
                 <div style={{background:'#1a1a2a',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}}><strong style={{color:'#60a5fa'}}>Verdict:</strong> <span style={{color:'#e0e0e0'}}>{result.verdict}</span></div>
                 {result.red_flags?.length>0&&<div style={{marginBottom:'1rem'}}><strong style={{color:'#f87171'}}>🚩 Red Flags:</strong>{result.red_flags.map((f:any,i:number)=><div key={i} style={{background:'#2d1515',borderRadius:'8px',padding:'0.75rem',margin:'0.5rem 0'}}><div style={{display:'flex',gap:'0.5rem',alignItems:'center'}}><span style={{background:'#991b1b',borderRadius:'4px',padding:'0.1rem 0.4rem',fontSize:'0.75rem'}}>{f.severity}</span><strong style={{color:'#fca5a5'}}>{f.clause}</strong></div><p style={{color:'#fca5a5',fontSize:'0.9rem',margin:'0.25rem 0'}}>{f.issue}</p><p style={{color:'#86efac',fontSize:'0.85rem'}}>Fix: {f.suggested_fix}</p></div>)}
-                </div>
+                </div>}
                 {result.negotiation_priorities?.length>0&&<div style={{background:'#1a2a1a',borderRadius:'8px',padding:'0.75rem'}}><strong style={{color:'#4ade80'}}>Negotiation Priorities:</strong>{result.negotiation_priorities.map((p:string,i:number)=><li key={i} style={{color:'#86efac',fontSize:'0.9rem'}}>{p}</li>)}</div>}
               </div>}
             </div>
