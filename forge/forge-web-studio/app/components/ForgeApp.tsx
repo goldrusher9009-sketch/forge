@@ -222,7 +222,7 @@ const SLASH_COMMANDS = [
   // Skills
   { cmd:'summarize',   icon:'📝', label:'Summarize',      desc:'Summarize the current thread',           category:'skill',   insert:'/summarize this conversation' },
   { cmd:'translate',   icon:'🌐', label:'Translate',      desc:'Translate text to another language',     category:'skill',   insert:'/translate to Spanish: ' },
-  { cmd:'explain',     icon:'🧠', label:'Explain`,        desc:\`Explain like I'm 5\`,                    category:`skill',   insert:'/explain ' },
+  { cmd:'explain',     icon:'🧠', label:'Explain',        desc:`Explain like I\'m 5`,                    category:'skill',   insert:'/explain ' },
   { cmd:'fix',         icon:'🔧', label:'Fix',            desc:'Fix bugs in selected code',              category:'skill',   insert:'/fix this: ' },
   { cmd:'improve',     icon:'⚡', label:'Improve',        desc:'Improve and polish text',                category:'skill',   insert:'/improve: ' },
   // Actions
@@ -1309,7 +1309,7 @@ function ForgeTab_forgeshop() {
               </div>
               {results.buying_guide&&<div style={{background:'#1a1a2e',borderRadius:'10px',padding:'16px',border:'1px solid #333',color:'#ddd',fontSize:'14px',lineHeight:'1.7'}}><strong style={{color:'#a78bfa'}}>📖 Buying Guide: </strong>{results.buying_guide}</div>}
             </div>}
-            {!results&&!loading&&<div style={{textAlign:'center',padding:'60px',color:'#555'}}><div style={{fontSize:'48px',marginBottom:'12px'}}>🛒</div><div>Describe what you're looking for and we'll find the best options</div></div>}
+            {!results&&!loading&&<div style={{textAlign:'center',padding:'60px',color:'#555'}}><div style={{fontSize:'48px',marginBottom:'12px'}}>🛒</div><div>Describe what you\'re looking for and we\'ll find the best options</div></div>}
           </div>);
 }
 
@@ -2032,7 +2032,7 @@ function ForgeTab_resumebuilder() {
                 </div>
                 <div>
                   <div style={{fontSize:12,fontWeight:600,color:'var(--fg-text2)',marginBottom:6}}>Target Job Description</div>
-                  <textarea value={jobDesc} onChange={e=>setJobDesc(e.target.value)} placeholder="Paste the job description you're applying for…" rows={12} style={{width:'100%',padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,resize:'vertical',boxSizing:'border-box'}} />
+                  <textarea value={jobDesc} onChange={e=>setJobDesc(e.target.value)} placeholder="Paste the job description you\'re applying for…" rows={12} style={{width:'100%',padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,resize:'vertical',boxSizing:'border-box'}} />
                 </div>
               </div>) : null}
               {!result && <button disabled={loading||!experience.trim()||!jobDesc.trim()} onClick={async()=>{setLoading(true);try{const r=await fetch(`${API}/api/resume/build`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({experience,job_desc:jobDesc})});const d=await r.json();setResult(d);setView('preview');}catch(e:any){alert(e.message);}setLoading(false);}} style={{width:'100%',padding:'12px',background:'#3b82f6',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!experience.trim()||!jobDesc.trim()?0.5:1}}>{loading?'Building resume…':'📄 Build Resume'}</button>}
@@ -2387,7 +2387,7 @@ function ForgeTab_financeadvisor() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [history, setHistory] = React.useState<any[]>([]);
-          const EXAMPLES = ['I make $80k/year, have $12k in credit card debt at 22%, and $0 saved. What do I do?',`I have $50k to invest and I'm 30 years old. Where should I put it?`,'Should I pay off my student loans or invest in my 401k?','I want to buy a house in 2 years. How do I save for a down payment?'];
+          const EXAMPLES = ['I make $80k/year, have $12k in credit card debt at 22%, and $0 saved. What do I do?','I have $50k to invest and I\'m 30 years old. Where should I put it?','Should I pay off my student loans or invest in my 401k?','I want to buy a house in 2 years. How do I save for a down payment?'];
           React.useEffect(()=>{fetch(`${API}/api/finance/history`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});}, []);
           return (<div style={{flex:1,overflowY:'auto',padding:24}}>
             <div style={{maxWidth:800,margin:'0 auto'}}>
@@ -2634,7 +2634,7 @@ function ForgeTab_linkedinopt() {
                 <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
                   {ANGLES.map(a=><button key={a.id} onClick={()=>setAngle(a.id)} style={{padding:'6px 12px',background:angle===a.id?'#0077b5':'var(--fg-bg2)',border:`1px solid ${angle===a.id?'#0077b5':'var(--fg-border)'}`,borderRadius:20,color:angle===a.id?'#fff':'var(--fg-text2)',fontSize:11,cursor:'pointer'}}>{a.emoji} {a.label}</button>)}
                 </div>
-                <textarea value={topic} onChange={e=>setTopic(e.target.value)} placeholder="What's the post about? (e.g. 'lessons from my startup failure', 'why remote work is the future')" rows={3} style={{width:'100%',padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,resize:'none',boxSizing:'border-box',marginBottom:10}} />
+                <textarea value={topic} onChange={e=>setTopic(e.target.value)} placeholder="What\'s the post about? (e.g. 'lessons from my startup failure', 'why remote work is the future')" rows={3} style={{width:'100%',padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,resize:'none',boxSizing:'border-box',marginBottom:10}} />
                 <input value={about} onChange={e=>setAbout(e.target.value)} placeholder="About you (optional — e.g. 'founder of a SaaS startup, 10 years in tech')" style={{width:'100%',padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,boxSizing:'border-box',marginBottom:14}} />
                 <button disabled={loading||!topic.trim()} onClick={async()=>{setLoading(true);setResult(null);try{const r=await fetch(`${API}/api/linkedin/generate`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({topic,angle,about})});const d=await r.json();setResult(d);}catch(e:any){alert(e.message);}setLoading(false);}} style={{width:'100%',padding:'12px',background:'#0077b5',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!topic.trim()?0.5:1}}>{loading?'Writing…':'💼 Generate Post'}</button>
               </>) : (<div>
@@ -3254,7 +3254,7 @@ function ForgeTab_apologyletter() {
                 <div><label className="block text-sm font-medium mb-1">Tone</label><select className="w-full border rounded px-3 py-2 text-sm" value={tone} onChange={e=>setTone(e.target.value)}><option value="sincere">Sincere & Heartfelt</option><option value="professional">Professional</option><option value="brief">Brief & Direct</option><option value="detailed">Detailed & Thorough</option></select></div>
               </div>
               <div className="mb-4"><label className="block text-sm font-medium mb-1">Specifically what did you do? (optional)</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="More detail helps personalize the letter..." value={whatDid} onChange={e=>setWhatDid(e.target.value)} /></div>
-              <div className="mb-4"><label className="block text-sm font-medium mb-1">What will you do differently?</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="I'll set calendar reminders / I'll be more mindful..." value={willDo} onChange={e=>setWillDo(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What will you do differently?</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="I\'ll set calendar reminders / I\'ll be more mindful..." value={willDo} onChange={e=>setWillDo(e.target.value)} /></div>
               <button onClick={write} disabled={loading||!situation} className="bg-rose-500 text-white px-6 py-2 rounded-lg hover:bg-rose-600 disabled:opacity-50">{loading ? 'Writing...' : '💌 Write Apology'}</button>
               {result && !result.error && (
                 <div className="mt-6 space-y-4">
@@ -3469,7 +3469,7 @@ function ForgeTab_salaryneg() {
           return (
             <div className="p-6 max-w-3xl mx-auto">
               <h2 className="text-2xl font-bold mb-2">💵 Salary Negotiator</h2>
-              <p className="text-sm text-gray-500 mb-6">Word-for-word scripts to get paid what you're worth</p>
+              <p className="text-sm text-gray-500 mb-6">Word-for-word scripts to get paid what you\'re worth</p>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div><label className="block text-sm font-medium mb-1">Role / Position *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Senior Software Engineer" value={role} onChange={e=>setRole(e.target.value)} /></div>
                 <div><label className="block text-sm font-medium mb-1">Current Offer *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="$120,000" value={offer} onChange={e=>setOffer(e.target.value)} /></div>
@@ -3541,7 +3541,7 @@ function ForgeTab_breakupletter() {
                 <div><label className="block text-sm font-medium mb-1">Their Name</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Alex" value={theirName} onChange={e=>setTheirName(e.target.value)} /></div>
                 <div><label className="block text-sm font-medium mb-1">Relationship Duration</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="6 months, 3 years..." value={duration} onChange={e=>setDuration(e.target.value)} /></div>
               </div>
-              <div className="mb-4"><label className="block text-sm font-medium mb-1">Main reason *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="We want different things / I don't feel the same way / long distance isn't working..." value={reason} onChange={e=>setReason(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Main reason *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="We want different things / I don\'t feel the same way / long distance isn\'t working..." value={reason} onChange={e=>setReason(e.target.value)} /></div>
               <div className="flex gap-6 mb-4">
                 <div><label className="block text-sm font-medium mb-1">Tone</label><div className="flex gap-2 flex-wrap">{['kind','direct','firm','compassionate'].map(t=><button key={t} onClick={()=>setTone(t)} className={`px-3 py-1 rounded-full text-sm capitalize ${tone===t?'bg-pink-500 text-white':'bg-gray-100'}`}>{t}</button>)}</div></div>
                 <div><label className="block text-sm font-medium mb-1">Medium</label><div className="flex gap-2">{['text','letter','email','in-person'].map(m=><button key={m} onClick={()=>setMedium(m)} className={`px-3 py-1 rounded-full text-sm capitalize ${medium===m?'bg-pink-500 text-white':'bg-gray-100'}`}>{m}</button>)}</div></div>
@@ -3763,8 +3763,8 @@ function ForgeTab_roastgen() {
             <div className="p-6 max-w-2xl mx-auto">
               <h2 className="text-2xl font-bold mb-2">🎤 Roast Generator</h2>
               <p className="text-sm text-gray-500 mb-6">Comedy roasts with killer burns (all in good fun)</p>
-              <div className="mb-4"><label className="block text-sm font-medium mb-1">Who/What to roast *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="My friend who's always late, my old startup idea, 2020..." value={subject} onChange={e=>setSubject(e.target.value)} /></div>
-              <div className="mb-4"><label className="block text-sm font-medium mb-1">Context (optional)</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="We're at their birthday party, they love self-deprecating humor..." value={context} onChange={e=>setContext(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Who/What to roast *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="My friend who\'s always late, my old startup idea, 2020..." value={subject} onChange={e=>setSubject(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Context (optional)</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="We\'re at their birthday party, they love self-deprecating humor..." value={context} onChange={e=>setContext(e.target.value)} /></div>
               <div className="mb-4"><label className="block text-sm font-medium mb-1">Roast Style</label><div className="flex gap-2 flex-wrap">{['funny','savage','gentle','dad-jokes','celebrity-style'].map(s=><button key={s} onClick={()=>setStyle(s)} className={`px-3 py-1 rounded-full text-sm capitalize ${style===s?'bg-red-500 text-white':'bg-gray-100'}`}>{s}</button>)}</div></div>
               <button onClick={generate} disabled={loading||!subject} className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 disabled:opacity-50">{loading ? 'Writing burns...' : '🎤 Roast Them'}</button>
               {result && !result.error && (
@@ -3804,7 +3804,7 @@ function ForgeTab_futureself() {
           return (
             <div className="p-6 max-w-2xl mx-auto">
               <h2 className="text-2xl font-bold mb-2">✉️ Letter to Future Self</h2>
-              <p className="text-sm text-gray-500 mb-6">A heartfelt time capsule letter you'll treasure</p>
+              <p className="text-sm text-gray-500 mb-6">A heartfelt time capsule letter you\'ll treasure</p>
               <div className="mb-4"><label className="block text-sm font-medium mb-1">Where are you right now? *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="I just graduated, starting my first job, feeling uncertain about the future..." value={situation} onChange={e=>setSituation(e.target.value)} /></div>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div><label className="block text-sm font-medium mb-1">Your biggest goals</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="Start a company, find love, travel the world..." value={goals} onChange={e=>setGoals(e.target.value)} /></div>
@@ -3969,7 +3969,7 @@ function ForgeTab_gratitudereflect() {
                   {result.insight && <div className="bg-blue-50 rounded-lg p-4 text-sm"><strong>💡 Insight: </strong>{result.insight}</div>}
                   {result.reframe && <div className="bg-orange-50 rounded-lg p-4 text-sm"><strong>🔄 Reframe: </strong>{result.reframe}</div>}
                   {result.what_you_have?.length>0 && <div className="bg-purple-50 rounded-xl p-4"><p className="font-semibold text-sm mb-2">💜 What You Have</p><ul className="space-y-1">{result.what_you_have.map((w:string,i:number)=><li key={i} className="text-sm flex gap-2"><span>•</span>{w}</li>)}</ul></div>}
-                  {result.challenge_for_tomorrow && <div className="border-2 border-green-200 rounded-xl p-4"><p className="font-semibold text-sm mb-1">🌱 Tomorrow's Challenge</p><p className="text-sm">{result.challenge_for_tomorrow}</p></div>}
+                  {result.challenge_for_tomorrow && <div className="border-2 border-green-200 rounded-xl p-4"><p className="font-semibold text-sm mb-1">🌱 Tomorrow\'s Challenge</p><p className="text-sm">{result.challenge_for_tomorrow}</p></div>}
                   {result.affirmation && <div className="text-center py-4"><p className="text-lg font-medium italic text-green-700">"{result.affirmation}"</p></div>}
                 </div>
               )}
@@ -4065,7 +4065,7 @@ function ForgeTab_moodtracker() {
                     <div className="flex items-center gap-4 mb-4"><span className="text-4xl">{moodEmoji(mood)}</span><div className="flex-1"><label className="text-sm font-medium">Mood: {mood}/10</label><input type="range" min={1} max={10} value={mood} onChange={e=>setMood(+e.target.value)} className="w-full mt-1" /></div></div>
                     <div><label className="text-sm font-medium">Energy: {energy}/10</label><input type="range" min={1} max={10} value={energy} onChange={e=>setEnergy(+e.target.value)} className="w-full mt-1" /></div>
                   </div>
-                  <div className="mb-4"><label className="block text-sm font-medium mb-1">Notes</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="What's going on today? How are you feeling?" value={notes} onChange={e=>setNotes(e.target.value)} /></div>
+                  <div className="mb-4"><label className="block text-sm font-medium mb-1">Notes</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="What\'s going on today? How are you feeling?" value={notes} onChange={e=>setNotes(e.target.value)} /></div>
                   <div className="mb-4"><label className="block text-sm font-medium mb-1">Context</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Big presentation today, got bad news, workout done..." value={context} onChange={e=>setContext(e.target.value)} /></div>
                   <button onClick={log} disabled={loading} className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50">{loading ? 'Analyzing...' : '🌊 Log Mood + Get Insights'}</button>
                   {result && !result.error && (
@@ -4168,7 +4168,7 @@ function ForgeTab_lifegoals() {
                 <div><label className="block text-sm font-medium mb-1">Timeframe</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="6 months, 2 years, by 30..." value={timeframe} onChange={e=>setTimeframe(e.target.value)} /></div>
                 <div><label className="block text-sm font-medium mb-1">Current Situation</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Working 9-5, no savings, beginner level..." value={situation} onChange={e=>setSituation(e.target.value)} /></div>
               </div>
-              <div className="mb-4"><label className="block text-sm font-medium mb-1">Biggest Obstacles</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="No time, money, don't know where to start..." value={obstacles} onChange={e=>setObstacles(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Biggest Obstacles</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="No time, money, don\'t know where to start..." value={obstacles} onChange={e=>setObstacles(e.target.value)} /></div>
               <button onClick={plan} disabled={loading||!goal} className="bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 disabled:opacity-50">{loading ? 'Planning...' : '🌟 Create My Plan'}</button>
               {result && !result.error && (
                 <div className="mt-6">
@@ -4180,7 +4180,7 @@ function ForgeTab_lifegoals() {
                   <div className="flex gap-3 mb-4">{(['plan','milestones','actions'] as const).map(s=><button key={s} onClick={()=>setSection(s)} className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize ${section===s?'bg-yellow-500 text-white':'bg-gray-100'}`}>{s}</button>)}</div>
                   {section==='plan' && (
                     <div className="space-y-3">
-                      {result.success_metrics?.length>0 && <div><p className="font-semibold text-sm mb-2">📏 How You'll Know You've Made It</p><ul className="space-y-1">{result.success_metrics.map((m:string,i:number)=><li key={i} className="text-sm flex gap-2"><span className="text-yellow-500">✓</span>{m}</li>)}</ul></div>}
+                      {result.success_metrics?.length>0 && <div><p className="font-semibold text-sm mb-2">📏 How You\'ll Know You\'ve Made It</p><ul className="space-y-1">{result.success_metrics.map((m:string,i:number)=><li key={i} className="text-sm flex gap-2"><span className="text-yellow-500">✓</span>{m}</li>)}</ul></div>}
                       {result.obstacle_solutions?.length>0 && <div><p className="font-semibold text-sm mb-2">🛡️ Obstacle Solutions</p>{result.obstacle_solutions.map((o:any,i:number)=><div key={i} className="border rounded-lg p-3 mb-2"><p className="text-sm font-medium text-red-600">⚠️ {o.obstacle}</p><p className="text-sm text-green-700 mt-1">→ {o.solution}</p></div>)}</div>}
                       {result.accountability_ideas?.length>0 && <div className="bg-blue-50 rounded-lg p-3"><p className="font-semibold text-sm mb-1">👥 Accountability Ideas</p><ul className="space-y-1">{result.accountability_ideas.map((a:string,i:number)=><li key={i} className="text-sm">• {a}</li>)}</ul></div>}
                     </div>
@@ -4273,10 +4273,10 @@ function ForgeTab_conflictresolve() {
             <div className="p-6 max-w-3xl mx-auto">
               <h2 className="text-2xl font-bold mb-2">🕊️ Conflict Resolver</h2>
               <p className="text-sm text-gray-500 mb-6">Navigate difficult conversations with empathy and clarity</p>
-              <div className="mb-4"><label className="block text-sm font-medium mb-1">What's the conflict? *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="My coworker takes credit for my work in meetings. It's happened 3 times now..." value={situation} onChange={e=>setSituation(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What\'s the conflict? *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="My coworker takes credit for my work in meetings. It\'s happened 3 times now..." value={situation} onChange={e=>setSituation(e.target.value)} /></div>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div><label className="block text-sm font-medium mb-1">Your perspective</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="I feel disrespected and invisible..." value={yourPov} onChange={e=>setYourPov(e.target.value)} /></div>
-                <div><label className="block text-sm font-medium mb-1">Their likely perspective</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="They might think they're just summarizing team work..." value={theirPov} onChange={e=>setTheirPov(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Their likely perspective</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="They might think they\'re just summarizing team work..." value={theirPov} onChange={e=>setTheirPov(e.target.value)} /></div>
               </div>
               <div className="flex gap-6 mb-4">
                 <div><label className="block text-sm font-medium mb-1">Relationship</label><div className="flex gap-2 flex-wrap">{['colleague','friend','partner','family','manager','client'].map(r=><button key={r} onClick={()=>setRelType(r)} className={`px-3 py-1 rounded-full text-sm capitalize ${relType===r?'bg-teal-600 text-white':'bg-gray-100'}`}>{r}</button>)}</div></div>
@@ -4299,7 +4299,7 @@ function ForgeTab_conflictresolve() {
                     <div className="space-y-3">
                       {result.opening_line && <div className="bg-green-50 border border-green-200 rounded-xl p-4"><p className="font-semibold text-sm mb-1">👋 Open with</p><p className="text-sm italic">"{result.opening_line}"</p></div>}
                       <div className="bg-gray-50 rounded-xl p-5 border"><pre className="whitespace-pre-wrap text-sm">{result.conversation_script}</pre></div>
-                      {result.things_to_avoid_saying?.length>0 && <div className="bg-red-50 rounded-lg p-3"><p className="font-semibold text-sm mb-1 text-red-700">🚫 Don't say</p><ul className="space-y-1">{result.things_to_avoid_saying.map((t:string,i:number)=><li key={i} className="text-sm text-red-600">• "{t}"</li>)}</ul></div>}
+                      {result.things_to_avoid_saying?.length>0 && <div className="bg-red-50 rounded-lg p-3"><p className="font-semibold text-sm mb-1 text-red-700">🚫 Don\'t say</p><ul className="space-y-1">{result.things_to_avoid_saying.map((t:string,i:number)=><li key={i} className="text-sm text-red-600">• "{t}"</li>)}</ul></div>}
                     </div>
                   )}
                   {tab==='paths' && (
@@ -4535,7 +4535,7 @@ function ForgeTab_apologytext() {
               <h2 className="text-2xl font-bold mb-2">🙇 Apology Text Writer</h2>
               <p className="text-sm text-gray-500 mb-6">Genuine apologies that actually heal things</p>
               <div className="mb-4"><label className="block text-sm font-medium mb-1">What happened? *</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="I forgot our plans last minute, let them down on an important day..." value={situation} onChange={e=>setSituation(e.target.value)} /></div>
-              <div className="mb-4"><label className="block text-sm font-medium mb-1">What did you specifically do?</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Cancelled 1 hour before, didn't show up, said something hurtful..." value={whatYouDid} onChange={e=>setWhatYouDid(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What did you specifically do?</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Cancelled 1 hour before, didn\'t show up, said something hurtful..." value={whatYouDid} onChange={e=>setWhatYouDid(e.target.value)} /></div>
               <div className="flex gap-6 mb-4 flex-wrap">
                 <div><label className="block text-sm font-medium mb-1">Relationship</label><div className="flex gap-2 flex-wrap">{['friend','partner','family','colleague','boss','client'].map(r=><button key={r} onClick={()=>setRelationship(r)} className={`px-3 py-1 rounded-full text-sm capitalize ${relationship===r?'bg-rose-500 text-white':'bg-gray-100'}`}>{r}</button>)}</div></div>
                 <div><label className="block text-sm font-medium mb-1">Tone</label><div className="flex gap-2">{['sincere','heartfelt','brief','formal'].map(t=><button key={t} onClick={()=>setTone(t)} className={`px-3 py-1 rounded-full text-sm capitalize ${tone===t?'bg-rose-500 text-white':'bg-gray-100'}`}>{t}</button>)}</div></div>
@@ -4549,7 +4549,7 @@ function ForgeTab_apologytext() {
                   {result.key_acknowledgment && <div className="bg-blue-50 rounded-lg p-3 text-sm"><strong>💡 Key acknowledgment: </strong>{result.key_acknowledgment}</div>}
                   {result.follow_up_action && <div className="bg-green-50 rounded-lg p-3 text-sm"><strong>→ Follow-up action: </strong>{result.follow_up_action}</div>}
                   {result.timing_advice && <div className="bg-yellow-50 rounded-lg p-3 text-sm"><strong>⏰ Timing: </strong>{result.timing_advice}</div>}
-                  {result.what_not_to_say?.length>0 && <div className="bg-red-50 rounded-lg p-3"><p className="font-semibold text-xs text-red-700 mb-1">🚫 Don't say</p><ul className="space-y-1">{result.what_not_to_say.map((w:string,i:number)=><li key={i} className="text-xs text-red-600">• "{w}"</li>)}</ul></div>}
+                  {result.what_not_to_say?.length>0 && <div className="bg-red-50 rounded-lg p-3"><p className="font-semibold text-xs text-red-700 mb-1">🚫 Don\'t say</p><ul className="space-y-1">{result.what_not_to_say.map((w:string,i:number)=><li key={i} className="text-xs text-red-600">• "{w}"</li>)}</ul></div>}
                 </div>
               )}
             </div>
@@ -4580,8 +4580,8 @@ function ForgeTab_excusegen() {
           return (
             <div className="p-6 max-w-2xl mx-auto">
               <h2 className="text-2xl font-bold mb-2">🎭 Excuse Generator</h2>
-              <p className="text-sm text-gray-500 mb-6">For emergencies only. We don't judge.</p>
-              <div className="mb-4"><label className="block text-sm font-medium mb-1">What do you need an excuse for? *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Late to a meeting, missed a deadline, forgot someone's birthday..." value={situation} onChange={e=>setSituation(e.target.value)} /></div>
+              <p className="text-sm text-gray-500 mb-6">For emergencies only. We don\'t judge.</p>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What do you need an excuse for? *</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Late to a meeting, missed a deadline, forgot someone\'s birthday..." value={situation} onChange={e=>setSituation(e.target.value)} /></div>
               <div className="flex gap-6 mb-4">
                 <div><label className="block text-sm font-medium mb-1">Style</label><div className="flex gap-2">{['professional','funny','creative','desperate'].map(s=><button key={s} onClick={()=>setStyle(s)} className={`px-3 py-1 rounded-full text-sm capitalize ${style===s?'bg-purple-600 text-white':'bg-gray-100'}`}>{s}</button>)}</div></div>
                 <div><label className="block text-sm font-medium mb-1">To</label><div className="flex gap-2 flex-wrap">{['boss','friend','partner','client','parents'].map(a=><button key={a} onClick={()=>setAudience(a)} className={`px-3 py-1 rounded-full text-sm capitalize ${audience===a?'bg-purple-600 text-white':'bg-gray-100'}`}>{a}</button>)}</div></div>
@@ -4632,9 +4632,9 @@ function ForgeTab_ventmode() {
               <h2 className="text-2xl font-bold mb-2">💨 Vent Mode</h2>
               <p className="text-sm text-gray-500 mb-6">No judgment. Just let it out. AI listens and validates.</p>
               <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-4 text-sm text-indigo-700">
-                <strong>This is a safe space.</strong> Say exactly what you're feeling. No filters needed.
+                <strong>This is a safe space.</strong> Say exactly what you\'re feeling. No filters needed.
               </div>
-              <div className="mb-4"><label className="block text-sm font-medium mb-1">What's on your mind?</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={6} placeholder="I'm so frustrated with... I can't believe... Nobody ever... Why does this always happen..." value={vent} onChange={e=>setVent(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">What\'s on your mind?</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={6} placeholder="I\'m so frustrated with... I can\'t believe... Nobody ever... Why does this always happen..." value={vent} onChange={e=>setVent(e.target.value)} /></div>
               <div className="flex gap-6 mb-4">
                 <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={wantAdvice} onChange={e=>setWantAdvice(e.target.checked)} className="w-4 h-4" /><span className="text-sm">I want advice</span></label>
                 <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={wantReframe} onChange={e=>setWantReframe(e.target.checked)} className="w-4 h-4" /><span className="text-sm">Help me reframe</span></label>
@@ -4646,10 +4646,10 @@ function ForgeTab_ventmode() {
                     <p className="text-sm leading-relaxed text-indigo-900">{result.you_are_heard}</p>
                     <p className="text-sm leading-relaxed mt-3">{result.validation}</p>
                   </div>
-                  {result.their_feelings_named?.length>0 && <div><p className="font-semibold text-sm mb-2">What you're feeling</p><div className="flex flex-wrap gap-2">{result.their_feelings_named.map((f:string,i:number)=><span key={i} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm">{f}</span>)}</div></div>}
+                  {result.their_feelings_named?.length>0 && <div><p className="font-semibold text-sm mb-2">What you\'re feeling</p><div className="flex flex-wrap gap-2">{result.their_feelings_named.map((f:string,i:number)=><span key={i} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm">{f}</span>)}</div></div>}
                   {result.reframe && <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm"><strong>🔄 Another way to see it: </strong>{result.reframe}</div>}
                   {result.gentle_question && <div className="border-l-4 border-indigo-400 pl-4 py-2"><p className="text-sm italic text-gray-600">"{result.gentle_question}"</p></div>}
-                  {result.advice && wantAdvice && <div className="bg-green-50 rounded-xl p-4 text-sm"><strong>💡 Here's what I'd suggest: </strong>{result.advice}</div>}
+                  {result.advice && wantAdvice && <div className="bg-green-50 rounded-xl p-4 text-sm"><strong>💡 Here\'s what I\'d suggest: </strong>{result.advice}</div>}
                   {result.release_ritual && <div className="bg-yellow-50 rounded-lg p-3 text-sm"><strong>✨ Release ritual: </strong>{result.release_ritual}</div>}
                   {result.affirmation && <p className="text-center italic text-indigo-700 py-3 text-sm">"{result.affirmation}"</p>}
                 </div>
@@ -4748,12 +4748,12 @@ function ForgeTab_weeklyreview() {
             <div className="p-6 max-w-2xl mx-auto">
               <h2 className="text-2xl font-bold mb-2">📅 Weekly Review</h2>
               <p className="text-sm text-gray-500 mb-6">Close the week with clarity. Start Monday with intention.</p>
-              <div className="mb-4"><label className="block text-sm font-medium mb-1">This week's wins</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="Shipped the feature, had a great 1:1, finally fixed that bug, worked out 4x..." value={wins} onChange={e=>setWins(e.target.value)} /></div>
-              <div className="mb-4"><label className="block text-sm font-medium mb-1">Struggles / What didn't go well</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="Got distracted too much, missed a deadline, conflict with a coworker..." value={struggles} onChange={e=>setStruggles(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">This week\'s wins</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="Shipped the feature, had a great 1:1, finally fixed that bug, worked out 4x..." value={wins} onChange={e=>setWins(e.target.value)} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-1">Struggles / What didn\'t go well</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={3} placeholder="Got distracted too much, missed a deadline, conflict with a coworker..." value={struggles} onChange={e=>setStruggles(e.target.value)} /></div>
               <div className="mb-4"><label className="block text-sm font-medium mb-1">Key lessons this week</label><textarea className="w-full border rounded px-3 py-2 text-sm" rows={2} placeholder="I work better in the morning, async is underrated, I need to say no more..." value={lessons} onChange={e=>setLessons(e.target.value)} /></div>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div><label className="block text-sm font-medium mb-1">Overall energy level: {energy}/10</label><input type="range" min={1} max={10} value={energy} onChange={e=>setEnergy(+e.target.value)} className="w-full mt-2" /></div>
-                <div><label className="block text-sm font-medium mb-1">Next week's top priority</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Ship v2, close the deal, rest..." value={priorities} onChange={e=>setPriorities(e.target.value)} /></div>
+                <div><label className="block text-sm font-medium mb-1">Next week\'s top priority</label><input className="w-full border rounded px-3 py-2 text-sm" placeholder="Ship v2, close the deal, rest..." value={priorities} onChange={e=>setPriorities(e.target.value)} /></div>
               </div>
               <button onClick={generate} disabled={loading||(!wins&&!struggles)} className="bg-slate-700 text-white px-6 py-2 rounded-lg hover:bg-slate-800 disabled:opacity-50">{loading?'Reviewing...':'📅 Generate My Weekly Review'}</button>
               {result && !result.error && (
@@ -4766,7 +4766,7 @@ function ForgeTab_weeklyreview() {
                   {result.biggest_lesson && <div className="bg-blue-50 border border-blue-100 rounded-xl p-4"><p className="font-semibold text-sm mb-1">💡 Biggest Lesson</p><p className="text-sm">{result.biggest_lesson}</p></div>}
                   {result.pattern_noticed && <div className="bg-purple-50 rounded-lg p-3 text-sm"><strong>🔍 Pattern: </strong>{result.pattern_noticed}</div>}
                   {result.energy_insight && <div className="bg-yellow-50 rounded-lg p-3 text-sm"><strong>⚡ Energy insight: </strong>{result.energy_insight}</div>}
-                  {result.next_week_theme && <div className="border-2 border-slate-300 rounded-xl p-4"><p className="font-bold text-lg">{result.next_week_theme}</p><p className="text-sm italic text-gray-600 mt-1">Next week's theme</p>{result.monday_intention && <p className="text-sm mt-2"><strong>Monday intention: </strong>{result.monday_intention}</p>}</div>}
+                  {result.next_week_theme && <div className="border-2 border-slate-300 rounded-xl p-4"><p className="font-bold text-lg">{result.next_week_theme}</p><p className="text-sm italic text-gray-600 mt-1">Next week\'s theme</p>{result.monday_intention && <p className="text-sm mt-2"><strong>Monday intention: </strong>{result.monday_intention}</p>}</div>}
                   <div className="grid grid-cols-2 gap-3">
                     {result.things_to_keep?.length>0 && <div className="bg-green-50 rounded-lg p-3"><p className="font-semibold text-xs text-green-700 mb-1">✅ KEEP DOING</p><ul className="space-y-1">{result.things_to_keep.map((t:string,i:number)=><li key={i} className="text-xs">• {t}</li>)}</ul></div>}
                     {result.things_to_drop?.length>0 && <div className="bg-red-50 rounded-lg p-3"><p className="font-semibold text-xs text-red-700 mb-1">🗑️ DROP</p><ul className="space-y-1">{result.things_to_drop.map((t:string,i:number)=><li key={i} className="text-xs text-red-600">• {t}</li>)}</ul></div>}
@@ -5117,7 +5117,7 @@ function ForgeTab_complimentengine() {
               <h2 style={{color:'#fbbf24',marginBottom:'1rem'}}>💛 Compliment Engine</h2>
               <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Specific, meaningful compliments that actually land.</p>
               <input value={recipient} onChange={e=>setRecipient(e.target.value)} placeholder="Who are you complimenting? (e.g. my coworker Sarah)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
-              <textarea value={context} onChange={e=>setContext(e.target.value)} placeholder="Tell me about them — their strengths, what they've done, who they are" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'80px',marginBottom:'0.75rem'}} />
+              <textarea value={context} onChange={e=>setContext(e.target.value)} placeholder="Tell me about them — their strengths, what they\'ve done, who they are" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'80px',marginBottom:'0.75rem'}} />
               <select value={style} onChange={e=>setStyle(e.target.value)} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}}>
                 <option value="warm and genuine">Warm and genuine</option>
                 <option value="professional">Professional</option>
@@ -5265,8 +5265,8 @@ function ForgeTab_eulogywriter() {
           return (
             <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
               <h2 style={{color:'#94a3b8',marginBottom:'1rem'}}>🕊️ Eulogy Writer</h2>
-              <p style={{color:'#64748b',marginBottom:'1.5rem'}}>Write a heartfelt eulogy that truly honors someone's life.</p>
-              <input value={person} onChange={e=>setPerson(e.target.value)} placeholder="Person's name" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <p style={{color:'#64748b',marginBottom:'1.5rem'}}>Write a heartfelt eulogy that truly honors someone\'s life.</p>
+              <input value={person} onChange={e=>setPerson(e.target.value)} placeholder="Person\'s name" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
               <input value={relationship} onChange={e=>setRelationship(e.target.value)} placeholder="Your relationship (e.g. daughter, best friend, colleague)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
               <textarea value={memories} onChange={e=>setMemories(e.target.value)} placeholder="Their qualities, memories, things they said or did..." style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'80px',marginBottom:'0.75rem'}} />
               <select value={tone} onChange={e=>setTone(e.target.value)} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}}>
@@ -5310,7 +5310,7 @@ function ForgeTab_villainorigin() {
             <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
               <h2 style={{color:'#dc2626',marginBottom:'1rem'}}>😈 Villain Origin Story</h2>
               <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Every villain is the hero of their own story. Write yours.</p>
-              <input value={name} onChange={e=>setName(e.target.value)} placeholder="Villain's name" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
+              <input value={name} onChange={e=>setName(e.target.value)} placeholder="Villain\'s name" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
               <textarea value={wound} onChange={e=>setWound(e.target.value)} placeholder="Core wound or trauma (e.g. betrayed by the city they swore to protect)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'70px',marginBottom:'0.75rem'}} />
               <input value={power} onChange={e=>setPower(e.target.value)} placeholder="Power or ability (e.g. control over time, genius-level intellect)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}} />
               <input value={goal} onChange={e=>setGoal(e.target.value)} placeholder="Ultimate goal (e.g. burn the corrupt system to ashes)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}} />
@@ -5433,12 +5433,12 @@ function ForgeTab_lovelanguage() {
           return (
             <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
               <h2 style={{color:'#f472b6',marginBottom:'1rem'}}>💞 Love Language Decoder</h2>
-              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Describe how they act — I'll decode their love language.</p>
+              <p style={{color:'#94a3b8',marginBottom:'1.5rem'}}>Describe how they act — I\'ll decode their love language.</p>
               <textarea value={behaviors} onChange={e=>setBehaviors(e.target.value)} placeholder="How do they show love? What do they do or say? What upsets them? (e.g. always doing things for me, gets hurt when I cancel plans, gives random gifts)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',minHeight:'100px',marginBottom:'0.75rem'}} />
               <select value={relationship} onChange={e=>setRelationship(e.target.value)} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}}>
                 {['romantic partner','spouse','parent','child','friend','colleague'].map(r=><option key={r} value={r}>{r.charAt(0).toUpperCase()+r.slice(1)}</option>)}
               </select>
-              <input value={concern} onChange={e=>setConcern(e.target.value)} placeholder="What's your main concern? (e.g. we keep missing each other emotionally)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}} />
+              <input value={concern} onChange={e=>setConcern(e.target.value)} placeholder="What\'s your main concern? (e.g. we keep missing each other emotionally)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}} />
               <button onClick={decode} disabled={loading} style={{background:'#db2777',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',width:'100%',fontWeight:600}}>
                 {loading ? 'Decoding...' : '💞 Decode Their Love Language'}
               </button>
@@ -5982,7 +5982,7 @@ function ForgeTab_sleepopt() {
             <div style={{padding:'2rem',maxWidth:700,margin:'0 auto'}}>
               <h2 style={{color:'#818cf8',marginBottom:4}}>😴 Sleep Optimizer</h2>
               <p style={{color:'#94a3b8',marginBottom:'1.5rem',fontSize:13}}>Get a personalized sleep protocol based on your issues and lifestyle.</p>
-              <textarea value={issues} onChange={e=>setIssues(e.target.value)} placeholder="What are your sleep issues? (e.g. can't fall asleep, wake up at 3am, feel groggy...)" rows={3} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem',marginBottom:'0.75rem',resize:'vertical'}}/>
+              <textarea value={issues} onChange={e=>setIssues(e.target.value)} placeholder="What are your sleep issues? (e.g. can\'t fall asleep, wake up at 3am, feel groggy...)" rows={3} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem',marginBottom:'0.75rem',resize:'vertical'}}/>
               <input value={schedule} onChange={e=>setSchedule(e.target.value)} placeholder="Current schedule (e.g. need to wake at 7am, usually sleep around midnight)" style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem',marginBottom:'0.75rem'}}/>
               <button onClick={async()=>{if(!issues.trim())return;setLoading(true);setResult(null);try{const r=await fetch(`${API}/api/sleep/optimize`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`},body:JSON.stringify({sleep_issues:issues,current_schedule:schedule})});const d=await r.json();setResult(d);}catch(e){setResult({error:'Failed'});}setLoading(false);}} disabled={loading} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:8,padding:'0.75rem 2rem',cursor:'pointer',fontWeight:600,marginBottom:'1.5rem'}}>{loading?'Optimizing...':'Get Sleep Protocol'}</button>
               {result&&!result.error&&(<div>
@@ -6027,7 +6027,7 @@ function ForgeTab_stressdecode() {
             <div style={{padding:'2rem',maxWidth:700,margin:'0 auto'}}>
               <h2 style={{color:'#fb923c',marginBottom:4}}>😤 Stress Decoder</h2>
               <p style={{color:'#94a3b8',marginBottom:'1.5rem',fontSize:13}}>Understand your stress and get an actionable coping toolkit.</p>
-              <textarea value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Describe what's stressing you out — work, relationships, finances, health, everything..." rows={5} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem',marginBottom:'0.75rem',resize:'vertical'}}/>
+              <textarea value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Describe what\'s stressing you out — work, relationships, finances, health, everything..." rows={5} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem',marginBottom:'0.75rem',resize:'vertical'}}/>
               <button onClick={async()=>{if(!desc.trim())return;setLoading(true);setResult(null);try{const r=await fetch(`${API}/api/stress/decode`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`},body:JSON.stringify({stress_description:desc})});const d=await r.json();setResult(d);}catch(e){setResult({error:'Failed'});}setLoading(false);}} disabled={loading} style={{background:'#f97316',color:'#fff',border:'none',borderRadius:8,padding:'0.75rem 2rem',cursor:'pointer',fontWeight:600,marginBottom:'1.5rem'}}>{loading?'Decoding...':'Decode My Stress'}</button>
               {result&&!result.error&&(<div>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'1rem',marginBottom:'1rem'}}>
@@ -6412,7 +6412,7 @@ function ForgeTab_dialoguecoach() {
               <p style={{color:'#94a3b8',marginBottom:'1.5rem',fontSize:13}}>Transform flat dialogue into compelling scenes with subtext and emotional punch.</p>
               <textarea value={dialogue} onChange={e=>setDialogue(e.target.value)} placeholder={'Paste your flat dialogue here...\n\n"Did you take the money?" he asked.\n"No," she said.\n"Are you sure?" he asked.'} rows={5} style={{width:'100%',background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem',marginBottom:'0.75rem',resize:'vertical'}}/>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
-                <input value={context} onChange={e=>setContext(e.target.value)} placeholder="Scene context (who, where, what's at stake)" style={{background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem'}}/>
+                <input value={context} onChange={e=>setContext(e.target.value)} placeholder="Scene context (who, where, what\'s at stake)" style={{background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem'}}/>
                 <select value={goal} onChange={e=>setGoal(e.target.value)} style={{background:'#1e293b',color:'#e2e8f0',border:'1px solid #334155',borderRadius:8,padding:'0.75rem'}}>
                   {['create tension','show intimacy','reveal character','advance plot','comic relief','emotional confrontation'].map(g=><option key={g} value={g}>{g}</option>)}
                 </select>
@@ -6787,7 +6787,7 @@ function ForgeTab_captiongen() {
             <div style={{padding:'2rem',maxWidth:700,margin:'0 auto'}}>
               <h2 style={{fontSize:'1.6rem',fontWeight:700,marginBottom:'0.5rem'}}>✍️ Caption Generator</h2>
               <p style={{color:'#888',marginBottom:'1.5rem'}}>3 caption variations tuned for your platform and goal.</p>
-              <textarea value={cgDesc} onChange={e=>setCgDesc(e.target.value)} placeholder="Describe your post / what you're sharing" rows={3} style={{width:'100%',padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a1a',color:'#fff',marginBottom:'0.75rem',resize:'vertical'}}/>
+              <textarea value={cgDesc} onChange={e=>setCgDesc(e.target.value)} placeholder="Describe your post / what you\'re sharing" rows={3} style={{width:'100%',padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a1a',color:'#fff',marginBottom:'0.75rem',resize:'vertical'}}/>
               <div style={{display:'flex',gap:'0.75rem',marginBottom:'1rem'}}>
                 <select value={cgPlatform} onChange={e=>setCgPlatform(e.target.value)} style={{flex:1,padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a1a',color:'#fff'}}>
                   <option>Instagram</option><option>LinkedIn</option><option>TikTok</option><option>Facebook</option><option>Twitter/X</option>
@@ -7208,7 +7208,7 @@ function ForgeTab_anxietytoolkit() {
               <h2 style={{fontSize:'1.6rem',fontWeight:700,marginBottom:'0.5rem'}}>🧘 Anxiety Toolkit</h2>
               <p style={{color:'#888',marginBottom:'0.5rem'}}>Personalized techniques for managing anxiety in the moment and long-term.</p>
               <div style={{background:'#f59e0b22',border:'1px solid #f59e0b44',borderRadius:6,padding:'0.6rem',marginBottom:'1.5rem',fontSize:'0.85rem',color:'#f59e0b'}}>Educational only — not a substitute for professional mental health care.</div>
-              <textarea value={atTrigger} onChange={e=>setAtTrigger(e.target.value)} placeholder="What's triggering your anxiety? (situation, thought, or feeling)" rows={3} style={{width:'100%',padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a1a',color:'#fff',marginBottom:'0.75rem',resize:'vertical'}}/>
+              <textarea value={atTrigger} onChange={e=>setAtTrigger(e.target.value)} placeholder="What\'s triggering your anxiety? (situation, thought, or feeling)" rows={3} style={{width:'100%',padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a1a',color:'#fff',marginBottom:'0.75rem',resize:'vertical'}}/>
               <div style={{marginBottom:'1rem'}}><label style={{fontSize:'0.85rem',color:'#888',display:'block',marginBottom:'0.4rem'}}>Anxiety intensity: {atIntensity}/10</label><input type="range" min="1" max="10" value={atIntensity} onChange={e=>setAtIntensity(e.target.value)} style={{width:'100%'}}/></div>
               <button disabled={atLoading||!atTrigger.trim()} onClick={async()=>{setAtLoading(true);setAtResult(null);try{const r=await fetch(`${API_BASE}/api/anxiety/toolkit`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({trigger:atTrigger,intensity:atIntensity})});const d=await r.json();setAtResult(d);}catch(e){setAtResult({error:'Error'});}setAtLoading(false);}} style={{padding:'0.75rem 2rem',background:'#6366f1',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',marginBottom:'1.5rem'}}>{atLoading?'Building…':'Build My Toolkit'}</button>
               {atResult&&!atResult.error&&<div>
@@ -7305,7 +7305,7 @@ function ForgeTab_boundaryscripts() {
               <textarea value={bsSit} onChange={e=>setBsSit(e.target.value)} placeholder="Describe the situation" rows={2} style={{width:'100%',padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a1a',color:'#fff',marginBottom:'0.75rem',resize:'vertical'}}/>
               <input value={bsBound} onChange={e=>setBsBound(e.target.value)} placeholder="What boundary do you want to set?" style={{width:'100%',padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a1a',color:'#fff',marginBottom:'0.75rem'}}/>
               <select value={bsConcern} onChange={e=>setBsConcern(e.target.value)} style={{width:'100%',padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a1a',color:'#fff',marginBottom:'1rem'}}>
-                {['fear of conflict','worried about hurting feelings','fear of rejection',`unsure how they'll react`,'history of them ignoring boundaries'].map(c=><option key={c}>{c}</option>)}
+                {['fear of conflict','worried about hurting feelings','fear of rejection','unsure how they\'ll react','history of them ignoring boundaries'].map(c=><option key={c}>{c}</option>)}
               </select>
               <button disabled={bsLoading||!bsSit.trim()||!bsBound.trim()} onClick={async()=>{setBsLoading(true);setBsResult(null);try{const r=await fetch(`${API_BASE}/api/boundaries/write`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({relationship_type:bsRel,situation:bsSit,desired_boundary:bsBound,concern:bsConcern})});const d=await r.json();setBsResult(d);}catch(e){setBsResult({error:'Error'});}setBsLoading(false);}} style={{padding:'0.75rem 2rem',background:'#f97316',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',marginBottom:'1.5rem'}}>{bsLoading?'Writing…':'Write My Scripts'}</button>
               {bsResult&&!bsResult.error&&<div>
@@ -7450,7 +7450,7 @@ function ForgeTab_weeklyplanner() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
   const [goals, setGoals] = React.useState(''); const [commits, setCommits] = React.useState(''); const [energy, setEnergy] = React.useState('normal'); const [prios, setPrios] = React.useState(''); const [res, setRes] = React.useState<any>(null); const [loading, setLoading] = React.useState(false);
-          return (<div style={{padding:'2rem',maxWidth:'800px',margin:'0 auto'}}><h2>📋 Weekly Plan Builder</h2><p style={{color:'#aaa`}}>Design a powerful week with themes, time blocks, and daily priorities.</p><textarea value={goals} onChange={e=>setGoals(e.target.value)} placeholder="This week's goals (what must get done?)" rows={3} style={{width:`100%',padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px',marginBottom:'0.75rem'}}/><input value={commits} onChange={e=>setCommits(e.target.value)} placeholder="Fixed commitments (meetings, appointments, deadlines)" style={{width:'100%',padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px',marginBottom:'0.75rem'}}/><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}><select value={energy} onChange={e=>setEnergy(e.target.value)} style={{padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px'}}><option value="high">High energy week</option><option value="normal">Normal energy</option><option value="low">Low energy / recovery</option></select><input value={prios} onChange={e=>setPrios(e.target.value)} placeholder="Top 3 priorities" style={{padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px'}}/></div><button onClick={async()=>{if(!goals)return;setLoading(true);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/weekly/plan`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({goals,commitments:commits,energy_level:energy,priorities:prios})});const d=await r.json();setRes(d);}catch(e){console.error(e);}setLoading(false);}} style={{background:'#0ea5e9',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',marginBottom:'1.5rem'}}>{loading?'Planning...':'Build Weekly Plan'}</button>{res&&(<div><div style={{background:'#0ea5e9',color:'#000',borderRadius:'8px',padding:'1.25rem',marginBottom:'1rem',textAlign:'center'}}><h2 style={{margin:0}}>Week Theme: {res.weekly_theme}</h2></div>{res.top_3_outcomes&&(<div style={{background:'#1a1a1a',border:'1px solid #0ea5e9',borderRadius:'8px',padding:'1.5rem',marginBottom:'1rem'}}><h4 style={{color:'#0ea5e9'}}>🎯 Must-Achieve Outcomes</h4>{res.top_3_outcomes.map((o:string,i:number)=>(<p key={i} style={{color:'#e2e8f0',margin:'0.25rem 0',fontWeight:'bold'}}>{i+1}. {o}</p>))}</div>)}{res.daily_plan&&res.daily_plan.map((d:any,i:number)=>(<div key={i} style={{background:'#1a1a1a',border:'1px solid #333',borderRadius:'8px',padding:'1.25rem',marginBottom:'0.5rem'}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.5rem'}}><h4 style={{margin:0,color:'#0ea5e9'}}>{d.day}</h4><span style={{color:'#888',fontSize:'0.85rem'}}>{d.theme}</span></div><div style={{fontWeight:'bold',color:'#fff',marginBottom:'0.25rem'}}>⭐ MIT: {d.mit}</div><div style={{fontSize:'0.85rem',color:'#aaa'}}>AM: {d.morning} | PM: {d.afternoon}</div></div>))}{res.anti_goals&&(<div style={{background:'#1a1a1a',border:'1px solid #ef4444',borderRadius:'8px',padding:'1.5rem'}}><h4 style={{color:'#ef4444`}}>🚫 Anti-Goals (Don't Do)</h4>{res.anti_goals.map((a:string,i:number)=>(<p key={i} style={{color:`#ccc',margin:'0.25rem 0'}}>• {a}</p>))}</div>)}</div>)}</div>);
+          return (<div style={{padding:'2rem',maxWidth:'800px',margin:'0 auto'}}><h2>📋 Weekly Plan Builder</h2><p style={{color:'#aaa'}}>Design a powerful week with themes, time blocks, and daily priorities.</p><textarea value={goals} onChange={e=>setGoals(e.target.value)} placeholder="This week\'s goals (what must get done?)" rows={3} style={{width:'100%',padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px',marginBottom:'0.75rem'}}/><input value={commits} onChange={e=>setCommits(e.target.value)} placeholder="Fixed commitments (meetings, appointments, deadlines)" style={{width:'100%',padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px',marginBottom:'0.75rem'}}/><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}><select value={energy} onChange={e=>setEnergy(e.target.value)} style={{padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px'}}><option value="high">High energy week</option><option value="normal">Normal energy</option><option value="low">Low energy / recovery</option></select><input value={prios} onChange={e=>setPrios(e.target.value)} placeholder="Top 3 priorities" style={{padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px'}}/></div><button onClick={async()=>{if(!goals)return;setLoading(true);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/weekly/plan`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({goals,commitments:commits,energy_level:energy,priorities:prios})});const d=await r.json();setRes(d);}catch(e){console.error(e);}setLoading(false);}} style={{background:'#0ea5e9',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',marginBottom:'1.5rem'}}>{loading?'Planning...':'Build Weekly Plan'}</button>{res&&(<div><div style={{background:'#0ea5e9',color:'#000',borderRadius:'8px',padding:'1.25rem',marginBottom:'1rem',textAlign:'center'}}><h2 style={{margin:0}}>Week Theme: {res.weekly_theme}</h2></div>{res.top_3_outcomes&&(<div style={{background:'#1a1a1a',border:'1px solid #0ea5e9',borderRadius:'8px',padding:'1.5rem',marginBottom:'1rem'}}><h4 style={{color:'#0ea5e9'}}>🎯 Must-Achieve Outcomes</h4>{res.top_3_outcomes.map((o:string,i:number)=>(<p key={i} style={{color:'#e2e8f0',margin:'0.25rem 0',fontWeight:'bold'}}>{i+1}. {o}</p>))}</div>)}{res.daily_plan&&res.daily_plan.map((d:any,i:number)=>(<div key={i} style={{background:'#1a1a1a',border:'1px solid #333',borderRadius:'8px',padding:'1.25rem',marginBottom:'0.5rem'}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.5rem'}}><h4 style={{margin:0,color:'#0ea5e9'}}>{d.day}</h4><span style={{color:'#888',fontSize:'0.85rem'}}>{d.theme}</span></div><div style={{fontWeight:'bold',color:'#fff',marginBottom:'0.25rem'}}>⭐ MIT: {d.mit}</div><div style={{fontSize:'0.85rem',color:'#aaa'}}>AM: {d.morning} | PM: {d.afternoon}</div></div>))}{res.anti_goals&&(<div style={{background:'#1a1a1a',border:'1px solid #ef4444',borderRadius:'8px',padding:'1.5rem'}}><h4 style={{color:'#ef4444'}}>🚫 Anti-Goals (Don\'t Do)</h4>{res.anti_goals.map((a:string,i:number)=>(<p key={i} style={{color:'#ccc',margin:'0.25rem 0'}}>• {a}</p>))}</div>)}</div>)}</div>);
 }
 
 
@@ -7483,7 +7483,7 @@ function ForgeTab_poemcrafter() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
   const [subject, setSubject] = React.useState(''); const [form, setForm] = React.useState('free verse'); const [mood, setMood] = React.useState('reflective'); const [imagery, setImagery] = React.useState(''); const [res, setRes] = React.useState<any>(null); const [loading, setLoading] = React.useState(false);
-          return (<div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}><h2>🎭 Poem Crafter</h2><p style={{color:'#aaa`}}>Craft original poetry with form analysis and interpretation.</p><input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="Subject or emotion (e.g. grief, a city at 3am, my grandmother's hands)" style={{width:`100%',padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px',marginBottom:'0.75rem'}}/><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}><select value={form} onChange={e=>setForm(e.target.value)} style={{padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px'}}><option>free verse</option><option>sonnet</option><option>haiku sequence</option><option>villanelle</option><option>prose poem</option><option>ode</option><option>elegy</option></select><select value={mood} onChange={e=>setMood(e.target.value)} style={{padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px'}}><option>reflective</option><option>melancholic</option><option>joyful</option><option>angry</option><option>tender</option><option>mysterious</option></select></div><input value={imagery} onChange={e=>setImagery(e.target.value)} placeholder="Imagery / sensory world to draw from (optional)" style={{width:'100%',padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px',marginBottom:'0.75rem'}}/><button onClick={async()=>{if(!subject)return;setLoading(true);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/poem/craft`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({subject,form,mood,imagery})});const d=await r.json();setRes(d);}catch(e){console.error(e);}setLoading(false);}} style={{background:'#ec4899',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',marginBottom:'1.5rem'}}>{loading?'Crafting...':'Craft Poem'}</button>{res&&(<div><div style={{background:'#1a1a1a',border:'1px solid #ec4899',borderRadius:'8px',padding:'2rem',marginBottom:'1rem',textAlign:'center'}}><h2 style={{color:'#ec4899',margin:'0 0 1.5rem'}}>{res.title}</h2><div style={{color:'#e2e8f0',lineHeight:'2',fontFamily:'Georgia,serif',fontSize:'1.05rem',whiteSpace:'pre-line',textAlign:'left'}}>{res.poem}</div></div>{res.interpretation&&(<div style={{background:'#1a1a1a',border:'1px solid #333',borderRadius:'8px',padding:'1.25rem'}}><h4>Interpretation</h4><p style={{color:'#ccc',fontSize:'0.9rem'}}>{res.interpretation}</p></div>)}</div>)}</div>);
+          return (<div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}><h2>🎭 Poem Crafter</h2><p style={{color:'#aaa'}}>Craft original poetry with form analysis and interpretation.</p><input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="Subject or emotion (e.g. grief, a city at 3am, my grandmother\'s hands)" style={{width:'100%',padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px',marginBottom:'0.75rem'}}/><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}><select value={form} onChange={e=>setForm(e.target.value)} style={{padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px'}}><option>free verse</option><option>sonnet</option><option>haiku sequence</option><option>villanelle</option><option>prose poem</option><option>ode</option><option>elegy</option></select><select value={mood} onChange={e=>setMood(e.target.value)} style={{padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px'}}><option>reflective</option><option>melancholic</option><option>joyful</option><option>angry</option><option>tender</option><option>mysterious</option></select></div><input value={imagery} onChange={e=>setImagery(e.target.value)} placeholder="Imagery / sensory world to draw from (optional)" style={{width:'100%',padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px',marginBottom:'0.75rem'}}/><button onClick={async()=>{if(!subject)return;setLoading(true);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/poem/craft`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({subject,form,mood,imagery})});const d=await r.json();setRes(d);}catch(e){console.error(e);}setLoading(false);}} style={{background:'#ec4899',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',marginBottom:'1.5rem'}}>{loading?'Crafting...':'Craft Poem'}</button>{res&&(<div><div style={{background:'#1a1a1a',border:'1px solid #ec4899',borderRadius:'8px',padding:'2rem',marginBottom:'1rem',textAlign:'center'}}><h2 style={{color:'#ec4899',margin:'0 0 1.5rem'}}>{res.title}</h2><div style={{color:'#e2e8f0',lineHeight:'2',fontFamily:'Georgia,serif',fontSize:'1.05rem',whiteSpace:'pre-line',textAlign:'left'}}>{res.poem}</div></div>{res.interpretation&&(<div style={{background:'#1a1a1a',border:'1px solid #333',borderRadius:'8px',padding:'1.25rem'}}><h4>Interpretation</h4><p style={{color:'#ccc',fontSize:'0.9rem'}}>{res.interpretation}</p></div>)}</div>)}</div>);
 }
 
 
@@ -7491,7 +7491,7 @@ function ForgeTab_screenplayscene() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
   const [setup, setSetup] = React.useState(''); const [chars, setChars] = React.useState(''); const [conflict, setConflict] = React.useState(''); const [location, setLocation] = React.useState(''); const [genre, setGenre] = React.useState('drama'); const [res, setRes] = React.useState<any>(null); const [loading, setLoading] = React.useState(false);
-          return (<div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}><h2>🎬 Screenplay Scene Writer</h2><p style={{color:'#aaa`}}>Get a professionally formatted screenplay scene with subtext analysis.</p><textarea value={setup} onChange={e=>setSetup(e.target.value)} placeholder="Scene setup — what's the situation?" rows={3} style={{width:`100%',padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px',marginBottom:'0.75rem'}}/><input value={chars} onChange={e=>setChars(e.target.value)} placeholder="Characters (e.g. 'MAYA, 30s detective; JAMES, her informant')" style={{width:'100%',padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px',marginBottom:'0.75rem'}}/><div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}><input value={conflict} onChange={e=>setConflict(e.target.value)} placeholder="Conflict/tension" style={{padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px'}}/><input value={location} onChange={e=>setLocation(e.target.value)} placeholder="Location" style={{padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px'}}/><select value={genre} onChange={e=>setGenre(e.target.value)} style={{padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px'}}><option>drama</option><option>thriller</option><option>comedy</option><option>horror</option><option>romance</option><option>sci-fi</option></select></div><button onClick={async()=>{if(!setup)return;setLoading(true);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/screenplay/scene`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({setup,characters:chars,conflict,location,genre})});const d=await r.json();setRes(d);}catch(e){console.error(e);}setLoading(false);}} style={{background:'#1d4ed8',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',marginBottom:'1.5rem'}}>{loading?'Writing...':'Write Scene'}</button>{res&&(<div><div style={{background:'#0d0d0d',border:'1px solid #1d4ed8',borderRadius:'8px',padding:'2rem',marginBottom:'1rem',fontFamily:'Courier New, monospace'}}><div style={{color:'#aaa',fontWeight:'bold',marginBottom:'1rem'}}>{res.scene_heading}</div><pre style={{color:'#e2e8f0',whiteSpace:'pre-wrap',fontFamily:'Courier New, monospace',fontSize:'0.9rem',lineHeight:'1.7',margin:0}}>{res.scene}</pre></div>{res.subtext&&(<div style={{background:'#1a1a1a',border:'1px solid #1d4ed8',borderRadius:'8px',padding:'1.25rem',marginBottom:'1rem'}}><h4 style={{color:'#1d4ed8'}}>Subtext</h4><p style={{color:'#ccc'}}>{res.subtext}</p></div>)}{res.character_notes&&(<div style={{background:'#1a1a1a',border:'1px solid #333',borderRadius:'8px',padding:'1.25rem'}}><h4>Character Objectives</h4>{res.character_notes.map((c:any,i:number)=>(<div key={i} style={{marginBottom:'0.5rem'}}><strong style={{color:'#e2e8f0'}}>{c.character}:</strong> <span style={{color:'#aaa',fontSize:'0.9rem'}}>Wants {c.objective} / Blocked by {c.obstacle}</span></div>))}</div>)}</div>)}</div>);
+          return (<div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}><h2>🎬 Screenplay Scene Writer</h2><p style={{color:'#aaa'}}>Get a professionally formatted screenplay scene with subtext analysis.</p><textarea value={setup} onChange={e=>setSetup(e.target.value)} placeholder="Scene setup — what\'s the situation?" rows={3} style={{width:'100%',padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px',marginBottom:'0.75rem'}}/><input value={chars} onChange={e=>setChars(e.target.value)} placeholder="Characters (e.g. 'MAYA, 30s detective; JAMES, her informant')" style={{width:'100%',padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px',marginBottom:'0.75rem'}}/><div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}><input value={conflict} onChange={e=>setConflict(e.target.value)} placeholder="Conflict/tension" style={{padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px'}}/><input value={location} onChange={e=>setLocation(e.target.value)} placeholder="Location" style={{padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px'}}/><select value={genre} onChange={e=>setGenre(e.target.value)} style={{padding:'0.75rem',background:'#1a1a1a',border:'1px solid #333',color:'#fff',borderRadius:'8px'}}><option>drama</option><option>thriller</option><option>comedy</option><option>horror</option><option>romance</option><option>sci-fi</option></select></div><button onClick={async()=>{if(!setup)return;setLoading(true);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/screenplay/scene`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({setup,characters:chars,conflict,location,genre})});const d=await r.json();setRes(d);}catch(e){console.error(e);}setLoading(false);}} style={{background:'#1d4ed8',color:'#fff',border:'none',borderRadius:'8px',padding:'0.75rem 2rem',cursor:'pointer',marginBottom:'1.5rem'}}>{loading?'Writing...':'Write Scene'}</button>{res&&(<div><div style={{background:'#0d0d0d',border:'1px solid #1d4ed8',borderRadius:'8px',padding:'2rem',marginBottom:'1rem',fontFamily:'Courier New, monospace'}}><div style={{color:'#aaa',fontWeight:'bold',marginBottom:'1rem'}}>{res.scene_heading}</div><pre style={{color:'#e2e8f0',whiteSpace:'pre-wrap',fontFamily:'Courier New, monospace',fontSize:'0.9rem',lineHeight:'1.7',margin:0}}>{res.scene}</pre></div>{res.subtext&&(<div style={{background:'#1a1a1a',border:'1px solid #1d4ed8',borderRadius:'8px',padding:'1.25rem',marginBottom:'1rem'}}><h4 style={{color:'#1d4ed8'}}>Subtext</h4><p style={{color:'#ccc'}}>{res.subtext}</p></div>)}{res.character_notes&&(<div style={{background:'#1a1a1a',border:'1px solid #333',borderRadius:'8px',padding:'1.25rem'}}><h4>Character Objectives</h4>{res.character_notes.map((c:any,i:number)=>(<div key={i} style={{marginBottom:'0.5rem'}}><strong style={{color:'#e2e8f0'}}>{c.character}:</strong> <span style={{color:'#aaa',fontSize:'0.9rem'}}>Wants {c.objective} / Blocked by {c.obstacle}</span></div>))}</div>)}</div>)}</div>);
 }
 
 
@@ -8477,7 +8477,7 @@ function ForgeTab_parentingcoach() {
           return (<div style={{padding:24}}><h2>👨‍👩‍👧 Parenting Coach</h2>
             {(['child_age','situation','parenting_style','what_tried'] as const).map(k=><div key={k} style={{marginBottom:12}}><label style={{display:'block',marginBottom:4,textTransform:'capitalize'}}>{k.replace(/_/g,' ')}</label><textarea value={pc[k]} onChange={e=>setPc(p=>({...p,[k]:e.target.value}))} rows={k==='situation'?4:2} style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:6,padding:8}}/></div>)}
             <button onClick={async()=>{setLoad(true);try{const r=await fetch(`${API_BASE}/api/parenting/coach`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify(pc)});const d=await r.json();setRes(d);}catch(e){console.error(e);}setLoad(false);}} style={{background:'#6c63ff',color:'#fff',border:'none',borderRadius:6,padding:'10px 24px',cursor:'pointer'}}>{load?'Coaching...':'Get Guidance'}</button>
-            {res&&<div style={{marginTop:20,background:'#1a1a2e`,borderRadius:8,padding:16}}><h3>What's Happening</h3><p style={{color:`#a0d0ff'}}>{res.what_is_happening}</p><h3>Right Now</h3><p style={{padding:12,background:'#0a2a0a',borderRadius:6,color:'#a0f0a0'}}>{res.immediate_strategy}</p><h3>Scripts</h3>{(res.scripts||[]).map((s:any,i:number)=><div key={i} style={{marginBottom:12,padding:12,background:'#12122a',borderRadius:6}}><p style={{color:'#ffe066'}}>Say: "{s.say_this}"</p><p style={{color:'#ff9999'}}>Avoid: "{s.avoid_saying}"</p><p style={{color:'#888',fontSize:12}}>Why: {s.why}</p></div>)}<h3>Long-Term Approach</h3><p>{res.long_term_approach}</p><h3>Self-Care Reminder</h3><p style={{color:'#a0d0ff',fontStyle:'italic'}}>💙 {res.self_care_reminder}</p></div>}
+            {res&&<div style={{marginTop:20,background:'#1a1a2e',borderRadius:8,padding:16}}><h3>What\'s Happening</h3><p style={{color:'#a0d0ff'}}>{res.what_is_happening}</p><h3>Right Now</h3><p style={{padding:12,background:'#0a2a0a',borderRadius:6,color:'#a0f0a0'}}>{res.immediate_strategy}</p><h3>Scripts</h3>{(res.scripts||[]).map((s:any,i:number)=><div key={i} style={{marginBottom:12,padding:12,background:'#12122a',borderRadius:6}}><p style={{color:'#ffe066'}}>Say: "{s.say_this}"</p><p style={{color:'#ff9999'}}>Avoid: "{s.avoid_saying}"</p><p style={{color:'#888',fontSize:12}}>Why: {s.why}</p></div>)}<h3>Long-Term Approach</h3><p>{res.long_term_approach}</p><h3>Self-Care Reminder</h3><p style={{color:'#a0d0ff',fontStyle:'italic'}}>💙 {res.self_care_reminder}</p></div>}
           </div>);
 }
 
@@ -8607,7 +8607,7 @@ function ForgeTab_flavorprofile() {
           return (<div style={{padding:24}}><h2>👅 Flavor Profiler</h2>
             {(['favorite_foods','disliked_foods','dietary_restrictions','cuisine_preferences'] as const).map(k=><div key={k} style={{marginBottom:12}}><label style={{display:'block',marginBottom:4,textTransform:'capitalize'}}>{k.replace(/_/g,' ')}</label><textarea value={fp[k]} onChange={e=>setFp(p=>({...p,[k]:e.target.value}))} rows={2} style={{width:'100%',background:'#1a1a2e',color:'#e0e0e0',border:'1px solid #333',borderRadius:6,padding:8}}/></div>)}
             <button onClick={async()=>{setLoad(true);try{const r=await fetch(`${API_BASE}/api/flavor/profile`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify(fp)});const d=await r.json();setRes(d);}catch(e){console.error(e);}setLoad(false);}} style={{background:'#e07a3a',color:'#fff',border:'none',borderRadius:6,padding:'10px 24px',cursor:'pointer'}}>{load?'Profiling...':'Build My Flavor Profile'}</button>
-            {res&&<div style={{marginTop:20,background:'#1a1a2e',borderRadius:8,padding:16}}><h3>Your Flavor Profile</h3><div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:12}}>{(res.flavor_profile?.dominant_preferences||[]).map((p:string,i:number)=><span key={i} style={{padding:'4px 12px',background:'#e07a3a33',borderRadius:20,border:'1px solid #e07a3a'}}>{p}</span>)}</div><p style={{color:'#a0d0ff'}}>{res.taste_science}</p><h3>Cuisines to Explore</h3>{(res.cuisines_to_explore||[]).map((c:any,i:number)=><div key={i} style={{marginBottom:8,padding:8,background:'#12122a',borderRadius:6}}><strong>{c.cuisine}</strong><p>{c.why}</p><p style={{color:'#ffe066`,fontSize:12}}>Start with: {c.gateway_dish}</p></div>)}<h3>Ingredients You'd Love</h3><div style={{display:`flex',flexWrap:'wrap',gap:6}}>{(res.ingredient_loves||[]).map((i:string,idx:number)=><span key={idx} style={{padding:'4px 10px',background:'#12122a',borderRadius:12}}>🌿 {i}</span>)}</div></div>}
+            {res&&<div style={{marginTop:20,background:'#1a1a2e',borderRadius:8,padding:16}}><h3>Your Flavor Profile</h3><div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:12}}>{(res.flavor_profile?.dominant_preferences||[]).map((p:string,i:number)=><span key={i} style={{padding:'4px 12px',background:'#e07a3a33',borderRadius:20,border:'1px solid #e07a3a'}}>{p}</span>)}</div><p style={{color:'#a0d0ff'}}>{res.taste_science}</p><h3>Cuisines to Explore</h3>{(res.cuisines_to_explore||[]).map((c:any,i:number)=><div key={i} style={{marginBottom:8,padding:8,background:'#12122a',borderRadius:6}}><strong>{c.cuisine}</strong><p>{c.why}</p><p style={{color:'#ffe066',fontSize:12}}>Start with: {c.gateway_dish}</p></div>)}<h3>Ingredients You\'d Love</h3><div style={{display:'flex',flexWrap:'wrap',gap:6}}>{(res.ingredient_loves||[]).map((i:string,idx:number)=><span key={idx} style={{padding:'4px 10px',background:'#12122a',borderRadius:12}}>🌿 {i}</span>)}</div></div>}
           </div>);
 }
 
@@ -9026,7 +9026,7 @@ function ForgeTab_mortgageexp() {
                 <select value={mgCredit} onChange={e=>setMgCredit(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}>
                   {['excellent (760+)','good (700+)','fair (650-699)','poor (below 650)'].map(c=><option key={c} value={c}>{c}</option>)}
                 </select>
-                <input value={mgQ} onChange={e=>setMgQ(e.target.value)} placeholder="Specific questions (e.g. should I do ARM or fixed? what's PMI?)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
+                <input value={mgQ} onChange={e=>setMgQ(e.target.value)} placeholder="Specific questions (e.g. should I do ARM or fixed? what\'s PMI?)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <button onClick={async()=>{if(!mgPrice.trim())return;setMgLoading(true);setMgRes(null);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/mortgage/explain`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({home_price:mgPrice,down_payment:mgDown,credit_score:mgCredit,questions:mgQ})});const d=await r.json();setMgRes(d);}catch(e){console.error(e);}finally{setMgLoading(false);}}} disabled={mgLoading||!mgPrice.trim()} style={{padding:'0.875rem',borderRadius:'8px',background:'var(--accent)',color:'white',border:'none',cursor:'pointer',fontWeight:600,fontSize:'1rem'}}>
                   {mgLoading?'Explaining...':'Explain My Mortgage Options 📖'}
                 </button>
@@ -9326,7 +9326,7 @@ function ForgeTab_griefcoach() {
                 <input value={gcLoss} onChange={e=>setGcLoss(e.target.value)} placeholder="Type of loss (e.g. death of parent, end of relationship, job loss, miscarriage)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
                   <input value={gcTime} onChange={e=>setGcTime(e.target.value)} placeholder="How long ago (e.g. 2 weeks, 6 months, 3 years)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
-                  <input value={gcState} onChange={e=>setGcState(e.target.value)} placeholder="How you're feeling right now" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
+                  <input value={gcState} onChange={e=>setGcState(e.target.value)} placeholder="How you\'re feeling right now" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 </div>
                 <button onClick={async()=>{if(!gcLoss.trim())return;setGcLoading(true);setGcRes(null);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/grief/coach`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({loss_type:gcLoss,time_since:gcTime,current_state:gcState})});const d=await r.json();setGcRes(d);}catch(e){console.error(e);}finally{setGcLoading(false);}}} disabled={gcLoading||!gcLoss.trim()} style={{padding:'0.875rem',borderRadius:'8px',background:'var(--accent)',color:'white',border:'none',cursor:'pointer',fontWeight:600,fontSize:'1rem'}}>
                   {gcLoading?'Gathering support...':'Get Grief Support 💙'}
@@ -9334,7 +9334,7 @@ function ForgeTab_griefcoach() {
               </div>
               {gcRes&&<div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
                 <div style={{padding:'1.5rem',borderRadius:'12px',background:'var(--bg-secondary)',border:'1px solid var(--border)',borderLeft:'4px solid #60a5fa'}}><p style={{lineHeight:1.8}}>{gcRes.validation}</p></div>
-                {gcRes.what_youre_experiencing&&<div style={{padding:'1rem',borderRadius:'8px',background:'var(--bg-secondary)',border:'1px solid var(--border)`}}><strong>What You're Experiencing:</strong><p style={{marginTop:`0.5rem',lineHeight:1.7}}>{gcRes.what_youre_experiencing}</p></div>}
+                {gcRes.what_youre_experiencing&&<div style={{padding:'1rem',borderRadius:'8px',background:'var(--bg-secondary)',border:'1px solid var(--border)'}}><strong>What You\'re Experiencing:</strong><p style={{marginTop:'0.5rem',lineHeight:1.7}}>{gcRes.what_youre_experiencing}</p></div>}
                 {Array.isArray(gcRes.coping_tools)&&<div style={{display:'flex',flexDirection:'column',gap:'0.5rem'}}><strong>🛠️ Coping Tools:</strong>{gcRes.coping_tools.map((t:any,i:number)=><div key={i} style={{padding:'1rem',borderRadius:'8px',background:'var(--bg-secondary)',border:'1px solid var(--border)'}}><div style={{fontWeight:700,marginBottom:'0.25rem'}}>{t.tool} <span style={{fontWeight:400,opacity:0.6,fontSize:'0.85rem'}}>{t.when_to_use}</span></div><div style={{fontSize:'0.9rem',lineHeight:1.6}}>{t.how_to}</div></div>)}</div>}
                 {Array.isArray(gcRes.things_that_help)&&<div style={{padding:'1rem',borderRadius:'8px',background:'var(--bg-secondary)',border:'1px solid var(--border)'}}><strong>✅ Things That Help:</strong><ul style={{margin:'0.25rem 0 0',paddingLeft:'1.25rem'}}>{gcRes.things_that_help.map((h:string,i:number)=><li key={i} style={{marginBottom:'0.25rem'}}>{h}</li>)}</ul></div>}
                 {gcRes.one_small_step&&<div style={{padding:'1.25rem',borderRadius:'12px',background:'var(--bg-secondary)',border:'2px solid var(--accent)'}}><strong>One Small Step Today: </strong>{gcRes.one_small_step}</div>}
@@ -9420,7 +9420,7 @@ function ForgeTab_mindsetcoach() {
             <div style={{padding:'2rem',maxWidth:'800px',margin:'0 auto'}}>
               <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'1.5rem'}}>🔮 Mindset Coach</h2>
               <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1.5rem'}}>
-                <textarea value={mcBelief} onChange={e=>setMcBelief(e.target.value)} placeholder="Limiting belief or pattern (e.g. `I'm not smart enough`, 'I always self-sabotage', `I don't deserve success`)" rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)',resize:'vertical'}}/>
+                <textarea value={mcBelief} onChange={e=>setMcBelief(e.target.value)} placeholder="Limiting belief or pattern (e.g. 'I\'m not smart enough', 'I always self-sabotage', 'I don\'t deserve success')" rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)',resize:'vertical'}}/>
                 <input value={mcArea} onChange={e=>setMcArea(e.target.value)} placeholder="Life area most affected (e.g. career, relationships, finances, health)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <input value={mcDesired} onChange={e=>setMcDesired(e.target.value)} placeholder="Desired mindset shift (e.g. confident, abundant, worthy, capable)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <button onClick={async()=>{if(!mcBelief.trim())return;setMcLoading(true);setMcRes(null);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/mindset/coach`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({limiting_belief:mcBelief,life_area:mcArea,desired_shift:mcDesired})});const d=await r.json();setMcRes(d);}catch(e){console.error(e);}finally{setMcLoading(false);}}} disabled={mcLoading||!mcBelief.trim()} style={{padding:'0.875rem',borderRadius:'8px',background:'var(--accent)',color:'white',border:'none',cursor:'pointer',fontWeight:600,fontSize:'1rem'}}>
@@ -9658,9 +9658,9 @@ function ForgeTab_parentadvise() {
             <div style={{padding:'2rem',maxWidth:'800px',margin:'0 auto'}}>
               <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'1.5rem'}}>👶 Parenting Advisor</h2>
               <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1.5rem'}}>
-                <input value={paAge} onChange={e=>setPaAge(e.target.value)} placeholder="Child's age (e.g. 3 years, 8 months, 14 years)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
+                <input value={paAge} onChange={e=>setPaAge(e.target.value)} placeholder="Child\'s age (e.g. 3 years, 8 months, 14 years)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <textarea value={paChallenge} onChange={e=>setPaChallenge(e.target.value)} placeholder="What challenge are you facing? (e.g. tantrums, sleep issues, screen time, defiance)" rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)',resize:'vertical'}}/>
-                <textarea value={paContext} onChange={e=>setPaContext(e.target.value)} placeholder="Additional context (what you've tried, family situation, anything relevant)" rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)',resize:'vertical'}}/>
+                <textarea value={paContext} onChange={e=>setPaContext(e.target.value)} placeholder="Additional context (what you\'ve tried, family situation, anything relevant)" rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)',resize:'vertical'}}/>
                 <button onClick={async()=>{if(!paAge.trim()||!paChallenge.trim())return;setPaLoading(true);setPaRes(null);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/parenting/advise`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({child_age:paAge,challenge:paChallenge,context:paContext})});const d=await r.json();setPaRes(d);}catch(e){console.error(e);}finally{setPaLoading(false);}}} disabled={paLoading||!paAge.trim()||!paChallenge.trim()} style={{padding:'0.875rem',borderRadius:'8px',background:'var(--accent)',color:'white',border:'none',cursor:'pointer',fontWeight:600,fontSize:'1rem'}}>
                   {paLoading?'Getting advice...':'Get Parenting Advice 💡'}
                 </button>
@@ -9756,7 +9756,7 @@ function ForgeTab_bedtimestory() {
               <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'1.5rem'}}>🌙 Bedtime Story Generator</h2>
               <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1.5rem'}}>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
-                  <input value={bsName} onChange={e=>setBsName(e.target.value)} placeholder="Child's name" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
+                  <input value={bsName} onChange={e=>setBsName(e.target.value)} placeholder="Child\'s name" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                   <input value={bsAge} onChange={e=>setBsAge(e.target.value)} placeholder="Age (e.g. 4, 7, 10)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 </div>
                 <input value={bsTheme} onChange={e=>setBsTheme(e.target.value)} placeholder="Theme/elements (e.g. dragons, space, unicorns, being brave, making friends)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
@@ -9798,7 +9798,7 @@ function ForgeTab_collegeprep() {
                   <option value="">Select grade...</option>
                   {['8th grade','9th grade (Freshman)','10th grade (Sophomore)','11th grade (Junior)','12th grade (Senior)'].map(g=><option key={g} value={g}>{g}</option>)}
                 </select>
-                <input value={cpInterests} onChange={e=>setCpInterests(e.target.value)} placeholder="Student's interests, passions, strengths (be specific)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
+                <input value={cpInterests} onChange={e=>setCpInterests(e.target.value)} placeholder="Student\'s interests, passions, strengths (be specific)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <input value={cpSchools} onChange={e=>setCpSchools(e.target.value)} placeholder="Dream schools or types (e.g. MIT, liberal arts colleges, in-state schools)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <input value={cpBudget} onChange={e=>setCpBudget(e.target.value)} placeholder="Budget considerations (e.g. need full scholarship, middle income, no constraints)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <button onClick={async()=>{if(!cpGrade||!cpInterests.trim())return;setCpLoading(true);setCpRes(null);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/college/prep`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({student_grade:cpGrade,interests:cpInterests,dream_schools:cpSchools,budget:cpBudget})});const d=await r.json();setCpRes(d);}catch(e){console.error(e);}finally{setCpLoading(false);}}} disabled={cpLoading||!cpGrade||!cpInterests.trim()} style={{padding:'0.875rem',borderRadius:'8px',background:'var(--accent)',color:'white',border:'none',cursor:'pointer',fontWeight:600,fontSize:'1rem'}}>
@@ -9807,7 +9807,7 @@ function ForgeTab_collegeprep() {
               </div>
               {cpRes&&<div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
                 {cpRes.timeline_overview&&<div style={{padding:'1.25rem',borderRadius:'12px',background:'var(--bg-secondary)',border:'2px solid var(--accent)'}}><strong>🗺️ Overview: </strong>{cpRes.timeline_overview}</div>}
-                {Array.isArray(cpRes.this_year_priorities)&&<div style={{display:'flex',flexDirection:'column',gap:'0.5rem`}}><strong>🎯 This Year's Priorities:</strong>{cpRes.this_year_priorities.map((p:any,i:number)=><div key={i} style={{padding:`1rem',borderRadius:'8px',background:'var(--bg-secondary)',border:'1px solid var(--border)'}}><div style={{fontWeight:600,marginBottom:'0.25rem'}}>{p.priority}</div><div style={{opacity:0.7,marginBottom:'0.5rem',fontSize:'0.85rem'}}>{p.why}</div>{Array.isArray(p.actions)&&p.actions.map((a:string,j:number)=><div key={j} style={{padding:'0.25rem 0',paddingLeft:'1rem'}}>→ {a}</div>)}</div>)}</div>}
+                {Array.isArray(cpRes.this_year_priorities)&&<div style={{display:'flex',flexDirection:'column',gap:'0.5rem'}}><strong>🎯 This Year\'s Priorities:</strong>{cpRes.this_year_priorities.map((p:any,i:number)=><div key={i} style={{padding:'1rem',borderRadius:'8px',background:'var(--bg-secondary)',border:'1px solid var(--border)'}}><div style={{fontWeight:600,marginBottom:'0.25rem'}}>{p.priority}</div><div style={{opacity:0.7,marginBottom:'0.5rem',fontSize:'0.85rem'}}>{p.why}</div>{Array.isArray(p.actions)&&p.actions.map((a:string,j:number)=><div key={j} style={{padding:'0.25rem 0',paddingLeft:'1rem'}}>→ {a}</div>)}</div>)}</div>}
                 {cpRes.extracurricular_strategy&&<div style={{padding:'1rem',borderRadius:'8px',background:'var(--bg-secondary)',border:'1px solid var(--border)'}}><strong>🏃 Extracurriculars:</strong><p style={{marginTop:'0.5rem',opacity:0.8}}>{cpRes.extracurricular_strategy.philosophy}</p>{Array.isArray(cpRes.extracurricular_strategy.recommendations)&&<ul style={{margin:'0.5rem 0 0',paddingLeft:'1.25rem'}}>{cpRes.extracurricular_strategy.recommendations.map((r:string,i:number)=><li key={i}>{r}</li>)}</ul>}</div>}
                 {cpRes.test_prep_plan&&<div style={{padding:'1rem',borderRadius:'8px',background:'var(--bg-secondary)',border:'1px solid var(--border)'}}><strong>📝 Test Prep:</strong><div style={{marginTop:'0.5rem'}}>{cpRes.test_prep_plan.sat_act}</div>{Array.isArray(cpRes.test_prep_plan.ap_courses)&&<div style={{marginTop:'0.5rem',opacity:0.8}}>Suggested APs: {cpRes.test_prep_plan.ap_courses.join(', ')}</div>}</div>}
                 {Array.isArray(cpRes.essay_themes)&&<div style={{padding:'1rem',borderRadius:'8px',background:'var(--bg-secondary)',border:'1px solid var(--border)'}}><strong>✍️ Essay Themes to Explore:</strong><ul style={{margin:'0.5rem 0 0',paddingLeft:'1.25rem'}}>{cpRes.essay_themes.map((t:string,i:number)=><li key={i}>{t}</li>)}</ul></div>}
@@ -9873,7 +9873,7 @@ function ForgeTab_investdecode() {
                   <select value={idLevel} onChange={e=>setIdLevel(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}>
                     {['complete beginner','beginner','intermediate','advanced'].map(l=><option key={l} value={l}>{l}</option>)}
                   </select>
-                  <input value={idAmount} onChange={e=>setIdAmount(e.target.value)} placeholder="Amount you're considering (optional)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
+                  <input value={idAmount} onChange={e=>setIdAmount(e.target.value)} placeholder="Amount you\'re considering (optional)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 </div>
                 <button onClick={async()=>{if(!idTopic.trim())return;setIdLoading(true);setIdRes(null);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/investment/decode`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({topic:idTopic,experience_level:idLevel,amount_to_invest:idAmount})});const d=await r.json();setIdRes(d);}catch(e){console.error(e);}finally{setIdLoading(false);}}} disabled={idLoading||!idTopic.trim()} style={{padding:'0.875rem',borderRadius:'8px',background:'var(--accent)',color:'white',border:'none',cursor:'pointer',fontWeight:600,fontSize:'1rem'}}>
                   {idLoading?'Decoding...':'Decode This Investment 🔍'}
@@ -10020,7 +10020,7 @@ function ForgeTab_difficultconv2() {
             <div style={{padding:'2rem',maxWidth:'800px',margin:'0 auto'}}>
               <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'1.5rem'}}>💬 Difficult Conversation Coach</h2>
               <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1.5rem'}}>
-                <textarea value={dcSit} onChange={e=>setDcSit(e.target.value)} placeholder="What`s the situation? (e.g. telling my boss I'm underpaid, confronting a friend who betrayed me, ending a relationship)" rows={2} style={{padding:`0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)',resize:'vertical'}}/>
+                <textarea value={dcSit} onChange={e=>setDcSit(e.target.value)} placeholder="What\'s the situation? (e.g. telling my boss I\'m underpaid, confronting a friend who betrayed me, ending a relationship)" rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)',resize:'vertical'}}/>
                 <input value={dcRel} onChange={e=>setDcRel(e.target.value)} placeholder="Your relationship with them (e.g. my manager, my partner, my best friend)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <input value={dcWant} onChange={e=>setDcWant(e.target.value)} placeholder="What outcome do you want?" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <input value={dcFear} onChange={e=>setDcFear(e.target.value)} placeholder="What are you afraid will happen?" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
@@ -10067,7 +10067,7 @@ function ForgeTab_apologycraft() {
                 {Array.isArray(acRes.apology_versions)&&acRes.apology_versions.map((v:any,i:number)=><div key={i} style={{padding:'1.25rem',borderRadius:'12px',background:'var(--bg-secondary)',border:i===0?'2px solid var(--accent)':'1px solid var(--border)'}}><div style={{opacity:0.6,fontSize:'0.8rem',marginBottom:'0.75rem',textTransform:'uppercase'}}>{v.style} version</div><div style={{lineHeight:1.8,fontStyle:'italic'}}>"{v.apology}"</div></div>)}
                 {Array.isArray(acRes.follow_through_actions)&&<div style={{padding:'1rem',borderRadius:'8px',background:'var(--bg-secondary)',border:'1px solid var(--border)'}}><strong>✅ Back It Up With Action:</strong><ul style={{margin:'0.5rem 0 0',paddingLeft:'1.25rem'}}>{acRes.follow_through_actions.map((a:string,i:number)=><li key={i}>{a}</li>)}</ul></div>}
                 {acRes.give_them_space&&<div style={{padding:'1rem',borderRadius:'8px',background:'var(--bg-secondary)',border:'1px solid var(--border)'}}><strong>⏳ Timing: </strong>{acRes.give_them_space}</div>}
-                {acRes.if_they_dont_accept&&<div style={{padding:'1rem',borderRadius:'8px',background:'var(--bg-secondary)',border:'1px solid var(--border)'}}><strong>💔 If They Don't Accept It: </strong>{acRes.if_they_dont_accept}</div>}
+                {acRes.if_they_dont_accept&&<div style={{padding:'1rem',borderRadius:'8px',background:'var(--bg-secondary)',border:'1px solid var(--border)'}}><strong>💔 If They Don\'t Accept It: </strong>{acRes.if_they_dont_accept}</div>}
               </div>}
             </div>
           );
@@ -10122,7 +10122,7 @@ function ForgeTab_boundaryset() {
             <div style={{padding:'2rem',maxWidth:'800px',margin:'0 auto'}}>
               <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'1.5rem'}}>🛡️ Boundary Setter</h2>
               <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1.5rem'}}>
-                <textarea value={bsSit} onChange={e=>setBsSit(e.target.value)} placeholder="What's the situation? What keeps happening that you need to stop?" rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)',resize:'vertical'}}/>
+                <textarea value={bsSit} onChange={e=>setBsSit(e.target.value)} placeholder="What\'s the situation? What keeps happening that you need to stop?" rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)',resize:'vertical'}}/>
                 <input value={bsRel} onChange={e=>setBsRel(e.target.value)} placeholder="Your relationship with this person" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <input value={bsDyn} onChange={e=>setBsDyn(e.target.value)} placeholder="Current dynamic (e.g. they always call me for advice, my parent guilt trips me, coworker oversteps)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <input value={bsBound} onChange={e=>setBsBound(e.target.value)} placeholder="The boundary you want to set" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
@@ -10201,7 +10201,7 @@ function ForgeTab_procbust() {
               <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1.5rem'}}>
                 <input value={pbTask} onChange={e=>setPbTask(e.target.value)} placeholder="What are you avoiding? (be specific)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <input value={pbHow} onChange={e=>setPbHow(e.target.value)} placeholder="How long have you been avoiding it?" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
-                <input value={pbRoot} onChange={e=>setPbRoot(e.target.value)} placeholder="Why do you think you're avoiding it? (e.g. fear of failure, overwhelm, boring, unclear)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
+                <input value={pbRoot} onChange={e=>setPbRoot(e.target.value)} placeholder="Why do you think you\'re avoiding it? (e.g. fear of failure, overwhelm, boring, unclear)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <input value={pbDeadline} onChange={e=>setPbDeadline(e.target.value)} placeholder="Deadline (if any)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <button onClick={async()=>{if(!pbTask.trim())return;setPbLoading(true);setPbRes(null);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/procrastination/bust`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({task:pbTask,how_long_avoiding:pbHow,root_cause:pbRoot,deadline:pbDeadline})});const d=await r.json();setPbRes(d);}catch(e){console.error(e);}finally{setPbLoading(false);}}} disabled={pbLoading||!pbTask.trim()} style={{padding:'0.875rem',borderRadius:'8px',background:'var(--accent)',color:'white',border:'none',cursor:'pointer',fontWeight:600,fontSize:'1rem'}}>
                   {pbLoading?'Diagnosing...':'Bust This Procrastination 💥'}
@@ -10301,7 +10301,7 @@ function ForgeTab_pkmdesign() {
               <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'1.5rem'}}>🗂️ PKM Architect</h2>
               <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1.5rem'}}>
                 <input value={pkTools} onChange={e=>setPkTools(e.target.value)} placeholder="Current tools (e.g. Notion, Apple Notes, Obsidian, random notebooks, nothing)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
-                <input value={pkFails} onChange={e=>setPkFails(e.target.value)} placeholder="What fails about your current system? (e.g. can`t find notes, too complex, don't maintain it)" style={{padding:`0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
+                <input value={pkFails} onChange={e=>setPkFails(e.target.value)} placeholder="What fails about your current system? (e.g. can\'t find notes, too complex, don\'t maintain it)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <input value={pkRole} onChange={e=>setPkRole(e.target.value)} placeholder="Your role (e.g. student, researcher, engineer, creator, executive)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <input value={pkGoals} onChange={e=>setPkGoals(e.target.value)} placeholder="Knowledge goals (e.g. retain what I read, build a writing library, track projects + ideas)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <button onClick={async()=>{if(!pkTools.trim())return;setPkLoading(true);setPkRes(null);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/pkm/design`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({current_tools:pkTools,what_fails:pkFails,role:pkRole,knowledge_goals:pkGoals})});const d=await r.json();setPkRes(d);}catch(e){console.error(e);}finally{setPkLoading(false);}}} disabled={pkLoading||!pkTools.trim()} style={{padding:'0.875rem',borderRadius:'8px',background:'var(--accent)',color:'white',border:'none',cursor:'pointer',fontWeight:600,fontSize:'1rem'}}>
@@ -10404,7 +10404,7 @@ function ForgeTab_plotweave() {
             <div style={{padding:'2rem',maxWidth:'800px',margin:'0 auto'}}>
               <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'1.5rem'}}>📖 Plot Weaver</h2>
               <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1.5rem'}}>
-                <textarea value={pwPremise} onChange={e=>setPwPremise(e.target.value)} placeholder="Core premise (e.g. A disgraced detective returns to her hometown to solve her sister's disappearance)" rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)',resize:'vertical'}}/>
+                <textarea value={pwPremise} onChange={e=>setPwPremise(e.target.value)} placeholder="Core premise (e.g. A disgraced detective returns to her hometown to solve her sister\'s disappearance)" rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)',resize:'vertical'}}/>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
                   <input value={pwGenre} onChange={e=>setPwGenre(e.target.value)} placeholder="Genre" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                   <input value={pwProta} onChange={e=>setPwProta(e.target.value)} placeholder="Protagonist (brief description)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
@@ -10447,7 +10447,7 @@ function ForgeTab_dialogsharp() {
                   <input value={dsGoal} onChange={e=>setDsGoal(e.target.value)} placeholder="Scene goal (what needs to happen)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                   <input value={dsTone} onChange={e=>setDsTone(e.target.value)} placeholder="Tone (e.g. tense, playful, heartbreaking)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 </div>
-                <input value={dsUnsaid} onChange={e=>setDsUnsaid(e.target.value)} placeholder="What's really being said underneath (subtext)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
+                <input value={dsUnsaid} onChange={e=>setDsUnsaid(e.target.value)} placeholder="What\'s really being said underneath (subtext)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 <button onClick={async()=>{if(!dsDialog.trim())return;setDsLoading(true);setDsRes(null);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/dialogue/sharpen`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({existing_dialogue:dsDialog,characters:dsChars,scene_goal:dsGoal,tone:dsTone,what_unsaid:dsUnsaid})});const d=await r.json();setDsRes(d);}catch(e){console.error(e);}finally{setDsLoading(false);}}} disabled={dsLoading||!dsDialog.trim()} style={{padding:'0.875rem',borderRadius:'8px',background:'var(--accent)',color:'white',border:'none',cursor:'pointer',fontWeight:600,fontSize:'1rem'}}>
                   {dsLoading?'Sharpening...':'Sharpen This Dialogue ✂️'}
                 </button>
@@ -10801,14 +10801,14 @@ function ForgeTab_growthhack() {
             <div style={{padding:'2rem',maxWidth:'800px',margin:'0 auto'}}>
               <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'1.5rem'}}>🚀 Growth Hacker</h2>
               <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1.5rem'}}>
-                <textarea value={ghProduct} onChange={e=>setGhProduct(e.target.value)} placeholder="Your product (what it does, who it's for, current state)" rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)',resize:'vertical'}}/>
+                <textarea value={ghProduct} onChange={e=>setGhProduct(e.target.value)} placeholder="Your product (what it does, who it\'s for, current state)" rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)',resize:'vertical'}}/>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
                   <input value={ghStage} onChange={e=>setGhStage(e.target.value)} placeholder="Stage (idea, pre-launch, early, growth, scale)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                   <input value={ghRate} onChange={e=>setGhRate(e.target.value)} placeholder="Current growth rate (users/MRR)" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 </div>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
                   <input value={ghBudget} onChange={e=>setGhBudget(e.target.value)} placeholder="Monthly growth budget" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
-                  <input value={ghChannels} onChange={e=>setGhChannels(e.target.value)} placeholder="Channels you've tried" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
+                  <input value={ghChannels} onChange={e=>setGhChannels(e.target.value)} placeholder="Channels you\'ve tried" style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}}/>
                 </div>
                 <button onClick={async()=>{if(!ghProduct.trim())return;setGhLoading(true);setGhRes(null);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/growth/hack`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({product:ghProduct,stage:ghStage,current_growth_rate:ghRate,budget:ghBudget,channel_history:ghChannels})});const d=await r.json();setGhRes(d);}catch(e){console.error(e);}finally{setGhLoading(false);}}} disabled={ghLoading||!ghProduct.trim()} style={{padding:'0.875rem',borderRadius:'8px',background:'var(--accent)',color:'white',border:'none',cursor:'pointer',fontWeight:600,fontSize:'1rem'}}>
                   {ghLoading?'Hacking...':'Build My Growth Engine 🚀'}
@@ -11242,7 +11242,7 @@ function ForgeTab_landlordadvise() {
                 <option value='vacation rental'>Vacation Rental</option>
               </select>
               <input placeholder="Jurisdiction (e.g. New York, California, Texas)" value={jurisdiction} onChange={e=>setJurisdiction(e.target.value)} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-              <textarea placeholder="Describe your situation (e.g. tenant hasn`t paid rent for 2 months, landlord won't fix heater, security deposit dispute...)" value={situation} onChange={e=>setSituation(e.target.value)} rows={5} style={{width:`100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
+              <textarea placeholder="Describe your situation (e.g. tenant hasn\'t paid rent for 2 months, landlord won\'t fix heater, security deposit dispute...)" value={situation} onChange={e=>setSituation(e.target.value)} rows={5} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
               <button onClick={async()=>{if(!situation)return;setLoading(true);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/landlord/advise`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({role,situation,property_type:propType,jurisdiction})});const d=await r.json();setResult(d);}catch(e){console.error(e);}setLoading(false);}} style={{width:'100%',padding:'0.875rem',background:'linear-gradient(135deg,#7c3aed,#0891b2)',color:'#fff',border:'none',borderRadius:'8px',fontWeight:600,cursor:'pointer',marginBottom:'1.5rem'}}>{loading?'Advising...':'Get Advice'}</button>
               {result&&<div style={{background:'#111',borderRadius:'12px',padding:'1.5rem',border:'1px solid #222'}}>
                 <div style={{background:'#1a1a2a',borderRadius:'8px',padding:'0.75rem',marginBottom:'1rem'}}><strong style={{color:'#a78bfa'}}>Assessment:</strong><p style={{color:'#e0e0e0',margin:'0.25rem 0'}}>{result.situation_assessment}</p><div style={{marginTop:'0.5rem',color:'#888',fontSize:'0.9rem'}}>Verdict: {result.verdict}</div></div>
@@ -11269,7 +11269,7 @@ function ForgeTab_emotiondecode() {
           return (
             <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
               <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>💭 Emotion Decoder</h2>
-              <p style={{color:'#888',marginBottom:'1.5rem',fontSize:'0.9rem'}}>Understand what you're feeling and why — with compassion.</p>
+              <p style={{color:'#888',marginBottom:'1.5rem',fontSize:'0.9rem'}}>Understand what you\'re feeling and why — with compassion.</p>
               <textarea placeholder="Describe your situation..." value={situation} onChange={e=>setSituation(e.target.value)} rows={4} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
               <input placeholder="How would you describe your feelings? (e.g. anxious, numb, angry, sad)" value={feelings} onChange={e=>setFeelings(e.target.value)} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
               <div style={{marginBottom:'0.75rem'}}><label style={{color:'#888',fontSize:'0.85rem'}}>Intensity: {intensity}/10</label><input type="range" min="1" max="10" value={intensity} onChange={e=>setIntensity(e.target.value)} style={{width:'100%',marginTop:'0.25rem'}} /></div>
@@ -11282,7 +11282,7 @@ function ForgeTab_emotiondecode() {
                     {result.secondary_emotions?.map((e:string,i:number)=><span key={i} style={{background:'#2e1065',borderRadius:'12px',padding:'0.2rem 0.6rem',fontSize:'0.8rem',color:'#a78bfa'}}>{e}</span>)}
                   </div>
                 </div>
-                <div style={{background:'#1a1a1a',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}}><strong style={{color:'#a78bfa`}}>What it's telling you:</strong><p style={{color:`#e0e0e0',margin:'0.25rem 0'}}>{result.what_the_emotion_is_telling_you}</p></div>
+                <div style={{background:'#1a1a1a',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}}><strong style={{color:'#a78bfa'}}>What it\'s telling you:</strong><p style={{color:'#e0e0e0',margin:'0.25rem 0'}}>{result.what_the_emotion_is_telling_you}</p></div>
                 <div style={{background:'#1a1a1a',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}}><strong>Unmet Needs:</strong>{result.unmet_needs?.map((n:string,i:number)=><li key={i} style={{color:'#fbbf24',fontSize:'0.9rem'}}>{n}</li>)}</div>
                 <div style={{background:'#1a2a1a',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}}><strong style={{color:'#4ade80'}}>Immediate Relief:</strong>{result.immediate_relief?.map((r:string,i:number)=><li key={i} style={{color:'#86efac',fontSize:'0.9rem'}}>{r}</li>)}</div>
                 <div style={{background:'#0a1a2a',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem',borderLeft:'3px solid #60a5fa'}}><strong style={{color:'#60a5fa'}}>Journaling Prompts:</strong>{result.journaling_prompts?.map((p:string,i:number)=><li key={i} style={{color:'#93c5fd',fontSize:'0.9rem'}}>{p}</li>)}</div>
@@ -11304,7 +11304,7 @@ function ForgeTab_copingtoolkit() {
           return (
             <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
               <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🧰 Coping Toolkit Builder</h2>
-              <p style={{color:'#888',marginBottom:'1.5rem',fontSize:'0.9rem'}}>Get a personalized toolkit of strategies for what you're going through.</p>
+              <p style={{color:'#888',marginBottom:'1.5rem',fontSize:'0.9rem'}}>Get a personalized toolkit of strategies for what you\'re going through.</p>
               <textarea placeholder="What challenge are you facing? (e.g. anxiety, grief, burnout, loneliness)" value={challenge} onChange={e=>setChallenge(e.target.value)} rows={3} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
               <div style={{marginBottom:'0.75rem'}}><label style={{color:'#888',fontSize:'0.85rem'}}>Severity: {severity}/10</label><input type="range" min="1" max="10" value={severity} onChange={e=>setSeverity(e.target.value)} style={{width:'100%',marginTop:'0.25rem'}} /></div>
               <input placeholder="Preferences (e.g. no meditation, prefer movement, limited time)" value={preferences} onChange={e=>setPreferences(e.target.value)} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
@@ -11332,7 +11332,7 @@ function ForgeTab_innercritic() {
             <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
               <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🪞 Inner Critic Coach</h2>
               <p style={{color:'#888',marginBottom:'1.5rem',fontSize:'0.9rem'}}>Challenge self-critical thoughts with compassion and evidence.</p>
-              <textarea placeholder="What is your inner critic saying? (e.g. `I'm a failure`, 'Nobody likes me', `I'll never be good enough`)" value={thought} onChange={e=>setThought(e.target.value)} rows={3} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
+              <textarea placeholder="What is your inner critic saying? (e.g. 'I\'m a failure', 'Nobody likes me', 'I\'ll never be good enough')" value={thought} onChange={e=>setThought(e.target.value)} rows={3} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
               <input placeholder="Context (optional — what triggered this thought?)" value={context} onChange={e=>setContext(e.target.value)} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
               <button onClick={async()=>{if(!thought)return;setLoading(true);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/inner/critic`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({thought,context})});const d=await r.json();setResult(d);}catch(e){console.error(e);}setLoading(false);}} style={{width:'100%',padding:'0.875rem',background:'linear-gradient(135deg,#be185d,#7c3aed)',color:'#fff',border:'none',borderRadius:'8px',fontWeight:600,cursor:'pointer',marginBottom:'1.5rem'}}>{loading?'Reframing...':'Challenge This Thought'}</button>
               {result&&<div style={{background:'#111',borderRadius:'12px',padding:'1.5rem',border:'1px solid #222'}}>
@@ -11377,7 +11377,7 @@ function ForgeTab_attachcoach() {
                 <option value='family'>Family</option>
                 <option value='work'>Work/Professional</option>
               </select>
-              <textarea placeholder="Describe behaviors you've noticed (e.g. I get clingy, I pull away when someone gets close, I fear abandonment...)" value={behaviors} onChange={e=>setBehaviors(e.target.value)} rows={4} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
+              <textarea placeholder="Describe behaviors you\'ve noticed (e.g. I get clingy, I pull away when someone gets close, I fear abandonment...)" value={behaviors} onChange={e=>setBehaviors(e.target.value)} rows={4} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
               <button onClick={async()=>{if(!pattern)return;setLoading(true);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/attachment/coach`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({pattern,relationship_type:relType,behaviors})});const d=await r.json();setResult(d);}catch(e){console.error(e);}setLoading(false);}} style={{width:'100%',padding:'0.875rem',background:'linear-gradient(135deg,#db2777,#7c3aed)',color:'#fff',border:'none',borderRadius:'8px',fontWeight:600,cursor:'pointer',marginBottom:'1.5rem'}}>{loading?'Coaching...':'Get Attachment Coaching'}</button>
               {result&&<div style={{background:'#111',borderRadius:'12px',padding:'1.5rem',border:'1px solid #222'}}>
                 <div style={{textAlign:'center',background:'#1a0a1a',borderRadius:'12px',padding:'1rem',marginBottom:'1rem'}}><div style={{fontSize:'1.25rem',fontWeight:700,color:'#f9a8d4'}}>{result.attachment_style}</div><p style={{color:'#aaa',fontSize:'0.9rem'}}>{result.style_description}</p></div>
@@ -11407,7 +11407,7 @@ function ForgeTab_resiliencebuild() {
               <p style={{color:'#888',marginBottom:'1.5rem',fontSize:'0.9rem'}}>Rebuild after hardship with a personalized resilience roadmap.</p>
               <textarea placeholder="What setback are you recovering from? (e.g. job loss, breakup, health crisis, failure)" value={setback} onChange={e=>setSetback(e.target.value)} rows={3} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
               <input placeholder="Current emotional state (e.g. devastated, numb, slowly recovering)" value={currentState} onChange={e=>setCurrentState(e.target.value)} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-              <input placeholder="Known strengths (optional — e.g. I'm adaptable, I have good friends)" value={strengths} onChange={e=>setStrengths(e.target.value)} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+              <input placeholder="Known strengths (optional — e.g. I\'m adaptable, I have good friends)" value={strengths} onChange={e=>setStrengths(e.target.value)} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
               <button onClick={async()=>{if(!setback)return;setLoading(true);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/resilience/build`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({setback,current_state:currentState,strengths})});const d=await r.json();setResult(d);}catch(e){console.error(e);}setLoading(false);}} style={{width:'100%',padding:'0.875rem',background:'linear-gradient(135deg,#059669,#1d4ed8)',color:'#fff',border:'none',borderRadius:'8px',fontWeight:600,cursor:'pointer',marginBottom:'1.5rem'}}>{loading?'Building...':'Build My Resilience Plan'}</button>
               {result&&<div style={{background:'#111',borderRadius:'12px',padding:'1.5rem',border:'1px solid #222'}}>
                 <div style={{background:'#0a1a1a',borderRadius:'8px',padding:'1rem',marginBottom:'1rem',borderLeft:'3px solid #22d3ee',fontStyle:'italic'}}><p style={{color:'#e0e0e0',margin:0}}>{result.validation}</p></div>
@@ -11654,7 +11654,7 @@ function ForgeTab_salarybench() {
           return (
             <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
               <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>💰 Salary Benchmark</h2>
-              <p style={{color:'#888',marginBottom:'1.5rem',fontSize:'0.9rem'}}>Know exactly what you're worth and how to negotiate for it.</p>
+              <p style={{color:'#888',marginBottom:'1.5rem',fontSize:'0.9rem'}}>Know exactly what you\'re worth and how to negotiate for it.</p>
               <input placeholder="Job title (e.g. Product Manager)" value={role} onChange={e=>setRole(e.target.value)} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem',marginBottom:'0.75rem'}}>
                 <input placeholder="Location (e.g. San Francisco, CA)" value={location} onChange={e=>setLocation(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
@@ -11853,7 +11853,7 @@ function ForgeTab_researchsynth() {
                   <div style={{background:'#2a1a1a',borderRadius:'8px',padding:'0.75rem'}}><strong style={{color:'#f87171',fontSize:'0.85rem'}}>Areas of Debate:</strong><p style={{color:'#fca5a5',fontSize:'0.85rem',margin:'0.25rem 0'}}>{result.areas_of_debate}</p></div>
                 </div>
                 <div style={{marginBottom:'1rem'}}><strong style={{color:'#fbbf24'}}>Practical Implications:</strong>{result.practical_implications?.map((p:string,i:number)=><li key={i} style={{color:'#fde68a',fontSize:'0.9rem'}}>{p}</li>)}</div>
-                <div style={{background:'#1a1a1a',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}}><strong style={{color:'#c084fc`}}>What We Still Don't Know:</strong><p style={{color:`#d8b4fe',fontSize:'0.9rem',margin:'0.25rem 0'}}>{result.what_we_still_dont_know}</p></div>
+                <div style={{background:'#1a1a1a',borderRadius:'8px',padding:'0.75rem',marginBottom:'0.75rem'}}><strong style={{color:'#c084fc'}}>What We Still Don\'t Know:</strong><p style={{color:'#d8b4fe',fontSize:'0.9rem',margin:'0.25rem 0'}}>{result.what_we_still_dont_know}</p></div>
                 <div style={{background:'#1a1a1a',borderRadius:'8px',padding:'0.75rem'}}><strong style={{color:'#888',fontSize:'0.85rem'}}>Bottom Line: </strong><span style={{color:'#e0e0e0',fontSize:'0.9rem'}}>{result.bottom_line}</span></div>
               </div>}
             </div>
@@ -12026,7 +12026,7 @@ function ForgeTab_charismav2() {
             <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
               <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>✨ Charisma Coach</h2>
               <p style={{color:'#888',marginBottom:'1.5rem',fontSize:'0.9rem'}}>Develop magnetic presence, natural humor, and authentic charm.</p>
-              <textarea placeholder="Scenario (e.g. `I'm quiet at parties and struggle to connect`, 'I want to be more engaging in presentations')" value={scenario} onChange={e=>setScenario(e.target.value)} rows={3} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
+              <textarea placeholder="Scenario (e.g. 'I\'m quiet at parties and struggle to connect', 'I want to be more engaging in presentations')" value={scenario} onChange={e=>setScenario(e.target.value)} rows={3} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
               <input placeholder="Current approach (what you typically do)" value={approach} onChange={e=>setApproach(e.target.value)} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
               <input placeholder="Desired outcome (e.g. 'Be the person people gravitate toward')" value={outcome} onChange={e=>setOutcome(e.target.value)} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
               <button onClick={async()=>{if(!scenario)return;setLoading(true);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/charisma/coach`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({scenario,current_approach:approach,desired_outcome:outcome})});const d=await r.json();setResult(d);}catch(e){console.error(e);}setLoading(false);}} style={{width:'100%',padding:'0.875rem',background:'linear-gradient(135deg,#db2777,#7c3aed)',color:'#fff',border:'none',borderRadius:'8px',fontWeight:600,cursor:'pointer',marginBottom:'1.5rem'}}>{loading?'Coaching...':'Coach My Charisma'}</button>
@@ -12129,7 +12129,7 @@ function ForgeTab_influencebuild() {
             <div style={{padding:'2rem',maxWidth:'750px',margin:'0 auto'}}>
               <h2 style={{fontSize:'1.5rem',fontWeight:700,marginBottom:'0.5rem'}}>🎯 Influence Builder</h2>
               <p style={{color:'#888',marginBottom:'1.5rem',fontSize:'0.9rem'}}>Ethically increase your influence with proven persuasion psychology and tailored scripts.</p>
-              <input placeholder="What you want to influence (e.g. 'Get team buy-in on my project', `Change my community's opinion on an issue`)" value={objective} onChange={e=>setObjective(e.target.value)} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+              <input placeholder="What you want to influence (e.g. 'Get team buy-in on my project', 'Change my community\'s opinion on an issue')" value={objective} onChange={e=>setObjective(e.target.value)} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
               <input placeholder="Target audience (e.g. 'skeptical engineers', 'conservative board members', 'new customers')" value={audience} onChange={e=>setAudience(e.target.value)} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
               <input placeholder="Current influence level with this audience (e.g. 'they respect me but are resistant', 'unknown to them')" value={currentInfluence} onChange={e=>setCurrentInfluence(e.target.value)} style={{width:'100%',padding:'0.75rem',marginBottom:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
               <button onClick={async()=>{if(!objective||!audience)return;setLoading(true);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/influence/build`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({objective,audience,current_influence:currentInfluence})});const d=await r.json();setResult(d);}catch(e){console.error(e);}setLoading(false);}} style={{width:'100%',padding:'0.875rem',background:'linear-gradient(135deg,#7c3aed,#dc2626)',color:'#fff',border:'none',borderRadius:'8px',fontWeight:600,cursor:'pointer',marginBottom:'1.5rem'}}>{loading?'Building Plan...':'Build My Influence Plan'}</button>
@@ -12315,7 +12315,7 @@ function ForgeTab_moneymind() {
               <h2 style={{fontSize:'1.5rem',fontWeight:'bold',marginBottom:'1rem'}}>🧠 Money Mindset Coach</h2>
               <p style={{color:'#6b7280',marginBottom:'1.5rem'}}>Transform your limiting money beliefs</p>
               <div style={{display:'grid',gap:'1rem',marginBottom:'1.5rem'}}>
-                <input value={belief} onChange={e=>setBelief(e.target.value)} placeholder={`Limiting belief (e.g. "I'm bad with money", "Rich people are greedy")' style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white`}}} />
+                <input value={belief} onChange={e=>setBelief(e.target.value)} placeholder={`Limiting belief (e.g. "I\'m bad with money", "Rich people are greedy")' style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white`}}} />
                 <textarea value={story} onChange={e=>setStory(e.target.value)} placeholder="Your money story (how did you grow up around money?)" rows={3} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white',resize:'vertical'}} />
                 <textarea value={patterns} onChange={e=>setPatterns(e.target.value)} placeholder="Current patterns (e.g. overspend, avoid looking at accounts, never invest)" rows={2} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white',resize:'vertical'}} />
               </div>
@@ -12425,7 +12425,7 @@ function ForgeTab_mentalmodels() {
               <div style={{display:'grid',gap:'1rem',marginBottom:'1.5rem'}}>
                 <textarea value={problem} onChange={e=>setProblem(e.target.value)} placeholder="Problem or situation (describe it in detail)" rows={3} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white',resize:'vertical'}} />
                 <input value={domain} onChange={e=>setDomain(e.target.value)} placeholder="Domain (e.g. business, personal, career, investing, relationships)" style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white'}} />
-                <input value={goal} onChange={e=>setGoal(e.target.value)} placeholder="What's your goal here?" style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white'}} />
+                <input value={goal} onChange={e=>setGoal(e.target.value)} placeholder="What\'s your goal here?" style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white'}} />
               </div>
               <button onClick={async()=>{if(!problem)return;setLoading(true);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/mental/models`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({problem_or_situation:problem,domain,goal})});const d=await r.json();setResult(d);}catch(e){console.error(e);}setLoading(false);}} style={{padding:'0.75rem 1.5rem',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'white',border:'none',borderRadius:'0.5rem',cursor:'pointer',fontWeight:'600',marginBottom:'1.5rem'}}>
                 {loading?'Applying Models...':'Apply Mental Models'}
@@ -12471,7 +12471,7 @@ function ForgeTab_decisionspeed() {
                   <option value="critical">Critical / Life-Changing</option>
                 </select>
                 <input value={timePressure} onChange={e=>setTimePressure(e.target.value)} placeholder="Time pressure (e.g. must decide today, 1 week, no deadline)" style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white'}} />
-                <textarea value={info} onChange={e=>setInfo(e.target.value)} placeholder="What info do you have? What's uncertain?" rows={2} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white',resize:'vertical'}} />
+                <textarea value={info} onChange={e=>setInfo(e.target.value)} placeholder="What info do you have? What\'s uncertain?" rows={2} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white',resize:'vertical'}} />
               </div>
               <button onClick={async()=>{if(!decision)return;setLoading(true);try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/decision/speed`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({decision,stakes,time_pressure:timePressure,available_info:info})});const d=await r.json();setResult(d);}catch(e){console.error(e);}setLoading(false);}} style={{padding:'0.75rem 1.5rem',background:'linear-gradient(135deg,#eab308,#ca8a04)',color:'white',border:'none',borderRadius:'0.5rem',cursor:'pointer',fontWeight:'600',marginBottom:'1.5rem'}}>
                 {loading?'Deciding...':'Get Decision Framework'}
@@ -12656,7 +12656,7 @@ function ForgeTab_textcoach() {
               <p style={{color:'#6b7280',marginBottom:'1.5rem'}}>Master the art of texting to build attraction</p>
               <div style={{display:'grid',gap:'1rem',marginBottom:'1.5rem'}}>
                 <textarea value={convo} onChange={e=>setConvo(e.target.value)} placeholder="Paste the conversation history (most recent messages)" rows={5} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white',resize:'vertical',fontFamily:'monospace',fontSize:'0.875rem'}} />
-                <input value={context} onChange={e=>setContext(e.target.value)} placeholder="Context (how you know them, how long you've been texting)" style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white'}} />
+                <input value={context} onChange={e=>setContext(e.target.value)} placeholder="Context (how you know them, how long you\'ve been texting)" style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white'}} />
                 <input value={goal} onChange={e=>setGoal(e.target.value)} placeholder="Your goal (ask them out, keep it going, re-engage after silence)" style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white'}} />
                 <input value={theirVibe} onChange={e=>setTheirVibe(e.target.value)} placeholder="Their texting vibe (slow replies, uses emojis, formal, playful)" style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white'}} />
               </div>
@@ -12753,7 +12753,7 @@ function ForgeTab_brandvoice65() {
   return (
     <div style={{padding:'2rem',maxWidth:700,margin:'0 auto'}}>
       <h2 style={{fontSize:'1.8rem',fontWeight:700,marginBottom:'0.5rem'}}>🎙️ Brand Voice Creator</h2>
-      <p style={{color:'#888',marginBottom:'1.5rem'}}>Define your brand's unique voice and communication style.</p>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Define your brand\'s unique voice and communication style.</p>
       <div style={{background:'#1a1a1a',borderRadius:12,padding:'1.5rem',marginBottom:'1rem'}}>
         <label style={{display:'block',marginBottom:'0.5rem',fontWeight:600}}>Brand Name & Mission</label>
         <input value={bvBrand} onChange={e=>setBvBrand(e.target.value)} placeholder="e.g. Acme — we simplify complex software for teams" style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff'}}/>
@@ -13019,7 +13019,7 @@ function ForgeTab_parentadvice() {
       <h2 style={{fontSize:'1.8rem',fontWeight:700,marginBottom:'0.5rem'}}>👨‍👩‍👧 Parenting Advisor</h2>
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Get thoughtful, age-appropriate parenting guidance powered by AI.</p>
       <div style={{background:'#1a1a1a',borderRadius:12,padding:'1.5rem',marginBottom:'1rem'}}>
-        <label style={{display:'block',marginBottom:'0.5rem',fontWeight:600}}>Child's Age</label>
+        <label style={{display:'block',marginBottom:'0.5rem',fontWeight:600}}>Child\'s Age</label>
         <input value={paAge} onChange={e=>setPaAge(e.target.value)} placeholder="e.g. 3 years old, 8, teenager" style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff'}}/>
         <label style={{display:'block',margin:'1rem 0 0.5rem',fontWeight:600}}>Situation</label>
         <textarea value={paSit} onChange={e=>setPaSit(e.target.value)} placeholder="Describe the parenting situation or challenge..." style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff',minHeight:100,resize:'vertical',boxSizing:'border-box'}}/>
@@ -13048,7 +13048,7 @@ function ForgeTab_bedtimestory67() {
       <h2 style={{fontSize:'1.8rem',fontWeight:700,marginBottom:'0.5rem'}}>🌙 Bedtime Story Creator</h2>
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Create magical, personalized bedtime stories for your child.</p>
       <div style={{background:'#1a1a1a',borderRadius:12,padding:'1.5rem',marginBottom:'1rem'}}>
-        <label style={{display:'block',marginBottom:'0.5rem',fontWeight:600}}>Child's Name</label>
+        <label style={{display:'block',marginBottom:'0.5rem',fontWeight:600}}>Child\'s Name</label>
         <input value={bsName} onChange={e=>setBsName(e.target.value)} placeholder="e.g. Emma, Liam" style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff'}}/>
         <label style={{display:'block',margin:'1rem 0 0.5rem',fontWeight:600}}>Age</label>
         <select value={bsAge} onChange={e=>setBsAge(e.target.value)} style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff'}}>
@@ -13387,7 +13387,7 @@ function ForgeTab_activelisten() {
         <label style={{display:'block',marginBottom:'0.5rem',fontWeight:600}}>Scenario</label>
         <input value={alScenario} onChange={e=>setAlScenario(e.target.value)} placeholder="e.g. conversations with partner, team meetings, client calls" style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff'}}/>
         <label style={{display:'block',margin:'1rem 0 0.5rem',fontWeight:600}}>Current Listening Habits</label>
-        <textarea value={alHabits} onChange={e=>setAlHabits(e.target.value)} placeholder="e.g. I think of what I'll say next, I get distracted, I interrupt..." style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff',minHeight:80,resize:'vertical',boxSizing:'border-box'}}/>
+        <textarea value={alHabits} onChange={e=>setAlHabits(e.target.value)} placeholder="e.g. I think of what I\'ll say next, I get distracted, I interrupt..." style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff',minHeight:80,resize:'vertical',boxSizing:'border-box'}}/>
         <button onClick={async()=>{if(!alScenario)return;setLoadingAl(true);setAlResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/activelistening/train`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({scenario:alScenario,current_habits:alHabits})});const d=await r.json();setAlResult(d.feedback||d.result||JSON.stringify(d));}catch(e){setAlResult('Error getting training');}setLoadingAl(false);}} disabled={loadingAl||!alScenario} style={{marginTop:'1rem',padding:'0.75rem 2rem',background:'#7c3aed',border:'none',borderRadius:8,color:'#fff',fontWeight:600,cursor:'pointer',opacity:loadingAl||!alScenario?0.6:1}}>
           {loadingAl?'Training...':'Get Listening Training'}
         </button>
@@ -13464,7 +13464,7 @@ function ForgeTab_charnames70() {
   return (
     <div style={{padding:'2rem',maxWidth:700,margin:'0 auto'}}>
       <h2 style={{fontSize:'1.8rem',fontWeight:700,marginBottom:'0.5rem'}}>✍️ Character Name Generator</h2>
-      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate memorable, fitting names for your story's characters.</p>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate memorable, fitting names for your story\'s characters.</p>
       <div style={{background:'#1a1a1a',borderRadius:12,padding:'1.5rem',marginBottom:'1rem'}}>
         <label style={{display:'block',marginBottom:'0.5rem',fontWeight:600}}>Genre</label>
         <select value={cnGenre} onChange={e=>setCnGenre(e.target.value)} style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff'}}>
@@ -13530,7 +13530,7 @@ function ForgeTab_plothole70() {
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Find and fix inconsistencies, logic gaps, and plot holes in your story.</p>
       <div style={{background:'#1a1a1a',borderRadius:12,padding:'1.5rem',marginBottom:'1rem'}}>
         <label style={{display:'block',marginBottom:'0.5rem',fontWeight:600}}>Story Summary</label>
-        <textarea value={phSummary} onChange={e=>setPhSummary(e.target.value)} placeholder="Describe your story's plot, characters, and key events..." style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff',minHeight:150,resize:'vertical',boxSizing:'border-box'}}/>
+        <textarea value={phSummary} onChange={e=>setPhSummary(e.target.value)} placeholder="Describe your story\'s plot, characters, and key events..." style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff',minHeight:150,resize:'vertical',boxSizing:'border-box'}}/>
         <label style={{display:'block',margin:'1rem 0 0.5rem',fontWeight:600}}>Genre</label>
         <input value={phGenre} onChange={e=>setPhGenre(e.target.value)} placeholder="e.g. fantasy, sci-fi, mystery" style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff'}}/>
         <button onClick={async()=>{if(!phSummary)return;setLoadingPh(true);setPhResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/plothole/detect`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({story_summary:phSummary,genre:phGenre})});const d=await r.json();setPhResult(d.issues||d.result||JSON.stringify(d));}catch(e){setPhResult('Error analyzing story');}setLoadingPh(false);}} disabled={loadingPh||!phSummary} style={{marginTop:'1rem',padding:'0.75rem 2rem',background:'#7c3aed',border:'none',borderRadius:8,color:'#fff',fontWeight:600,cursor:'pointer',opacity:loadingPh||!phSummary?0.6:1}}>
@@ -13583,7 +13583,7 @@ function ForgeTab_booktitle70() {
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Generate compelling, marketable titles for your book.</p>
       <div style={{background:'#1a1a1a',borderRadius:12,padding:'1.5rem',marginBottom:'1rem'}}>
         <label style={{display:'block',marginBottom:'0.5rem',fontWeight:600}}>Book Synopsis</label>
-        <textarea value={btSynopsis} onChange={e=>setBtSynopsis(e.target.value)} placeholder="Briefly describe your book's story or content..." style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff',minHeight:100,resize:'vertical',boxSizing:'border-box'}}/>
+        <textarea value={btSynopsis} onChange={e=>setBtSynopsis(e.target.value)} placeholder="Briefly describe your book\'s story or content..." style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff',minHeight:100,resize:'vertical',boxSizing:'border-box'}}/>
         <label style={{display:'block',margin:'1rem 0 0.5rem',fontWeight:600}}>Genre</label>
         <input value={btGenre} onChange={e=>setBtGenre(e.target.value)} placeholder="e.g. literary fiction, self-help, fantasy, memoir" style={{width:'100%',background:'#111',border:'1px solid #333',borderRadius:8,padding:'0.75rem',color:'#fff'}}/>
         <label style={{display:'block',margin:'1rem 0 0.5rem',fontWeight:600}}>Tone</label>
@@ -13609,7 +13609,7 @@ function ForgeTab_procbust71() {
   return (
     <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>🔥 Procrastination Buster</h2>
-      <p style={{color:'#888',marginBottom:'1.5rem'}}>Diagnose why you're avoiding a task and get an action plan to start NOW.</p>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Diagnose why you\'re avoiding a task and get an action plan to start NOW.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <input placeholder="What task are you avoiding?" value={pbTask} onChange={e=>setPbTask(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Why are you avoiding it?" value={pbReason} onChange={e=>setPbReason(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
@@ -13716,7 +13716,7 @@ function ForgeTab_deepwork71() {
   return (
     <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>🧠 Deep Work Scheduler</h2>
-      <p style={{color:'#888',marginBottom:'1.5rem'}}>Design a deep work protocol using Cal Newport's proven system.</p>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Design a deep work protocol using Cal Newport\'s proven system.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <input placeholder="Type of deep work (coding, writing, analysis...)" value={dwType} onChange={e=>setDwType(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Available deep work hours per week" value={dwHours} onChange={e=>setDwHours(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
@@ -13748,7 +13748,7 @@ function ForgeTab_conflmed72() {
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <textarea placeholder="Describe the conflict situation" value={cmSit} onChange={e=>setCmSit(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Your perspective" value={cmMy} onChange={e=>setCmMy(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <input placeholder="Other person's perspective" value={cmOther} onChange={e=>setCmOther(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="Other person\'s perspective" value={cmOther} onChange={e=>setCmOther(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Relationship type (friend, partner, coworker...)" value={cmRel} onChange={e=>setCmRel(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!cmSit)return;setCmLoading(true);setCmResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/conflict/mediate`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({situation:cmSit,your_perspective:cmMy,other_perspective:cmOther,relationship_type:cmRel})});const d=await r.json();setCmResult(d.mediation||d.error);}catch(e:any){setCmResult(e.message);}setCmLoading(false);}} disabled={cmLoading||!cmSit} style={{padding:'0.75rem',borderRadius:'8px',background:'#16a085',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {cmLoading?'Mediating...':'Get Mediation 🕊️'}
@@ -13828,9 +13828,9 @@ function ForgeTab_reconnect72() {
   return (
     <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>🤝 Friend Reconnector</h2>
-      <p style={{color:'#888',marginBottom:'1.5rem'}}>Write natural messages to reconnect with friends you've lost touch with.</p>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Write natural messages to reconnect with friends you\'ve lost touch with.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
-        <input placeholder="Friend's name" value={rcName} onChange={e=>setRcName(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="Friend\'s name" value={rcName} onChange={e=>setRcName(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="When did you last speak?" value={rcLast} onChange={e=>setRcLast(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Shared memories or inside jokes" value={rcMems} onChange={e=>setRcMems(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Why you drifted apart (optional)" value={rcWhy} onChange={e=>setRcWhy(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
@@ -14491,7 +14491,7 @@ function ForgeTab_careergap77() {
         <input placeholder="Gap duration (e.g. 8 months in 2023)" value={cgDur} onChange={e=>setCgDur(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Real reason for gap" value={cgReason} onChange={e=>setCgReason(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="What you did during the gap" value={cgDid} onChange={e=>setCgDid(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <input placeholder="Target role you're applying to" value={cgRole} onChange={e=>setCgRole(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="Target role you\'re applying to" value={cgRole} onChange={e=>setCgRole(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!cgReason)return;setCgLoading(true);setCgResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/careergap/explain`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({gap_duration:cgDur,gap_reason:cgReason,what_you_did:cgDid,target_role:cgRole})});const d=await r.json();setCgResult(d.explanation||d.error);}catch(e:any){setCgResult(e.message);}setCgLoading(false);}} disabled={cgLoading||!cgReason} style={{padding:'0.75rem',borderRadius:'8px',background:'#7f8c8d',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {cgLoading?'Writing...':'Get My Gap Explanation ⏸️'}
         </button>
@@ -14624,7 +14624,7 @@ function ForgeTab_moneymind78() {
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>🧠 Money Mindset Coach</h2>
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Identify and reframe limiting money beliefs to unlock financial potential.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
-        <textarea placeholder="Your money beliefs (rich people are greedy, money is hard, I'm bad with money...)" value={mmBeliefs} onChange={e=>setMmBeliefs(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <textarea placeholder="Your money beliefs (rich people are greedy, money is hard, I\'m bad with money...)" value={mmBeliefs} onChange={e=>setMmBeliefs(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Money story from childhood (optional)" value={mmStory} onChange={e=>setMmStory(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Current financial behaviors to change" value={mmBehaviors} onChange={e=>setMmBehaviors(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Financial goals" value={mmGoals} onChange={e=>setMmGoals(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
@@ -14891,9 +14891,9 @@ function ForgeTab_cogbias80() {
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>🔍 Cognitive Bias Detector</h2>
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Identify hidden thinking errors distorting your decisions and perception.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
-        <textarea placeholder="Describe the situation you're facing" value={cbSit} onChange={e=>setCbSit(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <input placeholder="Decision you're making (optional)" value={cbDec} onChange={e=>setCbDec(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <input placeholder="How you're currently thinking about it" value={cbThink} onChange={e=>setCbThink(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <textarea placeholder="Describe the situation you\'re facing" value={cbSit} onChange={e=>setCbSit(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="Decision you\'re making (optional)" value={cbDec} onChange={e=>setCbDec(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="How you\'re currently thinking about it" value={cbThink} onChange={e=>setCbThink(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!cbSit)return;setCbLoading(true);setCbResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/cognitivebias/detect`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({situation:cbSit,decision:cbDec,thinking_process:cbThink})});const d=await r.json();setCbResult(d.analysis||d.error);}catch(e:any){setCbResult(e.message);}setCbLoading(false);}} disabled={cbLoading||!cbSit} style={{padding:'0.75rem',borderRadius:'8px',background:'#117a65',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {cbLoading?'Analyzing...':'Detect My Biases 🔍'}
         </button>
@@ -14971,7 +14971,7 @@ function ForgeTab_empathy81() {
   return (
     <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>💚 Empathy Builder</h2>
-      <p style={{color:'#888',marginBottom:'1.5rem'}}>Understand any person's perspective deeply and craft empathic responses.</p>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Understand any person\'s perspective deeply and craft empathic responses.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <textarea placeholder="Describe the situation" value={emSit} onChange={e=>setEmSit(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Your current view / feelings" value={emView} onChange={e=>setEmView(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
@@ -15025,7 +15025,7 @@ function ForgeTab_lovelang81() {
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>❤️ Love Language Analyzer</h2>
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Decode love languages to deepen connection and resolve relationship friction.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
-        <textarea placeholder="Behaviors you've observed (how they show/seek love)" value={llBeh} onChange={e=>setLlBeh(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <textarea placeholder="Behaviors you\'ve observed (how they show/seek love)" value={llBeh} onChange={e=>setLlBeh(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Relationship type (romantic, friendship, family, colleague)" value={llType} onChange={e=>setLlType(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Current friction or complaints" value={llComp} onChange={e=>setLlComp(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!llBeh)return;setLlLoading(true);setLlResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/lovelanguage/analyze`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({behaviors:llBeh,relationship_type:llType,complaints:llComp})});const d=await r.json();setLlResult(d.analysis||d.error);}catch(e:any){setLlResult(e.message);}setLlLoading(false);}} disabled={llLoading||!llBeh} style={{padding:'0.75rem',borderRadius:'8px',background:'#c0392b',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
@@ -15055,7 +15055,7 @@ function ForgeTab_relaudit81() {
         <input placeholder="Relationship type (romantic, friendship, family, work)" value={raType} onChange={e=>setRaType(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <textarea placeholder="Describe the dynamics and patterns" value={raDyn} onChange={e=>setRaDyn(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="What works well" value={raWorks} onChange={e=>setRaWorks(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <input placeholder="What isn't working" value={raDoesnt} onChange={e=>setRaDoesnt(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="What isn\'t working" value={raDoesnt} onChange={e=>setRaDoesnt(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!raType||!raDyn)return;setRaLoading(true);setRaResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/relationship/audit`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({relationship_type:raType,dynamics:raDyn,what_works:raWorks,what_doesnt:raDoesnt})});const d=await r.json();setRaResult(d.audit||d.error);}catch(e:any){setRaResult(e.message);}setRaLoading(false);}} disabled={raLoading||!raType} style={{padding:'0.75rem',borderRadius:'8px',background:'#7d3c98',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {raLoading?'Auditing...':'Audit This Relationship 🔎'}
         </button>
@@ -15078,12 +15078,12 @@ function ForgeTab_diffconv81() {
   return (
     <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>💭 Difficult Conversation Guide</h2>
-      <p style={{color:'#888',marginBottom:'1.5rem'}}>Get a full script and strategy for any hard conversation you've been avoiding.</p>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Get a full script and strategy for any hard conversation you\'ve been avoiding.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
-        <input placeholder="What's the conversation about?" value={dcTopic} onChange={e=>setDcTopic(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="What\'s the conversation about?" value={dcTopic} onChange={e=>setDcTopic(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Your relationship with this person" value={dcRel} onChange={e=>setDcRel(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Desired outcome" value={dcOutcome} onChange={e=>setDcOutcome(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <input placeholder="What you're afraid will happen" value={dcFears} onChange={e=>setDcFears(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="What you\'re afraid will happen" value={dcFears} onChange={e=>setDcFears(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!dcTopic||!dcRel)return;setDcLoading(true);setDcResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/difficultconv/guide`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({topic:dcTopic,relationship:dcRel,desired_outcome:dcOutcome,fears:dcFears})});const d=await r.json();setDcResult(d.script||d.error);}catch(e:any){setDcResult(e.message);}setDcLoading(false);}} disabled={dcLoading||!dcTopic} style={{padding:'0.75rem',borderRadius:'8px',background:'#1a5276',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {dcLoading?'Preparing...':'Get My Conversation Script 💭'}
         </button>
@@ -15187,7 +15187,7 @@ function ForgeTab_delegcoach82() {
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>🤝 Delegation Coach</h2>
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Stop doing everything yourself — build a delegation system that multiplies your output.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
-        <textarea placeholder="Tasks you're currently doing that could be delegated" value={dlTasks} onChange={e=>setDlTasks(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <textarea placeholder="Tasks you\'re currently doing that could be delegated" value={dlTasks} onChange={e=>setDlTasks(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Your team (size, roles, skill levels)" value={dlTeam} onChange={e=>setDlTeam(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Current delegation struggles" value={dlStrug} onChange={e=>setDlStrug(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!dlTasks)return;setDlLoading(true);setDlResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/delegation/coach`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({tasks:dlTasks,team_description:dlTeam,current_struggles:dlStrug})});const d=await r.json();setDlResult(d.plan||d.error);}catch(e:any){setDlResult(e.message);}setDlLoading(false);}} disabled={dlLoading||!dlTasks} style={{padding:'0.75rem',borderRadius:'8px',background:'#2e86c1',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
@@ -15293,9 +15293,9 @@ function ForgeTab_stressdec83() {
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>🌡️ Stress Decoder</h2>
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Decode your stress patterns and get a science-backed resilience protocol (not medical advice).</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
-        <textarea placeholder="Physical and mental symptoms you're experiencing" value={sdSymp} onChange={e=>setSdSymp(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <textarea placeholder="Physical and mental symptoms you\'re experiencing" value={sdSymp} onChange={e=>setSdSymp(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Known triggers" value={sdTrig} onChange={e=>setSdTrig(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <input placeholder="How long you've been stressed (weeks, months, years)" value={sdDur} onChange={e=>setSdDur(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="How long you\'ve been stressed (weeks, months, years)" value={sdDur} onChange={e=>setSdDur(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!sdSymp)return;setSdLoading(true);setSdResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/stress/decode`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({symptoms:sdSymp,triggers:sdTrig,duration:sdDur})});const d=await r.json();setSdResult(d.analysis||d.error);}catch(e:any){setSdResult(e.message);}setSdLoading(false);}} disabled={sdLoading||!sdSymp} style={{padding:'0.75rem',borderRadius:'8px',background:'#8e44ad',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {sdLoading?'Decoding...':'Decode My Stress 🌡️'}
         </button>
@@ -15319,7 +15319,7 @@ function ForgeTab_recovopt83() {
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>💪 Recovery Optimizer</h2>
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Maximize recovery between sessions with an evidence-based protocol.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
-        <input placeholder="Activity you're recovering from (lifting, marathon, HIIT...)" value={roAct} onChange={e=>setRoAct(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="Activity you\'re recovering from (lifting, marathon, HIIT...)" value={roAct} onChange={e=>setRoAct(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Soreness/fatigue level (1-10)" value={roSore} onChange={e=>setRoSore(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Current recovery methods" value={roCur} onChange={e=>setRoCur(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!roAct)return;setRoLoading(true);setRoResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/recovery/optimize`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({activity:roAct,soreness_level:roSore,current_recovery:roCur})});const d=await r.json();setRoResult(d.protocol||d.error);}catch(e:any){setRoResult(e.message);}setRoLoading(false);}} disabled={roLoading||!roAct} style={{padding:'0.75rem',borderRadius:'8px',background:'#2e86c1',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
@@ -15347,7 +15347,7 @@ function ForgeTab_suppstack83() {
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <input placeholder="Goals (energy, muscle, cognitive, longevity, sleep...)" value={ssGoals} onChange={e=>setSsGoals(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Health conditions to consider (optional)" value={ssCond} onChange={e=>setSsCond(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <input placeholder="Current supplements you're taking" value={ssCur} onChange={e=>setSsCur(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="Current supplements you\'re taking" value={ssCur} onChange={e=>setSsCur(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!ssGoals)return;setSsLoading(true);setSsResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/supplement/stack`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({goals:ssGoals,conditions:ssCond,current_supplements:ssCur})});const d=await r.json();setSsResult(d.stack||d.error);}catch(e:any){setSsResult(e.message);}setSsLoading(false);}} disabled={ssLoading||!ssGoals} style={{padding:'0.75rem',borderRadius:'8px',background:'#1a5276',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {ssLoading?'Building...':'Build My Supplement Stack 💊'}
         </button>
@@ -15371,8 +15371,8 @@ function ForgeTab_parentcoach84() {
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>👨‍👩‍👧 Parenting Coach</h2>
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Evidence-based guidance for any parenting challenge, with exact scripts and strategies.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
-        <input placeholder="Child's age" value={pcAge} onChange={e=>setPcAge(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <textarea placeholder="Parenting challenge you're facing" value={pcChall} onChange={e=>setPcChall(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="Child\'s age" value={pcAge} onChange={e=>setPcAge(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <textarea placeholder="Parenting challenge you\'re facing" value={pcChall} onChange={e=>setPcChall(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Your parenting style (gentle, authoritative, strict...)" value={pcStyle} onChange={e=>setPcStyle(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!pcAge||!pcChall)return;setPcLoading(true);setPcResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/parenting/coach`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({child_age:pcAge,challenge:pcChall,parenting_style:pcStyle})});const d=await r.json();setPcResult(d.advice||d.error);}catch(e:any){setPcResult(e.message);}setPcLoading(false);}} disabled={pcLoading||!pcAge||!pcChall} style={{padding:'0.75rem',borderRadius:'8px',background:'#1e8449',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {pcLoading?'Coaching...':'Get Parenting Guidance 👨‍👩‍👧'}
@@ -15424,7 +15424,7 @@ function ForgeTab_teencomm84() {
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Bridge the parent-teen gap with scripts that actually open dialogue instead of shutting it down.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <textarea placeholder="Situation with your teen" value={tcSit} onChange={e=>setTcSit(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <input placeholder="Teen's age" value={tcAge} onChange={e=>setTcAge(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="Teen\'s age" value={tcAge} onChange={e=>setTcAge(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Your main concern" value={tcCon} onChange={e=>setTcCon(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!tcSit)return;setTcLoading(true);setTcResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/teen/communicate`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({situation:tcSit,teen_age:tcAge,your_concern:tcCon})});const d=await r.json();setTcResult(d.script||d.error);}catch(e:any){setTcResult(e.message);}setTcLoading(false);}} disabled={tcLoading||!tcSit} style={{padding:'0.75rem',borderRadius:'8px',background:'#8e44ad',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {tcLoading?'Crafting...':'Get Teen Communication Script 🧑'}
@@ -15449,7 +15449,7 @@ function ForgeTab_screentime84() {
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>📱 Screen Time Manager</h2>
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Create a healthy digital wellness plan your kids will actually accept.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
-        <input placeholder="Child's age" value={stAge} onChange={e=>setStAge(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="Child\'s age" value={stAge} onChange={e=>setStAge(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Current screen time usage (hours/day, types of content)" value={stUsage} onChange={e=>setStUsage(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Specific concerns (sleep, behavior, social media, gaming)" value={stCon} onChange={e=>setStCon(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!stAge)return;setStLoading(true);setStResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/screentime/manage`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({child_age:stAge,current_usage:stUsage,concerns:stCon})});const d=await r.json();setStResult(d.plan||d.error);}catch(e:any){setStResult(e.message);}setStLoading(false);}} disabled={stLoading||!stAge} style={{padding:'0.75rem',borderRadius:'8px',background:'#2980b9',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
@@ -15477,7 +15477,7 @@ function ForgeTab_famval84() {
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <textarea placeholder="Describe your family (culture, background, structure)" value={fvDesc} onChange={e=>setFvDesc(e.target.value)} rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="What matters most to your family" value={fvGoal} onChange={e=>setFvGoal(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <input placeholder="Children's ages" value={fvAges} onChange={e=>setFvAges(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="Children\'s ages" value={fvAges} onChange={e=>setFvAges(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!fvDesc||!fvGoal)return;setFvLoading(true);setFvResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/familyvalues/set`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({family_description:fvDesc,values_goal:fvGoal,children_ages:fvAges})});const d=await r.json();setFvResult(d.charter||d.error);}catch(e:any){setFvResult(e.message);}setFvLoading(false);}} disabled={fvLoading||!fvDesc} style={{padding:'0.75rem',borderRadius:'8px',background:'#d4ac0d',color:'#000',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {fvLoading?'Creating...':'Create Our Family Charter 🌟'}
         </button>
@@ -15526,9 +15526,9 @@ function ForgeTab_demandltr85() {
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>📨 Demand Letter Writer</h2>
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Draft a firm, professional demand letter (template — have an attorney review before sending).</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
-        <textarea placeholder="Describe the dispute (what happened, what's owed)" value={dlDisp} onChange={e=>setDlDisp(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <textarea placeholder="Describe the dispute (what happened, what\'s owed)" value={dlDisp} onChange={e=>setDlDisp(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Amount or remedy sought (e.g. $2,500 refund)" value={dlAmt} onChange={e=>setDlAmt(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <input placeholder="Recipient (company name, person's role)" value={dlRec} onChange={e=>setDlRec(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="Recipient (company name, person\'s role)" value={dlRec} onChange={e=>setDlRec(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Response deadline (e.g. 30 days)" value={dlDead} onChange={e=>setDlDead(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!dlDisp||!dlAmt)return;setDlLoading(true);setDlResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/demandletter/write`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({dispute:dlDisp,amount:dlAmt,recipient:dlRec,deadline:dlDead})});const d=await r.json();setDlResult(d.letter||d.error);}catch(e:any){setDlResult(e.message);}setDlLoading(false);}} disabled={dlLoading||!dlDisp} style={{padding:'0.75rem',borderRadius:'8px',background:'#922b21',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {dlLoading?'Drafting...':'Draft Demand Letter 📨'}
@@ -15913,10 +15913,10 @@ function ForgeTab_procbust88() {
   return (
     <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>🚀 Procrastination Buster</h2>
-      <p style={{color:'#888',marginBottom:'1.5rem'}}>Diagnose why you're stuck and get a personalized plan to start right now.</p>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Diagnose why you\'re stuck and get a personalized plan to start right now.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <input placeholder="What task are you avoiding?" value={pbTask} onChange={e=>setPbTask(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <input placeholder="Why do you think you're avoiding it?" value={pbReason} onChange={e=>setPbReason(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="Why do you think you\'re avoiding it?" value={pbReason} onChange={e=>setPbReason(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="When is it due?" value={pbDead} onChange={e=>setPbDead(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!pbTask)return;setPbLoading(true);setPbResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/procrastination/bust`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({task:pbTask,reason:pbReason,deadline:pbDead})});const d=await r.json();setPbResult(d.plan||d.error);}catch(e:any){setPbResult(e.message);}setPbLoading(false);}} disabled={pbLoading||!pbTask} style={{padding:'0.75rem',borderRadius:'8px',background:'#c0392b',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {pbLoading?'Busting...':'Bust My Procrastination 🚀'}
@@ -16017,10 +16017,10 @@ function ForgeTab_socstyle89() {
   return (
     <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>🎭 Social Style Decoder</h2>
-      <p style={{color:'#888',marginBottom:'1.5rem'}}>Decode anyone's social style and get a personalized interaction strategy.</p>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Decode anyone\'s social style and get a personalized interaction strategy.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <textarea placeholder="Describe the scenario (meeting, negotiation, first date, job interview)" value={ssScen} onChange={e=>setSsScen(e.target.value)} rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <input placeholder="Describe the person you're interacting with" value={ssPers} onChange={e=>setSsPers(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="Describe the person you\'re interacting with" value={ssPers} onChange={e=>setSsPers(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Your own communication style (direct, warm, analytical, expressive)" value={ssStyle} onChange={e=>setSsStyle(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!ssScen)return;setSsLoading(true);setSsResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/socialstyle/decode`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({scenario:ssScen,person_description:ssPers,your_style:ssStyle})});const d=await r.json();setSsResult(d.analysis||d.error);}catch(e:any){setSsResult(e.message);}setSsLoading(false);}} disabled={ssLoading||!ssScen} style={{padding:'0.75rem',borderRadius:'8px',background:'#6c3483',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {ssLoading?'Decoding...':'Decode Their Social Style 🎭'}
@@ -16043,7 +16043,7 @@ function ForgeTab_netcoach89() {
   return (
     <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>🤝 Networking Coach</h2>
-      <p style={{color:'#888',marginBottom:'1.5rem'}}>Build a genuine, strategic network — even if you're introverted or hate small talk.</p>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Build a genuine, strategic network — even if you\'re introverted or hate small talk.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <input placeholder="Networking goals (job, investors, clients, mentors, partnerships)" value={ncGoal} onChange={e=>setNcGoal(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Your personality style (introvert, extrovert, ambivert)" value={ncStyle} onChange={e=>setNcStyle(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
@@ -16098,7 +16098,7 @@ function ForgeTab_trustbld89() {
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Repair, deepen, or build trust in any relationship with a structured action plan.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <input placeholder="The relationship (my team, my manager, my partner, a client)" value={tbRel} onChange={e=>setTbRel(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <textarea placeholder="Trust challenges (what broke trust, or what's missing)" value={tbChal} onChange={e=>setTbChal(e.target.value)} rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <textarea placeholder="Trust challenges (what broke trust, or what\'s missing)" value={tbChal} onChange={e=>setTbChal(e.target.value)} rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Context (professional, romantic, family, new relationship)" value={tbCtx} onChange={e=>setTbCtx(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!tbRel)return;setTbLoading(true);setTbResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/trust/build`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({relationship:tbRel,challenges:tbChal,context:tbCtx})});const d=await r.json();setTbResult(d.plan||d.error);}catch(e:any){setTbResult(e.message);}setTbLoading(false);}} disabled={tbLoading||!tbRel} style={{padding:'0.75rem',borderRadius:'8px',background:'#1e8449',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {tbLoading?'Building...':'Build My Trust Plan 🔐'}
@@ -16359,7 +16359,7 @@ function ForgeTab_sciexp91() {
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <input placeholder="Scientific concept to explain (e.g. quantum entanglement, CRISPR, dark matter)" value={seConcept} onChange={e=>setSeConcept(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Explanation level (curious 10-year-old, smart adult, undergraduate, PhD)" value={seLevel} onChange={e=>setSeLevel(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <input placeholder="Context or why you're curious (optional)" value={seCtx} onChange={e=>setSeCtx(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <input placeholder="Context or why you\'re curious (optional)" value={seCtx} onChange={e=>setSeCtx(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!seConcept)return;setSeLoading(true);setSeResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/science/explain`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({concept:seConcept,level:seLevel,context:seCtx})});const d=await r.json();setSeResult(d.explanation||d.error);}catch(e:any){setSeResult(e.message);}setSeLoading(false);}} disabled={seLoading||!seConcept} style={{padding:'0.75rem',borderRadius:'8px',background:'#1a5276',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {seLoading?'Explaining...':'Explain This Science 🌌'}
         </button>
@@ -16487,7 +16487,7 @@ function ForgeTab_stratthk92() {
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>♟️ Strategic Thinker</h2>
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Your personal strategic advisor — 3 options, trade-offs, and a recommended path forward.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
-        <textarea placeholder="The strategic challenge you're facing" value={stChal} onChange={e=>setStChal(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
+        <textarea placeholder="The strategic challenge you\'re facing" value={stChal} onChange={e=>setStChal(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Context (company size, industry, competitive situation)" value={stCtx} onChange={e=>setStCtx(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Key constraints (budget, time, team, politics)" value={stConstr} onChange={e=>setStConstr(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!stChal)return;setStLoading(true);setStResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/strategy/think`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({challenge:stChal,context:stCtx,constraints:stConstr})});const d=await r.json();setStResult(d.strategy||d.error);}catch(e:any){setStResult(e.message);}setStLoading(false);}} disabled={stLoading||!stChal} style={{padding:'0.75rem',borderRadius:'8px',background:'#6c3483',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
@@ -16607,7 +16607,7 @@ function ForgeTab_procautopsy93() {
   return (
     <div style={{padding:'2rem',maxWidth:'700px',margin:'0 auto'}}>
       <h2 style={{fontSize:'1.5rem',fontWeight:'700',marginBottom:'0.5rem'}}>🔬 Procrastination Autopsy</h2>
-      <p style={{color:'#888',marginBottom:'1.5rem'}}>Dissect exactly why you're avoiding something — then get a precise cure.</p>
+      <p style={{color:'#888',marginBottom:'1.5rem'}}>Dissect exactly why you\'re avoiding something — then get a precise cure.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <input placeholder="What are you procrastinating on? (be specific)" value={paTask} onChange={e=>setPaTask(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="How long have you been avoiding it?" value={paPattern} onChange={e=>setPaPattern(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
@@ -16896,7 +16896,7 @@ function ForgeTab_habitdna96() {
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Decode why your habits fail and build a personalized system that actually sticks.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <textarea placeholder="Habit(s) you want to build (be specific: exercise, writing, meditation, etc.)" value={hdGoal} onChange={e=>setHdGoal(e.target.value)} rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
-        <textarea placeholder="What have you tried before that didn't work? Why did you quit?" value={hdFailed} onChange={e=>setHdFailed(e.target.value)} rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
+        <textarea placeholder="What have you tried before that didn\'t work? Why did you quit?" value={hdFailed} onChange={e=>setHdFailed(e.target.value)} rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
         <input placeholder="Your current daily schedule (when you wake, work hours, commitments)" value={hdSchedule} onChange={e=>setHdSchedule(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!hdGoal)return;setHdLoading(true);setHdResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/chat`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({message:'Analyze habit formation for these goals: '+hdGoal+'. Past failures: '+(hdFailed||'general inconsistency')+'. Schedule: '+(hdSchedule||'typical 9-5')+'. Provide: 1) FAILURE AUTOPSY (exactly why past attempts failed based on psychology), 2) YOUR HABIT DNA (personality type and ideal habit architecture), 3) MINIMUM VIABLE HABIT (stripped-down version that takes under 2 min), 4) HABIT STACK (attach to existing routines — exactly which ones), 5) ENVIRONMENT DESIGN (physical/digital changes to make willpower irrelevant), 6) IDENTITY REFRAME (who you need to become, not what you need to do), 7) RESCUE PROTOCOL (what to do after missing a day), 8) 66-DAY PROGRESSION MAP.',model:'claude-3-5-haiku-20241022'})});const d=await r.json();setHdResult(d.response||d.content||d.error);}catch(e:any){setHdResult(e.message);}setHdLoading(false);}} style={{padding:'0.75rem 1.5rem',borderRadius:'8px',background:'#6366f1',color:'#fff',border:'none',cursor:'pointer',fontWeight:'600'}}>{hdLoading?'Decoding...':'Decode My Habit DNA'}</button>
       </div>
@@ -17034,7 +17034,7 @@ function ForgeTab_twitterbio98() {
       <p style={{color:'#888',marginBottom:'1.5rem'}}>Write a Twitter bio that makes people instantly follow you — punchy, specific, and memorable.</p>
       <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginBottom:'1rem'}}>
         <input placeholder="Your name and role (e.g. Sarah Chen, SaaS founder)" value={tbName} onChange={e=>setTbName(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <textarea placeholder="What you do / what you`ve built / what you're known for" value={tbWork} onChange={e=>setTbWork(e.target.value)} rows={3} style={{padding:`0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
+        <textarea placeholder="What you do / what you\'ve built / what you\'re known for" value={tbWork} onChange={e=>setTbWork(e.target.value)} rows={3} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',resize:'vertical'}} />
         <input placeholder="Vibe (funny, serious, nerdy, contrarian, inspirational)" value={tbVibe} onChange={e=>setTbVibe(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <button onClick={async()=>{if(!tbName)return;setTbLoading(true);setTbResult('');try{const r=await fetch(`${process.env.NEXT_PUBLIC_API_URL||'https://forge-production-2692.up.railway.app'}/api/chat`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({message:'Write Twitter/X bios for: '+tbName+'. Background: '+(tbWork||'entrepreneur and creator')+'. Desired vibe: '+(tbVibe||'professional but human')+'. Create: 1) 10 DIFFERENT BIOS (each under 160 chars, different angles and styles), 2) ANALYSIS of what makes each effective, 3) TOP PICK with explanation, 4) PINNED TWEET IDEAS (3 options for first impression), 5) HEADER IMAGE CONCEPT description, 6) USERNAME ALTERNATIVES if relevant. Make them specific, not generic — avoid cliches like "passionate about" or "helping others".',model:'claude-3-5-haiku-20241022'})});const d=await r.json();setTbResult(d.response||d.content||d.error);}catch(e:any){setTbResult(e.message);}setTbLoading(false);}} style={{padding:'0.75rem 1.5rem',borderRadius:'8px',background:'#6366f1',color:'#fff',border:'none',cursor:'pointer',fontWeight:'600'}}>{tbLoading?'Writing...':'Generate Bios'}</button>
       </div>
@@ -19637,7 +19637,7 @@ export default function ForgeApp() {
   const [multiComparePrompt, setMultiComparePrompt] = useState('');
   const [multiCompareResults, setMultiCompareResults] = useState<{model:string;text:string;error:boolean}[]>([]);
   const [multiCompareLoading, setMultiCompareLoading] = useState(false);
-  // Chat folder actions (hoisted — can't use useState inside render IIFE)
+  // Chat folder actions (hoisted — can\'t use useState inside render IIFE)
   const [pinnedThreads, setPinnedThreads] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('forge_pinned_threads')||'[]')); } catch { return new Set(); }
   });
@@ -19763,7 +19763,7 @@ export default function ForgeApp() {
   const [activeConnectors, setActiveConnectors] = useState<Set<string>>(() => {
     try { const s = localStorage.getItem('forge_active_connectors'); return s ? new Set(JSON.parse(s)) : new Set(); } catch { return new Set(); }
   });
-  // Token-saver: remember which skill IDs we've already sent full prompts for, so we don't
+  // Token-saver: remember which skill IDs we\'ve already sent full prompts for, so we don\'t
   // re-ship the same skill-prompt text on every message. Only send the delta when it changes.
   const sentSkillPromptsRef = useRef<string>('');
   const [activeSkillPrompt, setActiveSkillPrompt] = useState('');
@@ -20118,7 +20118,7 @@ export default function ForgeApp() {
       const s = document.createElement('style'); s.id = id; s.textContent = GLOBAL_STYLES + LIVING_STYLES;
       document.head.appendChild(s);
     }
-    // Wake Railway backend on mount so it's warm when user sends first message
+    // Wake Railway backend on mount so it\'s warm when user sends first message
     fetch(`${API.replace('/api', '')}/health`, { signal: AbortSignal.timeout(10000) }).catch(() => {});
   }, []);
 
@@ -20374,7 +20374,7 @@ export default function ForgeApp() {
       const confirmed: Record<string,boolean> = {};
       providers.forEach(p => { if (data[`has_${p}`]) confirmed[p] = true; });
       setSavedProviders(confirmed);
-      // Trigger model fetch for all confirmed providers (in background, don't await)
+      // Trigger model fetch for all confirmed providers (in background, don\'t await)
       Object.keys(confirmed).forEach(p => { if (confirmed[p]) loadProviderModels(p); });
       // Always load OR models (public list available even without key; key gives full access)
       loadOpenRouterModels();
@@ -20646,7 +20646,7 @@ export default function ForgeApp() {
     } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
 
-  // -- Save a single provider's API key --------------------------------------
+  // -- Save a single provider\'s API key --------------------------------------
   const saveOneKey = async (provider: string, key: string) => {
     if (!user) return;
     const trimmed = key.trim();
@@ -20974,7 +20974,7 @@ export default function ForgeApp() {
     setSuperMessages(prev => [...prev, { role:'user', content }]);
     try {
       const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
-      // Use SSE stream so long tasks (kanban, complex agents) survive Railway's 60s HTTP timeout
+      // Use SSE stream so long tasks (kanban, complex agents) survive Railway\'s 60s HTTP timeout
       const resp = await fetch(`${API}/superagent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
@@ -21961,7 +21961,7 @@ export default function ForgeApp() {
       if (aiTimerRef.current) { clearInterval(aiTimerRef.current); aiTimerRef.current = null; }
       setSending(false); setTyping(false); sendAbortRef.current = null;
     }, 180000);
-    // Don't auto-open live tab — user stays in chat view
+    // Don\'t auto-open live tab — user stays in chat view
 
     const tempUser: Message = { id:'tmp-u', thread_id:currentThread.id, role:'user', content:userContent, created_at:new Date().toISOString() };
     setMessages(prev => [...prev, tempUser]);
@@ -22064,7 +22064,7 @@ export default function ForgeApp() {
             const errContent = `⚠️ No ${provLabel} API key found. Go to **Settings → LLM Providers** and add your ${provLabel} key.`;
             const errMsg: Message = { id: resp.data?.id || 'tmp-err', thread_id: threadId, role: 'assistant', content: errContent, created_at: new Date().toISOString() };
             setMessages(prev => [...prev.filter(m => m.id !== 'tmp-u'), errMsg]);
-            return; // don't throw — message is shown
+            return; // don\'t throw — message is shown
           }
           throw new Error(resp.message || resp.error || 'Unknown error from server');
         }
@@ -22093,7 +22093,7 @@ export default function ForgeApp() {
             setLiveToolCalls(prev => [...prev, tc]);
             addAgentStep('🔧', `${evt.tool}(${JSON.stringify(evt.args||{}).slice(0,60)})`);
           } else if (evt.type === 'file_created') {
-            // Agent created a file — it's auto-filed into this folder; refresh the left panel
+            // Agent created a file — it\'s auto-filed into this folder; refresh the left panel
             addAgentStep('📄', `Saved ${evt.filename} to this folder`);
             loadFolderFiles();
           }
@@ -22154,7 +22154,7 @@ export default function ForgeApp() {
           await loadThreads(activeProject?.id);
         } else { throw e; }
       }
-      // Reload messages in background to sync with DB (don't await — already have the reply)
+      // Reload messages in background to sync with DB (don\'t await — already have the reply)
       loadMessages(threadId);
       await loadArtifacts();
       await loadThreads(activeProject?.id);
@@ -25139,7 +25139,7 @@ export default function ForgeApp() {
                         <span style={{ fontSize:16 }}>🔧</span>
                         <div>
                           <p style={{ margin:0, fontSize:13, fontWeight:800, color:'var(--fg-orange)', fontFamily:'var(--fg-font-display)' }}>ForgeOptimizer™</p>
-                          <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>World's first 90-95% token optimizer</p>
+                          <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>World\'s first 90-95% token optimizer</p>
                         </div>
                       </div>
                       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -26464,7 +26464,7 @@ export default function ForgeApp() {
               {/* Forge Models */}
               {routerTab==='forge' && (
                 <div>
-                  <p style={{ color:'var(--fg-text3)', fontSize:13, margin:'0 0 16px' }}>Forge models are pre-configured with markup multipliers for resale. Use these as your product's branded AI.</p>
+                  <p style={{ color:'var(--fg-text3)', fontSize:13, margin:'0 0 16px' }}>Forge models are pre-configured with markup multipliers for resale. Use these as your product\'s branded AI.</p>
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:12, marginBottom:24 }}>
                     {FORGE_MODELS.map(m => (
                       <div key={m.id} style={{ padding:'16px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12 }}>
@@ -26577,20 +26577,20 @@ export default function ForgeApp() {
                 const LLM_PROVIDERS = [
                   { key:'anthropic',    icon:'🟣', label:'Anthropic (Claude)',    color:'#c96442', placeholder:'sk-ant-api03-...',     signup:'https://console.anthropic.com/settings/keys',    models:['claude-opus-4-5','claude-sonnet-4-5','claude-haiku-4-5'],   hint:'Powers all Claude models. Required for Forge defaults.' },
                   { key:'openai',       icon:'🟢', label:'OpenAI',                color:'#10a37f', placeholder:'sk-proj-...',           signup:'https://platform.openai.com/api-keys',            models:['gpt-4o','gpt-4o-mini','o1','o3-mini'],                       hint:'GPT-4o, o3, vision, DALL·E image generation.' },
-                  { key:'gemini',       icon:'🔵', label:'Google Gemini',         color:'#4285f4', placeholder:'AIza...',               signup:'https://aistudio.google.com/app/apikey',          models:['gemini-2.0-flash','gemini-2.5-pro','gemini-1.5-pro'],        hint:`Google's fastest and most capable multimodal models.` },
+                  { key:'gemini',       icon:'🔵', label:'Google Gemini',         color:'#4285f4', placeholder:'AIza...',               signup:'https://aistudio.google.com/app/apikey',          models:['gemini-2.0-flash','gemini-2.5-pro','gemini-1.5-pro'],        hint:`Google\'s fastest and most capable multimodal models.` },
                   { key:'groq',         icon:'⚡', label:'Groq',                  color:'#f04444', placeholder:'gsk_...',              signup:'https://console.groq.com/keys',                   models:['llama-3.3-70b-versatile','mixtral-8x7b-32768','gemma2-9b'], hint:'Ultra-fast inference. Best for low-latency use cases.' },
                   { key:'mistral',      icon:'🌊', label:'Mistral AI',            color:'#ff7000', placeholder:'...',                   signup:'https://console.mistral.ai/api-keys/',            models:['mistral-large-latest','mistral-small-latest','codestral'],  hint:'European open-weight models. Strong coding and reasoning.' },
                   { key:'openrouter',   icon:'🔀', label:'OpenRouter',            color:'#6366f1', placeholder:'sk-or-v1-...',          signup:'https://openrouter.ai/keys',                      models:['400+ models via single key'],                               hint:'Access 400+ models from one key. Unified billing.' },
                   { key:'together',     icon:'🤝', label:'Together AI',           color:'#22c55e', placeholder:'...',                   signup:'https://api.together.xyz/signin',                 models:['Llama 3.3 70B','Qwen 2.5 72B','DeepSeek R1'],               hint:'Open-source model hosting at scale. Low cost.' },
                   { key:'perplexity',   icon:'🔮', label:'Perplexity',            color:'#8b5cf6', placeholder:'pplx-...',              signup:'https://www.perplexity.ai/settings/api',          models:['sonar-pro','sonar','sonar-reasoning'],                       hint:'Real-time web search + AI synthesis. Best for research.' },
                   { key:'cohere',       icon:'🌀', label:'Cohere',                color:'#39d353', placeholder:'...',                   signup:'https://dashboard.cohere.com/api-keys',           models:['command-r-plus','command-r','command-nightly'],              hint:'Enterprise RAG, embeddings, and rerank specialists.' },
-                  { key:'hermes',       icon:'🏛', label:'Hermes (NousResearch)', color:'#f59e0b', placeholder:'sk-...',               signup:'https://openrouter.ai/keys',                      models:['Hermes 3 70B','Hermes 3 8B','Hermes 2 Pro'],                 hint:`Nous Research's fine-tuned Hermes models via OpenRouter. Add your OpenRouter key to access.` },
+                  { key:'hermes',       icon:'🏛', label:'Hermes (NousResearch)', color:'#f59e0b', placeholder:'sk-...',               signup:'https://openrouter.ai/keys',                      models:['Hermes 3 70B','Hermes 3 8B','Hermes 2 Pro'],                 hint:`Nous Research\'s fine-tuned Hermes models via OpenRouter. Add your OpenRouter key to access.` },
                   { key:'deepseek',     icon:'🐋', label:'DeepSeek',             color:'#06b6d4', placeholder:'sk-...',               signup:'https://platform.deepseek.com/api_keys',          models:['deepseek-chat','deepseek-reasoner'],                         hint:'Top-tier reasoning at fraction of cost. Popular for coding.' },
-                  { key:'xai',          icon:'𝕏',  label:'xAI (Grok)',           color:'#fff',    placeholder:'xai-...',              signup:'https://console.x.ai/',                           models:['grok-4','grok-3','grok-3-mini'],                             hint:`Elon Musk's Grok — real-time X/Twitter data access.` },
+                  { key:'xai',          icon:'𝕏',  label:'xAI (Grok)',           color:'#fff',    placeholder:'xai-...',              signup:'https://console.x.ai/',                           models:['grok-4','grok-3','grok-3-mini'],                             hint:`Elon Musk\'s Grok — real-time X/Twitter data access.` },
                 ];
                 return (
                 <div>
-                  <p style={{ color:'var(--fg-text3)', fontSize:13, margin:'0 0 20px' }}>Enter your API keys to unlock each provider's models across Forge. Keys are stored securely per-user.</p>
+                  <p style={{ color:'var(--fg-text3)', fontSize:13, margin:'0 0 20px' }}>Enter your API keys to unlock each provider\'s models across Forge. Keys are stored securely per-user.</p>
                   <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
                     {LLM_PROVIDERS.map(prov => {
                       const saved = savedProviders[prov.key];
@@ -27516,7 +27516,7 @@ export default function ForgeApp() {
               {/* -- PLATFORM KEYS -- */}
               {adminTab === 'keys' && (
                 <div>
-                  <p style={{ color:'var(--fg-text2)', fontSize:13, marginBottom:20 }}>Platform-level API keys are used as fallback for all users who haven't saved their own key. Keys are encrypted server-side and never exposed to the frontend.</p>
+                  <p style={{ color:'var(--fg-text2)', fontSize:13, marginBottom:20 }}>Platform-level API keys are used as fallback for all users who haven\'t saved their own key. Keys are encrypted server-side and never exposed to the frontend.</p>
                   <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                     {[
                       { provider:'anthropic', label:'Anthropic (Claude)', placeholder:'sk-ant-api03-...', color:'var(--fg-orange)' },
@@ -27561,7 +27561,7 @@ export default function ForgeApp() {
               {/* -- MODELS -- */}
               {adminTab === 'models' && (
                 <div>
-                  <p style={{ color:'var(--fg-text2)', fontSize:13, marginBottom:20 }}>Enable or disable models platform-wide. Disabled models won't appear in any user's model selector.</p>
+                  <p style={{ color:'var(--fg-text2)', fontSize:13, marginBottom:20 }}>Enable or disable models platform-wide. Disabled models won\'t appear in any user\'s model selector.</p>
                   <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12, overflow:'hidden' }}>
                     <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 80px 80px', padding:'10px 16px', background:'var(--fg-bg)', borderBottom:'1px solid var(--fg-border)' }}>
                       {['Model','Provider','Markup','Enabled'].map(h => <span key={h} style={{ fontSize:11, color:'var(--fg-text3)', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>{h}</span>)}
@@ -28135,7 +28135,7 @@ export default function ForgeApp() {
           const filtered = SKILLS.filter((s:any) => (skillCat === 'All' || s.category === skillCat) && (!skillSearch || s.name.toLowerCase().includes(skillSearch.toLowerCase()) || s.desc.toLowerCase().includes(skillSearch.toLowerCase())));
           const launchSkill = (skill: typeof SKILLS[0]) => {
             setActiveSkillPrompt(skill.prompt);
-            // Auto-activate the skill so it's always on when launched
+            // Auto-activate the skill so it\'s always on when launched
             setActiveSkills(prev => {
               const next = new Set(prev);
               next.add(skill.id);
@@ -28992,7 +28992,7 @@ export default function ForgeApp() {
                 <span style={{ fontSize:36 }}>🧠</span>
                 <div style={{ flex:1 }}>
                   <h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Intelligence Layer</h1>
-                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Forge's living memory — harvested across every module. The more you use Forge, the smarter it gets.</p>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Forge\'s living memory — harvested across every module. The more you use Forge, the smarter it gets.</p>
                 </div>
                 <button onClick={harvestMemory} disabled={superHarvesting} style={{ padding:'9px 18px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', opacity:superHarvesting?0.5:1 }}>{superHarvesting ? '🧠 Harvesting…' : '🧠 Harvest Knowledge'}</button>
               </div>
@@ -29843,7 +29843,7 @@ export default function ForgeApp() {
                   <input key={k} value={(form as any)[k]} onChange={(e: any) => setForm((f: any) => ({...f,[k]:e.target.value}))} placeholder={ph} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
                 ))}
               </div>
-              {[['interests','Interests (hobbies, passions, quirks)'],['personality','Personality in 3 words'],['looking_for',`What you're looking for`]].map(([k,ph]) => (
+              {[['interests','Interests (hobbies, passions, quirks)'],['personality','Personality in 3 words'],['looking_for','What you\'re looking for']].map(([k,ph]) => (
                 <input key={k} value={(form as any)[k]} onChange={(e: any) => setForm((f: any) => ({...f,[k]:e.target.value}))} placeholder={ph} style={{ width: '100%', background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13, marginBottom: '0.75rem', boxSizing: 'border-box' as const }} />
               ))}
               <button onClick={generate} disabled={loading || !form.interests} style={{ background: loading ? '#374151' : '#ec4899', color: '#fff', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{loading ? 'Writing...' : '💘 Generate Bios'}</button>
@@ -29935,7 +29935,7 @@ export default function ForgeApp() {
             <div style={{ padding: '2rem', maxWidth: 700, margin: '0 auto' }}>
               <h2 style={{ color: '#ec4899', marginBottom: '0.5rem' }}>💑 Relationship Check-In</h2>
               <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>Honest reflection on your relationship health.</p>
-              {[['relationship_length','How long have you been together?'],['what_is_working',`What's working well?`],['recent_challenge',`Recent challenge you're facing`],['love_languages','Your love languages (if known)'],['last_quality_time','When did you last have quality time?']].map(([k,ph]) => (
+              {[['relationship_length','How long have you been together?'],['what_is_working','What\'s working well?'],['recent_challenge','Recent challenge you\'re facing'],['love_languages','Your love languages (if known)'],['last_quality_time','When did you last have quality time?']].map(([k,ph]) => (
                 <input key={k} value={(form as any)[k]} onChange={(e: any) => setForm((f: any) => ({...f,[k]:e.target.value}))} placeholder={ph} style={{ width: '100%', background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13, marginBottom: '0.75rem', boxSizing: 'border-box' as const }} />
               ))}
               <button onClick={checkin} disabled={loading || !form.relationship_length} style={{ background: loading ? '#374151' : '#ec4899', color: '#fff', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{loading ? 'Reflecting...' : '💑 Run Check-In'}</button>
@@ -29985,7 +29985,7 @@ export default function ForgeApp() {
           return (
             <div style={{ padding: '2rem', maxWidth: 700, margin: '0 auto' }}>
               <h2 style={{ color: '#818cf8', marginBottom: '0.5rem' }}>💔 Breakup Recovery Plan</h2>
-              <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>Your personalized healing roadmap. You've got this.</p>
+              <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>Your personalized healing roadmap. You\'ve got this.</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <input value={form.relationship_length} onChange={(e: any) => setForm((f: any) => ({...f,relationship_length:e.target.value}))} placeholder="Relationship length" style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
                 <input value={form.how_long_ago} onChange={(e: any) => setForm((f: any) => ({...f,how_long_ago:e.target.value}))} placeholder="How long ago did it end?" style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
@@ -30013,7 +30013,7 @@ export default function ForgeApp() {
                     {result.affirmations.map((a: string, i: number) => <div key={i} style={{ color: '#6ee7b7', fontSize: 13, marginBottom: '0.25rem', fontStyle: 'italic' }}>"{a}"</div>)}
                   </div>}
                   {result.green_flags_youre_healing?.length > 0 && <div style={{ background: '#1f2937', borderRadius: 12, padding: '1rem', border: '1px solid #374151' }}>
-                    <div style={{ color: '#f59e0b', fontWeight: 600, marginBottom: '0.5rem' }}>💛 Signs You're Healing</div>
+                    <div style={{ color: '#f59e0b', fontWeight: 600, marginBottom: '0.5rem' }}>💛 Signs You\'re Healing</div>
                     {result.green_flags_youre_healing.map((g: string, i: number) => <div key={i} style={{ color: '#d1d5db', fontSize: 13, marginBottom: '0.25rem' }}>• {g}</div>)}
                   </div>}
                 </div>
@@ -39826,7 +39826,7 @@ export default function ForgeApp() {
                   <button key={m} onClick={() => setJournalMood(m)} style={{ fontSize:18, background: journalMood === m ? 'var(--fg-bg4)' : 'none', border: journalMood === m ? '2px solid var(--fg-orange,#ff1f35)' : '2px solid transparent', borderRadius:8, padding:'2px 6px', cursor:'pointer' }}>{m}</button>
                 ))}
               </div>
-              <textarea value={journalContent} onChange={e => setJournalContent(e.target.value)} placeholder={`What's on your mind today? ${new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' })}`} rows={5} style={{ width:'100%', padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:14, resize:'vertical', fontFamily:'inherit', boxSizing:'border-box' }} />
+              <textarea value={journalContent} onChange={e => setJournalContent(e.target.value)} placeholder={`What\'s on your mind today? ${new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' })}`} rows={5} style={{ width:'100%', padding:'10px 12px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text)', fontSize:14, resize:'vertical', fontFamily:'inherit', boxSizing:'border-box' }} />
               <button onClick={saveJournalEntry} disabled={!journalContent.trim()} style={{ marginTop:10, padding:'8px 20px', borderRadius:8, border:'none', background:'var(--fg-orange,#ff1f35)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>Save Entry</button>
               <button onClick={loadJournal} style={{ marginTop:10, marginLeft:8, padding:'8px 14px', borderRadius:8, border:'1px solid var(--fg-border)', background:'var(--fg-bg3)', color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>↻ Load</button>
             </div>
