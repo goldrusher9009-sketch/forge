@@ -12315,7 +12315,7 @@ function ForgeTab_moneymind() {
               <h2 style={{fontSize:'1.5rem',fontWeight:'bold',marginBottom:'1rem'}}>🧠 Money Mindset Coach</h2>
               <p style={{color:'#6b7280',marginBottom:'1.5rem'}}>Transform your limiting money beliefs</p>
               <div style={{display:'grid',gap:'1rem',marginBottom:'1.5rem'}}>
-                <input value={belief} onChange={e=>setBelief(e.target.value)} placeholder={`Limiting belief (e.g. "I'm bad with money", "Rich people are greedy")`} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white'}} /> />
+                <input value={belief} onChange={e=>setBelief(e.target.value)} placeholder={`Limiting belief (e.g. "I'm bad with money", "Rich people are greedy")`} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white'}} />
                 <textarea value={story} onChange={e=>setStory(e.target.value)} placeholder="Your money story (how did you grow up around money?)" rows={3} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white',resize:'vertical'}} />
                 <textarea value={patterns} onChange={e=>setPatterns(e.target.value)} placeholder="Current patterns (e.g. overspend, avoid looking at accounts, never invest)" rows={2} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white',resize:'vertical'}} />
               </div>
@@ -32893,13 +32893,13 @@ export default function ForgeApp() {
                 </div>
                 {e.subject_line && <div className="text-sm font-semibold text-blue-300 mb-1">Subject: {e.subject_line}</div>}
                 {e.open_hook && <div className="text-xs text-yellow-300 italic mb-2">Hook: {e.open_hook}</div>}
-                {e.email_body && <div className="text-xs text-gray-300 bg-gray-900 rounded p-2 mb-2 max-h-28 overflow-y-auto leading-relaxed">{e.email_body.replace(/Subject:[^
-]+
-?/i,'').replace(/Hook:[^
-]+
-?/i,'').replace(/CTA:[^
-]+
-?/i,'').trim().slice(0,200)}</div>}
+                {e.email_body && <div className="text-xs text-gray-300 bg-gray-900 rounded p-2 mb-2 max-h-28 overflow-y-auto leading-relaxed">{e.email_body.replace(/Subject:[^\n]+\n?/i,'').replace(/Hook:[^\n]+\n?/i,'').replace(/CTA:[^\n]+\n?/i,'').trim().slice(0,200)}</div>}
+
+
+
+
+
+
                 {e.cta_text && <div className="text-xs text-green-300 border-t border-gray-700 pt-2">CTA: {e.cta_text}</div>}
               </div>
             ))}</div>
@@ -33163,8 +33163,8 @@ export default function ForgeApp() {
                 {t.top_tagline && <div className="bg-pink-900/40 border border-pink-700 rounded p-2 mb-2 text-center font-bold text-pink-200">&#11088; {t.top_tagline}</div>}
                 {t.taglines_text && (
                   <div className="text-xs text-gray-300 space-y-1">
-                    {t.taglines_text.split('
-').filter((l:string)=>l.match(/^\d+\./)).slice(0,6).map((line:string,i:number)=>(
+                    {t.taglines_text.split('\n').filter((l:string)=>l.match(/^\d+\./)).slice(0,6).map((line:string,i:number)=>(
+
                       <div key={i} className="text-gray-400">{line.trim()}</div>
                     ))}
                   </div>
@@ -33301,8 +33301,8 @@ export default function ForgeApp() {
                 </div>
                 <div className="text-sm text-gray-400 italic mb-2">{p.announcement.slice(0,80)}{p.announcement.length>80?'...':''}</div>
                 {p.press_text && (
-                  <div className="text-xs text-gray-300 bg-gray-900 rounded p-3 max-h-36 overflow-y-auto leading-relaxed whitespace-pre-wrap">{p.press_text.slice(0,400)}{p.press_text.length>400?'
-[...]':''}</div>
+                  <div className="text-xs text-gray-300 bg-gray-900 rounded p-3 max-h-36 overflow-y-auto leading-relaxed whitespace-pre-wrap">{p.press_text.slice(0,400)}{p.press_text.length>400?'[...]':''}</div>
+
                 )}
                 {p.quote_name && <div className="text-xs text-blue-300 mt-2">&#x201C;...&#x201D; — {p.quote_name}{p.quote_title?`, ${p.quote_title}`:''}</div>}
               </div>
@@ -33560,8 +33560,8 @@ export default function ForgeApp() {
                 <div className="text-xs text-gray-400 mb-2">{p.product_description.slice(0,80)}</div>
                 {p.outline_text && (
                   <div className="text-xs text-gray-300 bg-gray-900 rounded p-2 space-y-1 max-h-32 overflow-y-auto">
-                    {p.outline_text.split('
-').filter((l:string)=>l.trim()).slice(0,8).map((line:string,i:number)=>(
+                    {p.outline_text.split('\n').filter((l:string)=>l.trim()).slice(0,8).map((line:string,i:number)=>(
+
                       <div key={i}>{line}</div>
                     ))}
                   </div>
@@ -33690,8 +33690,8 @@ export default function ForgeApp() {
                 {n.top_pick && <div className="bg-purple-900/40 border border-purple-700 rounded p-2 mb-2 text-center font-bold text-purple-300">&#11088; {n.top_pick}</div>}
                 {n.names_generated && (
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {n.names_generated.split('
-').filter((l:string)=>l.trim()).slice(0,8).map((name:string,i:number)=>(
+                    {n.names_generated.split('\n').filter((l:string)=>l.trim()).slice(0,8).map((name:string,i:number)=>(
+
                       <span key={i} className="bg-gray-700 px-2 py-0.5 rounded text-xs text-gray-200">{name.trim()}</span>
                     ))}
                   </div>
@@ -33978,7 +33978,7 @@ export default function ForgeApp() {
             <p className="text-gray-400 mb-4">Log sleep and track cumulative debt against your target hours.</p>
             <button onClick={async()=>{const r=await fetch('/api/sleep-debt',{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();setSleepDebt(d&&d.rows?d:{rows:[],cumulative_debt:0,avg_hours_slept:0});}} className="px-4 py-2 bg-gray-600 rounded text-white mb-4">Load Sleep Log</button>
             <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className={`rounded p-3 text-center ${sleepDebt.cumulative_debt>5?'bg-red-900/40':'sleepDebt.cumulative_debt>2?bg-yellow-900/40':'bg-green-900/40'}`}>
+              <div className={`rounded p-3 text-center ${sleepDebt.cumulative_debt>5?'bg-red-900/40':sleepDebt.cumulative_debt>2?'bg-yellow-900/40':'bg-green-900/40'}`}>
                 <div className={`text-2xl font-bold ${sleepDebt.cumulative_debt>5?'text-red-300':sleepDebt.cumulative_debt>2?'text-yellow-300':'text-green-300'}`}>{sleepDebt.cumulative_debt}h</div>
                 <div className="text-xs text-gray-400">Cumulative Debt</div>
               </div>
@@ -36369,8 +36369,8 @@ export default function ForgeApp() {
                   <span className="bg-gray-700 px-1.5 py-0.5 rounded">{ice.tone}</span>
                   <span className="text-gray-500">{ice.audience_size} group</span>
                 </div>
-                <div className="space-y-2">{(ice.icebreakers||'').split('
-').filter(Boolean).map((q:string,i:number)=>(
+                <div className="space-y-2">{(ice.icebreakers||'').split('\n').filter(Boolean).map((q:string,i:number)=>(
+
                   <div key={i} className="flex gap-2 text-sm">
                     <span className="text-cyan-400 flex-shrink-0 font-bold">{i+1}.</span>
                     <span className="text-gray-200">{q}</span>
@@ -45218,8 +45218,8 @@ export default function ForgeApp() {
   <div style={{padding:'24px'}}>
     <h2 style={{color:'#f9fafb',marginBottom:'16px'}}>🔍 Workspace Search Index</h2>
     <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
-      <input placeholder="Search..." value={searchIndexQuery} onChange={e=>setSearchIndexQuery(e.target.value)} onKeyDown={async(e)=>{if(e.key==='Enter'&&searchIndexQuery){const r=await fetch('/api/search-index?q=`+encodeURIComponent(searchIndexQuery),{headers:{'Authorization`:'Bearer '+localStorage.getItem('token')}});setSearchIndexResults(await r.json());}}} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
-      <button onClick={async()=>{if(!searchIndexQuery)return;const r=await fetch('/api/search-index?q=`+encodeURIComponent(searchIndexQuery),{headers:{'Authorization`:'Bearer '+localStorage.getItem('token')}});setSearchIndexResults(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Search</button>
+      <input placeholder="Search..." value={searchIndexQuery} onChange={e=>setSearchIndexQuery(e.target.value)} onKeyDown={async(e)=>{if(e.key==='Enter'&&searchIndexQuery){const r=await fetch('/api/search-index?q='+encodeURIComponent(searchIndexQuery),{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setSearchIndexResults(await r.json());}}} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}} />
+      <button onClick={async()=>{if(!searchIndexQuery)return;const r=await fetch('/api/search-index?q='+encodeURIComponent(searchIndexQuery),{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setSearchIndexResults(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Search</button>
     </div>
     <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
       <select value={siEntityType} onChange={e=>setSiEntityType(e.target.value)} style={{padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb'}}>
@@ -46125,7 +46125,7 @@ export default function ForgeApp() {
   <div style={{padding:'24px'}}>
     <h2 style={{fontSize:'20px',fontWeight:700,marginBottom:'16px'}}>📖 AI Glossary</h2>
     <div style={{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
-      <input placeholder="Search terms..." value={glossarySearch} onChange={e=>setGlossarySearch(e.target.value)} onKeyDown={async(e)=>{if(e.key==='Enter'){const r=await fetch('/api/ai-glossary?search=`+encodeURIComponent(glossarySearch),{headers:{'Authorization`:'Bearer '+localStorage.getItem('token')}});setAiGlossary(await r.json());}}} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'160px'}} />
+      <input placeholder="Search terms..." value={glossarySearch} onChange={e=>setGlossarySearch(e.target.value)} onKeyDown={async(e)=>{if(e.key==='Enter'){const r=await fetch('/api/ai-glossary?search='+encodeURIComponent(glossarySearch),{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiGlossary(await r.json());}}} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'160px'}} />
       <input placeholder="Term" value={newGlTermB36} onChange={e=>setNewGlTermB36(e.target.value)} style={{flex:1,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'120px'}} />
       <input placeholder="Definition" value={newGlDefB36} onChange={e=>setNewGlDefB36(e.target.value)} style={{flex:2,padding:'8px',borderRadius:'6px',border:'1px solid #374151',background:'#1f2937',color:'#f9fafb',minWidth:'180px'}} />
       <button onClick={async()=>{if(!newGlTermB36||!newGlDefB36)return;await fetch('/api/ai-glossary',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({term:newGlTermB36,definition:newGlDefB36,category:newGlCatB36})});setNewGlTermB36('');setNewGlDefB36('');const r=await fetch('/api/ai-glossary',{headers:{'Authorization':'Bearer '+localStorage.getItem('token')}});setAiGlossary(await r.json());}} style={{padding:'8px 16px',background:'#6366f1',color:'#fff',border:'none',borderRadius:'6px',cursor:'pointer'}}>Add</button>
