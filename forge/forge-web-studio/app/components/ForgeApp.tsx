@@ -12315,7 +12315,7 @@ function ForgeTab_moneymind() {
               <h2 style={{fontSize:'1.5rem',fontWeight:'bold',marginBottom:'1rem'}}>🧠 Money Mindset Coach</h2>
               <p style={{color:'#6b7280',marginBottom:'1.5rem'}}>Transform your limiting money beliefs</p>
               <div style={{display:'grid',gap:'1rem',marginBottom:'1.5rem'}}>
-                <input value={belief} onChange={e=>setBelief(e.target.value)} placeholder={`Limiting belief (e.g. "I\'m bad with money", "Rich people are greedy")' style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white`}}} />
+                <input value={belief} onChange={e=>setBelief(e.target.value)} placeholder={`Limiting belief (e.g. "I'm bad with money", "Rich people are greedy")`} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white'}} /> />
                 <textarea value={story} onChange={e=>setStory(e.target.value)} placeholder="Your money story (how did you grow up around money?)" rows={3} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white',resize:'vertical'}} />
                 <textarea value={patterns} onChange={e=>setPatterns(e.target.value)} placeholder="Current patterns (e.g. overspend, avoid looking at accounts, never invest)" rows={2} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white',resize:'vertical'}} />
               </div>
