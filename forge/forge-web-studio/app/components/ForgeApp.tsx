@@ -154,6 +154,19 @@ h1,h2,h3,h4 { font-family: var(--fg-font-display); letter-spacing: -0.02em; font
 `;
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://forge-production-2692.up.railway.app/api';
+const BACKEND = 'https://forge-production-2692.up.railway.app';
+
+// --- Global memory + history helpers ---
+function getToken(): string { return typeof window !== 'undefined' ? (localStorage.getItem('forge_token') || '') : ''; }
+async function saveToolHistory(toolId: string, toolName: string, input: any, output: string) {
+  try { await fetch(`${BACKEND}/api/tool-history`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` }, body: JSON.stringify({ tool_id: toolId, tool_name: toolName, input, output }) }); } catch {}
+}
+async function saveMemoryKV(key: string, value: string, category = 'general') {
+  try { await fetch(`${BACKEND}/api/memory`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` }, body: JSON.stringify({ key, value, category }) }); } catch {}
+}
+async function getToolHistory(toolId: string, limit = 10): Promise<any[]> {
+  try { const r = await fetch(`${BACKEND}/api/tool-history?tool_id=${toolId}&limit=${limit}`, { headers: { Authorization: `Bearer ${getToken()}` } }); const d = await r.json(); return d.history || []; } catch { return []; }
+}
 
 // --- Code preview helpers (module-level to avoid TSX parser confusion with < chars) --
 function extractCodeBlock(content: string): { code: string; isHtml: boolean; lang: string; suggestedFilename: string } | null {
@@ -1372,6 +1385,41 @@ function ForgeTab_forgememory() {
 }
 
 
+function ForgeTab_toolhistory() {
+  const [history, setHistory] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [filter, setFilter] = React.useState('');
+  React.useEffect(() => {
+    fetch(`${BACKEND}/api/tool-history?limit=100`, { headers: { Authorization: `Bearer ${getToken()}` } })
+      .then(r => r.json()).then(d => setHistory(d.history || [])).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+  const filtered = filter ? history.filter(h => h.tool_name.toLowerCase().includes(filter.toLowerCase())) : history;
+  const clearAll = async () => { await fetch(`${BACKEND}/api/tool-history`, { method: 'DELETE', headers: { Authorization: `Bearer ${getToken()}` } }); setHistory([]); };
+  return (
+    <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <span style={{ fontSize: 28 }}>📜</span>
+        <div><div style={{ fontSize: 22, fontWeight: 700 }}>Tool History</div><div style={{ color: '#888', fontSize: 13 }}>Every tool run, saved automatically</div></div>
+        <button onClick={clearAll} style={{ marginLeft: 'auto', padding: '6px 14px', background: '#ef444422', border: '1px solid #ef444444', borderRadius: 8, color: '#ef4444', fontSize: 12, cursor: 'pointer' }}>Clear All</button>
+      </div>
+      <input value={filter} onChange={e => setFilter(e.target.value)} placeholder="Filter by tool name…" style={{ width: '100%', padding: '10px 14px', background: '#1a1a2e', border: '1px solid #333', borderRadius: 10, color: '#fff', fontSize: 13, marginBottom: 16, boxSizing: 'border-box' }} />
+      {loading && <div style={{ textAlign: 'center', color: '#555', padding: 40 }}>Loading…</div>}
+      {!loading && filtered.length === 0 && <div style={{ textAlign: 'center', color: '#555', padding: 60 }}><div style={{ fontSize: 48, marginBottom: 12 }}>📜</div><div>No tool runs yet. Use any tool and it will appear here.</div></div>}
+      <div style={{ display: 'grid', gap: 10 }}>
+        {filtered.map((h: any) => (
+          <div key={h.id} style={{ background: '#1a1a2e', border: '1px solid #2a2a3e', borderRadius: 10, padding: '14px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <span style={{ fontWeight: 700, color: '#6366f1', fontSize: 14 }}>{h.tool_name}</span>
+              <span style={{ fontSize: 11, color: '#555', marginLeft: 'auto' }}>{new Date(h.created_at).toLocaleString()}</span>
+            </div>
+            {h.output && <div style={{ fontSize: 12, color: '#aaa', background: '#0d0d1a', borderRadius: 8, padding: '8px 12px', whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'hidden' }}>{h.output.slice(0, 300)}{h.output.length > 300 ? '…' : ''}</div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ForgeTab_forgeauto2() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
@@ -2035,7 +2083,7 @@ function ForgeTab_resumebuilder() {
                   <textarea value={jobDesc} onChange={e=>setJobDesc(e.target.value)} placeholder="Paste the job description you\'re applying for…" rows={12} style={{width:'100%',padding:'10px 14px',background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,color:'var(--fg-text)',fontSize:13,resize:'vertical',boxSizing:'border-box'}} />
                 </div>
               </div>) : null}
-              {!result && <button disabled={loading||!experience.trim()||!jobDesc.trim()} onClick={async()=>{setLoading(true);try{const r=await fetch(`${API}/api/resume/build`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({experience,job_desc:jobDesc})});const d=await r.json();setResult(d);setView('preview');}catch(e:any){alert(e.message);}setLoading(false);}} style={{width:'100%',padding:'12px',background:'#3b82f6',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!experience.trim()||!jobDesc.trim()?0.5:1}}>{loading?'Building resume…':'📄 Build Resume'}</button>}
+              {!result && <button disabled={loading||!experience.trim()||!jobDesc.trim()} onClick={async()=>{setLoading(true);try{const r=await fetch(`${API}/api/resume/build`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({experience,job_desc:jobDesc})});const d=await r.json();setResult(d);setView('preview');saveToolHistory('resumebuilder','Resume Builder',{experience:experience.slice(0,200),job_desc:jobDesc.slice(0,200)},d.resume?.slice(0,500)||'');}catch(e:any){alert(e.message);}setLoading(false);}} style={{width:'100%',padding:'12px',background:'#3b82f6',border:'none',borderRadius:10,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||!experience.trim()||!jobDesc.trim()?0.5:1}}>{loading?'Building resume…':'📄 Build Resume'}</button>}
               {result && <div>
                 <div style={{display:'flex',gap:12,marginBottom:16,alignItems:'center'}}>
                   <div style={{textAlign:'center',background:'var(--fg-bg2)',border:`2px solid ${scoreColor(result.score)}`,borderRadius:12,padding:'12px 20px'}}>
@@ -23340,6 +23388,7 @@ export default function ForgeApp() {
             { id:'forgecanvas', icon:'🖼️', label:'Forge Canvas' },
             { id:'forgeshop', icon:'🛒', label:'Smart Shopping' },
             { id:'forgememory', icon:'🧠', label:'Memory' },
+            { id:'toolhistory', icon:'📜', label:'Tool History' },
             { id:'forgeauto2', icon:'⚡', label:'Forge Autonomy' },
             { id:'dreamlog', icon:'🌙', label:'Dream Log' },
             { id:'forgeiq', icon:'🧬', label:'Forge IQ' },
@@ -29349,6 +29398,7 @@ export default function ForgeApp() {
 
         {/* ── MEMORY ─────────────────────────────────────────────── */}
         {(mainTab as string) === 'forgememory' && <ForgeTab_forgememory />}
+        {(mainTab as string) === 'toolhistory' && <ForgeTab_toolhistory />}
 
         {/* ── FORGE AUTONOMY ─────────────────────────────────────── */}
         {(mainTab as string) === 'forgeauto2' && <ForgeTab_forgeauto2 />}
