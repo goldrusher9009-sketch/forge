@@ -739,6 +739,201 @@ function ForgeTab_leads() {
 }
 
 
+function ForgeTab_github() {
+  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  const [status, setStatus] = React.useState<any>(null);
+  const [pat, setPat] = React.useState('');
+  const [connecting, setConnecting] = React.useState(false);
+  const [repos, setRepos] = React.useState<any[]>([]);
+  const [selectedRepo, setSelectedRepo] = React.useState<any>(null);
+  const [files, setFiles] = React.useState<any[]>([]);
+  const [currentPath, setCurrentPath] = React.useState('');
+  const [fileContent, setFileContent] = React.useState('');
+  const [fileSha, setFileSha] = React.useState('');
+  const [selectedFile, setSelectedFile] = React.useState('');
+  const [commits, setCommits] = React.useState<any[]>([]);
+  const [review, setReview] = React.useState('');
+  const [reviewing, setReviewing] = React.useState(false);
+  const [commitMsg, setCommitMsg] = React.useState('');
+  const [editedContent, setEditedContent] = React.useState('');
+  const [committing, setCommitting] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState<'repos'|'files'|'review'|'commits'>('repos');
+  const h = { Authorization: `Bearer ${tok}` };
+
+  React.useEffect(() => {
+    fetch(`${API}/api/integrations/github/status`, { headers: h }).then(r => r.json()).then(d => { setStatus(d); if (d.connected) loadRepos(); }).catch(() => {});
+  }, []);
+
+  async function loadRepos() {
+    const r = await fetch(`${API}/api/integrations/github/repos`, { headers: h });
+    const d = await r.json();
+    setRepos(d.repos || []);
+  }
+
+  async function connect() {
+    if (!pat.trim()) return;
+    setConnecting(true);
+    try {
+      const r = await fetch(`${API}/api/integrations/github/connect`, { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ token: pat }) });
+      const d = await r.json();
+      if (d.ok) { setStatus({ connected: true, username: d.username, avatar: d.avatar }); setPat(''); loadRepos(); }
+      else alert(d.error);
+    } catch(e:any) { alert(e.message); }
+    setConnecting(false);
+  }
+
+  async function loadFiles(repo: any, path = '') {
+    setSelectedRepo(repo); setCurrentPath(path); setFileContent(''); setSelectedFile(''); setReview('');
+    const r = await fetch(`${API}/api/integrations/github/repo/${repo.full_name.split('/')[0]}/${repo.full_name.split('/')[1]}/files?path=${encodeURIComponent(path)}&branch=${repo.default_branch}`, { headers: h });
+    const d = await r.json();
+    setFiles(d.files || []);
+    setActiveTab('files');
+    const rc = await fetch(`${API}/api/integrations/github/repo/${repo.full_name.split('/')[0]}/${repo.full_name.split('/')[1]}/commits?branch=${repo.default_branch}`, { headers: h });
+    const rcd = await rc.json();
+    setCommits(rcd.commits || []);
+  }
+
+  async function openFile(file: any) {
+    if (file.type === 'dir') { loadFiles(selectedRepo, file.path); return; }
+    setSelectedFile(file.path);
+    const [owner, repo] = selectedRepo.full_name.split('/');
+    const r = await fetch(`${API}/api/integrations/github/repo/${owner}/${repo}/file?path=${encodeURIComponent(file.path)}&branch=${selectedRepo.default_branch}`, { headers: h });
+    const d = await r.json();
+    setFileContent(d.content || ''); setFileSha(d.sha || ''); setEditedContent(d.content || '');
+  }
+
+  async function doReview() {
+    if (!selectedFile || !selectedRepo) return;
+    setReviewing(true); setReview('');
+    const [owner, repo] = selectedRepo.full_name.split('/');
+    const r = await fetch(`${API}/api/integrations/github/repo/${owner}/${repo}/ai-review`, { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ path: selectedFile, branch: selectedRepo.default_branch }) });
+    const d = await r.json();
+    setReview(d.review || d.error || 'Error');
+    setReviewing(false); setActiveTab('review');
+  }
+
+  async function doCommit() {
+    if (!commitMsg.trim() || !editedContent || !selectedRepo) return;
+    setCommitting(true);
+    const [owner, repo] = selectedRepo.full_name.split('/');
+    const r = await fetch(`${API}/api/integrations/github/repo/${owner}/${repo}/commit`, { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ path: selectedFile, content: editedContent, message: commitMsg, sha: fileSha, branch: selectedRepo.default_branch }) });
+    const d = await r.json();
+    if (d.ok) { alert(`✅ Committed! SHA: ${d.commit}`); setCommitMsg(''); setFileSha(d.sha); }
+    else alert(d.error);
+    setCommitting(false);
+  }
+
+  const tabStyle = (t: string) => ({ padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: activeTab === t ? '#6366f1' : 'var(--fg-bg2)', color: activeTab === t ? '#fff' : 'var(--fg-text2)' });
+
+  if (!status) return <div style={{ padding: 40, color: 'var(--fg-text3)' }}>Loading…</div>;
+
+  if (!status.connected) return (
+    <div style={{ maxWidth: 500, margin: '60px auto', padding: 32, background: 'var(--fg-bg2)', borderRadius: 16, border: '1px solid var(--fg-border)' }}>
+      <div style={{ fontSize: 32, marginBottom: 12 }}>🐙</div>
+      <h2 style={{ margin: '0 0 8px', color: 'var(--fg-text)' }}>Connect GitHub</h2>
+      <p style={{ color: 'var(--fg-text3)', fontSize: 13, marginBottom: 24 }}>Paste a Personal Access Token (PAT) with <code>repo</code> scope. <a href="https://github.com/settings/tokens/new?scopes=repo" target="_blank" rel="noreferrer" style={{ color: '#6366f1' }}>Create one here →</a></p>
+      <input value={pat} onChange={e => setPat(e.target.value)} type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--fg-border)', background: 'var(--fg-bg3)', color: 'var(--fg-text)', fontSize: 13, marginBottom: 12, boxSizing: 'border-box' }} />
+      <button onClick={connect} disabled={connecting || !pat.trim()} style={{ width: '100%', padding: '10px', background: '#6366f1', border: 'none', borderRadius: 8, color: '#fff', fontWeight: 700, cursor: 'pointer', opacity: connecting || !pat.trim() ? 0.5 : 1 }}>{connecting ? 'Connecting…' : '🔗 Connect GitHub'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+      {/* Sidebar */}
+      <div style={{ width: 260, borderRight: '1px solid var(--fg-border)', overflowY: 'auto', flexShrink: 0 }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--fg-border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <img src={status.avatar} style={{ width: 28, height: 28, borderRadius: 14 }} alt="" />
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--fg-text)' }}>{status.username}</div>
+            <div style={{ fontSize: 10, color: 'var(--fg-text3)' }}>GitHub Connected</div>
+          </div>
+          <button onClick={() => { fetch(`${API}/api/integrations/github/disconnect`, { method: 'DELETE', headers: h }).then(() => { setStatus({ connected: false }); setRepos([]); setSelectedRepo(null); }); }} style={{ marginLeft: 'auto', background: 'none', border: '1px solid #ef444444', borderRadius: 6, color: '#ef4444', fontSize: 10, cursor: 'pointer', padding: '2px 6px' }}>Disconnect</button>
+        </div>
+        <div style={{ padding: '8px 0' }}>
+          {repos.map(r => (
+            <div key={r.id} onClick={() => loadFiles(r)} style={{ padding: '8px 16px', cursor: 'pointer', background: selectedRepo?.id === r.id ? '#6366f122' : 'transparent', borderLeft: selectedRepo?.id === r.id ? '2px solid #6366f1' : '2px solid transparent' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-text)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                {r.private ? '🔒' : '📁'} {r.name}
+              </div>
+              {r.language && <div style={{ fontSize: 10, color: 'var(--fg-text3)', marginTop: 2 }}>{r.language} · ⭐{r.stars}</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {!selectedRepo ? (
+          <div style={{ padding: 48, textAlign: 'center', color: 'var(--fg-text3)' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🐙</div>
+            <div>Select a repository to browse files, view commits, and run AI code reviews.</div>
+          </div>
+        ) : (<>
+          {/* Tab bar */}
+          <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--fg-border)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--fg-text)', marginRight: 8 }}>{selectedRepo.name}</div>
+            <button style={tabStyle('files')} onClick={() => setActiveTab('files')}>📁 Files</button>
+            <button style={tabStyle('commits')} onClick={() => setActiveTab('commits')}>📝 Commits</button>
+            {selectedFile && <><button style={tabStyle('review')} onClick={() => { if (!review) doReview(); else setActiveTab('review'); }}>🤖 AI Review</button></>}
+            {selectedFile && <span style={{ fontSize: 11, color: 'var(--fg-text3)', marginLeft: 4 }}>/{selectedFile}</span>}
+          </div>
+
+          {/* File browser */}
+          {activeTab === 'files' && (
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+              <div style={{ width: 240, borderRight: '1px solid var(--fg-border)', overflowY: 'auto', padding: '8px 0' }}>
+                {currentPath && <div onClick={() => { const parts = currentPath.split('/'); parts.pop(); loadFiles(selectedRepo, parts.join('/')); }} style={{ padding: '6px 12px', cursor: 'pointer', color: '#6366f1', fontSize: 12 }}>← ..</div>}
+                {files.map(f => (
+                  <div key={f.path} onClick={() => openFile(f)} style={{ padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: selectedFile === f.path ? '#6366f1' : 'var(--fg-text)', background: selectedFile === f.path ? '#6366f111' : 'transparent', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {f.type === 'dir' ? '📂' : '📄'} {f.name}
+                    {f.type === 'file' && <span style={{ marginLeft: 'auto', color: 'var(--fg-text3)', fontSize: 10 }}>{Math.round(f.size/1024*10)/10}kb</span>}
+                  </div>
+                ))}
+              </div>
+              <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+                {selectedFile ? (<>
+                  <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--fg-border)', display: 'flex', gap: 8 }}>
+                    <button onClick={doReview} disabled={reviewing} style={{ padding: '4px 12px', background: '#7c3aed', border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>{reviewing ? 'Reviewing…' : '🤖 AI Review'}</button>
+                    <input value={commitMsg} onChange={e => setCommitMsg(e.target.value)} placeholder="Commit message…" style={{ flex: 1, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--fg-border)', background: 'var(--fg-bg2)', color: 'var(--fg-text)', fontSize: 12 }} />
+                    <button onClick={doCommit} disabled={committing || !commitMsg.trim()} style={{ padding: '4px 12px', background: '#22c55e', border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>{committing ? 'Pushing…' : '⬆ Commit'}</button>
+                  </div>
+                  <textarea value={editedContent} onChange={e => setEditedContent(e.target.value)} style={{ flex: 1, padding: 16, background: '#0d0d0d', color: '#e2e8f0', border: 'none', fontFamily: 'monospace', fontSize: 12, lineHeight: 1.6, resize: 'none', outline: 'none' }} />
+                </>) : <div style={{ padding: 32, color: 'var(--fg-text3)', fontSize: 13 }}>Select a file to view and edit.</div>}
+              </div>
+            </div>
+          )}
+
+          {/* Commits */}
+          {activeTab === 'commits' && (
+            <div style={{ overflowY: 'auto', flex: 1, padding: 16 }}>
+              {commits.map(c => (
+                <div key={c.sha} style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--fg-bg2)', border: '1px solid var(--fg-border)', marginBottom: 8, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <code style={{ fontSize: 11, color: '#6366f1', background: '#6366f122', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>{c.sha}</code>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, color: 'var(--fg-text)', marginBottom: 4 }}>{c.message.split('\n')[0]}</div>
+                    <div style={{ fontSize: 11, color: 'var(--fg-text3)' }}>{c.author} · {new Date(c.date).toLocaleDateString()}</div>
+                  </div>
+                  <a href={c.url} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#6366f1', textDecoration: 'none' }}>View →</a>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* AI Review */}
+          {activeTab === 'review' && (
+            <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+              {reviewing ? <div style={{ color: 'var(--fg-text3)' }}>🤖 Analyzing {selectedFile}…</div> : review ? (
+                <div style={{ background: 'var(--fg-bg2)', border: '1px solid #7c3aed44', borderRadius: 12, padding: 20, whiteSpace: 'pre-wrap', fontSize: 13, lineHeight: 1.7, color: 'var(--fg-text)' }}>{review}</div>
+              ) : <div style={{ color: 'var(--fg-text3)' }}>Select a file and click AI Review.</div>}
+            </div>
+          )}
+        </>)}
+      </div>
+    </div>
+  );
+}
+
 function ForgeTab_hermes() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
@@ -22675,6 +22870,7 @@ export default function ForgeApp() {
             { id:'brief', icon:'☀️', label:'Morning Brief' },
             { id:'brain', icon:'🧠', label:'Forge Brain' },
             { id:'passport', icon:'🪪', label:'AI Twin Passport' },
+            { id:'github', icon:'🐙', label:'GitHub' },
             { id:'hermes', icon:'⚡', label:'Hermes Agent' },
             { id:'keyhealth', icon:'🩺', label:'Key Health' },
             { id:'notes', icon:'📝', label:'Notes' },
@@ -29373,6 +29569,7 @@ export default function ForgeApp() {
 
 
         {/* ── Hermes — Autonomous Agent ─────────────────────────────── */}
+        {(mainTab as string) === 'github' && <ForgeTab_github />}
         {mainTab === 'hermes' && <ForgeTab_hermes />}
 
         {/* -- ForgeAuto ----------------------------------------------- */}
