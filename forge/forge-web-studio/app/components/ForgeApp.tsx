@@ -729,8 +729,6 @@ function ForgeTab_leads() {
 function ForgeTab_hermes() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [goal, setGoal] = React.useState('');
           const [runId, setRunId] = React.useState<string|null>(null);
           const [steps, setSteps] = React.useState<any[]>([]);
@@ -980,8 +978,6 @@ function ForgeTab_hermes() {
 function ForgeTab_forgedeepresearch() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [topic, setTopic] = React.useState('');
           const [depth, setDepth] = React.useState('standard');
           const [running, setRunning] = React.useState(false);
@@ -1065,8 +1061,6 @@ function ForgeTab_forgedeepresearch() {
 function ForgeTab_studymode() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [topic, setTopic] = React.useState('');
           const [mode, setMode] = React.useState('flashcards');
           const [loading, setLoading] = React.useState(false);
@@ -1140,8 +1134,6 @@ function ForgeTab_studymode() {
 function ForgeTab_voicemode() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [listening, setListening] = React.useState(false);
           const [speaking, setSpeaking] = React.useState(false);
           const [transcript, setTranscript] = React.useState('');
@@ -1214,8 +1206,6 @@ function ForgeTab_voicemode() {
 function ForgeTab_forgecanvas() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [prompt, setPrompt] = React.useState('');
           const [docType, setDocType] = React.useState('document');
           const [content, setContent] = React.useState('');
@@ -1276,8 +1266,6 @@ function ForgeTab_forgecanvas() {
 function ForgeTab_forgeshop() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [query, setQuery] = React.useState('');
           const [budget, setBudget] = React.useState('');
           const [category, setCategory] = React.useState('General');
@@ -1329,8 +1317,6 @@ function ForgeTab_forgeshop() {
 function ForgeTab_forgememory() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [memories, setMemories] = React.useState<any[]>([]);
           const [key, setKey] = React.useState('');
           const [value, setValue] = React.useState('');
@@ -1389,8 +1375,6 @@ function ForgeTab_forgememory() {
 function ForgeTab_forgeauto2() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [goal, setGoal] = React.useState('');
           const [running, setRunning] = React.useState(false);
           const [phase, setPhase] = React.useState('');
@@ -1528,8 +1512,6 @@ function ForgeTab_forgeauto2() {
 function ForgeTab_dreamlog() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [log, setLog] = React.useState<any[]>([]);
           const [brief, setBrief] = React.useState('');
           const [suggesting, setSuggesting] = React.useState(false);
@@ -1599,8 +1581,6 @@ function ForgeTab_dreamlog() {
 function ForgeTab_forgeiq() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [iq, setIq] = React.useState<any>(null);
           const [history, setHistory] = React.useState<any[]>([]);
           const [loading, setLoading] = React.useState(false);
@@ -1656,8 +1636,6 @@ function ForgeTab_forgeiq() {
 function ForgeTab_promptopt() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [prompt, setPrompt] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
@@ -1709,8 +1687,6 @@ function ForgeTab_promptopt() {
 function ForgeTab_shadowmode() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [prompt, setPrompt] = React.useState('');
           const [modelA, setModelA] = React.useState('claude-3-5-sonnet-20241022');
           const [modelB, setModelB] = React.useState('gpt-4o');
@@ -1777,8 +1753,6 @@ function ForgeTab_shadowmode() {
 function ForgeTab_debate2() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [topic, setTopic] = React.useState('');
           const [rounds, setRounds] = React.useState(3);
           const [result, setResult] = React.useState<any>(null);
@@ -1822,8 +1796,6 @@ function ForgeTab_debate2() {
 function ForgeTab_timecapsule() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [msg, setMsg] = React.useState('');
           const [deliverAt, setDeliverAt] = React.useState('');
           const [capsules, setCapsules] = React.useState<any[]>([]);
@@ -1869,8 +1841,6 @@ function ForgeTab_timecapsule() {
 function ForgeTab_codeexplain() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [code, setCode] = React.useState('');
           const [lang, setLang] = React.useState('auto');
           const [result, setResult] = React.useState<any>(null);
@@ -1925,8 +1895,6 @@ function ForgeTab_codeexplain() {
 function ForgeTab_ideavalidator() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [idea, setIdea] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
@@ -1996,8 +1964,6 @@ function ForgeTab_ideavalidator() {
 function ForgeTab_tonerewriter() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [text, setText] = React.useState('');
           const [tone, setTone] = React.useState('professional');
           const [result, setResult] = React.useState<any>(null);
@@ -2047,8 +2013,6 @@ function ForgeTab_tonerewriter() {
 function ForgeTab_resumebuilder() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [experience, setExperience] = React.useState('');
           const [jobDesc, setJobDesc] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
@@ -2115,8 +2079,6 @@ function ForgeTab_resumebuilder() {
 function ForgeTab_emailnegotiator() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [original, setOriginal] = React.useState('');
           const [context, setContext] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
@@ -2172,8 +2134,6 @@ function ForgeTab_emailnegotiator() {
 function ForgeTab_storygen2() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [premise, setPremise] = React.useState('');
           const [genre, setGenre] = React.useState('fantasy');
           const [storyId, setStoryId] = React.useState<string|null>(null);
@@ -2227,8 +2187,6 @@ function ForgeTab_storygen2() {
 function ForgeTab_meetingsum() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [transcript, setTranscript] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
@@ -2288,8 +2246,6 @@ function ForgeTab_meetingsum() {
 function ForgeTab_competitorspy() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [company, setCompany] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
@@ -2355,8 +2311,6 @@ function ForgeTab_competitorspy() {
 function ForgeTab_ailawyer() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [doc, setDoc] = React.useState('');
           const [docType, setDocType] = React.useState('contract');
           const [result, setResult] = React.useState<any>(null);
@@ -2429,8 +2383,6 @@ function ForgeTab_ailawyer() {
 function ForgeTab_financeadvisor() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [situation, setSituation] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
@@ -2495,8 +2447,6 @@ function ForgeTab_financeadvisor() {
 function ForgeTab_languagetutor() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [language, setLanguage] = React.useState('Spanish');
           const [level, setLevel] = React.useState('beginner');
           const [topic, setTopic] = React.useState('');
@@ -2591,8 +2541,6 @@ function ForgeTab_languagetutor() {
 function ForgeTab_flashcardgen() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [topic, setTopic] = React.useState('');
           const [count, setCount] = React.useState(10);
           const [difficulty, setDifficulty] = React.useState('medium');
@@ -2668,8 +2616,6 @@ function ForgeTab_flashcardgen() {
 function ForgeTab_linkedinopt() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [topic, setTopic] = React.useState('');
           const [angle, setAngle] = React.useState('thought-leadership');
           const [about, setAbout] = React.useState('');
@@ -5557,8 +5503,6 @@ function ForgeTab_lovelanguage() {
 function ForgeTab_forgeoperator() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [goal, setGoal] = React.useState('');
           const [sessionId, setSessionId] = React.useState<string|null>(null);
           const [status, setStatus] = React.useState<'idle'|'running'|'done'|'error'>('idle');
@@ -5836,8 +5780,6 @@ function ForgeTab_forgeoperator() {
 function ForgeTab_passport() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [pp, setPp] = React.useState<any>(null);
           const [ppLoad, setPpLoad] = React.useState(true);
           const [ppEdit, setPpEdit] = React.useState(false);
@@ -6023,8 +5965,6 @@ function ForgeTab_passport() {
 function ForgeTab_symptomcheck() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [symptoms, setSymptoms] = React.useState('');
           const [duration, setDuration] = React.useState('');
           const [age, setAge] = React.useState('');
@@ -6073,8 +6013,6 @@ function ForgeTab_symptomcheck() {
 function ForgeTab_sleepopt() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [issues, setIssues] = React.useState('');
           const [schedule, setSchedule] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
@@ -6121,8 +6059,6 @@ function ForgeTab_sleepopt() {
 function ForgeTab_stressdecode() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [desc, setDesc] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
@@ -6164,8 +6100,6 @@ function ForgeTab_stressdecode() {
 function ForgeTab_workoutgen() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [goal, setGoal] = React.useState('');
           const [equipment, setEquipment] = React.useState('bodyweight only');
           const [time, setTime] = React.useState('45');
@@ -6205,8 +6139,6 @@ function ForgeTab_workoutgen() {
 function ForgeTab_nutricoach() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [goal, setGoal] = React.useState('');
           const [restrictions, setRestrictions] = React.useState('');
           const [calories, setCalories] = React.useState('2000');
@@ -6241,8 +6173,6 @@ function ForgeTab_nutricoach() {
 function ForgeTab_willgen() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [name, setName] = React.useState('');
           const [state, setState] = React.useState('');
           const [assets, setAssets] = React.useState('');
@@ -6278,8 +6208,6 @@ function ForgeTab_willgen() {
 function ForgeTab_leaseanalyze() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [leaseText, setLeaseText] = React.useState('');
           const [rent, setRent] = React.useState('');
           const [state, setState] = React.useState('');
@@ -6310,8 +6238,6 @@ function ForgeTab_leaseanalyze() {
 function ForgeTab_disputeletter() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [company, setCompany] = React.useState('');
           const [amount, setAmount] = React.useState('');
           const [description, setDescription] = React.useState('');
@@ -6348,8 +6274,6 @@ function ForgeTab_disputeletter() {
 function ForgeTab_tosdecode() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [tosText, setTosText] = React.useState('');
           const [service, setService] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
@@ -6379,8 +6303,6 @@ function ForgeTab_tosdecode() {
 function ForgeTab_foiarequest() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [agency, setAgency] = React.useState('');
           const [records, setRecords] = React.useState('');
           const [yourName, setYourName] = React.useState('');
@@ -6415,8 +6337,6 @@ function ForgeTab_foiarequest() {
 function ForgeTab_plottwist() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [summary, setSummary] = React.useState('');
           const [genre, setGenre] = React.useState('thriller');
           const [situation, setSituation] = React.useState('');
@@ -6448,8 +6368,6 @@ function ForgeTab_plottwist() {
 function ForgeTab_charcreate() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [role, setRole] = React.useState('protagonist');
           const [genre, setGenre] = React.useState('');
           const [seeds, setSeeds] = React.useState('');
@@ -6488,8 +6406,6 @@ function ForgeTab_charcreate() {
 function ForgeTab_worldbuild() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [genre, setGenre] = React.useState('fantasy');
           const [premise, setPremise] = React.useState('');
           const [magicLevel, setMagicLevel] = React.useState('low magic');
@@ -6523,8 +6439,6 @@ function ForgeTab_worldbuild() {
 function ForgeTab_dialoguecoach() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [dialogue, setDialogue] = React.useState('');
           const [context, setContext] = React.useState('');
           const [goal, setGoal] = React.useState('create tension');
@@ -6561,8 +6475,6 @@ function ForgeTab_dialoguecoach() {
 function ForgeTab_bookblurb() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [title, setTitle] = React.useState('');
           const [genre, setGenre] = React.useState('');
           const [protagonist, setProtagonist] = React.useState('');
@@ -6597,8 +6509,6 @@ function ForgeTab_bookblurb() {
 function ForgeTab_perfreview() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [role, setRole] = React.useState('');
           const [achievements, setAchievements] = React.useState('');
           const [growth, setGrowth] = React.useState('');
@@ -6628,8 +6538,6 @@ function ForgeTab_perfreview() {
 function ForgeTab_salaryresearch() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [role, setRole] = React.useState('');
           const [yearsExp, setYearsExp] = React.useState('');
           const [location, setLocation] = React.useState('');
@@ -6675,8 +6583,6 @@ function ForgeTab_salaryresearch() {
 function ForgeTab_offercompare() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [offers, setOffers] = React.useState([{name:'Offer A',base:'',equity:'',bonus:'',pto:'',remote:'',notes:''},{name:'Offer B',base:'',equity:'',bonus:'',pto:'',remote:'',notes:''}]);
           const [priorities, setPriorities] = React.useState('');
           const [result, setResult] = React.useState<any>(null);
@@ -6705,8 +6611,6 @@ function ForgeTab_offercompare() {
 function ForgeTab_careerpivot() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [current, setCurrent] = React.useState('');
           const [target, setTarget] = React.useState('');
           const [skills, setSkills] = React.useState('');
@@ -6747,8 +6651,6 @@ function ForgeTab_careerpivot() {
 function ForgeTab_linkedinmsg() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [background, setBackground] = React.useState('');
           const [targetPerson, setTargetPerson] = React.useState('');
           const [targetCompany, setTargetCompany] = React.useState('');
@@ -21525,7 +21427,6 @@ export default function ForgeApp() {
     try { await fetch(`/api/url-saves/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } }); loadUrlSaves(); } catch {}
   }
   async function pinUrlSave(id: number) {
-    const tok = localStorage.getItem('forge_token');
     try { await fetch(`/api/url-saves/${id}/pin`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}` } }); loadUrlSaves(); } catch {}
   }
   async function loadContentCalendar(month?: string) {
@@ -21549,7 +21450,6 @@ export default function ForgeApp() {
     try { await fetch(`/api/content-calendar/${id}`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ status }) }); loadContentCalendar(); } catch {}
   }
   async function deleteCalItem(id: number) {
-    const tok = localStorage.getItem('forge_token');
     try { await fetch(`/api/content-calendar/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } }); loadContentCalendar(); } catch {}
   }
   async function loadThreadVote(threadId: string) {
@@ -21588,7 +21488,6 @@ export default function ForgeApp() {
   }
   async function addWgoal() {
     if (!newGoalTitle.trim()) return;
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { await fetch('/api/workspace-goals', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ title: newGoalTitle, priority: newGoalPriority, target_date: newGoalDate }) }); setNewGoalTitle(''); loadWgoals(); } catch {}
   }
   async function updateWgoalProgress(id: number, progress: number) {
@@ -21596,7 +21495,6 @@ export default function ForgeApp() {
     try { await fetch(`/api/workspace-goals/${id}`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ progress }) }); loadWgoals(); } catch {}
   }
   async function updateWgoalStatus(id: number, status: string) {
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { await fetch(`/api/workspace-goals/${id}`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ status }) }); loadWgoals(); } catch {}
   }
   async function deleteWgoal(id: number) {
@@ -21605,7 +21503,6 @@ export default function ForgeApp() {
   }
   async function runFormatter() {
     if (!formatterText.trim()) return;
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { const r = await fetch('/api/format-text', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ text: formatterText, operation: formatterOp }) }); const d = await r.json(); setFormatterResult(d.result||''); } catch {}
   }
   async function loadWeeklySummary() {
@@ -21613,7 +21510,6 @@ export default function ForgeApp() {
     try { const r = await fetch('/api/workspace/weekly-summary', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setWeeklySummary(d); } catch {}
   }
   async function loadFolders() {
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { const r = await fetch('/api/folders', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setFolders(Array.isArray(d)?d:[]); } catch {}
   }
   async function createFolder() {
@@ -21622,7 +21518,6 @@ export default function ForgeApp() {
     try { await fetch('/api/folders', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ name: newFolderName, color: newFolderColor, icon: newFolderIcon }) }); setNewFolderName(''); loadFolders(); } catch {}
   }
   async function deleteFolder(id: number) {
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { await fetch(`/api/folders/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } }); loadFolders(); if (activeFolderId===id) setActiveFolderId(null); } catch {}
   }
   async function loadFolderThreads(folderId: number) {
@@ -21631,7 +21526,6 @@ export default function ForgeApp() {
     try { const r = await fetch(`/api/folders/${folderId}/threads`, { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setFolderThreads(Array.isArray(d)?d:[]); } catch {}
   }
   async function loadQuickNotes() {
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { const r = await fetch('/api/quick-notes', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setQuickNotes(Array.isArray(d)?d:[]); } catch {}
   }
   async function addQuickNote() {
@@ -21640,7 +21534,6 @@ export default function ForgeApp() {
     try { await fetch('/api/quick-notes', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ content: newNoteContent, color: newNoteColor }) }); setNewNoteContent(''); loadQuickNotes(); } catch {}
   }
   async function updateQuickNote(id: number, content: string) {
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { await fetch(`/api/quick-notes/${id}`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ content }) }); setQnoteEditId(null); loadQuickNotes(); } catch {}
   }
   async function pinQuickNote(id: number, pinned: number) {
@@ -21648,7 +21541,6 @@ export default function ForgeApp() {
     try { await fetch(`/api/quick-notes/${id}`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ pinned }) }); loadQuickNotes(); } catch {}
   }
   async function deleteQuickNote(id: number) {
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { await fetch(`/api/quick-notes/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } }); loadQuickNotes(); } catch {}
   }
   async function exportWorkspace() {
@@ -21668,7 +21560,6 @@ export default function ForgeApp() {
   }
   async function addSavedSearch() {
     if (!newSearchQuery.trim()) return;
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { await fetch('/api/saved-searches', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ query: newSearchQuery, label: newSearchLabel }) }); setNewSearchQuery(''); setNewSearchLabel(''); loadSavedSearches(); } catch {}
   }
   async function deleteSavedSearch(id: number) {
@@ -21676,7 +21567,6 @@ export default function ForgeApp() {
     try { await fetch(`/api/saved-searches/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } }); loadSavedSearches(); } catch {}
   }
   async function loadProdScore() {
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { const r = await fetch('/api/workspace/productivity-score', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setProdScore(d); } catch {}
   }
   async function smartRename(threadId: string) {
@@ -21684,7 +21574,6 @@ export default function ForgeApp() {
     try { const r = await fetch(`/api/threads/${threadId}/smart-rename`, { method:'POST', headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setRenameTarget(d); setRenamePrompt(d.instruction); } catch {}
   }
   async function applyRename(threadId: string, title: string) {
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { await fetch(`/api/threads/${threadId}/rename`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ title }) }); setRenameTarget(null); loadThreads && loadThreads(); } catch {}
   }
   async function loadTimers() {
@@ -21692,7 +21581,6 @@ export default function ForgeApp() {
     try { const r = await fetch('/api/timers', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setTimerSessions(Array.isArray(d)?d:[]); } catch {}
   }
   async function startTimer() {
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try {
       const r = await fetch('/api/timers', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ label: timerLabel, duration_min: timerDuration }) });
       const d = await r.json(); setTimerRunning(d); setTimerElapsed(0); loadTimers();
@@ -21704,7 +21592,6 @@ export default function ForgeApp() {
     try { await fetch(`/api/timers/${timerRunning.id}/end`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ notes }) }); setTimerRunning(null); setTimerElapsed(0); loadTimers(); } catch {}
   }
   async function loadSysTpls() {
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { const r = await fetch('/api/templates/system', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setSysTpls(Array.isArray(d)?d:[]); } catch {}
   }
   async function addSysTpl() {
@@ -21713,7 +21600,6 @@ export default function ForgeApp() {
     try { await fetch('/api/templates/system', { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ name: newTplName, content: newTplContent, category: newTplCategory }) }); setNewTplName(''); setNewTplContent(''); loadSysTpls(); } catch {}
   }
   async function setDefaultTpl(id: number) {
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { await fetch(`/api/templates/system/${id}/default`, { method:'PUT', headers:{ Authorization:`Bearer ${tok}` } }); loadSysTpls(); } catch {}
   }
   async function deleteSysTpl(id: number) {
@@ -21721,7 +21607,6 @@ export default function ForgeApp() {
     try { await fetch(`/api/templates/system/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } }); loadSysTpls(); } catch {}
   }
   async function loadHeatmap() {
-    const tok = localStorage.getItem('forge_token'); if (!tok) return;
     try { const r = await fetch('/api/workspace/activity-heatmap', { headers:{ Authorization:`Bearer ${tok}` } }); const d = await r.json(); setActivityHeatmap(d.heatmap||[]); } catch {}
   }
   async function runWritingAssist() {
@@ -21730,7 +21615,6 @@ export default function ForgeApp() {
     try { const r = await fetch(`/api/threads/0/writing-assist`, { method:'POST', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ text: writingText, mode: writingMode }) }); const d = await r.json(); setWritingResult(d); } catch {}
   }
   async function loadSnippets(q?: string) {
-    const tok = localStorage.getItem('forge_token');
     try {
       const url = q ? `/api/snippets?q=${encodeURIComponent(q)}` : '/api/snippets';
       const r = await fetch(url, { headers: { Authorization: `Bearer ${tok}` } });
@@ -21758,7 +21642,6 @@ export default function ForgeApp() {
   }
   async function globalSearch() {
     if (!globalSearchQ.trim()) return;
-    const tok = localStorage.getItem('forge_token');
     try {
       const r = await fetch(`/api/search/global?q=${encodeURIComponent(globalSearchQ)}`, { headers: { Authorization: `Bearer ${tok}` } });
       if (r.ok) { const d = await r.json(); setGlobalResults(d.results || []); }
@@ -21770,7 +21653,6 @@ export default function ForgeApp() {
   }
 
     async function loadFlashcards(deck?: string) {
-    const tok = localStorage.getItem('forge_token');
     try {
       const url = deck ? `/api/flashcards?deck=${encodeURIComponent(deck)}` : '/api/flashcards';
       const r = await fetch(url, { headers: { Authorization: `Bearer ${tok}` } });
@@ -21800,7 +21682,6 @@ export default function ForgeApp() {
     try { await fetch(`/api/flashcards/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadFlashcards(activeDeck); } catch {}
   }
   async function loadReadingList() {
-    const tok = localStorage.getItem('forge_token');
     try {
       const url = readFilter === 'all' ? '/api/reading-list' : `/api/reading-list?status=${readFilter}`;
       const r = await fetch(url, { headers: { Authorization: `Bearer ${tok}` } });
@@ -21820,7 +21701,6 @@ export default function ForgeApp() {
     try { await fetch(`/api/reading-list/${id}`, { method:'PUT', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ status }) }); loadReadingList(); } catch {}
   }
   async function deleteReadItem(id: number) {
-    const tok = localStorage.getItem('forge_token');
     try { await fetch(`/api/reading-list/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadReadingList(); } catch {}
   }
   async function loadKanban() {
@@ -21829,7 +21709,6 @@ export default function ForgeApp() {
   }
   async function addKanbanItem() {
     if (!newKanbanTitle.trim()) return;
-    const tok = localStorage.getItem('forge_token');
     try {
       await fetch('/api/kanban', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ title: newKanbanTitle, column_name: newKanbanCol }) });
       setNewKanbanTitle(''); loadKanban();
@@ -21840,7 +21719,6 @@ export default function ForgeApp() {
     try { await fetch(`/api/kanban/${id}`, { method:'PUT', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ column_name }) }); loadKanban(); } catch {}
   }
   async function deleteKanbanItem(id: number) {
-    const tok = localStorage.getItem('forge_token');
     try { await fetch(`/api/kanban/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadKanban(); } catch {}
   }
   async function loadDigest() {
@@ -21849,7 +21727,6 @@ export default function ForgeApp() {
   }
 
     async function loadJournal() {
-    const tok = localStorage.getItem('forge_token');
     try { const r = await fetch('/api/journal', { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) setJournalEntries(await r.json()); } catch {}
   }
   async function saveJournalEntry() {
@@ -21866,7 +21743,6 @@ export default function ForgeApp() {
     try { await fetch(`/api/journal/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadJournal(); } catch {}
   }
   async function loadHabits() {
-    const tok = localStorage.getItem('forge_token');
     try { const r = await fetch('/api/habits', { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) setHabits(await r.json()); } catch {}
   }
   async function addHabit() {
@@ -21882,7 +21758,6 @@ export default function ForgeApp() {
     try { await fetch(`/api/habits/${id}/log`, { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: '{}' }); loadHabits(); } catch {}
   }
   async function deleteHabit(id: number) {
-    const tok = localStorage.getItem('forge_token');
     try { await fetch(`/api/habits/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadHabits(); } catch {}
   }
   async function loadChangelog() {
@@ -21891,7 +21766,6 @@ export default function ForgeApp() {
   }
 
     async function loadGoals() {
-    const tok = localStorage.getItem('forge_token');
     try { const r = await fetch('/api/goals', { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) setGoals(await r.json()); } catch {}
   }
   async function addGoal() {
@@ -21907,7 +21781,6 @@ export default function ForgeApp() {
     try { await fetch(`/api/goals/${id}`, { method:'PUT', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ current_value }) }); loadGoals(); } catch {}
   }
   async function deleteGoal(id: number) {
-    const tok = localStorage.getItem('forge_token');
     try { await fetch(`/api/goals/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadGoals(); } catch {}
   }
   async function loadCaptures() {
@@ -21916,7 +21789,6 @@ export default function ForgeApp() {
   }
   async function addCapture() {
     if (!newCapture.trim()) return;
-    const tok = localStorage.getItem('forge_token');
     try {
       const r = await fetch('/api/captures', { method:'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type':'application/json' }, body: JSON.stringify({ content: newCapture }) });
       if (r.ok) { setNewCapture(''); loadCaptures(); }
@@ -21927,7 +21799,6 @@ export default function ForgeApp() {
     try { await fetch(`/api/captures/${id}`, { method:'DELETE', headers: { Authorization: `Bearer ${tok}` } }); loadCaptures(); } catch {}
   }
   async function pinCapture(id: number) {
-    const tok = localStorage.getItem('forge_token');
     try { await fetch(`/api/captures/${id}/pin`, { method:'PUT', headers: { Authorization: `Bearer ${tok}` } }); loadCaptures(); } catch {}
   }
   async function loadKnowledgeGraph() {
@@ -21935,7 +21806,6 @@ export default function ForgeApp() {
     try { const r = await fetch('/api/knowledge-graph', { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) setKnowledgeGraph(await r.json()); } catch {}
   }
   async function loadMilestones(threadId: string) {
-    const tok = localStorage.getItem('forge_token');
     try { const r = await fetch(`/api/threads/${threadId}/milestones`, { headers: { Authorization: `Bearer ${tok}` } }); if (r.ok) setMilestones(await r.json()); } catch {}
   }
   async function addMilestone(threadId: string) {
