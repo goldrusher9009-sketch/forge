@@ -594,8 +594,6 @@ function computeDiff(oldText: string, newText: string): string {
 function ForgeTab_keyhealth() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-          const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const [health, setHealth] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [probedAt, setProbedAt] = React.useState('');
@@ -675,8 +673,6 @@ function ForgeTab_keyhealth() {
 function ForgeTab_leads() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-                const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
                 const [leads, setLeads] = React.useState<any[]>([]);
                 const [total, setTotal] = React.useState(0);
                 const [loading, setLoading] = React.useState(false);
