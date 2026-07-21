@@ -222,7 +222,7 @@ const SLASH_COMMANDS = [
   // Skills
   { cmd:'summarize',   icon:'📝', label:'Summarize',      desc:'Summarize the current thread',           category:'skill',   insert:'/summarize this conversation' },
   { cmd:'translate',   icon:'🌐', label:'Translate',      desc:'Translate text to another language',     category:'skill',   insert:'/translate to Spanish: ' },
-  { cmd:'explain',     icon:'🧠', label:'Explain',        desc:'Explain like I\'m 5',                    category:'skill',   insert:'/explain ' },
+  { cmd:'explain',     icon:'🧠', label:'Explain',        desc:'Explain like I'm 5',                    category:'skill',   insert:'/explain ' },
   { cmd:'fix',         icon:'🔧', label:'Fix',            desc:'Fix bugs in selected code',              category:'skill',   insert:'/fix this: ' },
   { cmd:'improve',     icon:'⚡', label:'Improve',        desc:'Improve and polish text',                category:'skill',   insert:'/improve: ' },
   // Actions
@@ -2387,7 +2387,7 @@ function ForgeTab_financeadvisor() {
           const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = React.useState(false);
           const [history, setHistory] = React.useState<any[]>([]);
-          const EXAMPLES = ['I make $80k/year, have $12k in credit card debt at 22%, and $0 saved. What do I do?','I have $50k to invest and I\'m 30 years old. Where should I put it?','Should I pay off my student loans or invest in my 401k?','I want to buy a house in 2 years. How do I save for a down payment?'];
+          const EXAMPLES = ['I make $80k/year, have $12k in credit card debt at 22%, and $0 saved. What do I do?','I have $50k to invest and I'm 30 years old. Where should I put it?','Should I pay off my student loans or invest in my 401k?','I want to buy a house in 2 years. How do I save for a down payment?'];
           React.useEffect(()=>{fetch(`${API}/api/finance/history`,{headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setHistory(d.history||[])).catch(()=>{});}, []);
           return (<div style={{flex:1,overflowY:'auto',padding:24}}>
             <div style={{maxWidth:800,margin:'0 auto'}}>
@@ -7305,7 +7305,7 @@ function ForgeTab_boundaryscripts() {
               <textarea value={bsSit} onChange={e=>setBsSit(e.target.value)} placeholder="Describe the situation" rows={2} style={{width:'100%',padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a1a',color:'#fff',marginBottom:'0.75rem',resize:'vertical'}}/>
               <input value={bsBound} onChange={e=>setBsBound(e.target.value)} placeholder="What boundary do you want to set?" style={{width:'100%',padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a1a',color:'#fff',marginBottom:'0.75rem'}}/>
               <select value={bsConcern} onChange={e=>setBsConcern(e.target.value)} style={{width:'100%',padding:'0.75rem',borderRadius:8,border:'1px solid #333',background:'#1a1a1a',color:'#fff',marginBottom:'1rem'}}>
-                {['fear of conflict','worried about hurting feelings','fear of rejection','unsure how they\'ll react','history of them ignoring boundaries'].map(c=><option key={c}>{c}</option>)}
+                {['fear of conflict','worried about hurting feelings','fear of rejection','unsure how they'll react','history of them ignoring boundaries'].map(c=><option key={c}>{c}</option>)}
               </select>
               <button disabled={bsLoading||!bsSit.trim()||!bsBound.trim()} onClick={async()=>{setBsLoading(true);setBsResult(null);try{const r=await fetch(`${API_BASE}/api/boundaries/write`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({relationship_type:bsRel,situation:bsSit,desired_boundary:bsBound,concern:bsConcern})});const d=await r.json();setBsResult(d);}catch(e){setBsResult({error:'Error'});}setBsLoading(false);}} style={{padding:'0.75rem 2rem',background:'#f97316',color:'#fff',border:'none',borderRadius:8,fontWeight:600,cursor:'pointer',marginBottom:'1.5rem'}}>{bsLoading?'Writing…':'Write My Scripts'}</button>
               {bsResult&&!bsResult.error&&<div>
@@ -12315,7 +12315,7 @@ function ForgeTab_moneymind() {
               <h2 style={{fontSize:'1.5rem',fontWeight:'bold',marginBottom:'1rem'}}>🧠 Money Mindset Coach</h2>
               <p style={{color:'#6b7280',marginBottom:'1.5rem'}}>Transform your limiting money beliefs</p>
               <div style={{display:'grid',gap:'1rem',marginBottom:'1.5rem'}}>
-                <input value={belief} onChange={e=>setBelief(e.target.value)} placeholder='Limiting belief (e.g. "I\'m bad with money", "Rich people are greedy")' style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white'}} />
+                <input value={belief} onChange={e=>setBelief(e.target.value)} placeholder={`Limiting belief (e.g. "I'm bad with money", "Rich people are greedy")' style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white`}}} />
                 <textarea value={story} onChange={e=>setStory(e.target.value)} placeholder="Your money story (how did you grow up around money?)" rows={3} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white',resize:'vertical'}} />
                 <textarea value={patterns} onChange={e=>setPatterns(e.target.value)} placeholder="Current patterns (e.g. overspend, avoid looking at accounts, never invest)" rows={2} style={{padding:'0.75rem',borderRadius:'0.5rem',border:'1px solid #d1d5db',background:'#1f2937',color:'white',resize:'vertical'}} />
               </div>
@@ -26577,16 +26577,16 @@ export default function ForgeApp() {
                 const LLM_PROVIDERS = [
                   { key:'anthropic',    icon:'🟣', label:'Anthropic (Claude)',    color:'#c96442', placeholder:'sk-ant-api03-...',     signup:'https://console.anthropic.com/settings/keys',    models:['claude-opus-4-5','claude-sonnet-4-5','claude-haiku-4-5'],   hint:'Powers all Claude models. Required for Forge defaults.' },
                   { key:'openai',       icon:'🟢', label:'OpenAI',                color:'#10a37f', placeholder:'sk-proj-...',           signup:'https://platform.openai.com/api-keys',            models:['gpt-4o','gpt-4o-mini','o1','o3-mini'],                       hint:'GPT-4o, o3, vision, DALL·E image generation.' },
-                  { key:'gemini',       icon:'🔵', label:'Google Gemini',         color:'#4285f4', placeholder:'AIza...',               signup:'https://aistudio.google.com/app/apikey',          models:['gemini-2.0-flash','gemini-2.5-pro','gemini-1.5-pro'],        hint:'Google\'s fastest and most capable multimodal models.' },
+                  { key:'gemini',       icon:'🔵', label:'Google Gemini',         color:'#4285f4', placeholder:'AIza...',               signup:'https://aistudio.google.com/app/apikey',          models:['gemini-2.0-flash','gemini-2.5-pro','gemini-1.5-pro'],        hint:'Google's fastest and most capable multimodal models.' },
                   { key:'groq',         icon:'⚡', label:'Groq',                  color:'#f04444', placeholder:'gsk_...',              signup:'https://console.groq.com/keys',                   models:['llama-3.3-70b-versatile','mixtral-8x7b-32768','gemma2-9b'], hint:'Ultra-fast inference. Best for low-latency use cases.' },
                   { key:'mistral',      icon:'🌊', label:'Mistral AI',            color:'#ff7000', placeholder:'...',                   signup:'https://console.mistral.ai/api-keys/',            models:['mistral-large-latest','mistral-small-latest','codestral'],  hint:'European open-weight models. Strong coding and reasoning.' },
                   { key:'openrouter',   icon:'🔀', label:'OpenRouter',            color:'#6366f1', placeholder:'sk-or-v1-...',          signup:'https://openrouter.ai/keys',                      models:['400+ models via single key'],                               hint:'Access 400+ models from one key. Unified billing.' },
                   { key:'together',     icon:'🤝', label:'Together AI',           color:'#22c55e', placeholder:'...',                   signup:'https://api.together.xyz/signin',                 models:['Llama 3.3 70B','Qwen 2.5 72B','DeepSeek R1'],               hint:'Open-source model hosting at scale. Low cost.' },
                   { key:'perplexity',   icon:'🔮', label:'Perplexity',            color:'#8b5cf6', placeholder:'pplx-...',              signup:'https://www.perplexity.ai/settings/api',          models:['sonar-pro','sonar','sonar-reasoning'],                       hint:'Real-time web search + AI synthesis. Best for research.' },
                   { key:'cohere',       icon:'🌀', label:'Cohere',                color:'#39d353', placeholder:'...',                   signup:'https://dashboard.cohere.com/api-keys',           models:['command-r-plus','command-r','command-nightly'],              hint:'Enterprise RAG, embeddings, and rerank specialists.' },
-                  { key:'hermes',       icon:'🏛', label:'Hermes (NousResearch)', color:'#f59e0b', placeholder:'sk-...',               signup:'https://openrouter.ai/keys',                      models:['Hermes 3 70B','Hermes 3 8B','Hermes 2 Pro'],                 hint:'Nous Research\'s fine-tuned Hermes models via OpenRouter. Add your OpenRouter key to access.' },
+                  { key:'hermes',       icon:'🏛', label:'Hermes (NousResearch)', color:'#f59e0b', placeholder:'sk-...',               signup:'https://openrouter.ai/keys',                      models:['Hermes 3 70B','Hermes 3 8B','Hermes 2 Pro'],                 hint:'Nous Research's fine-tuned Hermes models via OpenRouter. Add your OpenRouter key to access.' },
                   { key:'deepseek',     icon:'🐋', label:'DeepSeek',             color:'#06b6d4', placeholder:'sk-...',               signup:'https://platform.deepseek.com/api_keys',          models:['deepseek-chat','deepseek-reasoner'],                         hint:'Top-tier reasoning at fraction of cost. Popular for coding.' },
-                  { key:'xai',          icon:'𝕏',  label:'xAI (Grok)',           color:'#fff',    placeholder:'xai-...',              signup:'https://console.x.ai/',                           models:['grok-4','grok-3','grok-3-mini'],                             hint:'Elon Musk\'s Grok — real-time X/Twitter data access.' },
+                  { key:'xai',          icon:'𝕏',  label:'xAI (Grok)',           color:'#fff',    placeholder:'xai-...',              signup:'https://console.x.ai/',                           models:['grok-4','grok-3','grok-3-mini'],                             hint:'Elon Musk's Grok — real-time X/Twitter data access.' },
                 ];
                 return (
                 <div>
@@ -29843,7 +29843,7 @@ export default function ForgeApp() {
                   <input key={k} value={(form as any)[k]} onChange={(e: any) => setForm((f: any) => ({...f,[k]:e.target.value}))} placeholder={ph} style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13 }} />
                 ))}
               </div>
-              {[['interests','Interests (hobbies, passions, quirks)'],['personality','Personality in 3 words'],['looking_for','What you\'re looking for']].map(([k,ph]) => (
+              {[['interests','Interests (hobbies, passions, quirks)'],['personality','Personality in 3 words'],['looking_for','What you're looking for']].map(([k,ph]) => (
                 <input key={k} value={(form as any)[k]} onChange={(e: any) => setForm((f: any) => ({...f,[k]:e.target.value}))} placeholder={ph} style={{ width: '100%', background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13, marginBottom: '0.75rem', boxSizing: 'border-box' as const }} />
               ))}
               <button onClick={generate} disabled={loading || !form.interests} style={{ background: loading ? '#374151' : '#ec4899', color: '#fff', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{loading ? 'Writing...' : '💘 Generate Bios'}</button>
@@ -29935,7 +29935,7 @@ export default function ForgeApp() {
             <div style={{ padding: '2rem', maxWidth: 700, margin: '0 auto' }}>
               <h2 style={{ color: '#ec4899', marginBottom: '0.5rem' }}>💑 Relationship Check-In</h2>
               <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>Honest reflection on your relationship health.</p>
-              {[['relationship_length','How long have you been together?'],['what_is_working','What\'s working well?'],['recent_challenge','Recent challenge you\'re facing'],['love_languages','Your love languages (if known)'],['last_quality_time','When did you last have quality time?']].map(([k,ph]) => (
+              {[['relationship_length','How long have you been together?'],['what_is_working','What's working well?'],['recent_challenge','Recent challenge you're facing'],['love_languages','Your love languages (if known)'],['last_quality_time','When did you last have quality time?']].map(([k,ph]) => (
                 <input key={k} value={(form as any)[k]} onChange={(e: any) => setForm((f: any) => ({...f,[k]:e.target.value}))} placeholder={ph} style={{ width: '100%', background: '#1f2937', border: '1px solid #374151', borderRadius: 8, color: '#f9fafb', padding: '0.75rem', fontSize: 13, marginBottom: '0.75rem', boxSizing: 'border-box' as const }} />
               ))}
               <button onClick={checkin} disabled={loading || !form.relationship_length} style={{ background: loading ? '#374151' : '#ec4899', color: '#fff', border: 'none', borderRadius: 8, padding: '0.75rem 2rem', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{loading ? 'Reflecting...' : '💑 Run Check-In'}</button>
