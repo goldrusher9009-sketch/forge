@@ -1493,6 +1493,164 @@ function ForgeTab_slack() {
   );
 }
 
+function ForgeTab_jira() {
+  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  const [status, setStatus] = React.useState<any>(null);
+  const [domain, setDomain] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [apiToken, setApiToken] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [projects, setProjects] = React.useState<any[]>([]);
+  const [issues, setIssues] = React.useState<any[]>([]);
+  const [selProject, setSelProject] = React.useState('');
+  const [newSummary, setNewSummary] = React.useState('');
+  const [newDesc, setNewDesc] = React.useState('');
+  const [newType, setNewType] = React.useState('Task');
+  const [tab, setTab] = React.useState<'issues'|'create'>('issues');
+
+  React.useEffect(() => {
+    fetch(`${API}/api/integrations/jira/status`, {headers:{Authorization:`Bearer ${tok}`}})
+      .then(r=>r.json()).then(d=>{ setStatus(d); if(d.connected) loadProjects(); });
+  }, []);
+
+  async function loadProjects() {
+    const r = await fetch(`${API}/api/integrations/jira/projects`, {headers:{Authorization:`Bearer ${tok}`}});
+    const d = await r.json();
+    if(d.projects?.length) { setProjects(d.projects); setSelProject(d.projects[0].key); loadIssues(d.projects[0].key); }
+  }
+
+  async function loadIssues(projectKey: string) {
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/jira/issues?projectKey=${projectKey}`, {headers:{Authorization:`Bearer ${tok}`}});
+    const d = await r.json();
+    setIssues(d.issues||[]);
+    setLoading(false);
+  }
+
+  async function connect() {
+    if(!domain.trim()||!email.trim()||!apiToken.trim()) return;
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/jira/connect`, {method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`}, body:JSON.stringify({domain,email,apiToken})});
+    const d = await r.json();
+    setLoading(false);
+    if(d.ok) { setStatus({connected:true,...d}); loadProjects(); }
+    else alert(d.error||'Connection failed');
+  }
+
+  async function createIssue() {
+    if(!newSummary.trim()||!selProject) return;
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/jira/issue`, {method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`}, body:JSON.stringify({projectKey:selProject,summary:newSummary,description:newDesc,issueType:newType})});
+    const d = await r.json();
+    setLoading(false);
+    if(d.ok) { setNewSummary(''); setNewDesc(''); loadIssues(selProject); setTab('issues'); alert(`Created: ${d.key}`); }
+    else alert(d.error||'Failed');
+  }
+
+  const priColor: Record<string,string> = {'Highest':'#ef4444','High':'#f97316','Medium':'#eab308','Low':'#22c55e','Lowest':'#94a3b8'};
+
+  const s: Record<string,React.CSSProperties> = {
+    wrap:{padding:24,maxWidth:1000,margin:'0 auto'},
+    card:{background:'#1e1e2e',borderRadius:12,padding:20,marginBottom:16,border:'1px solid #2d2d3d'},
+    input:{background:'#0d0d14',border:'1px solid #3d3d5c',borderRadius:8,padding:'10px 14px',color:'#e2e8f0',width:'100%',fontSize:14,boxSizing:'border-box' as const},
+    btn:{padding:'10px 20px',borderRadius:8,border:'none',cursor:'pointer',fontWeight:600,fontSize:14},
+    tabs:{display:'flex',gap:8,marginBottom:20},
+    tab:{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:13,fontWeight:600},
+    issueRow:{background:'#12121e',borderRadius:8,padding:'10px 14px',marginBottom:6,border:'1px solid #2d2d3d',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12},
+  };
+
+  if(!status) return <div style={{padding:40,color:'#94a3b8',textAlign:'center'}}>Loading Jira status…</div>;
+
+  if(!status.connected) return (
+    <div style={s.wrap}>
+      <div style={s.card}>
+        <h2 style={{color:'#f1f5f9',marginBottom:8}}>🔷 Connect Jira</h2>
+        <p style={{color:'#94a3b8',fontSize:14,marginBottom:16}}>Connect your Jira Cloud workspace to browse projects, view issues, and create tickets.</p>
+        <ol style={{color:'#94a3b8',fontSize:13,marginBottom:20,lineHeight:'1.8'}}>
+          <li>Go to <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" style={{color:'#818cf8'}}>id.atlassian.com → API tokens</a> → Create token</li>
+          <li>Enter your Jira domain (e.g. <code style={{background:'#2d2d3d',padding:'1px 4px',borderRadius:3}}>mycompany.atlassian.net</code>)</li>
+        </ol>
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          <input style={s.input} placeholder="yourcompany.atlassian.net" value={domain} onChange={e=>setDomain(e.target.value)} />
+          <input style={s.input} placeholder="your@email.com" value={email} onChange={e=>setEmail(e.target.value)} />
+          <div style={{display:'flex',gap:10}}>
+            <input style={s.input} placeholder="API token" type="password" value={apiToken} onChange={e=>setApiToken(e.target.value)} />
+            <button style={{...s.btn,background:'#6366f1',color:'#fff',whiteSpace:'nowrap'}} onClick={connect} disabled={loading}>{loading?'Connecting…':'Connect Jira'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={s.wrap}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <div><span style={{color:'#a78bfa',fontWeight:700,fontSize:18}}>🔷 Jira</span><span style={{color:'#22c55e',fontSize:12,marginLeft:10}}>● {status.display_name||'Connected'} @ {status.domain}</span></div>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <select style={{...s.input,width:'auto',padding:'6px 10px'}} value={selProject} onChange={e=>{setSelProject(e.target.value);loadIssues(e.target.value);}}>
+            {projects.map(p=><option key={p.key} value={p.key}>{p.name}</option>)}
+          </select>
+          <button style={{...s.btn,background:'#374151',color:'#9ca3af',fontSize:12}} onClick={()=>{fetch(`${API}/api/integrations/jira/disconnect`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}});setStatus({connected:false});}}>Disconnect</button>
+        </div>
+      </div>
+
+      <div style={s.tabs}>
+        {(['issues','create'] as const).map(t=>(
+          <button key={t} style={{...s.tab,background:tab===t?'#6366f1':'#1e1e2e',color:tab===t?'#fff':'#94a3b8',border:'1px solid '+(tab===t?'#6366f1':'#2d2d3d')}} onClick={()=>setTab(t)}>{t==='issues'?'🎯 Issues':'✏️ Create Issue'}</button>
+        ))}
+      </div>
+
+      {tab==='issues' && (
+        <div style={s.card}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <h3 style={{color:'#f1f5f9',margin:0}}>Recent Issues</h3>
+            <button style={{...s.btn,background:'#1e1e2e',color:'#6366f1',border:'1px solid #6366f1',fontSize:12}} onClick={()=>loadIssues(selProject)}>↻ Refresh</button>
+          </div>
+          {loading && <p style={{color:'#64748b'}}>Loading…</p>}
+          {issues.map(iss=>(
+            <div key={iss.key} style={s.issueRow}>
+              <div style={{flex:1}}>
+                <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:4}}>
+                  <span style={{color:'#6366f1',fontSize:12,fontWeight:700}}>{iss.key}</span>
+                  <span style={{background:'#1e3a5f',color:'#93c5fd',borderRadius:4,padding:'1px 6px',fontSize:11}}>{iss.status}</span>
+                  <span style={{color:priColor[iss.priority]||'#94a3b8',fontSize:11}}>{iss.priority}</span>
+                  <span style={{color:'#64748b',fontSize:11}}>{iss.type}</span>
+                </div>
+                <div style={{color:'#e2e8f0',fontSize:14}}>{iss.summary}</div>
+                {iss.assignee && <div style={{color:'#64748b',fontSize:12,marginTop:4}}>👤 {iss.assignee}</div>}
+              </div>
+              <a href={iss.url} target="_blank" style={{color:'#6366f1',fontSize:12,whiteSpace:'nowrap'}}>Open ↗</a>
+            </div>
+          ))}
+          {issues.length===0 && !loading && <p style={{color:'#64748b',fontSize:13}}>No issues found for this project.</p>}
+        </div>
+      )}
+
+      {tab==='create' && (
+        <div style={s.card}>
+          <h3 style={{color:'#f1f5f9',marginBottom:16}}>Create Issue</h3>
+          <div style={{marginBottom:12}}>
+            <label style={{color:'#94a3b8',fontSize:13}}>Summary *</label>
+            <input style={{...s.input,marginTop:6}} placeholder="Issue summary" value={newSummary} onChange={e=>setNewSummary(e.target.value)} />
+          </div>
+          <div style={{marginBottom:12}}>
+            <label style={{color:'#94a3b8',fontSize:13}}>Description</label>
+            <textarea style={{...s.input,marginTop:6,minHeight:100,resize:'vertical'} as React.CSSProperties} placeholder="Describe the issue…" value={newDesc} onChange={e=>setNewDesc(e.target.value)} />
+          </div>
+          <div style={{marginBottom:16}}>
+            <label style={{color:'#94a3b8',fontSize:13}}>Issue Type</label>
+            <select style={{...s.input,marginTop:6,width:'auto'}} value={newType} onChange={e=>setNewType(e.target.value)}>
+              <option>Task</option><option>Bug</option><option>Story</option><option>Epic</option>
+            </select>
+          </div>
+          <button style={{...s.btn,background:'#22c55e',color:'#fff',width:'100%'}} onClick={createIssue} disabled={loading||!newSummary.trim()}>{loading?'Creating…':'Create Issue'}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ForgeTab_hermes() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
@@ -23433,6 +23591,7 @@ export default function ForgeApp() {
             { id:'notion', icon:'🗒️', label:'Notion' },
             { id:'linear', icon:'📐', label:'Linear' },
             { id:'slack', icon:'💬', label:'Slack' },
+            { id:'jira', icon:'🔷', label:'Jira' },
             { id:'hermes', icon:'⚡', label:'Hermes Agent' },
             { id:'keyhealth', icon:'🩺', label:'Key Health' },
             { id:'notes', icon:'📝', label:'Notes' },
@@ -30135,6 +30294,7 @@ export default function ForgeApp() {
         {(mainTab as string) === 'notion' && <ForgeTab_notion />}
         {(mainTab as string) === 'linear' && <ForgeTab_linear />}
         {(mainTab as string) === 'slack' && <ForgeTab_slack />}
+        {(mainTab as string) === 'jira' && <ForgeTab_jira />}
         {mainTab === 'hermes' && <ForgeTab_hermes />}
 
         {/* -- ForgeAuto ----------------------------------------------- */}
