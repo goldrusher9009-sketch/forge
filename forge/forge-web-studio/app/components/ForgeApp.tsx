@@ -1493,6 +1493,358 @@ function ForgeTab_slack() {
   );
 }
 
+function ForgeTab_stripe_mgmt() {
+  const [connected, setConnected] = React.useState(false);
+  const [secretKey, setSecretKey] = React.useState('');
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'payments'|'customers'|'subscriptions'>('payments');
+  const [payments, setPayments] = React.useState<any[]>([]);
+  const [customers, setCustomers] = React.useState<any[]>([]);
+  const [subs, setSubs] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/stripe/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [p, c, s] = await Promise.all([
+      fetch('/api/integrations/stripe/payments', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/stripe/customers', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/stripe/subscriptions', { headers: h }).then(r => r.json()),
+    ]);
+    setPayments(p.data || []); setCustomers(c.data || []); setSubs(s.data || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/stripe/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ secretKey }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  const statusColor = (s: string) => ({ succeeded: '#18d26e', pending: '#ff9500', failed: '#f55', canceled: '#888' }[s] || '#888');
+  const subColor = (s: string) => ({ active: '#18d26e', trialing: '#4285f4', past_due: '#ff9500', canceled: '#888' }[s] || '#888');
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>💳 Stripe</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Stripe to view payments, customers, and subscriptions.</p>
+      <input value={secretKey} onChange={e => setSecretKey(e.target.value)} placeholder="Secret Key (sk_live_... or sk_test_...)" type="password" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#635bff', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Stripe'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>💳 Stripe</h2>
+        <span style={{ background: '#635bff22', color: '#635bff', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/stripe/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['payments','customers','subscriptions'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#635bff' : '#1a1a1a', color: tab === t ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t === 'payments' ? '💰 Payments' : t === 'customers' ? '👤 Customers' : '🔄 Subscriptions'}</button>)}
+      </div>
+      {tab === 'payments' && payments.map(p => <div key={p.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ color: statusColor(p.status), fontSize: 11 }}>●</span>
+        <span style={{ fontWeight: 700, color: '#ddd' }}>${((p.amount||0)/100).toFixed(2)} {p.currency?.toUpperCase()}</span>
+        <span style={{ color: '#aaa', fontSize: 11, flex: 1 }}>{p.description || p.id}</span>
+        <span style={{ color: '#555', fontSize: 11 }}>{p.created ? new Date(p.created*1000).toLocaleDateString() : ''}</span>
+      </div>)}
+      {tab === 'customers' && customers.map(c => <div key={c.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{c.name || c.email || c.id}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{c.email}</span>
+        <span style={{ color: '#635bff', fontSize: 11 }}>${((c.balance||0)/100).toFixed(2)}</span>
+      </div>)}
+      {tab === 'subscriptions' && subs.map(s => <div key={s.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ color: subColor(s.status), fontSize: 11 }}>●</span>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{s.id}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{s.status}</span>
+        <span style={{ color: '#555', fontSize: 11 }}>{s.current_period_end ? new Date(s.current_period_end*1000).toLocaleDateString() : ''}</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_airtable() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [connStatus, setConnStatus] = React.useState('');
+  const [bases, setBases] = React.useState<any[]>([]);
+  const [selectedBase, setSelectedBase] = React.useState<any>(null);
+  const [tables, setTables] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/airtable/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); fetch('/api/integrations/airtable/bases', { headers: h }).then(r => r.json()).then(d => setBases(d.bases || [])); }
+    });
+  }, []);
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/airtable/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); fetch('/api/integrations/airtable/bases', { headers: h }).then(r => r.json()).then(d => setBases(d.bases || [])); } else setConnStatus(d.error || 'Failed');
+  };
+
+  const selectBase = async (base: any) => {
+    setSelectedBase(base);
+    const d = await fetch(`/api/integrations/airtable/tables/${base.id}`, { headers: h }).then(r => r.json());
+    setTables(d.tables || []);
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🟡 Airtable</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Airtable to browse bases and tables.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="Personal Access Token" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#fcb400', color: '#111', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Airtable'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🟡 Airtable</h2>
+        <span style={{ background: '#fcb40022', color: '#fcb400', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected · {bases.length} bases</span>
+        <button onClick={() => { fetch('/api/integrations/airtable/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 16, height: 400 }}>
+        <div style={{ width: 220, overflowY: 'auto', borderRight: '1px solid #222', paddingRight: 12 }}>
+          <div style={{ fontWeight: 600, color: '#aaa', fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>Bases</div>
+          {bases.map(b => <div key={b.id} onClick={() => selectBase(b)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedBase?.id === b.id ? '#1a1a2e' : 'transparent', color: selectedBase?.id === b.id ? '#fcb400' : '#ddd', fontSize: 13, marginBottom: 2 }}>📊 {b.name}</div>)}
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          {!selectedBase && <p style={{ color: '#555', fontSize: 13 }}>Select a base to view its tables</p>}
+          {selectedBase && <>
+            <div style={{ fontWeight: 600, color: '#aaa', fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>{selectedBase.name} · Tables</div>
+            {tables.map(t => <div key={t.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+              <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>📋 {t.name}</span>
+              <span style={{ color: '#aaa', fontSize: 11 }}>{t.fields?.length} fields</span>
+            </div>)}
+          </>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_zendesk() {
+  const [connected, setConnected] = React.useState(false);
+  const [form, setForm] = React.useState({ subdomain: '', email: '', apiToken: '' });
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'tickets'|'users'>('tickets');
+  const [tickets, setTickets] = React.useState<any[]>([]);
+  const [users, setUsers] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/zendesk/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [t, u] = await Promise.all([
+      fetch('/api/integrations/zendesk/tickets', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/zendesk/users', { headers: h }).then(r => r.json()),
+    ]);
+    setTickets(t.tickets || []); setUsers(u.users || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/zendesk/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  const priorityColor = (p: string) => ({ urgent: '#f55', high: '#ff9500', normal: '#4285f4', low: '#888' }[p] || '#888');
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🎫 Zendesk</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Zendesk to manage support tickets.</p>
+      <input value={form.subdomain} onChange={e => setForm(p => ({ ...p, subdomain: e.target.value }))} placeholder="Subdomain (e.g. yourcompany)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />
+      <input value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="Agent Email" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />
+      <input value={form.apiToken} onChange={e => setForm(p => ({ ...p, apiToken: e.target.value }))} placeholder="API Token" type="password" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#03363d', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Zendesk'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🎫 Zendesk</h2>
+        <span style={{ background: '#03363d44', color: '#78e8a0', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/zendesk/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['tickets','users'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#03363d' : '#1a1a1a', color: tab === t ? '#78e8a0' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t === 'tickets' ? '🎫 Tickets' : '👥 Users'}</button>)}
+      </div>
+      {tab === 'tickets' && tickets.map(t => <div key={t.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <span style={{ color: priorityColor(t.priority), fontSize: 10, fontWeight: 700 }}>{t.priority?.toUpperCase()}</span>
+          <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{t.subject}</span>
+          <span style={{ color: '#aaa', fontSize: 11 }}>#{t.id}</span>
+        </div>
+        <div style={{ color: '#555', fontSize: 11, marginTop: 2 }}>{t.status} · {t.created_at ? new Date(t.created_at).toLocaleDateString() : ''}</div>
+      </div>)}
+      {tab === 'users' && users.map(u => <div key={u.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{u.name}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{u.email}</span>
+        <span style={{ color: u.role === 'admin' ? '#78e8a0' : '#555', fontSize: 11 }}>{u.role}</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_asana() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'tasks'|'projects'>('tasks');
+  const [tasks, setTasks] = React.useState<any[]>([]);
+  const [asanaProjects, setAsanaProjects] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/asana/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [t, p] = await Promise.all([
+      fetch('/api/integrations/asana/tasks', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/asana/projects', { headers: h }).then(r => r.json()),
+    ]);
+    setTasks(t.data || []); setAsanaProjects(p.data || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/asana/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🗂️ Asana</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Asana to view your tasks and projects.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="Personal Access Token" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#f06a6a', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Asana'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🗂️ Asana</h2>
+        <span style={{ background: '#f06a6a22', color: '#f06a6a', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/asana/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['tasks','projects'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#f06a6a' : '#1a1a1a', color: tab === t ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t === 'tasks' ? '✅ My Tasks' : '📁 Projects'}</button>)}
+      </div>
+      {tab === 'tasks' && tasks.map(t => <div key={t.gid} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ color: t.completed ? '#18d26e' : '#aaa', fontSize: 14 }}>{t.completed ? '✅' : '⬜'}</span>
+        <span style={{ fontWeight: 600, color: t.completed ? '#555' : '#ddd', flex: 1, textDecoration: t.completed ? 'line-through' : 'none' }}>{t.name}</span>
+        {t.due_on && <span style={{ color: '#f06a6a', fontSize: 11 }}>{t.due_on}</span>}
+      </div>)}
+      {tab === 'projects' && asanaProjects.map(p => <div key={p.gid} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ color: p.color ? `var(--color-${p.color})` : '#f06a6a', fontSize: 14 }}>📁</span>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{p.name}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{p.team?.name}</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_hubspot() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'contacts'|'deals'|'companies'>('contacts');
+  const [contacts, setContacts] = React.useState<any[]>([]);
+  const [deals, setDeals] = React.useState<any[]>([]);
+  const [companies, setCompanies] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/hubspot/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [c, d, co] = await Promise.all([
+      fetch('/api/integrations/hubspot/contacts', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/hubspot/deals', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/hubspot/companies', { headers: h }).then(r => r.json()),
+    ]);
+    setContacts(c.results || []); setDeals(d.results || []); setCompanies(co.results || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/hubspot/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🟠 HubSpot</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect HubSpot CRM to view contacts, deals, and companies.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="Private App Access Token" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#ff7a59', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect HubSpot'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🟠 HubSpot</h2>
+        <span style={{ background: '#ff7a5922', color: '#ff7a59', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/hubspot/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['contacts','deals','companies'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#ff7a59' : '#1a1a1a', color: tab === t ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t === 'contacts' ? '👤 Contacts' : t === 'deals' ? '💼 Deals' : '🏢 Companies'}</button>)}
+      </div>
+      {tab === 'contacts' && contacts.map(c => <div key={c.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{[c.properties?.firstname, c.properties?.lastname].filter(Boolean).join(' ') || c.id}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{c.properties?.email}</span>
+        <span style={{ color: '#555', fontSize: 11 }}>{c.properties?.company}</span>
+      </div>)}
+      {tab === 'deals' && deals.map(d => <div key={d.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{d.properties?.dealname}</span>
+        <span style={{ color: '#18d26e', fontWeight: 700, fontSize: 12 }}>{d.properties?.amount ? `$${Number(d.properties.amount).toLocaleString()}` : ''}</span>
+        <span style={{ color: '#ff7a59', fontSize: 11 }}>{d.properties?.dealstage}</span>
+      </div>)}
+      {tab === 'companies' && companies.map(c => <div key={c.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{c.properties?.name}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{c.properties?.domain}</span>
+        <span style={{ color: '#555', fontSize: 11 }}>{c.properties?.industry}</span>
+      </div>)}
+    </div>
+  );
+}
+
 function ForgeTab_pagerduty() {
   const [connected, setConnected] = React.useState(false);
   const [apiKey, setApiKey] = React.useState('');
@@ -26541,6 +26893,11 @@ export default function ForgeApp() {
             { id:'sendgrid', icon:'✉️', label:'SendGrid' },
             { id:'shopify', icon:'🛍️', label:'Shopify' },
             { id:'webflow', icon:'🌐', label:'Webflow' },
+            { id:'stripe_mgmt', icon:'💳', label:'Stripe' },
+            { id:'airtable', icon:'🟡', label:'Airtable' },
+            { id:'zendesk', icon:'🎫', label:'Zendesk' },
+            { id:'asana', icon:'🗂️', label:'Asana' },
+            { id:'hubspot', icon:'🟠', label:'HubSpot' },
             { id:'pagerduty', icon:'🚨', label:'PagerDuty' },
             { id:'sentry', icon:'🛡️', label:'Sentry' },
             { id:'cloudflare', icon:'☁️', label:'Cloudflare' },
@@ -33278,6 +33635,11 @@ export default function ForgeApp() {
         {(mainTab as string) === 'sendgrid' && <ForgeTab_sendgrid />}
         {(mainTab as string) === 'shopify' && <ForgeTab_shopify />}
         {(mainTab as string) === 'webflow' && <ForgeTab_webflow />}
+        {(mainTab as string) === 'stripe_mgmt' && <ForgeTab_stripe_mgmt />}
+        {(mainTab as string) === 'airtable' && <ForgeTab_airtable />}
+        {(mainTab as string) === 'zendesk' && <ForgeTab_zendesk />}
+        {(mainTab as string) === 'asana' && <ForgeTab_asana />}
+        {(mainTab as string) === 'hubspot' && <ForgeTab_hubspot />}
         {(mainTab as string) === 'pagerduty' && <ForgeTab_pagerduty />}
         {(mainTab as string) === 'sentry' && <ForgeTab_sentry />}
         {(mainTab as string) === 'cloudflare' && <ForgeTab_cloudflare />}
