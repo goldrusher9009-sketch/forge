@@ -1817,6 +1817,473 @@ function ForgeTab_stripe() {
   );
 }
 
+function ForgeTab_airtable() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const [bases, setBases] = React.useState<any[]>([]);
+  const [selectedBase, setSelectedBase] = React.useState('');
+  const [tables, setTables] = React.useState<any[]>([]);
+  const [selectedTable, setSelectedTable] = React.useState('');
+  const [records, setRecords] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/integrations/airtable/status', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+      .then(r => r.json()).then(d => { if (d.connected) { setConnected(true); loadBases(); } });
+  }, []);
+
+  const loadBases = async () => {
+    const r = await fetch('/api/integrations/airtable/bases', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setBases(d.bases || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/airtable/connect', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json();
+    setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadBases(); } else setStatus(d.error || 'Failed');
+  };
+
+  const disconnect = async () => {
+    await fetch('/api/integrations/airtable/disconnect', { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    setConnected(false); setBases([]); setTables([]); setRecords([]);
+  };
+
+  const loadTables = async (baseId: string) => {
+    setSelectedBase(baseId); setTables([]); setRecords([]);
+    const r = await fetch(`/api/integrations/airtable/tables/${baseId}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setTables(d.tables || []);
+  };
+
+  const loadRecords = async (tableId: string) => {
+    setSelectedTable(tableId); setRecords([]);
+    const r = await fetch(`/api/integrations/airtable/records/${selectedBase}/${tableId}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setRecords(d.records || []);
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🗃️ Airtable</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect your Airtable workspace to browse bases, tables, and records.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="Personal Access Token (patXXX...)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#18d26e', color: '#000', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Airtable'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🗃️ Airtable</h2>
+        <span style={{ background: '#18d26e22', color: '#18d26e', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={disconnect} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 16 }}>
+        <div style={{ width: 220, flexShrink: 0 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Bases</div>
+          {bases.map(b => <div key={b.id} onClick={() => loadTables(b.id)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedBase === b.id ? '#18d26e22' : 'transparent', color: selectedBase === b.id ? '#18d26e' : '#ddd', marginBottom: 4 }}>{b.name}</div>)}
+        </div>
+        {tables.length > 0 && <div style={{ width: 180, flexShrink: 0 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Tables</div>
+          {tables.map(t => <div key={t.id} onClick={() => loadRecords(t.id)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedTable === t.id ? '#18d26e22' : 'transparent', color: selectedTable === t.id ? '#18d26e' : '#ddd', marginBottom: 4 }}>{t.name}</div>)}
+        </div>}
+        {records.length > 0 && <div style={{ flex: 1, overflowX: 'auto' }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Records ({records.length})</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead><tr>{Object.keys(records[0]?.fields || {}).slice(0, 6).map(k => <th key={k} style={{ padding: '6px 10px', background: '#1a1a1a', textAlign: 'left', color: '#aaa', fontWeight: 600, border: '1px solid #222' }}>{k}</th>)}</tr></thead>
+            <tbody>{records.map(r => <tr key={r.id}>{Object.values(r.fields || {}).slice(0, 6).map((v: any, i) => <td key={i} style={{ padding: '6px 10px', border: '1px solid #1a1a1a', color: '#ddd', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(v ?? '')}</td>)}</tr>)}</tbody>
+          </table>
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_hubspot() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'contacts'|'deals'|'companies'>('contacts');
+  const [data, setData] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/integrations/hubspot/status', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+      .then(r => r.json()).then(d => { if (d.connected) { setConnected(true); loadTab('contacts'); } });
+  }, []);
+
+  const loadTab = async (t: 'contacts'|'deals'|'companies') => {
+    setTab(t); setLoading(true);
+    const r = await fetch(`/api/integrations/hubspot/${t}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setData(d.results || []);
+    setLoading(false);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/hubspot/connect', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json();
+    setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadTab('contacts'); } else setStatus(d.error || 'Failed');
+  };
+
+  const disconnect = async () => {
+    await fetch('/api/integrations/hubspot/disconnect', { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    setConnected(false); setData([]);
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🧲 HubSpot</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect your HubSpot CRM to view contacts, deals, and companies.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="Private App Access Token" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#ff7a59', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect HubSpot'}</button>
+    </div>
+  );
+
+  const tabs = [{ id: 'contacts', label: '👤 Contacts' }, { id: 'deals', label: '💼 Deals' }, { id: 'companies', label: '🏢 Companies' }] as const;
+
+  const renderRow = (item: any) => {
+    const p = item.properties || {};
+    if (tab === 'contacts') return <>{p.firstname} {p.lastname} — {p.email || '—'}</>;
+    if (tab === 'deals') return <>{p.dealname} — ${Number(p.amount||0).toLocaleString()} · {p.dealstage}</>;
+    return <>{p.name} — {p.domain || '—'} · {p.industry || '—'}</>;
+  };
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🧲 HubSpot</h2>
+        <span style={{ background: '#ff7a5922', color: '#ff7a59', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={disconnect} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {tabs.map(t => <button key={t.id} onClick={() => loadTab(t.id)} style={{ padding: '6px 16px', borderRadius: 6, border: 'none', background: tab === t.id ? '#ff7a59' : '#1a1a1a', color: tab === t.id ? '#fff' : '#aaa', cursor: 'pointer', fontWeight: tab === t.id ? 700 : 400 }}>{t.label}</button>)}
+      </div>
+      {loading ? <div style={{ color: '#aaa' }}>Loading...</div> : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {data.map((item, i) => <div key={i} style={{ padding: '10px 14px', background: '#111', borderRadius: 8, color: '#ddd', fontSize: 14 }}>{renderRow(item)}</div>)}
+          {data.length === 0 && <div style={{ color: '#666' }}>No {tab} found.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForgeTab_asana() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const [workspaces, setWorkspaces] = React.useState<any[]>([]);
+  const [selectedWs, setSelectedWs] = React.useState('');
+  const [projects, setProjects] = React.useState<any[]>([]);
+  const [selectedProj, setSelectedProj] = React.useState('');
+  const [tasks, setTasks] = React.useState<any[]>([]);
+  const [newTask, setNewTask] = React.useState({ name: '', notes: '', due_on: '' });
+  const [creating, setCreating] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/integrations/asana/status', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+      .then(r => r.json()).then(d => { if (d.connected) { setConnected(true); loadWorkspaces(); } });
+  }, []);
+
+  const loadWorkspaces = async () => {
+    const r = await fetch('/api/integrations/asana/workspaces', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setWorkspaces(d.data || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/asana/connect', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json();
+    setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadWorkspaces(); } else setStatus(d.error || 'Failed');
+  };
+
+  const disconnect = async () => {
+    await fetch('/api/integrations/asana/disconnect', { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    setConnected(false); setWorkspaces([]); setProjects([]); setTasks([]);
+  };
+
+  const loadProjects = async (wsId: string) => {
+    setSelectedWs(wsId); setProjects([]); setTasks([]);
+    const r = await fetch(`/api/integrations/asana/projects/${wsId}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setProjects(d.data || []);
+  };
+
+  const loadTasks = async (projId: string) => {
+    setSelectedProj(projId); setTasks([]);
+    const r = await fetch(`/api/integrations/asana/tasks/${projId}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setTasks(d.data || []);
+  };
+
+  const createTask = async () => {
+    if (!newTask.name || !selectedProj) return;
+    setCreating(true);
+    await fetch('/api/integrations/asana/tasks', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ ...newTask, projectId: selectedProj }) });
+    setCreating(false);
+    setNewTask({ name: '', notes: '', due_on: '' });
+    loadTasks(selectedProj);
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>📋 Asana</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Asana to browse workspaces, projects, and tasks.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="Personal Access Token" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#f06a6a', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Asana'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>📋 Asana</h2>
+        <span style={{ background: '#f06a6a22', color: '#f06a6a', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={disconnect} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 16 }}>
+        <div style={{ width: 180, flexShrink: 0 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Workspaces</div>
+          {workspaces.map(w => <div key={w.gid} onClick={() => loadProjects(w.gid)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedWs === w.gid ? '#f06a6a22' : 'transparent', color: selectedWs === w.gid ? '#f06a6a' : '#ddd', marginBottom: 4, fontSize: 13 }}>{w.name}</div>)}
+        </div>
+        {projects.length > 0 && <div style={{ width: 180, flexShrink: 0 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Projects</div>
+          {projects.map(p => <div key={p.gid} onClick={() => loadTasks(p.gid)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedProj === p.gid ? '#f06a6a22' : 'transparent', color: selectedProj === p.gid ? '#f06a6a' : '#ddd', marginBottom: 4, fontSize: 13 }}>{p.name}</div>)}
+        </div>}
+        {selectedProj && <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Tasks</div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <input value={newTask.name} onChange={e => setNewTask(p => ({ ...p, name: e.target.value }))} placeholder="New task name" style={{ flex: 1, padding: '7px 10px', borderRadius: 6, border: '1px solid #333', background: '#111', color: '#fff', fontSize: 13 }} />
+            <input type="date" value={newTask.due_on} onChange={e => setNewTask(p => ({ ...p, due_on: e.target.value }))} style={{ width: 130, padding: '7px 10px', borderRadius: 6, border: '1px solid #333', background: '#111', color: '#fff', fontSize: 13 }} />
+            <button onClick={createTask} disabled={creating} style={{ background: '#f06a6a', color: '#fff', border: 'none', borderRadius: 6, padding: '7px 14px', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>Add</button>
+          </div>
+          {tasks.map(t => <div key={t.gid} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13 }}>
+            <span style={{ color: t.completed ? '#18d26e' : '#555' }}>{t.completed ? '✅' : '○'}</span>
+            <span style={{ color: t.completed ? '#666' : '#ddd', textDecoration: t.completed ? 'line-through' : 'none', flex: 1 }}>{t.name}</span>
+            {t.due_on && <span style={{ color: '#888', fontSize: 11 }}>{t.due_on}</span>}
+          </div>)}
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_discord() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const [guilds, setGuilds] = React.useState<any[]>([]);
+  const [selectedGuild, setSelectedGuild] = React.useState('');
+  const [channels, setChannels] = React.useState<any[]>([]);
+  const [selectedChannel, setSelectedChannel] = React.useState('');
+  const [messages, setMessages] = React.useState<any[]>([]);
+  const [sendMsg, setSendMsg] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/integrations/discord/status', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+      .then(r => r.json()).then(d => { if (d.connected) { setConnected(true); loadGuilds(); } });
+  }, []);
+
+  const loadGuilds = async () => {
+    const r = await fetch('/api/integrations/discord/guilds', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setGuilds(Array.isArray(d) ? d : []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/discord/connect', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json();
+    setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadGuilds(); } else setStatus(d.error || 'Failed');
+  };
+
+  const disconnect = async () => {
+    await fetch('/api/integrations/discord/disconnect', { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    setConnected(false); setGuilds([]); setChannels([]); setMessages([]);
+  };
+
+  const loadChannels = async (guildId: string) => {
+    setSelectedGuild(guildId); setChannels([]); setMessages([]);
+    const r = await fetch(`/api/integrations/discord/channels/${guildId}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setChannels((Array.isArray(d) ? d : []).filter((c: any) => c.type === 0));
+  };
+
+  const loadMessages = async (channelId: string) => {
+    setSelectedChannel(channelId);
+    const r = await fetch(`/api/integrations/discord/messages/${channelId}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setMessages(Array.isArray(d) ? d : []);
+  };
+
+  const send = async () => {
+    if (!sendMsg || !selectedChannel) return;
+    await fetch('/api/integrations/discord/send', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ channelId: selectedChannel, content: sendMsg }) });
+    setSendMsg('');
+    loadMessages(selectedChannel);
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🎮 Discord</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect a Discord Bot Token to browse servers, channels, and messages.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="Bot Token (MTxxxxxx...)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#5865f2', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Discord'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🎮 Discord</h2>
+        <span style={{ background: '#5865f222', color: '#5865f2', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={disconnect} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 0, height: 'calc(100vh - 180px)', overflow: 'hidden' }}>
+        <div style={{ width: 160, borderRight: '1px solid #222', paddingRight: 12, overflowY: 'auto' }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 11, textTransform: 'uppercase' }}>Servers</div>
+          {guilds.map(g => <div key={g.id} onClick={() => loadChannels(g.id)} style={{ padding: '6px 8px', borderRadius: 6, cursor: 'pointer', background: selectedGuild === g.id ? '#5865f222' : 'transparent', color: selectedGuild === g.id ? '#5865f2' : '#ddd', marginBottom: 2, fontSize: 12 }}>{g.name}</div>)}
+        </div>
+        {channels.length > 0 && <div style={{ width: 150, borderRight: '1px solid #222', padding: '0 12px', overflowY: 'auto' }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 11, textTransform: 'uppercase' }}>Channels</div>
+          {channels.map(c => <div key={c.id} onClick={() => loadMessages(c.id)} style={{ padding: '6px 8px', borderRadius: 6, cursor: 'pointer', background: selectedChannel === c.id ? '#5865f222' : 'transparent', color: selectedChannel === c.id ? '#5865f2' : '#ddd', marginBottom: 2, fontSize: 12 }}># {c.name}</div>)}
+        </div>}
+        {selectedChannel && <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingLeft: 16 }}>
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column-reverse', gap: 6 }}>
+            {messages.map(m => <div key={m.id} style={{ padding: '6px 10px', background: '#111', borderRadius: 6 }}>
+              <span style={{ fontWeight: 600, color: '#5865f2', fontSize: 12 }}>{m.author?.username}</span>
+              <span style={{ color: '#888', fontSize: 11, marginLeft: 8 }}>{new Date(m.timestamp).toLocaleTimeString()}</span>
+              <div style={{ color: '#ddd', fontSize: 13, marginTop: 2 }}>{m.content}</div>
+            </div>)}
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <input value={sendMsg} onChange={e => setSendMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Message..." style={{ flex: 1, padding: '8px 12px', borderRadius: 6, border: '1px solid #333', background: '#111', color: '#fff', fontSize: 13 }} />
+            <button onClick={send} style={{ background: '#5865f2', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', cursor: 'pointer', fontWeight: 600 }}>Send</button>
+          </div>
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_trello() {
+  const [connected, setConnected] = React.useState(false);
+  const [apiKey, setApiKey] = React.useState('');
+  const [trelloToken, setTrelloToken] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const [boards, setBoards] = React.useState<any[]>([]);
+  const [selectedBoard, setSelectedBoard] = React.useState('');
+  const [lists, setLists] = React.useState<any[]>([]);
+  const [selectedList, setSelectedList] = React.useState('');
+  const [cards, setCards] = React.useState<any[]>([]);
+  const [newCard, setNewCard] = React.useState({ name: '', desc: '' });
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/integrations/trello/status', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+      .then(r => r.json()).then(d => { if (d.connected) { setConnected(true); loadBoards(); } });
+  }, []);
+
+  const loadBoards = async () => {
+    const r = await fetch('/api/integrations/trello/boards', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setBoards(Array.isArray(d) ? d.filter((b: any) => !b.closed) : []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/trello/connect', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ apiKey, token: trelloToken }) });
+    const d = await r.json();
+    setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadBoards(); } else setStatus(d.error || 'Failed');
+  };
+
+  const disconnect = async () => {
+    await fetch('/api/integrations/trello/disconnect', { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    setConnected(false); setBoards([]); setLists([]); setCards([]);
+  };
+
+  const loadLists = async (boardId: string) => {
+    setSelectedBoard(boardId); setLists([]); setCards([]);
+    const r = await fetch(`/api/integrations/trello/lists/${boardId}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setLists(Array.isArray(d) ? d : []);
+  };
+
+  const loadCards = async (listId: string) => {
+    setSelectedList(listId);
+    const r = await fetch(`/api/integrations/trello/cards/${listId}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setCards(Array.isArray(d) ? d : []);
+  };
+
+  const addCard = async () => {
+    if (!newCard.name || !selectedList) return;
+    await fetch('/api/integrations/trello/cards', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ ...newCard, idList: selectedList }) });
+    setNewCard({ name: '', desc: '' });
+    loadCards(selectedList);
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>📌 Trello</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Trello to browse boards, lists, and cards.</p>
+      <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="API Key (from trello.com/app-key)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />
+      <input value={trelloToken} onChange={e => setTrelloToken(e.target.value)} placeholder="Token" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Trello'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>📌 Trello</h2>
+        <span style={{ background: '#0052cc22', color: '#0088ff', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={disconnect} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 16 }}>
+        <div style={{ width: 200, flexShrink: 0 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Boards</div>
+          {boards.map(b => <div key={b.id} onClick={() => loadLists(b.id)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedBoard === b.id ? '#0052cc22' : 'transparent', color: selectedBoard === b.id ? '#0088ff' : '#ddd', marginBottom: 4, fontSize: 13 }}>{b.name}</div>)}
+        </div>
+        {lists.length > 0 && <div style={{ width: 160, flexShrink: 0 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Lists</div>
+          {lists.map(l => <div key={l.id} onClick={() => loadCards(l.id)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedList === l.id ? '#0052cc22' : 'transparent', color: selectedList === l.id ? '#0088ff' : '#ddd', marginBottom: 4, fontSize: 13 }}>{l.name}</div>)}
+        </div>}
+        {selectedList && <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Cards</div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <input value={newCard.name} onChange={e => setNewCard(p => ({ ...p, name: e.target.value }))} placeholder="New card name" style={{ flex: 1, padding: '7px 10px', borderRadius: 6, border: '1px solid #333', background: '#111', color: '#fff', fontSize: 13 }} />
+            <button onClick={addCard} style={{ background: '#0052cc', color: '#fff', border: 'none', borderRadius: 6, padding: '7px 14px', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>Add</button>
+          </div>
+          {cards.map(c => <div key={c.id} style={{ padding: '10px 12px', background: '#111', borderRadius: 6, marginBottom: 6 }}>
+            <div style={{ fontWeight: 600, color: '#ddd', fontSize: 13 }}>{c.name}</div>
+            {c.due && <div style={{ color: '#888', fontSize: 11, marginTop: 2 }}>Due: {new Date(c.due).toLocaleDateString()} {c.dueComplete ? '✅' : ''}</div>}
+            {c.desc && <div style={{ color: '#666', fontSize: 12, marginTop: 4 }}>{c.desc.slice(0, 80)}</div>}
+          </div>)}
+        </div>}
+      </div>
+    </div>
+  );
+}
+
 function ForgeTab_hermes() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
@@ -23759,6 +24226,11 @@ export default function ForgeApp() {
             { id:'slack', icon:'💬', label:'Slack' },
             { id:'jira', icon:'🔷', label:'Jira' },
             { id:'stripe', icon:'💳', label:'Stripe' },
+            { id:'airtable', icon:'🗃️', label:'Airtable' },
+            { id:'hubspot', icon:'🧲', label:'HubSpot' },
+            { id:'asana', icon:'📋', label:'Asana' },
+            { id:'discord', icon:'🎮', label:'Discord' },
+            { id:'trello', icon:'📌', label:'Trello' },
             { id:'hermes', icon:'⚡', label:'Hermes Agent' },
             { id:'keyhealth', icon:'🩺', label:'Key Health' },
             { id:'notes', icon:'📝', label:'Notes' },
@@ -30463,6 +30935,11 @@ export default function ForgeApp() {
         {(mainTab as string) === 'slack' && <ForgeTab_slack />}
         {(mainTab as string) === 'jira' && <ForgeTab_jira />}
         {(mainTab as string) === 'stripe' && <ForgeTab_stripe />}
+        {(mainTab as string) === 'airtable' && <ForgeTab_airtable />}
+        {(mainTab as string) === 'hubspot' && <ForgeTab_hubspot />}
+        {(mainTab as string) === 'asana' && <ForgeTab_asana />}
+        {(mainTab as string) === 'discord' && <ForgeTab_discord />}
+        {(mainTab as string) === 'trello' && <ForgeTab_trello />}
         {mainTab === 'hermes' && <ForgeTab_hermes />}
 
         {/* -- ForgeAuto ----------------------------------------------- */}
