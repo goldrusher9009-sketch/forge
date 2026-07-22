@@ -1817,6 +1817,405 @@ function ForgeTab_stripe() {
   );
 }
 
+function ForgeTab_gsheets() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const [files, setFiles] = React.useState<any[]>([]);
+  const [selectedFile, setSelectedFile] = React.useState<any>(null);
+  const [sheets, setSheets] = React.useState<any[]>([]);
+  const [selectedSheet, setSelectedSheet] = React.useState('');
+  const [rows, setRows] = React.useState<any[][]>([]);
+  const [newRow, setNewRow] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/integrations/gsheets/status', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+      .then(r => r.json()).then(d => { if (d.connected) { setConnected(true); loadFiles(); } });
+  }, []);
+
+  const loadFiles = async () => {
+    const r = await fetch('/api/integrations/gsheets/files', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setFiles(d.files || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/gsheets/connect', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json();
+    setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadFiles(); } else setStatus(d.error || 'Failed');
+  };
+
+  const disconnect = async () => {
+    await fetch('/api/integrations/gsheets/disconnect', { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    setConnected(false); setFiles([]); setSheets([]); setRows([]);
+  };
+
+  const loadSheets = async (file: any) => {
+    setSelectedFile(file); setSheets([]); setRows([]);
+    const r = await fetch(`/api/integrations/gsheets/sheets/${file.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setSheets((d.sheets || []).map((s: any) => s.properties));
+  };
+
+  const loadData = async (sheetName: string) => {
+    setSelectedSheet(sheetName);
+    const r = await fetch(`/api/integrations/gsheets/data/${selectedFile.id}/${encodeURIComponent(sheetName + '!A1:Z100')}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setRows(d.values || []);
+  };
+
+  const appendRow = async () => {
+    if (!newRow || !selectedFile || !selectedSheet) return;
+    const values = [newRow.split(',').map(v => v.trim())];
+    await fetch(`/api/integrations/gsheets/append/${selectedFile.id}/${encodeURIComponent(selectedSheet + '!A1')}`, { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ values }) });
+    setNewRow('');
+    loadData(selectedSheet);
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 520 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>📊 Google Sheets</h2>
+      <p style={{ color: '#aaa', marginBottom: 16 }}>Paste a Google OAuth access token. Get one at <a href="https://developers.google.com/oauthplayground" target="_blank" style={{ color: '#4285f4' }}>OAuth Playground</a> with scope <code style={{ background: '#222', padding: '1px 4px', borderRadius: 3, fontSize: 12 }}>https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly</code>.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="ya29.xxxxx (OAuth access token)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#4285f4', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Google Sheets'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>📊 Google Sheets</h2>
+        <span style={{ background: '#4285f422', color: '#4285f4', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={disconnect} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 16 }}>
+        <div style={{ width: 200, flexShrink: 0 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Spreadsheets</div>
+          {files.map(f => <div key={f.id} onClick={() => loadSheets(f)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedFile?.id === f.id ? '#4285f422' : 'transparent', color: selectedFile?.id === f.id ? '#4285f4' : '#ddd', marginBottom: 4, fontSize: 13 }}>{f.name}</div>)}
+        </div>
+        {sheets.length > 0 && <div style={{ width: 140, flexShrink: 0 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Sheets</div>
+          {sheets.map(s => <div key={s.sheetId} onClick={() => loadData(s.title)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedSheet === s.title ? '#4285f422' : 'transparent', color: selectedSheet === s.title ? '#4285f4' : '#ddd', marginBottom: 4, fontSize: 13 }}>{s.title}</div>)}
+        </div>}
+        {rows.length > 0 && <div style={{ flex: 1, overflowX: 'auto' }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+            <input value={newRow} onChange={e => setNewRow(e.target.value)} placeholder="Append row (comma-separated values)" style={{ flex: 1, padding: '7px 10px', borderRadius: 6, border: '1px solid #333', background: '#111', color: '#fff', fontSize: 13 }} />
+            <button onClick={appendRow} style={{ background: '#4285f4', color: '#fff', border: 'none', borderRadius: 6, padding: '7px 14px', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>Append</button>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+            <thead><tr>{(rows[0] || []).map((h, i) => <th key={i} style={{ padding: '6px 10px', background: '#1a1a1a', textAlign: 'left', color: '#aaa', fontWeight: 600, border: '1px solid #222', maxWidth: 150 }}>{h}</th>)}</tr></thead>
+            <tbody>{rows.slice(1).map((row, ri) => <tr key={ri}>{row.map((cell, ci) => <td key={ci} style={{ padding: '5px 10px', border: '1px solid #1a1a1a', color: '#ddd', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cell}</td>)}</tr>)}</tbody>
+          </table>
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_figma() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [teamId, setTeamId] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const [projects, setProjects] = React.useState<any[]>([]);
+  const [selectedProj, setSelectedProj] = React.useState('');
+  const [files, setFiles] = React.useState<any[]>([]);
+  const [selectedFile, setSelectedFile] = React.useState<any>(null);
+  const [fileData, setFileData] = React.useState<any>(null);
+  const [comments, setComments] = React.useState<any[]>([]);
+  const [view, setView] = React.useState<'structure'|'comments'>('structure');
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/integrations/figma/status', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+      .then(r => r.json()).then(d => { if (d.connected) setConnected(true); });
+  }, []);
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/figma/connect', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json();
+    setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); } else setStatus(d.error || 'Failed');
+  };
+
+  const disconnect = async () => {
+    await fetch('/api/integrations/figma/disconnect', { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    setConnected(false); setProjects([]); setFiles([]);
+  };
+
+  const loadProjects = async () => {
+    if (!teamId) return;
+    const r = await fetch(`/api/integrations/figma/projects/${teamId}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setProjects(d.projects || []);
+  };
+
+  const loadFiles = async (projId: string) => {
+    setSelectedProj(projId);
+    const r = await fetch(`/api/integrations/figma/files/${projId}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setFiles(d.files || []);
+  };
+
+  const loadFile = async (file: any) => {
+    setSelectedFile(file); setFileData(null); setComments([]);
+    const [fd, cd] = await Promise.all([
+      fetch(`/api/integrations/figma/file/${file.key}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } }).then(r => r.json()),
+      fetch(`/api/integrations/figma/comments/${file.key}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } }).then(r => r.json()),
+    ]);
+    setFileData(fd); setComments(cd.comments || []);
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🎨 Figma</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Figma with a Personal Access Token to browse projects and files.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="Personal Access Token" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#a259ff', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Figma'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🎨 Figma</h2>
+        <span style={{ background: '#a259ff22', color: '#a259ff', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={disconnect} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      {!projects.length && <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <input value={teamId} onChange={e => setTeamId(e.target.value)} placeholder="Team ID (from figma.com/files/team/XXXXXXX)" style={{ flex: 1, padding: '8px 12px', borderRadius: 6, border: '1px solid #333', background: '#111', color: '#fff', fontSize: 13 }} />
+        <button onClick={loadProjects} style={{ background: '#a259ff', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px', cursor: 'pointer', fontWeight: 600 }}>Load Projects</button>
+      </div>}
+      <div style={{ display: 'flex', gap: 16 }}>
+        {projects.length > 0 && <div style={{ width: 180, flexShrink: 0 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Projects</div>
+          {projects.map(p => <div key={p.id} onClick={() => loadFiles(p.id)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedProj === p.id ? '#a259ff22' : 'transparent', color: selectedProj === p.id ? '#a259ff' : '#ddd', marginBottom: 4, fontSize: 13 }}>{p.name}</div>)}
+        </div>}
+        {files.length > 0 && <div style={{ width: 200, flexShrink: 0 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Files</div>
+          {files.map(f => <div key={f.key} onClick={() => loadFile(f)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedFile?.key === f.key ? '#a259ff22' : 'transparent', color: selectedFile?.key === f.key ? '#a259ff' : '#ddd', marginBottom: 4, fontSize: 13 }}>{f.name}</div>)}
+        </div>}
+        {selectedFile && fileData && <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            {(['structure','comments'] as const).map(v => <button key={v} onClick={() => setView(v)} style={{ padding: '5px 14px', borderRadius: 6, border: 'none', background: view === v ? '#a259ff' : '#1a1a1a', color: view === v ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{v === 'structure' ? '🗂 Structure' : `💬 Comments (${comments.length})`}</button>)}
+            <a href={`https://www.figma.com/file/${selectedFile.key}`} target="_blank" style={{ marginLeft: 'auto', color: '#a259ff', fontSize: 12, textDecoration: 'none' }}>Open in Figma →</a>
+          </div>
+          {view === 'structure' && <div>
+            {(fileData.document?.children || []).map((page: any) => <div key={page.id} style={{ marginBottom: 12 }}>
+              <div style={{ fontWeight: 700, color: '#ddd', marginBottom: 6 }}>📄 {page.name}</div>
+              {(page.children || []).slice(0, 8).map((frame: any) => <div key={frame.id} style={{ padding: '6px 10px', background: '#111', borderRadius: 5, marginBottom: 3, fontSize: 12, color: '#bbb' }}>▸ {frame.name} <span style={{ color: '#555' }}>({frame.type})</span></div>)}
+            </div>)}
+          </div>}
+          {view === 'comments' && <div>{comments.map(c => <div key={c.id} style={{ padding: '10px 12px', background: '#111', borderRadius: 6, marginBottom: 6 }}>
+            <div style={{ fontWeight: 600, color: '#a259ff', fontSize: 12 }}>{c.user?.handle}</div>
+            <div style={{ color: '#ddd', fontSize: 13, marginTop: 2 }}>{c.message}</div>
+            <div style={{ color: '#555', fontSize: 11, marginTop: 4 }}>{new Date(c.created_at).toLocaleDateString()}</div>
+          </div>)}</div>}
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_zendesk() {
+  const [connected, setConnected] = React.useState(false);
+  const [form, setForm] = React.useState({ subdomain: '', email: '', apiToken: '' });
+  const [status, setStatus] = React.useState('');
+  const [subdomain, setSubdomain] = React.useState('');
+  const [tickets, setTickets] = React.useState<any[]>([]);
+  const [ticketStatus, setTicketStatus] = React.useState('open');
+  const [selected, setSelected] = React.useState<any>(null);
+  const [reply, setReply] = React.useState('');
+  const [sending, setSending] = React.useState(false);
+  const [aiDraft, setAiDraft] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/integrations/zendesk/status', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+      .then(r => r.json()).then(d => { if (d.connected) { setConnected(true); setSubdomain(d.subdomain || ''); loadTickets('open'); } });
+  }, []);
+
+  const loadTickets = async (s: string) => {
+    setTicketStatus(s);
+    const r = await fetch(`/api/integrations/zendesk/tickets?status=${s}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setTickets(d.tickets || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/zendesk/connect', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    const d = await r.json();
+    setLoading(false);
+    if (d.ok) { setConnected(true); setSubdomain(form.subdomain); setStatus(''); loadTickets('open'); } else setStatus(d.error || 'Failed');
+  };
+
+  const disconnect = async () => {
+    await fetch('/api/integrations/zendesk/disconnect', { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    setConnected(false); setTickets([]);
+  };
+
+  const sendReply = async () => {
+    if (!reply || !selected) return;
+    setSending(true);
+    await fetch(`/api/integrations/zendesk/reply/${selected.id}`, { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ body: reply, status: 'open' }) });
+    setSending(false); setReply(''); loadTickets(ticketStatus);
+  };
+
+  const draftAI = async () => {
+    if (!selected) return;
+    setAiDraft('Drafting...');
+    const r = await fetch('/api/agent', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Draft a professional, empathetic support reply to this Zendesk ticket:\nSubject: ${selected.subject}\nStatus: ${selected.status}\nPriority: ${selected.priority}\n\nWrite a complete reply in 3-4 sentences.`, model: 'claude-3-haiku-20240307' }) });
+    const d = await r.json();
+    setAiDraft(d.content || d.response || '');
+    setReply(d.content || d.response || '');
+  };
+
+  const priorityColor = (p: string) => ({ urgent: '#f55', high: '#f90', normal: '#18d26e', low: '#888' }[p] || '#888');
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🎫 Zendesk</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Zendesk Support to manage tickets with AI-assisted replies.</p>
+      {(['subdomain','email','apiToken'] as const).map(k => <input key={k} value={form[k]} onChange={e => setForm(p => ({ ...p, [k]: e.target.value }))} placeholder={k === 'subdomain' ? 'Subdomain (yourco)' : k === 'email' ? 'Email' : 'API Token'} style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />)}
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#03363d', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Zendesk'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🎫 Zendesk</h2>
+        <span style={{ background: '#03363d44', color: '#1db954', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected · {subdomain}</span>
+        <button onClick={disconnect} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {['open','pending','solved','closed'].map(s => <button key={s} onClick={() => loadTickets(s)} style={{ padding: '5px 12px', borderRadius: 6, border: 'none', background: ticketStatus === s ? '#03363d' : '#1a1a1a', color: ticketStatus === s ? '#1db954' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{s}</button>)}
+      </div>
+      <div style={{ display: 'flex', gap: 16, height: 'calc(100vh - 230px)' }}>
+        <div style={{ width: 280, overflowY: 'auto', flexShrink: 0 }}>
+          {tickets.map(t => <div key={t.id} onClick={() => setSelected(t)} style={{ padding: '10px 12px', borderRadius: 6, cursor: 'pointer', background: selected?.id === t.id ? '#03363d33' : '#111', marginBottom: 4, border: selected?.id === t.id ? '1px solid #1db954' : '1px solid transparent' }}>
+            <div style={{ fontWeight: 600, color: '#ddd', fontSize: 13, marginBottom: 2 }}>#{t.id} {t.subject?.slice(0, 40)}</div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <span style={{ color: priorityColor(t.priority), fontSize: 11 }}>● {t.priority || 'normal'}</span>
+              <span style={{ color: '#666', fontSize: 11 }}>{new Date(t.created_at).toLocaleDateString()}</span>
+            </div>
+          </div>)}
+        </div>
+        {selected && <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: '#fff', marginBottom: 8 }}>#{selected.id} — {selected.subject}</div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <span style={{ color: priorityColor(selected.priority), fontSize: 12 }}>Priority: {selected.priority}</span>
+            <span style={{ color: '#aaa', fontSize: 12 }}>Status: {selected.status}</span>
+            <a href={`https://${subdomain}.zendesk.com/agent/tickets/${selected.id}`} target="_blank" style={{ color: '#1db954', fontSize: 12, marginLeft: 'auto', textDecoration: 'none' }}>Open in Zendesk →</a>
+          </div>
+          <div style={{ background: '#111', borderRadius: 8, padding: 14, marginBottom: 12, flex: 1, overflowY: 'auto', color: '#ccc', fontSize: 13 }}>{selected.description}</div>
+          <button onClick={draftAI} style={{ alignSelf: 'flex-start', background: '#18d26e22', color: '#18d26e', border: '1px solid #18d26e44', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12, marginBottom: 8 }}>✨ AI Draft Reply</button>
+          <textarea value={reply} onChange={e => setReply(e.target.value)} placeholder="Write reply..." rows={4} style={{ width: '100%', padding: '10px 12px', borderRadius: 6, border: '1px solid #333', background: '#111', color: '#fff', fontSize: 13, resize: 'vertical', boxSizing: 'border-box', marginBottom: 8 }} />
+          <button onClick={sendReply} disabled={sending} style={{ alignSelf: 'flex-end', background: '#03363d', color: '#1db954', border: 'none', borderRadius: 6, padding: '8px 18px', cursor: 'pointer', fontWeight: 600 }}>{sending ? 'Sending...' : 'Send Reply'}</button>
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_monday() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const [boards, setBoards] = React.useState<any[]>([]);
+  const [selectedBoard, setSelectedBoard] = React.useState<any>(null);
+  const [items, setItems] = React.useState<any[]>([]);
+  const [newItem, setNewItem] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/integrations/monday/status', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } })
+      .then(r => r.json()).then(d => { if (d.connected) { setConnected(true); loadBoards(); } });
+  }, []);
+
+  const loadBoards = async () => {
+    const r = await fetch('/api/integrations/monday/boards', { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    setBoards(d.data?.boards || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/monday/connect', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json();
+    setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadBoards(); } else setStatus(d.error || 'Failed');
+  };
+
+  const disconnect = async () => {
+    await fetch('/api/integrations/monday/disconnect', { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    setConnected(false); setBoards([]); setItems([]);
+  };
+
+  const loadItems = async (board: any) => {
+    setSelectedBoard(board); setItems([]);
+    const r = await fetch(`/api/integrations/monday/items/${board.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}` } });
+    const d = await r.json();
+    const b = d.data?.boards?.[0];
+    setItems(b?.items_page?.items || []);
+  };
+
+  const addItem = async () => {
+    if (!newItem || !selectedBoard) return;
+    await fetch('/api/integrations/monday/item', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('forge_token')}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ boardId: selectedBoard.id, itemName: newItem }) });
+    setNewItem('');
+    loadItems(selectedBoard);
+  };
+
+  const stateColor = (s: string) => s === 'active' ? '#18d26e' : s === 'done' ? '#4285f4' : '#888';
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>📅 Monday.com</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Monday.com to browse boards and manage work items.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="API Token (from monday.com → Profile → API)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#ff3d57', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Monday.com'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>📅 Monday.com</h2>
+        <span style={{ background: '#ff3d5722', color: '#ff3d57', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={disconnect} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 16 }}>
+        <div style={{ width: 200, flexShrink: 0 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Boards</div>
+          {boards.map(b => <div key={b.id} onClick={() => loadItems(b)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedBoard?.id === b.id ? '#ff3d5722' : 'transparent', color: selectedBoard?.id === b.id ? '#ff3d57' : '#ddd', marginBottom: 4, fontSize: 13 }}>{b.name}</div>)}
+        </div>
+        {selectedBoard && <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <input value={newItem} onChange={e => setNewItem(e.target.value)} onKeyDown={e => e.key === 'Enter' && addItem()} placeholder="New item name..." style={{ flex: 1, padding: '7px 10px', borderRadius: 6, border: '1px solid #333', background: '#111', color: '#fff', fontSize: 13 }} />
+            <button onClick={addItem} style={{ background: '#ff3d57', color: '#fff', border: 'none', borderRadius: 6, padding: '7px 14px', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>Add</button>
+          </div>
+          {items.map(item => <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#111', borderRadius: 6, marginBottom: 4 }}>
+            <span style={{ color: stateColor(item.state), fontSize: 11 }}>●</span>
+            <span style={{ color: '#ddd', fontSize: 13, flex: 1 }}>{item.name}</span>
+            <span style={{ color: '#555', fontSize: 11 }}>{item.state}</span>
+          </div>)}
+          {items.length === 0 && <div style={{ color: '#666', fontSize: 13 }}>No items. Add one above.</div>}
+        </div>}
+      </div>
+    </div>
+  );
+}
+
 function ForgeTab_airtable() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
@@ -24226,6 +24625,10 @@ export default function ForgeApp() {
             { id:'slack', icon:'💬', label:'Slack' },
             { id:'jira', icon:'🔷', label:'Jira' },
             { id:'stripe', icon:'💳', label:'Stripe' },
+            { id:'gsheets', icon:'📊', label:'Google Sheets' },
+            { id:'figma', icon:'🎨', label:'Figma' },
+            { id:'zendesk', icon:'🎫', label:'Zendesk' },
+            { id:'monday', icon:'📅', label:'Monday.com' },
             { id:'airtable', icon:'🗃️', label:'Airtable' },
             { id:'hubspot', icon:'🧲', label:'HubSpot' },
             { id:'asana', icon:'📋', label:'Asana' },
@@ -30935,6 +31338,10 @@ export default function ForgeApp() {
         {(mainTab as string) === 'slack' && <ForgeTab_slack />}
         {(mainTab as string) === 'jira' && <ForgeTab_jira />}
         {(mainTab as string) === 'stripe' && <ForgeTab_stripe />}
+        {(mainTab as string) === 'gsheets' && <ForgeTab_gsheets />}
+        {(mainTab as string) === 'figma' && <ForgeTab_figma />}
+        {(mainTab as string) === 'zendesk' && <ForgeTab_zendesk />}
+        {(mainTab as string) === 'monday' && <ForgeTab_monday />}
         {(mainTab as string) === 'airtable' && <ForgeTab_airtable />}
         {(mainTab as string) === 'hubspot' && <ForgeTab_hubspot />}
         {(mainTab as string) === 'asana' && <ForgeTab_asana />}
