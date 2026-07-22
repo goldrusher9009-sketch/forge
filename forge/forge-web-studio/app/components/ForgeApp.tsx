@@ -1310,6 +1310,189 @@ function ForgeTab_linear() {
   );
 }
 
+function ForgeTab_slack() {
+  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  const [status, setStatus] = React.useState<any>(null);
+  const [botToken, setBotToken] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [channels, setChannels] = React.useState<any[]>([]);
+  const [selChan, setSelChan] = React.useState('');
+  const [messages, setMessages] = React.useState<any[]>([]);
+  const [msgText, setMsgText] = React.useState('');
+  const [aiPrompt, setAiPrompt] = React.useState('');
+  const [searchQ, setSearchQ] = React.useState('');
+  const [searchRes, setSearchRes] = React.useState<any[]>([]);
+  const [tab, setTab] = React.useState<'channels'|'compose'|'search'>('channels');
+
+  React.useEffect(() => {
+    fetch(`${API}/api/integrations/slack/status`, {headers:{Authorization:`Bearer ${tok}`}})
+      .then(r=>r.json()).then(d=>{ setStatus(d); if(d.connected) loadChannels(); });
+  }, []);
+
+  async function loadChannels() {
+    const r = await fetch(`${API}/api/integrations/slack/channels`, {headers:{Authorization:`Bearer ${tok}`}});
+    const d = await r.json();
+    if(d.channels?.length) { setChannels(d.channels); setSelChan(d.channels[0].id); loadMessages(d.channels[0].id); }
+  }
+
+  async function loadMessages(channelId: string) {
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/slack/messages?channelId=${channelId}`, {headers:{Authorization:`Bearer ${tok}`}});
+    const d = await r.json();
+    setMessages(d.messages||[]);
+    setLoading(false);
+  }
+
+  async function connect() {
+    if(!botToken.trim()) return;
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/slack/connect`, {method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`}, body:JSON.stringify({botToken})});
+    const d = await r.json();
+    setLoading(false);
+    if(d.ok) { setStatus({connected:true,...d}); loadChannels(); }
+    else alert(d.error||'Connection failed');
+  }
+
+  async function sendMessage() {
+    if(!msgText.trim()||!selChan) return;
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/slack/send`, {method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`}, body:JSON.stringify({channelId:selChan,text:msgText})});
+    const d = await r.json();
+    setLoading(false);
+    if(d.ok) { setMsgText(''); loadMessages(selChan); }
+    else alert(d.error||'Failed to send');
+  }
+
+  async function aiWrite() {
+    if(!aiPrompt.trim()) return;
+    setLoading(true);
+    const r = await fetch(`${API}/api/chat`, {method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`}, body:JSON.stringify({message:`Write a clear, professional Slack message for: ${aiPrompt}\n\nBe concise. Use emoji sparingly. Format for Slack (bold with *text*, code with \`text\`). Output only the message text, no preamble.`, model:'claude-3-5-haiku-20241022'})});
+    const d = await r.json();
+    setMsgText(d.response||d.content||'');
+    setLoading(false);
+    setTab('compose');
+  }
+
+  async function doSearch() {
+    if(!searchQ.trim()) return;
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/slack/search?q=${encodeURIComponent(searchQ)}`, {headers:{Authorization:`Bearer ${tok}`}});
+    const d = await r.json();
+    setSearchRes(d.messages||[]);
+    setLoading(false);
+  }
+
+  const s: Record<string,React.CSSProperties> = {
+    wrap:{padding:24,maxWidth:1000,margin:'0 auto'},
+    card:{background:'#1e1e2e',borderRadius:12,padding:20,marginBottom:16,border:'1px solid #2d2d3d'},
+    input:{background:'#0d0d14',border:'1px solid #3d3d5c',borderRadius:8,padding:'10px 14px',color:'#e2e8f0',width:'100%',fontSize:14,boxSizing:'border-box' as const},
+    btn:{padding:'10px 20px',borderRadius:8,border:'none',cursor:'pointer',fontWeight:600,fontSize:14},
+    tabs:{display:'flex',gap:8,marginBottom:20},
+    tab:{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:13,fontWeight:600},
+    msgRow:{background:'#12121e',borderRadius:8,padding:'10px 14px',marginBottom:6,border:'1px solid #2d2d3d'},
+  };
+
+  if(!status) return <div style={{padding:40,color:'#94a3b8',textAlign:'center'}}>Loading Slack status…</div>;
+
+  if(!status.connected) return (
+    <div style={s.wrap}>
+      <div style={s.card}>
+        <h2 style={{color:'#f1f5f9',marginBottom:8}}>💬 Connect Slack</h2>
+        <p style={{color:'#94a3b8',fontSize:14,marginBottom:16}}>Connect your Slack workspace to browse channels, send messages, and search conversations.</p>
+        <ol style={{color:'#94a3b8',fontSize:13,marginBottom:20,lineHeight:'1.8'}}>
+          <li>Go to <a href="https://api.slack.com/apps" target="_blank" style={{color:'#818cf8'}}>api.slack.com/apps</a> → Create New App → From scratch</li>
+          <li>OAuth &amp; Permissions → Bot Token Scopes: add <code style={{background:'#2d2d3d',padding:'1px 4px',borderRadius:3}}>channels:read</code>, <code style={{background:'#2d2d3d',padding:'1px 4px',borderRadius:3}}>channels:history</code>, <code style={{background:'#2d2d3d',padding:'1px 4px',borderRadius:3}}>chat:write</code>, <code style={{background:'#2d2d3d',padding:'1px 4px',borderRadius:3}}>search:read</code></li>
+          <li>Install App → copy Bot User OAuth Token (<code style={{background:'#2d2d3d',padding:'1px 4px',borderRadius:3}}>xoxb-...</code>)</li>
+        </ol>
+        <div style={{display:'flex',gap:10}}>
+          <input style={s.input} placeholder="xoxb-xxx Bot Token" type="password" value={botToken} onChange={e=>setBotToken(e.target.value)} />
+          <button style={{...s.btn,background:'#6366f1',color:'#fff',whiteSpace:'nowrap'}} onClick={connect} disabled={loading}>{loading?'Connecting…':'Connect Slack'}</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={s.wrap}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <div><span style={{color:'#a78bfa',fontWeight:700,fontSize:18}}>💬 Slack</span><span style={{color:'#22c55e',fontSize:12,marginLeft:10}}>● Connected to {status.workspace_name||'workspace'}</span></div>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <select style={{...s.input,width:'auto',padding:'6px 10px'}} value={selChan} onChange={e=>{setSelChan(e.target.value);loadMessages(e.target.value);}}>
+            {channels.map(c=><option key={c.id} value={c.id}>#{c.name}</option>)}
+          </select>
+          <button style={{...s.btn,background:'#374151',color:'#9ca3af',fontSize:12}} onClick={()=>{fetch(`${API}/api/integrations/slack/disconnect`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}});setStatus({connected:false});}}>Disconnect</button>
+        </div>
+      </div>
+
+      <div style={s.tabs}>
+        {(['channels','compose','search'] as const).map(t=>(
+          <button key={t} style={{...s.tab,background:tab===t?'#6366f1':'#1e1e2e',color:tab===t?'#fff':'#94a3b8',border:'1px solid '+(tab===t?'#6366f1':'#2d2d3d')}} onClick={()=>setTab(t)}>{t==='channels'?'📨 Messages':t==='compose'?'✏️ Compose':'🔍 Search'}</button>
+        ))}
+      </div>
+
+      {tab==='channels' && (
+        <div style={s.card}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <h3 style={{color:'#f1f5f9',margin:0}}>Recent Messages</h3>
+            <button style={{...s.btn,background:'#1e1e2e',color:'#6366f1',border:'1px solid #6366f1',fontSize:12}} onClick={()=>loadMessages(selChan)}>↻ Refresh</button>
+          </div>
+          {loading && <p style={{color:'#64748b'}}>Loading…</p>}
+          {messages.map((m,i)=>(
+            <div key={i} style={s.msgRow}>
+              <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:4}}>
+                <span style={{color:'#6366f1',fontSize:12,fontWeight:700}}>{m.user||'Bot'}</span>
+                <span style={{color:'#475569',fontSize:11}}>{m.time}</span>
+              </div>
+              <div style={{color:'#cbd5e1',fontSize:14,whiteSpace:'pre-wrap'}}>{m.text}</div>
+            </div>
+          ))}
+          {messages.length===0 && !loading && <p style={{color:'#64748b',fontSize:13}}>No messages. Invite the bot to the channel first.</p>}
+        </div>
+      )}
+
+      {tab==='compose' && (
+        <div style={s.card}>
+          <h3 style={{color:'#f1f5f9',marginBottom:12}}>Compose Message</h3>
+          <div style={{marginBottom:12}}>
+            <label style={{color:'#94a3b8',fontSize:13}}>AI Write</label>
+            <div style={{display:'flex',gap:8,marginTop:6}}>
+              <input style={s.input} placeholder="What should the message say?" value={aiPrompt} onChange={e=>setAiPrompt(e.target.value)} onKeyDown={e=>e.key==='Enter'&&aiWrite()} />
+              <button style={{...s.btn,background:'#8b5cf6',color:'#fff',whiteSpace:'nowrap'}} onClick={aiWrite} disabled={loading}>{loading?'…':'✨ AI Write'}</button>
+            </div>
+          </div>
+          <div style={{marginBottom:16}}>
+            <label style={{color:'#94a3b8',fontSize:13}}>Message</label>
+            <textarea style={{...s.input,marginTop:6,minHeight:120,resize:'vertical'} as React.CSSProperties} placeholder="Type your message…" value={msgText} onChange={e=>setMsgText(e.target.value)} />
+          </div>
+          <button style={{...s.btn,background:'#22c55e',color:'#fff',width:'100%'}} onClick={sendMessage} disabled={loading||!msgText.trim()||!selChan}>{loading?'Sending…':'Send to #'+((channels.find(c=>c.id===selChan)?.name)||'channel')}</button>
+        </div>
+      )}
+
+      {tab==='search' && (
+        <div style={s.card}>
+          <h3 style={{color:'#f1f5f9',marginBottom:12}}>Search Messages</h3>
+          <div style={{display:'flex',gap:8,marginBottom:16}}>
+            <input style={s.input} placeholder="Search across all channels…" value={searchQ} onChange={e=>setSearchQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doSearch()} />
+            <button style={{...s.btn,background:'#6366f1',color:'#fff'}} onClick={doSearch} disabled={loading}>{loading?'…':'Search'}</button>
+          </div>
+          {searchRes.map((m,i)=>(
+            <div key={i} style={s.msgRow}>
+              <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:4}}>
+                <span style={{color:'#6366f1',fontSize:12}}>#{m.channel}</span>
+                <span style={{color:'#475569',fontSize:11}}>{m.time}</span>
+                <span style={{color:'#94a3b8',fontSize:12}}>{m.user}</span>
+              </div>
+              <div style={{color:'#cbd5e1',fontSize:14}}>{m.text}</div>
+            </div>
+          ))}
+          {searchRes.length===0 && searchQ && !loading && <p style={{color:'#64748b',fontSize:13}}>No results.</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ForgeTab_hermes() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
@@ -23249,6 +23432,7 @@ export default function ForgeApp() {
             { id:'github', icon:'🐙', label:'GitHub' },
             { id:'notion', icon:'🗒️', label:'Notion' },
             { id:'linear', icon:'📐', label:'Linear' },
+            { id:'slack', icon:'💬', label:'Slack' },
             { id:'hermes', icon:'⚡', label:'Hermes Agent' },
             { id:'keyhealth', icon:'🩺', label:'Key Health' },
             { id:'notes', icon:'📝', label:'Notes' },
@@ -29950,6 +30134,7 @@ export default function ForgeApp() {
         {(mainTab as string) === 'github' && <ForgeTab_github />}
         {(mainTab as string) === 'notion' && <ForgeTab_notion />}
         {(mainTab as string) === 'linear' && <ForgeTab_linear />}
+        {(mainTab as string) === 'slack' && <ForgeTab_slack />}
         {mainTab === 'hermes' && <ForgeTab_hermes />}
 
         {/* -- ForgeAuto ----------------------------------------------- */}
