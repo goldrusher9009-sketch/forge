@@ -1132,6 +1132,184 @@ function ForgeTab_notion() {
   );
 }
 
+function ForgeTab_linear() {
+  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  const [status, setStatus] = React.useState<any>(null);
+  const [apiKey, setApiKey] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [teams, setTeams] = React.useState<any[]>([]);
+  const [issues, setIssues] = React.useState<any[]>([]);
+  const [selTeam, setSelTeam] = React.useState('');
+  const [newTitle, setNewTitle] = React.useState('');
+  const [newDesc, setNewDesc] = React.useState('');
+  const [newPri, setNewPri] = React.useState('2');
+  const [aiGoal, setAiGoal] = React.useState('');
+  const [tab, setTab] = React.useState<'issues'|'create'|'ai'>('issues');
+
+  React.useEffect(() => {
+    fetch(`${API}/api/integrations/linear/status`, {headers:{Authorization:`Bearer ${tok}`}})
+      .then(r=>r.json()).then(d=>{ setStatus(d); if(d.connected) loadData(); });
+  }, []);
+
+  async function loadData() {
+    const r = await fetch(`${API}/api/integrations/linear/teams`, {headers:{Authorization:`Bearer ${tok}`}});
+    const d = await r.json();
+    if(d.teams?.length) { setTeams(d.teams); setSelTeam(d.teams[0].id); loadIssues(d.teams[0].id); }
+  }
+
+  async function loadIssues(teamId: string) {
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/linear/issues?teamId=${teamId}`, {headers:{Authorization:`Bearer ${tok}`}});
+    const d = await r.json();
+    setIssues(d.issues||[]);
+    setLoading(false);
+  }
+
+  async function connect() {
+    if(!apiKey.trim()) return;
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/linear/connect`, {method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`}, body:JSON.stringify({apiKey})});
+    const d = await r.json();
+    setLoading(false);
+    if(d.ok) { setStatus({connected:true,...d}); loadData(); }
+    else alert(d.error||'Connection failed');
+  }
+
+  async function createIssue() {
+    if(!newTitle.trim()||!selTeam) return;
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/linear/issue`, {method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`}, body:JSON.stringify({teamId:selTeam,title:newTitle,description:newDesc,priority:Number(newPri)})});
+    const d = await r.json();
+    setLoading(false);
+    if(d.ok) { setNewTitle(''); setNewDesc(''); loadIssues(selTeam); setTab('issues'); alert(`Issue created: ${d.identifier}`); }
+    else alert(d.error||'Failed');
+  }
+
+  async function aiBreakdown() {
+    if(!aiGoal.trim()) return;
+    setLoading(true);
+    const r = await fetch(`${API}/api/chat`, {method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`}, body:JSON.stringify({message:`Break this goal into actionable Linear issues:\n\n"${aiGoal}"\n\nProvide 5-8 specific, well-scoped tickets. For each:\n- TITLE (concise, action-oriented)\n- DESCRIPTION (what, why, acceptance criteria)\n- PRIORITY (1=Urgent, 2=High, 3=Medium, 4=Low)\n\nFormat as a numbered list.`, model:'claude-3-5-haiku-20241022'})});
+    const d = await r.json();
+    setNewDesc(d.response||d.content||'');
+    setNewTitle(aiGoal.slice(0,80));
+    setLoading(false);
+    setTab('create');
+  }
+
+  const priColor: Record<string,string> = {'0':'#6b7280','1':'#ef4444','2':'#f97316','3':'#eab308','4':'#94a3b8'};
+  const priLabel: Record<string,string> = {'0':'No priority','1':'🔴 Urgent','2':'🟠 High','3':'🟡 Medium','4':'⚪ Low'};
+
+  const s: Record<string,React.CSSProperties> = {
+    wrap:{padding:24,maxWidth:1000,margin:'0 auto'},
+    card:{background:'#1e1e2e',borderRadius:12,padding:20,marginBottom:16,border:'1px solid #2d2d3d'},
+    input:{background:'#0d0d14',border:'1px solid #3d3d5c',borderRadius:8,padding:'10px 14px',color:'#e2e8f0',width:'100%',fontSize:14,boxSizing:'border-box' as const},
+    btn:{padding:'10px 20px',borderRadius:8,border:'none',cursor:'pointer',fontWeight:600,fontSize:14},
+    tabs:{display:'flex',gap:8,marginBottom:20},
+    tab:{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:13,fontWeight:600},
+    issueRow:{background:'#12121e',borderRadius:8,padding:'10px 14px',marginBottom:8,border:'1px solid #2d2d3d',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12},
+  };
+
+  if(!status) return <div style={{padding:40,color:'#94a3b8',textAlign:'center'}}>Loading Linear status…</div>;
+
+  if(!status.connected) return (
+    <div style={s.wrap}>
+      <div style={s.card}>
+        <h2 style={{color:'#f1f5f9',marginBottom:8}}>📐 Connect Linear</h2>
+        <p style={{color:'#94a3b8',fontSize:14,marginBottom:16}}>Connect your Linear workspace to browse issues, create tickets, and use AI to break goals into tasks.</p>
+        <ol style={{color:'#94a3b8',fontSize:13,marginBottom:20,lineHeight:'1.8'}}>
+          <li>Go to <a href="https://linear.app/settings/api" target="_blank" style={{color:'#818cf8'}}>linear.app/settings/api</a></li>
+          <li>Under "Personal API Keys", click "Create key"</li>
+          <li>Copy the key and paste it below</li>
+        </ol>
+        <div style={{display:'flex',gap:10}}>
+          <input style={s.input} placeholder="lin_api_xxx" type="password" value={apiKey} onChange={e=>setApiKey(e.target.value)} />
+          <button style={{...s.btn,background:'#6366f1',color:'#fff',whiteSpace:'nowrap'}} onClick={connect} disabled={loading}>{loading?'Connecting…':'Connect Linear'}</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={s.wrap}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <div><span style={{color:'#a78bfa',fontWeight:700,fontSize:18}}>📐 Linear</span><span style={{color:'#22c55e',fontSize:12,marginLeft:10}}>● Connected as {status.org_name||'workspace'}</span></div>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <select style={{...s.input,width:'auto',padding:'6px 10px'}} value={selTeam} onChange={e=>{setSelTeam(e.target.value);loadIssues(e.target.value);}}>
+            {teams.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+          <button style={{...s.btn,background:'#374151',color:'#9ca3af',fontSize:12}} onClick={()=>{fetch(`${API}/api/integrations/linear/disconnect`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}});setStatus({connected:false});}}>Disconnect</button>
+        </div>
+      </div>
+
+      <div style={s.tabs}>
+        {(['issues','create','ai'] as const).map(t=>(
+          <button key={t} style={{...s.tab,background:tab===t?'#6366f1':'#1e1e2e',color:tab===t?'#fff':'#94a3b8',border:'1px solid '+(tab===t?'#6366f1':'#2d2d3d')}} onClick={()=>setTab(t)}>{t==='issues'?'🎯 Issues':t==='create'?'✏️ Create':'🤖 AI Breakdown'}</button>
+        ))}
+      </div>
+
+      {tab==='issues' && (
+        <div style={s.card}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <h3 style={{color:'#f1f5f9',margin:0}}>Recent Issues</h3>
+            <button style={{...s.btn,background:'#1e1e2e',color:'#6366f1',border:'1px solid #6366f1',fontSize:12}} onClick={()=>loadIssues(selTeam)}>↻ Refresh</button>
+          </div>
+          {loading && <p style={{color:'#64748b'}}>Loading…</p>}
+          {issues.map(iss=>(
+            <div key={iss.id} style={s.issueRow}>
+              <div style={{flex:1}}>
+                <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:4}}>
+                  <span style={{color:'#6366f1',fontSize:12,fontWeight:700}}>{iss.identifier}</span>
+                  <span style={{background:iss.state_color||'#374151',color:'#fff',borderRadius:4,padding:'1px 6px',fontSize:11}}>{iss.state_name||'—'}</span>
+                  <span style={{color:priColor[String(iss.priority)]||'#6b7280',fontSize:11}}>{priLabel[String(iss.priority)]||''}</span>
+                </div>
+                <div style={{color:'#e2e8f0',fontSize:14}}>{iss.title}</div>
+                {iss.assignee && <div style={{color:'#64748b',fontSize:12,marginTop:4}}>👤 {iss.assignee}</div>}
+              </div>
+              <a href={iss.url} target="_blank" style={{color:'#6366f1',fontSize:12,whiteSpace:'nowrap'}}>Open ↗</a>
+            </div>
+          ))}
+          {issues.length===0 && !loading && <p style={{color:'#64748b',fontSize:13}}>No issues found for this team.</p>}
+        </div>
+      )}
+
+      {tab==='create' && (
+        <div style={s.card}>
+          <h3 style={{color:'#f1f5f9',marginBottom:16}}>Create Issue</h3>
+          <div style={{marginBottom:12}}>
+            <label style={{color:'#94a3b8',fontSize:13}}>Title *</label>
+            <input style={{...s.input,marginTop:6}} placeholder="Issue title" value={newTitle} onChange={e=>setNewTitle(e.target.value)} />
+          </div>
+          <div style={{marginBottom:12}}>
+            <label style={{color:'#94a3b8',fontSize:13}}>Description</label>
+            <textarea style={{...s.input,marginTop:6,minHeight:120,resize:'vertical'} as React.CSSProperties} placeholder="Description / acceptance criteria…" value={newDesc} onChange={e=>setNewDesc(e.target.value)} />
+          </div>
+          <div style={{marginBottom:16}}>
+            <label style={{color:'#94a3b8',fontSize:13}}>Priority</label>
+            <select style={{...s.input,marginTop:6,width:'auto'}} value={newPri} onChange={e=>setNewPri(e.target.value)}>
+              <option value="1">🔴 Urgent</option>
+              <option value="2">🟠 High</option>
+              <option value="3">🟡 Medium</option>
+              <option value="4">⚪ Low</option>
+            </select>
+          </div>
+          <button style={{...s.btn,background:'#22c55e',color:'#fff',width:'100%'}} onClick={createIssue} disabled={loading||!newTitle.trim()}>{loading?'Creating…':'Create Issue'}</button>
+        </div>
+      )}
+
+      {tab==='ai' && (
+        <div style={s.card}>
+          <h3 style={{color:'#f1f5f9',marginBottom:8}}>🤖 AI Issue Breakdown</h3>
+          <p style={{color:'#94a3b8',fontSize:13,marginBottom:16}}>Describe a goal or feature and AI will break it into Linear-ready tickets.</p>
+          <textarea style={{...s.input,minHeight:100,resize:'vertical',marginBottom:12} as React.CSSProperties} placeholder="e.g. Build user authentication with email/password, Google OAuth, and 2FA" value={aiGoal} onChange={e=>setAiGoal(e.target.value)} />
+          <button style={{...s.btn,background:'#8b5cf6',color:'#fff',width:'100%'}} onClick={aiBreakdown} disabled={loading||!aiGoal.trim()}>{loading?'Analyzing…':'✨ Break into Issues'}</button>
+          <p style={{color:'#64748b',fontSize:12,marginTop:8}}>Results will pre-fill the Create tab so you can review before creating.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ForgeTab_hermes() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
@@ -23070,6 +23248,7 @@ export default function ForgeApp() {
             { id:'passport', icon:'🪪', label:'AI Twin Passport' },
             { id:'github', icon:'🐙', label:'GitHub' },
             { id:'notion', icon:'🗒️', label:'Notion' },
+            { id:'linear', icon:'📐', label:'Linear' },
             { id:'hermes', icon:'⚡', label:'Hermes Agent' },
             { id:'keyhealth', icon:'🩺', label:'Key Health' },
             { id:'notes', icon:'📝', label:'Notes' },
@@ -29770,6 +29949,7 @@ export default function ForgeApp() {
         {/* ── Hermes — Autonomous Agent ─────────────────────────────── */}
         {(mainTab as string) === 'github' && <ForgeTab_github />}
         {(mainTab as string) === 'notion' && <ForgeTab_notion />}
+        {(mainTab as string) === 'linear' && <ForgeTab_linear />}
         {mainTab === 'hermes' && <ForgeTab_hermes />}
 
         {/* -- ForgeAuto ----------------------------------------------- */}
