@@ -1493,6 +1493,360 @@ function ForgeTab_slack() {
   );
 }
 
+function ForgeTab_pagerduty() {
+  const [connected, setConnected] = React.useState(false);
+  const [apiKey, setApiKey] = React.useState('');
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'incidents'|'services'|'oncall'>('incidents');
+  const [incidents, setIncidents] = React.useState<any[]>([]);
+  const [services, setServices] = React.useState<any[]>([]);
+  const [oncall, setOncall] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/pagerduty/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [i, s, o] = await Promise.all([
+      fetch('/api/integrations/pagerduty/incidents', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/pagerduty/services', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/pagerduty/oncall', { headers: h }).then(r => r.json()),
+    ]);
+    setIncidents(i.incidents || []); setServices(s.services || []); setOncall(o.oncalls || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/pagerduty/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ apiKey }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  const urgencyColor = (u: string) => u === 'high' ? '#f55' : '#ff9500';
+  const statusColor = (s: string) => ({ triggered: '#f55', acknowledged: '#ff9500', resolved: '#18d26e' }[s] || '#888');
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🚨 PagerDuty</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect PagerDuty to monitor incidents and on-call schedules.</p>
+      <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="API Key (v2)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#06AC38', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect PagerDuty'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🚨 PagerDuty</h2>
+        <span style={{ background: '#06AC3822', color: '#06AC38', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/pagerduty/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['incidents','services','oncall'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#06AC38' : '#1a1a1a', color: tab === t ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t === 'incidents' ? '🚨 Incidents' : t === 'services' ? '⚙️ Services' : '📟 On-Call'}</button>)}
+      </div>
+      {tab === 'incidents' && incidents.map(i => <div key={i.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <span style={{ color: statusColor(i.status), fontSize: 11, fontWeight: 700 }}>● {i.status}</span>
+          <span style={{ color: urgencyColor(i.urgency), fontSize: 10 }}>{i.urgency?.toUpperCase()}</span>
+          <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{i.title}</span>
+          <span style={{ color: '#555', fontSize: 11 }}>#{i.incident_number}</span>
+        </div>
+        <div style={{ color: '#555', fontSize: 11, marginTop: 2 }}>{i.service?.summary} · {i.created_at ? new Date(i.created_at).toLocaleString() : ''}</div>
+      </div>)}
+      {tab === 'services' && services.map(s => <div key={s.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ color: s.status === 'active' ? '#18d26e' : '#888', fontSize: 11 }}>●</span>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{s.name}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{s.escalation_policy?.summary}</span>
+      </div>)}
+      {tab === 'oncall' && oncall.map((o, i) => <div key={i} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{o.user?.summary}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{o.escalation_policy?.summary}</span>
+        <span style={{ color: '#555', fontSize: 11 }}>L{o.escalation_level}</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_sentry() {
+  const [connected, setConnected] = React.useState(false);
+  const [form, setForm] = React.useState({ authToken: '', org: '' });
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'issues'|'projects'>('issues');
+  const [issues, setIssues] = React.useState<any[]>([]);
+  const [projects, setProjects] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/sentry/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [i, p] = await Promise.all([
+      fetch('/api/integrations/sentry/issues', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/sentry/projects', { headers: h }).then(r => r.json()),
+    ]);
+    setIssues(Array.isArray(i) ? i : []); setProjects(Array.isArray(p) ? p : []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/sentry/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  const levelColor = (l: string) => ({ fatal: '#f55', error: '#ff6b6b', warning: '#ff9500', info: '#4285f4', debug: '#888' }[l] || '#888');
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🛡️ Sentry</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Sentry to track errors and performance issues.</p>
+      <input value={form.authToken} onChange={e => setForm(p => ({ ...p, authToken: e.target.value }))} placeholder="Auth Token" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />
+      <input value={form.org} onChange={e => setForm(p => ({ ...p, org: e.target.value }))} placeholder="Organization Slug" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#362d59', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Sentry'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🛡️ Sentry</h2>
+        <span style={{ background: '#362d5922', color: '#a78bfa', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/sentry/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['issues','projects'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#362d59' : '#1a1a1a', color: tab === t ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t === 'issues' ? '🐛 Issues' : '📦 Projects'}</button>)}
+      </div>
+      {tab === 'issues' && issues.map(i => <div key={i.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <span style={{ color: levelColor(i.level), fontSize: 10, fontWeight: 700 }}>{i.level?.toUpperCase()}</span>
+          <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{i.title}</span>
+          <span style={{ color: '#a78bfa', fontSize: 11 }}>{i.count} events</span>
+        </div>
+        <div style={{ color: '#555', fontSize: 11, marginTop: 2 }}>{i.project?.slug} · {i.firstSeen ? new Date(i.firstSeen).toLocaleDateString() : ''}</div>
+      </div>)}
+      {tab === 'projects' && projects.map(p => <div key={p.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{p.name}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{p.platform}</span>
+        <span style={{ color: p.status === 'active' ? '#18d26e' : '#888', fontSize: 11 }}>● {p.status}</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_cloudflare() {
+  const [connected, setConnected] = React.useState(false);
+  const [apiToken, setApiToken] = React.useState('');
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'zones'|'workers'>('zones');
+  const [zones, setZones] = React.useState<any[]>([]);
+  const [workers, setWorkers] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/cloudflare/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [z, w] = await Promise.all([
+      fetch('/api/integrations/cloudflare/zones', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/cloudflare/workers', { headers: h }).then(r => r.json()),
+    ]);
+    setZones(z.result || []); setWorkers(w.result || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/cloudflare/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ apiToken }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  const statusColor = (s: string) => ({ active: '#18d26e', pending: '#ff9500', deactivated: '#888', paused: '#888' }[s] || '#888');
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>☁️ Cloudflare</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Cloudflare to manage zones and Workers.</p>
+      <input value={apiToken} onChange={e => setApiToken(e.target.value)} placeholder="API Token" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#f6821f', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Cloudflare'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>☁️ Cloudflare</h2>
+        <span style={{ background: '#f6821f22', color: '#f6821f', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected · {zones.length} zones</span>
+        <button onClick={() => { fetch('/api/integrations/cloudflare/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['zones','workers'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#f6821f' : '#1a1a1a', color: tab === t ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t === 'zones' ? '🌐 Zones' : '⚡ Workers'}</button>)}
+      </div>
+      {tab === 'zones' && zones.map(z => <div key={z.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ color: statusColor(z.status), fontSize: 11 }}>●</span>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{z.name}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{z.plan?.name}</span>
+        <span style={{ color: '#555', fontSize: 11 }}>{z.name_servers?.length} NS</span>
+      </div>)}
+      {tab === 'workers' && workers.map(w => <div key={w.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>⚡ {w.id}</span>
+        <span style={{ color: '#555', fontSize: 11 }}>{w.modified_on ? new Date(w.modified_on).toLocaleDateString() : ''}</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_vercel() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'projects'|'deployments'>('projects');
+  const [projects, setProjects] = React.useState<any[]>([]);
+  const [deployments, setDeployments] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/vercel/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [p, dep] = await Promise.all([
+      fetch('/api/integrations/vercel/projects', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/vercel/deployments', { headers: h }).then(r => r.json()),
+    ]);
+    setProjects(p.projects || []); setDeployments(dep.deployments || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/vercel/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  const deployColor = (s: string) => ({ READY: '#18d26e', ERROR: '#f55', BUILDING: '#ff9500', CANCELED: '#888', QUEUED: '#4285f4' }[s] || '#888');
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>▲ Vercel</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Vercel to view projects and deployments.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="Access Token" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#fff', color: '#000', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Vercel'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>▲ Vercel</h2>
+        <span style={{ background: '#ffffff22', color: '#fff', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected · {projects.length} projects</span>
+        <button onClick={() => { fetch('/api/integrations/vercel/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['projects','deployments'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#fff' : '#1a1a1a', color: tab === t ? '#000' : '#aaa', cursor: 'pointer', fontSize: 12, fontWeight: tab === t ? 700 : 400 }}>{t === 'projects' ? '📦 Projects' : '🚀 Deployments'}</button>)}
+      </div>
+      {tab === 'projects' && projects.map(p => <div key={p.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>📦 {p.name}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{p.framework || 'custom'}</span>
+        <span style={{ color: '#555', fontSize: 11 }}>{p.updatedAt ? new Date(p.updatedAt).toLocaleDateString() : ''}</span>
+      </div>)}
+      {tab === 'deployments' && deployments.map(d => <div key={d.uid} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ color: deployColor(d.state), fontSize: 11 }}>●</span>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{d.name}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{d.url}</span>
+        <span style={{ color: '#555', fontSize: 11 }}>{d.createdAt ? new Date(d.createdAt).toLocaleDateString() : ''}</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_supabase() {
+  const [connected, setConnected] = React.useState(false);
+  const [accessToken, setAccessToken] = React.useState('');
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'projects'|'orgs'>('projects');
+  const [sbProjects, setSbProjects] = React.useState<any[]>([]);
+  const [orgs, setOrgs] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/supabase/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [p, o] = await Promise.all([
+      fetch('/api/integrations/supabase/projects', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/supabase/organizations', { headers: h }).then(r => r.json()),
+    ]);
+    setSbProjects(Array.isArray(p) ? p : []); setOrgs(Array.isArray(o) ? o : []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/supabase/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  const statusColor = (s: string) => ({ ACTIVE_HEALTHY: '#18d26e', ACTIVE_UNHEALTHY: '#f55', INACTIVE: '#888', COMING_UP: '#ff9500' }[s] || '#888');
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>⚡ Supabase</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Supabase to view your projects and organizations.</p>
+      <input value={accessToken} onChange={e => setAccessToken(e.target.value)} placeholder="Access Token (from supabase.com/dashboard/account/tokens)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#3ecf8e', color: '#111', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Supabase'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>⚡ Supabase</h2>
+        <span style={{ background: '#3ecf8e22', color: '#3ecf8e', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected · {sbProjects.length} projects</span>
+        <button onClick={() => { fetch('/api/integrations/supabase/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['projects','orgs'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#3ecf8e' : '#1a1a1a', color: tab === t ? '#111' : '#aaa', cursor: 'pointer', fontSize: 12, fontWeight: tab === t ? 700 : 400 }}>{t === 'projects' ? '📦 Projects' : '🏢 Organizations'}</button>)}
+      </div>
+      {tab === 'projects' && sbProjects.map(p => <div key={p.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <span style={{ color: statusColor(p.status), fontSize: 11 }}>●</span>
+          <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{p.name}</span>
+          <span style={{ color: '#aaa', fontSize: 11 }}>{p.region}</span>
+        </div>
+        <div style={{ color: '#555', fontSize: 11, marginTop: 2 }}>{p.organization_id} · {p.created_at ? new Date(p.created_at).toLocaleDateString() : ''}</div>
+      </div>)}
+      {tab === 'orgs' && orgs.map(o => <div key={o.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>🏢 {o.name}</span>
+        <span style={{ color: '#3ecf8e', fontSize: 11 }}>{o.billing_email}</span>
+      </div>)}
+    </div>
+  );
+}
+
 function ForgeTab_amplitude() {
   const [connected, setConnected] = React.useState(false);
   const [form, setForm] = React.useState({ apiKey: '', secretKey: '' });
@@ -26187,6 +26541,11 @@ export default function ForgeApp() {
             { id:'sendgrid', icon:'✉️', label:'SendGrid' },
             { id:'shopify', icon:'🛍️', label:'Shopify' },
             { id:'webflow', icon:'🌐', label:'Webflow' },
+            { id:'pagerduty', icon:'🚨', label:'PagerDuty' },
+            { id:'sentry', icon:'🛡️', label:'Sentry' },
+            { id:'cloudflare', icon:'☁️', label:'Cloudflare' },
+            { id:'vercel', icon:'▲', label:'Vercel' },
+            { id:'supabase', icon:'⚡', label:'Supabase' },
             { id:'amplitude', icon:'📈', label:'Amplitude' },
             { id:'mixpanel', icon:'🔮', label:'Mixpanel' },
             { id:'segment', icon:'🔌', label:'Segment' },
@@ -32919,6 +33278,11 @@ export default function ForgeApp() {
         {(mainTab as string) === 'sendgrid' && <ForgeTab_sendgrid />}
         {(mainTab as string) === 'shopify' && <ForgeTab_shopify />}
         {(mainTab as string) === 'webflow' && <ForgeTab_webflow />}
+        {(mainTab as string) === 'pagerduty' && <ForgeTab_pagerduty />}
+        {(mainTab as string) === 'sentry' && <ForgeTab_sentry />}
+        {(mainTab as string) === 'cloudflare' && <ForgeTab_cloudflare />}
+        {(mainTab as string) === 'vercel' && <ForgeTab_vercel />}
+        {(mainTab as string) === 'supabase' && <ForgeTab_supabase />}
         {(mainTab as string) === 'amplitude' && <ForgeTab_amplitude />}
         {(mainTab as string) === 'mixpanel' && <ForgeTab_mixpanel />}
         {(mainTab as string) === 'segment' && <ForgeTab_segment />}
