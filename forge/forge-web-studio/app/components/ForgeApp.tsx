@@ -934,6 +934,204 @@ function ForgeTab_github() {
   );
 }
 
+function ForgeTab_notion() {
+  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  const [status, setStatus] = React.useState<any>(null);
+  const [token, setToken] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [pages, setPages] = React.useState<any[]>([]);
+  const [dbs, setDbs] = React.useState<any[]>([]);
+  const [selPage, setSelPage] = React.useState<any>(null);
+  const [pageContent, setPageContent] = React.useState('');
+  const [newTitle, setNewTitle] = React.useState('');
+  const [newBody, setNewBody] = React.useState('');
+  const [aiPrompt, setAiPrompt] = React.useState('');
+  const [aiResult, setAiResult] = React.useState('');
+  const [searchQ, setSearchQ] = React.useState('');
+  const [searchRes, setSearchRes] = React.useState<any[]>([]);
+  const [tab, setTab] = React.useState<'pages'|'create'|'search'|'db'>('pages');
+
+  React.useEffect(() => {
+    fetch(`${API}/api/integrations/notion/status`, {headers:{Authorization:`Bearer ${tok}`}})
+      .then(r=>r.json()).then(d=>{ setStatus(d); if(d.connected) loadPages(); });
+  }, []);
+
+  async function loadPages() {
+    const r = await fetch(`${API}/api/integrations/notion/pages`, {headers:{Authorization:`Bearer ${tok}`}});
+    const d = await r.json();
+    if(d.pages) setPages(d.pages);
+    if(d.dbs) setDbs(d.dbs);
+  }
+
+  async function connect() {
+    if(!token.trim()) return;
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/notion/connect`, {method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`}, body:JSON.stringify({token})});
+    const d = await r.json();
+    setLoading(false);
+    if(d.ok) { setStatus({connected:true,...d}); loadPages(); }
+    else alert(d.error||'Connection failed');
+  }
+
+  async function loadPage(pageId: string) {
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/notion/page/${pageId}`, {headers:{Authorization:`Bearer ${tok}`}});
+    const d = await r.json();
+    setPageContent(d.content||'');
+    setLoading(false);
+  }
+
+  async function createPage() {
+    if(!newTitle.trim()) return;
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/notion/page`, {method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`}, body:JSON.stringify({title:newTitle,content:newBody})});
+    const d = await r.json();
+    setLoading(false);
+    if(d.ok) { setNewTitle(''); setNewBody(''); loadPages(); setTab('pages'); alert('Page created!'); }
+    else alert(d.error||'Failed');
+  }
+
+  async function aiEnhance() {
+    if(!aiPrompt.trim()) return;
+    setLoading(true);
+    const r = await fetch(`${API}/api/chat`, {method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`}, body:JSON.stringify({message:`Write Notion page content for: ${aiPrompt}\n\nFormat with clear sections, bullet points where appropriate. Be thorough and professional.`, model:'claude-3-5-haiku-20241022'})});
+    const d = await r.json();
+    setAiResult(d.response||d.content||'');
+    setNewBody(d.response||d.content||'');
+    setLoading(false);
+  }
+
+  async function doSearch() {
+    if(!searchQ.trim()) return;
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/notion/search?q=${encodeURIComponent(searchQ)}`, {headers:{Authorization:`Bearer ${tok}`}});
+    const d = await r.json();
+    setSearchRes(d.results||[]);
+    setLoading(false);
+  }
+
+  const s: Record<string,React.CSSProperties> = {
+    wrap:{padding:24,maxWidth:1000,margin:'0 auto'},
+    card:{background:'#1e1e2e',borderRadius:12,padding:20,marginBottom:16,border:'1px solid #2d2d3d'},
+    input:{background:'#0d0d14',border:'1px solid #3d3d5c',borderRadius:8,padding:'10px 14px',color:'#e2e8f0',width:'100%',fontSize:14,boxSizing:'border-box' as const},
+    btn:{padding:'10px 20px',borderRadius:8,border:'none',cursor:'pointer',fontWeight:600,fontSize:14},
+    tabs:{display:'flex',gap:8,marginBottom:20},
+    tab:{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:13,fontWeight:600},
+    pageItem:{background:'#12121e',borderRadius:8,padding:'10px 14px',marginBottom:8,cursor:'pointer',border:'1px solid #2d2d3d',display:'flex',justifyContent:'space-between',alignItems:'center'},
+  };
+
+  if(!status) return <div style={{padding:40,color:'#94a3b8',textAlign:'center'}}>Loading Notion status…</div>;
+
+  if(!status.connected) return (
+    <div style={s.wrap}>
+      <div style={s.card}>
+        <h2 style={{color:'#f1f5f9',marginBottom:8}}>🗒️ Connect Notion</h2>
+        <p style={{color:'#94a3b8',fontSize:14,marginBottom:16}}>Connect your Notion workspace to create pages, browse databases, and write AI-generated content directly.</p>
+        <ol style={{color:'#94a3b8',fontSize:13,marginBottom:20,lineHeight:'1.8'}}>
+          <li>Go to <a href="https://www.notion.so/my-integrations" target="_blank" style={{color:'#818cf8'}}>notion.so/my-integrations</a></li>
+          <li>Click "New integration" → give it a name → copy the Internal Integration Token</li>
+          <li>In your Notion pages, click ··· → Add connections → select your integration</li>
+        </ol>
+        <div style={{display:'flex',gap:10}}>
+          <input style={s.input} placeholder="secret_xxx integration token" value={token} onChange={e=>setToken(e.target.value)} />
+          <button style={{...s.btn,background:'#6366f1',color:'#fff',whiteSpace:'nowrap'}} onClick={connect} disabled={loading}>{loading?'Connecting…':'Connect Notion'}</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={s.wrap}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <div><span style={{color:'#a78bfa',fontWeight:700,fontSize:18}}>🗒️ Notion</span><span style={{color:'#22c55e',fontSize:12,marginLeft:10}}>● Connected as {status.workspace_name||'workspace'}</span></div>
+        <button style={{...s.btn,background:'#374151',color:'#9ca3af',fontSize:12}} onClick={()=>{fetch(`${API}/api/integrations/notion/disconnect`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}});setStatus({connected:false});}}>Disconnect</button>
+      </div>
+
+      <div style={s.tabs}>
+        {(['pages','create','search','db'] as const).map(t=>(
+          <button key={t} style={{...s.tab,background:tab===t?'#6366f1':'#1e1e2e',color:tab===t?'#fff':'#94a3b8',border:'1px solid '+(tab===t?'#6366f1':'#2d2d3d')}} onClick={()=>setTab(t)}>{t==='pages'?'📄 Pages':t==='create'?'✏️ Create':t==='search'?'🔍 Search':'🗄️ Databases'}</button>
+        ))}
+      </div>
+
+      {tab==='pages' && (
+        <div style={s.card}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <h3 style={{color:'#f1f5f9',margin:0}}>Recent Pages</h3>
+            <button style={{...s.btn,background:'#1e1e2e',color:'#6366f1',border:'1px solid #6366f1',fontSize:12}} onClick={loadPages}>↻ Refresh</button>
+          </div>
+          {pages.length===0 && <p style={{color:'#64748b',fontSize:13}}>No pages found. Share pages with your integration in Notion first.</p>}
+          {pages.map(p=>(
+            <div key={p.id} style={s.pageItem} onClick={()=>{setSelPage(p);loadPage(p.id);}}>
+              <span style={{color:'#e2e8f0',fontSize:14}}>{p.icon||'📄'} {p.title||'Untitled'}</span>
+              <span style={{color:'#64748b',fontSize:12}}>{p.last_edited?.slice(0,10)}</span>
+            </div>
+          ))}
+          {selPage && (
+            <div style={{marginTop:16,background:'#0d0d14',borderRadius:10,padding:16}}>
+              <h4 style={{color:'#a78bfa',marginBottom:8}}>{selPage.icon||'📄'} {selPage.title}</h4>
+              {loading ? <p style={{color:'#64748b'}}>Loading…</p> : <pre style={{color:'#cbd5e1',fontSize:13,whiteSpace:'pre-wrap',lineHeight:'1.6',maxHeight:400,overflow:'auto'}}>{pageContent||'(empty page)'}</pre>}
+              <a href={selPage.url} target="_blank" style={{color:'#6366f1',fontSize:12}}>Open in Notion ↗</a>
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab==='create' && (
+        <div style={s.card}>
+          <h3 style={{color:'#f1f5f9',marginBottom:16}}>Create New Page</h3>
+          <div style={{marginBottom:12}}>
+            <label style={{color:'#94a3b8',fontSize:13}}>Page Title</label>
+            <input style={{...s.input,marginTop:6}} placeholder="My new page" value={newTitle} onChange={e=>setNewTitle(e.target.value)} />
+          </div>
+          <div style={{marginBottom:12}}>
+            <label style={{color:'#94a3b8',fontSize:13}}>AI Generate Content</label>
+            <div style={{display:'flex',gap:8,marginTop:6}}>
+              <input style={s.input} placeholder="Describe what this page should contain…" value={aiPrompt} onChange={e=>setAiPrompt(e.target.value)} />
+              <button style={{...s.btn,background:'#8b5cf6',color:'#fff',whiteSpace:'nowrap'}} onClick={aiEnhance} disabled={loading}>{loading?'…':'✨ AI Write'}</button>
+            </div>
+          </div>
+          <div style={{marginBottom:16}}>
+            <label style={{color:'#94a3b8',fontSize:13}}>Content</label>
+            <textarea style={{...s.input,marginTop:6,minHeight:200,resize:'vertical'} as React.CSSProperties} placeholder="Or write content manually…" value={newBody} onChange={e=>setNewBody(e.target.value)} />
+          </div>
+          <button style={{...s.btn,background:'#22c55e',color:'#fff',width:'100%'}} onClick={createPage} disabled={loading||!newTitle.trim()}>{loading?'Creating…':'Create Page'}</button>
+        </div>
+      )}
+
+      {tab==='search' && (
+        <div style={s.card}>
+          <h3 style={{color:'#f1f5f9',marginBottom:16}}>Search Workspace</h3>
+          <div style={{display:'flex',gap:8,marginBottom:16}}>
+            <input style={s.input} placeholder="Search pages and databases…" value={searchQ} onChange={e=>setSearchQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doSearch()} />
+            <button style={{...s.btn,background:'#6366f1',color:'#fff'}} onClick={doSearch} disabled={loading}>{loading?'…':'Search'}</button>
+          </div>
+          {searchRes.map(r=>(
+            <div key={r.id} style={s.pageItem} onClick={()=>window.open(r.url,'_blank')}>
+              <span style={{color:'#e2e8f0',fontSize:14}}>{r.icon||'📄'} {r.title||'Untitled'}</span>
+              <span style={{color:'#64748b',fontSize:12}}>{r.type}</span>
+            </div>
+          ))}
+          {searchRes.length===0 && searchQ && !loading && <p style={{color:'#64748b',fontSize:13}}>No results. Try a different query.</p>}
+        </div>
+      )}
+
+      {tab==='db' && (
+        <div style={s.card}>
+          <h3 style={{color:'#f1f5f9',marginBottom:16}}>Databases</h3>
+          {dbs.length===0 && <p style={{color:'#64748b',fontSize:13}}>No databases found. Share databases with your integration in Notion.</p>}
+          {dbs.map(db=>(
+            <div key={db.id} style={{...s.pageItem}} onClick={()=>window.open(db.url,'_blank')}>
+              <span style={{color:'#e2e8f0',fontSize:14}}>🗄️ {db.title||'Untitled DB'}</span>
+              <span style={{color:'#6366f1',fontSize:12}}>Open ↗</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ForgeTab_hermes() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
@@ -22871,6 +23069,7 @@ export default function ForgeApp() {
             { id:'brain', icon:'🧠', label:'Forge Brain' },
             { id:'passport', icon:'🪪', label:'AI Twin Passport' },
             { id:'github', icon:'🐙', label:'GitHub' },
+            { id:'notion', icon:'🗒️', label:'Notion' },
             { id:'hermes', icon:'⚡', label:'Hermes Agent' },
             { id:'keyhealth', icon:'🩺', label:'Key Health' },
             { id:'notes', icon:'📝', label:'Notes' },
@@ -29570,6 +29769,7 @@ export default function ForgeApp() {
 
         {/* ── Hermes — Autonomous Agent ─────────────────────────────── */}
         {(mainTab as string) === 'github' && <ForgeTab_github />}
+        {(mainTab as string) === 'notion' && <ForgeTab_notion />}
         {mainTab === 'hermes' && <ForgeTab_hermes />}
 
         {/* -- ForgeAuto ----------------------------------------------- */}
