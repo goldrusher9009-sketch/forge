@@ -1817,6 +1817,432 @@ function ForgeTab_stripe() {
   );
 }
 
+function ForgeTab_salesforce() {
+  const [connected, setConnected] = React.useState(false);
+  const [form, setForm] = React.useState({ instanceUrl: '', accessToken: '' });
+  const [status, setStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'accounts'|'opportunities'|'leads'>('opportunities');
+  const [accounts, setAccounts] = React.useState<any[]>([]);
+  const [opps, setOpps] = React.useState<any[]>([]);
+  const [leads, setLeads] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/salesforce/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [a, o, l] = await Promise.all([
+      fetch('/api/integrations/salesforce/accounts', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/salesforce/opportunities', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/salesforce/leads', { headers: h }).then(r => r.json()),
+    ]);
+    setAccounts(a.records || []); setOpps(o.records || []); setLeads(l.records || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/salesforce/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadAll(); } else setStatus(d.error || 'Failed');
+  };
+
+  const stageColor = (s: string) => ({ 'Closed Won': '#18d26e', 'Closed Lost': '#f55', 'Prospecting': '#4285f4', 'Proposal/Price Quote': '#ff9500' }[s] || '#888');
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>☁️ Salesforce</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Salesforce to browse accounts, opportunities, and leads.</p>
+      <input value={form.instanceUrl} onChange={e => setForm(p => ({ ...p, instanceUrl: e.target.value }))} placeholder="Instance URL (https://yourorg.my.salesforce.com)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />
+      <input value={form.accessToken} onChange={e => setForm(p => ({ ...p, accessToken: e.target.value }))} placeholder="Access Token" type="password" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#00a1e0', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Salesforce'}</button>
+    </div>
+  );
+
+  const tabs = [{ id: 'opportunities', label: '💰 Opportunities' }, { id: 'accounts', label: '🏢 Accounts' }, { id: 'leads', label: '🎯 Leads' }] as const;
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>☁️ Salesforce</h2>
+        <span style={{ background: '#00a1e022', color: '#00a1e0', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/salesforce/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {tabs.map(t => <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t.id ? '#00a1e0' : '#1a1a1a', color: tab === t.id ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t.label}</button>)}
+      </div>
+      {tab === 'opportunities' && opps.map(o => <div key={o.Id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 12, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{o.Name}</span>
+        <span style={{ color: '#18d26e', fontWeight: 700 }}>{o.Amount ? `$${Number(o.Amount).toLocaleString()}` : '-'}</span>
+        <span style={{ color: stageColor(o.StageName), fontSize: 11 }}>● {o.StageName}</span>
+        <span style={{ color: '#555', fontSize: 11 }}>{o.CloseDate}</span>
+      </div>)}
+      {tab === 'accounts' && accounts.map(a => <div key={a.Id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 12, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{a.Name}</span>
+        <span style={{ color: '#aaa', fontSize: 12 }}>{a.Industry || '—'}</span>
+        <span style={{ color: '#00a1e0', fontSize: 12 }}>{a.AnnualRevenue ? `$${Number(a.AnnualRevenue).toLocaleString()}` : ''}</span>
+        <span style={{ color: '#555', fontSize: 11 }}>{a.BillingCity}</span>
+      </div>)}
+      {tab === 'leads' && leads.map(l => <div key={l.Id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 12, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd' }}>{l.FirstName} {l.LastName}</span>
+        <span style={{ color: '#aaa', fontSize: 12 }}>{l.Company}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{l.Email}</span>
+        <span style={{ color: l.Status === 'Converted' ? '#18d26e' : '#888', fontSize: 11, marginLeft: 'auto' }}>● {l.Status}</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_mailchimp() {
+  const [connected, setConnected] = React.useState(false);
+  const [apiKey, setApiKey] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'campaigns'|'lists'>('campaigns');
+  const [campaigns, setCampaigns] = React.useState<any[]>([]);
+  const [lists, setLists] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/mailchimp/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [c, l] = await Promise.all([
+      fetch('/api/integrations/mailchimp/campaigns', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/mailchimp/lists', { headers: h }).then(r => r.json()),
+    ]);
+    setCampaigns(c.campaigns || []); setLists(l.lists || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/mailchimp/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ apiKey }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadAll(); } else setStatus(d.error || 'Failed');
+  };
+
+  const statusColor = (s: string) => ({ sent: '#18d26e', sending: '#4285f4', schedule: '#ff9500', draft: '#888', paused: '#f55' }[s] || '#888');
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🐵 Mailchimp</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Mailchimp to manage campaigns and audiences.</p>
+      <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="API Key (xxx-us1)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#ffe01b', color: '#241c15', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Mailchimp'}</button>
+    </div>
+  );
+
+  const tabs = [{ id: 'campaigns', label: '📧 Campaigns' }, { id: 'lists', label: '👥 Audiences' }] as const;
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🐵 Mailchimp</h2>
+        <span style={{ background: '#ffe01b33', color: '#ffe01b', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/mailchimp/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {tabs.map(t => <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t.id ? '#ffe01b' : '#1a1a1a', color: tab === t.id ? '#241c15' : '#aaa', cursor: 'pointer', fontSize: 12, fontWeight: tab === t.id ? 700 : 400 }}>{t.label}</button>)}
+      </div>
+      {tab === 'campaigns' && campaigns.map(c => <div key={c.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{c.settings?.subject_line || c.settings?.title || c.id}</span>
+          <span style={{ color: statusColor(c.status), fontSize: 11 }}>● {c.status}</span>
+        </div>
+        {c.report_summary && <div style={{ color: '#aaa', fontSize: 11, marginTop: 4 }}>Opens: {c.report_summary.open_rate ? `${(c.report_summary.open_rate * 100).toFixed(1)}%` : '-'} · Clicks: {c.report_summary.click_rate ? `${(c.report_summary.click_rate * 100).toFixed(1)}%` : '-'} · Recipients: {c.recipients?.recipient_count}</div>}
+      </div>)}
+      {tab === 'lists' && lists.map(l => <div key={l.id} style={{ padding: '12px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 12, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{l.name}</span>
+        <span style={{ color: '#ffe01b', fontWeight: 700, fontSize: 16 }}>{l.stats?.member_count?.toLocaleString()}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>subscribers</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_notion() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'pages'|'databases'>('pages');
+  const [pages, setPages] = React.useState<any[]>([]);
+  const [databases, setDatabases] = React.useState<any[]>([]);
+  const [newTitle, setNewTitle] = React.useState('');
+  const [parentId, setParentId] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/notion/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [p, db] = await Promise.all([
+      fetch('/api/integrations/notion/pages', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/notion/databases', { headers: h }).then(r => r.json()),
+    ]);
+    setPages(p.results || []); setDatabases(db.results || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/notion/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadAll(); } else setStatus(d.error || 'Failed');
+  };
+
+  const createPage = async () => {
+    if (!newTitle || !parentId) return;
+    await fetch('/api/integrations/notion/create-page', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ parentId, title: newTitle }) });
+    setNewTitle(''); loadAll();
+  };
+
+  const getTitle = (p: any) => {
+    const t = p.properties?.title?.title?.[0]?.plain_text || p.properties?.Name?.title?.[0]?.plain_text;
+    return t || p.id;
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>📓 Notion</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Notion to browse pages and databases.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="Integration Token (secret_xxx)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#fff', color: '#111', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Notion'}</button>
+    </div>
+  );
+
+  const tabs = [{ id: 'pages', label: '📄 Pages' }, { id: 'databases', label: '🗃️ Databases' }] as const;
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>📓 Notion</h2>
+        <span style={{ background: '#ffffff22', color: '#fff', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/notion/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {tabs.map(t => <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t.id ? '#fff' : '#1a1a1a', color: tab === t.id ? '#111' : '#aaa', cursor: 'pointer', fontSize: 12, fontWeight: tab === t.id ? 700 : 400 }}>{t.label}</button>)}
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <select value={parentId} onChange={e => setParentId(e.target.value)} style={{ padding: '7px 10px', borderRadius: 6, border: '1px solid #333', background: '#0a0a0a', color: '#ddd', fontSize: 12, flex: 1 }}>
+          <option value="">Parent page...</option>
+          {pages.map(p => <option key={p.id} value={p.id}>{getTitle(p)}</option>)}
+        </select>
+        <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="New page title" style={{ flex: 2, padding: '7px 10px', borderRadius: 6, border: '1px solid #333', background: '#0a0a0a', color: '#ddd', fontSize: 12 }} />
+        <button onClick={createPage} style={{ background: '#fff', color: '#111', border: 'none', borderRadius: 6, padding: '7px 14px', cursor: 'pointer', fontWeight: 700, fontSize: 12 }}>+ Create</button>
+      </div>
+      {tab === 'pages' && pages.map(p => <div key={p.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ color: '#ddd', flex: 1 }}>📄 {getTitle(p)}</span>
+        <span style={{ color: '#555', fontSize: 11 }}>{p.last_edited_time ? new Date(p.last_edited_time).toLocaleDateString() : ''}</span>
+        <a href={p.url} target="_blank" rel="noreferrer" style={{ color: '#aaa', fontSize: 11, textDecoration: 'none' }}>↗</a>
+      </div>)}
+      {tab === 'databases' && databases.map(db => <div key={db.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ color: '#ddd', flex: 1 }}>🗃️ {getTitle(db)}</span>
+        <span style={{ color: '#555', fontSize: 11 }}>{Object.keys(db.properties || {}).length} props</span>
+        <a href={db.url} target="_blank" rel="noreferrer" style={{ color: '#aaa', fontSize: 11, textDecoration: 'none' }}>↗</a>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_linear() {
+  const [connected, setConnected] = React.useState(false);
+  const [apiKey, setApiKey] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'issues'|'teams'>('issues');
+  const [issues, setIssues] = React.useState<any[]>([]);
+  const [teams, setTeams] = React.useState<any[]>([]);
+  const [form, setForm] = React.useState({ teamId: '', title: '', description: '', priority: '0' });
+  const [showForm, setShowForm] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/linear/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [i, t] = await Promise.all([
+      fetch('/api/integrations/linear/issues', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/linear/teams', { headers: h }).then(r => r.json()),
+    ]);
+    setIssues(i.data?.issues?.nodes || []); setTeams(t.data?.teams?.nodes || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/linear/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ apiKey }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadAll(); } else setStatus(d.error || 'Failed');
+  };
+
+  const createIssue = async () => {
+    if (!form.teamId || !form.title) return;
+    await fetch('/api/integrations/linear/create-issue', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    setShowForm(false); setForm(p => ({ ...p, title: '', description: '' })); loadAll();
+  };
+
+  const prioLabel = (p: number) => ['No Priority', 'Urgent', 'High', 'Medium', 'Low'][p] || '—';
+  const prioColor = (p: number) => ['#555', '#f55', '#ff9500', '#4285f4', '#18d26e'][p] || '#555';
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>📐 Linear</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Linear to browse issues, teams, and create tasks.</p>
+      <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="API Key (lin_api_xxx)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#5e6ad2', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Linear'}</button>
+    </div>
+  );
+
+  const tabs = [{ id: 'issues', label: '🐛 Issues' }, { id: 'teams', label: '👥 Teams' }] as const;
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>📐 Linear</h2>
+        <span style={{ background: '#5e6ad222', color: '#5e6ad2', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => setShowForm(p => !p)} style={{ background: '#5e6ad2', color: '#fff', border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>+ Issue</button>
+        <button onClick={() => { fetch('/api/integrations/linear/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      {showForm && <div style={{ padding: 14, background: '#111', borderRadius: 8, marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <select value={form.teamId} onChange={e => setForm(p => ({ ...p, teamId: e.target.value }))} style={{ padding: '7px 10px', borderRadius: 6, border: '1px solid #333', background: '#0a0a0a', color: '#ddd', fontSize: 12 }}>
+          <option value="">Team...</option>
+          {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+        <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Issue title" style={{ flex: 2, padding: '7px 10px', borderRadius: 6, border: '1px solid #333', background: '#0a0a0a', color: '#ddd', fontSize: 12 }} />
+        <select value={form.priority} onChange={e => setForm(p => ({ ...p, priority: e.target.value }))} style={{ padding: '7px 10px', borderRadius: 6, border: '1px solid #333', background: '#0a0a0a', color: '#ddd', fontSize: 12 }}>
+          {['No Priority','Urgent','High','Medium','Low'].map((l,i) => <option key={i} value={String(i)}>{l}</option>)}
+        </select>
+        <button onClick={createIssue} style={{ background: '#5e6ad2', color: '#fff', border: 'none', borderRadius: 6, padding: '7px 14px', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}>Create</button>
+      </div>}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {tabs.map(t => <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t.id ? '#5e6ad2' : '#1a1a1a', color: tab === t.id ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t.label}</button>)}
+      </div>
+      {tab === 'issues' && issues.map(i => <div key={i.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: i.state?.color || '#888', display: 'inline-block', flexShrink: 0 }} />
+          <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{i.title}</span>
+          <span style={{ color: prioColor(i.priority), fontSize: 11 }}>{prioLabel(i.priority)}</span>
+        </div>
+        <div style={{ color: '#555', fontSize: 11, marginTop: 4, paddingLeft: 16 }}>{i.team?.name} · {i.assignee?.name || 'Unassigned'} · {i.state?.name}</div>
+      </div>)}
+      {tab === 'teams' && teams.map(t => <div key={t.id} style={{ padding: '12px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 12, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 700, color: '#5e6ad2', fontSize: 12, background: '#5e6ad222', padding: '2px 8px', borderRadius: 4 }}>{t.key}</span>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{t.name}</span>
+        <span style={{ color: '#aaa', fontSize: 12 }}>{t.issueCount} issues</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_github() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'repos'|'issues'|'prs'>('repos');
+  const [repos, setRepos] = React.useState<any[]>([]);
+  const [issues, setIssues] = React.useState<any[]>([]);
+  const [prs, setPrs] = React.useState<any[]>([]);
+  const [selectedRepo, setSelectedRepo] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/github/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadRepos(); }
+    });
+  }, []);
+
+  const loadRepos = async () => {
+    const r = await fetch('/api/integrations/github/repos', { headers: h }); const d = await r.json();
+    setRepos(Array.isArray(d) ? d : []);
+  };
+
+  const selectRepo = async (repo: any) => {
+    setSelectedRepo(repo);
+    const [i, p] = await Promise.all([
+      fetch(`/api/integrations/github/issues?owner=${repo.owner.login}&repo=${repo.name}`, { headers: h }).then(r => r.json()),
+      fetch(`/api/integrations/github/prs?owner=${repo.owner.login}&repo=${repo.name}`, { headers: h }).then(r => r.json()),
+    ]);
+    setIssues(Array.isArray(i) ? i : []); setPrs(Array.isArray(p) ? p : []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/github/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadRepos(); } else setStatus(d.error || 'Failed');
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🐙 GitHub</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect GitHub to browse repos, issues, and pull requests.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="Personal Access Token (ghp_xxx)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#238636', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect GitHub'}</button>
+    </div>
+  );
+
+  const tabs = [{ id: 'repos', label: '📁 Repos' }, { id: 'issues', label: '🐛 Issues' }, { id: 'prs', label: '🔀 Pull Requests' }] as const;
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🐙 GitHub</h2>
+        <span style={{ background: '#23863622', color: '#238636', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/github/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {tabs.map(t => <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t.id ? '#238636' : '#1a1a1a', color: tab === t.id ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t.label}</button>)}
+      </div>
+      {tab === 'repos' && <div>{repos.map(r => <div key={r.id} onClick={() => { setSelectedRepo(r); selectRepo(r); setTab('issues'); }} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, cursor: 'pointer', display: 'flex', gap: 12, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#4285f4', flex: 1 }}>{r.full_name}</span>
+        {r.language && <span style={{ color: '#aaa', fontSize: 11 }}>{r.language}</span>}
+        <span style={{ color: '#666', fontSize: 11 }}>⭐ {r.stargazers_count}</span>
+        <span style={{ color: r.private ? '#ff9500' : '#18d26e', fontSize: 10 }}>● {r.private ? 'private' : 'public'}</span>
+      </div>)}</div>}
+      {tab === 'issues' && <div>
+        {selectedRepo && <div style={{ marginBottom: 10, color: '#aaa', fontSize: 12 }}>Showing issues for <span style={{ color: '#4285f4' }}>{selectedRepo.full_name}</span> — or <button onClick={() => setTab('repos')} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', textDecoration: 'underline', fontSize: 12 }}>pick a repo</button></div>}
+        {issues.map(i => <div key={i.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span style={{ color: '#18d26e', fontWeight: 700, fontSize: 11 }}>#{i.number}</span>
+            <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{i.title}</span>
+            <a href={i.html_url} target="_blank" rel="noreferrer" style={{ color: '#aaa', fontSize: 11, textDecoration: 'none' }}>↗</a>
+          </div>
+          {i.labels?.length > 0 && <div style={{ marginTop: 4, display: 'flex', gap: 4 }}>{i.labels.map((l: any) => <span key={l.id} style={{ fontSize: 10, padding: '1px 7px', borderRadius: 10, background: `#${l.color}33`, color: `#${l.color}` }}>{l.name}</span>)}</div>}
+        </div>)}
+      </div>}
+      {tab === 'prs' && <div>
+        {selectedRepo && <div style={{ marginBottom: 10, color: '#aaa', fontSize: 12 }}>PRs for <span style={{ color: '#4285f4' }}>{selectedRepo.full_name}</span></div>}
+        {prs.map(pr => <div key={pr.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span style={{ color: '#a371f7', fontWeight: 700, fontSize: 11 }}>#{pr.number}</span>
+            <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{pr.title}</span>
+            <span style={{ color: '#aaa', fontSize: 11 }}>{pr.user?.login}</span>
+            <a href={pr.html_url} target="_blank" rel="noreferrer" style={{ color: '#aaa', fontSize: 11, textDecoration: 'none' }}>↗</a>
+          </div>
+          <div style={{ color: '#555', fontSize: 11, marginTop: 4 }}>{pr.head?.ref} → {pr.base?.ref} · +{pr.additions} -{pr.deletions}</div>
+        </div>)}
+      </div>}
+    </div>
+  );
+}
+
 function ForgeTab_twilio() {
   const [connected, setConnected] = React.useState(false);
   const [form, setForm] = React.useState({ accountSid: '', authToken: '' });
@@ -25020,6 +25446,11 @@ export default function ForgeApp() {
             { id:'asana', icon:'📋', label:'Asana' },
             { id:'discord', icon:'🎮', label:'Discord' },
             { id:'trello', icon:'📌', label:'Trello' },
+            { id:'salesforce', icon:'☁️', label:'Salesforce' },
+            { id:'mailchimp', icon:'🐵', label:'Mailchimp' },
+            { id:'notion', icon:'📓', label:'Notion' },
+            { id:'linear', icon:'📐', label:'Linear' },
+            { id:'github', icon:'🐙', label:'GitHub' },
             { id:'twilio', icon:'📱', label:'Twilio' },
             { id:'sendgrid', icon:'✉️', label:'SendGrid' },
             { id:'shopify', icon:'🛍️', label:'Shopify' },
@@ -31737,6 +32168,11 @@ export default function ForgeApp() {
         {(mainTab as string) === 'asana' && <ForgeTab_asana />}
         {(mainTab as string) === 'discord' && <ForgeTab_discord />}
         {(mainTab as string) === 'trello' && <ForgeTab_trello />}
+        {(mainTab as string) === 'salesforce' && <ForgeTab_salesforce />}
+        {(mainTab as string) === 'mailchimp' && <ForgeTab_mailchimp />}
+        {(mainTab as string) === 'notion' && <ForgeTab_notion />}
+        {(mainTab as string) === 'linear' && <ForgeTab_linear />}
+        {(mainTab as string) === 'github' && <ForgeTab_github />}
         {(mainTab as string) === 'twilio' && <ForgeTab_twilio />}
         {(mainTab as string) === 'sendgrid' && <ForgeTab_sendgrid />}
         {(mainTab as string) === 'shopify' && <ForgeTab_shopify />}
