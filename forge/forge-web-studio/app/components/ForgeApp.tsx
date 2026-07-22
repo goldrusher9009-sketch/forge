@@ -1817,6 +1817,392 @@ function ForgeTab_stripe() {
   );
 }
 
+function ForgeTab_twilio() {
+  const [connected, setConnected] = React.useState(false);
+  const [form, setForm] = React.useState({ accountSid: '', authToken: '' });
+  const [status, setStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'messages'|'calls'|'numbers'>('messages');
+  const [messages, setMessages] = React.useState<any[]>([]);
+  const [calls, setCalls] = React.useState<any[]>([]);
+  const [numbers, setNumbers] = React.useState<any[]>([]);
+  const [sms, setSms] = React.useState({ to: '', from: '', body: '' });
+  const [sending, setSending] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/twilio/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [m, c, n] = await Promise.all([
+      fetch('/api/integrations/twilio/messages', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/twilio/calls', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/twilio/numbers', { headers: h }).then(r => r.json()),
+    ]);
+    setMessages(m.messages || []); setCalls(c.calls || []); setNumbers(n.incoming_phone_numbers || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/twilio/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadAll(); } else setStatus(d.error || 'Failed');
+  };
+
+  const sendSms = async () => {
+    if (!sms.to || !sms.from || !sms.body) return;
+    setSending(true);
+    await fetch('/api/integrations/twilio/send', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(sms) });
+    setSending(false); setSms(p => ({ ...p, body: '' })); loadAll();
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>📱 Twilio</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Twilio to send SMS, view messages and call logs.</p>
+      <input value={form.accountSid} onChange={e => setForm(p => ({ ...p, accountSid: e.target.value }))} placeholder="Account SID (ACxxx...)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />
+      <input value={form.authToken} onChange={e => setForm(p => ({ ...p, authToken: e.target.value }))} placeholder="Auth Token" type="password" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#f22f46', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Twilio'}</button>
+    </div>
+  );
+
+  const tabs = [{ id: 'messages', label: '💬 Messages' }, { id: 'calls', label: '📞 Calls' }, { id: 'numbers', label: '🔢 Numbers' }] as const;
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>📱 Twilio</h2>
+        <span style={{ background: '#f22f4622', color: '#f22f46', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/twilio/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      {numbers.length > 0 && <div style={{ marginBottom: 16, padding: 12, background: '#111', borderRadius: 8 }}>
+        <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12 }}>SEND SMS</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <select value={sms.from} onChange={e => setSms(p => ({ ...p, from: e.target.value }))} style={{ padding: '7px 10px', borderRadius: 6, border: '1px solid #333', background: '#0a0a0a', color: '#ddd', fontSize: 13 }}>
+            <option value="">From...</option>
+            {numbers.map(n => <option key={n.sid} value={n.phone_number}>{n.phone_number}</option>)}
+          </select>
+          <input value={sms.to} onChange={e => setSms(p => ({ ...p, to: e.target.value }))} placeholder="To (+1...)" style={{ width: 130, padding: '7px 10px', borderRadius: 6, border: '1px solid #333', background: '#0a0a0a', color: '#ddd', fontSize: 13 }} />
+          <input value={sms.body} onChange={e => setSms(p => ({ ...p, body: e.target.value }))} placeholder="Message..." style={{ flex: 1, padding: '7px 10px', borderRadius: 6, border: '1px solid #333', background: '#0a0a0a', color: '#ddd', fontSize: 13 }} />
+          <button onClick={sendSms} disabled={sending} style={{ background: '#f22f46', color: '#fff', border: 'none', borderRadius: 6, padding: '7px 14px', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>Send</button>
+        </div>
+      </div>}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {tabs.map(t => <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t.id ? '#f22f46' : '#1a1a1a', color: tab === t.id ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t.label}</button>)}
+      </div>
+      {tab === 'messages' && messages.map(m => <div key={m.sid} style={{ padding: '10px 12px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13 }}>
+        <div style={{ display: 'flex', gap: 8, color: '#aaa', fontSize: 11, marginBottom: 4 }}><span>{m.from}</span><span>→</span><span>{m.to}</span><span style={{ marginLeft: 'auto' }}>{new Date(m.date_created).toLocaleDateString()}</span></div>
+        <div style={{ color: '#ddd' }}>{m.body}</div>
+      </div>)}
+      {tab === 'calls' && calls.map(c => <div key={c.sid} style={{ padding: '10px 12px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 12, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ color: c.status === 'completed' ? '#18d26e' : '#888' }}>●</span>
+        <span style={{ color: '#ddd' }}>{c.from} → {c.to}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{c.duration}s</span>
+        <span style={{ color: '#666', fontSize: 11, marginLeft: 'auto' }}>{new Date(c.start_time).toLocaleDateString()}</span>
+      </div>)}
+      {tab === 'numbers' && numbers.map(n => <div key={n.sid} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 12, alignItems: 'center' }}>
+        <span style={{ fontWeight: 700, color: '#f22f46', fontSize: 15 }}>{n.phone_number}</span>
+        <span style={{ color: '#aaa', fontSize: 12 }}>{n.friendly_name}</span>
+        <span style={{ color: '#555', fontSize: 11, marginLeft: 'auto' }}>{n.capabilities?.sms ? '💬' : ''} {n.capabilities?.voice ? '📞' : ''}</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_sendgrid() {
+  const [connected, setConnected] = React.useState(false);
+  const [apiKey, setApiKey] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'stats'|'send'|'templates'|'contacts'>('stats');
+  const [stats, setStats] = React.useState<any[]>([]);
+  const [templates, setTemplates] = React.useState<any[]>([]);
+  const [contacts, setContacts] = React.useState<any>(null);
+  const [email, setEmail] = React.useState({ to: '', from: '', subject: '', html: '' });
+  const [sending, setSending] = React.useState(false);
+  const [sent, setSent] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/sendgrid/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadStats(); }
+    });
+  }, []);
+
+  const loadStats = async () => {
+    const [s, t, c] = await Promise.all([
+      fetch('/api/integrations/sendgrid/stats', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/sendgrid/templates', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/sendgrid/contacts', { headers: h }).then(r => r.json()),
+    ]);
+    setStats(Array.isArray(s) ? s : []); setTemplates(t.result || t.templates || []); setContacts(c);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/sendgrid/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ apiKey }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadStats(); } else setStatus(d.error || 'Failed');
+  };
+
+  const sendEmail = async () => {
+    if (!email.to || !email.from || !email.subject) return;
+    setSending(true);
+    await fetch('/api/integrations/sendgrid/send', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(email) });
+    setSending(false); setSent(true); setTimeout(() => setSent(false), 3000);
+  };
+
+  // compute 30d totals
+  const totals = stats.reduce((acc, day) => {
+    const s = day.stats?.[0]?.metrics || {};
+    return { delivered: acc.delivered + (s.delivered || 0), opens: acc.opens + (s.opens || 0), clicks: acc.clicks + (s.clicks || 0), bounces: acc.bounces + (s.bounces || 0) };
+  }, { delivered: 0, opens: 0, clicks: 0, bounces: 0 });
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>✉️ SendGrid</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect SendGrid to send emails, view stats, and manage templates.</p>
+      <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="API Key (SG.xxx...)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#1a82e2', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect SendGrid'}</button>
+    </div>
+  );
+
+  const tabs = [{ id: 'stats', label: '📊 Stats' }, { id: 'send', label: '✉️ Send' }, { id: 'templates', label: '📋 Templates' }, { id: 'contacts', label: '👤 Contacts' }] as const;
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>✉️ SendGrid</h2>
+        <span style={{ background: '#1a82e222', color: '#1a82e2', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/sendgrid/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {tabs.map(t => <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t.id ? '#1a82e2' : '#1a1a1a', color: tab === t.id ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t.label}</button>)}
+      </div>
+      {tab === 'stats' && <div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
+          {[['Delivered', totals.delivered, '#18d26e'], ['Opens', totals.opens, '#4285f4'], ['Clicks', totals.clicks, '#ff9500'], ['Bounces', totals.bounces, '#f55']].map(([l, v, c]) => (
+            <div key={l as string} style={{ background: '#111', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ color: '#888', fontSize: 12, marginBottom: 4 }}>{l} (30d)</div>
+              <div style={{ color: c as string, fontSize: 22, fontWeight: 700 }}>{Number(v).toLocaleString()}</div>
+            </div>
+          ))}
+        </div>
+      </div>}
+      {tab === 'send' && <div style={{ maxWidth: 480 }}>
+        {['to','from','subject'].map(k => <input key={k} value={(email as any)[k]} onChange={e => setEmail(p => ({ ...p, [k]: e.target.value }))} placeholder={k.charAt(0).toUpperCase() + k.slice(1)} style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box', fontSize: 13 }} />)}
+        <textarea value={email.html} onChange={e => setEmail(p => ({ ...p, html: e.target.value }))} placeholder="HTML body..." rows={6} style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 10, boxSizing: 'border-box', fontSize: 13, resize: 'vertical' }} />
+        <button onClick={sendEmail} disabled={sending} style={{ background: '#1a82e2', color: '#fff', border: 'none', borderRadius: 6, padding: '9px 20px', cursor: 'pointer', fontWeight: 700 }}>{sent ? '✓ Sent!' : sending ? 'Sending...' : 'Send Email'}</button>
+      </div>}
+      {tab === 'templates' && <div>{templates.map(t => <div key={t.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', fontSize: 13 }}>{t.name}</span>
+        <span style={{ color: '#555', fontSize: 11, marginLeft: 'auto' }}>v{t.versions?.length || 0} version{t.versions?.length !== 1 ? 's' : ''}</span>
+      </div>)}</div>}
+      {tab === 'contacts' && contacts && <div style={{ padding: '14px 16px', background: '#111', borderRadius: 8 }}>
+        <div style={{ color: '#aaa', fontSize: 13 }}>Total contacts: <span style={{ color: '#1a82e2', fontWeight: 700, fontSize: 18 }}>{(contacts.contact_count || 0).toLocaleString()}</span></div>
+      </div>}
+    </div>
+  );
+}
+
+function ForgeTab_shopify() {
+  const [connected, setConnected] = React.useState(false);
+  const [form, setForm] = React.useState({ shop: '', accessToken: '' });
+  const [status, setStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'overview'|'orders'|'products'|'customers'>('overview');
+  const [overview, setOverview] = React.useState<any>(null);
+  const [orders, setOrders] = React.useState<any[]>([]);
+  const [products, setProducts] = React.useState<any[]>([]);
+  const [customers, setCustomers] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/shopify/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [o, ord, p, c] = await Promise.all([
+      fetch('/api/integrations/shopify/overview', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/shopify/orders', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/shopify/products', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/shopify/customers', { headers: h }).then(r => r.json()),
+    ]);
+    setOverview(o); setOrders(ord.orders || []); setProducts(p.products || []); setCustomers(c.customers || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/shopify/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadAll(); } else setStatus(d.error || 'Failed');
+  };
+
+  const statusBadge = (s: string) => ({ paid: '#18d26e', pending: '#ff9500', refunded: '#f55', voided: '#888' }[s] || '#888');
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🛍️ Shopify</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect your Shopify store to browse orders, products, and customers.</p>
+      <input value={form.shop} onChange={e => setForm(p => ({ ...p, shop: e.target.value }))} placeholder="Store domain (mystore.myshopify.com)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />
+      <input value={form.accessToken} onChange={e => setForm(p => ({ ...p, accessToken: e.target.value }))} placeholder="Admin API access token (shpat_xxx)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#96bf48', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Shopify'}</button>
+    </div>
+  );
+
+  const tabs = [{ id: 'overview', label: '📊 Overview' }, { id: 'orders', label: '📦 Orders' }, { id: 'products', label: '🏷️ Products' }, { id: 'customers', label: '👤 Customers' }] as const;
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🛍️ Shopify</h2>
+        <span style={{ background: '#96bf4822', color: '#96bf48', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/shopify/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {tabs.map(t => <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t.id ? '#96bf48' : '#1a1a1a', color: tab === t.id ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t.label}</button>)}
+      </div>
+      {tab === 'overview' && overview && <div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 16 }}>
+          {[['Products', overview.productCount, '#96bf48'], ['Customers', overview.customerCount, '#4285f4'], ['Recent Orders', overview.recentOrders?.length, '#ff9500']].map(([l, v, c]) => (
+            <div key={l as string} style={{ background: '#111', borderRadius: 10, padding: '16px 18px' }}>
+              <div style={{ color: '#888', fontSize: 12 }}>{l}</div>
+              <div style={{ color: c as string, fontSize: 26, fontWeight: 700 }}>{v}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontWeight: 600, color: '#aaa', fontSize: 12, marginBottom: 8, textTransform: 'uppercase' }}>Recent Orders</div>
+        {(overview.recentOrders || []).slice(0, 5).map((o: any) => <div key={o.id} style={{ padding: '8px 12px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 12, alignItems: 'center', fontSize: 13 }}>
+          <span style={{ fontWeight: 600, color: '#ddd' }}>{o.name}</span>
+          <span style={{ color: '#96bf48', fontWeight: 700 }}>${Number(o.total_price).toFixed(2)}</span>
+          <span style={{ color: statusBadge(o.financial_status), fontSize: 11 }}>● {o.financial_status}</span>
+          <span style={{ color: '#555', fontSize: 11, marginLeft: 'auto' }}>{o.customer?.first_name} {o.customer?.last_name}</span>
+        </div>)}
+      </div>}
+      {tab === 'orders' && orders.map(o => <div key={o.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 12, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 700, color: '#ddd' }}>{o.name}</span>
+        <span style={{ color: '#96bf48', fontWeight: 700 }}>${Number(o.total_price).toFixed(2)}</span>
+        <span style={{ color: statusBadge(o.financial_status), fontSize: 11 }}>● {o.financial_status}</span>
+        <span style={{ color: '#666', fontSize: 11 }}>{o.fulfillment_status || 'unfulfilled'}</span>
+        <span style={{ color: '#555', fontSize: 11, marginLeft: 'auto' }}>{new Date(o.created_at).toLocaleDateString()}</span>
+      </div>)}
+      {tab === 'products' && products.map(p => <div key={p.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 12, alignItems: 'center', fontSize: 13 }}>
+        {p.image?.src && <img src={p.image.src} style={{ width: 36, height: 36, borderRadius: 4, objectFit: 'cover' }} />}
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{p.title}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{p.variants?.length} variant{p.variants?.length !== 1 ? 's' : ''}</span>
+        <span style={{ color: p.status === 'active' ? '#18d26e' : '#888', fontSize: 11 }}>● {p.status}</span>
+      </div>)}
+      {tab === 'customers' && customers.map(c => <div key={c.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 12, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd' }}>{c.first_name} {c.last_name}</span>
+        <span style={{ color: '#aaa', fontSize: 12 }}>{c.email}</span>
+        <span style={{ color: '#96bf48', fontSize: 12, marginLeft: 'auto' }}>${Number(c.total_spent).toFixed(2)} · {c.orders_count} orders</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_webflow() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [status, setStatus] = React.useState('');
+  const [sites, setSites] = React.useState<any[]>([]);
+  const [selectedSite, setSelectedSite] = React.useState<any>(null);
+  const [collections, setCollections] = React.useState<any[]>([]);
+  const [selectedCol, setSelectedCol] = React.useState<any>(null);
+  const [items, setItems] = React.useState<any[]>([]);
+  const [publishing, setPublishing] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/webflow/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadSites(); }
+    });
+  }, []);
+
+  const loadSites = async () => {
+    const r = await fetch('/api/integrations/webflow/sites', { headers: h }); const d = await r.json();
+    setSites(d.sites || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/webflow/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); loadSites(); } else setStatus(d.error || 'Failed');
+  };
+
+  const loadCollections = async (site: any) => {
+    setSelectedSite(site); setCollections([]); setItems([]);
+    const r = await fetch(`/api/integrations/webflow/collections/${site.id}`, { headers: h }); const d = await r.json();
+    setCollections(d.collections || []);
+  };
+
+  const loadItems = async (col: any) => {
+    setSelectedCol(col);
+    const r = await fetch(`/api/integrations/webflow/items/${col.id}`, { headers: h }); const d = await r.json();
+    setItems(d.items || []);
+  };
+
+  const publish = async () => {
+    if (!selectedSite) return;
+    setPublishing(true);
+    await fetch(`/api/integrations/webflow/publish/${selectedSite.id}`, { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ domains: selectedSite.customDomains?.map((d: any) => d.url) || [] }) });
+    setPublishing(false);
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🌐 Webflow</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Webflow to browse sites, collections, and publish content.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="API Token (from Webflow → Account → Integrations)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#4353ff', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Webflow'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🌐 Webflow</h2>
+        <span style={{ background: '#4353ff22', color: '#4353ff', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/webflow/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 16 }}>
+        <div style={{ width: 200, flexShrink: 0 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Sites</div>
+          {sites.map(s => <div key={s.id} onClick={() => loadCollections(s)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedSite?.id === s.id ? '#4353ff22' : 'transparent', color: selectedSite?.id === s.id ? '#4353ff' : '#ddd', marginBottom: 4, fontSize: 13 }}>
+            🌐 {s.displayName || s.name}
+          </div>)}
+        </div>
+        {collections.length > 0 && <div style={{ width: 170, flexShrink: 0 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Collections</div>
+          {collections.map(c => <div key={c.id} onClick={() => loadItems(c)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedCol?.id === c.id ? '#4353ff22' : 'transparent', color: selectedCol?.id === c.id ? '#4353ff' : '#ddd', marginBottom: 4, fontSize: 13 }}>{c.displayName || c.name}</div>)}
+        </div>}
+        {selectedSite && <div style={{ flex: 1 }}>
+          {selectedCol && <div>
+            <div style={{ fontWeight: 600, marginBottom: 8, color: '#aaa', fontSize: 12, textTransform: 'uppercase' }}>Items ({items.length})</div>
+            {items.map(item => <div key={item.id} style={{ padding: '8px 12px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13, color: '#ddd', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ flex: 1 }}>{item.fieldData?.name || item.fieldData?.title || item.id}</span>
+              <span style={{ color: item.isDraft ? '#888' : '#18d26e', fontSize: 11 }}>● {item.isDraft ? 'draft' : 'published'}</span>
+            </div>)}
+          </div>}
+          <button onClick={publish} disabled={publishing} style={{ marginTop: 16, background: '#4353ff', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', cursor: 'pointer', fontWeight: 700 }}>{publishing ? 'Publishing...' : '🚀 Publish Site'}</button>
+        </div>}
+      </div>
+    </div>
+  );
+}
+
 function ForgeTab_gsheets() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
@@ -24634,6 +25020,10 @@ export default function ForgeApp() {
             { id:'asana', icon:'📋', label:'Asana' },
             { id:'discord', icon:'🎮', label:'Discord' },
             { id:'trello', icon:'📌', label:'Trello' },
+            { id:'twilio', icon:'📱', label:'Twilio' },
+            { id:'sendgrid', icon:'✉️', label:'SendGrid' },
+            { id:'shopify', icon:'🛍️', label:'Shopify' },
+            { id:'webflow', icon:'🌐', label:'Webflow' },
             { id:'hermes', icon:'⚡', label:'Hermes Agent' },
             { id:'keyhealth', icon:'🩺', label:'Key Health' },
             { id:'notes', icon:'📝', label:'Notes' },
@@ -31347,6 +31737,10 @@ export default function ForgeApp() {
         {(mainTab as string) === 'asana' && <ForgeTab_asana />}
         {(mainTab as string) === 'discord' && <ForgeTab_discord />}
         {(mainTab as string) === 'trello' && <ForgeTab_trello />}
+        {(mainTab as string) === 'twilio' && <ForgeTab_twilio />}
+        {(mainTab as string) === 'sendgrid' && <ForgeTab_sendgrid />}
+        {(mainTab as string) === 'shopify' && <ForgeTab_shopify />}
+        {(mainTab as string) === 'webflow' && <ForgeTab_webflow />}
         {mainTab === 'hermes' && <ForgeTab_hermes />}
 
         {/* -- ForgeAuto ----------------------------------------------- */}
