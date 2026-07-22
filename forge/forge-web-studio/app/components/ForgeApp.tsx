@@ -1493,6 +1493,324 @@ function ForgeTab_slack() {
   );
 }
 
+function ForgeTab_amplitude() {
+  const [connected, setConnected] = React.useState(false);
+  const [form, setForm] = React.useState({ apiKey: '', secretKey: '' });
+  const [status, setStatus] = React.useState('');
+  const [events, setEvents] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/amplitude/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); fetch('/api/integrations/amplitude/events', { headers: h }).then(r => r.json()).then(d => setEvents(d.data || [])); }
+    });
+  }, []);
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/amplitude/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setStatus(''); fetch('/api/integrations/amplitude/events', { headers: h }).then(r => r.json()).then(d => setEvents(d.data || [])); } else setStatus(d.error || 'Failed');
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>📈 Amplitude</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Amplitude to view events and user analytics.</p>
+      <input value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} placeholder="API Key" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />
+      <input value={form.secretKey} onChange={e => setForm(p => ({ ...p, secretKey: e.target.value }))} placeholder="Secret Key" type="password" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {status && <p style={{ color: '#f55', marginBottom: 8 }}>{status}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#1e66f5', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Amplitude'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>📈 Amplitude</h2>
+        <span style={{ background: '#1e66f522', color: '#1e66f5', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/amplitude/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ fontWeight: 600, color: '#aaa', fontSize: 12, textTransform: 'uppercase', marginBottom: 10 }}>Events ({events.length})</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 8 }}>
+        {events.slice(0, 40).map((e: string, i: number) => <div key={i} style={{ padding: '8px 12px', background: '#111', borderRadius: 6, fontSize: 12, color: '#ddd' }}>⚡ {e}</div>)}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_mixpanel() {
+  const [connected, setConnected] = React.useState(false);
+  const [form, setForm] = React.useState({ serviceAccountUser: '', serviceAccountSecret: '', projectId: '' });
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'events'|'funnels'>('events');
+  const [events, setEvents] = React.useState<any[]>([]);
+  const [funnels, setFunnels] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/mixpanel/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [e, f] = await Promise.all([
+      fetch('/api/integrations/mixpanel/events', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/mixpanel/funnels', { headers: h }).then(r => r.json()),
+    ]);
+    setEvents(e.events || []); setFunnels(f.results || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/mixpanel/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🔮 Mixpanel</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Mixpanel to browse events and funnels.</p>
+      <input value={form.serviceAccountUser} onChange={e => setForm(p => ({ ...p, serviceAccountUser: e.target.value }))} placeholder="Service Account Username" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />
+      <input value={form.serviceAccountSecret} onChange={e => setForm(p => ({ ...p, serviceAccountSecret: e.target.value }))} placeholder="Service Account Secret" type="password" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />
+      <input value={form.projectId} onChange={e => setForm(p => ({ ...p, projectId: e.target.value }))} placeholder="Project ID" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#7856ff', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Mixpanel'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🔮 Mixpanel</h2>
+        <span style={{ background: '#7856ff22', color: '#7856ff', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/mixpanel/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['events','funnels'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#7856ff' : '#1a1a1a', color: tab === t ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t === 'events' ? '⚡ Events' : '🔽 Funnels'}</button>)}
+      </div>
+      {tab === 'events' && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 8 }}>
+        {events.slice(0, 40).map((e: string, i: number) => <div key={i} style={{ padding: '8px 12px', background: '#111', borderRadius: 6, fontSize: 12, color: '#ddd' }}>⚡ {e}</div>)}
+      </div>}
+      {tab === 'funnels' && funnels.map((f: any) => <div key={f.funnel_id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{f.name}</span>
+        <span style={{ color: '#7856ff', fontSize: 11 }}>{f.steps?.length} steps</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_segment() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'sources'|'destinations'>('sources');
+  const [sources, setSources] = React.useState<any[]>([]);
+  const [destinations, setDestinations] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/segment/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [s, d] = await Promise.all([
+      fetch('/api/integrations/segment/sources', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/segment/destinations', { headers: h }).then(r => r.json()),
+    ]);
+    setSources(s.data?.sources || []); setDestinations(d.data?.destinations || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/segment/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🔌 Segment</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Segment to view sources and destinations.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="Public API Token" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#52bd94', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Segment'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🔌 Segment</h2>
+        <span style={{ background: '#52bd9422', color: '#52bd94', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/segment/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['sources','destinations'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#52bd94' : '#1a1a1a', color: tab === t ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t === 'sources' ? '📥 Sources' : '📤 Destinations'}</button>)}
+      </div>
+      {tab === 'sources' && sources.map(s => <div key={s.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{s.name}</span>
+        <span style={{ color: s.enabled ? '#18d26e' : '#888', fontSize: 11 }}>● {s.enabled ? 'enabled' : 'disabled'}</span>
+      </div>)}
+      {tab === 'destinations' && destinations.map(d => <div key={d.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{d.name}</span>
+        <span style={{ color: d.enabled ? '#18d26e' : '#888', fontSize: 11 }}>● {d.enabled ? 'enabled' : 'disabled'}</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_posthog() {
+  const [connected, setConnected] = React.useState(false);
+  const [form, setForm] = React.useState({ apiKey: '', projectId: '' });
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'insights'|'events'|'persons'>('insights');
+  const [insights, setInsights] = React.useState<any[]>([]);
+  const [phEvents, setPhEvents] = React.useState<any[]>([]);
+  const [persons, setPersons] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/posthog/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [i, e, p] = await Promise.all([
+      fetch('/api/integrations/posthog/insights', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/posthog/events', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/posthog/persons', { headers: h }).then(r => r.json()),
+    ]);
+    setInsights(i.results || []); setPhEvents(e.results || []); setPersons(p.results || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/posthog/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🦔 PostHog</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect PostHog to view insights, events, and users.</p>
+      <input value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} placeholder="Personal API Key (phx_xxx)" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />
+      <input value={form.projectId} onChange={e => setForm(p => ({ ...p, projectId: e.target.value }))} placeholder="Project ID" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#f9bd2b', color: '#111', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect PostHog'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🦔 PostHog</h2>
+        <span style={{ background: '#f9bd2b22', color: '#f9bd2b', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/posthog/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['insights','events','persons'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#f9bd2b' : '#1a1a1a', color: tab === t ? '#111' : '#aaa', cursor: 'pointer', fontSize: 12, fontWeight: tab === t ? 700 : 400 }}>{t === 'insights' ? '💡 Insights' : t === 'events' ? '⚡ Events' : '👤 Persons'}</button>)}
+      </div>
+      {tab === 'insights' && insights.map(i => <div key={i.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13 }}>
+        <div style={{ fontWeight: 600, color: '#ddd' }}>{i.name || i.derived_name || 'Unnamed insight'}</div>
+        <div style={{ color: '#555', fontSize: 11, marginTop: 2 }}>{i.filters?.insight}</div>
+      </div>)}
+      {tab === 'events' && phEvents.map((e, i) => <div key={i} style={{ padding: '8px 12px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#f9bd2b', fontSize: 12 }}>⚡ {e.event}</span>
+        <span style={{ color: '#aaa', fontSize: 11, flex: 1 }}>{e.distinct_id}</span>
+      </div>)}
+      {tab === 'persons' && persons.map((p, i) => <div key={i} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{p.name || p.distinct_ids?.[0]}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{p.properties?.email}</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_datadog() {
+  const [connected, setConnected] = React.useState(false);
+  const [form, setForm] = React.useState({ apiKey: '', appKey: '' });
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'monitors'|'metrics'|'logs'>('monitors');
+  const [monitors, setMonitors] = React.useState<any[]>([]);
+  const [ddMetrics, setDdMetrics] = React.useState<any[]>([]);
+  const [logs, setLogs] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/datadog/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [m, mt, l] = await Promise.all([
+      fetch('/api/integrations/datadog/monitors', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/datadog/metrics', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/datadog/logs', { headers: h }).then(r => r.json()),
+    ]);
+    setMonitors(Array.isArray(m) ? m : []); setDdMetrics(mt.metrics || []); setLogs(l.data || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/datadog/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  const stateColor = (s: string) => ({ Alert: '#f55', Warn: '#ff9500', OK: '#18d26e', 'No Data': '#888' }[s] || '#888');
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🐶 Datadog</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Datadog to monitor infrastructure, metrics, and logs.</p>
+      <input value={form.apiKey} onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))} placeholder="API Key" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />
+      <input value={form.appKey} onChange={e => setForm(p => ({ ...p, appKey: e.target.value }))} placeholder="Application Key" type="password" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#632ca6', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Datadog'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🐶 Datadog</h2>
+        <span style={{ background: '#632ca622', color: '#632ca6', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/datadog/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['monitors','metrics','logs'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#632ca6' : '#1a1a1a', color: tab === t ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t === 'monitors' ? '🔔 Monitors' : t === 'metrics' ? '📊 Metrics' : '📋 Logs'}</button>)}
+      </div>
+      {tab === 'monitors' && monitors.map(m => <div key={m.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ color: stateColor(m.overall_state), fontSize: 11 }}>●</span>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{m.name}</span>
+        <span style={{ color: '#555', fontSize: 11 }}>{m.type}</span>
+      </div>)}
+      {tab === 'metrics' && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8 }}>
+        {ddMetrics.slice(0, 40).map((m: string, i: number) => <div key={i} style={{ padding: '8px 12px', background: '#111', borderRadius: 6, fontSize: 12, color: '#ddd' }}>📊 {m}</div>)}
+      </div>}
+      {tab === 'logs' && logs.map((l: any, i: number) => <div key={i} style={{ padding: '8px 12px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 12 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 2 }}>
+          <span style={{ color: ({ ERROR: '#f55', WARN: '#ff9500', INFO: '#4285f4', DEBUG: '#888' } as any)[l.attributes?.status] || '#888', fontWeight: 700, fontSize: 10 }}>{l.attributes?.status}</span>
+        </div>
+        <div style={{ color: '#ddd' }}>{String(l.attributes?.message || '').slice(0, 120)}</div>
+      </div>)}
+    </div>
+  );
+}
+
 function ForgeTab_jira() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
@@ -25869,6 +26187,11 @@ export default function ForgeApp() {
             { id:'sendgrid', icon:'✉️', label:'SendGrid' },
             { id:'shopify', icon:'🛍️', label:'Shopify' },
             { id:'webflow', icon:'🌐', label:'Webflow' },
+            { id:'amplitude', icon:'📈', label:'Amplitude' },
+            { id:'mixpanel', icon:'🔮', label:'Mixpanel' },
+            { id:'segment', icon:'🔌', label:'Segment' },
+            { id:'posthog', icon:'🦔', label:'PostHog' },
+            { id:'datadog', icon:'🐶', label:'Datadog' },
             { id:'hermes', icon:'⚡', label:'Hermes Agent' },
             { id:'keyhealth', icon:'🩺', label:'Key Health' },
             { id:'notes', icon:'📝', label:'Notes' },
@@ -32596,6 +32919,11 @@ export default function ForgeApp() {
         {(mainTab as string) === 'sendgrid' && <ForgeTab_sendgrid />}
         {(mainTab as string) === 'shopify' && <ForgeTab_shopify />}
         {(mainTab as string) === 'webflow' && <ForgeTab_webflow />}
+        {(mainTab as string) === 'amplitude' && <ForgeTab_amplitude />}
+        {(mainTab as string) === 'mixpanel' && <ForgeTab_mixpanel />}
+        {(mainTab as string) === 'segment' && <ForgeTab_segment />}
+        {(mainTab as string) === 'posthog' && <ForgeTab_posthog />}
+        {(mainTab as string) === 'datadog' && <ForgeTab_datadog />}
         {mainTab === 'hermes' && <ForgeTab_hermes />}
 
         {/* -- ForgeAuto ----------------------------------------------- */}
