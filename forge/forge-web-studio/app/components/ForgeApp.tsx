@@ -1651,6 +1651,172 @@ function ForgeTab_jira() {
   );
 }
 
+function ForgeTab_stripe() {
+  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  const [status, setStatus] = React.useState<any>(null);
+  const [secretKey, setSecretKey] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [overview, setOverview] = React.useState<any>(null);
+  const [customers, setCustomers] = React.useState<any[]>([]);
+  const [subs, setSubs] = React.useState<any[]>([]);
+  const [charges, setCharges] = React.useState<any[]>([]);
+  const [tab, setTab] = React.useState<'overview'|'customers'|'subscriptions'|'charges'>('overview');
+
+  React.useEffect(() => {
+    fetch(`${API}/api/integrations/stripe/status`, {headers:{Authorization:`Bearer ${tok}`}})
+      .then(r=>r.json()).then(d=>{ setStatus(d); if(d.connected) loadAll(); });
+  }, []);
+
+  async function loadAll() {
+    setLoading(true);
+    const [ov, cu, sb, ch] = await Promise.all([
+      fetch(`${API}/api/integrations/stripe/overview`, {headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()),
+      fetch(`${API}/api/integrations/stripe/customers`, {headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()),
+      fetch(`${API}/api/integrations/stripe/subscriptions`, {headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()),
+      fetch(`${API}/api/integrations/stripe/charges`, {headers:{Authorization:`Bearer ${tok}`}}).then(r=>r.json()),
+    ]);
+    setOverview(ov); setCustomers(cu.customers||[]); setSubs(sb.subscriptions||[]); setCharges(ch.charges||[]);
+    setLoading(false);
+  }
+
+  async function connect() {
+    if(!secretKey.trim()) return;
+    setLoading(true);
+    const r = await fetch(`${API}/api/integrations/stripe/connect`, {method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`}, body:JSON.stringify({secretKey})});
+    const d = await r.json();
+    setLoading(false);
+    if(d.ok) { setStatus({connected:true,...d}); loadAll(); }
+    else alert(d.error||'Connection failed');
+  }
+
+  const fmtMoney = (cents: number, currency = 'usd') => new Intl.NumberFormat('en-US',{style:'currency',currency}).format(cents/100);
+  const fmtDate = (ts: number) => new Date(ts*1000).toLocaleDateString();
+
+  const s: Record<string,React.CSSProperties> = {
+    wrap:{padding:24,maxWidth:1100,margin:'0 auto'},
+    card:{background:'#1e1e2e',borderRadius:12,padding:20,marginBottom:16,border:'1px solid #2d2d3d'},
+    input:{background:'#0d0d14',border:'1px solid #3d3d5c',borderRadius:8,padding:'10px 14px',color:'#e2e8f0',width:'100%',fontSize:14,boxSizing:'border-box' as const},
+    btn:{padding:'10px 20px',borderRadius:8,border:'none',cursor:'pointer',fontWeight:600,fontSize:14},
+    tabs:{display:'flex',gap:8,marginBottom:20},
+    tab:{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:13,fontWeight:600},
+    statCard:{background:'#12121e',borderRadius:10,padding:20,border:'1px solid #2d2d3d',textAlign:'center' as const},
+    row:{background:'#12121e',borderRadius:8,padding:'10px 14px',marginBottom:6,border:'1px solid #2d2d3d',display:'flex',justifyContent:'space-between',alignItems:'center',gap:12},
+  };
+
+  if(!status) return <div style={{padding:40,color:'#94a3b8',textAlign:'center'}}>Loading Stripe status…</div>;
+
+  if(!status.connected) return (
+    <div style={s.wrap}>
+      <div style={s.card}>
+        <h2 style={{color:'#f1f5f9',marginBottom:8}}>💳 Connect Stripe</h2>
+        <p style={{color:'#94a3b8',fontSize:14,marginBottom:16}}>Connect your Stripe account to view revenue, customers, subscriptions, and recent charges.</p>
+        <ol style={{color:'#94a3b8',fontSize:13,marginBottom:20,lineHeight:'1.8'}}>
+          <li>Go to <a href="https://dashboard.stripe.com/apikeys" target="_blank" style={{color:'#818cf8'}}>dashboard.stripe.com/apikeys</a></li>
+          <li>Copy your <strong style={{color:'#f1f5f9'}}>Secret key</strong> (<code style={{background:'#2d2d3d',padding:'1px 4px',borderRadius:3}}>sk_live_...</code> or <code style={{background:'#2d2d3d',padding:'1px 4px',borderRadius:3}}>sk_test_...</code>)</li>
+        </ol>
+        <div style={{display:'flex',gap:10}}>
+          <input style={s.input} placeholder="sk_live_xxx or sk_test_xxx" type="password" value={secretKey} onChange={e=>setSecretKey(e.target.value)} />
+          <button style={{...s.btn,background:'#6366f1',color:'#fff',whiteSpace:'nowrap'}} onClick={connect} disabled={loading}>{loading?'Connecting…':'Connect Stripe'}</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={s.wrap}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <div><span style={{color:'#a78bfa',fontWeight:700,fontSize:18}}>💳 Stripe</span><span style={{color:'#22c55e',fontSize:12,marginLeft:10}}>● {status.account_name||'Connected'} {status.mode==='test'?'[TEST MODE]':''}</span></div>
+        <div style={{display:'flex',gap:8}}>
+          <button style={{...s.btn,background:'#1e1e2e',color:'#6366f1',border:'1px solid #6366f1',fontSize:12}} onClick={loadAll}>↻ Refresh</button>
+          <button style={{...s.btn,background:'#374151',color:'#9ca3af',fontSize:12}} onClick={()=>{fetch(`${API}/api/integrations/stripe/disconnect`,{method:'DELETE',headers:{Authorization:`Bearer ${tok}`}});setStatus({connected:false});}}>Disconnect</button>
+        </div>
+      </div>
+
+      <div style={s.tabs}>
+        {(['overview','customers','subscriptions','charges'] as const).map(t=>(
+          <button key={t} style={{...s.tab,background:tab===t?'#6366f1':'#1e1e2e',color:tab===t?'#fff':'#94a3b8',border:'1px solid '+(tab===t?'#6366f1':'#2d2d3d')}} onClick={()=>setTab(t)}>{t==='overview'?'📊 Overview':t==='customers'?'👥 Customers':t==='subscriptions'?'🔄 Subscriptions':'💰 Charges'}</button>
+        ))}
+      </div>
+
+      {tab==='overview' && overview && (
+        <div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
+            {[
+              {label:'MRR',value:fmtMoney(overview.mrr||0),color:'#22c55e'},
+              {label:'Total Revenue (30d)',value:fmtMoney(overview.revenue_30d||0),color:'#6366f1'},
+              {label:'Active Subs',value:String(overview.active_subs||0),color:'#f59e0b'},
+              {label:'Total Customers',value:String(overview.total_customers||0),color:'#3b82f6'},
+            ].map(stat=>(
+              <div key={stat.label} style={s.statCard}>
+                <div style={{color:'#64748b',fontSize:12,marginBottom:8}}>{stat.label}</div>
+                <div style={{color:stat.color,fontSize:24,fontWeight:800}}>{stat.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab==='customers' && (
+        <div style={s.card}>
+          <h3 style={{color:'#f1f5f9',marginBottom:12}}>Recent Customers</h3>
+          {customers.map(c=>(
+            <div key={c.id} style={s.row}>
+              <div>
+                <div style={{color:'#e2e8f0',fontSize:14,fontWeight:600}}>{c.name||'(no name)'}</div>
+                <div style={{color:'#64748b',fontSize:12}}>{c.email} · {fmtDate(c.created)}</div>
+              </div>
+              <div style={{textAlign:'right' as const}}>
+                <div style={{color:'#22c55e',fontSize:14,fontWeight:700}}>{fmtMoney(c.balance<0?-c.balance:0)}</div>
+                <div style={{color:'#475569',fontSize:11}}>{c.id}</div>
+              </div>
+            </div>
+          ))}
+          {customers.length===0 && <p style={{color:'#64748b',fontSize:13}}>No customers yet.</p>}
+        </div>
+      )}
+
+      {tab==='subscriptions' && (
+        <div style={s.card}>
+          <h3 style={{color:'#f1f5f9',marginBottom:12}}>Active Subscriptions</h3>
+          {subs.map(sub=>(
+            <div key={sub.id} style={s.row}>
+              <div>
+                <div style={{color:'#e2e8f0',fontSize:14,fontWeight:600}}>{sub.customer_email||sub.customer_id}</div>
+                <div style={{color:'#64748b',fontSize:12}}>{sub.plan} · started {fmtDate(sub.created)}</div>
+              </div>
+              <div style={{textAlign:'right' as const}}>
+                <span style={{background:sub.status==='active'?'#14532d':'#7f1d1d',color:sub.status==='active'?'#4ade80':'#f87171',borderRadius:4,padding:'2px 8px',fontSize:12}}>{sub.status}</span>
+                <div style={{color:'#22c55e',fontSize:14,fontWeight:700,marginTop:4}}>{fmtMoney(sub.amount,sub.currency)} / {sub.interval}</div>
+              </div>
+            </div>
+          ))}
+          {subs.length===0 && <p style={{color:'#64748b',fontSize:13}}>No subscriptions yet.</p>}
+        </div>
+      )}
+
+      {tab==='charges' && (
+        <div style={s.card}>
+          <h3 style={{color:'#f1f5f9',marginBottom:12}}>Recent Charges</h3>
+          {charges.map(ch=>(
+            <div key={ch.id} style={s.row}>
+              <div>
+                <div style={{color:'#e2e8f0',fontSize:14,fontWeight:600}}>{ch.description||ch.customer_email||'Charge'}</div>
+                <div style={{color:'#64748b',fontSize:12}}>{fmtDate(ch.created)} · {ch.payment_method}</div>
+              </div>
+              <div style={{textAlign:'right' as const}}>
+                <div style={{color:'#22c55e',fontSize:16,fontWeight:700}}>{fmtMoney(ch.amount,ch.currency)}</div>
+                <span style={{background:ch.status==='succeeded'?'#14532d':'#7f1d1d',color:ch.status==='succeeded'?'#4ade80':'#f87171',borderRadius:4,padding:'1px 6px',fontSize:11}}>{ch.status}</span>
+              </div>
+            </div>
+          ))}
+          {charges.length===0 && <p style={{color:'#64748b',fontSize:13}}>No charges yet.</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ForgeTab_hermes() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
@@ -23592,6 +23758,7 @@ export default function ForgeApp() {
             { id:'linear', icon:'📐', label:'Linear' },
             { id:'slack', icon:'💬', label:'Slack' },
             { id:'jira', icon:'🔷', label:'Jira' },
+            { id:'stripe', icon:'💳', label:'Stripe' },
             { id:'hermes', icon:'⚡', label:'Hermes Agent' },
             { id:'keyhealth', icon:'🩺', label:'Key Health' },
             { id:'notes', icon:'📝', label:'Notes' },
@@ -30295,6 +30462,7 @@ export default function ForgeApp() {
         {(mainTab as string) === 'linear' && <ForgeTab_linear />}
         {(mainTab as string) === 'slack' && <ForgeTab_slack />}
         {(mainTab as string) === 'jira' && <ForgeTab_jira />}
+        {(mainTab as string) === 'stripe' && <ForgeTab_stripe />}
         {mainTab === 'hermes' && <ForgeTab_hermes />}
 
         {/* -- ForgeAuto ----------------------------------------------- */}
