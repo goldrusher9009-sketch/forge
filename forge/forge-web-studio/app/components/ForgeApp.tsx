@@ -934,6 +934,334 @@ function ForgeTab_github() {
   );
 }
 
+// ─── INTEGRATIONS HUB ────────────────────────────────────────────────────────
+const INTEGRATION_CATALOG = [
+  // Dev Tools
+  { id:'github',      icon:'🐙', label:'GitHub',      cat:'Dev Tools',   color:'#238636', desc:'Repos, PRs, issues, Actions' },
+  { id:'linear',      icon:'📐', label:'Linear',      cat:'Dev Tools',   color:'#5e6ad2', desc:'Issues, sprints, roadmap' },
+  { id:'jira',        icon:'🎯', label:'Jira',         cat:'Dev Tools',   color:'#0052cc', desc:'Tickets, boards, epics' },
+  { id:'sentry',      icon:'🛡️', label:'Sentry',      cat:'Dev Tools',   color:'#362d59', desc:'Errors, issues, releases' },
+  { id:'datadog',     icon:'🐶', label:'Datadog',     cat:'Dev Tools',   color:'#632ca6', desc:'Monitors, metrics, logs' },
+  { id:'pagerduty',   icon:'🚨', label:'PagerDuty',   cat:'Dev Tools',   color:'#06ac38', desc:'Incidents, services, on-call' },
+  { id:'cloudflare',  icon:'☁️', label:'Cloudflare',  cat:'Dev Tools',   color:'#f38020', desc:'Zones, workers, DNS' },
+  { id:'vercel',      icon:'▲',  label:'Vercel',      cat:'Dev Tools',   color:'#fff',    desc:'Deployments, logs, domains' },
+  { id:'supabase',    icon:'⚡', label:'Supabase',    cat:'Dev Tools',   color:'#3ecf8e', desc:'Database, auth, storage' },
+  // Productivity
+  { id:'notion',      icon:'📝', label:'Notion',      cat:'Productivity',color:'#fff',    desc:'Pages, databases, docs' },
+  { id:'confluence',  icon:'📚', label:'Confluence',  cat:'Productivity',color:'#0052cc', desc:'Spaces, pages, wikis' },
+  { id:'asana',       icon:'🗂️', label:'Asana',       cat:'Productivity',color:'#f06a6a', desc:'Tasks, projects, timelines' },
+  { id:'airtable',    icon:'🟡', label:'Airtable',    cat:'Productivity',color:'#fcb400', desc:'Bases, tables, records' },
+  { id:'figma',       icon:'🎨', label:'Figma',       cat:'Productivity',color:'#a259ff', desc:'Projects, files, designs' },
+  { id:'loom',        icon:'🎬', label:'Loom',        cat:'Productivity',color:'#625df5', desc:'Videos, folders' },
+  { id:'calendly',    icon:'📅', label:'Calendly',    cat:'Productivity',color:'#0069ff', desc:'Events, event types' },
+  { id:'zoom',        icon:'📹', label:'Zoom',        cat:'Productivity',color:'#2d8cff', desc:'Meetings, recordings' },
+  // CRM & Support
+  { id:'hubspot',     icon:'🟠', label:'HubSpot',     cat:'CRM & Support',color:'#ff7a59', desc:'Contacts, deals, companies' },
+  { id:'zendesk',     icon:'🎫', label:'Zendesk',     cat:'CRM & Support',color:'#03363d', desc:'Tickets, users, orgs' },
+  // Analytics
+  { id:'amplitude',   icon:'📈', label:'Amplitude',   cat:'Analytics',   color:'#1a71e5', desc:'Events, funnels, cohorts' },
+  { id:'mixpanel',    icon:'🔮', label:'Mixpanel',    cat:'Analytics',   color:'#7856ff', desc:'Events, funnels, people' },
+  { id:'segment',     icon:'🔌', label:'Segment',     cat:'Analytics',   color:'#52bd94', desc:'Sources, destinations' },
+  { id:'posthog',     icon:'🦔', label:'PostHog',     cat:'Analytics',   color:'#f76b15', desc:'Insights, events, persons' },
+  // Finance
+  { id:'stripe_mgmt', icon:'💳', label:'Stripe',      cat:'Finance',     color:'#635bff', desc:'Payments, customers, subs' },
+];
+
+const INTEGRATION_CATS = ['All','Dev Tools','Productivity','CRM & Support','Analytics','Finance'];
+
+function ForgeTab_integrationsHub({ onOpen }: { onOpen: (id: string) => void }) {
+  const [search, setSearch] = React.useState('');
+  const [cat, setCat] = React.useState('All');
+  const [statuses, setStatuses] = React.useState<Record<string,boolean>>({});
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    // Check connection status for all integrations in parallel
+    const providers = INTEGRATION_CATALOG.map(i => i.id === 'stripe_mgmt' ? 'stripe' : i.id);
+    Promise.all(
+      INTEGRATION_CATALOG.map(async (integ) => {
+        const provider = integ.id === 'stripe_mgmt' ? 'stripe' : integ.id;
+        try {
+          const r = await fetch(`/api/integrations/${provider}/status`, { headers: h });
+          const d = await r.json();
+          return { id: integ.id, connected: !!d.connected };
+        } catch { return { id: integ.id, connected: false }; }
+      })
+    ).then(results => {
+      const map: Record<string,boolean> = {};
+      results.forEach(r => { map[r.id] = r.connected; });
+      setStatuses(map);
+    });
+  }, []);
+
+  const connectedCount = Object.values(statuses).filter(Boolean).length;
+  const filtered = INTEGRATION_CATALOG.filter(i =>
+    (cat === 'All' || i.cat === cat) &&
+    (search === '' || i.label.toLowerCase().includes(search.toLowerCase()) || i.desc.toLowerCase().includes(search.toLowerCase()))
+  );
+  const grouped = INTEGRATION_CATS.filter(c => c !== 'All').reduce((acc, c) => {
+    const items = filtered.filter(i => i.cat === c);
+    if (items.length) acc[c] = items;
+    return acc;
+  }, {} as Record<string, typeof INTEGRATION_CATALOG>);
+
+  return (
+    <div style={{ padding: 28, maxWidth: 1000 }}>
+      {/* Header */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display:'flex', alignItems:'center', gap: 16, marginBottom: 6 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: '-0.03em' }}>🔌 Integrations</h1>
+          <div style={{ background: connectedCount > 0 ? '#18d26e22' : '#ffffff11', border: `1px solid ${connectedCount > 0 ? '#18d26e44' : '#333'}`, borderRadius: 20, padding: '3px 12px', fontSize: 12, color: connectedCount > 0 ? '#18d26e' : '#888' }}>
+            {connectedCount} connected
+          </div>
+        </div>
+        <p style={{ color: '#888', fontSize: 14, margin: 0 }}>Connect your tools to see all your data in one place.</p>
+      </div>
+
+      {/* Search + filter */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#555', fontSize: 14 }}>🔍</span>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search integrations..." style={{ width: '100%', padding: '9px 12px 9px 34px', borderRadius: 8, border: '1px solid #2a2a2a', background: '#111', color: '#fff', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {INTEGRATION_CATS.map(c => (
+            <button key={c} onClick={() => setCat(c)} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: cat === c ? '#ffffff18' : 'transparent', color: cat === c ? '#fff' : '#666', cursor: 'pointer', fontSize: 12, fontWeight: cat === c ? 600 : 400, transition: 'all 0.15s' }}>{c}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Connected strip */}
+      {connectedCount > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#18d26e', marginBottom: 10 }}>● Connected</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {INTEGRATION_CATALOG.filter(i => statuses[i.id]).map(i => (
+              <button key={i.id} onClick={() => onOpen(i.id)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: '#0a1a0a', border: '1px solid #18d26e44', borderRadius: 10, cursor: 'pointer', color: '#fff', fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#0d250d')}
+                onMouseLeave={e => (e.currentTarget.style.background = '#0a1a0a')}>
+                <span>{i.icon}</span><span>{i.label}</span><span style={{ width: 6, height: 6, borderRadius: '50%', background: '#18d26e', display: 'inline-block' }} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Grid by category */}
+      {(cat === 'All' ? Object.entries(grouped) : [[cat, filtered] as [string, typeof INTEGRATION_CATALOG]]).map(([catName, items]) => (
+        <div key={catName} style={{ marginBottom: 32 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#555', marginBottom: 12 }}>{catName}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+            {(items as typeof INTEGRATION_CATALOG).map(integ => {
+              const connected = statuses[integ.id];
+              return (
+                <button key={integ.id} onClick={() => onOpen(integ.id)}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8, padding: '14px 16px', background: connected ? '#0a120a' : '#0f0f0f', border: `1px solid ${connected ? '#18d26e33' : '#1e1e1e'}`, borderRadius: 12, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', position: 'relative' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = connected ? '#0d1a0d' : '#161616'; e.currentTarget.style.borderColor = connected ? '#18d26e66' : '#333'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = connected ? '#0a120a' : '#0f0f0f'; e.currentTarget.style.borderColor = connected ? '#18d26e33' : '#1e1e1e'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                    <span style={{ fontSize: 22 }}>{integ.icon}</span>
+                    {connected
+                      ? <span style={{ fontSize: 10, color: '#18d26e', background: '#18d26e18', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>Connected</span>
+                      : <span style={{ fontSize: 10, color: '#555', background: '#ffffff08', padding: '2px 8px', borderRadius: 20 }}>Connect</span>
+                    }
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#eee', marginBottom: 2 }}>{integ.label}</div>
+                    <div style={{ fontSize: 11, color: '#555', lineHeight: 1.4 }}>{integ.desc}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── HOME DASHBOARD ───────────────────────────────────────────────────────────
+function ForgeTab_homeHub({ onOpen }: { onOpen: (id: string) => void }) {
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+  const [loading, setLoading] = React.useState(true);
+  const [data, setData] = React.useState<{
+    connected: Array<{id:string;icon:string;label:string;color:string}>;
+    github?: any; linear?: any; pagerduty?: any; stripe?: any; datadog?: any; sentry?: any;
+  }>({ connected: [] });
+  const [time, setTime] = React.useState(new Date());
+
+  React.useEffect(() => {
+    const t = setInterval(() => setTime(new Date()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  React.useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      // Check which are connected
+      const statuses = await Promise.all(
+        INTEGRATION_CATALOG.map(async i => {
+          const provider = i.id === 'stripe_mgmt' ? 'stripe' : i.id;
+          try { const r = await fetch(`/api/integrations/${provider}/status`, { headers: h }); const d = await r.json(); return { ...i, connected: !!d.connected }; }
+          catch { return { ...i, connected: false }; }
+        })
+      );
+      const connected = statuses.filter(s => s.connected);
+
+      // Load quick data from connected services in parallel
+      const fetches: Record<string, Promise<any>> = {};
+      if (connected.find(c => c.id === 'github')) fetches.github = fetch('/api/integrations/github/prs', { headers: h }).then(r => r.json()).catch(() => ({}));
+      if (connected.find(c => c.id === 'linear')) fetches.linear = fetch('/api/integrations/linear/issues', { headers: h }).then(r => r.json()).catch(() => ({}));
+      if (connected.find(c => c.id === 'pagerduty')) fetches.pagerduty = fetch('/api/integrations/pagerduty/incidents', { headers: h }).then(r => r.json()).catch(() => ({}));
+      if (connected.find(c => c.id === 'stripe_mgmt')) fetches.stripe = fetch('/api/integrations/stripe/recent', { headers: h }).then(r => r.json()).catch(() => ({}));
+      if (connected.find(c => c.id === 'sentry')) fetches.sentry = fetch('/api/integrations/sentry/issues', { headers: h }).then(r => r.json()).catch(() => ({}));
+
+      const results = await Promise.all(Object.values(fetches));
+      const keys = Object.keys(fetches);
+      const extra: Record<string,any> = {};
+      keys.forEach((k, i) => { extra[k] = results[i]; });
+
+      setData({ connected, ...extra });
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  const greeting = () => {
+    const h = time.getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  const Card = ({ title, children, accent, onClick }: any) => (
+    <div onClick={onClick} style={{ background: '#0f0f0f', border: `1px solid #1e1e1e`, borderLeft: `3px solid ${accent || '#333'}`, borderRadius: 12, padding: '16px 18px', cursor: onClick ? 'pointer' : 'default', transition: 'all 0.15s' }}
+      onMouseEnter={e => { if (onClick) { e.currentTarget.style.background = '#141414'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
+      onMouseLeave={e => { e.currentTarget.style.background = '#0f0f0f'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: accent || '#555', marginBottom: 10 }}>{title}</div>
+      {children}
+    </div>
+  );
+
+  if (loading) return (
+    <div style={{ padding: 40, textAlign: 'center', color: '#555' }}>
+      <div style={{ fontSize: 32, marginBottom: 12 }}>⚡</div>
+      <div>Loading your dashboard...</div>
+    </div>
+  );
+
+  if (data.connected.length === 0) return (
+    <div style={{ padding: 40, textAlign: 'center' }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>🔌</div>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Connect your first tool</h2>
+      <p style={{ color: '#888', marginBottom: 24, fontSize: 14 }}>Your dashboard will show live data from GitHub, Linear, Stripe, and more.</p>
+      <button onClick={() => onOpen('integrations')} style={{ background: '#ffffff', color: '#000', border: 'none', borderRadius: 10, padding: '12px 28px', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>Browse Integrations →</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 28, maxWidth: 960 }}>
+      {/* Header */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px', letterSpacing: '-0.03em' }}>{greeting()} 👋</h1>
+            <p style={{ color: '#666', fontSize: 13, margin: 0 }}>{time.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' })} · {data.connected.length} tools connected</p>
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {data.connected.slice(0, 6).map(i => (
+              <button key={i.id} onClick={() => onOpen(i.id)} title={i.label} style={{ width: 34, height: 34, borderRadius: 8, background: '#1a1a1a', border: '1px solid #2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16 }}>{i.icon}</button>
+            ))}
+            {data.connected.length > 6 && <button onClick={() => onOpen('integrations')} style={{ width: 34, height: 34, borderRadius: 8, background: '#1a1a1a', border: '1px solid #2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 11, color: '#888' }}>+{data.connected.length - 6}</button>}
+          </div>
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10, marginBottom: 24 }}>
+        {data.github && <div style={{ background: '#0f0f0f', border: '1px solid #1e1e1e', borderRadius: 10, padding: '14px 16px', cursor: 'pointer' }} onClick={() => onOpen('github')}>
+          <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>Open PRs</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: '#238636' }}>{(data.github.prs || []).length}</div>
+          <div style={{ fontSize: 11, color: '#555' }}>🐙 GitHub</div>
+        </div>}
+        {data.linear && <div style={{ background: '#0f0f0f', border: '1px solid #1e1e1e', borderRadius: 10, padding: '14px 16px', cursor: 'pointer' }} onClick={() => onOpen('linear')}>
+          <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>Open Issues</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: '#5e6ad2' }}>{(data.linear.issues || []).length}</div>
+          <div style={{ fontSize: 11, color: '#555' }}>📐 Linear</div>
+        </div>}
+        {data.pagerduty && <div style={{ background: '#0f0f0f', border: '1px solid #1e1e1e', borderRadius: 10, padding: '14px 16px', cursor: 'pointer' }} onClick={() => onOpen('pagerduty')}>
+          <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>Active Incidents</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: (data.pagerduty.incidents || []).length > 0 ? '#e55' : '#18d26e' }}>{(data.pagerduty.incidents || []).length}</div>
+          <div style={{ fontSize: 11, color: '#555' }}>🚨 PagerDuty</div>
+        </div>}
+        {data.sentry && <div style={{ background: '#0f0f0f', border: '1px solid #1e1e1e', borderRadius: 10, padding: '14px 16px', cursor: 'pointer' }} onClick={() => onOpen('sentry')}>
+          <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>Sentry Issues</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: '#f77' }}>{(data.sentry.issues || []).length}</div>
+          <div style={{ fontSize: 11, color: '#555' }}>🛡️ Sentry</div>
+        </div>}
+      </div>
+
+      {/* Content grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+        {data.github && (data.github.prs || []).length > 0 && (
+          <Card title="🔀 Open Pull Requests" accent="#238636" onClick={() => onOpen('github')}>
+            {(data.github.prs || []).slice(0, 4).map((p: any) => (
+              <div key={p.id} style={{ padding: '6px 0', borderBottom: '1px solid #1a1a1a', fontSize: 12, color: '#ddd' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ color: '#18d26e', fontSize: 10 }}>●</span>
+                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</span>
+                </div>
+                <div style={{ color: '#555', fontSize: 10, marginTop: 2 }}>#{p.number} · {p.repository_url?.split('/').slice(-2).join('/')}</div>
+              </div>
+            ))}
+            {(data.github.prs || []).length > 4 && <div style={{ color: '#555', fontSize: 11, marginTop: 6 }}>+{(data.github.prs || []).length - 4} more</div>}
+          </Card>
+        )}
+
+        {data.linear && (data.linear.issues || []).length > 0 && (
+          <Card title="📐 Linear Issues" accent="#5e6ad2" onClick={() => onOpen('linear')}>
+            {(data.linear.issues || []).slice(0, 4).map((i: any) => (
+              <div key={i.id} style={{ padding: '6px 0', borderBottom: '1px solid #1a1a1a', fontSize: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ background: '#1a1a2e', color: '#5e6ad2', padding: '1px 6px', borderRadius: 4, fontSize: 10, flexShrink: 0 }}>{i.state?.name}</span>
+                  <span style={{ color: '#ddd', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{i.title}</span>
+                </div>
+                <div style={{ color: '#555', fontSize: 10, marginTop: 2 }}>{i.team?.name} · {i.assignee?.name || 'Unassigned'}</div>
+              </div>
+            ))}
+          </Card>
+        )}
+
+        {data.pagerduty && (data.pagerduty.incidents || []).filter((i: any) => i.status !== 'resolved').length > 0 && (
+          <Card title="🚨 Active Incidents" accent="#e55" onClick={() => onOpen('pagerduty')}>
+            {(data.pagerduty.incidents || []).filter((i: any) => i.status !== 'resolved').slice(0, 3).map((i: any) => (
+              <div key={i.id} style={{ padding: '6px 0', borderBottom: '1px solid #1a1a1a', fontSize: 12 }}>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <span style={{ color: i.urgency === 'high' ? '#e55' : '#fa0', fontSize: 10 }}>▲</span>
+                  <span style={{ color: '#ddd', flex: 1 }}>{i.title}</span>
+                </div>
+                <div style={{ color: '#555', fontSize: 10, marginTop: 2 }}>{i.service?.summary}</div>
+              </div>
+            ))}
+          </Card>
+        )}
+
+        {/* Empty connection prompt */}
+        <Card title="➕ Add Integration" accent="#333">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {INTEGRATION_CATALOG.filter(i => !data.connected.find(c => c.id === i.id)).slice(0, 6).map(i => (
+              <button key={i.id} onClick={() => onOpen(i.id)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8, cursor: 'pointer', color: '#888', fontSize: 11 }}>
+                <span>{i.icon}</span><span>{i.label}</span>
+              </button>
+            ))}
+            <button onClick={() => onOpen('integrations')} style={{ padding: '5px 10px', background: 'transparent', border: '1px dashed #333', borderRadius: 8, cursor: 'pointer', color: '#555', fontSize: 11 }}>See all →</button>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 function ForgeTab_notion() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
@@ -1489,6 +1817,262 @@ function ForgeTab_slack() {
           {searchRes.length===0 && searchQ && !loading && <p style={{color:'#64748b',fontSize:13}}>No results.</p>}
         </div>
       )}
+    </div>
+  );
+}
+
+function ForgeTab_figma() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [connStatus, setConnStatus] = React.useState('');
+  const [projects, setProjects] = React.useState<any[]>([]);
+  const [files, setFiles] = React.useState<any[]>([]);
+  const [selectedProject, setSelectedProject] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/figma/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); fetch('/api/integrations/figma/projects', { headers: h }).then(r => r.json()).then(d => setProjects(d.projects || [])); }
+    });
+  }, []);
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/figma/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); fetch('/api/integrations/figma/projects', { headers: h }).then(r => r.json()).then(d => setProjects(d.projects || [])); } else setConnStatus(d.error || 'Failed');
+  };
+
+  const selectProject = async (p: any) => {
+    setSelectedProject(p);
+    const d = await fetch(`/api/integrations/figma/files?projectId=${p.id}`, { headers: h }).then(r => r.json());
+    setFiles(d.files || []);
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🎨 Figma</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Figma to browse your design projects and files.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="Personal Access Token" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#a259ff', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Figma'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🎨 Figma</h2>
+        <span style={{ background: '#a259ff22', color: '#a259ff', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/figma/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 16, height: 450 }}>
+        <div style={{ width: 220, overflowY: 'auto', borderRight: '1px solid #222', paddingRight: 12 }}>
+          <div style={{ fontWeight: 600, color: '#aaa', fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>Projects</div>
+          {projects.map(p => <div key={p.id} onClick={() => selectProject(p)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: selectedProject?.id === p.id ? '#1a0030' : 'transparent', color: selectedProject?.id === p.id ? '#a259ff' : '#ddd', fontSize: 13, marginBottom: 2 }}>📁 {p.name}</div>)}
+          {projects.length === 0 && <p style={{ color: '#555', fontSize: 12 }}>No team projects found (personal token may not expose team projects)</p>}
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          {!selectedProject && <p style={{ color: '#555', fontSize: 13 }}>Select a project to view files</p>}
+          {selectedProject && <>
+            <div style={{ fontWeight: 600, color: '#aaa', fontSize: 11, textTransform: 'uppercase', marginBottom: 8 }}>{selectedProject.name}</div>
+            {files.map(f => <div key={f.key} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+              <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>🎨 {f.name}</span>
+              <span style={{ color: '#555', fontSize: 11 }}>{f.last_modified ? new Date(f.last_modified).toLocaleDateString() : ''}</span>
+            </div>)}
+          </>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_loom() {
+  const [connected, setConnected] = React.useState(false);
+  const [apiKey, setApiKey] = React.useState('');
+  const [connStatus, setConnStatus] = React.useState('');
+  const [folders, setFolders] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/loom/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); fetch('/api/integrations/loom/videos', { headers: h }).then(r => r.json()).then(d => setFolders(d.data || d.folders || [])); }
+    });
+  }, []);
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/loom/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ apiKey }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); fetch('/api/integrations/loom/videos', { headers: h }).then(r => r.json()).then(d => setFolders(d.data || d.folders || [])); } else setConnStatus(d.error || 'Failed');
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>🎬 Loom</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Loom to browse your video library.</p>
+      <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="API Key" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#625df5', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Loom'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🎬 Loom</h2>
+        <span style={{ background: '#625df522', color: '#625df5', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/loom/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ fontWeight: 600, color: '#aaa', fontSize: 11, textTransform: 'uppercase', marginBottom: 10 }}>Folders</div>
+      {folders.map((f: any) => <div key={f.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>📁 {f.name}</span>
+        <span style={{ color: '#aaa', fontSize: 11 }}>{f.videos_count || 0} videos</span>
+      </div>)}
+      {folders.length === 0 && <p style={{ color: '#555', fontSize: 13 }}>No folders found.</p>}
+    </div>
+  );
+}
+
+function ForgeTab_calendly() {
+  const [connected, setConnected] = React.useState(false);
+  const [token, setToken] = React.useState('');
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'events'|'types'>('events');
+  const [events, setEvents] = React.useState<any[]>([]);
+  const [eventTypes, setEventTypes] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/calendly/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [e, t] = await Promise.all([
+      fetch('/api/integrations/calendly/events', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/calendly/event-types', { headers: h }).then(r => r.json()),
+    ]);
+    setEvents(e.collection || []); setEventTypes(t.collection || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/calendly/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  const statusColor = (s: string) => ({ active: '#18d26e', canceled: '#f55' }[s] || '#aaa');
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>📅 Calendly</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Calendly to view scheduled meetings and event types.</p>
+      <input value={token} onChange={e => setToken(e.target.value)} placeholder="Personal Access Token" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#0069ff', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Calendly'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>📅 Calendly</h2>
+        <span style={{ background: '#0069ff22', color: '#0069ff', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/calendly/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['events','types'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#0069ff' : '#1a1a1a', color: tab === t ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t === 'events' ? '📆 Scheduled' : '📋 Event Types'}</button>)}
+      </div>
+      {tab === 'events' && events.map(e => <div key={e.uri} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <span style={{ color: statusColor(e.status), fontSize: 11 }}>●</span>
+          <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{e.name}</span>
+          <span style={{ color: '#555', fontSize: 11 }}>{e.start_time ? new Date(e.start_time).toLocaleString() : ''}</span>
+        </div>
+        <div style={{ color: '#555', fontSize: 11, marginTop: 2 }}>{e.invitees_counter?.total} invitee(s)</div>
+      </div>)}
+      {tab === 'types' && eventTypes.map(t => <div key={t.uri} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', gap: 10, alignItems: 'center', fontSize: 13 }}>
+        <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>{t.name}</span>
+        <span style={{ color: '#0069ff', fontSize: 11 }}>{t.duration} min</span>
+        <span style={{ color: t.active ? '#18d26e' : '#888', fontSize: 11 }}>● {t.active ? 'active' : 'inactive'}</span>
+      </div>)}
+    </div>
+  );
+}
+
+function ForgeTab_zoom() {
+  const [connected, setConnected] = React.useState(false);
+  const [form, setForm] = React.useState({ accountId: '', clientId: '', clientSecret: '' });
+  const [connStatus, setConnStatus] = React.useState('');
+  const [tab, setTab] = React.useState<'meetings'|'recordings'>('meetings');
+  const [meetings, setMeetings] = React.useState<any[]>([]);
+  const [recordings, setRecordings] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
+
+  React.useEffect(() => {
+    fetch('/api/integrations/zoom/status', { headers: h }).then(r => r.json()).then(d => {
+      if (d.connected) { setConnected(true); loadAll(); }
+    });
+  }, []);
+
+  const loadAll = async () => {
+    const [m, r] = await Promise.all([
+      fetch('/api/integrations/zoom/meetings', { headers: h }).then(r => r.json()),
+      fetch('/api/integrations/zoom/recordings', { headers: h }).then(r => r.json()),
+    ]);
+    setMeetings(m.meetings || []); setRecordings(r.meetings || []);
+  };
+
+  const connect = async () => {
+    setLoading(true);
+    const r = await fetch('/api/integrations/zoom/connect', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    const d = await r.json(); setLoading(false);
+    if (d.ok) { setConnected(true); setConnStatus(''); loadAll(); } else setConnStatus(d.error || 'Failed');
+  };
+
+  if (!connected) return (
+    <div style={{ padding: 32, maxWidth: 480 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>📹 Zoom</h2>
+      <p style={{ color: '#aaa', marginBottom: 24 }}>Connect Zoom (Server-to-Server OAuth) to view meetings and recordings.</p>
+      <input value={form.accountId} onChange={e => setForm(p => ({ ...p, accountId: e.target.value }))} placeholder="Account ID" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />
+      <input value={form.clientId} onChange={e => setForm(p => ({ ...p, clientId: e.target.value }))} placeholder="Client ID" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box' }} />
+      <input value={form.clientSecret} onChange={e => setForm(p => ({ ...p, clientSecret: e.target.value }))} placeholder="Client Secret" type="password" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 12, boxSizing: 'border-box' }} />
+      {connStatus && <p style={{ color: '#f55', marginBottom: 8 }}>{connStatus}</p>}
+      <button onClick={connect} disabled={loading} style={{ background: '#2d8cff', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 700, cursor: 'pointer' }}>{loading ? 'Connecting...' : 'Connect Zoom'}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>📹 Zoom</h2>
+        <span style={{ background: '#2d8cff22', color: '#2d8cff', padding: '2px 10px', borderRadius: 12, fontSize: 12 }}>Connected</span>
+        <button onClick={() => { fetch('/api/integrations/zoom/disconnect', { method: 'DELETE', headers: h }); setConnected(false); }} style={{ marginLeft: 'auto', background: '#333', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}>Disconnect</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['meetings','recordings'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t ? '#2d8cff' : '#1a1a1a', color: tab === t ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t === 'meetings' ? '📹 Meetings' : '🎬 Recordings'}</button>)}
+      </div>
+      {tab === 'meetings' && meetings.map(m => <div key={m.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>📹 {m.topic}</span>
+          <span style={{ color: '#2d8cff', fontSize: 11 }}>{m.duration} min</span>
+        </div>
+        <div style={{ color: '#555', fontSize: 11, marginTop: 2 }}>{m.start_time ? new Date(m.start_time).toLocaleString() : ''}</div>
+      </div>)}
+      {tab === 'recordings' && recordings.map(m => <div key={m.uuid} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, fontSize: 13 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <span style={{ fontWeight: 600, color: '#ddd', flex: 1 }}>🎬 {m.topic}</span>
+          <span style={{ color: '#2d8cff', fontSize: 11 }}>{m.duration} min</span>
+        </div>
+        <div style={{ color: '#555', fontSize: 11, marginTop: 2 }}>{m.start_time ? new Date(m.start_time).toLocaleDateString() : ''} · {m.recording_count} recordings</div>
+      </div>)}
     </div>
   );
 }
@@ -21621,7 +22205,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'debate2'|'timecapsule'|'codeexplain'|'ideavalidator'|'tonerewriter'|'resumebuilder'|'emailnegotiator'|'storygen2'|'meetingsum'|'competitorspy'|'ailawyer'|'financeadvisor'|'languagetutor'|'flashcardgen'|'linkedinopt'|'speechwriter'|'pricenegotiator'|'emailroastv2'|'startupnamer'|'coverlettergen'|'interviewcoach'|'colddmwriter'|'fitnessplanner'|'recipegen2'|'travelplanner'|'apologyletter'|'leasereview'|'booksummarizer'|'quizgen'|'salaryneg'|'breakupletter'|'bizplan'|'viralhooks'|'dreaminterp'|'roastgen'|'futureself'|'resumebullets'|'meetingbuilder'|'gratitudereflect'|'coldpitch'|'moodtracker'|'habitjournal'|'lifegoals'|'standupwriter'|'conflictresolve'|'priceanchor'|'linkedinbio'|'failurecv'|'morningritual'|'apologytext'|'excusegen'|'ventmode'|'personalbrand'|'weeklyreview'|'negotiationsim'|'challengebuilder'|'therapyletter'|'podcastpitch'|'grantproposal'|'burnletter'|'decisionoracle'|'complimentengine'|'manifestowriter'|'debateprep14'|'eulogywriter'|'villainorigin'|'secretadmirer'|'legacyletter'|'lovelanguage'|'resumeroast'|'coldemailanalyze'|'pitchdeckcritic'|'refletter'|'offereval'|'datingbio'|'dateplanner'|'relcheckin'|'breakuprecover'|'flirtytext'|'networthcalc'|'budgetroast'|'freelancerate'|'invthesis'|'subaudit'|'symptomcheck'|'sleepopt'|'stressdecode'|'workoutgen'|'nutricoach'|'willgen'|'leaseanalyze'|'disputeletter'|'tosdecode'|'foiarequest'|'plottwist'|'charcreate'|'worldbuild'|'dialoguecoach'|'bookblurb'|'perfreview'|'salaryresearch'|'offercompare'|'careerpivot'|'linkedinmsg'|'competitordive'|'pricingstrat'|'custpersona2'|'gtmplan'|'okrbuilder'|'viralthread'|'captiongen'|'contentcal24'|'hashtagstrat'|'biooptimizer'|'emailseqbuilder'|'subjectlines'|'newsletterdraft'|'reengage'|'welcomeseq'|'debtpayoff'|'budgetbuilder'|'investexplain'|'firecalc'|'sidehustle'|'anxietytoolkit'|'cbtexercise'|'selfcareplan'|'boundaryscripts'|'burnoutcheck'|'studyplan'|'conceptmap'|'examprep'|'skillroadmap'|'socraticlearn'|'codereviewer'|'regexbuilder'|'apidocgen'|'sqloptimizer'|'gitcommitgen'|'timeauditor'|'secondbrainai'|'weeklyplanner'|'habitdesigner'|'energymapper'|'shortstoryai'|'poemcrafter'|'screenplayscene'|'memoirdraft'|'satiregen'|'marketanalyze'|'bizmodelai'|'pricingmodel'|'partnerpropose'|'exitplanner'|'labinterpreter'|'supplementstack'|'recoveryplan'|'longevityprotocol'|'mentalperf'|'contractanalyze'|'taxstrategy'|'estateplan'|'investanalyze'|'insuranceaudit'|'deepworkplan'|'meetingopt'|'careermap'|'promotioncase'|'linkedinrewrite'|'difficultconvo'|'feedbackcraft'|'persuasionscript'|'relaudit'|'personalceo'|'paperdecode'|'hypothesisbuild'|'experimentdesign'|'litmap'|'grantwrite'|'rightsexplain'|'contractdraft'|'complaintwrite'|'policydecode'|'smallclaimscoach'|'parentingcoach'|'lessonplan'|'collegeadvise'|'behaviordecode'|'learningstyle'|'carbonaudit'|'ecohabits'|'sustainplan'|'climateexplain'|'greenhome'|'flavorprofile'|'mealplanv2'|'recipeinvent'|'winepair'|'cookingcoach'|'trainingplan'|'sportanalyze'|'injuryadv'|'mentalgame'|'fantasyadv'|'lyricwrite'|'musictheory'|'playlistcurate'|'practicesched'|'musicpitch'|'homebuy'|'rentanalyze'|'mortgageexp'|'neighborscout'|'homerenovate'|'triparchitect'|'packingopt'|'localintel'|'travelbudget'|'solotravel'|'griefcoach'|'angermanage'|'traumaedu'|'mindsetcoach'|'innerchild'|'startupvalidate'|'pitchdeckbuild'|'investoremail'|'mvpdesign'|'cofoundermatch'|'parentadvise'|'familymeeting'|'chorechart'|'bedtimestory'|'collegeprep'|'debtstrat'|'investdecode'|'creditcoach'|'taxoptimize'|'wealthmap'|'difficultconv2'|'apologycraft'|'complimenteng'|'boundaryset'|'lovelang'|'deepworkplan2'|'procbust'|'emailzero'|'meetingaudit'|'pkmdesign'|'charbuild'|'plotweave'|'dialogsharp'|'worldbuild2'|'scenewrite'|'biohackopt'|'vo2train'|'coldtherapy'|'suppstack'|'sleeparch'|'pricingstrategy'|'churnanalyze'|'growthhack'|'investpitch'|'moatbuild'|'contractdraft2'|'ndareview2'|'termsdecode2'|'compliancecheck2'|'disputeletter2'|'homevaluate'|'mortgagecalc'|'neighborscout2'|'renovationplan'|'landlordadvise'|'emotiondecode'|'copingtoolkit'|'innercritic'|'attachcoach'|'resiliencebuild'|'storyworld'|'lyriccraft'|'charforge'|'plottwistai'|'worldbuildai'|'promotionmap'|'salarybench'|'execpresence'|'offerneg'|'careerbrand'|'conceptdecode'|'researchsynth'|'debateprep60'|'criticalthink'|'teachassist'|'convhack'|'charismav2'|'netwrkstrat'|'conflictmed'|'influencebuild'|'passiveincome'|'taxstrat62'|'investthesis'|'wealthgap'|'moneymind'|'flowoptimize'|'cogenhance'|'mentalmodels'|'decisionspeed'|'perfreview63'|'attractbuild'|'relaudit64'|'firstdate'|'textcoach'|'breakupanalyze'|'prodnamer'|'brandvoice65'|'launchstrat'|'custavatr'|'revmodel'|'mealplan'|'workoutdesign'|'sleepopt66'|'stressmgr'|'habitstack'|'parentadvice'|'bedtimestory67'|'familymtg'|'chorechart67'|'collegeprep67'|'debtstrat68'|'investdecode68'|'creditcoach68'|'taxopt68'|'wealthmap68'|'smalltalk69'|'pubspeak69'|'activelisten'|'assertive69'|'netmsg69'|'charnames70'|'writeprompt70'|'plothole70'|'dialogpol'|'booktitle70'|'procbust71'|'timeblock71'|'meetcost71'|'inboxzero71'|'deepwork71'|'conflmed72'|'appreci72'|'socianx72'|'reconnect72'|'famlegacy72'|'analogymkr73'|'mentmodel73'|'speedread73'|'feynman73'|'knowconn73'|'pivotadv74'|'fundraise74'|'uniteco74'|'pmfcheck74'|'startuplegal74'|'hormoneopt75'|'guthealth75'|'inflame75'|'energyopt75'|'prevhealth75'|'ytscript76'|'tiktokhook76'|'podplan76'|'thumbconcept76'|'repurpose76'|'perfreview77'|'linkedincont77'|'careergap77'|'execpres77'|'workbound77'|'emergfund78'|'insaudit78'|'moneymind78'|'fireplan78'|'taxloss78'|'storyout79'|'charcreate79'|'dialogue79'|'plottwist79'|'worldbuild79'|'focuscoach80'|'memtrain80'|'cogbias80'|'mentalclr80'|'peakstate80'|'empathy81'|'smalltalk81'|'lovelang81'|'relaudit81'|'diffconv81'|'sopgen82'|'kpidesign82'|'meetdesign82'|'delegcoach82'|'wfoptim82'|'longev83'|'vo2max83'|'stressdec83'|'recovopt83'|'suppstack83'|'parentcoach84'|'fammeet84'|'teencomm84'|'screentime84'|'famval84'|'rightsexp85'|'demandltr85'|'contrdec85'|'tenright85'|'smclaim85'|'carbonfp86'|'sustliv86'|'ecodiet86'|'greenhome86'|'climact86'|'pbrand87'|'contcal87'|'biowrite87'|'audgrow87'|'monetize87'|'flowstate88'|'procbust88'|'decfat88'|'atttrain88'|'mentenrg88'|'socstyle89'|'netcoach89'|'conflmed89'|'trustbld89'|'socianx89'|'firecalc90'|'debtdest90'|'investedu90'|'sidehust90'|'netwrth90'|'paperdec91'|'hypogen91'|'expdes91'|'sciexp91'|'litrev91'|'leadcoach92'|'execpres92'|'teammot92'|'stratthk92'|'fbkcultr92'|'pitchcoach93'|'viralideagen93'|'meetkill93'|'procautopsy93'|'secondbrain93'|'scriptwriter94'|'threadgen94'|'coldloom94'|'seowriter94'|'adcopy94'|'pricingpage95'|'legalease95'|'productlaunch95'|'energyaudit95'|'storyteller95'|'jobscout96'|'newsletterarch96'|'habitdna96'|'salespage96'|'teamretro96'|'codetutor97'|'emotionmap97'|'podcastguest97'|'mvpscoper97'|'reviewrespond97'|'twitterbio98'|'speakingprep98'|'debtplan98'|'productupdate98'|'therapyjournal98'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'|'toolchain'>('workspace');
+  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'debate2'|'timecapsule'|'codeexplain'|'ideavalidator'|'tonerewriter'|'resumebuilder'|'emailnegotiator'|'storygen2'|'meetingsum'|'competitorspy'|'ailawyer'|'financeadvisor'|'languagetutor'|'flashcardgen'|'linkedinopt'|'speechwriter'|'pricenegotiator'|'emailroastv2'|'startupnamer'|'coverlettergen'|'interviewcoach'|'colddmwriter'|'fitnessplanner'|'recipegen2'|'travelplanner'|'apologyletter'|'leasereview'|'booksummarizer'|'quizgen'|'salaryneg'|'breakupletter'|'bizplan'|'viralhooks'|'dreaminterp'|'roastgen'|'futureself'|'resumebullets'|'meetingbuilder'|'gratitudereflect'|'coldpitch'|'moodtracker'|'habitjournal'|'lifegoals'|'standupwriter'|'conflictresolve'|'priceanchor'|'linkedinbio'|'failurecv'|'morningritual'|'apologytext'|'excusegen'|'ventmode'|'personalbrand'|'weeklyreview'|'negotiationsim'|'challengebuilder'|'therapyletter'|'podcastpitch'|'grantproposal'|'burnletter'|'decisionoracle'|'complimentengine'|'manifestowriter'|'debateprep14'|'eulogywriter'|'villainorigin'|'secretadmirer'|'legacyletter'|'lovelanguage'|'resumeroast'|'coldemailanalyze'|'pitchdeckcritic'|'refletter'|'offereval'|'datingbio'|'dateplanner'|'relcheckin'|'breakuprecover'|'flirtytext'|'networthcalc'|'budgetroast'|'freelancerate'|'invthesis'|'subaudit'|'symptomcheck'|'sleepopt'|'stressdecode'|'workoutgen'|'nutricoach'|'willgen'|'leaseanalyze'|'disputeletter'|'tosdecode'|'foiarequest'|'plottwist'|'charcreate'|'worldbuild'|'dialoguecoach'|'bookblurb'|'perfreview'|'salaryresearch'|'offercompare'|'careerpivot'|'linkedinmsg'|'competitordive'|'pricingstrat'|'custpersona2'|'gtmplan'|'okrbuilder'|'viralthread'|'captiongen'|'contentcal24'|'hashtagstrat'|'biooptimizer'|'emailseqbuilder'|'subjectlines'|'newsletterdraft'|'reengage'|'welcomeseq'|'debtpayoff'|'budgetbuilder'|'investexplain'|'firecalc'|'sidehustle'|'anxietytoolkit'|'cbtexercise'|'selfcareplan'|'boundaryscripts'|'burnoutcheck'|'studyplan'|'conceptmap'|'examprep'|'skillroadmap'|'socraticlearn'|'codereviewer'|'regexbuilder'|'apidocgen'|'sqloptimizer'|'gitcommitgen'|'timeauditor'|'secondbrainai'|'weeklyplanner'|'habitdesigner'|'energymapper'|'shortstoryai'|'poemcrafter'|'screenplayscene'|'memoirdraft'|'satiregen'|'marketanalyze'|'bizmodelai'|'pricingmodel'|'partnerpropose'|'exitplanner'|'labinterpreter'|'supplementstack'|'recoveryplan'|'longevityprotocol'|'mentalperf'|'contractanalyze'|'taxstrategy'|'estateplan'|'investanalyze'|'insuranceaudit'|'deepworkplan'|'meetingopt'|'careermap'|'promotioncase'|'linkedinrewrite'|'difficultconvo'|'feedbackcraft'|'persuasionscript'|'relaudit'|'personalceo'|'paperdecode'|'hypothesisbuild'|'experimentdesign'|'litmap'|'grantwrite'|'rightsexplain'|'contractdraft'|'complaintwrite'|'policydecode'|'smallclaimscoach'|'parentingcoach'|'lessonplan'|'collegeadvise'|'behaviordecode'|'learningstyle'|'carbonaudit'|'ecohabits'|'sustainplan'|'climateexplain'|'greenhome'|'flavorprofile'|'mealplanv2'|'recipeinvent'|'winepair'|'cookingcoach'|'trainingplan'|'sportanalyze'|'injuryadv'|'mentalgame'|'fantasyadv'|'lyricwrite'|'musictheory'|'playlistcurate'|'practicesched'|'musicpitch'|'homebuy'|'rentanalyze'|'mortgageexp'|'neighborscout'|'homerenovate'|'triparchitect'|'packingopt'|'localintel'|'travelbudget'|'solotravel'|'griefcoach'|'angermanage'|'traumaedu'|'mindsetcoach'|'innerchild'|'startupvalidate'|'pitchdeckbuild'|'investoremail'|'mvpdesign'|'cofoundermatch'|'parentadvise'|'familymeeting'|'chorechart'|'bedtimestory'|'collegeprep'|'debtstrat'|'investdecode'|'creditcoach'|'taxoptimize'|'wealthmap'|'difficultconv2'|'apologycraft'|'complimenteng'|'boundaryset'|'lovelang'|'deepworkplan2'|'procbust'|'emailzero'|'meetingaudit'|'pkmdesign'|'charbuild'|'plotweave'|'dialogsharp'|'worldbuild2'|'scenewrite'|'biohackopt'|'vo2train'|'coldtherapy'|'suppstack'|'sleeparch'|'pricingstrategy'|'churnanalyze'|'growthhack'|'investpitch'|'moatbuild'|'contractdraft2'|'ndareview2'|'termsdecode2'|'compliancecheck2'|'disputeletter2'|'homevaluate'|'mortgagecalc'|'neighborscout2'|'renovationplan'|'landlordadvise'|'emotiondecode'|'copingtoolkit'|'innercritic'|'attachcoach'|'resiliencebuild'|'storyworld'|'lyriccraft'|'charforge'|'plottwistai'|'worldbuildai'|'promotionmap'|'salarybench'|'execpresence'|'offerneg'|'careerbrand'|'conceptdecode'|'researchsynth'|'debateprep60'|'criticalthink'|'teachassist'|'convhack'|'charismav2'|'netwrkstrat'|'conflictmed'|'influencebuild'|'passiveincome'|'taxstrat62'|'investthesis'|'wealthgap'|'moneymind'|'flowoptimize'|'cogenhance'|'mentalmodels'|'decisionspeed'|'perfreview63'|'attractbuild'|'relaudit64'|'firstdate'|'textcoach'|'breakupanalyze'|'prodnamer'|'brandvoice65'|'launchstrat'|'custavatr'|'revmodel'|'mealplan'|'workoutdesign'|'sleepopt66'|'stressmgr'|'habitstack'|'parentadvice'|'bedtimestory67'|'familymtg'|'chorechart67'|'collegeprep67'|'debtstrat68'|'investdecode68'|'creditcoach68'|'taxopt68'|'wealthmap68'|'smalltalk69'|'pubspeak69'|'activelisten'|'assertive69'|'netmsg69'|'charnames70'|'writeprompt70'|'plothole70'|'dialogpol'|'booktitle70'|'procbust71'|'timeblock71'|'meetcost71'|'inboxzero71'|'deepwork71'|'conflmed72'|'appreci72'|'socianx72'|'reconnect72'|'famlegacy72'|'analogymkr73'|'mentmodel73'|'speedread73'|'feynman73'|'knowconn73'|'pivotadv74'|'fundraise74'|'uniteco74'|'pmfcheck74'|'startuplegal74'|'hormoneopt75'|'guthealth75'|'inflame75'|'energyopt75'|'prevhealth75'|'ytscript76'|'tiktokhook76'|'podplan76'|'thumbconcept76'|'repurpose76'|'perfreview77'|'linkedincont77'|'careergap77'|'execpres77'|'workbound77'|'emergfund78'|'insaudit78'|'moneymind78'|'fireplan78'|'taxloss78'|'storyout79'|'charcreate79'|'dialogue79'|'plottwist79'|'worldbuild79'|'focuscoach80'|'memtrain80'|'cogbias80'|'mentalclr80'|'peakstate80'|'empathy81'|'smalltalk81'|'lovelang81'|'relaudit81'|'diffconv81'|'sopgen82'|'kpidesign82'|'meetdesign82'|'delegcoach82'|'wfoptim82'|'longev83'|'vo2max83'|'stressdec83'|'recovopt83'|'suppstack83'|'parentcoach84'|'fammeet84'|'teencomm84'|'screentime84'|'famval84'|'rightsexp85'|'demandltr85'|'contrdec85'|'tenright85'|'smclaim85'|'carbonfp86'|'sustliv86'|'ecodiet86'|'greenhome86'|'climact86'|'pbrand87'|'contcal87'|'biowrite87'|'audgrow87'|'monetize87'|'flowstate88'|'procbust88'|'decfat88'|'atttrain88'|'mentenrg88'|'socstyle89'|'netcoach89'|'conflmed89'|'trustbld89'|'socianx89'|'firecalc90'|'debtdest90'|'investedu90'|'sidehust90'|'netwrth90'|'paperdec91'|'hypogen91'|'expdes91'|'sciexp91'|'litrev91'|'leadcoach92'|'execpres92'|'teammot92'|'stratthk92'|'fbkcultr92'|'pitchcoach93'|'viralideagen93'|'meetkill93'|'procautopsy93'|'secondbrain93'|'scriptwriter94'|'threadgen94'|'coldloom94'|'seowriter94'|'adcopy94'|'pricingpage95'|'legalease95'|'productlaunch95'|'energyaudit95'|'storyteller95'|'jobscout96'|'newsletterarch96'|'habitdna96'|'salespage96'|'teamretro96'|'codetutor97'|'emotionmap97'|'podcastguest97'|'mvpscoper97'|'reviewrespond97'|'twitterbio98'|'speakingprep98'|'debtplan98'|'productupdate98'|'therapyjournal98'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'|'toolchain'|'home'|'integrations'>('home');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -26858,853 +27442,18 @@ export default function ForgeApp() {
 
         {/* Nav tabs — 3-zone Taskade-style */}
         <div style={{ padding:'6px 6px', borderBottom:'1px solid var(--fg-border)', overflowY:'auto', flexShrink:0, maxHeight: sidebarExpanded ? 'calc(100vh - 340px)' : 'calc(100vh - 120px)' }}>
-          {/* -- ZONE 1: Core -- */}
-          {sidebarExpanded && <div style={{ padding:'4px 6px 2px', fontSize:9, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--fg-text3)' }}>Core</div>}
+          {/* -- ZONE 1: Core (grouped nav) -- */}
           {([
+            { id:'home', icon:'🏠', label:'Home' },
             { id:'brief', icon:'☀️', label:'Morning Brief' },
             { id:'brain', icon:'🧠', label:'Forge Brain' },
             { id:'passport', icon:'🪪', label:'AI Twin Passport' },
-            { id:'github', icon:'🐙', label:'GitHub' },
-            { id:'notion', icon:'🗒️', label:'Notion' },
-            { id:'linear', icon:'📐', label:'Linear' },
-            { id:'slack', icon:'💬', label:'Slack' },
-            { id:'jira', icon:'🔷', label:'Jira' },
-            { id:'stripe', icon:'💳', label:'Stripe' },
-            { id:'gsheets', icon:'📊', label:'Google Sheets' },
-            { id:'figma', icon:'🎨', label:'Figma' },
-            { id:'zendesk', icon:'🎫', label:'Zendesk' },
-            { id:'monday', icon:'📅', label:'Monday.com' },
-            { id:'airtable', icon:'🗃️', label:'Airtable' },
-            { id:'hubspot', icon:'🧲', label:'HubSpot' },
-            { id:'asana', icon:'📋', label:'Asana' },
-            { id:'discord', icon:'🎮', label:'Discord' },
-            { id:'trello', icon:'📌', label:'Trello' },
-            { id:'jira', icon:'🔵', label:'Jira' },
-            { id:'slack', icon:'💬', label:'Slack' },
-            { id:'intercom', icon:'💬', label:'Intercom' },
-            { id:'pipedrive', icon:'🔧', label:'Pipedrive' },
-            { id:'typeform', icon:'📋', label:'Typeform' },
-            { id:'salesforce', icon:'☁️', label:'Salesforce' },
-            { id:'mailchimp', icon:'🐵', label:'Mailchimp' },
-            { id:'notion', icon:'📓', label:'Notion' },
-            { id:'linear', icon:'📐', label:'Linear' },
-            { id:'github', icon:'🐙', label:'GitHub' },
-            { id:'twilio', icon:'📱', label:'Twilio' },
-            { id:'sendgrid', icon:'✉️', label:'SendGrid' },
-            { id:'shopify', icon:'🛍️', label:'Shopify' },
-            { id:'webflow', icon:'🌐', label:'Webflow' },
-            { id:'stripe_mgmt', icon:'💳', label:'Stripe' },
-            { id:'airtable', icon:'🟡', label:'Airtable' },
-            { id:'zendesk', icon:'🎫', label:'Zendesk' },
-            { id:'asana', icon:'🗂️', label:'Asana' },
-            { id:'hubspot', icon:'🟠', label:'HubSpot' },
-            { id:'pagerduty', icon:'🚨', label:'PagerDuty' },
-            { id:'sentry', icon:'🛡️', label:'Sentry' },
-            { id:'cloudflare', icon:'☁️', label:'Cloudflare' },
-            { id:'vercel', icon:'▲', label:'Vercel' },
-            { id:'supabase', icon:'⚡', label:'Supabase' },
-            { id:'amplitude', icon:'📈', label:'Amplitude' },
-            { id:'mixpanel', icon:'🔮', label:'Mixpanel' },
-            { id:'segment', icon:'🔌', label:'Segment' },
-            { id:'posthog', icon:'🦔', label:'PostHog' },
-            { id:'datadog', icon:'🐶', label:'Datadog' },
-            { id:'hermes', icon:'⚡', label:'Hermes Agent' },
-            { id:'keyhealth', icon:'🩺', label:'Key Health' },
+            { id:'integrations', icon:'🔌', label:'Integrations' },
             { id:'notes', icon:'📝', label:'Notes' },
             { id:'personas', icon:'🎭', label:'Personas' },
             { id:'templates', icon:'📋', label:'Templates' },
-            { id:'collections', icon:'🗂️', label:'Collections' },
-            { id:'agenda', icon:'📅', label:'Agenda' },
-            { id:'goals', icon:'🎯', label:'Goals' },
-            { id:'captures', icon:'⚡', label:'Capture' },
-            { id:'graph', icon:'🕸️', label:'Graph' },
             { id:'imagegen', icon:'🎨', label:'Image Gen' },
-    { id:'notificationbell', icon:'🔔', label:'Notifications' },
-    { id:'goalstreaks', icon:'🏆', label:'Goal Streaks' },
-    { id:'writingcoach', icon:'✍️', label:'Writing Coach' },
-    { id:'worksessions', icon:'⏱️', label:'Work Sessions' },
-    { id:'podcastnotesv2', icon:'🎧', label:'Podcast Notes' },
-      { id:'apiversioning', icon:'📌', label:'API Versioning' },
-      { id:'elevatorpitch', icon:'🛗', label:'Elevator Pitch AI' },
-      { id:'fastingv2', icon:'⏱️', label:'Fasting Tracker v2' },
-      { id:'localizationkeys', icon:'🌐', label:'Localization Keys' },
-      { id:'gratitudechallenges', icon:'🙏', label:'Gratitude Challenges' },
-      { id:'releaseblockers', icon:'🚧', label:'Release Blockers' },
-      { id:'brandstory', icon:'📖', label:'Brand Story AI' },
-      { id:'recoverylog', icon:'💆', label:'Recovery Log' },
-      { id:'permissionmatrix', icon:'🔐', label:'Permission Matrix' },
-      { id:'visionmapping', icon:'🗺️', label:'Vision Mapping' },
-          { id:'apianalytics', icon:'📊', label:'API Analytics' },
-          { id:'competitivepositioning', icon:'⚔️', label:'Competitive Position AI' },
-          { id:'mealpreplog', icon:'🥗', label:'Meal Prep Log' },
-          { id:'onboardingflows', icon:'🚀', label:'Onboarding Flows' },
-          { id:'learningresources', icon:'📰', label:'Learning Resources' },
-          { id:'campaigntracker', icon:'📣', label:'Campaign Tracker' },
-          { id:'reframecoach', icon:'🧠', label:'Reframe Coach AI' },
-          { id:'saunalog', icon:'🔥', label:'Sauna Log' },
-          { id:'datapipelines', icon:'🔄', label:'Data Pipelines' },
-          { id:'affirmationsets', icon:'💫', label:'Affirmation Sets' },
-          { id:'vendorcontracts', icon:'📄', label:'Vendor Contracts' },
-          { id:'toneanalyzer', icon:'🎭', label:'Tone Analyzer AI' },
-          { id:'coldexposure', icon:'🧊', label:'Cold Exposure Log' },
-          { id:'featurevotes', icon:'🗳️', label:'Feature Votes' },
-          { id:'networkingevents', icon:'🤝', label:'Networking Events' },
-          { id:'costtracker', icon:'💰', label:'Cost Tracker' },
-          { id:'emailsubjects', icon:'📧', label:'Email Subject AI' },
-          { id:'bodyscanlog', icon:'🧘', label:'Body Scan Log' },
-          { id:'techdecisions', icon:'⚙️', label:'Tech Decisions' },
-          { id:'booksummaries', icon:'📖', label:'Book Summaries' },
-          { id:'okrtemplates', icon:'🎯', label:'OKR Templates' },
-          { id:'taglinerefiner', icon:'✨', label:'Tagline Refiner AI' },
-          { id:'fastingwindows', icon:'⏱️', label:'Fasting Windows' },
-          { id:'incidentseverity', icon:'🚨', label:'Incident Severity' },
-          { id:'readinglog', icon:'📚', label:'Reading Log' },
-    { id:'apikeys', icon:'🔑', label:'API Keys Vault' },
-    { id:'headlinescorer', icon:'📰', label:'Headline Scorer' },
-    { id:'habitchains', icon:'🔗', label:'Habit Chains' },
-    { id:'sprintboard', icon:'🏃', label:'Sprint Board' },
-    { id:'gratitudepractice', icon:'🙏', label:'Gratitude Practice' },
-    { id:'deploymentenvs', icon:'🌐', label:'Deploy Envs' },
-    { id:'copywritingangles', icon:'✍️', label:'Copy Angles AI' },
-    { id:'coldplungelog', icon:'🧊', label:'Cold Plunge Log' },
-    { id:'featureadoption', icon:'📊', label:'Feature Adoption' },
-    { id:'moodcheckins', icon:'😴', label:'Mood Check-ins' },
-    { id:'integregistry', icon:'🔗', label:'Integ Registry' },
-    { id:'meetingfacilitator', icon:'📋', label:'Meeting Facilitator' },
-    { id:'fitracker', icon:'💰', label:'FI Tracker' },
-    { id:'knowledgearticles', icon:'📚', label:'Knowledge Articles' },
-    { id:'learningmilestones', icon:'🎯', label:'Learning Milestones' },
-            { id:'compliancepolicies', icon:'📁', label:'Compliance Policies' },
-            { id:'contentsummarizer', icon:'📰', label:'Content Summarizer AI' },
-            { id:'runninglog', icon:'🏃', label:'Running Log' },
-            { id:'featuretoggles', icon:'🔌', label:'Feature Toggles' },
-            { id:'bucketlistv3', icon:'🩣', label:'Bucket List v3' },
-            { id:'vendorslas', icon:'📄', label:'Vendor SLAs' },
-            { id:'interviewqs', icon:'💼', label:'Interview Qs AI' },
-            { id:'hydrationlog', icon:'💧', label:'Hydration Log' },
-            { id:'sprintreviews', icon:'🏃', label:'Sprint Reviews' },
-            { id:'visionstatements', icon:'💠', label:'Vision Statements' },
-            { id:'changelogentries', icon:'📝', label:'Changelog Entries' },
-            { id:'salesobjection', icon:'💪', label:'Sales Objection AI' },
-            { id:'sleepgoals', icon:'🌙', label:'Sleep Goals' },
-            { id:'archdiagrams', icon:'🗺', label:'Arch Diagrams' },
-            { id:'convscripts', icon:'💬', label:'Conv Scripts' },
-            { id:'audittrail', icon:'📋', label:'Audit Trail' },
-            { id:'rebrandcopy', icon:'🎨', label:'Rebrand Copy AI' },
-            { id:'microhabits', icon:'⚡', label:'Micro Habits' },
-            { id:'teamgoals', icon:'🎯', label:'Team Goals' },
-            { id:'podcastnotes', icon:'🎧', label:'Podcast Notes' },
-            { id:'apiversioning', icon:'📡', label:'API Versioning' },
-            { id:'elevatorpitch', icon:'🎤', label:'Elevator Pitch AI' },
-            { id:'fastingv2', icon:'⏱', label:'Fasting v2' },
-            { id:'localizationkeys', icon:'🌍', label:'Localization Keys' },
-            { id:'gratitudechallenges', icon:'🌟', label:'Gratitude Challenges' },
-            { id:'releaseblockers', icon:'🚧', label:'Release Blockers' },
-            { id:'brandstory', icon:'📖', label:'Brand Story AI' },
-            { id:'recoverylog', icon:'🏋', label:'Recovery Log' },
-            { id:'permmatrix', icon:'🔑', label:'Permission Matrix' },
-            { id:'affirmchains', icon:'💫', label:'Affirmation Chains' },
-            { id:'budgetforecast', icon:'📊', label:'Budget Forecast' },
-            { id:'debatecoach', icon:'🎙', label:'Debate Coach AI' },
-            { id:'stretchlog', icon:'🧘', label:'Stretch Log' },
-            { id:'dataretention', icon:'🗄', label:'Data Retention' },
-            { id:'energyblocks', icon:'⚡', label:'Energy Blocks' },
-            { id:'incidentrunbook', icon:'📕', label:'Runbooks' },
-            { id:'coldemailv2', icon:'📩', label:'Cold Email AI v2' },
-            { id:'networthv2', icon:'💰', label:'Net Worth v2' },
-            { id:'slav2', icon:'📈', label:'SLA Tracker v2' },
-            { id:'focusrituals', icon:'🧘', label:'Focus Rituals' },
-            { id:'changelogv2', icon:'📝', label:'Changelog v2' },
-            { id:'interviewcoach', icon:'🎤', label:'Interview Coach' },
-            { id:'mealplanning', icon:'🍽', label:'Meal Planning' },
-            { id:'deptracker', icon:'🔗', label:'Dependencies' },
-            { id:'habitscore', icon:'🎯', label:'Habit Score' },
-            { id:'apiusage', icon:'📡', label:'API Usage' },
-            { id:'taglinesv3', icon:'🏷', label:'Tagline AI v3' },
-            { id:'symptompatterns', icon:'🤒', label:'Symptom Patterns' },
-            { id:'teamnorms', icon:'🤝', label:'Team Norms' },
-            { id:'learningnotes', icon:'💡', label:'Learning Notes' },
-            { id:'featurematrix', icon:'📋', label:'Feature Matrix' },
-            { id:'pressrelease', icon:'📰', label:'Press Release AI' },
-            { id:'posturelog', icon:'🪨', label:'Posture Log' },
-            { id:'costallocation', icon:'💸', label:'Cost Allocation' },
-            { id:'challengetracker', icon:'🏅', label:'Challenges' },
-            { id:'glossary', icon:'📖', label:'Glossary' },
-            { id:'colddm', icon:'📬', label:'Cold DM AI' },
-            { id:'financialgoals', icon:'💰', label:'Financial Goals' },
-            { id:'errorbudget', icon:'🚧', label:'Error Budget' },
-            { id:'journalprompts', icon:'📔', label:'Journal Prompts' },
-            { id:'contentpipeline', icon:'📦', label:'Content Pipeline' },
-            { id:'pitchdeck', icon:'📊', label:'Pitch Deck AI' },
-            { id:'moodweather', icon:'🌤', label:'Mood + Weather' },
-            { id:'accesslog', icon:'🔒', label:'Access Log' },
-            { id:'gratitudechain', icon:'💛', label:'Gratitude Chain' },
-            { id:'alertrules', icon:'🚨', label:'Alert Rules' },
-            { id:'namingengine', icon:'🏷', label:'Naming AI' },
-            { id:'macrotracker', icon:'🥗', label:'Macro Tracker' },
-            { id:'hiringscorecard', icon:'🤝', label:'Hiring Scores' },
-            { id:'readinggoals', icon:'📚', label:'Reading Goals' },
-            { id:'sprintvelocity', icon:'🏃', label:'Sprint Velocity' },
-            { id:'biov2', icon:'👤', label:'Bio Writer v2' },
-            { id:'energymap', icon:'⚡', label:'Energy Map' },
-            { id:'techstack', icon:'🧱', label:'Tech Stack' },
-            { id:'promptlibrary', icon:'📝', label:'Prompt Library' },
-            { id:'datacatalog', icon:'🗄', label:'Data Catalog' },
-            { id:'storyhook', icon:'💫', label:'Story Hook AI' },
-            { id:'sleepdebt', icon:'💤', label:'Sleep Debt' },
-            { id:'vendorscorecard', icon:'🏆', label:'Vendor Scores' },
-            { id:'digitaldetox', icon:'📵', label:'Digital Detox' },
-            { id:'experimentlog', icon:'🧪', label:'Experiments' },
-            { id:'objectionhandler', icon:'🤝', label:'Objection AI' },
-            { id:'languagegoals', icon:'🗣', label:'Language Goals' },
-            { id:'productmetrics', icon:'📊', label:'Product Metrics' },
-            { id:'digitaldetox', icon:'📵', label:'Digital Detox' },
-            { id:'experimentlog', icon:'🧪', label:'Experiments' },
-            { id:'objectionhandler', icon:'🤝', label:'Objection AI' },
-            { id:'languagegoals', icon:'🗣', label:'Language Goals' },
-            { id:'productmetrics', icon:'📊', label:'Product Metrics' },
-            { id:'habitstacking', icon:'🔗', label:'Habit Stacking' },
-            { id:'localization', icon:'🌐', label:'Localization' },
-            { id:'valueprop', icon:'💡', label:'Value Prop AI' },
-            { id:'breathwork', icon:'💨', label:'Breathwork' },
-            { id:'onboardingchecklist', icon:'✅', label:'Onboarding' },
-            { id:'coffeejournal', icon:'☕', label:'Coffee Journal' },
-            { id:'decisionmatrix', icon:'🧩', label:'Decision Matrix' },
-            { id:'pitchanalyzer', icon:'🎯', label:'Pitch Analyzer' },
-            { id:'fitracker', icon:'🏖', label:'FI Tracker' },
-            { id:'feedbackcollector', icon:'📥', label:'Feedback' },
-            { id:'bookwishlist', icon:'📚', label:'Book Wishlist' },
-            { id:'integhealth', icon:'💚', label:'Integrations' },
-            { id:'coverletter2', icon:'📧', label:'Cover Letter AI' },
-            { id:'moonlog', icon:'🌙', label:'Moon Log' },
-            { id:'capacityforecast', icon:'📈', label:'Capacity Forecast' },
-            { id:'focussprints', icon:'⚡', label:'Focus Sprints' },
-            { id:'assetlib', icon:'🖼', label:'Asset Library' },
-            { id:'slogangen', icon:'✨', label:'Slogan Generator' },
-            { id:'visionstatement', icon:'🔭', label:'Vision Statement' },
-            { id:'meetingcost', icon:'💰', label:'Meeting Cost' },
-            { id:'convstarters', icon:'💬', label:'Conv Starters' },
-            { id:'depmap', icon:'🗸', label:'Dependency Map' },
-            { id:'faqgen', icon:'📋', label:'FAQ Generator' },
-            { id:'expensesplit', icon:'💸', label:'Expense Split' },
-            { id:'changelog', icon:'📝', label:'Change Log' },
-            { id:'lifeareas', icon:'🗺', label:'Life Areas' },
-            { id:'announcements', icon:'📢', label:'Announcements' },
-            { id:'meetingagenda', icon:'📋', label:'Meeting Agenda AI' },
-            { id:'detoxlog', icon:'🚫', label:'Detox Log' },
-            { id:'kpialerts', icon:'🚨', label:'KPI Alerts' },
-            { id:'habitchallenges', icon:'🏆', label:'Habit Challenges' },
-            { id:'meetingrooms', icon:'🚪', label:'Meeting Rooms' },
-            { id:'recipegen', icon:'🧁', label:'Recipe AI' },
-            { id:'moodplaylist', icon:'🎵', label:'Mood Playlist' },
-            { id:'ideapipeline', icon:'💡', label:'Idea Pipeline' },
-            { id:'careerjournal', icon:'💼', label:'Career Journal' },
-            { id:'feedbackwall', icon:'📌', label:'Feedback Wall' },
-            { id:'poemgen', icon:'📜', label:'Poem Generator' },
-            { id:'plants', icon:'🌱', label:'Plant Tracker' },
-            { id:'datarequests', icon:'🗃', label:'Data Requests' },
-            { id:'fitnessgoals', icon:'🏋', label:'Fitness Goals' },
-            { id:'eventplanner', icon:'📅', label:'Event Planner' },
-            { id:'storygen', icon:'📖', label:'Story Generator' },
-            { id:'mindfulness', icon:'🧘', label:'Mindfulness' },
-            { id:'ratelimits', icon:'🚦', label:'Rate Limits' },
-            { id:'gratitudejar', icon:'🫗', label:'Gratitude Jar' },
-            { id:'contentbriefs', icon:'📝', label:'Content Briefs' },
-            { id:'taglinev2', icon:'💬', label:'Tagline AI' },
-            { id:'symptoms', icon:'🤒', label:'Symptom Log' },
-            { id:'sprintgoals', icon:'🏃', label:'Sprint Goals' },
-            { id:'bucketlistv2', icon:'🪄', label:'Bucket List' },
-            { id:'okrheatmap', icon:'🌡', label:'OKR Heatmap' },
-            { id:'emailreply', icon:'📧', label:'Email Reply AI' },
-            { id:'dreamjournal', icon:'🌙', label:'Dream Journal' },
-            { id:'techradar', icon:'📡', label:'Tech Radar' },
-            { id:'creativeprojects', icon:'🎨', label:'Creative Projects' },
-            { id:'hiringpipeline', icon:'👤', label:'Hiring Pipeline' },
-            { id:'swotgen', icon:'📊', label:'SWOT Generator' },
-            { id:'skincare', icon:'🧴', label:'Skincare Log' },
-            { id:'budgetv2', icon:'💸', label:'Budget Tracker' },
-            { id:'travelwish', icon:'🌍', label:'Travel Wishlist' },
-            { id:'soplibrary', icon:'📋', label:'SOP Library' },
-            { id:'linkedinpost', icon:'💼', label:'LinkedIn Posts' },
-            { id:'pomodoro', icon:'🍅', label:'Pomodoro' },
-            { id:'compliancereg', icon:'⚖', label:'Compliance' },
-            { id:'networkingcrm', icon:'🤝', label:'Networking CRM' },
-            { id:'localization', icon:'🌐', label:'Localization' },
-            { id:'coverletter', icon:'📨', label:'Cover Letters' },
-            { id:'allergies', icon:'⚠', label:'Allergy Log' },
-            { id:'releasecal', icon:'📅', label:'Release Calendar' },
-            { id:'bookclub', icon:'📚', label:'Book Club' },
-            { id:'partnertracker', icon:'🤝', label:'Partners' },
-            { id:'debateprep', icon:'🎙', label:'Debate Prep' },
-            { id:'caffeine', icon:'☕', label:'Caffeine' },
-            { id:'growthexp', icon:'🧪', label:'Growth Experiments' },
-            { id:'stresslog', icon:'💢', label:'Stress Log' },
-            { id:'productfeedback', icon:'💬', label:'Product Feedback' },
-            { id:'icebreakers', icon:'🧊', label:'Icebreakers' },
-            { id:'journalv2', icon:'📓', label:'Journal' },
-            { id:'innovationlog', icon:'💡', label:'Innovation Log' },
-            { id:'braindump', icon:'🧠', label:'Brain Dump' },
-            { id:'sprintbacklog', icon:'🏃', label:'Sprint Backlog' },
-            { id:'socialcaptions', icon:'📱', label:'Social Captions' },
-            { id:'fasting', icon:'⏱', label:'Fasting Tracker' },
-            { id:'productglossary', icon:'📚', label:'Product Glossary' },
-            { id:'flashcards', icon:'🃏', label:'Flashcards' },
-            { id:'kpidashboard', icon:'📈', label:'KPI Dashboard' },
-            { id:'meetingminutes', icon:'📝', label:'Meeting Minutes' },
-            { id:'emotionaljournal', icon:'🧠', label:'Emotional Journal' },
-            { id:'supportv2', icon:'🎫', label:'Support Tickets' },
-            { id:'workoutprograms', icon:'🏋', label:'Workout Programs' },
-            { id:'commlog', icon:'💬', label:'Comm Log' },
-            { id:'blogoutlines', icon:'📝', label:'Blog Outlines' },
-            { id:'moodboards', icon:'🎨', label:'Mood Boards' },
-            { id:'projectphases', icon:'📅', label:'Project Phases' },
-            { id:'bucketlist', icon:'🨣', label:'Bucket List' },
-            { id:'vendorcontacts', icon:'🤝', label:'Vendors' },
-            { id:'productnames', icon:'💡', label:'Product Names' },
-            { id:'waterv2', icon:'💧', label:'Water Intake' },
-            { id:'costcenters', icon:'💰', label:'Cost Centers' },
-            { id:'bodymetrics', icon:'💪', label:'Body Metrics' },
-            { id:'stakeholdermap', icon:'🌐', label:'Stakeholder Map' },
-            { id:'headlineopt', icon:'📰', label:'Headlines' },
-            { id:'gratitudev2', icon:'💛', label:'Gratitude' },
-            { id:'securitylog', icon:'🔒', label:'Security Log' },
-            { id:'learningsprints', icon:'💡', label:'Learning Sprints' },
-            { id:'featurerequests', icon:'📣', label:'Feature Requests' },
-            { id:'taglinegen', icon:'✨', label:'Tagline Gen' },
-            { id:'expensecats', icon:'💳', label:'Expenses' },
-            { id:'archdocs', icon:'🏗', label:'Architecture' },
-            { id:'focusblocks', icon:'🎯', label:'Focus Blocks' },
-            { id:'incidenttracker', icon:'🚨', label:'Incidents' },
-            { id:'contentrepurposer', icon:'🔄', label:'Repurposer' },
-            { id:'sleepv2', icon:'😴', label:'Sleep Tracker' },
-            { id:'apichangelog', icon:'📜', label:'API Changelog' },
-            { id:'visionboard', icon:'🎨', label:'Vision Board' },
-            { id:'processflows', icon:'🔀', label:'Process Flows' },
-            { id:'coldemails', icon:'📧', label:'Cold Emails' },
-            { id:'habitsv4', icon:'🔥', label:'Habit Streaks' },
-            { id:'meetingtemplates', icon:'📋', label:'Meeting Templates' },
-            { id:'affirmations', icon:'✨', label:'Affirmations' },
-            { id:'datadictionary', icon:'📘', label:'Data Dictionary' },
-            { id:'resumebuilder', icon:'📄', label:'Resume Builder' },
-            { id:'portfolio', icon:'🗂', label:'Portfolio' },
-            { id:'teamdirectory', icon:'👥', label:'Team Directory' },
-            { id:'interviewprep', icon:'💼', label:'Interview Prep' },
-            { id:'okrs', icon:'🎯', label:'OKR Tracker' },
-            { id:'pitchdeck', icon:'📰', label:'Pitch Deck' },
-            { id:'recipes', icon:'🍳', label:'Recipe Box' },
-            { id:'riskregister', icon:'⚠', label:'Risk Register' },
-            { id:'dailyintentions', icon:'🌅', label:'Daily Intentions' },
-            { id:'retrospectives', icon:'🔄', label:'Retrospectives' },
-            { id:'swot', icon:'📊', label:'SWOT Analysis' },
-            { id:'savings', icon:'💰', label:'Savings Goals' },
-            { id:'companalysis', icon:'🔭', label:'Competitive Analysis' },
-            { id:'meditationlog', icon:'🧘', label:'Meditation Log' },
-            { id:'apidocs', icon:'📖', label:'API Docs' },
-            { id:'prd', icon:'📋', label:'PRD Builder' },
-            { id:'goalmilestones', icon:'🎯', label:'Goal Milestones' },
-            { id:'techdebt', icon:'🔧', label:'Tech Debt' },
-            { id:'habitsv3', icon:'🔁', label:'Habits Tracker' },
-            { id:'onboardingdocs', icon:'🎓', label:'Onboarding Docs' },
-            { id:'emailseq', icon:'📧', label:'Email Sequences' },
-            { id:'expenses', icon:'💰', label:'Expenses' },
-            { id:'prodroadmap', icon:'🗺', label:'Product Roadmap' },
-            { id:'networking', icon:'🤝', label:'Networking Log' },
-            { id:'decisions', icon:'⚖', label:'Decision Log' },
-            { id:'biowriter', icon:'👤', label:'Bio Writer' },
-            { id:'subscriptions', icon:'💸', label:'Subscriptions' },
-            { id:'custpersonas', icon:'👥', label:'Customer Personas' },
-            { id:'langlearnin', icon:'🌎', label:'Language Learning' },
-            { id:'wschangelog', icon:'📋', label:'Changelog' },
-            { id:'meetingagenda', icon:'📆', label:'Meeting Agendas' },
-            { id:'journalprompts', icon:'📝', label:'Journal Prompts' },
-            { id:'capacityplan', icon:'📈', label:'Capacity Planner' },
-            { id:'booktracker', icon:'📕', label:'Book Tracker' },
-            { id:'wsbudget', icon:'💵', label:'Team Budget' },
-            { id:'contentrepurpose', icon:'🔄', label:'Content Repurposer' },
-            { id:'waterintake', icon:'💧', label:'Water Intake' },
-            { id:'engmetrics', icon:'🔧', label:'Eng Metrics' },
-            { id:'moodjournal', icon:'😊', label:'Mood Journal' },
-            { id:'vendorcontracts', icon:'📄', label:'Vendor Contracts' },
-            { id:'pressrelease', icon:'📰', label:'Press Releases' },
-            { id:'workoutlog', icon:'🏋', label:'Workout Log' },
-            { id:'interviewqs', icon:'💬', label:'Interview Questions' },
-            { id:'debttracker', icon:'💳', label:'Debt Tracker' },
-            { id:'postmortems', icon:'📝', label:'Postmortems' },
-            { id:'jobdesc', icon:'💼', label:'Job Descriptions' },
-            { id:'watchlist', icon:'📈', label:'Watchlist' },
-            { id:'slatracker', icon:'📊', label:'SLA Tracker' },
-            { id:'focussessions', icon:'🎯', label:'Focus Sessions' },
-            { id:'archdiagrams', icon:'🗺', label:'Architecture Diagrams' },
-            { id:'valueprops', icon:'💰', label:'Value Propositions' },
-            { id:'readingnotes', icon:'📓', label:'Reading Notes' },
-            { id:'featureflags', icon:'🚩', label:'Feature Flags' },
-            { id:'visionjournal', icon:'🔮', label:'Vision Journal' },
-            { id:'deployrunbook', icon:'🚀', label:'Deploy Runbook' },
-            { id:'blogoutline', icon:'📝', label:'Blog Outline' },
-            { id:'symptomslog', icon:'🩺', label:'Symptoms Log' },
-            { id:'escalation', icon:'🚨', label:'Escalation Matrix' },
-            { id:'painpoints', icon:'🤒', label:'Pain Points' },
-            { id:'compliancedocs', icon:'📜', label:'Compliance Docs' },
-            { id:'headlines', icon:'📰', label:'Headline Optimizer' },
-            { id:'gratitudev2', icon:'💛', label:'Gratitude Journal' },
-            { id:'meetingtmpls', icon:'📅', label:'Meeting Templates' },
-            { id:'quotescoll', icon:'💬', label:'Quotes Collection' },
-            { id:'deptracker', icon:'📦', label:'Dependency Tracker' },
-            { id:'personas', icon:'🧑', label:'Persona Builder' },
-            { id:'screentime', icon:'📱', label:'Screen Time' },
-            { id:'knowledgebase', icon:'📚', label:'Knowledge Base' },
-            { id:'mealplanner', icon:'🍽', label:'Meal Planner' },
-            { id:'brandassets', icon:'🎨', label:'Brand Assets' },
-            { id:'abtests', icon:'🧪', label:'A/B Test Ideas' },
-            { id:'energylog', icon:'⚡', label:'Energy Log' },
-            { id:'servicecatalog', icon:'🗂', label:'Service Catalog' },
-            { id:'affirmations', icon:'✨', label:'Affirmations' },
-            { id:'datadict', icon:'📖', label:'Data Dictionary' },
-            { id:'taglines', icon:'💥', label:'Tagline Generator' },
-            { id:'projlog', icon:'📋', label:'Project Log' },
-            { id:'accessreqs', icon:'🔒', label:'Access Requests' },
-            { id:'travelplans', icon:'🌍', label:'Travel Plans' },
-            { id:'releasenotes', icon:'📝', label:'Release Notes' },
-            { id:'faqbuilder', icon:'💬', label:'FAQ Builder' },
-            { id:'sleepqual', icon:'😴', label:'Sleep Quality' },
-            { id:'clientportal', icon:'💼', label:'Client Portal' },
-            { id:'learningpaths', icon:'🧭', label:'Learning Paths' },
-            { id:'retros', icon:'🔄', label:'Retrospectives' },
-            { id:'prodnames', icon:'💡', label:'Product Names' },
-            { id:'bodymeasu', icon:'📏', label:'Body Measurements' },
-            { id:'stakeholders', icon:'👥', label:'Stakeholder Map' },
-            { id:'lifegoals', icon:'🌟', label:'Life Goals' },
-            { id:'meetingactions', icon:'📋', label:'Meeting Actions' },
-            { id:'coldoutreach', icon:'📨', label:'Cold Outreach' },
-            { id:'dailychk', icon:'✅', label:'Daily Checklist' },
-            { id:'prodfeedback', icon:'💬', label:'Product Feedback' },
-            { id:'timeblocks', icon:'🕓', label:'Time Blocks' },
-            { id:'apikeysreg', icon:'🔑', label:'API Keys Registry' },
-            { id:'emailsubj', icon:'📧', label:'Email Subject Tester' },
-            { id:'savingsgoals', icon:'💳', label:'Savings Goals' },
-            { id:'onboardchk', icon:'✅', label:'Onboarding Checklist' },
-            { id:'pomodoro', icon:'🍅', label:'Pomodoro Log' },
-            { id:'designtokens', icon:'🎨', label:'Design Tokens' },
-            { id:'swotbuilder', icon:'📊', label:'SWOT Builder' },
-            { id:'networth', icon:'💰', label:'Net Worth' },
-            { id:'testplans', icon:'🧪', label:'Test Plans' },
-            { id:'readingchallenge', icon:'📚', label:'Reading Challenge' },
-            { id:'adrs', icon:'🏛', label:'Architecture Decisions' },
-            { id:'pitchdeck', icon:'📊', label:'Pitch Deck Builder' },
-            { id:'habitstreaks', icon:'🔥', label:'Habit Streaks' },
-            { id:'secchecklist', icon:'🔐', label:'Security Checklist' },
-            { id:'skillmatrix', icon:'🧠', label:'Skill Matrix' },
-            { id:'budgettrack', icon:'💵', label:'Budget Tracker' },
-            { id:'contentcal', icon:'📰', label:'Content Cal' },
-            { id:'personalgoals', icon:'🏆', label:'Personal Goals' },
-            { id:'accesslog', icon:'🔒', label:'Access Log' },
-            { id:'focussess', icon:'🎯', label:'Focus Sessions' },
-            { id:'capacityplan', icon:'📊', label:'Capacity Plan' },
-            { id:'interviewprep', icon:'👔', label:'Interview Prep' },
-            { id:'meditationlog', icon:'🧘', label:'Meditation' },
-            { id:'compintel', icon:'🔍', label:'Comp Intel' },
-            { id:'visionboard', icon:'🌟', label:'Vision Board' },
-            { id:'incidentlog', icon:'🚨', label:'Incidents' },
-            { id:'codeopt', icon:'🔧', label:'Code Optimizer' },
-            { id:'watertracker', icon:'💧', label:'Water Tracker' },
-            { id:'techradar', icon:'🛰️', label:'Tech Radar' },
-            { id:'contactbook', icon:'📗', label:'Contacts' },
-            { id:'releasecal', icon:'📅', label:'Release Cal' },
-            { id:'debatetopics', icon:'🎙️', label:'Debate Topics' },
-            { id:'langvocab', icon:'🗣️', label:'Vocab' },
-            { id:'costcenter', icon:'💳', label:'Cost Centers' },
-            { id:'readingnotes', icon:'📖', label:'Reading Notes' },
-            { id:'featureflags', icon:'🚩', label:'Feature Flags' },
-            { id:'storygen', icon:'💬', label:'Story Gen' },
-            { id:'gratitudelog', icon:'🙏', label:'Gratitude Log' },
-            { id:'slatracker', icon:'📈', label:'SLA Tracker' },
-            { id:'workoutplans', icon:'🏋️', label:'Workout Plans' },
-            { id:'meetingnotes', icon:'📋', label:'Meeting Notes' },
-            { id:'resumebuilder', icon:'📄', label:'Resume Builder' },
-            { id:'bucketlist', icon:'🨣', label:'Bucket List' },
-            { id:'depmap', icon:'🗺️', label:'Dep Map' },
-            { id:'journal', icon:'📓', label:'Journal' },
-            { id:'habits', icon:'🔥', label:'Habits' },
-            { id:'changelog', icon:'📜', label:'Changelog' },
-            { id:'journal', icon:'📓', label:'Journal' },
-            { id:'vendors', icon:'🏪', label:'Vendors' },
-            { id:'emaildraft', icon:'📧', label:'Email Drafter' },
-            { id:'moodboard', icon:'🎨', label:'Mood Board' },
-            { id:'changelog', icon:'📝', label:'Changelog' },
-            { id:'sleeplog', icon:'😴', label:'Sleep Log' },
-            { id:'apicatalog', icon:'🌐', label:'API Catalog' },
-            { id:'diagrambuilder', icon:'📊', label:'Diagrams' },
-            { id:'expensetracker', icon:'💰', label:'Expenses' },
-            { id:'retroboards', icon:'🧩', label:'Retro Boards' },
-            { id:'portfolio', icon:'💼', label:'Portfolio' },
-            { id:'runbooks', icon:'📔', label:'Runbooks' },
-            { id:'codereviewq', icon:'🔍', label:'Code Review Q' },
-            { id:'nutritionlog', icon:'🥗', label:'Nutrition Log' },
-            { id:'prreviews', icon:'🧾', label:'PR Reviews' },
-            { id:'readingq', icon:'📰', label:'Reading Queue' },
-            { id:'sprintcap', icon:'📈', label:'Sprint Capacity' },
-            { id:'tonerewrite', icon:'🖊️', label:'Tone Rewriter' },
-            { id:'achievebadge', icon:'🏆', label:'Badges' },
-            { id:'datagloss', icon:'📝', label:'Data Glossary' },
-            { id:'decjournal', icon:'📓', label:'Decision Journal' },
-            { id:'knowwiki', icon:'📖', label:'Knowledge Wiki' },
-            { id:'conceptexp', icon:'🧪', label:'Concept Explainer' },
-            { id:'reflectlog', icon:'🌟', label:'Reflection Log' },
-            { id:'teamkudos', icon:'👏', label:'Team Kudos' },
-            { id:'flashcards', icon:'🃏', label:'Flashcards' },
-            { id:'reading', icon:'📚', label:'Reading' },
-            { id:'kanban', icon:'🗃️', label:'Kanban' },
-            { id:'digest', icon:'☀️', label:'Digest' },
-            { id:'snippets', icon:'🗄️', label:'Snippets' },
-            { id:'gsearch', icon:'🔎', label:'Search' },
-            { id:'onboarding', icon:'🚀', label:'Get Started' },
-            { id:'urlsaves', icon:'🔗', label:'Link Vault' },
-            { id:'calendar', icon:'📆', label:'Content Cal' },
-            { id:'advstats', icon:'📊', label:'Adv. Stats' },
-            { id:'timer', icon:'⏱', label:'Focus Timer' },
-            { id:'wgoals', icon:'🎯', label:'Goals' },
-            { id:'formatter', icon:'✂️', label:'Formatter' },
-            { id:'weeksummary', icon:'📅', label:'Week Summary' },
-            { id:'streaks', icon:'🔥', label:'Streaks' },
-            { id:'readlist', icon:'📚', label:'Reading List' },
-            { id:'csnippets', icon:'🧩', label:'Code Snippets' },
-            { id:'tdiffs', icon:'🔀', label:'Thread Diffs' },
-            { id:'aifeed', icon:'🤖', label:'AI Insights' },
-            { id:'statssummary', icon:'📊', label:'Stats Hub' },
-            { id:'focusmodes', icon:'🧘', label:'Focus Modes' },
-            { id:'polls', icon:'🗳', label:'Polls' },
-            { id:'wtags', icon:'🏷', label:'Tag Manager' },
-            { id:'batchrename', icon:'✏️', label:'Batch Rename' },
-            { id:'wshealth', icon:'❤️', label:'WS Health' },
-            { id:'dailylog', icon:'📓', label:'Daily Log' },
-            { id:'milestones', icon:'🏅', label:'Milestones' },
-            { id:'archives', icon:'🗄', label:'Archives' },
-            { id:'timeline', icon:'📈', label:'Timeline' },
-            { id:'rxleader', icon:'🎖', label:'Top Reactions' },
-            { id:'pchains', icon:'⛓', label:'Prompt Chains' },
-            { id:'compare', icon:'🔍', label:'Compare Threads' },
-            { id:'kcards', icon:'🃏', label:'Knowledge Cards' },
-            { id:'vnotes', icon:'🎙', label:'Voice Notes' },
-            { id:'wevents', icon:'📅', label:'WS Events' },
-            { id:'personaslib', icon:'🎭', label:'Personas Lib' },
-            { id:'challenges', icon:'🏆', label:'Challenges' },
-            { id:'glossary', icon:'📖', label:'Glossary' },
-            { id:'tscores', icon:'⭐', label:'Thread Scores' },
-            { id:'suggestions', icon:'💡', label:'Suggestions' },
-            { id:'ideainbox', icon:'📥', label:'Idea Inbox' },
-            { id:'sessionplans', icon:'🗓', label:'Session Plans' },
-            { id:'threaddeps', icon:'🔗', label:'Thread Deps' },
-            { id:'wschangelog', icon:'📝', label:'WS Changelog' },
-            { id:'writingcoach', icon:'✍️', label:'Writing Coach' },
-            { id:'decisionlog', icon:'⚖️', label:'Decision Log' },
-            { id:'threadclones', icon:'🐑', label:'Thread Clones' },
-            { id:'wsmood', icon:'😊', label:'WS Mood' },
-            { id:'readprog', icon:'📖', label:'Reading Progress' },
-            { id:'aidebate', icon:'🎙', label:'AI Debate' },
-            { id:'boards', icon:'📋', label:'Project Boards' },
-            { id:'sprints', icon:'🏃', label:'Sprints' },
-            { id:'contentcal', icon:'📆', label:'Content Cal' },
-            { id:'learnpath', icon:'🎓', label:'Learning Paths' },
-          { id:'aibookmarks', icon:'🔖', label:'AI Bookmarks' },
-          { id:'focussess', icon:'🎯', label:'Focus Sessions' },
-          { id:'treactions', icon:'💬', label:'Reactions' },
-          { id:'wstags', icon:'🏷', label:'WS Tags' },
-          { id:'intentions', icon:'🌅', label:'Daily Intentions' },
-          { id:'notetpl', icon:'📄', label:'Note Templates' },
-          { id:'snippetsv2', icon:'</>', label:'Code Snippets' },
-          { id:'wsannounce', icon:'📢', label:'Announcements' },
-          { id:'aijournal', icon:'📓', label:'AI Journal' },
-          { id:'threadpolls', icon:'📊', label:'Thread Polls' },
-          { id:'insightcards', icon:'💎', label:'Insights' },
-          { id:'goalsv2', icon:'🎯', label:'Goals v2' },
-          { id:'aireminders', icon:'⏰', label:'AI Reminders' },
-          { id:'tbookmarks2', icon:'🔖', label:'Thread Marks' },
-          { id:'exportpresets', icon:'📤', label:'Export Presets' },
-          { id:'aiflows', icon:'🔄', label:'AI Flows' },
-            { id:'wstagsv2', icon:'🏷️', label:'WS Tags v2' },
-            { id:'insightcards', icon:'💡', label:'Insight Cards' },
-            { id:'promptratings', icon:'⭐', label:'Prompt Ratings' },
-            { id:'sessnaps', icon:'📸', label:'Session Snaps' },
-            { id:'aievals', icon:'⭐', label:'AI Evaluations' },
-            { id:'wsevents', icon:'📡', label:'WS Events' },
-            { id:'resptmpls', icon:'📝', label:'Response Templates' },
-            { id:'archivesv3', icon:'🗃️', label:'Thread Archives' },
-            { id:'userbadges', icon:'🏅', label:'User Badges' },
-            { id:'chatmem', icon:'🧠', label:'Chat Memory' },
-            { id:'searchidx', icon:'🔍', label:'Search Index' },
-            { id:'custmetrics', icon:'📈', label:'Custom Metrics' },
-            { id:'filequeue', icon:'📁', label:'File Queue' },
-            { id:'tokledger', icon:'🪙', label:'Token Ledger' },
-            { id:'thrxv2', icon:'😊', label:'Thread Reactions' },
-            { id:'wsalertsv2', icon:'🔔', label:'WS Alerts' },
-            { id:'personasv3', icon:'🤖', label:'AI Personas v3' },
-            { id:'docversions', icon:'📄', label:'Doc Versions' },
-            { id:'taskcomments', icon:'💬', label:'Task Comments' },
-            { id:'aisuggv2', icon:'✨', label:'AI Suggestions' },
-            { id:'wsgoals', icon:'🎯', label:'WS Goals' },
-            { id:'codesnipv2', icon:'💻', label:'Code Snippets' },
-            { id:'feedbnotes', icon:'📣', label:'Feedback Notes' },
-            { id:'sesschkpts', icon:'💾', label:'Checkpoints' },
-            { id:'ideavotes', icon:'💡', label:'Idea Votes' },
-            { id:'wsbroad', icon:'📢', label:'WS Broadcasts' },
-            { id:'debuglogs', icon:'🐛', label:'Debug Logs' },
-            { id:'notelinks', icon:'🔗', label:'Note Links' },
-            { id:'profilev2', icon:'👤', label:'Profile v2' },
-            { id:'meetingnotes', icon:'📅', label:'Meeting Notes' },
-              { id:'metricsv2', icon:'📊', label:'WS Metrics' },
-              { id:'pchains', icon:'🔗', label:'Prompt Chains' },
-              { id:'fileanno', icon:'📎', label:'File Annotations' },
-              { id:'aitasks', icon:'✅', label:'AI Tasks' },
-              { id:'summariesv2', icon:'📋', label:'AI Summaries' },
-              { id:'wsthemes', icon:'🎨', label:'WS Themes' },
-              { id:'shortcuts', icon:'⌨️', label:'Shortcuts' },
-              { id:'threadlabels', icon:'🏷️', label:'Thread Labels' },
-              { id:'collabrooms', icon:'🚪', label:'Collab Rooms' },
-              { id:'promptlib', icon:'📚', label:'Prompt Library' },
-              { id:'wsconnect', icon:'🔗', label:'WS Connections' },
-              { id:'aiglossary', icon:'📖', label:'AI Glossary' },
-              { id:'rqv2', icon:'📰', label:'Reading Queue' },
-              { id:'kanlabels', icon:'🎨', label:'Kanban Labels' },
-              { id:'collabnotes', icon:'📝', label:'Collab Notes' },
-              { id:'aiexp', icon:'🧪', label:'AI Experiments' },
-              { id:'wsrules', icon:'⚙️', label:'WS Rules' },
-              { id:'cdrafts', icon:'✍️', label:'Content Drafts' },
-              { id:'achievements', icon:'🏆', label:'Achievements' },
-              { id:'wswidgets', icon:'🧩', label:'WS Widgets' },
-          { id:'personasv2', icon:'🎭', label:'Personas v2' },
-          { id:'threadmetrics', icon:'📈', label:'Thread Metrics' },
-          { id:'quickactions', icon:'⚡', label:'Quick Actions' },
-          { id:'searchhist', icon:'🔍', label:'Search History' },
-            { id:'folders', icon:'📂', label:'Folders' },
-            { id:'quicknotes', icon:'📝', label:'Quick Notes' },
-            { id:'export', icon:'💾', label:'Export Data' },
-            { id:'tokenbreak', icon:'🪙', label:'Token Cost' },
-            { id:'savedsearch', icon:'🔖', label:'Saved Searches' },
-            { id:'prodscore', icon:'🏆', label:'Productivity' },
-            { id:'systpl', icon:'📋', label:'Sys Prompts' },
-            { id:'heatmap', icon:'🌡', label:'Heatmap' },
-            { id:'workspace', icon:'🛠', label:'Workspace' },
-            { id:'super', icon:'🌟', label:'SuperAgent' },
-            { id:'skills', icon:'🧩', label:'Skills & Tools' },
-            { id:'aichains', icon:'⛓️', label:'AI Chains' },
-            { id:'wsreports', icon:'📊', label:'WS Reports' },
-            { id:'aitestcases', icon:'🧪', label:'AI Test Cases' },
-            { id:'ctxwindows', icon:'🪟', label:'Context Windows' },
-            { id:'usergoals', icon:'🎯', label:'User Goals' },
-            { id:'aipersonas', icon:'🎭', label:'AI Personas' },
-            { id:'wseventsb51', icon:'📅', label:'WS Events' },
-            { id:'aioutputs', icon:'🖨️', label:'AI Outputs' },
-            { id:'threadperms', icon:'🔐', label:'Thread Perms' },
-            { id:'userbadges', icon:'🏅', label:'User Badges' },
-            { id:'aifeedback', icon:'🔁', label:'AI Feedback' },
-            { id:'wsrulesb52', icon:'⚖️', label:'WS Rules' },
-            { id:'msgthreadsv2', icon:'💬', label:'Threads V2' },
-            { id:'embedmeta', icon:'🧮', label:'Embed Meta' },
-            { id:'wsshortcuts', icon:'⌨️', label:'WS Shortcuts' },
-            { id:'aievalsb53', icon:'📝', label:'AI Evals' },
-            { id:'wskpis', icon:'📈', label:'WS KPIs' },
-            { id:'threadarchb53', icon:'🗄️', label:'Thread Archive' },
-            { id:'ctxinject', icon:'💉', label:'Ctx Inject' },
-            { id:'wswatchers', icon:'👁️', label:'WS Watchers' },
-            { id:'aitaskq', icon:'📋', label:'AI Task Queue' },
-            { id:'wsglossary', icon:'📖', label:'WS Glossary' },
-            { id:'airoutingrules', icon:'🔀', label:'AI Routing' },
-            { id:'threadreactsum', icon:'😄', label:'Reactions' },
-            { id:'wsintegrations', icon:'🔌', label:'WS Integrations' },
-            { id:'aiplaybooks', icon:'📒', label:'AI Playbooks' },
-            { id:'wschannels', icon:'#️⃣', label:'WS Channels' },
-            { id:'aibenchmarks', icon:'⚡', label:'AI Benchmarks' },
-            { id:'msgthreadarch', icon:'🗃️', label:'Thread Archive' },
-            { id:'aibudgets', icon:'💵', label:'AI Budgets' },
-            { id:'aisnippets', icon:'✂️', label:'AI Snippets' },
-            { id:'wsannounceb56', icon:'📢', label:'Announcements' },
-            { id:'aimnodes', icon:'🧠', label:'Memory Nodes' },
-            { id:'threadlabv2', icon:'🏷️', label:'Thread Labels' },
-            { id:'ustreaksv2', icon:'🔥', label:'Streaks' },
-            { id:'aipromptver', icon:'📜', label:'Prompt Versions' },
-            { id:'wsdigests', icon:'📰', label:'WS Digests' },
-            { id:'aicostbreak', icon:'💰', label:'Cost Breakdown' },
-            { id:'threadments', icon:'@️', label:'Mentions' },
-            { id:'userprefsv2', icon:'⚙️', label:'Preferences V2' },
-            { id:'airatingsv2', icon:'⭐', label:'Response Ratings' },
-            { id:'wsmilestones', icon:'🏁', label:'Milestones' },
-            { id:'aictxsnaps', icon:'📸', label:'Context Snapshots' },
-            { id:'threadcollabs', icon:'👥', label:'Thread Collabs' },
-            { id:'focussessions', icon:'🎯', label:'Focus Sessions' },
-            { id:'aidebuglogsb59', icon:'🐛', label:'Debug Logs' },
-            { id:'wspollsv2', icon:'📊', label:'Polls V2' },
-            { id:'threadreactv2', icon:'😄', label:'Reactions V2' },
-            { id:'userachievv2', icon:'🏆', label:'Achievements V2' },
-            { id:'aioutcache', icon:'💾', label:'Output Cache' },
-            { id:'aichainsteps', icon:'⛓️', label:'Chain Steps' },
-            { id:'wstagsv3', icon:'🏷️', label:'Tags V3' },
-            { id:'threadnotesv2', icon:'📝', label:'Thread Notes V2' },
-            { id:'userrituals', icon:'🕯️', label:'Rituals' },
-            { id:'aipersonasv2', icon:'🎭', label:'Personas V2' },
-            { id:'aiwftriggers', icon:'⚡', label:'WF Triggers' },
-            { id:'wsnotices', icon:'📣', label:'WS Notices' },
-            { id:'threadsumv2', icon:'📋', label:'Thread Sums V2' },
-            { id:'usertimeblocks', icon:'⏰', label:'Time Blocks' },
-            { id:'airesptemplates', icon:'📄', label:'Resp Templates' },
-            { id:'aiknowledgegaps', icon:'🧩', label:'Knowledge Gaps' },
-            { id:'wsroles', icon:'🏘', label:'WS Roles' },
-            { id:'threadhighlights2', icon:'📝', label:'Thread Highlights' },
-            { id:'userjournal', icon:'📓', label:'User Journal' },
-            { id:'airankinglog', icon:'🏆', label:'Ranking Log' },
-            { id:'aiconfidencescores', icon:'📊', label:'Confidence Scores' },
-            { id:'wsboards', icon:'🗂', label:'WS Boards' },
-            { id:'threadrevisions', icon:'🔄', label:'Thread Revisions' },
-            { id:'usercommitments', icon:'🤝', label:'Commitments' },
-            { id:'aiquestionlog', icon:'❓', label:'Question Log' },
-            { id:'codediffexp', icon:'📄', label:'Diff Explainer' },
-            { id:'sessionreplays', icon:'🎥', label:'Session Replays' },
-            { id:'smartrenames', icon:'✏️', label:'Smart Rename' },
-            { id:'tokenbreakdown', icon:'📊', label:'Token Breakdown' },
-            { id:'aipromptchains', icon:'🔗', label:'Prompt Chains' },
-            { id:'aioutputscores', icon:'🎯', label:'Output Scores' },
-            { id:'wsnotesv2', icon:'📋', label:'WS Notes v2' },
-            { id:'threadflags', icon:'🚩', label:'Thread Flags' },
-            { id:'focustimers', icon:'⏱️', label:'Focus Timers' },
-            { id:'aicontextwins', icon:'🖼️', label:'Context Windows' },
-            { id:'aistyleguides', icon:'📐', label:'Style Guides' },
-            { id:'wssprints2', icon:'🏃', label:'Sprints v2' },
-            { id:'threadreactv3', icon:'😄', label:'Reactions v3' },
-            { id:'skillgoals', icon:'🎯', label:'Skill Goals' },
-            { id:'aitestprompts', icon:'🧪', label:'Test Prompts' },
-            { id:'aifeedbackloops', icon:'🔁', label:'Feedback Loops' },
-            { id:'wseventsv2', icon:'📅', label:'Events v2' },
-            { id:'growthlog', icon:'📈', label:'Growth Log' },
-            { id:'hallucinchk', icon:'🔍', label:'Hallucin Check' },
-            { id:'wsdirs', icon:'📂', label:'WS Dirs' },
-            { id:'flashcards', icon:'🃏', label:'Flashcards' },
-            { id:'okrcheckins', icon:'🎯', label:'OKR Check-ins' },
-            { id:'debatecoach', icon:'🎙️', label:'Debate Coach' },
-            { id:'habitchains', icon:'🔗', label:'Habit Chains' },
-            { id:'eventcal', icon:'📅', label:'Event Calendar' },
-            { id:'booktracker', icon:'📚', label:'Book Tracker' },
-            { id:'projectrisks', icon:'⚠️', label:'Project Risks' },
-            { id:'writingcoach', icon:'✏️', label:'Writing Coach' },
-            { id:'mindmapnodes', icon:'🧠', label:'Mind Map' },
-            { id:'surveyresps', icon:'📋', label:'Survey Resps' },
-            { id:'codereviews', icon:'🔎', label:'Code Reviews' },
-            { id:'incidenttl', icon:'🚨', label:'Incident TL' },
-            { id:'promptlib', icon:'📚', label:'Prompt Lib' },
-            { id:'langlearn', icon:'🌍', label:'Language' },
-            { id:'vendorcontacts', icon:'📞', label:'Vendor Contacts' },
-            { id:'taskdeps', icon:'🔗', label:'Task Deps' },
-            { id:'slatracker', icon:'📶', label:'SLA Tracker' },
-            { id:'contentplanner', icon:'🗓️', label:'Content Plan' },
-            { id:'interviewnotesb100', icon:'📋', label:'Interviews' },
-            { id:'costtracker', icon:'💵', label:'Cost Tracker' },
-            { id:'learnobjectives', icon:'🎯', label:'Learn Objs' },
-            { id:'threatlog', icon:'🛡️', label:'Threat Log' },
-            { id:'styletransfer', icon:'🎨', label:'Style Transfer' },
-            { id:'dailycheckin', icon:'📅', label:'Daily Check-in' },
-            { id:'releasenotes', icon:'📦', label:'Release Notes' },
-            { id:'readingnotes', icon:'📝', label:'Reading Notes' },
-            { id:'docvault', icon:'🗄️', label:'Doc Vault' },
-            { id:'promptmetrics', icon:'📊', label:'Prompt Metrics' },
-            { id:'sprintreviews', icon:'🏁', label:'Sprint Reviews' },
-            { id:'depmap', icon:'🧩', label:'Dep Map' },
-            { id:'shortcutkeys', icon:'⌨️', label:'Shortcuts' },
-            { id:'apicatalog', icon:'📖', label:'API Catalog' },
-            { id:'factchecker', icon:'🔍', label:'Fact Check' },
-            { id:'pomodorosess', icon:'🍅', label:'Pomodoro' },
-            { id:'changereqs', icon:'🔄', label:'Change Reqs' },
-            { id:'timeblocks', icon:'⏰', label:'Time Blocks' },
-            { id:'knowledgegraph', icon:'🧠', label:'Knowledge Graph' },
-            { id:'toneanalyzer', icon:'🎨', label:'Tone Analyzer' },
-            { id:'goalstracker', icon:'🥅', label:'Goals Tracker' },
-            { id:'auditlog', icon:'📋', label:'Audit Log' },
-            { id:'escalationlog', icon:'🚨', label:'Escalations' },
-            { id:'winsjournal', icon:'🏆', label:'Wins Journal' },
-            { id:'ctxsnapshots', icon:'📸', label:'Ctx Snapshots' },
-            { id:'vendorlist', icon:'💳', label:'Vendor List' },
-            { id:'npscore', icon:'⭐', label:'NPS Scores' },
-            { id:'meetingcal', icon:'📅', label:'Meeting Cal' },
-            { id:'interviewprep', icon:'🎤', label:'Interview Prep' },
-            { id:'rewritelog', icon:'🔄', label:'Rewrite Log' },
-            { id:'standupconfig', icon:'🕑', label:'Standup Config' },
-            { id:'projectlog', icon:'📁', label:'Project Log' },
-            { id:'learnpaths', icon:'📚', label:'Learning Paths' },
-            { id:'glossary', icon:'📖', label:'Glossary' },
-            { id:'drafthistory', icon:'📝', label:'Draft History' },
-            { id:'feedbackboard', icon:'💬', label:'Feedback Board' },
-            { id:'sleeplog', icon:'😴', label:'Sleep Log' },
-            { id:'habittracker', icon:'✅', label:'Habit Tracker' },
-            { id:'linkvault', icon:'🔗', label:'Link Vault' },
-            { id:'questionbank', icon:'❓', label:'Question Bank' },
-            { id:'capacityplan', icon:'📊', label:'Capacity Plan' },
-            { id:'energylog', icon:'⚡', label:'Energy Log' },
-            { id:'readprogress', icon:'📖', label:'Reading Progress' },
-            { id:'wssops', icon:'📋', label:'SOPs' },
-            { id:'aicitations', icon:'📎', label:'Citations' },
-            { id:'wsbudget', icon:'💰', label:'Budget Tracker' },
-            { id:'focusgoals', icon:'🎯', label:'Focus Goals' },
-            { id:'wsdatasrc', icon:'🗄️', label:'Data Sources' },
-            { id:'dailyintent', icon:'🌞', label:'Daily Intentions' },
-            { id:'wsdesigntok', icon:'🎨', label:'Design Tokens' },
-            { id:'aiknowledge', icon:'🧠', label:'Knowledge Base' },
-            { id:'teamhealth', icon:'💗', label:'Team Health' },
-            { id:'wsflags', icon:'🚩', label:'Feature Flags' },
-            { id:'moodjournal', icon:'🌟', label:'Mood Journal' },
-            { id:'wsapimocks', icon:'🔧', label:'API Mocks' },
-            { id:'aisumcache', icon:'💾', label:'Summary Cache' },
-            { id:'wsslatargets', icon:'📈', label:'SLA Targets' },
-            { id:'usrpomodoro', icon:'🍅', label:'Pomodoro' },
-            { id:'wsrisk', icon:'⚠️', label:'Risk Register' },
-            { id:'aioutgallery', icon:'🖼️', label:'Output Gallery' },
-            { id:'wschangelog', icon:'📝', label:'Changelog' },
-            { id:'writinggoals', icon:'✍️', label:'Writing Goals' },
-            { id:'wsdeclog', icon:'📜', label:'Decision Log' },
-            { id:'aipersonas', icon:'🧠', label:'AI Personas' },
-            { id:'wsokrs', icon:'🎯', label:'OKRs' },
-            { id:'aiexpruns', icon:'🧪', label:'AI Experiments' },
-            { id:'wsmtgnotes', icon:'🗒️', label:'Meeting Notes' },
-            { id:'savedsearch', icon:'🔍', label:'Saved Searches' },
-            { id:'wscodesnip', icon:'📋', label:'Code Snippets' },
-            { id:'hallurepts', icon:'💬', label:'Hallucin. Reports' },
-            { id:'wsretro', icon:'🔄', label:'Retrospective' },
-            { id:'ctxnotes', icon:'📌', label:'Context Notes' },
-            { id:'wsintv2', icon:'🔗', label:'Integrations v2' },
-            { id:'aicostalerts', icon:'🚨', label:'Cost Alerts' },
-            { id:'sprintgoals', icon:'🏃', label:'Sprint Goals' },
-            { id:'achainresults', icon:'⛓️', label:'Chain Results' },
-            { id:'wsannv2', icon:'📢', label:'Announcements v2' },
-            { id:'aimodellogs', icon:'📊', label:'Model Logs' },
-            { id:'wsgoalsv3', icon:'🎯', label:'Goals v3' },
-            { id:'threadnotesv3', icon:'📋', label:'Thread Notes v3' },
-            { id:'habitstreaks', icon:'🔥', label:'Habit Streaks' },
-            { id:'aipersonamsgs', icon:'🤖', label:'Persona Msgs' },
-            { id:'aiprompttemps', icon:'📄', label:'Prompt Templates' },
-            { id:'wslabelsv3', icon:'🏷️', label:'Labels v3' },
-            { id:'usrtimelogs', icon:'⏰', label:'Time Logs' },
-            { id:'aisuggcache', icon:'⚡', label:'Sugg Cache' },
-            { id:'wspinsv2', icon:'📌', label:'Pins v2' },
-            { id:'aireviewqueues', icon:'📋', label:'Review Queue' },
-            { id:'wskanban', icon:'🗂️', label:'Kanban' },
-            { id:'readinglist', icon:'📚', label:'Reading List' },
-            { id:'aidebuglogs', icon:'🐛', label:'Debug Logs' },
-            { id:'threadsumv3', icon:'📝', label:'Thread Sums v3' },
-            { id:'wsbkmksv2', icon:'🔖', label:'Bookmarks V2' },
-            { id:'threadeventsv2', icon:'📅', label:'Thread Events V2' },
-            { id:'userskillratings', icon:'📊', label:'Skill Ratings' },
-            { id:'aipromptchainsv2', icon:'🔗', label:'Prompt Chains V2' },
-            { id:'aictxwindowsv2', icon:'🪟', label:'Ctx Windows V2' },
-            { id:'wsgoalsv2', icon:'🥅', label:'Goals V2' },
-            { id:'threadhighlights', icon:'🖍️', label:'Thread Highlights' },
-            { id:'learningpaths', icon:'🛤️', label:'Learning Paths' },
-            { id:'aifeedbackloops', icon:'🔄', label:'Feedback Loops' },
-            { id:'aisesschkpts', icon:'💾', label:'Session Checkpoints' },
-            { id:'wsreactionsv2', icon:'😊', label:'WS Reactions V2' },
-            { id:'threadactionitems', icon:'✅', label:'Action Items' },
-            { id:'usermoodlog', icon:'😶', label:'Mood Log' },
-            { id:'aioutputversions', icon:'📝', label:'Output Versions' },
-            { id:'aictxinjectors', icon:'💉', label:'Ctx Injectors' },
-            { id:'wssprintsv2', icon:'🏃', label:'Sprints V2' },
-            { id:'threadsubscribers', icon:'🔔', label:'Thread Subs' },
-            { id:'habitstreaksv2', icon:'🔥', label:'Habit Streaks V2' },
-            { id:'aimodelpresets', icon:'⚙️', label:'Model Presets' },
+            { id:'hermes', icon:'⚡', label:'Hermes Agent' },
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => { setMainTab(tab.id as any); if (tab.id==='super'){loadSuperMemory();loadSuperHistory();} }} title={tab.label}
               style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'7px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.12)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius: mainTab===tab.id ? '0 8px 8px 0' : '0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:13, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center', transition:'all 0.15s' }}>
@@ -33613,6 +33362,8 @@ export default function ForgeApp() {
         {(mainTab as string) === 'jira' && <ForgeTab_jira />}
         {(mainTab as string) === 'stripe' && <ForgeTab_stripe />}
         {(mainTab as string) === 'gsheets' && <ForgeTab_gsheets />}
+        {(mainTab as string) === 'home' && <ForgeTab_homeHub onOpen={(id: string) => setMainTab(id as any)} />}
+        {(mainTab as string) === 'integrations' && <ForgeTab_integrationsHub onOpen={(id: string) => setMainTab(id as any)} />}
         {(mainTab as string) === 'figma' && <ForgeTab_figma />}
         {(mainTab as string) === 'zendesk' && <ForgeTab_zendesk />}
         {(mainTab as string) === 'monday' && <ForgeTab_monday />}
@@ -33635,6 +33386,10 @@ export default function ForgeApp() {
         {(mainTab as string) === 'sendgrid' && <ForgeTab_sendgrid />}
         {(mainTab as string) === 'shopify' && <ForgeTab_shopify />}
         {(mainTab as string) === 'webflow' && <ForgeTab_webflow />}
+        {(mainTab as string) === 'figma' && <ForgeTab_figma />}
+        {(mainTab as string) === 'loom' && <ForgeTab_loom />}
+        {(mainTab as string) === 'calendly' && <ForgeTab_calendly />}
+        {(mainTab as string) === 'zoom' && <ForgeTab_zoom />}
         {(mainTab as string) === 'stripe_mgmt' && <ForgeTab_stripe_mgmt />}
         {(mainTab as string) === 'airtable' && <ForgeTab_airtable />}
         {(mainTab as string) === 'zendesk' && <ForgeTab_zendesk />}
