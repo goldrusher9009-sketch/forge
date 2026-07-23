@@ -431,6 +431,7 @@ async function apiFetchSSE(path: string, opts: RequestInit = {}, token?: string,
 const PROJECT_COLORS = ['var(--fg-orange)','var(--fg-blue)','var(--fg-green)','var(--fg-red)','var(--fg-orange)','var(--fg-orange)','var(--fg-blue)','var(--fg-green)'];
 const AGENT_ICONS = ['🧠','⚡','🔮','🔥','🌊','🎨','🚀','💻'];
 const FORGE_MODELS = [
+  { id:'forge-auto',   label:'⚡ Auto',       desc:'Smart router — picks best model for your task', base:'auto' },
   { id:'forge-ultra',  label:'Forge Ultra',  desc:'Claude Opus 4.6 + markup',       base:'claude-opus-4-6' },
   { id:'forge-pro',    label:'Forge Pro',    desc:'Claude Sonnet 4.6 + markup',     base:'claude-sonnet-4-6' },
   { id:'forge-flash',  label:'Forge Flash',  desc:'Claude Haiku 4.5 + markup',      base:'claude-haiku-4-5-20251001' },
@@ -27005,7 +27006,14 @@ export default function ForgeApp() {
         // Success — append AI reply directly from response, no re-fetch needed
         const aiData = resp?.data;
         if (aiData?.content) {
-          const aiMsg: Message = { id: aiData.id || 'tmp-ai', thread_id: threadId, role: 'assistant', content: aiData.content, created_at: new Date().toISOString() };
+          // Auto-router: show which model was selected and why
+          const autoRoute = aiData.autoRoute;
+          const routeBadge = autoRoute
+            ? `\n\n---\n⚡ **Auto-Router** → \`${autoRoute.model}\` *(${autoRoute.tier} · ${autoRoute.reason})*`
+            : '';
+          const finalContent = aiData.content + routeBadge;
+          if (autoRoute) addAgentStep('⚡', `Auto-Router: ${autoRoute.tier} task → ${autoRoute.model}`);
+          const aiMsg: Message = { id: aiData.id || 'tmp-ai', thread_id: threadId, role: 'assistant', content: finalContent, created_at: new Date().toISOString() };
           setMessages(prev => {
             const withoutTemp = prev.filter(m => m.id !== 'tmp-u');
             // Replace temp user message with a clean copy, then add AI reply
