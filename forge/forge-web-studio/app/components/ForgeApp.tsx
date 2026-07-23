@@ -31571,6 +31571,124 @@ export default function ForgeApp() {
                 {agents.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:13 }}>No agents loaded.</p>}
               </div>
 
+              {/* ── BYOS: Bring Your Own Storage ────────────────────────────────── */}
+              {(() => {
+                const [byosConfigs, setByosConfigs] = React.useState<any[]>([]);
+                const [byosLoaded, setByosLoaded] = React.useState(false);
+                const [byosAdding, setByosAdding] = React.useState(false);
+                const [byosProvider, setByosProvider] = React.useState('supabase');
+                const [byosCreds, setByosCreds] = React.useState<Record<string,string>>({});
+                const [byosLabel, setByosLabel] = React.useState('');
+                const [byosTesting, setByosTesting] = React.useState<string|null>(null);
+                const [byosSyncing, setByosSyncing] = React.useState<string|null>(null);
+                const tok = user.token;
+                const h = { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' };
+
+                const loadByos = async () => {
+                  const r = await fetch(`${API}/api/user/storage`, { headers: h });
+                  const d = await r.json();
+                  if (d.success) { setByosConfigs(d.data); setByosLoaded(true); }
+                };
+
+                React.useEffect(() => { loadByos(); }, []);
+
+                const byosProviders: Record<string,{ icon:string; label:string; fields: {key:string;label:string;placeholder:string;type?:string}[] }> = {
+                  supabase:    { icon:'⚡', label:'Supabase', fields: [{ key:'url', label:'Project URL', placeholder:'https://xxx.supabase.co' }, { key:'serviceKey', label:'Service Role Key', placeholder:'eyJ...', type:'password' }] },
+                  s3:          { icon:'☁️', label:'AWS S3',   fields: [{ key:'endpoint', label:'Endpoint', placeholder:'https://s3.amazonaws.com' }, { key:'bucket', label:'Bucket Name', placeholder:'my-forge-backup' }, { key:'accessKey', label:'Access Key ID', placeholder:'AKIA...' }, { key:'secretKey', label:'Secret Key', placeholder:'...', type:'password' }, { key:'region', label:'Region', placeholder:'us-east-1' }] },
+                  r2:          { icon:'🟠', label:'Cloudflare R2', fields: [{ key:'endpoint', label:'R2 Endpoint', placeholder:'https://xxx.r2.cloudflarestorage.com' }, { key:'bucket', label:'Bucket', placeholder:'forge-data' }, { key:'accessKey', label:'Access Key', placeholder:'...' }, { key:'secretKey', label:'Secret Key', placeholder:'...', type:'password' }] },
+                  gdrive:      { icon:'📗', label:'Google Drive', fields: [{ key:'accessToken', label:'OAuth Access Token', placeholder:'ya29...', type:'password' }] },
+                  vercel_blob: { icon:'▲', label:'Vercel Blob', fields: [{ key:'token', label:'Blob Read-Write Token', placeholder:'vercel_blob_rw_...', type:'password' }] },
+                  github:      { icon:'🐙', label:'GitHub Gist', fields: [{ key:'token', label:'Personal Access Token', placeholder:'ghp_...', type:'password' }, { key:'gistId', label:'Gist ID (optional)', placeholder:'Leave blank to auto-create' }] },
+                };
+
+                const activeProv = byosProviders[byosProvider];
+
+                const saveByos = async () => {
+                  const r = await fetch(`${API}/api/user/storage`, { method:'POST', headers: h, body: JSON.stringify({ provider: byosProvider, label: byosLabel || activeProv.label, credentials: byosCreds }) });
+                  const d = await r.json();
+                  if (d.success) { showToast('✅ Storage backend saved'); setByosAdding(false); setByosCreds({}); setByosLabel(''); loadByos(); }
+                  else showToast('❌ Save failed');
+                };
+
+                const testByos = async (id: string) => {
+                  setByosTesting(id);
+                  const r = await fetch(`${API}/api/user/storage/${id}/test`, { method:'POST', headers: h });
+                  const d = await r.json();
+                  showToast(d.success ? `✅ ${d.message}` : `❌ ${d.message}`);
+                  setByosTesting(null);
+                };
+
+                const syncByos = async (id: string) => {
+                  setByosSyncing(id);
+                  const r = await fetch(`${API}/api/user/storage/${id}/sync`, { method:'POST', headers: h });
+                  const d = await r.json();
+                  showToast(d.success ? `✅ Synced ${d.records} records (${(d.bytes/1024).toFixed(1)} KB)` : `❌ ${d.error}`);
+                  setByosSyncing(null);
+                  loadByos();
+                };
+
+                const deleteByos = async (id: string) => {
+                  if (!confirm('Remove this storage backend?')) return;
+                  await fetch(`${API}/api/user/storage/${id}`, { method:'DELETE', headers: h });
+                  loadByos();
+                };
+
+                return (
+                  <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24, marginBottom:24 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+                      <h3 style={{ color:'var(--fg-text2)', fontSize:14, margin:0, textTransform:'uppercase', letterSpacing:'0.05em' }}>🗄 Your Storage (BYOS)</h3>
+                      <span style={{ fontSize:10, color:'var(--fg-orange)', background:'rgba(251,146,60,0.15)', padding:'2px 8px', borderRadius:20, fontWeight:700, letterSpacing:'0.05em' }}>PRO</span>
+                    </div>
+                    <p style={{ margin:'0 0 16px', fontSize:12, color:'var(--fg-text3)' }}>Sync your threads, memories, and notes to storage you own. Forge keeps AI intelligence server-side; only your content is exported.</p>
+
+                    {/* Existing backends */}
+                    {byosConfigs.length > 0 && byosConfigs.map(cfg => (
+                      <div key={cfg.id} style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:'12px 14px', marginBottom:8, display:'flex', alignItems:'center', gap:10 }}>
+                        <span style={{ fontSize:20 }}>{byosProviders[cfg.provider]?.icon || '🗄'}</span>
+                        <div style={{ flex:1 }}>
+                          <p style={{ margin:0, fontSize:13, fontWeight:600, color:'var(--fg-text)' }}>{cfg.label}</p>
+                          <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>
+                            {cfg.last_sync_status === 'ok' ? `✅ Last sync: ${cfg.last_sync_at ? new Date(cfg.last_sync_at).toLocaleString() : 'never'}` : cfg.last_sync_status === 'error' ? '❌ Last sync failed' : '⏳ Never synced'}
+                            {cfg.bytes_synced > 0 && ` · ${(cfg.bytes_synced/1024).toFixed(1)} KB total`}
+                          </p>
+                        </div>
+                        <button onClick={() => testByos(cfg.id)} disabled={byosTesting===cfg.id} style={{ padding:'5px 10px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text2)', fontSize:11, cursor:'pointer' }}>{byosTesting===cfg.id ? '...' : 'Test'}</button>
+                        <button onClick={() => syncByos(cfg.id)} disabled={byosSyncing===cfg.id} style={{ padding:'5px 10px', background:'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', fontSize:11, cursor:'pointer', fontWeight:600 }}>{byosSyncing===cfg.id ? 'Syncing…' : '↑ Sync'}</button>
+                        <button onClick={() => deleteByos(cfg.id)} style={{ padding:'5px 10px', background:'transparent', border:'1px solid var(--fg-red)', borderRadius:6, color:'var(--fg-red)', fontSize:11, cursor:'pointer' }}>Remove</button>
+                      </div>
+                    ))}
+                    {byosLoaded && byosConfigs.length === 0 && !byosAdding && (
+                      <p style={{ color:'var(--fg-text3)', fontSize:13, margin:'0 0 12px' }}>No storage backends connected yet.</p>
+                    )}
+
+                    {/* Add form */}
+                    {byosAdding ? (
+                      <div style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:16, marginTop:8 }}>
+                        <p style={{ margin:'0 0 10px', fontSize:12, color:'var(--fg-text3)', fontWeight:600, textTransform:'uppercase' }}>Add Storage Backend</p>
+                        {/* Provider selector */}
+                        <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:12 }}>
+                          {Object.entries(byosProviders).map(([k,v]) => (
+                            <button key={k} onClick={() => { setByosProvider(k); setByosCreds({}); }} style={{ padding:'5px 10px', borderRadius:20, border:`1px solid ${byosProvider===k ? 'var(--fg-orange)' : 'var(--fg-border)'}`, background: byosProvider===k ? 'rgba(251,146,60,0.15)' : 'var(--fg-bg3)', color: byosProvider===k ? 'var(--fg-orange)' : 'var(--fg-text2)', fontSize:12, cursor:'pointer', fontWeight: byosProvider===k ? 700 : 400 }}>{v.icon} {v.label}</button>
+                          ))}
+                        </div>
+                        {/* Label */}
+                        <input value={byosLabel} onChange={e=>setByosLabel(e.target.value)} placeholder={`Label (e.g. "My ${activeProv.label}")`} style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box' }} />
+                        {/* Provider-specific fields */}
+                        {activeProv.fields.map(f => (
+                          <input key={f.key} type={f.type||'text'} value={byosCreds[f.key]||''} onChange={e=>setByosCreds(p=>({...p,[f.key]:e.target.value}))} placeholder={f.label + ' — ' + f.placeholder} style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:6, boxSizing:'border-box' }} />
+                        ))}
+                        <div style={{ display:'flex', gap:8, marginTop:8 }}>
+                          <button onClick={saveByos} style={{ padding:'8px 18px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}>Save</button>
+                          <button onClick={() => { setByosAdding(false); setByosCreds({}); }} style={{ padding:'8px 14px', background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', fontSize:13, cursor:'pointer' }}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => setByosAdding(true)} style={{ padding:'8px 16px', background:'var(--fg-bg)', border:'1px dashed var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', fontSize:13, cursor:'pointer', marginTop:byosConfigs.length?8:0 }}>+ Add Storage Backend</button>
+                    )}
+                  </div>
+                );
+              })()}
+
               {/* Account */}
               <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24 }}>
                 <h3 style={{ color:'var(--fg-text2)', fontSize:14, margin:'0 0 16px', textTransform:'uppercase', letterSpacing:'0.05em' }}>Account</h3>
