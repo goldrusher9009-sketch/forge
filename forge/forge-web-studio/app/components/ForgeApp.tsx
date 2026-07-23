@@ -34842,6 +34842,179 @@ export default function ForgeApp() {
         {/* ── Agent Passport / AI Twin ─────────────────────────────── */}
         {mainTab === 'passport' && <ForgeTab_passport />}
 
+        {mainTab === 'brain' && (() => {
+          const fm = brainData?.model || null;
+          const mems = brainData?.memories || [];
+          const personaEmoji: Record<string,string> = {developer:'👨‍💻',marketer:'📣',writer:'✍️',analyst:'📊',designer:'🎨',founder:'🚀',pm:'📋',finance:'💰',legal:'⚖️',sales:'🤝',general:'🧠'};
+          const HOURS = ['12a','1a','2a','3a','4a','5a','6a','7a','8a','9a','10a','11a','12p','1p','2p','3p','4p','5p','6p','7p','8p','9p','10p','11p'];
+          const activeHours: number[] = fm ? (() => { try { return JSON.parse(fm.active_hours||'[]'); } catch { return []; } })() : [];
+          const topTopics: string[] = fm ? (() => { try { return JSON.parse(fm.top_topics||'[]'); } catch { return []; } })() : [];
+          const topTools: string[] = fm ? (() => { try { return JSON.parse(fm.top_tools||'[]'); } catch { return []; } })() : [];
+          const suggestedTools: string[] = fm ? (() => { try { return JSON.parse(fm.suggested_tools||'[]'); } catch { return []; } })() : [];
+          const interests: string[] = fm ? (() => { try { return JSON.parse(fm.interests||'[]'); } catch { return []; } })() : [];
+          return (
+          <div style={{flex:1,overflowY:'auto',padding:28,background:'var(--fg-bg)'}}>
+            <div style={{maxWidth:860,margin:'0 auto'}}>
+              <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:24}}>
+                <span style={{fontSize:36}}>🧠</span>
+                <div>
+                  <h1 style={{margin:0,fontSize:22,fontWeight:800,color:'var(--fg-text)'}}>Forge Brain</h1>
+                  <p style={{margin:0,fontSize:13,color:'var(--fg-text3)'}}>Your AI-powered behavioral profile — personalized to how you actually use Forge.</p>
+                </div>
+                <button onClick={async()=>{
+                  const tok=localStorage.getItem('forge_token');
+                  setBrainLoading(true);
+                  await fetch('/api/user/model/harvest',{method:'POST',headers:{Authorization:`Bearer ${tok}`}});
+                  const r=await fetch('/api/user/brain',{headers:{Authorization:`Bearer ${tok}`}});
+                  const d=await r.json(); setBrainData(d); setBrainLoading(false);
+                }} style={{marginLeft:'auto',padding:'8px 18px',borderRadius:8,border:'none',background:'#7c3aed',color:'#fff',cursor:'pointer',fontSize:13,fontWeight:600}}>
+                  {brainLoading?'Harvesting…':'⚡ Harvest Now'}
+                </button>
+              </div>
+              {brainError && <div style={{color:'#f87171',marginBottom:16}}>{brainError}</div>}
+              {brainLoading && !fm && <div style={{color:'var(--fg-text3)',padding:40,textAlign:'center'}}>Loading your brain…</div>}
+
+              {fm && (<>
+                {/* ForgeModel Card */}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
+                  <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:12,padding:20}}>
+                    <div style={{fontSize:11,fontWeight:700,letterSpacing:1,color:'#a78bfa',marginBottom:8,textTransform:'uppercase'}}>Your Persona</div>
+                    <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
+                      <span style={{fontSize:32}}>{personaEmoji[fm.persona]||'🧠'}</span>
+                      <div>
+                        <div style={{fontSize:18,fontWeight:800,color:'var(--fg-text)',textTransform:'capitalize'}}>{fm.persona||'General'}</div>
+                        <div style={{fontSize:12,color:'var(--fg-text3)'}}>{fm.industry||'General industry'}</div>
+                      </div>
+                    </div>
+                    <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                      {fm.formality&&<span style={{background:'#1e1b4b',color:'#a78bfa',padding:'3px 10px',borderRadius:20,fontSize:11}}>{fm.formality}</span>}
+                      {fm.response_style&&<span style={{background:'#1e1b4b',color:'#a78bfa',padding:'3px 10px',borderRadius:20,fontSize:11}}>{fm.response_style}</span>}
+                      {fm.language&&fm.language!=='en'&&<span style={{background:'#1e1b4b',color:'#a78bfa',padding:'3px 10px',borderRadius:20,fontSize:11}}>{fm.language}</span>}
+                    </div>
+                  </div>
+                  <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:12,padding:20}}>
+                    <div style={{fontSize:11,fontWeight:700,letterSpacing:1,color:'#34d399',marginBottom:8,textTransform:'uppercase'}}>Usage Stats</div>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                      <div><div style={{fontSize:22,fontWeight:800,color:'var(--fg-text)'}}>{fm.session_count||0}</div><div style={{fontSize:11,color:'var(--fg-text3)'}}>Sessions</div></div>
+                      <div><div style={{fontSize:22,fontWeight:800,color:'var(--fg-text)'}}>{fm.total_messages||0}</div><div style={{fontSize:11,color:'var(--fg-text3)'}}>Messages</div></div>
+                      <div><div style={{fontSize:22,fontWeight:800,color:'var(--fg-text)'}}>{fm.avg_prompt_length||0}</div><div style={{fontSize:11,color:'var(--fg-text3)'}}>Avg prompt len</div></div>
+                      <div><div style={{fontSize:22,fontWeight:800,color:'var(--fg-text)'}}>{fm.preferred_model?.split('/').pop()?.split('-')[0]||'—'}</div><div style={{fontSize:11,color:'var(--fg-text3)'}}>Fav model</div></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Home Greeting Preview */}
+                {fm.home_greeting&&<div style={{background:'linear-gradient(135deg,#1e1b4b,#312e81)',border:'1px solid #4338ca',borderRadius:12,padding:20,marginBottom:16}}>
+                  <div style={{fontSize:11,fontWeight:700,letterSpacing:1,color:'#818cf8',marginBottom:6,textTransform:'uppercase'}}>Your Personalized Greeting</div>
+                  <div style={{fontSize:16,color:'#e0e7ff',fontStyle:'italic'}}>"{fm.home_greeting}"</div>
+                </div>}
+
+                {/* Top Topics + Interests */}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+                  <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:12,padding:16}}>
+                    <div style={{fontSize:11,fontWeight:700,letterSpacing:1,color:'#fb923c',marginBottom:10,textTransform:'uppercase'}}>Top Topics</div>
+                    {topTopics.length?<div style={{display:'flex',flexWrap:'wrap',gap:6}}>{topTopics.slice(0,10).map((t:string,i:number)=><span key={i} style={{background:'#431407',color:'#fb923c',padding:'3px 10px',borderRadius:20,fontSize:11}}>#{t}</span>)}</div>:<div style={{color:'var(--fg-text3)',fontSize:13}}>Chat more to discover topics</div>}
+                  </div>
+                  <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:12,padding:16}}>
+                    <div style={{fontSize:11,fontWeight:700,letterSpacing:1,color:'#38bdf8',marginBottom:10,textTransform:'uppercase'}}>Interests</div>
+                    {interests.length?<div style={{display:'flex',flexWrap:'wrap',gap:6}}>{interests.slice(0,10).map((t:string,i:number)=><span key={i} style={{background:'#0c1a2e',color:'#38bdf8',padding:'3px 10px',borderRadius:20,fontSize:11}}>{t}</span>)}</div>:<div style={{color:'var(--fg-text3)',fontSize:13}}>Interests emerge from your chats</div>}
+                  </div>
+                </div>
+
+                {/* Active Hours Heatmap */}
+                {activeHours.length>0&&<div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:12,padding:16,marginBottom:16}}>
+                  <div style={{fontSize:11,fontWeight:700,letterSpacing:1,color:'#facc15',marginBottom:10,textTransform:'uppercase'}}>Active Hours Heatmap</div>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(24,1fr)',gap:3}}>
+                    {HOURS.map((h,i)=>{
+                      const count=activeHours[i]||0;
+                      const max=Math.max(...activeHours,1);
+                      const intensity=Math.round((count/max)*5);
+                      const colors=['#111','#1a1a2e','#16213e','#0f3460','#533483','#7c3aed'];
+                      return <div key={i} title={`${h}: ${count} msgs`} style={{height:32,borderRadius:4,background:colors[intensity],display:'flex',alignItems:'flex-end',justifyContent:'center',paddingBottom:2}}>
+                        <span style={{fontSize:8,color:'#ffffff44'}}>{h}</span>
+                      </div>;
+                    })}
+                  </div>
+                  {fm.peak_hour!=null&&<div style={{marginTop:8,fontSize:12,color:'var(--fg-text3)'}}>Peak hour: {HOURS[fm.peak_hour]}</div>}
+                </div>}
+
+                {/* Suggested Tools */}
+                {suggestedTools.length>0&&<div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:12,padding:16,marginBottom:16}}>
+                  <div style={{fontSize:11,fontWeight:700,letterSpacing:1,color:'#a78bfa',marginBottom:10,textTransform:'uppercase'}}>Suggested Tools for You</div>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+                    {suggestedTools.map((t:string,i:number)=><button key={i} onClick={()=>setMainTab(t as any)} style={{background:'#2d1b69',color:'#c4b5fd',border:'1px solid #4c1d95',borderRadius:8,padding:'6px 14px',fontSize:12,cursor:'pointer'}}>{t}</button>)}
+                  </div>
+                </div>}
+
+                {/* Top Tools Used */}
+                {topTools.length>0&&<div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:12,padding:16,marginBottom:16}}>
+                  <div style={{fontSize:11,fontWeight:700,letterSpacing:1,color:'#34d399',marginBottom:10,textTransform:'uppercase'}}>Tools You Use Most</div>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:6}}>{topTools.slice(0,8).map((t:string,i:number)=><span key={i} style={{background:'#022c22',color:'#34d399',padding:'3px 10px',borderRadius:20,fontSize:11}}>{t}</span>)}</div>
+                </div>}
+
+                {/* Edit Preferences */}
+                <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:12,padding:16,marginBottom:16}}>
+                  <div style={{fontSize:11,fontWeight:700,letterSpacing:1,color:'var(--fg-text3)',marginBottom:10,textTransform:'uppercase'}}>Customize Your Profile</div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+                    {[['Persona','persona',['developer','marketer','writer','analyst','designer','founder','pm','finance','legal','sales','general']],
+                      ['Style','response_style',['concise','balanced','detailed']],
+                      ['Formality','formality',['casual','neutral','formal']]].map(([label,field,opts]:[any,any,any])=>(
+                      <div key={field}>
+                        <div style={{fontSize:11,color:'var(--fg-text3)',marginBottom:4}}>{label}</div>
+                        <select value={fm[field]||''} onChange={async(e)=>{
+                          const tok=localStorage.getItem('forge_token');
+                          await fetch('/api/user/model',{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:`Bearer ${tok}`},body:JSON.stringify({[field]:e.target.value})});
+                          setBrainData((prev:any)=>({...prev,model:{...prev?.model,[field]:e.target.value}}));
+                        }} style={{width:'100%',padding:'6px 8px',background:'var(--fg-bg)',border:'1px solid var(--fg-border)',borderRadius:6,color:'var(--fg-text)',fontSize:12}}>
+                          {opts.map((o:string)=><option key={o} value={o}>{o}</option>)}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{fontSize:11,color:'var(--fg-text3)',textAlign:'right'}}>Last harvested: {fm.last_harvested?new Date(fm.last_harvested).toLocaleString():'Never'} · Harvest #{fm.harvest_count||0}</div>
+              </>)}
+
+              {/* Memories Section */}
+              {mems.length>0&&(<div style={{marginTop:24}}>
+                <div style={{fontSize:15,fontWeight:700,color:'var(--fg-text)',marginBottom:12}}>🧩 Forge Memory ({mems.length})</div>
+                <div style={{display:'grid',gap:8}}>
+                  {mems.slice(0,20).map((m:any,i:number)=>(
+                    <div key={i} style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:10,padding:12}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
+                        <div>
+                          <span style={{fontWeight:600,color:'var(--fg-text)',fontSize:13}}>{m.topic}</span>
+                          {m.category&&<span style={{marginLeft:8,fontSize:10,color:'var(--fg-text3)',background:'var(--fg-bg)',padding:'2px 6px',borderRadius:10}}>{m.category}</span>}
+                          <div style={{fontSize:12,color:'var(--fg-text2)',marginTop:4}}>{m.insight}</div>
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4,flexShrink:0}}>
+                          <div style={{fontSize:10,color:'#a78bfa'}}>str {m.strength?.toFixed(1)||'—'}</div>
+                          <div style={{fontSize:10,color:'var(--fg-text3)'}}>×{m.frequency||1}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>)}
+
+              {!fm&&!brainLoading&&<div style={{textAlign:'center',padding:60,color:'var(--fg-text3)'}}>
+                <div style={{fontSize:48,marginBottom:16}}>🧠</div>
+                <div style={{fontSize:18,fontWeight:700,marginBottom:8}}>Your brain is empty</div>
+                <div style={{fontSize:14,marginBottom:24}}>Chat more to let Forge learn about you, then click Harvest Now.</div>
+                <button onClick={async()=>{
+                  const tok=localStorage.getItem('forge_token');setBrainLoading(true);
+                  await fetch('/api/user/model/harvest',{method:'POST',headers:{Authorization:`Bearer ${tok}`}});
+                  const r=await fetch('/api/user/brain',{headers:{Authorization:`Bearer ${tok}`}});
+                  const d=await r.json();setBrainData(d);setBrainLoading(false);
+                }} style={{padding:'10px 28px',background:'#7c3aed',color:'#fff',border:'none',borderRadius:10,fontSize:15,cursor:'pointer',fontWeight:600}}>
+                  ⚡ Harvest Now
+                </button>
+              </div>}
+            </div>
+          </div>);
+        })()}
+
         {/* Notes tab */}
         {mainTab === 'notes' && (() => {
           if (!userNotes.length && !newNoteText) { loadNotes(); }
