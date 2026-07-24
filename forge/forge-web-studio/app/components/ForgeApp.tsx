@@ -431,12 +431,14 @@ async function apiFetchSSE(path: string, opts: RequestInit = {}, token?: string,
 const PROJECT_COLORS = ['var(--fg-orange)','var(--fg-blue)','var(--fg-green)','var(--fg-red)','var(--fg-orange)','var(--fg-orange)','var(--fg-blue)','var(--fg-green)'];
 const AGENT_ICONS = ['🧠','⚡','🔮','🔥','🌊','🎨','🚀','💻'];
 const FORGE_MODELS = [
-  { id:'forge-auto',   label:'⚡ Auto',       desc:'Smart router — picks best model for your task', base:'auto' },
-  { id:'forge-ultra',  label:'Forge Ultra',  desc:'Claude Opus 4.6 + markup',       base:'claude-opus-4-6' },
-  { id:'forge-pro',    label:'Forge Pro',    desc:'Claude Sonnet 4.6 + markup',     base:'claude-sonnet-4-6' },
-  { id:'forge-flash',  label:'Forge Flash',  desc:'Claude Haiku 4.5 + markup',      base:'claude-haiku-4-5-20251001' },
-  { id:'forge-gpt',    label:'Forge GPT',    desc:'GPT-4o + markup',                base:'gpt-4o' },
-  { id:'forge-gemini', label:'Forge Gemini', desc:'Gemini 2.0 Flash + markup',      base:'gemini-2.0-flash' },
+  { id:'forge-auto',    label:'⚡ Auto',        desc:'Smart router — picks best model based on complexity', base:'auto' },
+  { id:'forge-cheap',   label:'💸 Cheap',       desc:'Always uses fastest/free models — Groq, Flash, Mini', base:'auto' },
+  { id:'forge-premium', label:'💎 Premium',     desc:'Always uses the best available model — Opus, GPT-4o', base:'auto' },
+  { id:'forge-ultra',   label:'Forge Ultra',   desc:'Claude Opus 4.6 + markup',       base:'claude-opus-4-6' },
+  { id:'forge-pro',     label:'Forge Pro',     desc:'Claude Sonnet 4.6 + markup',     base:'claude-sonnet-4-6' },
+  { id:'forge-flash',   label:'Forge Flash',   desc:'Claude Haiku 4.5 + markup',      base:'claude-haiku-4-5-20251001' },
+  { id:'forge-gpt',     label:'Forge GPT',     desc:'GPT-4o + markup',                base:'gpt-4o' },
+  { id:'forge-gemini',  label:'Forge Gemini',  desc:'Gemini 2.0 Flash + markup',      base:'gemini-2.0-flash' },
 ];
 const DIRECT_MODELS = [
   { group:'Anthropic', models:[
@@ -26954,6 +26956,8 @@ export default function ForgeApp() {
         enabled_hooks: hooks.filter(h => h.enabled).map(h => ({ event: h.event, action: h.action, target: h.target })),
         forge_mode: superMode === 'forgeMagic' ? 'magic' : 'ask',
         agent_mode: agentMode,
+        // Pass cost_mode when on forge-auto so backend knows which tier to target
+        ...(cleanModel === 'forge-auto' ? { cost_mode: (() => { try { return localStorage.getItem('forge_cost_mode') || 'normal'; } catch { return 'normal'; } })() } : {}),
       };
       if (activeSkillPrompt) body.skill_prompt = activeSkillPrompt;
       // Attach images for vision
@@ -28835,6 +28839,17 @@ export default function ForgeApp() {
                   </select>
                 );
               })()}
+              {/* Cost-mode pills — only show when forge-auto is selected */}
+              {selectedModel === 'forge-auto' && (
+                <div style={{ display:'flex', gap:3, flexShrink:0 }}>
+                  {([['💸','cheap','Cheap: fast/free'],['⚡','normal','Normal: smart routing'],['💎','premium','Premium: best model']] as [string,string,string][]).map(([icon, mode, title]) => {
+                    const active = (typeof window !== 'undefined' ? (localStorage.getItem('forge_cost_mode') || 'normal') : 'normal') === mode;
+                    return (
+                      <button key={mode} title={title} onClick={() => { try { localStorage.setItem('forge_cost_mode', mode); } catch {} /* force re-render */ setSelectedModel(m => m); }} style={{ padding:'3px 7px', fontSize:11, borderRadius:6, border: active ? '1px solid var(--fg-orange)' : '1px solid var(--fg-border)', background: active ? 'var(--fg-orange)' : 'var(--fg-bg3)', color: active ? '#fff' : 'var(--fg-text3)', cursor:'pointer', fontWeight: active ? 700 : 400 }}>{icon}</button>
+                    );
+                  })}
+                </div>
+              )}
               {/* OR model refresh button */}
               {savedProviders['openrouter'] && (
                 <button onClick={loadOpenRouterModels} disabled={orLoading} title="Refresh OpenRouter models" style={{ background:'none', border:'none', color: orLoading ? 'var(--fg-text3)' : 'var(--fg-orange)', cursor: orLoading ? 'default' : 'pointer', fontSize:14, padding:'2px 4px', flexShrink:0 }}>
