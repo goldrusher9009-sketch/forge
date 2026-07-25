@@ -27495,36 +27495,23 @@ export default function ForgeApp() {
             </button>
           ))}
 
-          {/* -- Advanced (collapsed by default) -- */}
-          {sidebarExpanded && (() => {
-            const [advOpen, setAdvOpen] = React.useState(false);
-            return (
-              <>
-                <button onClick={() => setAdvOpen(v => !v)} style={{ width:'100%', display:'flex', alignItems:'center', gap:6, padding:'5px 8px', background:'none', border:'none', color:'var(--fg-text3)', cursor:'pointer', fontSize:11, marginTop:4 }}>
-                  <span style={{ fontSize:10 }}>{advOpen ? '▾' : '▸'}</span>
-                  <span style={{ letterSpacing:'0.08em', textTransform:'uppercase', fontWeight:700, fontSize:9 }}>Advanced</span>
-                </button>
-                {advOpen && ([
-                  { id:'forgeasi',      icon:'🌌', label:'ForgeASI' },
-                  { id:'forgemulti',    icon:'🤖', label:'Multi-Agent' },
-                  { id:'forgeco',       icon:'🧪', label:'ForgeCo' },
-                  { id:'forgeauto',     icon:'⚡', label:'ForgeAuto' },
-                  { id:'swarm',         icon:'🎉', label:'Agent Swarm' },
-                  { id:'forgevoyage',   icon:'🚢', label:'ForgeVoyage' },
-                  { id:'forgeoperator', icon:'🤖', label:'Forge Operator' },
-                  { id:'forgeauto2',    icon:'⚡', label:'Autonomy OS' },
-                  { id:'forgeiq',       icon:'🧬', label:'Forge IQ' },
-                  { id:'shadowmode',    icon:'👥', label:'Shadow Mode' },
-                ] as Array<{id:string;icon:string;label:string}>).map(tab => (
-                  <button key={tab.id} onClick={() => setMainTab(tab.id as any)} title={tab.label}
-                    style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'5px 8px 5px 18px', background: mainTab===tab.id ? 'rgba(255,31,53,0.10)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius:'0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:'flex-start' }}>
-                    <span style={{ fontSize:13, flexShrink:0 }}>{tab.icon}</span>
-                    <span style={{ fontSize:11 }}>{tab.label}</span>
-                  </button>
-                ))}
-              </>
-            );
-          })()}
+          {/* -- Advanced -- */}
+          {sidebarExpanded && <div style={{ padding:'4px 6px 2px', fontSize:9, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--fg-text3)', marginTop:4 }}>Advanced</div>}
+          {([
+            { id:'forgeasi',      icon:'🌌', label:'ForgeASI' },
+            { id:'forgemulti',    icon:'🤖', label:'Multi-Agent' },
+            { id:'forgeco',       icon:'🧪', label:'ForgeCo' },
+            { id:'forgeauto',     icon:'⚡', label:'ForgeAuto' },
+            { id:'swarm',         icon:'🎉', label:'Agent Swarm' },
+            { id:'forgevoyage',   icon:'🚢', label:'ForgeVoyage' },
+            { id:'forgeoperator', icon:'🤖', label:'Forge Operator' },
+          ] as Array<{id:string;icon:string;label:string}>).map(tab => (
+            <button key={tab.id} onClick={() => setMainTab(tab.id as any)} title={tab.label}
+              style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'5px 8px', background: mainTab===tab.id ? 'rgba(255,31,53,0.10)' : 'transparent', border:'none', borderLeft: mainTab===tab.id ? '2px solid var(--fg-orange)' : '2px solid transparent', borderRadius:'0 8px 8px 0', color: mainTab===tab.id ? 'var(--fg-orange2)' : 'var(--fg-text3)', cursor:'pointer', fontSize:11, fontWeight: mainTab===tab.id ? 600 : 400, marginBottom:1, justifyContent:sidebarExpanded?'flex-start':'center' }}>
+              <span style={{ fontSize:13, flexShrink:0 }}>{tab.icon}</span>
+              {sidebarExpanded && <span style={{ fontSize:11 }}>{tab.label}</span>}
+            </button>
+          ))}
 
           {/* -- ZONE 3: Account -- */}
           <div style={{ margin:'8px 0 2px', height:'1px', background:'var(--fg-border)' }} />
