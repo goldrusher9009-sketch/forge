@@ -50987,7 +50987,18 @@ export default function ForgeApp() {
                       </div>
                       <div style={{ display:'flex', gap:4 }}>
                         <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}/dismiss`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:5, color:'var(--fg-text)', cursor:'pointer', fontSize:11 }}>Dismiss</button>
-                        <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id
+                        <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 8px', background:'#ef444433', border:'1px solid #ef4444', borderRadius:5, color:'#ef4444', cursor:'pointer', fontSize:11 }}>Delete</button>
+                      </div>
+                    </div>
+                    <p style={{ color:'var(--fg-text3)', margin:0, marginTop:6, fontSize:13 }}>{a.body}</p>
+                    <div style={{ color:'var(--fg-text3)', fontSize:11, marginTop:4 }}>{new Date(a.created_at).toLocaleString()}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── WAVE 19: Health & Wellness AI ─────────────────────── */}
         {(mainTab as string) === 'symptomcheck' && <ForgeTab_symptomcheck />}
 
@@ -51569,4 +51580,11 @@ export default function ForgeApp() {
 
 {(mainTab as string) === 'productupdate98' && <ForgeTab_productupdate98 />}
 
-{(mainTab as string) === 'therapyjournal98' && <ForgeTab_therapyjournal98 />}G
+{(mainTab as string) === 'therapyjournal98' && <ForgeTab_therapyjournal98 />}
+
+      </div>
+    </div>
+  );
+}
+
+export default ForgeApp;
