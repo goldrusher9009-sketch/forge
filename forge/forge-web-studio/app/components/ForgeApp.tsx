@@ -33256,24 +33256,6 @@ function ForgeApp() {
         {(mainTab as string) === 'datadog' && <ForgeTab_datadog />}
         {mainTab === 'hermes' && <ForgeTab_hermes />}
 
-        {/* -- ForgeVoyage placeholder ---------------------------------- */}
-        {(mainTab as string) === 'forgevoyage' && (
-          <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16, color:'var(--fg-text3)' }}>
-            <div style={{ fontSize:48 }}>🚢</div>
-            <div style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)' }}>ForgeVoyage</div>
-            <div style={{ fontSize:13 }}>Autonomous multi-step research journeys — coming soon</div>
-          </div>
-        )}
-
-        {/* -- ForgeOperator placeholder -------------------------------- */}
-        {(mainTab as string) === 'forgeoperator' && (
-          <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16, color:'var(--fg-text3)' }}>
-            <div style={{ fontSize:48 }}>🤖</div>
-            <div style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)' }}>Forge Operator</div>
-            <div style={{ fontSize:13 }}>AI-driven browser automation — coming soon</div>
-          </div>
-        )}
-
         {/* -- ForgeAuto ----------------------------------------------- */}
         {mainTab === 'forgeauto' && (
           <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
