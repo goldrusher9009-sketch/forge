@@ -27,6 +27,7 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.46.0",
     "socket.io-client": "^4.7.4",
+    "state-local": "^1.0.7",
     "xlsx": "^0.18.5",
     "zod": "^3.22.0"
   },
@@ -35,8 +36,8 @@
     "@types/prop-types": "^15.7.15",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
-    "autoprefixer": "^10.4.15",
-    "postcss": "^8.4.28",
+    "autoprefixer": "^10.5.4",
+    "postcss": "^8.5.25",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.1.6"
   },
