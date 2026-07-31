@@ -27524,7 +27524,7 @@ function ForgeApp() {
         </div>
 
         {/* Workspace sidebar content */}
-        {mainTab === 'workspace' && sidebarExpanded && (
+        {(mainTab === 'workspace' || mainTab === 'home') && sidebarExpanded && (
           <>
             <div style={{ padding:'10px 10px 0' }}>
               <button onClick={() => newThread()} style={{ width:'100%', padding:'9px 14px', background:'var(--fg-btn-grad)', border:'none', borderRadius:'var(--fg-radius-btn)', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', gap:7, boxShadow:'0 2px 10px rgba(255,31,53,0.25)', transition:'all 0.18s', letterSpacing:'-0.01em' }}
@@ -27748,7 +27748,7 @@ function ForgeApp() {
       <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', marginTop: isMobile ? 52 : 0 }}>
 
         {/* -- WORKSPACE TAB --------------------------------------------------- */}
-        {mainTab === 'workspace' && (
+        {(mainTab === 'workspace' || mainTab === 'home') && (
           <>
             {/* Top bar */}
             <div style={{ padding:'0 10px', height:52, background:'var(--fg-bg2)', borderBottom:'1px solid var(--fg-border)', display:'flex', alignItems:'center', gap:8, flexShrink:0, position:'relative' }}>
@@ -30708,7 +30708,7 @@ function ForgeApp() {
         {/* ── API Key Health Monitor ── */}
         {mainTab === 'keyhealth' && <ForgeTab_keyhealth />}
 
-        {mainTab === 'platforms' && (
+        {(mainTab === 'platforms' || mainTab === 'integrations') && (
           <div style={{ flex:1, overflowY:'auto', padding:32 }}>
             <div style={{ maxWidth:800, margin:'0 auto' }}>
               <h2 style={{ color:'var(--fg-orange)', margin:'0 0 4px', fontSize:22, fontFamily:'var(--fg-font-display)', fontWeight:800, letterSpacing:'-0.3px' }}>🌐 Platforms</h2>
@@ -33255,6 +33255,24 @@ function ForgeApp() {
         {(mainTab as string) === 'posthog' && <ForgeTab_posthog />}
         {(mainTab as string) === 'datadog' && <ForgeTab_datadog />}
         {mainTab === 'hermes' && <ForgeTab_hermes />}
+
+        {/* -- ForgeVoyage placeholder ---------------------------------- */}
+        {(mainTab as string) === 'forgevoyage' && (
+          <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16, color:'var(--fg-text3)' }}>
+            <div style={{ fontSize:48 }}>🚢</div>
+            <div style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)' }}>ForgeVoyage</div>
+            <div style={{ fontSize:13 }}>Autonomous multi-step research journeys — coming soon</div>
+          </div>
+        )}
+
+        {/* -- ForgeOperator placeholder -------------------------------- */}
+        {(mainTab as string) === 'forgeoperator' && (
+          <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16, color:'var(--fg-text3)' }}>
+            <div style={{ fontSize:48 }}>🤖</div>
+            <div style={{ fontSize:20, fontWeight:700, color:'var(--fg-text)' }}>Forge Operator</div>
+            <div style={{ fontSize:13 }}>AI-driven browser automation — coming soon</div>
+          </div>
+        )}
 
         {/* -- ForgeAuto ----------------------------------------------- */}
         {mainTab === 'forgeauto' && (
