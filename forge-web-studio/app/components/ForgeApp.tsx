@@ -26848,6 +26848,10 @@ export default function ForgeApp() {
             { id:'files', icon:'📌', label:'Files' },
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
+            { id:'voiceagent', icon:'🎙️', label:'Voice Agent' },
+            { id:'emailagent', icon:'📧', label:'Email Agent' },
+            { id:'founderos', icon:'🚀', label:'Founder OS' },
+            { id:'costdash', icon:'💰', label:'Cost Dashboard' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop & Files' }] : []),
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => setMainTab(tab.id as any)} title={tab.label}
@@ -50631,7 +50635,290 @@ export default function ForgeApp() {
         {(mainTab as string) === 'habitstack98' && <ForgeTab_habitstack98 />}
         {(mainTab as string) === 'debateprep98' && <ForgeTab_debateprep98 />}
         {(mainTab as string) === 'brandstory98' && <ForgeTab_brandstory98 />}
+        {(mainTab as string) === 'voiceagent' && <ForgeTab_voiceagent />}
+        {(mainTab as string) === 'emailagent' && <ForgeTab_emailagent />}
+        {(mainTab as string) === 'founderos' && <ForgeTab_founderos />}
+        {(mainTab as string) === 'costdash' && <ForgeTab_costdash />}
       {<WaveRenderer tabId={mainTab as string} />}
+      </div>
+    </div>
+  );
+}
+
+// ===== VIRAL WAVE v1275 =====
+
+function ForgeTab_voiceagent() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const [listening, setListening] = React.useState(false);
+  const [transcript, setTranscript] = React.useState('');
+  const [response, setResponse] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [supported, setSupported] = React.useState(true);
+  const recRef = React.useRef<any>(null);
+
+  React.useEffect(() => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      setSupported(false);
+    }
+  }, []);
+
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+    const rec = new SpeechRecognition();
+    rec.continuous = false;
+    rec.interimResults = true;
+    rec.lang = 'en-US';
+    rec.onresult = (e: any) => {
+      const t = Array.from(e.results).map((r: any) => r[0].transcript).join('');
+      setTranscript(t);
+    };
+    rec.onend = () => { setListening(false); };
+    rec.start();
+    recRef.current = rec;
+    setListening(true);
+    setTranscript('');
+    setResponse('');
+  };
+
+  const stopListening = () => {
+    recRef.current?.stop();
+    setListening(false);
+  };
+
+  const runAgent = async () => {
+    if (!transcript.trim()) return;
+    setLoading(true);
+    const token = localStorage.getItem('forge_token');
+    try {
+      const r = await fetch(BACKEND + '/api/dream-tool', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ toolId: 'voice_agent', prompt: transcript })
+      });
+      const d = await r.json();
+      setResponse(d.result || d.content || 'Done');
+    } catch { setResponse('Error — check your connection.'); }
+    setLoading(false);
+  };
+
+  const speak = (text: string) => {
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.rate = 1.1;
+    window.speechSynthesis.speak(utt);
+  };
+
+  return (
+    <div style={{ padding: 32, maxWidth: 680, margin: '0 auto' }}>
+      <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>🎙️ Voice Agent</h2>
+      <p style={{ color: 'var(--fg-text3)', marginBottom: 32 }}>Speak your request — Forge acts on it instantly</p>
+      {!supported && <div style={{ background: '#ff1f3520', border: '1px solid #ff1f35', borderRadius: 12, padding: 16, marginBottom: 24, color: '#ff6b6b' }}>Voice input not supported in this browser. Use Chrome or Edge.</div>}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+        <button onClick={listening ? stopListening : startListening} disabled={!supported}
+          style={{ width: 120, height: 120, borderRadius: '50%', background: listening ? '#ff1f35' : 'var(--fg-surface2)', border: '3px solid ' + (listening ? '#ff6b6b' : 'var(--fg-border)'), cursor: 'pointer', fontSize: 40, transition: 'all 0.2s', boxShadow: listening ? '0 0 40px #ff1f3566' : 'none' }}>
+          {listening ? '⏹' : '🎙️'}
+        </button>
+        <div style={{ fontSize: 14, color: 'var(--fg-text3)' }}>{listening ? 'Listening… speak now' : 'Tap to speak'}</div>
+        {transcript && (
+          <div style={{ width: '100%', background: 'var(--fg-surface2)', border: '1px solid var(--fg-border)', borderRadius: 12, padding: 20 }}>
+            <div style={{ fontSize: 12, color: 'var(--fg-text3)', marginBottom: 8 }}>You said:</div>
+            <div style={{ fontSize: 16, lineHeight: 1.5 }}>{transcript}</div>
+            <button onClick={runAgent} disabled={loading} style={{ marginTop: 16, padding: '10px 28px', background: 'var(--fg-orange)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+              {loading ? 'Running…' : '⚡ Run Agent'}
+            </button>
+          </div>
+        )}
+        {response && (
+          <div style={{ width: '100%', background: 'var(--fg-surface2)', border: '1px solid var(--fg-border)', borderRadius: 12, padding: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: 'var(--fg-text3)' }}>Response:</div>
+              <button onClick={() => speak(response)} style={{ padding: '4px 12px', background: 'transparent', border: '1px solid var(--fg-border)', borderRadius: 6, color: 'var(--fg-text2)', cursor: 'pointer', fontSize: 12 }}>🔊 Read aloud</button>
+            </div>
+            <div style={{ fontSize: 15, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{response}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_emailagent() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const [thread, setThread] = React.useState('');
+  const [goal, setGoal] = React.useState('follow-up');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+
+  const goals = ['follow-up', 'close deal', 'request meeting', 'say no politely', 'check in', 'thank them', 'escalate urgently'];
+
+  const run = async () => {
+    if (!thread.trim()) return;
+    setLoading(true);
+    const token = localStorage.getItem('forge_token');
+    const prompt = 'You are an elite email strategist. Here is an email thread:\n\n' + thread + '\n\nGoal: ' + goal + '\n\nWrite a perfect, concise reply that achieves this goal. Make it sound human, not robotic. Output only the email draft.';
+    try {
+      const r = await fetch(BACKEND + '/api/dream-tool', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ toolId: 'email_agent', prompt })
+      });
+      const d = await r.json();
+      setResult(d.result || d.content || '');
+    } catch { setResult('Error — try again.'); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ padding: 32, maxWidth: 760, margin: '0 auto' }}>
+      <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>📧 Email Follow-up Agent</h2>
+      <p style={{ color: 'var(--fg-text3)', marginBottom: 32 }}>Paste any email thread — get the perfect reply instantly</p>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+        {goals.map(g => (
+          <button key={g} onClick={() => setGoal(g)} style={{ padding: '6px 16px', background: goal === g ? 'var(--fg-orange)' : 'var(--fg-surface2)', border: '1px solid ' + (goal === g ? 'var(--fg-orange)' : 'var(--fg-border)'), borderRadius: 20, color: goal === g ? '#fff' : 'var(--fg-text2)', cursor: 'pointer', fontSize: 13, fontWeight: goal === g ? 700 : 400 }}>
+            {g}
+          </button>
+        ))}
+      </div>
+      <textarea value={thread} onChange={e => setThread(e.target.value)} placeholder="Paste the email thread here…" rows={10}
+        style={{ width: '100%', background: 'var(--fg-surface2)', border: '1px solid var(--fg-border)', borderRadius: 12, padding: 16, color: 'var(--fg-text)', fontSize: 14, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+      <button onClick={run} disabled={loading || !thread.trim()} style={{ marginTop: 12, padding: '12px 32px', background: 'var(--fg-orange)', border: 'none', borderRadius: 10, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer', opacity: (!thread.trim() || loading) ? 0.5 : 1 }}>
+        {loading ? 'Drafting…' : '✍️ Draft Reply'}
+      </button>
+      {result && (
+        <div style={{ marginTop: 24, background: 'var(--fg-surface2)', border: '1px solid var(--fg-border)', borderRadius: 12, padding: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--fg-orange)' }}>DRAFT</div>
+            <button onClick={() => { navigator.clipboard.writeText(result); }} style={{ padding: '4px 12px', background: 'transparent', border: '1px solid var(--fg-border)', borderRadius: 6, color: 'var(--fg-text2)', cursor: 'pointer', fontSize: 12 }}>📋 Copy</button>
+          </div>
+          <div style={{ fontSize: 15, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{result}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForgeTab_founderos() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const [stats, setStats] = React.useState<any>(null);
+  const [brief, setBrief] = React.useState('');
+  const [loadingBrief, setLoadingBrief] = React.useState(false);
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('forge_token');
+    Promise.all([
+      fetch(BACKEND + '/api/analytics', { headers: { 'Authorization': 'Bearer ' + token } }).then(r => r.json()).catch(() => ({})),
+      fetch(BACKEND + '/api/agent-runs', { headers: { 'Authorization': 'Bearer ' + token } }).then(r => r.json()).catch(() => ({ runs: [] })),
+    ]).then(([analytics, runs]) => {
+      setStats({ analytics, runs });
+    });
+  }, []);
+
+  const generateBrief = async () => {
+    setLoadingBrief(true);
+    const token = localStorage.getItem('forge_token');
+    const ctx = stats ? JSON.stringify(stats).slice(0, 1500) : 'No data yet';
+    const prompt = 'You are an elite founder advisor. Platform usage data: ' + ctx + '. Generate a crisp founder morning brief with: 1) Key metric to watch today 2) Top opportunity 3) One thing to fix immediately 4) Today priority. Use emojis.';
+    try {
+      const r = await fetch(BACKEND + '/api/dream-tool', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ toolId: 'founder_brief', prompt })
+      });
+      const d = await r.json();
+      setBrief(d.result || d.content || '');
+    } catch { setBrief('Could not generate brief.'); }
+    setLoadingBrief(false);
+  };
+
+  const cards = [
+    { label: 'Total Users', icon: '👥', value: stats?.analytics?.total_users ?? '—' },
+    { label: 'Active Today', icon: '🔥', value: stats?.analytics?.active_today ?? '—' },
+    { label: 'Agent Runs', icon: '⚡', value: stats?.runs?.runs?.length ?? '—' },
+    { label: 'Revenue', icon: '💰', value: stats?.analytics?.mrr ? '$' + stats.analytics.mrr : '—' },
+  ];
+
+  return (
+    <div style={{ padding: 32, maxWidth: 860, margin: '0 auto' }}>
+      <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>🚀 Founder OS</h2>
+      <p style={{ color: 'var(--fg-text3)', marginBottom: 32 }}>Your platform command center — everything in one view</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
+        {cards.map(c => (
+          <div key={c.label} style={{ background: 'var(--fg-surface2)', border: '1px solid var(--fg-border)', borderRadius: 14, padding: 20, textAlign: 'center' }}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>{c.icon}</div>
+            <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 4 }}>{String(c.value)}</div>
+            <div style={{ fontSize: 12, color: 'var(--fg-text3)' }}>{c.label}</div>
+          </div>
+        ))}
+      </div>
+      <button onClick={generateBrief} disabled={loadingBrief} style={{ marginBottom: 24, padding: '12px 28px', background: 'var(--fg-orange)', border: 'none', borderRadius: 10, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+        {loadingBrief ? 'Generating…' : '🧠 Generate Founder Brief'}
+      </button>
+      {brief && (
+        <div style={{ background: 'linear-gradient(135deg, #1a0a00 0%, #0a0014 100%)', border: '1px solid var(--fg-orange)', borderRadius: 14, padding: 28 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--fg-orange)', marginBottom: 16 }}>Today's Founder Brief</div>
+          <div style={{ fontSize: 15, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{brief}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForgeTab_costdash() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const [data, setData] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('forge_token');
+    fetch(BACKEND + '/api/cost-usage', { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(r => r.json()).then(setData).catch(() => setData({ models: [], total_calls: 0 }));
+  }, []);
+
+  const COST: Record<string, number[]> = {
+    'claude-3-5-sonnet': [3, 15], 'claude-3-haiku': [0.25, 1.25],
+    'claude-opus-4': [15, 75], 'gpt-4o': [5, 15], 'gpt-4o-mini': [0.15, 0.6],
+    'gemini-1.5-pro': [3.5, 10.5], 'mixtral': [0.24, 0.24],
+  };
+  const getCost = (model: string, ti: number, to: number) => {
+    const key = Object.keys(COST).find(k => model.includes(k));
+    if (!key) return 0;
+    return ((ti / 1e6) * COST[key][0] + (to / 1e6) * COST[key][1]);
+  };
+
+  const rows = data?.models || [];
+  const totalCost = rows.reduce((s: number, r: any) => s + getCost(r.model, r.tokens_in || 0, r.tokens_out || 0), 0);
+
+  return (
+    <div style={{ padding: 32, maxWidth: 800, margin: '0 auto' }}>
+      <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>💰 AI Cost Dashboard</h2>
+      <p style={{ color: 'var(--fg-text3)', marginBottom: 32 }}>Track your AI spend across all models</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
+        {[
+          { label: 'TOTAL SPEND', value: '$' + totalCost.toFixed(4), color: 'var(--fg-orange)' },
+          { label: 'TOTAL CALLS', value: String(data?.total_calls ?? '—'), color: 'var(--fg-text)' },
+          { label: 'MODELS USED', value: String(rows.length), color: 'var(--fg-text)' },
+        ].map(c => (
+          <div key={c.label} style={{ background: 'var(--fg-surface2)', border: '1px solid var(--fg-border)', borderRadius: 14, padding: 20, textAlign: 'center' }}>
+            <div style={{ fontSize: 11, color: 'var(--fg-text3)', marginBottom: 4 }}>{c.label}</div>
+            <div style={{ fontSize: 32, fontWeight: 800, color: c.color }}>{c.value}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: 'var(--fg-surface2)', border: '1px solid var(--fg-border)', borderRadius: 14, overflow: 'hidden' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', padding: '12px 20px', borderBottom: '1px solid var(--fg-border)', fontSize: 11, fontWeight: 700, color: 'var(--fg-text3)', textTransform: 'uppercase' }}>
+          <div>Model</div><div>Calls</div><div>Tokens</div><div>Cost</div>
+        </div>
+        {rows.length === 0 && <div style={{ padding: 24, color: 'var(--fg-text3)', fontSize: 14, textAlign: 'center' }}>No usage data yet</div>}
+        {rows.map((r: any, i: number) => {
+          const cost = getCost(r.model, r.tokens_in || 0, r.tokens_out || 0);
+          return (
+            <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', padding: '14px 20px', borderBottom: i < rows.length - 1 ? '1px solid var(--fg-border)' : 'none', fontSize: 14 }}>
+              <div style={{ fontWeight: 600 }}>{r.model}</div>
+              <div>{r.calls}</div>
+              <div>{((r.tokens_in || 0) + (r.tokens_out || 0)).toLocaleString()}</div>
+              <div style={{ color: cost > 1 ? '#ff6b6b' : 'var(--fg-text)' }}>${cost.toFixed(4)}</div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
