@@ -173,7 +173,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Health ────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1270.00' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', environment: NODE_ENV, timestamp: new Date().toISOString(), version: 'v1271.00' }));
 
 // ── Server listen — early, before any code that can throw ────
 const httpServer = require('http').createServer(app);
@@ -5544,7 +5544,7 @@ app.get('/api/brain/summary', requireAuth, (req: AuthRequest, res) => {
 });
 
 // ─── Version ──────────────────────────────────────────────────────────────────
-app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v1270.00', build: 'production', timestamp: new Date().toISOString() }));
+app.get('/api/version', (_req: any, res: any) => res.json({ version: 'v1271.00', build: 'production', timestamp: new Date().toISOString() }));
 
 // ─── Server bootstrap (httpServer declared + listening at top, near /health) ──
 try {
@@ -188606,6 +188606,135 @@ app.post('/api/threads/:id/writing-assist', requireAuth, async (req: AuthRequest
     const result = await callLLM(req.user!.id, prompt, 'You are a writing assistant.');
     res.json({ success:true, result });
   } catch(e:any){ res.status(500).json({ error:e.message }); }
+});
+
+
+// ── GITHUB INTEGRATION ──────────────────────────────────────────────────────
+db.prepare(`CREATE TABLE IF NOT EXISTS user_integrations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  provider TEXT NOT NULL,
+  access_token TEXT,
+  username TEXT,
+  avatar TEXT,
+  meta TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(user_id, provider)
+)`).run();
+
+async function githubApi(token: string, path: string, method = 'GET', body?: any) {
+  const ghRes = await fetch(`https://api.github.com${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type': 'application/json',
+      'User-Agent': 'Forge-Platform/1.0',
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+  if (!ghRes.ok) throw new Error(`GitHub API error ${ghRes.status}: ${await ghRes.text()}`);
+  return ghRes.json();
+}
+
+app.post('/api/integrations/github/connect', requireAuth, async (req: AuthRequest, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: 'token required' });
+  try {
+    const ghUser = await githubApi(token, '/user') as any;
+    db.prepare(`INSERT INTO user_integrations (user_id,provider,access_token,username,avatar,updated_at) VALUES (?,?,?,?,?,datetime('now')) ON CONFLICT(user_id,provider) DO UPDATE SET access_token=excluded.access_token,username=excluded.username,avatar=excluded.avatar,updated_at=datetime('now')`).run(req.user!.id,'github',token,ghUser.login,ghUser.avatar_url);
+    res.json({ ok:true, username:ghUser.login, avatar:ghUser.avatar_url, public_repos:ghUser.public_repos });
+  } catch(e:any){ res.status(400).json({error:e.message}); }
+});
+
+app.get('/api/integrations/github/status', requireAuth, (req: AuthRequest, res) => {
+  const row = db.prepare('SELECT username,avatar,created_at FROM user_integrations WHERE user_id=? AND provider=?').get(req.user!.id,'github') as any;
+  res.json(row ? {connected:true,username:row.username,avatar:row.avatar,since:row.created_at} : {connected:false});
+});
+
+app.delete('/api/integrations/github/disconnect', requireAuth, (req: AuthRequest, res) => {
+  db.prepare('DELETE FROM user_integrations WHERE user_id=? AND provider=?').run(req.user!.id,'github');
+  res.json({ok:true});
+});
+
+app.get('/api/integrations/github/repos', requireAuth, async (req: AuthRequest, res) => {
+  const row = db.prepare('SELECT access_token FROM user_integrations WHERE user_id=? AND provider=?').get(req.user!.id,'github') as any;
+  if (!row) return res.status(401).json({error:'GitHub not connected'});
+  try {
+    const page = Number(req.query.page)||1;
+    const repos = await githubApi(row.access_token,`/user/repos?sort=updated&per_page=30&page=${page}`) as any[];
+    res.json({repos:repos.map(r=>({id:r.id,name:r.name,full_name:r.full_name,private:r.private,description:r.description,language:r.language,stars:r.stargazers_count,updated_at:r.updated_at,default_branch:r.default_branch,url:r.html_url}))});
+  } catch(e:any){ res.status(400).json({error:e.message}); }
+});
+
+app.get('/api/integrations/github/repo/:owner/:repo/files', requireAuth, async (req: AuthRequest, res) => {
+  const row = db.prepare('SELECT access_token FROM user_integrations WHERE user_id=? AND provider=?').get(req.user!.id,'github') as any;
+  if (!row) return res.status(401).json({error:'GitHub not connected'});
+  const {owner,repo} = req.params;
+  const path = (req.query.path as string)||'';
+  const branch = (req.query.branch as string)||'main';
+  try {
+    const items = await githubApi(row.access_token,`/repos/${owner}/${repo}/contents/${path}?ref=${branch}`) as any;
+    const list = Array.isArray(items)?items:[items];
+    res.json({files:list.map((f:any)=>({name:f.name,path:f.path,type:f.type,size:f.size,sha:f.sha}))});
+  } catch(e:any){ res.status(400).json({error:e.message}); }
+});
+
+app.get('/api/integrations/github/repo/:owner/:repo/file', requireAuth, async (req: AuthRequest, res) => {
+  const row = db.prepare('SELECT access_token FROM user_integrations WHERE user_id=? AND provider=?').get(req.user!.id,'github') as any;
+  if (!row) return res.status(401).json({error:'GitHub not connected'});
+  const {owner,repo} = req.params;
+  const path = req.query.path as string;
+  const branch = (req.query.branch as string)||'main';
+  if (!path) return res.status(400).json({error:'path required'});
+  try {
+    const f = await githubApi(row.access_token,`/repos/${owner}/${repo}/contents/${path}?ref=${branch}`) as any;
+    const decoded = Buffer.from(f.content,'base64').toString('utf8');
+    res.json({content:decoded,sha:f.sha,path:f.path,size:f.size});
+  } catch(e:any){ res.status(400).json({error:e.message}); }
+});
+
+app.get('/api/integrations/github/repo/:owner/:repo/commits', requireAuth, async (req: AuthRequest, res) => {
+  const row = db.prepare('SELECT access_token FROM user_integrations WHERE user_id=? AND provider=?').get(req.user!.id,'github') as any;
+  if (!row) return res.status(401).json({error:'GitHub not connected'});
+  const {owner,repo} = req.params;
+  const branch = (req.query.branch as string)||'main';
+  try {
+    const commits = await githubApi(row.access_token,`/repos/${owner}/${repo}/commits?sha=${branch}&per_page=20`) as any[];
+    res.json({commits:commits.map((c:any)=>({sha:c.sha.slice(0,7),message:c.commit.message,author:c.commit.author.name,date:c.commit.author.date,url:c.html_url}))});
+  } catch(e:any){ res.status(400).json({error:e.message}); }
+});
+
+app.post('/api/integrations/github/repo/:owner/:repo/ai-review', requireAuth, async (req: AuthRequest, res) => {
+  const row = db.prepare('SELECT access_token FROM user_integrations WHERE user_id=? AND provider=?').get(req.user!.id,'github') as any;
+  if (!row) return res.status(401).json({error:'GitHub not connected'});
+  const {owner,repo} = req.params;
+  const {path,branch='main'} = req.body;
+  if (!path) return res.status(400).json({error:'path required'});
+  try {
+    const f = await githubApi(row.access_token,`/repos/${owner}/${repo}/contents/${path}?ref=${branch}`) as any;
+    const decoded = Buffer.from(f.content,'base64').toString('utf8');
+    const apiKey = await getUserKey(req.user!.id,'anthropic');
+    if (!apiKey) return res.status(400).json({error:'No Anthropic key configured'});
+    const aiRes = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','content-type':'application/json'},body:JSON.stringify({model:'claude-3-5-haiku-20241022',max_tokens:2000,messages:[{role:'user',content:`Review this code file: ${path}\n\n\`\`\`\n${decoded.slice(0,6000)}\n\`\`\`\n\nProvide:\n1. SUMMARY (what it does)\n2. BUGS / RISKS\n3. PERFORMANCE\n4. SECURITY\n5. TOP 3 IMPROVEMENTS (with before/after)\n6. SCORE /10\n\nBe specific, reference actual code.`}]})});
+    const aiData = await aiRes.json() as any;
+    res.json({review:aiData.content?.[0]?.text||'No review generated',file:path,lines:decoded.split('\n').length});
+  } catch(e:any){ res.status(400).json({error:e.message}); }
+});
+
+app.post('/api/integrations/github/repo/:owner/:repo/commit', requireAuth, async (req: AuthRequest, res) => {
+  const row = db.prepare('SELECT access_token FROM user_integrations WHERE user_id=? AND provider=?').get(req.user!.id,'github') as any;
+  if (!row) return res.status(401).json({error:'GitHub not connected'});
+  const {owner,repo} = req.params;
+  const {path,content,message,sha,branch='main'} = req.body;
+  if (!path||!content||!message) return res.status(400).json({error:'path, content, message required'});
+  try {
+    const encoded = Buffer.from(content).toString('base64');
+    const result = await githubApi(row.access_token,`/repos/${owner}/${repo}/contents/${path}`,'PUT',{message,content:encoded,branch,...(sha?{sha}:{})}) as any;
+    res.json({ok:true,sha:result.content?.sha,commit:result.commit?.sha?.slice(0,7),url:result.content?.html_url});
+  } catch(e:any){ res.status(400).json({error:e.message}); }
 });
 
 app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));
