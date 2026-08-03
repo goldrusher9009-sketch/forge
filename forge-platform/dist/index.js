@@ -215364,4 +215364,45 @@ app.post("/api/hr/recruiter-outreach", requireAuth, async (req, res) => {
 });
 app.post("/api/content/thought-leadership", requireAuth, async (req, res) => {
   const { author, topic, perspective, audience } = req.body;
-  const prompt = `Write a thought leadership LinkedIn post for ${author || "a founder/executive"} on: ${topic}. Perspective: ${perspective || "contrarian take"}. Audience: ${audience || "industry professionals"}. Structure: bold hook, specific story/observation, insight/lesson, practical implication, closing question. 800-1200 words. First-person, opinion
+  const prompt = `Write a thought leadership LinkedIn post for ${author || "a founder/executive"} on: ${topic}. Perspective: ${perspective || "contrarian take"}. Audience: ${audience || "industry professionals"}. Structure: bold hook, specific story/observation, insight/lesson, practical implication, closing question. 800-1200 words. First-person, opinionated voice.`;
+  try { const r = await callUserLLM(req, prompt); res.json({ post: r }); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Web Search
+app.post("/api/web-search", requireAuth, async (req, res) => {
+  const { query } = req.body;
+  if (!query) return res.status(400).json({ error: "query required" });
+  try {
+    const encoded = encodeURIComponent(query);
+    let results = [];
+    try {
+      const braveKey = await getUserKey(req.user.id, "brave");
+      if (braveKey) {
+        const r = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encoded}&count=8`, {
+          headers: { "Accept": "application/json", "Accept-Encoding": "gzip", "X-Subscription-Token": braveKey }
+        });
+        const d = await r.json();
+        results = (d.web?.results || []).map((x) => ({ title: x.title, url: x.url, snippet: x.description || "" }));
+      }
+    } catch(_) {}
+    if (results.length === 0) {
+      const r = await fetch(`https://html.duckduckgo.com/html/?q=${encoded}`, {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; ForgeBot/1.0)" }
+      });
+      const html = await r.text();
+      const snippets = [...html.matchAll(/<a class="result__a" href="([^"]+)"[^>]*>([^<]+)<\/a>[\s\S]*?<a class="result__snippet"[^>]*>([^<]*)<\/a>/g)];
+      results = snippets.slice(0, 8).map((m) => ({ url: m[1], title: m[2].trim(), snippet: m[3].trim() }));
+      if (results.length === 0) {
+        const titles = [...html.matchAll(/<a class="result__a"[^>]*>(.+?)<\/a>/g)].map((m) => m[1].replace(/<[^>]+>/g, "").trim());
+        const urls = [...html.matchAll(/uddg=([^&"]+)/g)].map((m) => decodeURIComponent(m[1]));
+        results = titles.slice(0, 8).map((t, i) => ({ title: t, url: urls[i] || "", snippet: "" }));
+      }
+    }
+    res.json({ results, query, source: results.length > 0 ? "ok" : "no_results" });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+var PORT2 = process.env.PORT || 3000;
+app.listen(PORT2, () => console.log("Forge Platform v1276.00 running on port " + PORT2));

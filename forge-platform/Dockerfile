@@ -7,7 +7,7 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 
-RUN NODE_OPTIONS="--max-old-space-size=4096" npx esbuild src/index.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist
+# Use pre-compiled dist/index.js (esbuild skipped — dist committed to repo)
 
 EXPOSE 3000
 
