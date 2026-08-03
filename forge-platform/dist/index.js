@@ -171,7 +171,7 @@ app.use((0, import_cors.default)({
 app.use(import_express.default.json({ limit: "10mb" }));
 app.use(import_express.default.urlencoded({ extended: true, limit: "10mb" }));
 app.use((0, import_cookie_parser.default)());
-app.get("/health", (_req, res) => res.json({ status: "ok", environment: NODE_ENV, timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "v1275.00" }));
+app.get("/health", (_req, res) => res.json({ status: "ok", environment: NODE_ENV, timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "v1277.00" }));
 const httpServer = require("http").createServer(app);
 httpServer.listen(PORT, () => {
   console.log("Forge Platform v1275.00 running on port " + PORT);
