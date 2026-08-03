@@ -1,6 +1,6 @@
 {
   "build": {
-    "builder": "NIXPACKS"
+    "builder": "DOCKERFILE"
   },
   "deploy": {
     "startCommand": "node --max-old-space-size=4096 dist/index.js",
