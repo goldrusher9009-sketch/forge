@@ -26849,6 +26849,7 @@ export default function ForgeApp() {
             { id:'runs', icon:'🏃', label:'Runs' },
             { id:'hooks', icon:'🪝', label:'Hooks' },
             { id:'voiceagent', icon:'🎙️', label:'Voice Agent' },
+            { id:'websearch', icon:'🔍', label:'Web Search' },
             { id:'emailagent', icon:'📧', label:'Email Agent' },
             { id:'founderos', icon:'🚀', label:'Founder OS' },
             { id:'costdash', icon:'💰', label:'Cost Dashboard' },
@@ -50645,7 +50646,97 @@ export default function ForgeApp() {
         {(mainTab as string) === 'emailagent' && <ForgeTab_emailagent />}
         {(mainTab as string) === 'founderos' && <ForgeTab_founderos />}
         {(mainTab as string) === 'costdash' && <ForgeTab_costdash />}
+        {(mainTab as string) === 'websearch' && <ForgeTab_websearch />}
       {<WaveRenderer tabId={mainTab as string} />}
+      </div>
+    </div>
+  );
+}
+
+// ===== WEB SEARCH TAB =====
+function ForgeTab_websearch() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const [query, setQuery] = React.useState('');
+  const [results, setResults] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [aiSummary, setAiSummary] = React.useState('');
+  const [summarizing, setSummarizing] = React.useState(false);
+
+  const search = async () => {
+    if (!query.trim()) return;
+    setLoading(true); setError(''); setResults([]); setAiSummary('');
+    try {
+      const r = await fetch(BACKEND + '/api/web-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('forge_token') },
+        body: JSON.stringify({ query })
+      });
+      const d = await r.json();
+      if (d.error) { setError(d.error); } else { setResults(d.results || []); }
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const summarizeWithAI = async () => {
+    if (!results.length) return;
+    setSummarizing(true); setAiSummary('');
+    const context = results.map((r:any,i:number) => `[${i+1}] ${r.title}\n${r.snippet}\n${r.url}`).join('\n\n');
+    try {
+      const r = await fetch(BACKEND + '/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('forge_token') },
+        body: JSON.stringify({ messages: [
+          { role: 'user', content: `Based on these search results for "${query}", give me a concise 3-4 sentence summary of the key findings:\n\n${context}` }
+        ] })
+      });
+      const d = await r.json();
+      setAiSummary(d.content || d.message || '');
+    } catch(e:any) { setAiSummary('Could not generate summary.'); }
+    setSummarizing(false);
+  };
+
+  return (
+    <div style={{ padding: 24, maxWidth: 800, margin: '0 auto' }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>🔍 Web Search</h2>
+      <p style={{ color: 'var(--fg-text3)', fontSize: 13, marginBottom: 20 }}>Search the web and get AI-powered summaries</p>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <input
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && search()}
+          placeholder="Search anything..."
+          style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: '1px solid var(--fg-border)', background: 'var(--fg-surface2)', color: 'var(--fg-text)', fontSize: 14 }}
+        />
+        <button onClick={search} disabled={loading} style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px', fontWeight: 600, cursor: 'pointer', fontSize: 14 }}>
+          {loading ? '...' : 'Search'}
+        </button>
+      </div>
+      {error && <div style={{ background: '#fee2e2', color: '#dc2626', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13 }}>{error}</div>}
+      {results.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <button onClick={summarizeWithAI} disabled={summarizing} style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontWeight: 600, cursor: 'pointer', fontSize: 13, marginBottom: 12 }}>
+            {summarizing ? '⏳ Summarizing...' : '✨ AI Summary'}
+          </button>
+          {aiSummary && (
+            <div style={{ background: 'var(--fg-surface2)', border: '1px solid var(--fg-border)', borderRadius: 10, padding: 16, marginBottom: 16, fontSize: 14, lineHeight: 1.6 }}>
+              <strong style={{ display: 'block', marginBottom: 6, color: '#10b981' }}>✨ AI Summary</strong>
+              {aiSummary}
+            </div>
+          )}
+        </div>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {results.map((r: any, i: number) => (
+          <div key={i} style={{ background: 'var(--fg-surface2)', border: '1px solid var(--fg-border)', borderRadius: 12, padding: 16 }}>
+            <a href={r.url} target="_blank" rel="noreferrer" style={{ color: '#6366f1', fontWeight: 600, fontSize: 15, textDecoration: 'none' }}>{r.title || r.url}</a>
+            <p style={{ color: 'var(--fg-text3)', fontSize: 12, margin: '4px 0 6px', wordBreak: 'break-all' }}>{r.url}</p>
+            {r.snippet && <p style={{ fontSize: 13, color: 'var(--fg-text)', lineHeight: 1.5 }}>{r.snippet}</p>}
+          </div>
+        ))}
+        {loading && [1,2,3,4].map(i => (
+          <div key={i} style={{ background: 'var(--fg-surface2)', borderRadius: 12, padding: 16, height: 80, opacity: 0.5 }} />
+        ))}
       </div>
     </div>
   );

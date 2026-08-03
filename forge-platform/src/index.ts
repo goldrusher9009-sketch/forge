@@ -188737,4 +188737,44 @@ app.post('/api/integrations/github/repo/:owner/:repo/commit', requireAuth, async
   } catch(e:any){ res.status(400).json({error:e.message}); }
 });
 
+// ── Web Search ────────────────────────────────────────────────
+app.post('/api/web-search', requireAuth, async (req: any, res: any) => {
+  const { query } = req.body;
+  if (!query) return res.status(400).json({ error: 'query required' });
+  try {
+    const encoded = encodeURIComponent(query);
+    // Try Brave Search first if user has key, else DuckDuckGo scrape
+    const userId = req.user.id;
+    let results: any[] = [];
+    try {
+      const braveKey = await getUserKey(userId, 'brave');
+      if (braveKey) {
+        const r = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encoded}&count=8`, {
+          headers: { 'Accept': 'application/json', 'Accept-Encoding': 'gzip', 'X-Subscription-Token': braveKey }
+        });
+        const d: any = await r.json();
+        results = (d.web?.results || []).map((x: any) => ({ title: x.title, url: x.url, snippet: x.description || '' }));
+      }
+    } catch(_) {}
+    if (results.length === 0) {
+      // DuckDuckGo HTML scrape fallback
+      const r = await fetch(`https://html.duckduckgo.com/html/?q=${encoded}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ForgeBot/1.0)' }
+      });
+      const html = await r.text();
+      const snippets = [...html.matchAll(/<a class="result__a" href="([^"]+)"[^>]*>([^<]+)<\/a>[\s\S]*?<a class="result__snippet"[^>]*>([^<]*)<\/a>/g)];
+      results = snippets.slice(0, 8).map((m: any) => ({ url: m[1], title: m[2].trim(), snippet: m[3].trim() }));
+      if (results.length === 0) {
+        // simpler pattern
+        const titles = [...html.matchAll(/<a class="result__a"[^>]*>(.+?)<\/a>/g)].map((m:any)=>m[1].replace(/<[^>]+>/g,'').trim());
+        const urls = [...html.matchAll(/uddg=([^&"]+)/g)].map((m:any)=>decodeURIComponent(m[1]));
+        results = titles.slice(0,8).map((t:any,i:number)=>({ title: t, url: urls[i]||'', snippet: '' }));
+      }
+    }
+    res.json({ results, query, source: results.length > 0 ? 'ok' : 'no_results' });
+  } catch(e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));
