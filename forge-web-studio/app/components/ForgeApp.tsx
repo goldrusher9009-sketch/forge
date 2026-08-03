@@ -33539,7 +33539,13 @@ export default function ForgeApp() {
           <div style={{ flex:1, overflowY:'auto', padding:32 }}>
             <div style={{ maxWidth:700, margin:'0 auto' }}>
               <h2 style={{ color:'var(--fg-orange)', margin:'0 0 4px', fontSize:22, fontFamily:'var(--fg-font-display)', fontWeight:800, letterSpacing:'-0.3px' }}>⚙️ Settings</h2>
-              <p style={{ color:'var(--fg-text3)', margin:'0 0 24px', fontSize:14 }}>Configure API keys, agents, and preferences</p>
+              <p style={{ color:'var(--fg-text3)', margin:'0 0 8px', fontSize:14 }}>Configure API keys, agents, and preferences</p>
+              <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'var(--fg-surface2)', border:'1px solid var(--fg-border)', borderRadius:20, padding:'4px 14px', marginBottom:24 }}>
+                <span style={{ fontSize:11, color:'var(--fg-text3)' }}>Forge</span>
+                <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-orange)', fontFamily:'monospace' }}>v1275.00</span>
+                <span style={{ fontSize:10, color:'var(--fg-text3)' }}>·</span>
+                <span style={{ fontSize:11, color:'var(--fg-text3)' }}>Production</span>
+              </div>
 
               {/* Connected Services */}
               <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24, marginBottom:24 }}>
