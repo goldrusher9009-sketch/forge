@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["node", "--max-old-space-size=4096", "-r", "ts-node/register", "src/index.ts"]
+CMD ["node", "--max-old-space-size=4096", "-r", "ts-node/register/transpile-only", "src/index.ts"]
