@@ -225965,4 +225965,3 @@ app.post("/api/web-search", requireAuth, async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
-app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));

@@ -188777,4 +188777,4 @@ app.post('/api/web-search', requireAuth, async (req: any, res: any) => {
   }
 });
 
-app.listen(PORT, () => console.log(`Forge API running on port ${PORT}`));
+// httpServer already listening above (line ~180) — no duplicate listen needed
