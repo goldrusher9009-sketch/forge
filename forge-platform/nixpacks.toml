@@ -8,7 +8,7 @@ nixPkgs = ["nodejs_20"]
 cmds = ["npm install"]
 
 [phases.build]
-cmds = ["npx esbuild src/index.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist"]
+cmds = ["echo 'using committed CJS dist'"]
 
 [start]
 cmd = "node --max-old-space-size=4096 dist/index.js"
