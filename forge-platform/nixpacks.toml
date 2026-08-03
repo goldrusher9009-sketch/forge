@@ -8,7 +8,7 @@ nixPkgs = ["nodejs_20"]
 cmds = ["npm install"]
 
 [phases.build]
-cmds = ["echo 'using committed CJS dist'"]
+cmds = ["echo 'build: ts-node runs source directly'"]
 
 [start]
-cmd = "node --max-old-space-size=4096 dist/index.js"
+cmd = "node --max-old-space-size=4096 -r ts-node/register src/index.ts"
