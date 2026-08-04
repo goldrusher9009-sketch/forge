@@ -8,7 +8,7 @@ nixPkgs = ["nodejs_20"]
 cmds = ["npm install"]
 
 [phases.build]
-cmds = ["echo 'build: ts-node runs source directly'"]
+cmds = ["npx esbuild src/index.ts --bundle=false --platform=node --format=cjs --outfile=dist/index.js"]
 
 [start]
-cmd = "node --max-old-space-size=4096 -r ts-node/register/transpile-only src/index.ts"
+cmd = "node --max-old-space-size=4096 dist/index.js"
