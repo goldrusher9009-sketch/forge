@@ -1,4 +1,4 @@
-FROM node:20-bullseye-slim
+FROM node:20.18.0-bullseye-slim
 RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package*.json ./
