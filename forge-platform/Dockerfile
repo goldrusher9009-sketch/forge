@@ -4,4 +4,5 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+RUN npx esbuild src/index.ts --bundle=false --platform=node --target=node20 --format=cjs --outfile=dist/index.js
 CMD ["node", "--max-old-space-size=4096", "dist/index.js"]
