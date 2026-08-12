@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
+RUN echo "cache-bust-2026-08-12T0445"
 COPY . .
 
 RUN NODE_OPTIONS="--max-old-space-size=4096" npx esbuild src/index.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist
