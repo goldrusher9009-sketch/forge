@@ -11,4 +11,4 @@ cmds = ["npm install --include=dev"]
 cmds = ["npx esbuild src/index.ts --bundle=false --platform=node --format=cjs --outfile=dist/index.js"]
 
 [start]
-cmd = "node --max-old-space-size=4096 dist/index.js"
+cmd = "npx esbuild src/index.ts --bundle=false --platform=node --target=node20 --format=cjs --outfile=dist/index.js && node --max-old-space-size=4096 dist/index.js"
