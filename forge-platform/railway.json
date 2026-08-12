@@ -3,7 +3,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "node --max-old-space-size=4096 dist/index.js",
+    "startCommand": "npx esbuild src/index.ts --bundle=false --platform=node --target=node20 --format=cjs --outfile=dist/index.js && node --max-old-space-size=4096 dist/index.js",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 600,
     "restartPolicyType": "ON_FAILURE",
