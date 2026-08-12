@@ -1,3 +1,4 @@
+# cache-bust: 2026-08-12T02:51
 FROM node:20.18.0-bullseye-slim
 RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
