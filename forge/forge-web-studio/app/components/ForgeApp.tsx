@@ -27613,6 +27613,8 @@ function ForgeApp() {
             { id:'tonedetect',       icon:'🎭',  label:'Tone Detector' },
             { id:'repurpose',        icon:'♻️',  label:'Repurposer' },
             { id:'summarize',        icon:'⚡',  label:'Summarizer' },
+            { id:'ideagen',          icon:'💡',  label:'Idea Generator' },
+            { id:'meetingnotes',     icon:'📋',  label:'Meeting Notes' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51716,6 +51718,8 @@ function ForgeApp() {
 {(mainTab as string) === 'tonedetect' && <ForgeTab_tonedetect />}
 {(mainTab as string) === 'repurpose' && <ForgeTab_repurpose />}
 {(mainTab as string) === 'summarize' && <ForgeTab_summarize />}
+{(mainTab as string) === 'ideagen' && <ForgeTab_ideagen />}
+{(mainTab as string) === 'meetingnotes' && <ForgeTab_meetingnotes />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51797,6 +51801,275 @@ function ForgeTab_costdash() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function ForgeTab_ideagen() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const CATEGORIES = [
+    { id:'startup', label:'Startup Ideas', icon:'🚀' },
+    { id:'features', label:'Product Features', icon:'⚙️' },
+    { id:'marketing', label:'Marketing Campaigns', icon:'📣' },
+    { id:'content', label:'Content Ideas', icon:'📝' },
+    { id:'business', label:'Business Models', icon:'💼' },
+    { id:'names', label:'Brand Names', icon:'✨' },
+    { id:'problem', label:'Problems to Solve', icon:'🔍' },
+    { id:'growth', label:'Growth Hacks', icon:'📈' },
+  ];
+  const [prompt, setPrompt] = React.useState('');
+  const [category, setCategory] = React.useState('startup');
+  const [ideas, setIdeas] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [expanded, setExpanded] = React.useState<number | null>(0);
+
+  const generate = async () => {
+    if (!prompt.trim()) { setError('Describe the domain or context'); return; }
+    setLoading(true); setError(''); setIdeas([]);
+    try {
+      const token = localStorage.getItem('forge_token');
+      const r = await fetch(`${BACKEND}/api/ideagen`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ prompt, category }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setIdeas(d.ideas || []);
+      setExpanded(0);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const scoreColor = (v: number) => v >= 80 ? '#059669' : v >= 60 ? '#d97706' : '#dc2626';
+
+  return (
+    <div style={{ padding:'24px', maxWidth:'900px', margin:'0 auto', fontFamily:'system-ui,sans-serif' }}>
+      <div style={{ marginBottom:'24px' }}>
+        <h2 style={{ fontSize:'22px', fontWeight:700, color:'#1e293b', margin:0 }}>💡 Idea Generator</h2>
+        <p style={{ color:'#64748b', margin:'4px 0 0', fontSize:'14px' }}>AI-generated ideas with scoring and validation framework</p>
+      </div>
+
+      {/* Category */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'8px', marginBottom:'16px' }}>
+        {CATEGORIES.map(c => (
+          <button key={c.id} onClick={() => setCategory(c.id)} style={{
+            padding:'9px 8px', borderRadius:'10px', border:'2px solid', cursor:'pointer', textAlign:'center',
+            borderColor: category === c.id ? '#6366f1' : '#e5e7eb',
+            background: category === c.id ? '#eef2ff' : '#fff',
+          }}>
+            <div style={{ fontSize:'16px', marginBottom:'3px' }}>{c.icon}</div>
+            <div style={{ fontSize:'11px', fontWeight: category === c.id ? 700 : 500, color: category === c.id ? '#4f46e5' : '#374151' }}>{c.label}</div>
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display:'flex', gap:'10px', marginBottom:'16px' }}>
+        <input value={prompt} onChange={e => setPrompt(e.target.value)} onKeyDown={e => e.key === 'Enter' && generate()}
+          placeholder="Describe the domain, space, or constraints... e.g. B2B SaaS for remote teams, budget under $50k, solo founder"
+          style={{ flex:1, padding:'10px 14px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px' }} />
+        <button onClick={generate} disabled={loading || !prompt.trim()} style={{
+          padding:'10px 22px', background: loading ? '#94a3b8' : '#6366f1', color:'#fff', border:'none', borderRadius:'8px',
+          cursor: loading ? 'not-allowed' : 'pointer', fontSize:'14px', fontWeight:600, whiteSpace:'nowrap',
+        }}>{loading ? '💡 Generating...' : '💡 Generate'}</button>
+      </div>
+
+      {error && <div style={{ padding:'10px 14px', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'8px', color:'#dc2626', fontSize:'13px', marginBottom:'12px' }}>{error}</div>}
+
+      {ideas.length > 0 && (
+        <div>
+          {ideas.map((idea, i) => (
+            <div key={i} style={{ marginBottom:'12px', border:'1px solid #e2e8f0', borderRadius:'12px', overflow:'hidden' }}>
+              <button onClick={() => setExpanded(expanded === i ? null : i)} style={{
+                width:'100%', padding:'14px 18px', background: expanded === i ? '#eef2ff' : '#f8fafc', border:'none', cursor:'pointer',
+                display:'flex', alignItems:'center', gap:'12px', textAlign:'left',
+              }}>
+                <span style={{ fontSize:'20px', fontWeight:800, color:'#c7d2fe', minWidth:'28px' }}>#{i+1}</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:'15px', fontWeight:700, color:'#1e293b' }}>{idea.title}</div>
+                  <div style={{ fontSize:'13px', color:'#64748b', marginTop:'2px' }}>{idea.tagline}</div>
+                </div>
+                {idea.score && (
+                  <div style={{ display:'flex', gap:'8px' }}>
+                    {Object.entries(idea.score).map(([k, v]: [string, any]) => (
+                      <div key={k} style={{ textAlign:'center', minWidth:'40px' }}>
+                        <div style={{ fontSize:'14px', fontWeight:800, color: scoreColor(v) }}>{v}</div>
+                        <div style={{ fontSize:'9px', color:'#94a3b8', textTransform:'uppercase' }}>{k.substring(0,3)}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <span style={{ color:'#94a3b8', fontSize:'16px' }}>{expanded === i ? '▲' : '▼'}</span>
+              </button>
+
+              {expanded === i && (
+                <div style={{ padding:'16px 18px', background:'#fff', borderTop:'1px solid #e2e8f0' }}>
+                  {idea.details && Object.entries(idea.details).map(([k, v]: [string, any]) => (
+                    <div key={k} style={{ marginBottom:'10px', display:'grid', gridTemplateColumns:'160px 1fr', gap:'8px' }}>
+                      <div style={{ fontSize:'12px', fontWeight:700, color:'#374151', textTransform:'capitalize', paddingTop:'2px' }}>{k.replace(/_/g,' ')}</div>
+                      <div style={{ fontSize:'13px', color:'#475569', lineHeight:1.6 }}>{v}</div>
+                    </div>
+                  ))}
+                  {idea.verdict && (
+                    <div style={{ marginTop:'12px', padding:'10px 14px', background:'#f0f9ff', border:'1px solid #7dd3fc', borderRadius:'8px', fontSize:'13px', color:'#0c4a6e', fontStyle:'italic' }}>
+                      💭 {idea.verdict}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForgeTab_meetingnotes() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const [transcript, setTranscript] = React.useState('');
+  const [title, setTitle] = React.useState('');
+  const [attendees, setAttendees] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [activeTab, setActiveTab] = React.useState('summary');
+  const [copied, setCopied] = React.useState(false);
+
+  const process = async () => {
+    if (transcript.trim().length < 30) { setError('Please paste meeting notes (min 30 chars)'); return; }
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const token = localStorage.getItem('forge_token');
+      const r = await fetch(`${BACKEND}/api/meeting-notes`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ transcript, meetingTitle: title, attendees }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d.result);
+      setActiveTab('summary');
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const copyEmail = () => {
+    if (!result?.followUpEmail) return;
+    navigator.clipboard.writeText(`Subject: ${result.followUpEmail.subject}\n\n${result.followUpEmail.body}`);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
+  };
+
+  const priorityColor: Record<string, string> = { High:'#dc2626', Medium:'#d97706', Low:'#059669' };
+
+  return (
+    <div style={{ padding:'24px', maxWidth:'1000px', margin:'0 auto', fontFamily:'system-ui,sans-serif' }}>
+      <div style={{ marginBottom:'24px' }}>
+        <h2 style={{ fontSize:'22px', fontWeight:700, color:'#1e293b', margin:0 }}>📋 Meeting Notes AI</h2>
+        <p style={{ color:'#64748b', margin:'4px 0 0', fontSize:'14px' }}>Transform raw meeting notes into decisions, action items, and follow-up emails</p>
+      </div>
+
+      {!result ? (
+        <div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'12px' }}>
+            <div>
+              <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Meeting Title (optional)</label>
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Q3 Planning Kickoff" style={{ width:'100%', padding:'8px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', boxSizing:'border-box' }} />
+            </div>
+            <div>
+              <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Attendees (optional)</label>
+              <input value={attendees} onChange={e => setAttendees(e.target.value)} placeholder="e.g. Alice, Bob, Carol" style={{ width:'100%', padding:'8px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', boxSizing:'border-box' }} />
+            </div>
+          </div>
+          <div style={{ marginBottom:'16px' }}>
+            <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Meeting Notes / Transcript *</label>
+            <textarea value={transcript} onChange={e => setTranscript(e.target.value)} rows={14}
+              placeholder="Paste your meeting transcript, raw notes, or any unstructured meeting content here..."
+              style={{ width:'100%', padding:'12px 14px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', resize:'vertical', boxSizing:'border-box', fontFamily:'inherit', lineHeight:1.6 }} />
+          </div>
+          <button onClick={process} disabled={loading || transcript.trim().length < 30} style={{
+            padding:'10px 28px', background: loading ? '#94a3b8' : '#6366f1', color:'#fff', border:'none', borderRadius:'8px',
+            cursor: loading ? 'not-allowed' : 'pointer', fontSize:'14px', fontWeight:600,
+          }}>{loading ? '📋 Processing...' : '📋 Process Meeting Notes'}</button>
+          {error && <div style={{ marginTop:'12px', padding:'10px 14px', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'8px', color:'#dc2626', fontSize:'13px' }}>{error}</div>}
+        </div>
+      ) : (
+        <div>
+          {/* Header */}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'20px', padding:'16px 20px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'12px' }}>
+            <div>
+              <div style={{ fontSize:'18px', fontWeight:700, color:'#1e293b' }}>{result.title}</div>
+              <div style={{ fontSize:'13px', color:'#64748b', marginTop:'4px' }}>{result.summary}</div>
+              {result.sentiment && <div style={{ marginTop:'8px', fontSize:'12px' }}>Sentiment: <strong style={{ color:'#6366f1' }}>{result.sentiment}</strong></div>}
+            </div>
+            <button onClick={() => setResult(null)} style={{ padding:'7px 14px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'8px', cursor:'pointer', fontSize:'13px', color:'#64748b' }}>← New Notes</button>
+          </div>
+
+          {/* Tabs */}
+          <div style={{ display:'flex', gap:'4px', marginBottom:'20px', borderBottom:'2px solid #e2e8f0' }}>
+            {['summary','actions','email'].map(t => (
+              <button key={t} onClick={() => setActiveTab(t)} style={{
+                padding:'8px 18px', border:'none', borderBottom: activeTab === t ? '2px solid #6366f1' : '2px solid transparent',
+                background:'none', cursor:'pointer', fontSize:'14px', fontWeight: activeTab === t ? 700 : 400,
+                color: activeTab === t ? '#4f46e5' : '#6b7280', textTransform:'capitalize', marginBottom:'-2px',
+              }}>{t === 'actions' ? 'Action Items' : t === 'email' ? 'Follow-up Email' : 'Summary'}</button>
+            ))}
+          </div>
+
+          {activeTab === 'summary' && (
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px' }}>
+              <div style={{ padding:'16px', background:'#f0f9ff', border:'1px solid #7dd3fc', borderRadius:'10px' }}>
+                <div style={{ fontSize:'13px', fontWeight:700, color:'#0c4a6e', marginBottom:'10px' }}>✅ KEY DECISIONS ({result.keyDecisions?.length || 0})</div>
+                {result.keyDecisions?.map((d: any, i: number) => (
+                  <div key={i} style={{ marginBottom:'10px', paddingBottom:'10px', borderBottom: i < result.keyDecisions.length-1 ? '1px solid #bae6fd' : 'none' }}>
+                    <div style={{ fontSize:'13px', fontWeight:600, color:'#1e293b' }}>{d.decision}</div>
+                    {d.owner && <div style={{ fontSize:'12px', color:'#64748b', marginTop:'2px' }}>Owner: {d.owner}</div>}
+                    {d.rationale && <div style={{ fontSize:'12px', color:'#94a3b8', marginTop:'2px' }}>{d.rationale}</div>}
+                  </div>
+                ))}
+              </div>
+              <div>
+                <div style={{ padding:'16px', background:'#fefce8', border:'1px solid #fde68a', borderRadius:'10px', marginBottom:'12px' }}>
+                  <div style={{ fontSize:'13px', fontWeight:700, color:'#92400e', marginBottom:'8px' }}>❓ OPEN QUESTIONS</div>
+                  {result.openQuestions?.map((q: string, i: number) => <div key={i} style={{ fontSize:'13px', color:'#78350f', padding:'3px 0', display:'flex', gap:'8px' }}><span>•</span><span>{q}</span></div>)}
+                </div>
+                <div style={{ padding:'16px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'10px' }}>
+                  <div style={{ fontSize:'13px', fontWeight:700, color:'#374151', marginBottom:'8px' }}>📌 TOPICS COVERED</div>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                    {result.topicsCovered?.map((t: string, i: number) => <span key={i} style={{ padding:'4px 10px', background:'#e2e8f0', color:'#374151', borderRadius:'12px', fontSize:'12px' }}>{t}</span>)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'actions' && (
+            <div>
+              {result.actionItems?.length > 0 ? result.actionItems.map((item: any, i: number) => (
+                <div key={i} style={{ display:'grid', gridTemplateColumns:'1fr auto auto auto', gap:'12px', alignItems:'center', padding:'12px 16px', background: i % 2 === 0 ? '#f8fafc' : '#fff', border:'1px solid #e2e8f0', borderRadius:'8px', marginBottom:'8px' }}>
+                  <div style={{ fontSize:'14px', color:'#1e293b', fontWeight:500 }}>{item.task}</div>
+                  <div style={{ fontSize:'12px', color:'#64748b', whiteSpace:'nowrap' }}>👤 {item.owner}</div>
+                  <div style={{ fontSize:'12px', color:'#64748b', whiteSpace:'nowrap' }}>📅 {item.deadline}</div>
+                  <span style={{ padding:'3px 10px', borderRadius:'12px', fontSize:'11px', fontWeight:700, color:'#fff', background: priorityColor[item.priority] || '#6b7280', whiteSpace:'nowrap' }}>{item.priority}</span>
+                </div>
+              )) : <div style={{ color:'#94a3b8', fontSize:'14px' }}>No action items found in these notes.</div>}
+            </div>
+          )}
+
+          {activeTab === 'email' && result.followUpEmail && (
+            <div>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px' }}>
+                <div style={{ fontSize:'14px', fontWeight:600, color:'#374151' }}>Subject: {result.followUpEmail.subject}</div>
+                <button onClick={copyEmail} style={{ padding:'6px 14px', background: copied ? '#ecfdf5' : '#f1f5f9', border:'1px solid #e2e8f0', borderRadius:'6px', cursor:'pointer', fontSize:'12px', color: copied ? '#059669' : '#475569' }}>
+                  {copied ? '✓ Copied!' : '📋 Copy Email'}
+                </button>
+              </div>
+              <div style={{ padding:'20px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'12px' }}>
+                <pre style={{ whiteSpace:'pre-wrap', fontFamily:'inherit', fontSize:'14px', color:'#1e293b', margin:0, lineHeight:1.8 }}>{result.followUpEmail.body}</pre>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
