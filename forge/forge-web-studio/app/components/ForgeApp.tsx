@@ -27609,6 +27609,8 @@ function ForgeApp() {
             { id:'translate',        icon:'🌍',  label:'Translate Hub' },
             { id:'emailcompose',     icon:'✉️',  label:'Email Composer' },
             { id:'sqlgen',           icon:'🗄️',  label:'SQL Generator' },
+            { id:'resumeanalyze',    icon:'📄',  label:'Resume Analyzer' },
+            { id:'tonedetect',       icon:'🎭',  label:'Tone Detector' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51708,6 +51710,8 @@ function ForgeApp() {
 {(mainTab as string) === 'translate' && <ForgeTab_translate />}
 {(mainTab as string) === 'emailcompose' && <ForgeTab_emailcompose />}
 {(mainTab as string) === 'sqlgen' && <ForgeTab_sqlgen />}
+{(mainTab as string) === 'resumeanalyze' && <ForgeTab_resumeanalyze />}
+{(mainTab as string) === 'tonedetect' && <ForgeTab_tonedetect />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51789,6 +51793,323 @@ function ForgeTab_costdash() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function ForgeTab_resumeanalyze() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const [resume, setResume] = React.useState('');
+  const [jobDesc, setJobDesc] = React.useState('');
+  const [targetRole, setTargetRole] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [activeTab, setActiveTab] = React.useState('overview');
+
+  const analyze = async () => {
+    if (resume.trim().length < 50) { setError('Please paste your resume (at least 50 characters)'); return; }
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const token = localStorage.getItem('forge_token');
+      const r = await fetch(`${BACKEND}/api/resume-analyze`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ resume, jobDescription: jobDesc, targetRole }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d.result);
+      setActiveTab('overview');
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const gradeColor: Record<string, string> = { A:'#059669', B:'#0891b2', C:'#d97706', D:'#dc2626', F:'#7f1d1d' };
+  const scoreBg = (s: number) => s >= 80 ? '#ecfdf5' : s >= 60 ? '#eff6ff' : s >= 40 ? '#fefce8' : '#fef2f2';
+  const scoreColor = (s: number) => s >= 80 ? '#059669' : s >= 60 ? '#2563eb' : s >= 40 ? '#d97706' : '#dc2626';
+
+  return (
+    <div style={{ padding:'24px', maxWidth:'1000px', margin:'0 auto', fontFamily:'system-ui,sans-serif' }}>
+      <div style={{ marginBottom:'24px' }}>
+        <h2 style={{ fontSize:'22px', fontWeight:700, color:'#1e293b', margin:0 }}>📄 Resume Analyzer</h2>
+        <p style={{ color:'#64748b', margin:'4px 0 0', fontSize:'14px' }}>ATS scoring, gap analysis, and bullet rewrites powered by AI</p>
+      </div>
+
+      {!result ? (
+        <div>
+          <div style={{ marginBottom:'12px' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'12px' }}>
+              <div>
+                <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Target Role (optional)</label>
+                <input value={targetRole} onChange={e => setTargetRole(e.target.value)} placeholder="e.g. Senior Product Manager" style={{ width:'100%', padding:'8px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', boxSizing:'border-box' }} />
+              </div>
+              <div style={{ display:'flex', alignItems:'flex-end' }}>
+                <div style={{ fontSize:'12px', color:'#6b7280', padding:'8px 0' }}>Add a job description for targeted analysis</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px', marginBottom:'16px' }}>
+            <div>
+              <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Resume *</label>
+              <textarea value={resume} onChange={e => setResume(e.target.value)} rows={16}
+                placeholder="Paste your resume here (plain text)..."
+                style={{ width:'100%', padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'13px', resize:'vertical', boxSizing:'border-box', fontFamily:'monospace', lineHeight:1.5 }} />
+            </div>
+            <div>
+              <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Job Description (optional)</label>
+              <textarea value={jobDesc} onChange={e => setJobDesc(e.target.value)} rows={16}
+                placeholder="Paste the job description to get targeted keyword analysis and gap detection..."
+                style={{ width:'100%', padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'13px', resize:'vertical', boxSizing:'border-box', fontFamily:'monospace', lineHeight:1.5 }} />
+            </div>
+          </div>
+
+          <button onClick={analyze} disabled={loading || resume.trim().length < 50} style={{
+            padding:'10px 28px', background: loading ? '#94a3b8' : '#6366f1', color:'#fff', border:'none', borderRadius:'8px',
+            cursor: loading ? 'not-allowed' : 'pointer', fontSize:'14px', fontWeight:600,
+          }}>{loading ? '🔍 Analyzing...' : '📊 Analyze Resume'}</button>
+
+          {error && <div style={{ marginTop:'12px', padding:'10px 14px', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'8px', color:'#dc2626', fontSize:'13px' }}>{error}</div>}
+        </div>
+      ) : (
+        <div>
+          {/* Score header */}
+          <div style={{ display:'grid', gridTemplateColumns:'auto 1fr auto', gap:'24px', alignItems:'center', marginBottom:'24px', padding:'20px 24px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'12px' }}>
+            <div style={{ textAlign:'center' }}>
+              <div style={{ fontSize:'48px', fontWeight:800, color: scoreColor(result.atsScore) }}>{result.atsScore}</div>
+              <div style={{ fontSize:'12px', color:'#64748b', fontWeight:600 }}>ATS SCORE</div>
+            </div>
+            <div>
+              <div style={{ fontSize:'16px', fontWeight:700, color:'#1e293b', marginBottom:'4px' }}>{result.summary}</div>
+              <div style={{ fontSize:'13px', color:'#64748b' }}>Grade: <strong style={{ color: gradeColor[result.overallGrade] || '#374151' }}>{result.overallGrade}</strong></div>
+            </div>
+            <button onClick={() => setResult(null)} style={{ padding:'8px 16px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'8px', cursor:'pointer', fontSize:'13px', color:'#64748b' }}>← New Analysis</button>
+          </div>
+
+          {/* Tabs */}
+          <div style={{ display:'flex', gap:'4px', marginBottom:'20px', borderBottom:'2px solid #e2e8f0' }}>
+            {['overview','keywords','bullets','sections'].map(t => (
+              <button key={t} onClick={() => setActiveTab(t)} style={{
+                padding:'8px 18px', border:'none', borderBottom: activeTab === t ? '2px solid #6366f1' : '2px solid transparent',
+                background:'none', cursor:'pointer', fontSize:'14px', fontWeight: activeTab === t ? 700 : 400,
+                color: activeTab === t ? '#4f46e5' : '#6b7280', textTransform:'capitalize', marginBottom:'-2px',
+              }}>{t}</button>
+            ))}
+          </div>
+
+          {activeTab === 'overview' && (
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px' }}>
+              <div style={{ padding:'16px', background:'#ecfdf5', border:'1px solid #6ee7b7', borderRadius:'10px' }}>
+                <div style={{ fontSize:'13px', fontWeight:700, color:'#065f46', marginBottom:'10px' }}>✅ STRENGTHS</div>
+                {result.strengths?.map((s: string, i: number) => <div key={i} style={{ fontSize:'13px', color:'#047857', padding:'4px 0', display:'flex', gap:'8px' }}><span>•</span><span>{s}</span></div>)}
+              </div>
+              <div style={{ padding:'16px', background:'#fef2f2', border:'1px solid #fca5a5', borderRadius:'10px' }}>
+                <div style={{ fontSize:'13px', fontWeight:700, color:'#991b1b', marginBottom:'10px' }}>⚠️ GAPS & ISSUES</div>
+                {result.gaps?.map((g: string, i: number) => <div key={i} style={{ fontSize:'13px', color:'#b91c1c', padding:'4px 0', display:'flex', gap:'8px' }}><span>•</span><span>{g}</span></div>)}
+              </div>
+              <div style={{ gridColumn:'1/-1', padding:'16px', background:'#f0f9ff', border:'1px solid #7dd3fc', borderRadius:'10px' }}>
+                <div style={{ fontSize:'13px', fontWeight:700, color:'#0c4a6e', marginBottom:'10px' }}>🎯 TOP RECOMMENDATIONS</div>
+                {result.topRecommendations?.map((r: string, i: number) => (
+                  <div key={i} style={{ fontSize:'13px', color:'#075985', padding:'5px 0', display:'flex', gap:'10px', borderTop: i > 0 ? '1px solid #bae6fd' : 'none' }}>
+                    <span style={{ fontWeight:700, minWidth:'18px' }}>{i+1}.</span><span>{r}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'keywords' && (
+            <div>
+              {result.presentKeywords?.length > 0 && (
+                <div style={{ marginBottom:'16px', padding:'16px', background:'#ecfdf5', border:'1px solid #6ee7b7', borderRadius:'10px' }}>
+                  <div style={{ fontSize:'13px', fontWeight:700, color:'#065f46', marginBottom:'10px' }}>✅ KEYWORDS FOUND ({result.presentKeywords.length})</div>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                    {result.presentKeywords.map((k: string, i: number) => <span key={i} style={{ padding:'4px 10px', background:'#d1fae5', color:'#047857', borderRadius:'12px', fontSize:'12px', fontWeight:600 }}>{k}</span>)}
+                  </div>
+                </div>
+              )}
+              {result.missingKeywords?.length > 0 && (
+                <div style={{ padding:'16px', background:'#fef2f2', border:'1px solid #fca5a5', borderRadius:'10px' }}>
+                  <div style={{ fontSize:'13px', fontWeight:700, color:'#991b1b', marginBottom:'10px' }}>❌ MISSING KEYWORDS ({result.missingKeywords.length})</div>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                    {result.missingKeywords.map((k: string, i: number) => <span key={i} style={{ padding:'4px 10px', background:'#fee2e2', color:'#b91c1c', borderRadius:'12px', fontSize:'12px', fontWeight:600 }}>{k}</span>)}
+                  </div>
+                  <div style={{ marginTop:'10px', fontSize:'12px', color:'#9f1239' }}>Add these keywords naturally to your resume to improve ATS scoring.</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'bullets' && (
+            <div>
+              <div style={{ fontSize:'13px', color:'#64748b', marginBottom:'16px' }}>AI-powered bullet rewrites with stronger impact and metrics focus</div>
+              {result.bulletRewrites?.length > 0 ? result.bulletRewrites.map((b: any, i: number) => (
+                <div key={i} style={{ marginBottom:'16px', border:'1px solid #e2e8f0', borderRadius:'10px', overflow:'hidden' }}>
+                  <div style={{ padding:'12px 14px', background:'#fef2f2', borderBottom:'1px solid #fecaca' }}>
+                    <div style={{ fontSize:'11px', fontWeight:700, color:'#dc2626', marginBottom:'4px' }}>ORIGINAL</div>
+                    <div style={{ fontSize:'13px', color:'#374151' }}>{b.original}</div>
+                  </div>
+                  <div style={{ padding:'12px 14px', background:'#ecfdf5' }}>
+                    <div style={{ fontSize:'11px', fontWeight:700, color:'#059669', marginBottom:'4px' }}>IMPROVED ✨</div>
+                    <div style={{ fontSize:'13px', color:'#1e293b', fontWeight:500 }}>{b.improved}</div>
+                  </div>
+                </div>
+              )) : <div style={{ color:'#94a3b8', fontSize:'14px' }}>No bullet rewrites available for this resume.</div>}
+            </div>
+          )}
+
+          {activeTab === 'sections' && (
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
+              {Object.entries(result.sectionFeedback || {}).map(([section, feedback]: [string, any]) => (
+                <div key={section} style={{ padding:'14px 16px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'10px' }}>
+                  <div style={{ fontSize:'12px', fontWeight:700, color:'#374151', textTransform:'uppercase', marginBottom:'6px' }}>{section}</div>
+                  <div style={{ fontSize:'13px', color:'#475569', lineHeight:1.6 }}>{feedback}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForgeTab_tonedetect() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const [text, setText] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [showAlt, setShowAlt] = React.useState<number | null>(null);
+
+  const detect = async () => {
+    if (text.trim().length < 10) { setError('Text too short'); return; }
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const token = localStorage.getItem('forge_token');
+      const r = await fetch(`${BACKEND}/api/tone-detect`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ text }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d.result);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const meterBar = (value: number, color: string, label: string) => (
+    <div style={{ marginBottom:'10px' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'4px' }}>
+        <span style={{ fontSize:'12px', color:'#64748b' }}>{label}</span>
+        <span style={{ fontSize:'12px', fontWeight:700, color }}>{value}%</span>
+      </div>
+      <div style={{ height:'8px', background:'#f1f5f9', borderRadius:'4px', overflow:'hidden' }}>
+        <div style={{ height:'100%', width:`${value}%`, background:color, borderRadius:'4px', transition:'width 0.5s' }} />
+      </div>
+    </div>
+  );
+
+  const sentimentColor = (label: string) => ({ Positive:'#059669', Negative:'#dc2626', Neutral:'#6b7280', Mixed:'#d97706' }[label] || '#6b7280');
+
+  return (
+    <div style={{ padding:'24px', maxWidth:'900px', margin:'0 auto', fontFamily:'system-ui,sans-serif' }}>
+      <div style={{ marginBottom:'24px' }}>
+        <h2 style={{ fontSize:'22px', fontWeight:700, color:'#1e293b', margin:0 }}>🎭 Tone Detector</h2>
+        <p style={{ color:'#64748b', margin:'4px 0 0', fontSize:'14px' }}>Analyze sentiment, emotions, formality, and communication style</p>
+      </div>
+
+      <div style={{ marginBottom:'12px' }}>
+        <textarea value={text} onChange={e => setText(e.target.value)} rows={6}
+          placeholder="Paste any text — an email, message, article, feedback, or any content you want to analyze..."
+          style={{ width:'100%', padding:'12px 14px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', resize:'vertical', boxSizing:'border-box', fontFamily:'inherit', lineHeight:1.6 }} />
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'8px' }}>
+          <span style={{ fontSize:'12px', color:'#94a3b8' }}>{text.split(/\s+/).filter(Boolean).length} words</span>
+          <button onClick={detect} disabled={loading || text.trim().length < 10} style={{
+            padding:'9px 22px', background: loading ? '#94a3b8' : '#6366f1', color:'#fff', border:'none', borderRadius:'8px',
+            cursor: loading ? 'not-allowed' : 'pointer', fontSize:'14px', fontWeight:600,
+          }}>{loading ? '🔍 Analyzing...' : '🎭 Detect Tone'}</button>
+        </div>
+      </div>
+
+      {error && <div style={{ padding:'10px 14px', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'8px', color:'#dc2626', fontSize:'13px' }}>{error}</div>}
+
+      {result && (
+        <div>
+          {/* Top summary */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'12px', marginBottom:'20px' }}>
+            <div style={{ padding:'16px', background:'#eef2ff', border:'1px solid #c7d2fe', borderRadius:'10px', textAlign:'center' }}>
+              <div style={{ fontSize:'24px', fontWeight:800, color:'#4f46e5' }}>{result.primaryTone}</div>
+              <div style={{ fontSize:'11px', color:'#6366f1', fontWeight:600, marginTop:'4px' }}>PRIMARY TONE</div>
+            </div>
+            <div style={{ padding:'16px', borderRadius:'10px', textAlign:'center', background:'#f8fafc', border:'1px solid #e2e8f0' }}>
+              <div style={{ fontSize:'22px', fontWeight:800, color: sentimentColor(result.sentiment?.label) }}>{result.sentiment?.label}</div>
+              <div style={{ fontSize:'11px', color:'#64748b', fontWeight:600, marginTop:'4px' }}>SENTIMENT</div>
+              <div style={{ fontSize:'13px', color:'#94a3b8', marginTop:'2px' }}>Score: {(result.sentiment?.score || 0).toFixed(2)}</div>
+            </div>
+            <div style={{ padding:'16px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'10px', textAlign:'center' }}>
+              <div style={{ fontSize:'13px', color:'#374151', lineHeight:1.5 }}>{result.audienceMatch}</div>
+              <div style={{ fontSize:'11px', color:'#64748b', fontWeight:600, marginTop:'4px' }}>BEST AUDIENCE</div>
+            </div>
+          </div>
+
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px', marginBottom:'16px' }}>
+            {/* Metrics */}
+            <div style={{ padding:'16px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'10px' }}>
+              <div style={{ fontSize:'13px', fontWeight:700, color:'#374151', marginBottom:'12px' }}>COMMUNICATION METRICS</div>
+              {meterBar(result.formality, '#6366f1', 'Formality')}
+              {meterBar(result.persuasiveness, '#0891b2', 'Persuasiveness')}
+              {meterBar(result.clarity, '#059669', 'Clarity')}
+              {meterBar(result.confidence, '#d97706', 'Confidence')}
+              {meterBar(result.empathy, '#ec4899', 'Empathy')}
+            </div>
+
+            {/* Emotions */}
+            <div style={{ padding:'16px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'10px' }}>
+              <div style={{ fontSize:'13px', fontWeight:700, color:'#374151', marginBottom:'12px' }}>EMOTIONS DETECTED</div>
+              {result.emotions?.slice(0, 6).map((e: any, i: number) => (
+                <div key={i} style={{ marginBottom:'8px' }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'3px' }}>
+                    <span style={{ fontSize:'12px', color:'#64748b', textTransform:'capitalize' }}>{e.emotion}</span>
+                    <span style={{ fontSize:'12px', fontWeight:700, color:'#374151' }}>{e.intensity}%</span>
+                  </div>
+                  <div style={{ height:'6px', background:'#f1f5f9', borderRadius:'3px', overflow:'hidden' }}>
+                    <div style={{ height:'100%', width:`${e.intensity}%`, background:`hsl(${(i * 47) % 360},70%,55%)`, borderRadius:'3px' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Insights */}
+          {result.insights?.length > 0 && (
+            <div style={{ marginBottom:'16px', padding:'14px 16px', background:'#f0f9ff', border:'1px solid #7dd3fc', borderRadius:'10px' }}>
+              <div style={{ fontSize:'13px', fontWeight:700, color:'#0c4a6e', marginBottom:'8px' }}>💡 INSIGHTS</div>
+              {result.insights.map((ins: string, i: number) => <div key={i} style={{ fontSize:'13px', color:'#075985', padding:'3px 0', display:'flex', gap:'8px' }}><span>•</span><span>{ins}</span></div>)}
+            </div>
+          )}
+
+          {/* Alternative versions */}
+          {result.alternativeVersions?.length > 0 && (
+            <div style={{ padding:'16px', background:'#fefce8', border:'1px solid #fde68a', borderRadius:'10px' }}>
+              <div style={{ fontSize:'13px', fontWeight:700, color:'#92400e', marginBottom:'12px' }}>✍️ REWRITTEN VERSIONS</div>
+              <div style={{ display:'flex', gap:'8px', marginBottom:'12px' }}>
+                {result.alternativeVersions.map((v: any, i: number) => (
+                  <button key={i} onClick={() => setShowAlt(showAlt === i ? null : i)} style={{
+                    padding:'6px 12px', border:'1px solid #fde68a', borderRadius:'8px', background: showAlt === i ? '#fde68a' : '#fff',
+                    cursor:'pointer', fontSize:'12px', fontWeight: showAlt === i ? 700 : 400, color:'#78350f',
+                  }}>{v.label}</button>
+                ))}
+              </div>
+              {showAlt !== null && result.alternativeVersions[showAlt] && (
+                <div style={{ padding:'12px 14px', background:'#fff', border:'1px solid #fde68a', borderRadius:'8px', fontSize:'14px', color:'#1e293b', lineHeight:1.7 }}>
+                  {result.alternativeVersions[showAlt].text}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
