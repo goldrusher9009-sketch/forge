@@ -1,14 +1,25 @@
-FROM node:20-bullseye-slim
+FROM docker.m.daocloud.io/library/node:20-bullseye-slim
 
-RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+RUN sed -i \
+      -e 's|http://deb.debian.org/debian-security|http://mirrors.aliyun.com/debian-security|g' \
+      -e 's|http://security.debian.org/debian-security|http://mirrors.aliyun.com/debian-security|g' \
+      -e 's|http://deb.debian.org/debian|http://mirrors.aliyun.com/debian|g' \
+      /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm pkg delete devDependencies \
+    && npm ci --omit=dev --registry=https://registry.npmmirror.com --no-audit --no-fund
 RUN echo "cache-bust-2026-08-12T0445"
 COPY . .
 
-RUN NODE_OPTIONS="--max-old-space-size=4096" npx esbuild src/index.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist
+RUN NODE_OPTIONS="--max-old-space-size=4096" \
+    npm exec --yes --package=esbuild@0.19.12 --registry=https://registry.npmmirror.com -- \
+    esbuild src/index.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist \
+    && npm cache clean --force
 
 EXPOSE 3000
 
