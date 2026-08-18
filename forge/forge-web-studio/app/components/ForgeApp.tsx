@@ -27599,6 +27599,7 @@ function ForgeApp() {
             { id:'ragknow',          icon:'📚',  label:'Knowledge Base' },
             { id:'agentmulti',       icon:'🤖',  label:'Agent Hub' },
             { id:'videoanal',        icon:'🎬',  label:'Video Analyzer' },
+            { id:'forgemetrics',     icon:'📊',  label:'Metrics' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51688,6 +51689,7 @@ function ForgeApp() {
 {(mainTab as string) === 'ragknow' && <ForgeTab_ragknow />}
 {(mainTab as string) === 'agentmulti' && <ForgeTab_agentmulti />}
 {(mainTab as string) === 'videoanal' && <ForgeTab_videoanal />}
+{(mainTab as string) === 'forgemetrics' && <ForgeTab_forgemetrics />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51766,6 +51768,99 @@ function ForgeTab_costdash() {
                 </div>
               ))}
             </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_forgemetrics() {
+  const [metrics, setMetrics] = React.useState<any>(null);
+  const [history, setHistory] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : null;
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [mRes, hRes] = await Promise.all([
+        fetch(`${BACKEND}/api/metrics`, { headers: { Authorization: `Bearer ${tok}` } }),
+        fetch(`${BACKEND}/api/metrics/history`, { headers: { Authorization: `Bearer ${tok}` } })
+      ]);
+      const m = await mRes.json();
+      const h = await hRes.json();
+      setMetrics(m);
+      setHistory(h.history || []);
+    } catch {}
+    setLoading(false);
+  };
+  React.useEffect(() => { load(); const t = setInterval(load, 30000); return () => clearInterval(t); }, []);
+  const fmtUptime = (sec: number) => {
+    const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = Math.floor(sec%60);
+    return `${h}h ${m}m ${s}s`;
+  };
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+      <div style={{ maxWidth:900, margin:'0 auto' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
+          <div>
+            <h1 style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:4 }}>📊 Platform Metrics</h1>
+            <p style={{ color:'var(--fg-text3)', fontSize:13 }}>Real-time observability for the Forge backend.</p>
+          </div>
+          <button onClick={load} disabled={loading} style={{ padding:'8px 18px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer' }}>{loading ? '…' : '↻ Refresh'}</button>
+        </div>
+        {loading && !metrics && <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)' }}>Loading metrics…</div>}
+        {metrics && (
+          <>
+            <div style={{ background:'#16a34a18', border:'1px solid #16a34a', borderRadius:10, padding:'12px 18px', marginBottom:20, display:'flex', alignItems:'center', gap:10 }}>
+              <div style={{ width:8, height:8, borderRadius:'50%', background:'#16a34a' }} />
+              <span style={{ color:'#16a34a', fontSize:13, fontWeight:600 }}>System Online</span>
+              <span style={{ color:'var(--fg-text3)', fontSize:12, marginLeft:'auto' }}>v{metrics.version} · Uptime: {fmtUptime(metrics.uptimeSec || 0)}</span>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(155px, 1fr))', gap:12, marginBottom:24 }}>
+              {[
+                { label:'Total Requests', value: metrics.requestCount ?? 0, icon:'🌐' },
+                { label:'LLM Calls', value: metrics.llmCallCount ?? 0, icon:'🧠' },
+                { label:'Agent Runs', value: metrics.hermesRunCount ?? 0, icon:'⚡' },
+                { label:'Multiplex Jobs', value: metrics.multiplexJobCount ?? 0, icon:'🔀' },
+                { label:'RAG Queries', value: metrics.ragQueryCount ?? 0, icon:'📚' },
+                { label:'Errors', value: metrics.errorCount ?? 0, icon:'⚠️' },
+                { label:'Memory (MB)', value: Math.round(metrics.memoryMB || 0), icon:'💾' },
+                { label:'Started', value: metrics.startedAt ? new Date(metrics.startedAt).toLocaleDateString() : '—', icon:'🗓' },
+              ].map((kpi, i) => (
+                <div key={i} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14 }}>
+                  <div style={{ fontSize:18, marginBottom:6 }}>{kpi.icon}</div>
+                  <div style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:2 }}>{kpi.value}</div>
+                  <div style={{ fontSize:11, color:'var(--fg-text3)', fontWeight:500 }}>{kpi.label}</div>
+                </div>
+              ))}
+            </div>
+            {history.length > 0 && (
+              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+                <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:14 }}>📈 Request History (last {history.length} min)</div>
+                <div style={{ overflowX:'auto' }}>
+                  <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                    <thead>
+                      <tr>{['Time','Req/min','Err/min','Mem MB'].map(hh => (
+                        <th key={hh} style={{ textAlign:'left', padding:'6px 12px', color:'var(--fg-text3)', fontWeight:600, borderBottom:'1px solid var(--fg-border)', whiteSpace:'nowrap' }}>{hh}</th>
+                      ))}</tr>
+                    </thead>
+                    <tbody>
+                      {history.slice().reverse().map((row: any, i: number) => (
+                        <tr key={i} style={{ borderBottom:'1px solid var(--fg-border)' }}>
+                          <td style={{ padding:'6px 12px', color:'var(--fg-text3)' }}>{new Date(row.ts).toLocaleTimeString()}</td>
+                          <td style={{ padding:'6px 12px', color:'var(--fg-text)', fontWeight:600 }}>{row.reqPerMin}</td>
+                          <td style={{ padding:'6px 12px', color: row.errPerMin > 0 ? '#ef4444' : 'var(--fg-text3)' }}>{row.errPerMin}</td>
+                          <td style={{ padding:'6px 12px', color:'var(--fg-text)' }}>{Math.round(row.memMB)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            {history.length === 0 && <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:24, textAlign:'center', color:'var(--fg-text3)', fontSize:13 }}>History builds 1 point/min. Check back soon.</div>}
           </>
         )}
       </div>
