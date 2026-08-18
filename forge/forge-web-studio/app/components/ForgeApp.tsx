@@ -27611,6 +27611,8 @@ function ForgeApp() {
             { id:'sqlgen',           icon:'🗄️',  label:'SQL Generator' },
             { id:'resumeanalyze',    icon:'📄',  label:'Resume Analyzer' },
             { id:'tonedetect',       icon:'🎭',  label:'Tone Detector' },
+            { id:'repurpose',        icon:'♻️',  label:'Repurposer' },
+            { id:'summarize',        icon:'⚡',  label:'Summarizer' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51712,6 +51714,8 @@ function ForgeApp() {
 {(mainTab as string) === 'sqlgen' && <ForgeTab_sqlgen />}
 {(mainTab as string) === 'resumeanalyze' && <ForgeTab_resumeanalyze />}
 {(mainTab as string) === 'tonedetect' && <ForgeTab_tonedetect />}
+{(mainTab as string) === 'repurpose' && <ForgeTab_repurpose />}
+{(mainTab as string) === 'summarize' && <ForgeTab_summarize />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51793,6 +51797,274 @@ function ForgeTab_costdash() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function ForgeTab_repurpose() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const ALL_FORMATS = [
+    { id:'linkedin', label:'LinkedIn Post', icon:'💼' },
+    { id:'tweet_thread', label:'Tweet Thread', icon:'🐦' },
+    { id:'blog_post', label:'Blog Post', icon:'📝' },
+    { id:'email_newsletter', label:'Email Newsletter', icon:'📧' },
+    { id:'youtube_script', label:'YouTube Script', icon:'🎬' },
+    { id:'tiktok_hook', label:'TikTok / Reels', icon:'📱' },
+    { id:'podcast_notes', label:'Podcast Notes', icon:'🎙️' },
+    { id:'press_release', label:'Press Release', icon:'📰' },
+  ];
+  const [content, setContent] = React.useState('');
+  const [context, setContext] = React.useState('');
+  const [selected, setSelected] = React.useState<string[]>(['linkedin', 'tweet_thread', 'email_newsletter']);
+  const [results, setResults] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [activeResult, setActiveResult] = React.useState(0);
+  const [copied, setCopied] = React.useState<number | null>(null);
+
+  const toggle = (id: string) => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : prev.length < 6 ? [...prev, id] : prev);
+
+  const repurpose = async () => {
+    if (!content.trim()) { setError('Paste your source content'); return; }
+    setLoading(true); setError(''); setResults([]);
+    try {
+      const token = localStorage.getItem('forge_token');
+      const r = await fetch(`${BACKEND}/api/repurpose`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ content, formats: selected, context }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResults(d.results);
+      setActiveResult(0);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const copyResult = (idx: number, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(idx); setTimeout(() => setCopied(null), 2000);
+  };
+
+  return (
+    <div style={{ padding:'24px', maxWidth:'1000px', margin:'0 auto', fontFamily:'system-ui,sans-serif' }}>
+      <div style={{ marginBottom:'24px' }}>
+        <h2 style={{ fontSize:'22px', fontWeight:700, color:'#1e293b', margin:0 }}>♻️ Content Repurposer</h2>
+        <p style={{ color:'#64748b', margin:'4px 0 0', fontSize:'14px' }}>Turn one piece of content into 8 formats — simultaneously</p>
+      </div>
+
+      {results.length === 0 ? (
+        <div>
+          <div style={{ marginBottom:'16px' }}>
+            <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Source Content *</label>
+            <textarea value={content} onChange={e => setContent(e.target.value)} rows={7}
+              placeholder="Paste your blog post, article, talk transcript, podcast notes, or any source content you want to repurpose..."
+              style={{ width:'100%', padding:'12px 14px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', resize:'vertical', boxSizing:'border-box', fontFamily:'inherit', lineHeight:1.6 }} />
+          </div>
+
+          <div style={{ marginBottom:'16px' }}>
+            <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Brand Voice / Context (optional)</label>
+            <input value={context} onChange={e => setContext(e.target.value)} placeholder="e.g. Casual and conversational, target audience: startup founders, avoid corporate jargon"
+              style={{ width:'100%', padding:'9px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', boxSizing:'border-box' }} />
+          </div>
+
+          <div style={{ marginBottom:'20px' }}>
+            <div style={{ fontSize:'13px', fontWeight:600, color:'#374151', marginBottom:'8px' }}>Output Formats (select up to 6)</div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'8px' }}>
+              {ALL_FORMATS.map(f => {
+                const isSelected = selected.includes(f.id);
+                return (
+                  <button key={f.id} onClick={() => toggle(f.id)} style={{
+                    padding:'10px 12px', borderRadius:'10px', border:'2px solid', cursor:'pointer', textAlign:'center',
+                    borderColor: isSelected ? '#6366f1' : '#e5e7eb',
+                    background: isSelected ? '#eef2ff' : '#fff',
+                    opacity: !isSelected && selected.length >= 6 ? 0.4 : 1,
+                  }}>
+                    <div style={{ fontSize:'20px', marginBottom:'4px' }}>{f.icon}</div>
+                    <div style={{ fontSize:'12px', fontWeight: isSelected ? 700 : 400, color: isSelected ? '#4f46e5' : '#374151' }}>{f.label}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <button onClick={repurpose} disabled={loading || !content.trim() || selected.length === 0} style={{
+            padding:'10px 28px', background: loading ? '#94a3b8' : '#6366f1', color:'#fff', border:'none', borderRadius:'8px',
+            cursor: loading ? 'not-allowed' : 'pointer', fontSize:'14px', fontWeight:600,
+          }}>{loading ? `♻️ Repurposing into ${selected.length} formats...` : `♻️ Repurpose into ${selected.length} Format${selected.length !== 1 ? 's' : ''}`}</button>
+
+          {error && <div style={{ marginTop:'12px', padding:'10px 14px', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'8px', color:'#dc2626', fontSize:'13px' }}>{error}</div>}
+        </div>
+      ) : (
+        <div>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px' }}>
+            <div style={{ fontSize:'14px', color:'#64748b' }}>Generated {results.length} formats from your content</div>
+            <button onClick={() => setResults([])} style={{ padding:'7px 16px', background:'#f1f5f9', border:'1px solid #e2e8f0', borderRadius:'8px', cursor:'pointer', fontSize:'13px', color:'#64748b' }}>← Repurpose Again</button>
+          </div>
+
+          {/* Format tabs */}
+          <div style={{ display:'flex', flexWrap:'wrap', gap:'6px', marginBottom:'20px' }}>
+            {results.map((r, i) => {
+              const fmt = ALL_FORMATS.find(f => f.id === r.format);
+              return (
+                <button key={i} onClick={() => setActiveResult(i)} style={{
+                  padding:'8px 14px', borderRadius:'20px', border:'2px solid', cursor:'pointer', fontSize:'13px',
+                  borderColor: activeResult === i ? '#6366f1' : '#e5e7eb',
+                  background: activeResult === i ? '#eef2ff' : '#fff',
+                  color: activeResult === i ? '#4f46e5' : '#6b7280',
+                  fontWeight: activeResult === i ? 700 : 400,
+                }}>{fmt?.icon || '📄'} {r.label}</button>
+              );
+            })}
+          </div>
+
+          {/* Active result */}
+          {results[activeResult] && (
+            <div style={{ border:'1px solid #e2e8f0', borderRadius:'12px', overflow:'hidden' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 16px', background:'#f8fafc', borderBottom:'1px solid #e2e8f0' }}>
+                <span style={{ fontSize:'14px', fontWeight:700, color:'#374151' }}>
+                  {ALL_FORMATS.find(f => f.id === results[activeResult].format)?.icon} {results[activeResult].label}
+                </span>
+                <button onClick={() => copyResult(activeResult, results[activeResult].content)} style={{
+                  padding:'6px 14px', background: copied === activeResult ? '#ecfdf5' : '#fff', border:'1px solid #e2e8f0', borderRadius:'6px', cursor:'pointer', fontSize:'12px',
+                  color: copied === activeResult ? '#059669' : '#475569',
+                }}>{copied === activeResult ? '✓ Copied!' : '📋 Copy'}</button>
+              </div>
+              <div style={{ padding:'20px', background:'#fff' }}>
+                <pre style={{ whiteSpace:'pre-wrap', fontFamily:'inherit', fontSize:'14px', color:'#1e293b', margin:0, lineHeight:1.8 }}>{results[activeResult].content}</pre>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForgeTab_summarize() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const MODES = [
+    { id:'tldr', label:'TLDR', icon:'⚡', desc:'1-3 sentences' },
+    { id:'bullets', label:'Bullet Points', icon:'📋', desc:'5-8 key points' },
+    { id:'executive', label:'Executive Brief', icon:'👔', desc:'150 words' },
+    { id:'eli5', label:'ELI5', icon:'👶', desc:'Simple language' },
+    { id:'action_items', label:'Action Items', icon:'✅', desc:'To-do list' },
+    { id:'key_insights', label:'Key Insights', icon:'💡', desc:'Non-obvious' },
+    { id:'academic', label:'Academic', icon:'🎓', desc:'Formal abstract' },
+    { id:'narrative', label:'Story', icon:'📖', desc:'Narrative form' },
+  ];
+  const [text, setText] = React.useState('');
+  const [mode, setMode] = React.useState('bullets');
+  const [length, setLength] = React.useState('medium');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [copied, setCopied] = React.useState(false);
+
+  const summarize = async () => {
+    if (text.trim().length < 30) { setError('Text too short (min 30 chars)'); return; }
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const token = localStorage.getItem('forge_token');
+      const r = await fetch(`${BACKEND}/api/summarize`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ text, mode, length }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const copy = () => {
+    if (!result) return;
+    navigator.clipboard.writeText(result.result);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{ padding:'24px', maxWidth:'900px', margin:'0 auto', fontFamily:'system-ui,sans-serif' }}>
+      <div style={{ marginBottom:'24px' }}>
+        <h2 style={{ fontSize:'22px', fontWeight:700, color:'#1e293b', margin:0 }}>⚡ AI Summarizer</h2>
+        <p style={{ color:'#64748b', margin:'4px 0 0', fontSize:'14px' }}>8 summary styles — from TLDR to academic abstract</p>
+      </div>
+
+      {/* Mode selector */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'8px', marginBottom:'16px' }}>
+        {MODES.map(m => (
+          <button key={m.id} onClick={() => setMode(m.id)} style={{
+            padding:'10px 8px', borderRadius:'10px', border:'2px solid', cursor:'pointer', textAlign:'center',
+            borderColor: mode === m.id ? '#6366f1' : '#e5e7eb',
+            background: mode === m.id ? '#eef2ff' : '#fff',
+          }}>
+            <div style={{ fontSize:'18px', marginBottom:'3px' }}>{m.icon}</div>
+            <div style={{ fontSize:'12px', fontWeight: mode === m.id ? 700 : 500, color: mode === m.id ? '#4f46e5' : '#374151' }}>{m.label}</div>
+            <div style={{ fontSize:'10px', color:'#94a3b8', marginTop:'1px' }}>{m.desc}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Length */}
+      <div style={{ display:'flex', gap:'8px', marginBottom:'16px' }}>
+        {['short','medium','long'].map(l => (
+          <button key={l} onClick={() => setLength(l)} style={{
+            padding:'6px 16px', borderRadius:'16px', border:'1.5px solid', cursor:'pointer', fontSize:'13px', textTransform:'capitalize',
+            borderColor: length === l ? '#10b981' : '#e5e7eb',
+            background: length === l ? '#ecfdf5' : '#fff',
+            color: length === l ? '#059669' : '#6b7280', fontWeight: length === l ? 600 : 400,
+          }}>{l}</button>
+        ))}
+        <span style={{ fontSize:'12px', color:'#94a3b8', alignSelf:'center' }}>output length</span>
+      </div>
+
+      <div style={{ marginBottom:'12px' }}>
+        <textarea value={text} onChange={e => setText(e.target.value)} rows={8}
+          placeholder="Paste any text — article, report, meeting notes, research paper, email thread, book chapter..."
+          style={{ width:'100%', padding:'12px 14px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', resize:'vertical', boxSizing:'border-box', fontFamily:'inherit', lineHeight:1.6 }} />
+        <div style={{ display:'flex', justifyContent:'space-between', marginTop:'6px' }}>
+          <span style={{ fontSize:'12px', color:'#94a3b8' }}>{text.split(/\s+/).filter(Boolean).length} words</span>
+          <button onClick={summarize} disabled={loading || text.trim().length < 30} style={{
+            padding:'9px 22px', background: loading ? '#94a3b8' : '#6366f1', color:'#fff', border:'none', borderRadius:'8px',
+            cursor: loading ? 'not-allowed' : 'pointer', fontSize:'14px', fontWeight:600,
+          }}>{loading ? '⚡ Summarizing...' : '⚡ Summarize'}</button>
+        </div>
+      </div>
+
+      {error && <div style={{ padding:'10px 14px', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'8px', color:'#dc2626', fontSize:'13px' }}>{error}</div>}
+
+      {result && (
+        <div style={{ marginTop:'20px' }}>
+          {/* Stats bar */}
+          <div style={{ display:'flex', gap:'16px', marginBottom:'12px', padding:'10px 14px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'8px' }}>
+            <div style={{ fontSize:'13px', color:'#64748b' }}><strong style={{ color:'#374151' }}>{result.stats?.inputWords}</strong> words input</div>
+            <div style={{ color:'#cbd5e1' }}>→</div>
+            <div style={{ fontSize:'13px', color:'#64748b' }}><strong style={{ color:'#374151' }}>{result.stats?.outputWords}</strong> words output</div>
+            <div style={{ color:'#cbd5e1' }}>|</div>
+            <div style={{ fontSize:'13px', color:'#059669', fontWeight:600 }}>{result.stats?.compressionRatio}% compression</div>
+            <div style={{ marginLeft:'auto' }}>
+              <button onClick={copy} style={{ padding:'4px 12px', background: copied ? '#ecfdf5' : '#fff', border:'1px solid #e2e8f0', borderRadius:'6px', cursor:'pointer', fontSize:'12px', color: copied ? '#059669' : '#475569' }}>
+                {copied ? '✓ Copied!' : '📋 Copy'}
+              </button>
+            </div>
+          </div>
+
+          <div style={{ padding:'20px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'12px' }}>
+            <div style={{ fontSize:'13px', fontWeight:700, color:'#64748b', marginBottom:'12px' }}>{result.icon} {result.label?.toUpperCase()}</div>
+            <div style={{ fontSize:'14px', color:'#1e293b', lineHeight:1.8, whiteSpace:'pre-wrap' }}>{result.result}</div>
+          </div>
+
+          {/* Quick-switch modes */}
+          <div style={{ marginTop:'12px', display:'flex', gap:'8px', flexWrap:'wrap' }}>
+            <span style={{ fontSize:'12px', color:'#94a3b8', alignSelf:'center' }}>Try also:</span>
+            {MODES.filter(m => m.id !== mode).slice(0, 4).map(m => (
+              <button key={m.id} onClick={() => { setMode(m.id); setTimeout(summarize, 50); }} style={{
+                padding:'5px 12px', borderRadius:'12px', border:'1px solid #e2e8f0', background:'#f8fafc', cursor:'pointer', fontSize:'12px', color:'#6366f1',
+              }}>{m.icon} {m.label}</button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
