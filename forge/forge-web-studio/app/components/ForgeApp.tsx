@@ -27602,6 +27602,7 @@ function ForgeApp() {
             { id:'forgemetrics',     icon:'📊',  label:'Metrics' },
             { id:'compare',          icon:'⚖️',  label:'Model Compare' },
             { id:'prompts',          icon:'📋',  label:'Prompt Library' },
+            { id:'batch',            icon:'⚡',  label:'Batch Process' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51694,6 +51695,7 @@ function ForgeApp() {
 {(mainTab as string) === 'forgemetrics' && <ForgeTab_forgemetrics />}
 {(mainTab as string) === 'compare' && <ForgeTab_compare />}
 {(mainTab as string) === 'prompts' && <ForgeTab_prompts />}
+{(mainTab as string) === 'batch' && <ForgeTab_batch />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51773,6 +51775,113 @@ function ForgeTab_costdash() {
               ))}
             </div>
           </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_batch() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : null;
+  const [template, setTemplate] = React.useState('Summarize this in one sentence:\n\n{{input}}');
+  const [inputsRaw, setInputsRaw] = React.useState('');
+  const [model, setModel] = React.useState('claude-haiku-4-5');
+  const [results, setResults] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+
+  const inputs = inputsRaw.split('\n').map(s => s.trim()).filter(Boolean);
+
+  const run = async () => {
+    if (!template.trim() || inputs.length === 0) return;
+    setLoading(true); setResults([]); setError('');
+    try {
+      const r = await fetch(`${BACKEND}/api/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
+        body: JSON.stringify({ template, inputs, model })
+      });
+      const d = await r.json();
+      if (d.error) setError(d.error);
+      else setResults(d.results || []);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const exportCSV = () => {
+    const rows = [['Input','Output','Time(ms)'], ...results.map(r => [JSON.stringify(r.input), JSON.stringify(r.output), r.elapsed])];
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = 'batch_results.csv'; a.click();
+  };
+
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+      <div style={{ maxWidth:1000, margin:'0 auto' }}>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:4 }}>⚡ Batch Processor</h1>
+        <p style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:24 }}>Run a prompt template over many inputs at once. Use <code style={{ background:'var(--fg-bg2)', padding:'1px 5px', borderRadius:4 }}>{'{{input}}'}</code> in your template.</p>
+
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18, marginBottom:18 }}>
+          {/* Template */}
+          <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+              <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>📝 Prompt Template</div>
+              <select value={model} onChange={e=>setModel(e.target.value)} style={{ padding:'5px 10px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text)', fontSize:11 }}>
+                <option value="claude-haiku-4-5">Claude Haiku 4.5</option>
+                <option value="claude-sonnet-4-5">Claude Sonnet 4.5</option>
+                <option value="gpt-4o-mini">GPT-4o Mini</option>
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+              </select>
+            </div>
+            <textarea value={template} onChange={e=>setTemplate(e.target.value)} rows={8}
+              style={{ width:'100%', padding:'9px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', fontFamily:'monospace' }} />
+          </div>
+          {/* Inputs */}
+          <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
+            <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)', marginBottom:10 }}>📋 Inputs <span style={{ color:'var(--fg-text3)', fontWeight:400 }}>({inputs.length} / 50, one per line)</span></div>
+            <textarea value={inputsRaw} onChange={e=>setInputsRaw(e.target.value)} rows={8}
+              placeholder={"Apple\nBanana\nOrange\n..."}
+              style={{ width:'100%', padding:'9px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
+          </div>
+        </div>
+
+        <div style={{ display:'flex', gap:12, marginBottom:24 }}>
+          <button onClick={run} disabled={loading || !template.trim() || inputs.length === 0 || inputs.length > 50}
+            style={{ padding:'11px 32px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity: (loading || !template.trim() || inputs.length === 0) ? 0.5 : 1 }}>
+            {loading ? `⏳ Processing ${inputs.length} inputs…` : `▶ Run Batch (${inputs.length} inputs)`}
+          </button>
+          {results.length > 0 && (
+            <button onClick={exportCSV} style={{ padding:'11px 20px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, cursor:'pointer' }}>⬇ Export CSV</button>
+          )}
+        </div>
+
+        {error && <div style={{ background:'#ef444420', border:'1px solid #ef4444', borderRadius:8, padding:'10px 14px', color:'#ef4444', fontSize:13, marginBottom:16 }}>{error}</div>}
+
+        {results.length > 0 && (
+          <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, overflow:'hidden' }}>
+            <div style={{ padding:'12px 18px', borderBottom:'1px solid var(--fg-border)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)' }}>Results ({results.length})</div>
+            </div>
+            <div style={{ overflowX:'auto' }}>
+              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                <thead>
+                  <tr style={{ background:'var(--fg-bg)' }}>
+                    {['#','Input','Output','Time'].map(h => <th key={h} style={{ textAlign:'left', padding:'8px 14px', color:'var(--fg-text3)', fontWeight:600, borderBottom:'1px solid var(--fg-border)', whiteSpace:'nowrap' }}>{h}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {results.map((r: any, i: number) => (
+                    <tr key={i} style={{ borderBottom:'1px solid var(--fg-border)' }}>
+                      <td style={{ padding:'8px 14px', color:'var(--fg-text3)', width:32 }}>{i+1}</td>
+                      <td style={{ padding:'8px 14px', color:'var(--fg-text)', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.input}</td>
+                      <td style={{ padding:'8px 14px', color:'var(--fg-text)', lineHeight:1.5 }}>{r.output}</td>
+                      <td style={{ padding:'8px 14px', color:'var(--fg-text3)', whiteSpace:'nowrap' }}>{r.elapsed}ms</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
       </div>
     </div>
