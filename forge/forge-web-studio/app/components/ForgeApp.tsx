@@ -27605,6 +27605,7 @@ function ForgeApp() {
             { id:'batch',            icon:'⚡',  label:'Batch Process' },
             { id:'writeassist',      icon:'✍️',  label:'Writing AI' },
             { id:'codeplay',         icon:'🖥',   label:'Code Playground' },
+            { id:'extract',          icon:'🗂',   label:'Data Extractor' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51700,6 +51701,7 @@ function ForgeApp() {
 {(mainTab as string) === 'batch' && <ForgeTab_batch />}
 {(mainTab as string) === 'writeassist' && <ForgeTab_writeassist />}
 {(mainTab as string) === 'codeplay' && <ForgeTab_codeplay />}
+{(mainTab as string) === 'extract' && <ForgeTab_extract />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51780,6 +51782,109 @@ function ForgeTab_costdash() {
             </div>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_extract() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : null;
+  const SCHEMAS = [
+    { id:'contacts',   icon:'👤', label:'Contacts',    desc:'Names, emails, phones, companies' },
+    { id:'dates',      icon:'📅', label:'Dates',       desc:'Dates, deadlines, time refs' },
+    { id:'keywords',   icon:'🔑', label:'Keywords',    desc:'Topics, entities, keywords' },
+    { id:'financials', icon:'💰', label:'Financials',  desc:'Amounts, prices, percentages' },
+    { id:'tasks',      icon:'✅', label:'Tasks',       desc:'Action items with owners & due dates' },
+    { id:'sentiment',  icon:'💬', label:'Sentiment',   desc:'Sentiment analysis + themes' },
+    { id:'products',   icon:'📦', label:'Products',    desc:'Items, prices, descriptions' },
+    { id:'custom',     icon:'⚙️', label:'Custom',      desc:'Define your own schema' },
+  ];
+  const [text, setText] = React.useState('');
+  const [schema, setSchema] = React.useState('contacts');
+  const [customSchema, setCustomSchema] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [copied, setCopied] = React.useState(false);
+
+  const run = async () => {
+    if (!text.trim()) return;
+    setLoading(true); setResult(null); setError('');
+    try {
+      const r = await fetch(`${BACKEND}/api/extract`, {
+        method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${tok}` },
+        body: JSON.stringify({ text, schema, customSchema })
+      });
+      const d = await r.json();
+      if (d.error) setError(d.error);
+      else setResult(d);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(result?.result || '');
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
+  };
+
+  const download = () => {
+    const blob = new Blob([result?.result || ''], { type:'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `extracted_${schema}.json`; a.click();
+  };
+
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+      <div style={{ maxWidth:1000, margin:'0 auto' }}>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:4 }}>🗂 Data Extractor</h1>
+        <p style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:24 }}>Pull structured JSON data from any unstructured text — emails, docs, web content.</p>
+
+        {/* Schema picker */}
+        <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:18 }}>
+          {SCHEMAS.map(s => (
+            <button key={s.id} onClick={() => setSchema(s.id)} title={s.desc}
+              style={{ padding:'8px 16px', borderRadius:8, border:`2px solid ${schema===s.id ? 'var(--fg-orange)' : 'var(--fg-border)'}`, background: schema===s.id ? 'rgba(255,100,50,0.12)' : 'var(--fg-bg2)', color: schema===s.id ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:12, fontWeight:600, cursor:'pointer', transition:'all 0.15s' }}>
+              {s.icon} {s.label}
+            </button>
+          ))}
+        </div>
+
+        {schema === 'custom' && (
+          <div style={{ marginBottom:14 }}>
+            <input value={customSchema} onChange={e=>setCustomSchema(e.target.value)} placeholder='e.g. Extract all company names, their revenue, and CEO names as JSON...'
+              style={{ width:'100%', padding:'10px 14px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+          </div>
+        )}
+
+        <div style={{ display:'grid', gridTemplateColumns: result ? '1fr 1fr' : '1fr', gap:18, marginBottom:18 }}>
+          <div>
+            <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:8 }}>Input Text</div>
+            <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Paste your text here — email, article, report, meeting notes..."
+              rows={16} style={{ width:'100%', padding:'12px 14px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', lineHeight:1.7 }} />
+          </div>
+          {result && (
+            <div>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.07em' }}>Extracted JSON</div>
+                  {result.valid && <span style={{ fontSize:10, padding:'2px 8px', background:'#16a34a20', border:'1px solid #16a34a', borderRadius:10, color:'#16a34a' }}>✓ Valid JSON</span>}
+                </div>
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={copy} style={{ padding:'5px 12px', background:copied?'#16a34a':'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:6, color:copied?'#fff':'var(--fg-text)', fontSize:11, cursor:'pointer' }}>{copied?'✓':'📋'} Copy</button>
+                  <button onClick={download} style={{ padding:'5px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text)', fontSize:11, cursor:'pointer' }}>⬇ JSON</button>
+                </div>
+              </div>
+              <pre style={{ width:'100%', minHeight:250, maxHeight:450, padding:'12px 14px', background:'#0d0d0d', border:'1px solid var(--fg-orange)', borderRadius:10, color:'#86efac', fontSize:12, fontFamily:'monospace', lineHeight:1.6, whiteSpace:'pre-wrap', overflowY:'auto', boxSizing:'border-box', margin:0 }}>{result.result}</pre>
+            </div>
+          )}
+        </div>
+
+        {error && <div style={{ background:'#ef444420', border:'1px solid #ef4444', borderRadius:8, padding:'10px 14px', color:'#ef4444', fontSize:13, marginBottom:16 }}>{error}</div>}
+
+        <button onClick={run} disabled={loading || !text.trim() || (schema === 'custom' && !customSchema.trim())}
+          style={{ padding:'12px 36px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity:(loading||!text.trim())?0.5:1 }}>
+          {loading ? '⏳ Extracting…' : `${SCHEMAS.find(s=>s.id===schema)?.icon} Extract ${SCHEMAS.find(s=>s.id===schema)?.label}`}
+        </button>
       </div>
     </div>
   );
