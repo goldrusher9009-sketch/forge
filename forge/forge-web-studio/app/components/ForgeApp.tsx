@@ -27604,6 +27604,7 @@ function ForgeApp() {
             { id:'prompts',          icon:'📋',  label:'Prompt Library' },
             { id:'batch',            icon:'⚡',  label:'Batch Process' },
             { id:'writeassist',      icon:'✍️',  label:'Writing AI' },
+            { id:'codeplay',         icon:'🖥',   label:'Code Playground' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51698,6 +51699,7 @@ function ForgeApp() {
 {(mainTab as string) === 'prompts' && <ForgeTab_prompts />}
 {(mainTab as string) === 'batch' && <ForgeTab_batch />}
 {(mainTab as string) === 'writeassist' && <ForgeTab_writeassist />}
+{(mainTab as string) === 'codeplay' && <ForgeTab_codeplay />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51778,6 +51780,98 @@ function ForgeTab_costdash() {
             </div>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_codeplay() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : null;
+  const MODES = [
+    { id:'review',   icon:'🔍', label:'Review',   desc:'Find bugs & issues' },
+    { id:'explain',  icon:'💡', label:'Explain',  desc:'Understand the code' },
+    { id:'fix',      icon:'🔧', label:'Fix Bugs', desc:'Auto-fix problems' },
+    { id:'comment',  icon:'📝', label:'Comment',  desc:'Add inline docs' },
+    { id:'optimize', icon:'⚡', label:'Optimize', desc:'Faster & cleaner' },
+    { id:'test',     icon:'✅', label:'Tests',    desc:'Write unit tests' },
+    { id:'convert',  icon:'🔄', label:'Convert',  desc:'Change language' },
+    { id:'security', icon:'🔒', label:'Security', desc:'Audit for vulns' },
+  ];
+  const LANGS = ['Auto-detect','JavaScript','TypeScript','Python','Go','Rust','Java','C#','C++','Ruby','PHP','Swift','Kotlin','SQL','Bash'];
+  const [code, setCode] = React.useState('');
+  const [lang, setLang] = React.useState('Auto-detect');
+  const [mode, setMode] = React.useState('review');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [copied, setCopied] = React.useState(false);
+
+  const run = async (m?: string) => {
+    const activeMode = m || mode;
+    if (!code.trim()) return;
+    setMode(activeMode); setLoading(true); setResult(''); setError('');
+    try {
+      const r = await fetch(`${BACKEND}/api/code-assist`, {
+        method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${tok}` },
+        body: JSON.stringify({ code, mode: activeMode, language: lang === 'Auto-detect' ? '' : lang })
+      });
+      const d = await r.json();
+      if (d.error) setError(d.error);
+      else setResult(d.result);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(result);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+      <div style={{ maxWidth:1100, margin:'0 auto' }}>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:4 }}>🖥 Code Playground</h1>
+        <p style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:24 }}>AI-powered code review, explanation, fixing, optimization, and more.</p>
+
+        {/* Mode buttons */}
+        <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:18 }}>
+          {MODES.map(m => (
+            <button key={m.id} onClick={() => code.trim() ? run(m.id) : setMode(m.id)} title={m.desc}
+              style={{ padding:'8px 16px', borderRadius:8, border:`2px solid ${mode===m.id ? 'var(--fg-orange)' : 'var(--fg-border)'}`, background: mode===m.id ? 'rgba(255,100,50,0.12)' : 'var(--fg-bg2)', color: mode===m.id ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:12, fontWeight:600, cursor:'pointer', transition:'all 0.15s' }}>
+              {m.icon} {m.label}
+            </button>
+          ))}
+          <select value={lang} onChange={e=>setLang(e.target.value)} style={{ padding:'8px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:12, marginLeft:'auto' }}>
+            {LANGS.map(l => <option key={l}>{l}</option>)}
+          </select>
+        </div>
+
+        <div style={{ display:'grid', gridTemplateColumns: result ? '1fr 1fr' : '1fr', gap:18, marginBottom:18 }}>
+          {/* Code input */}
+          <div>
+            <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:8 }}>Your Code</div>
+            <textarea value={code} onChange={e=>setCode(e.target.value)} placeholder={'// Paste your code here...\nfunction example() {\n  return "hello world";\n}'}
+              rows={18} style={{ width:'100%', padding:'12px 14px', background:'#0d0d0d', border:'1px solid var(--fg-border)', borderRadius:10, color:'#e2e8f0', fontSize:13, resize:'vertical', boxSizing:'border-box', fontFamily:'monospace', lineHeight:1.6 }} />
+          </div>
+          {/* Result */}
+          {result && (
+            <div>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.07em' }}>{MODES.find(m=>m.id===mode)?.label} Result</div>
+                <button onClick={copy} style={{ padding:'5px 12px', background: copied?'#16a34a':'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:6, color:copied?'#fff':'var(--fg-text)', fontSize:11, cursor:'pointer', transition:'all 0.2s' }}>{copied?'✓ Copied':'📋 Copy'}</button>
+              </div>
+              <div style={{ width:'100%', minHeight:300, padding:'12px 14px', background:'#0d0d0d', border:'1px solid var(--fg-orange)', borderRadius:10, color:'#e2e8f0', fontSize:13, fontFamily:'monospace', lineHeight:1.6, whiteSpace:'pre-wrap', overflowY:'auto', maxHeight:500, boxSizing:'border-box' }}>{result}</div>
+            </div>
+          )}
+        </div>
+
+        {error && <div style={{ background:'#ef444420', border:'1px solid #ef4444', borderRadius:8, padding:'10px 14px', color:'#ef4444', fontSize:13, marginBottom:16 }}>{error}</div>}
+
+        <button onClick={() => run()} disabled={loading || !code.trim()}
+          style={{ padding:'12px 36px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity:(loading||!code.trim())?0.5:1 }}>
+          {loading ? '⏳ Analyzing…' : `${MODES.find(m=>m.id===mode)?.icon} ${MODES.find(m=>m.id===mode)?.label}`}
+        </button>
       </div>
     </div>
   );
