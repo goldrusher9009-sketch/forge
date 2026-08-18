@@ -27601,6 +27601,7 @@ function ForgeApp() {
             { id:'videoanal',        icon:'🎬',  label:'Video Analyzer' },
             { id:'forgemetrics',     icon:'📊',  label:'Metrics' },
             { id:'compare',          icon:'⚖️',  label:'Model Compare' },
+            { id:'prompts',          icon:'📋',  label:'Prompt Library' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51692,6 +51693,7 @@ function ForgeApp() {
 {(mainTab as string) === 'videoanal' && <ForgeTab_videoanal />}
 {(mainTab as string) === 'forgemetrics' && <ForgeTab_forgemetrics />}
 {(mainTab as string) === 'compare' && <ForgeTab_compare />}
+{(mainTab as string) === 'prompts' && <ForgeTab_prompts />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51772,6 +51774,112 @@ function ForgeTab_costdash() {
             </div>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_prompts() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : null;
+  const CATEGORIES = ['General','Writing','Coding','Analysis','Creative','Research','Business','Marketing'];
+  const [prompts, setPrompts] = React.useState<any[]>([]);
+  const [search, setSearch] = React.useState('');
+  const [catFilter, setCatFilter] = React.useState('All');
+  const [showNew, setShowNew] = React.useState(false);
+  const [newTitle, setNewTitle] = React.useState('');
+  const [newContent, setNewContent] = React.useState('');
+  const [newCat, setNewCat] = React.useState('General');
+  const [saving, setSaving] = React.useState(false);
+  const [copiedId, setCopiedId] = React.useState<number|null>(null);
+
+  const load = () => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (catFilter !== 'All') params.set('category', catFilter);
+    fetch(`${BACKEND}/api/prompts?${params}`, { headers: { Authorization: `Bearer ${tok}` } })
+      .then(r => r.json()).then(d => setPrompts(d.prompts || [])).catch(() => {});
+  };
+
+  React.useEffect(() => { load(); }, [search, catFilter]);
+
+  const save = async () => {
+    if (!newTitle.trim() || !newContent.trim()) return;
+    setSaving(true);
+    await fetch(`${BACKEND}/api/prompts`, { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${tok}` }, body: JSON.stringify({ title: newTitle, content: newContent, category: newCat }) });
+    setSaving(false); setNewTitle(''); setNewContent(''); setShowNew(false); load();
+  };
+
+  const del = async (id: number) => {
+    await fetch(`${BACKEND}/api/prompts/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${tok}` } });
+    load();
+  };
+
+  const copy = async (p: any) => {
+    await navigator.clipboard.writeText(p.content);
+    setCopiedId(p.id); setTimeout(() => setCopiedId(null), 2000);
+    fetch(`${BACKEND}/api/prompts/${p.id}/use`, { method:'POST', headers:{ Authorization:`Bearer ${tok}` } });
+  };
+
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+      <div style={{ maxWidth:920, margin:'0 auto' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
+          <div>
+            <h1 style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:4 }}>📋 Prompt Library</h1>
+            <p style={{ color:'var(--fg-text3)', fontSize:13 }}>Save, organize, and reuse your best prompts.</p>
+          </div>
+          <button onClick={() => setShowNew(v => !v)} style={{ padding:'9px 20px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>+ New Prompt</button>
+        </div>
+
+        {showNew && (
+          <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-orange)', borderRadius:12, padding:20, marginBottom:20 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:14 }}>New Prompt</div>
+            <input value={newTitle} onChange={e=>setNewTitle(e.target.value)} placeholder="Title..." style={{ width:'100%', padding:'9px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:10, boxSizing:'border-box' }} />
+            <select value={newCat} onChange={e=>setNewCat(e.target.value)} style={{ width:'100%', padding:'9px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:10, boxSizing:'border-box' }}>
+              {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+            </select>
+            <textarea value={newContent} onChange={e=>setNewContent(e.target.value)} placeholder="Prompt content..." rows={5} style={{ width:'100%', padding:'9px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', marginBottom:12 }} />
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={save} disabled={saving||!newTitle.trim()||!newContent.trim()} style={{ padding:'9px 22px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:saving?0.5:1 }}>{saving?'Saving…':'Save'}</button>
+              <button onClick={() => setShowNew(false)} style={{ padding:'9px 16px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text3)', fontSize:13, cursor:'pointer' }}>Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {/* Search + filter */}
+        <div style={{ display:'flex', gap:10, marginBottom:18 }}>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search prompts..." style={{ flex:1, padding:'9px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+          <select value={catFilter} onChange={e=>setCatFilter(e.target.value)} style={{ padding:'9px 12px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }}>
+            <option>All</option>{CATEGORIES.map(c => <option key={c}>{c}</option>)}
+          </select>
+        </div>
+
+        {/* Prompt cards */}
+        {prompts.length === 0 && (
+          <div style={{ textAlign:'center', padding:'60px 20px', color:'var(--fg-text3)' }}>
+            <div style={{ fontSize:36, marginBottom:12 }}>📋</div>
+            <div style={{ fontSize:14 }}>No prompts yet. Click "New Prompt" to save your first one.</div>
+          </div>
+        )}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(400px, 1fr))', gap:14 }}>
+          {prompts.map((p: any) => (
+            <div key={p.id} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 }}>
+                <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', flex:1 }}>{p.title}</div>
+                <span style={{ fontSize:10, padding:'2px 8px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text3)', marginLeft:8, flexShrink:0 }}>{p.category}</span>
+              </div>
+              <div style={{ fontSize:12, color:'var(--fg-text3)', marginBottom:12, maxHeight:80, overflowY:'auto', lineHeight:1.6, whiteSpace:'pre-wrap' }}>{p.content}</div>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <span style={{ fontSize:11, color:'var(--fg-text3)' }}>Used {p.use_count || 0}×</span>
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={() => copy(p)} style={{ padding:'6px 14px', background: copiedId===p.id ? '#16a34a' : 'var(--fg-orange)', border:'none', borderRadius:6, color:'#fff', fontSize:12, fontWeight:600, cursor:'pointer', transition:'background 0.2s' }}>{copiedId===p.id ? '✓ Copied' : '📋 Copy'}</button>
+                  <button onClick={() => del(p.id)} style={{ padding:'6px 10px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:6, color:'#ef4444', fontSize:12, cursor:'pointer' }}>🗑</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
