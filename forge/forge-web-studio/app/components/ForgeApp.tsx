@@ -27600,6 +27600,7 @@ function ForgeApp() {
             { id:'agentmulti',       icon:'🤖',  label:'Agent Hub' },
             { id:'videoanal',        icon:'🎬',  label:'Video Analyzer' },
             { id:'forgemetrics',     icon:'📊',  label:'Metrics' },
+            { id:'compare',          icon:'⚖️',  label:'Model Compare' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51690,6 +51691,7 @@ function ForgeApp() {
 {(mainTab as string) === 'agentmulti' && <ForgeTab_agentmulti />}
 {(mainTab as string) === 'videoanal' && <ForgeTab_videoanal />}
 {(mainTab as string) === 'forgemetrics' && <ForgeTab_forgemetrics />}
+{(mainTab as string) === 'compare' && <ForgeTab_compare />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51769,6 +51771,99 @@ function ForgeTab_costdash() {
               ))}
             </div>
           </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_compare() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : null;
+  const PRESET_MODELS = [
+    { id:'claude-haiku-4-5', label:'Claude Haiku 4.5', color:'#f97316' },
+    { id:'claude-sonnet-4-5', label:'Claude Sonnet 4.5', color:'#f97316' },
+    { id:'gpt-4o-mini', label:'GPT-4o Mini', color:'#10b981' },
+    { id:'gpt-4o', label:'GPT-4o', color:'#10b981' },
+    { id:'gemini-1.5-flash', label:'Gemini 1.5 Flash', color:'#3b82f6' },
+    { id:'gemini-2.0-flash', label:'Gemini 2.0 Flash', color:'#3b82f6' },
+  ];
+  const [prompt, setPrompt] = React.useState('');
+  const [selected, setSelected] = React.useState<string[]>(['claude-haiku-4-5', 'gpt-4o-mini']);
+  const [results, setResults] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+
+  const toggle = (id: string) => setSelected(prev =>
+    prev.includes(id) ? prev.filter(x => x !== id) : prev.length < 4 ? [...prev, id] : prev
+  );
+
+  const run = async () => {
+    if (!prompt.trim() || selected.length < 2) return;
+    setLoading(true); setResults([]);
+    try {
+      const r = await fetch(`${BACKEND}/api/compare`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
+        body: JSON.stringify({ prompt: prompt.trim(), models: selected })
+      });
+      const d = await r.json();
+      setResults(d.results || []);
+    } catch(e: any) { setResults([{ model: 'Error', result: e.message, error: true }]); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+      <div style={{ maxWidth:1100, margin:'0 auto' }}>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:4 }}>⚖️ Model Comparison</h1>
+        <p style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:24 }}>Run the same prompt across multiple models and compare responses side-by-side.</p>
+
+        {/* Model picker */}
+        <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18, marginBottom:18 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)', marginBottom:12 }}>Select 2–4 Models</div>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+            {PRESET_MODELS.map(m => {
+              const on = selected.includes(m.id);
+              return (
+                <button key={m.id} onClick={() => toggle(m.id)} style={{ padding:'7px 14px', borderRadius:20, border:`2px solid ${on ? m.color : 'var(--fg-border)'}`, background: on ? `${m.color}20` : 'var(--fg-bg)', color: on ? m.color : 'var(--fg-text3)', fontSize:12, fontWeight:600, cursor:'pointer', transition:'all 0.15s' }}>
+                  {on ? '✓ ' : ''}{m.label}
+                </button>
+              );
+            })}
+          </div>
+          {selected.length < 2 && <div style={{ fontSize:11, color:'#f59e0b', marginTop:8 }}>⚠ Select at least 2 models.</div>}
+        </div>
+
+        {/* Prompt */}
+        <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18, marginBottom:18 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)', marginBottom:10 }}>Prompt</div>
+          <textarea value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Enter your prompt here..." rows={4}
+            style={{ width:'100%', padding:'10px 14px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, resize:'vertical', boxSizing:'border-box', outline:'none' }} />
+          <div style={{ marginTop:10, display:'flex', justifyContent:'flex-end' }}>
+            <button onClick={run} disabled={loading || selected.length < 2 || !prompt.trim()}
+              style={{ padding:'10px 28px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity: (loading || selected.length < 2 || !prompt.trim()) ? 0.5 : 1 }}>
+              {loading ? '⏳ Comparing…' : '▶ Compare'}
+            </button>
+          </div>
+        </div>
+
+        {/* Results */}
+        {results.length > 0 && (
+          <div style={{ display:'grid', gridTemplateColumns: `repeat(${Math.min(results.length, 2)}, 1fr)`, gap:16 }}>
+            {results.map((r: any, i: number) => {
+              const modelMeta = PRESET_MODELS.find(m => m.id === r.model);
+              const col = modelMeta?.color || '#6b7280';
+              return (
+                <div key={i} style={{ background:'var(--fg-bg2)', border:`1px solid ${r.error ? '#ef4444' : col + '44'}`, borderRadius:12, padding:18 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+                    <div style={{ fontSize:13, fontWeight:700, color: col }}>{modelMeta?.label || r.model}</div>
+                    <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{r.elapsed ? `${(r.elapsed/1000).toFixed(1)}s` : ''}{r.tokens ? ` · ${r.tokens} tok` : ''}</div>
+                  </div>
+                  <div style={{ fontSize:13, color: r.error ? '#ef4444' : 'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap', maxHeight:400, overflowY:'auto' }}>{r.result}</div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
