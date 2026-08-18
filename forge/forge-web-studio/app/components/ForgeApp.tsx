@@ -27617,6 +27617,8 @@ function ForgeApp() {
             { id:'meetingnotes',     icon:'📋',  label:'Meeting Notes' },
             { id:'contractanalyze',  icon:'⚖️',  label:'Contract Analyzer' },
             { id:'productdesc',      icon:'🛒',  label:'Product Writer' },
+            { id:'competitorresearch', icon:'🔭', label:'Competitor Intel' },
+            { id:'jobdesc',          icon:'💼',  label:'Job Description' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51724,6 +51726,8 @@ function ForgeApp() {
 {(mainTab as string) === 'meetingnotes' && <ForgeTab_meetingnotes />}
 {(mainTab as string) === 'contractanalyze' && <ForgeTab_contractanalyze />}
 {(mainTab as string) === 'productdesc' && <ForgeTab_productdesc />}
+{(mainTab as string) === 'competitorresearch' && <ForgeTab_competitorresearch />}
+{(mainTab as string) === 'jobdesc' && <ForgeTab_jobdesc />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51805,6 +51809,349 @@ function ForgeTab_costdash() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function ForgeTab_competitorresearch() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const FOCUS_AREAS = ['pricing','features','UX','marketing','integrations','support','performance','security'];
+  const [yourProduct, setYourProduct] = React.useState('');
+  const [competitorInput, setCompetitorInput] = React.useState('');
+  const [industry, setIndustry] = React.useState('');
+  const [focusAreas, setFocusAreas] = React.useState<string[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [result, setResult] = React.useState<any>(null);
+  const [error, setError] = React.useState('');
+  const [activeTab, setActiveTab] = React.useState('overview');
+
+  const toggleFocus = (f: string) => setFocusAreas(prev => prev.includes(f) ? prev.filter(x=>x!==f) : [...prev,f]);
+
+  const analyze = async () => {
+    const competitors = competitorInput.split('\n').map(s=>s.trim()).filter(Boolean);
+    if (!yourProduct.trim() || competitors.length === 0) { setError('Enter your product and at least one competitor'); return; }
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const token = localStorage.getItem('forge_token');
+      const r = await fetch(`${BACKEND}/api/competitor-research`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ yourProduct, competitors, industry, focusAreas })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d.result);
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+
+  const riskColor: Record<string,string> = { leader:'#10b981', challenger:'#3b82f6', niche:'#f59e0b', emerging:'#8b5cf6' };
+
+  return (
+    <div style={{padding:'24px',maxWidth:'900px',margin:'0 auto'}}>
+      <h2 style={{fontSize:'22px',fontWeight:700,marginBottom:'6px'}}>🔭 Competitor Intelligence</h2>
+      <p style={{color:'#6b7280',marginBottom:'24px',fontSize:'14px'}}>Analyze your competitive landscape and discover differentiation opportunities</p>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'16px'}}>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'6px'}}>Your Product / Company *</label>
+          <input value={yourProduct} onChange={e=>setYourProduct(e.target.value)} placeholder="e.g. Acme CRM" style={{width:'100%',padding:'10px 12px',border:'1.5px solid #e5e7eb',borderRadius:'8px',fontSize:'14px',boxSizing:'border-box'}} />
+        </div>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'6px'}}>Industry (optional)</label>
+          <input value={industry} onChange={e=>setIndustry(e.target.value)} placeholder="e.g. B2B SaaS, E-commerce, Fintech" style={{width:'100%',padding:'10px 12px',border:'1.5px solid #e5e7eb',borderRadius:'8px',fontSize:'14px',boxSizing:'border-box'}} />
+        </div>
+      </div>
+
+      <div style={{marginBottom:'16px'}}>
+        <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'6px'}}>Competitors (one per line, up to 5) *</label>
+        <textarea value={competitorInput} onChange={e=>setCompetitorInput(e.target.value)} rows={4} placeholder={"Salesforce\nHubSpot\nPipedrive"} style={{width:'100%',padding:'10px 12px',border:'1.5px solid #e5e7eb',borderRadius:'8px',fontSize:'14px',resize:'vertical',boxSizing:'border-box'}} />
+      </div>
+
+      <div style={{marginBottom:'20px'}}>
+        <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'8px'}}>Focus Areas</label>
+        <div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>
+          {FOCUS_AREAS.map(f => (
+            <button key={f} onClick={()=>toggleFocus(f)} style={{padding:'6px 14px',borderRadius:'20px',fontSize:'13px',fontWeight:500,cursor:'pointer',border:'1.5px solid',borderColor:focusAreas.includes(f)?'#6366f1':'#e5e7eb',background:focusAreas.includes(f)?'#eef2ff':'white',color:focusAreas.includes(f)?'#6366f1':'#374151'}}>
+              {f}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {error && <div style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:'8px',padding:'12px',color:'#dc2626',fontSize:'14px',marginBottom:'16px'}}>{error}</div>}
+
+      <button onClick={analyze} disabled={loading} style={{background:loading?'#9ca3af':'#6366f1',color:'white',border:'none',borderRadius:'8px',padding:'12px 28px',fontSize:'15px',fontWeight:600,cursor:loading?'not-allowed':'pointer',marginBottom:'28px'}}>
+        {loading ? '🔍 Analyzing...' : '🔭 Analyze Competitors'}
+      </button>
+
+      {result && (
+        <div>
+          <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'16px',marginBottom:'20px'}}>
+            <p style={{margin:0,fontSize:'14px',color:'#166534',lineHeight:1.6}}>{result.marketOverview}</p>
+          </div>
+
+          <div style={{display:'flex',gap:'8px',marginBottom:'20px',borderBottom:'2px solid #e5e7eb',paddingBottom:'0'}}>
+            {['overview','swot','opportunities','strategies'].map(t => (
+              <button key={t} onClick={()=>setActiveTab(t)} style={{padding:'10px 18px',border:'none',background:'none',cursor:'pointer',fontSize:'14px',fontWeight:activeTab===t?700:500,color:activeTab===t?'#6366f1':'#6b7280',borderBottom:activeTab===t?'3px solid #6366f1':'3px solid transparent',marginBottom:'-2px'}}>
+                {t === 'overview' ? '🏢 Competitors' : t === 'swot' ? '📊 Your SWOT' : t === 'opportunities' ? '💡 Opportunities' : '🏆 Win Strategies'}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === 'overview' && (
+            <div style={{display:'grid',gap:'16px'}}>
+              {(result.competitors||[]).map((c:any, i:number) => (
+                <div key={i} style={{border:'1.5px solid #e5e7eb',borderRadius:'10px',padding:'18px'}}>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
+                    <div>
+                      <span style={{fontSize:'17px',fontWeight:700}}>{c.name}</span>
+                      <span style={{fontSize:'13px',color:'#6b7280',marginLeft:'12px'}}>{c.tagline}</span>
+                    </div>
+                    <span style={{padding:'4px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:600,background:`${riskColor[c.marketPosition]||'#6b7280'}20`,color:riskColor[c.marketPosition]||'#6b7280',textTransform:'capitalize'}}>{c.marketPosition}</span>
+                  </div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',fontSize:'13px'}}>
+                    <div>
+                      <div style={{color:'#6b7280',marginBottom:'4px'}}>Target: {c.targetCustomer}</div>
+                      <div style={{color:'#6b7280'}}>Pricing: {c.estimatedPricing||c.pricingModel}</div>
+                      <div style={{color:'#6366f1',fontWeight:600,marginTop:'6px'}}>"{c.uniqueAngle}"</div>
+                    </div>
+                    <div>
+                      <div style={{marginBottom:'6px'}}><span style={{color:'#10b981',fontWeight:600}}>✓ </span>{(c.strengths||[]).join(' · ')}</div>
+                      <div><span style={{color:'#ef4444',fontWeight:600}}>✗ </span>{(c.weaknesses||[]).join(' · ')}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'swot' && result.yourSwot && (
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px'}}>
+              {[
+                {key:'strengths',label:'💪 Strengths',bg:'#f0fdf4',border:'#bbf7d0',color:'#166534'},
+                {key:'weaknesses',label:'⚠️ Weaknesses',bg:'#fff7ed',border:'#fed7aa',color:'#92400e'},
+                {key:'opportunities',label:'🚀 Opportunities',bg:'#eff6ff',border:'#bfdbfe',color:'#1e40af'},
+                {key:'threats',label:'🎯 Threats',bg:'#fef2f2',border:'#fecaca',color:'#991b1b'},
+              ].map(s => (
+                <div key={s.key} style={{background:s.bg,border:`1px solid ${s.border}`,borderRadius:'10px',padding:'16px'}}>
+                  <div style={{fontWeight:700,marginBottom:'10px',color:s.color}}>{s.label}</div>
+                  {(result.yourSwot[s.key]||[]).map((item:string,i:number) => (
+                    <div key={i} style={{fontSize:'13px',color:'#374151',marginBottom:'6px',paddingLeft:'12px',borderLeft:`3px solid ${s.border}`}}>{item}</div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'opportunities' && (
+            <div>
+              {result.pricingInsights && <div style={{background:'#f5f3ff',border:'1px solid #ddd6fe',borderRadius:'10px',padding:'16px',marginBottom:'16px'}}><div style={{fontWeight:700,marginBottom:'8px',color:'#6d28d9'}}>💰 Pricing Insights</div><p style={{margin:0,fontSize:'14px',color:'#374151',lineHeight:1.6}}>{result.pricingInsights}</p></div>}
+              <div style={{marginBottom:'16px'}}><div style={{fontWeight:700,marginBottom:'12px',fontSize:'15px'}}>🏳️ White Space Opportunities</div>
+                {(result.differentiationOpportunities||[]).map((op:string,i:number) => (
+                  <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'10px',marginBottom:'10px',padding:'12px',background:'white',border:'1.5px solid #e5e7eb',borderRadius:'8px'}}>
+                    <span style={{color:'#6366f1',fontWeight:700,fontSize:'16px'}}>{i+1}</span>
+                    <span style={{fontSize:'14px',color:'#374151'}}>{op}</span>
+                  </div>
+                ))}
+              </div>
+              {(result.keyBattlegrounds||[]).length > 0 && <div><div style={{fontWeight:700,marginBottom:'10px',fontSize:'15px'}}>⚔️ Key Battlegrounds</div>
+                <div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>{result.keyBattlegrounds.map((b:string,i:number)=><span key={i} style={{padding:'6px 14px',background:'#fef3c7',border:'1px solid #fcd34d',borderRadius:'20px',fontSize:'13px',color:'#92400e'}}>{b}</span>)}</div>
+              </div>}
+            </div>
+          )}
+
+          {activeTab === 'strategies' && (
+            <div>{(result.winStrategies||[]).map((s:string,i:number) => (
+              <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'12px',marginBottom:'12px',padding:'14px',background:'white',border:'1.5px solid #e5e7eb',borderRadius:'8px'}}>
+                <span style={{background:'#6366f1',color:'white',borderRadius:'50%',width:'24px',height:'24px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',fontWeight:700,flexShrink:0}}>{i+1}</span>
+                <span style={{fontSize:'14px',color:'#374151',lineHeight:1.5}}>{s}</span>
+              </div>
+            ))}</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForgeTab_jobdesc() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const LEVELS = ['intern','junior','mid','senior','lead','staff','principal','director','vp','c-level'];
+  const TYPES = ['full-time','part-time','contract','freelance','temporary'];
+  const REMOTES = ['on-site','hybrid','remote'];
+  const TONES = ['professional','startup','friendly','formal','creative','technical'];
+  const [jobTitle, setJobTitle] = React.useState('');
+  const [company, setCompany] = React.useState('');
+  const [level, setLevel] = React.useState('mid');
+  const [employmentType, setEmploymentType] = React.useState('full-time');
+  const [remote, setRemote] = React.useState('hybrid');
+  const [salary, setSalary] = React.useState('');
+  const [keyResponsibilities, setKeyResponsibilities] = React.useState('');
+  const [requiredSkills, setRequiredSkills] = React.useState('');
+  const [niceToHave, setNiceToHave] = React.useState('');
+  const [companyDescription, setCompanyDescription] = React.useState('');
+  const [tone, setTone] = React.useState('professional');
+  const [loading, setLoading] = React.useState(false);
+  const [result, setResult] = React.useState<any>(null);
+  const [error, setError] = React.useState('');
+  const [activeTab, setActiveTab] = React.useState('preview');
+  const [copied, setCopied] = React.useState(false);
+
+  const generate = async () => {
+    if (!jobTitle.trim()) { setError('Job title is required'); return; }
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const token = localStorage.getItem('forge_token');
+      const r = await fetch(`${BACKEND}/api/job-desc`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ jobTitle, company, level, employmentType, remote, salary, keyResponsibilities, requiredSkills, niceToHave, companyDescription, tone })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d.result);
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+
+  const copyFull = () => {
+    if (result?.fullText) { navigator.clipboard.writeText(result.fullText); setCopied(true); setTimeout(()=>setCopied(false),2000); }
+  };
+
+  return (
+    <div style={{padding:'24px',maxWidth:'900px',margin:'0 auto'}}>
+      <h2 style={{fontSize:'22px',fontWeight:700,marginBottom:'6px'}}>💼 Job Description Writer</h2>
+      <p style={{color:'#6b7280',marginBottom:'24px',fontSize:'14px'}}>Create inclusive, compelling job descriptions that attract top candidates</p>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'16px'}}>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'6px'}}>Job Title *</label>
+          <input value={jobTitle} onChange={e=>setJobTitle(e.target.value)} placeholder="e.g. Senior Product Manager" style={{width:'100%',padding:'10px 12px',border:'1.5px solid #e5e7eb',borderRadius:'8px',fontSize:'14px',boxSizing:'border-box'}} />
+        </div>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'6px'}}>Company Name (optional)</label>
+          <input value={company} onChange={e=>setCompany(e.target.value)} placeholder="e.g. Acme Inc." style={{width:'100%',padding:'10px 12px',border:'1.5px solid #e5e7eb',borderRadius:'8px',fontSize:'14px',boxSizing:'border-box'}} />
+        </div>
+      </div>
+
+      <div style={{marginBottom:'14px'}}>
+        <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'8px'}}>Level</label>
+        <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>{LEVELS.map(l=>(
+          <button key={l} onClick={()=>setLevel(l)} style={{padding:'6px 12px',borderRadius:'20px',fontSize:'13px',fontWeight:500,cursor:'pointer',border:'1.5px solid',borderColor:level===l?'#6366f1':'#e5e7eb',background:level===l?'#eef2ff':'white',color:level===l?'#6366f1':'#374151',textTransform:'capitalize'}}>{l}</button>
+        ))}</div>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'14px',marginBottom:'14px'}}>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'8px'}}>Employment Type</label>
+          <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>{TYPES.map(t=>(
+            <label key={t} style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'13px',cursor:'pointer'}}><input type="radio" checked={employmentType===t} onChange={()=>setEmploymentType(t)} />{t}</label>
+          ))}</div>
+        </div>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'8px'}}>Work Location</label>
+          <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>{REMOTES.map(r=>(
+            <label key={r} style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'13px',cursor:'pointer'}}><input type="radio" checked={remote===r} onChange={()=>setRemote(r)} />{r}</label>
+          ))}</div>
+        </div>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'8px'}}>Tone</label>
+          <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>{TONES.map(t=>(
+            <label key={t} style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'13px',cursor:'pointer',textTransform:'capitalize'}}><input type="radio" checked={tone===t} onChange={()=>setTone(t)} />{t}</label>
+          ))}</div>
+        </div>
+      </div>
+
+      <div style={{marginBottom:'14px'}}>
+        <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'6px'}}>Salary / Comp Range (optional)</label>
+        <input value={salary} onChange={e=>setSalary(e.target.value)} placeholder="e.g. $120,000 – $160,000 + equity" style={{width:'100%',padding:'10px 12px',border:'1.5px solid #e5e7eb',borderRadius:'8px',fontSize:'14px',boxSizing:'border-box'}} />
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px',marginBottom:'14px'}}>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'6px'}}>Key Responsibilities (optional)</label>
+          <textarea value={keyResponsibilities} onChange={e=>setKeyResponsibilities(e.target.value)} rows={3} placeholder="Brief notes on main duties..." style={{width:'100%',padding:'10px 12px',border:'1.5px solid #e5e7eb',borderRadius:'8px',fontSize:'14px',resize:'vertical',boxSizing:'border-box'}} />
+        </div>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'6px'}}>Required Skills (optional)</label>
+          <textarea value={requiredSkills} onChange={e=>setRequiredSkills(e.target.value)} rows={3} placeholder="Key skills and experience required..." style={{width:'100%',padding:'10px 12px',border:'1.5px solid #e5e7eb',borderRadius:'8px',fontSize:'14px',resize:'vertical',boxSizing:'border-box'}} />
+        </div>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px',marginBottom:'20px'}}>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'6px'}}>Nice to Have (optional)</label>
+          <textarea value={niceToHave} onChange={e=>setNiceToHave(e.target.value)} rows={2} placeholder="Bonus qualifications..." style={{width:'100%',padding:'10px 12px',border:'1.5px solid #e5e7eb',borderRadius:'8px',fontSize:'14px',resize:'vertical',boxSizing:'border-box'}} />
+        </div>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:600,color:'#374151',display:'block',marginBottom:'6px'}}>Company Description (optional)</label>
+          <textarea value={companyDescription} onChange={e=>setCompanyDescription(e.target.value)} rows={2} placeholder="Brief company pitch..." style={{width:'100%',padding:'10px 12px',border:'1.5px solid #e5e7eb',borderRadius:'8px',fontSize:'14px',resize:'vertical',boxSizing:'border-box'}} />
+        </div>
+      </div>
+
+      {error && <div style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:'8px',padding:'12px',color:'#dc2626',fontSize:'14px',marginBottom:'16px'}}>{error}</div>}
+
+      <button onClick={generate} disabled={loading} style={{background:loading?'#9ca3af':'#6366f1',color:'white',border:'none',borderRadius:'8px',padding:'12px 28px',fontSize:'15px',fontWeight:600,cursor:loading?'not-allowed':'pointer',marginBottom:'28px'}}>
+        {loading ? '✍️ Writing...' : '💼 Generate Job Description'}
+      </button>
+
+      {result && (
+        <div>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px'}}>
+            <div style={{display:'flex',gap:'8px'}}>
+              {['preview','breakdown','deicheck'].map(t => (
+                <button key={t} onClick={()=>setActiveTab(t)} style={{padding:'8px 16px',border:'none',background:activeTab===t?'#6366f1':'#f3f4f6',color:activeTab===t?'white':'#374151',borderRadius:'8px',cursor:'pointer',fontSize:'13px',fontWeight:600}}>
+                  {t==='preview'?'📄 Preview':t==='breakdown'?'📋 Breakdown':'🌈 DEI Check'}
+                </button>
+              ))}
+            </div>
+            <button onClick={copyFull} style={{padding:'8px 16px',background:copied?'#10b981':'white',color:copied?'white':'#374151',border:'1.5px solid #e5e7eb',borderRadius:'8px',cursor:'pointer',fontSize:'13px',fontWeight:600}}>
+              {copied ? '✓ Copied!' : '📋 Copy Full JD'}
+            </button>
+          </div>
+
+          {activeTab === 'preview' && (
+            <div style={{border:'1.5px solid #e5e7eb',borderRadius:'10px',padding:'24px',background:'white',lineHeight:1.7}}>
+              {result.tagline && <div style={{fontSize:'16px',color:'#6366f1',fontWeight:600,marginBottom:'16px',fontStyle:'italic'}}>"{result.tagline}"</div>}
+              <pre style={{whiteSpace:'pre-wrap',fontFamily:'inherit',fontSize:'14px',color:'#1f2937',margin:0}}>{result.fullText}</pre>
+            </div>
+          )}
+
+          {activeTab === 'breakdown' && (
+            <div style={{display:'grid',gap:'14px'}}>
+              {[
+                {key:'responsibilities',label:'📌 Responsibilities',color:'#6366f1'},
+                {key:'requiredQualifications',label:'✅ Required Qualifications',color:'#059669'},
+                {key:'niceToHave',label:'⭐ Nice to Have',color:'#d97706'},
+                {key:'whatWeOffer',label:'🎁 What We Offer',color:'#7c3aed'},
+              ].map(s => (
+                result[s.key]?.length > 0 && <div key={s.key} style={{border:'1.5px solid #e5e7eb',borderRadius:'10px',padding:'16px'}}>
+                  <div style={{fontWeight:700,marginBottom:'10px',color:s.color}}>{s.label}</div>
+                  {result[s.key].map((item:string,i:number) => <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px',fontSize:'14px',color:'#374151'}}><span style={{color:s.color,flexShrink:0}}>•</span>{item}</div>)}
+                </div>
+              ))}
+              {result.salaryRange && <div style={{background:'#f5f3ff',border:'1px solid #ddd6fe',borderRadius:'10px',padding:'14px'}}><span style={{fontWeight:600,color:'#6d28d9'}}>💰 Compensation: </span><span style={{fontSize:'14px',color:'#374151'}}>{result.salaryRange}</span></div>}
+            </div>
+          )}
+
+          {activeTab === 'deicheck' && result.deiStatement && (
+            <div>
+              <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'16px',marginBottom:'16px'}}>
+                <div style={{fontWeight:700,marginBottom:'8px',color:'#166534'}}>🌈 DEI Statement</div>
+                <p style={{margin:0,fontSize:'14px',color:'#166534',lineHeight:1.6}}>{result.deiStatement}</p>
+              </div>
+              <div style={{border:'1.5px solid #e5e7eb',borderRadius:'10px',padding:'16px'}}>
+                <div style={{fontWeight:700,marginBottom:'12px'}}>✅ Inclusive Language Checklist</div>
+                {[
+                  'Gender-neutral language used throughout',
+                  'Avoids age-related terms ("young","recent grad")',
+                  'Focuses on skills over credentials where possible',
+                  'No unnecessary physical requirements listed',
+                  'Growth and learning opportunities highlighted',
+                  'Compensation transparency included',
+                ].map((item,i) => <div key={i} style={{display:'flex',gap:'10px',alignItems:'center',marginBottom:'8px',fontSize:'14px',color:'#374151'}}><span style={{color:'#10b981',fontWeight:700}}>✓</span>{item}</div>)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
