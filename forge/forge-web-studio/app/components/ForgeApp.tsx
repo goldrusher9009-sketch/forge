@@ -27603,6 +27603,7 @@ function ForgeApp() {
             { id:'compare',          icon:'⚖️',  label:'Model Compare' },
             { id:'prompts',          icon:'📋',  label:'Prompt Library' },
             { id:'batch',            icon:'⚡',  label:'Batch Process' },
+            { id:'writeassist',      icon:'✍️',  label:'Writing AI' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51696,6 +51697,7 @@ function ForgeApp() {
 {(mainTab as string) === 'compare' && <ForgeTab_compare />}
 {(mainTab as string) === 'prompts' && <ForgeTab_prompts />}
 {(mainTab as string) === 'batch' && <ForgeTab_batch />}
+{(mainTab as string) === 'writeassist' && <ForgeTab_writeassist />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51776,6 +51778,98 @@ function ForgeTab_costdash() {
             </div>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_writeassist() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : null;
+  const MODES = [
+    { id:'improve',    icon:'✨', label:'Improve' },
+    { id:'shorten',    icon:'✂️', label:'Shorten' },
+    { id:'expand',     icon:'📖', label:'Expand' },
+    { id:'grammar',    icon:'✅', label:'Fix Grammar' },
+    { id:'professional',icon:'👔',label:'Professional' },
+    { id:'casual',     icon:'😊', label:'Casual' },
+    { id:'simplify',   icon:'💡', label:'Simplify' },
+    { id:'bullet',     icon:'📋', label:'Bullet Points' },
+    { id:'persuasive', icon:'🎯', label:'Persuasive' },
+    { id:'emojis',     icon:'🎨', label:'Add Emojis' },
+  ];
+  const [text, setText] = React.useState('');
+  const [mode, setMode] = React.useState('improve');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [copied, setCopied] = React.useState(false);
+
+  const run = async (m?: string) => {
+    const activeMode = m || mode;
+    if (!text.trim()) return;
+    setMode(activeMode); setLoading(true); setResult(''); setError('');
+    try {
+      const r = await fetch(`${BACKEND}/api/write-assist`, {
+        method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${tok}` },
+        body: JSON.stringify({ text, mode: activeMode })
+      });
+      const d = await r.json();
+      if (d.error) setError(d.error);
+      else setResult(d.result);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(result);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+      <div style={{ maxWidth:1000, margin:'0 auto' }}>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:4 }}>✍️ Writing Assistant</h1>
+        <p style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:24 }}>Transform any text with AI. Improve, shorten, fix, rephrase — instantly.</p>
+
+        {/* Mode picker */}
+        <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:18 }}>
+          {MODES.map(m => (
+            <button key={m.id} onClick={() => result ? run(m.id) : setMode(m.id)}
+              style={{ padding:'8px 16px', borderRadius:20, border:`2px solid ${mode===m.id ? 'var(--fg-orange)' : 'var(--fg-border)'}`, background: mode===m.id ? 'rgba(255,100,50,0.12)' : 'var(--fg-bg2)', color: mode===m.id ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:12, fontWeight:600, cursor:'pointer', transition:'all 0.15s' }}>
+              {m.icon} {m.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display:'grid', gridTemplateColumns: result ? '1fr 1fr' : '1fr', gap:18, marginBottom:18 }}>
+          {/* Input */}
+          <div>
+            <div style={{ fontSize:12, fontWeight:600, color:'var(--fg-text3)', marginBottom:8, textTransform:'uppercase', letterSpacing:'0.06em' }}>Original Text</div>
+            <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Paste your text here..." rows={14}
+              style={{ width:'100%', padding:'12px 14px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text)', fontSize:14, resize:'vertical', boxSizing:'border-box', lineHeight:1.7 }} />
+            <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:4 }}>{text.length} chars · {text.split(/\s+/).filter(Boolean).length} words</div>
+          </div>
+
+          {/* Result */}
+          {result && (
+            <div>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                <div style={{ fontSize:12, fontWeight:600, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.06em' }}>Result ({MODES.find(m=>m.id===mode)?.label})</div>
+                <button onClick={copy} style={{ padding:'5px 12px', background: copied ? '#16a34a' : 'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:6, color: copied ? '#fff' : 'var(--fg-text)', fontSize:11, cursor:'pointer', transition:'all 0.2s' }}>{copied ? '✓ Copied' : '📋 Copy'}</button>
+              </div>
+              <div style={{ width:'100%', minHeight:200, padding:'12px 14px', background:'var(--fg-bg2)', border:'1px solid var(--fg-orange)', borderRadius:10, color:'var(--fg-text)', fontSize:14, lineHeight:1.7, whiteSpace:'pre-wrap', overflowY:'auto', maxHeight:400, boxSizing:'border-box' }}>{result}</div>
+              <div style={{ fontSize:11, color:'var(--fg-text3)', marginTop:4 }}>{result.length} chars · {result.split(/\s+/).filter(Boolean).length} words</div>
+            </div>
+          )}
+        </div>
+
+        {error && <div style={{ background:'#ef444420', border:'1px solid #ef4444', borderRadius:8, padding:'10px 14px', color:'#ef4444', fontSize:13, marginBottom:16 }}>{error}</div>}
+
+        <button onClick={() => run()} disabled={loading || !text.trim()}
+          style={{ padding:'12px 36px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity: (loading || !text.trim()) ? 0.5 : 1 }}>
+          {loading ? '⏳ Transforming…' : `${MODES.find(m=>m.id===mode)?.icon} ${MODES.find(m=>m.id===mode)?.label}`}
+        </button>
       </div>
     </div>
   );
