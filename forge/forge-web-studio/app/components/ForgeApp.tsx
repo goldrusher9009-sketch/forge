@@ -27606,6 +27606,7 @@ function ForgeApp() {
             { id:'writeassist',      icon:'✍️',  label:'Writing AI' },
             { id:'codeplay',         icon:'🖥',   label:'Code Playground' },
             { id:'extract',          icon:'🗂',   label:'Data Extractor' },
+            { id:'translate',        icon:'🌍',  label:'Translate Hub' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51702,6 +51703,7 @@ function ForgeApp() {
 {(mainTab as string) === 'writeassist' && <ForgeTab_writeassist />}
 {(mainTab as string) === 'codeplay' && <ForgeTab_codeplay />}
 {(mainTab as string) === 'extract' && <ForgeTab_extract />}
+{(mainTab as string) === 'translate' && <ForgeTab_translate />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51781,6 +51783,109 @@ function ForgeTab_costdash() {
               ))}
             </div>
           </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_translate() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : null;
+  const ALL_LANGS = [
+    { id:'Spanish', flag:'🇪🇸' }, { id:'French', flag:'🇫🇷' }, { id:'German', flag:'🇩🇪' },
+    { id:'Portuguese', flag:'🇧🇷' }, { id:'Italian', flag:'🇮🇹' }, { id:'Japanese', flag:'🇯🇵' },
+    { id:'Chinese (Simplified)', flag:'🇨🇳' }, { id:'Korean', flag:'🇰🇷' }, { id:'Arabic', flag:'🇸🇦' },
+    { id:'Russian', flag:'🇷🇺' }, { id:'Hindi', flag:'🇮🇳' }, { id:'Dutch', flag:'🇳🇱' },
+    { id:'Polish', flag:'🇵🇱' }, { id:'Turkish', flag:'🇹🇷' }, { id:'Swedish', flag:'🇸🇪' },
+    { id:'Greek', flag:'🇬🇷' }, { id:'Hebrew', flag:'🇮🇱' }, { id:'Thai', flag:'🇹🇭' },
+    { id:'Vietnamese', flag:'🇻🇳' }, { id:'Indonesian', flag:'🇮🇩' },
+  ];
+  const [text, setText] = React.useState('');
+  const [selected, setSelected] = React.useState<string[]>(['Spanish','French','German','Japanese']);
+  const [results, setResults] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [copiedLang, setCopiedLang] = React.useState<string|null>(null);
+
+  const toggle = (id: string) => setSelected(prev =>
+    prev.includes(id) ? prev.filter(x => x !== id) : prev.length < 12 ? [...prev, id] : prev
+  );
+
+  const run = async () => {
+    if (!text.trim() || selected.length === 0) return;
+    setLoading(true); setResults([]); setError('');
+    try {
+      const r = await fetch(`${BACKEND}/api/translate`, {
+        method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${tok}` },
+        body: JSON.stringify({ text, languages: selected })
+      });
+      const d = await r.json();
+      if (d.error) setError(d.error);
+      else setResults(d.results || []);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const copy = async (lang: string, text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedLang(lang); setTimeout(() => setCopiedLang(null), 2000);
+  };
+
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+      <div style={{ maxWidth:1100, margin:'0 auto' }}>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:4 }}>🌍 Translation Hub</h1>
+        <p style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:24 }}>Translate text to multiple languages simultaneously. Select up to 12.</p>
+
+        {/* Language picker */}
+        <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, marginBottom:18 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)', marginBottom:12 }}>Target Languages ({selected.length}/12)</div>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+            {ALL_LANGS.map(l => {
+              const on = selected.includes(l.id);
+              return (
+                <button key={l.id} onClick={() => toggle(l.id)}
+                  style={{ padding:'6px 14px', borderRadius:20, border:`2px solid ${on ? 'var(--fg-orange)' : 'var(--fg-border)'}`, background: on ? 'rgba(255,100,50,0.12)' : 'var(--fg-bg)', color: on ? 'var(--fg-orange)' : 'var(--fg-text3)', fontSize:12, fontWeight:600, cursor:'pointer', transition:'all 0.15s' }}>
+                  {l.flag} {l.id}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Text input */}
+        <div style={{ marginBottom:18 }}>
+          <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:8 }}>Source Text (English)</div>
+          <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Enter the text you want to translate..."
+            rows={5} style={{ width:'100%', padding:'12px 14px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text)', fontSize:14, resize:'vertical', boxSizing:'border-box', lineHeight:1.7 }} />
+        </div>
+
+        {error && <div style={{ background:'#ef444420', border:'1px solid #ef4444', borderRadius:8, padding:'10px 14px', color:'#ef4444', fontSize:13, marginBottom:16 }}>{error}</div>}
+
+        <button onClick={run} disabled={loading || !text.trim() || selected.length === 0}
+          style={{ padding:'12px 36px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity:(loading||!text.trim()||selected.length===0)?0.5:1, marginBottom:24 }}>
+          {loading ? `⏳ Translating to ${selected.length} languages…` : `🌍 Translate to ${selected.length} language${selected.length!==1?'s':''}`}
+        </button>
+
+        {results.length > 0 && (
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(320px, 1fr))', gap:14 }}>
+            {results.map((r: any) => {
+              const meta = ALL_LANGS.find(l => l.id === r.language);
+              return (
+                <div key={r.language} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                    <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>{meta?.flag} {r.language}</div>
+                    <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                      <span style={{ fontSize:10, color:'var(--fg-text3)' }}>{r.elapsed ? `${(r.elapsed/1000).toFixed(1)}s` : ''}</span>
+                      <button onClick={() => copy(r.language, r.translation)} style={{ padding:'4px 10px', background:copiedLang===r.language?'#16a34a':'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:6, color:copiedLang===r.language?'#fff':'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>{copiedLang===r.language?'✓':'📋'}</button>
+                    </div>
+                  </div>
+                  <div style={{ fontSize:13, color:'var(--fg-text)', lineHeight:1.7 }}>{r.translation}</div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
