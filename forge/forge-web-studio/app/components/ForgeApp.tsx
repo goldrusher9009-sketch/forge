@@ -27456,6 +27456,7 @@ function ForgeApp() {
             { id:'integrations', icon:'🔌', label:'Integrations' },
             { id:'notes',        icon:'📝', label:'Notes' },
             { id:'templates',    icon:'📋', label:'Templates' },
+            { id:'websearch',    icon:'🔍', label:'Web Search' },
             { id:'imagegen',     icon:'🎨', label:'Image Gen' },
             { id:'hermes',       icon:'⚡', label:'Auto Agent' },
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
@@ -27479,6 +27480,12 @@ function ForgeApp() {
             { id:'files',            icon:'📁',  label:'Files' },
             { id:'runs',             icon:'🏃',  label:'Run History' },
             { id:'hooks',            icon:'🪝',  label:'Automations' },
+            { id:'costdash',         icon:'💰',  label:'Cost Dashboard' },
+            { id:'ragknow',          icon:'📚',  label:'Knowledge Base' },
+            { id:'agentmulti',       icon:'🤖',  label:'Agent Hub' },
+            { id:'videoanal',        icon:'🎬',  label:'Video Analyzer' },
+            { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
+            { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
             <button key={tab.id} onClick={() => setMainTab(tab.id as any)} title={tab.label}
@@ -33045,6 +33052,9 @@ function ForgeApp() {
             { id:'satiregen', icon:'🃏', label:'Satire Writer', cat:'Fun' },
             { id:'bedtimestory', icon:'🌙', label:'Bedtime Story Gen', cat:'Fun' },
             { id:'secretadmirer', icon:'💘', label:'Secret Admirer Letter', cat:'Fun' },
+            { id:'videoanal', icon:'🎬', label:'Video Analyzer', cat:'Productivity' },
+            { id:'meetingtrans', icon:'🎙️', label:'Meeting Intelligence', cat:'Productivity' },
+            { id:'skillbuilder', icon:'🛠️', label:'Skill Builder', cat:'Productivity' },
           ];
           const cats = ['All','Career','Writing','Finance','Health','Learning','Creative','Legal','Relationships','Productivity','Business','Fun'];
           const [dtSearch, setDtSearch] = React.useState('');
@@ -35104,23 +35114,106 @@ function ForgeApp() {
         )}
 
         {/* Journal tab */}
-        {mainTab === 'imagegen' && (
-        <div className="p-6 space-y-4">
-          <h2 className="text-xl font-bold">🎨 Image Generation</h2>
-          <div className="bg-white rounded-xl p-4 shadow space-y-3">
-            <textarea id="imgPrompt" className="w-full border rounded p-2 text-sm" rows={3} placeholder="Describe an image to generate..."/>
-            <button onClick={async()=>{const p=(document.getElementById('imgPrompt') as any)?.value;if(!p)return;const r=await fetch(`${BACKEND}/api/image-generate`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},body:JSON.stringify({prompt:p})});const d=await r.json();if(d.image_url)setImageGen((prev:any)=>({...prev,rows:[d,...prev.rows]}));}} className="bg-purple-600 text-white px-4 py-2 rounded text-sm">Generate</button>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {imageGen.rows.map((r:any)=>(
-              <div key={r.id} className="bg-white rounded-xl p-3 shadow">
-                {r.image_url ? <img src={r.image_url} alt={r.prompt} className="w-full rounded mb-2"/> : <div className="h-32 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-sm">No API key</div>}
-                <p className="text-xs text-gray-500 truncate">{r.prompt}</p>
+        {mainTab === 'websearch' && (() => {
+          const [wsQuery, setWsQuery] = (window as any).__wsState || ['',(v:any)=>{ (window as any).__wsState=[v,(window as any).__wsState?.[1]]; }];
+          const [wsResults, setWsResults] = (window as any).__wsResultState || [[],(v:any)=>{ (window as any).__wsResultState=[v,(window as any).__wsResultState?.[1]]; }];
+          const [wsLoading, setWsLoading] = (window as any).__wsLoadState || [false,(v:any)=>{ (window as any).__wsLoadState=[v,(window as any).__wsLoadState?.[1]]; }];
+          const doSearch = async () => {
+            const q = (document.getElementById('wsInput') as HTMLInputElement)?.value?.trim();
+            if (!q) return;
+            (window as any).__wsState = [q, (window as any).__wsState?.[1]];
+            (window as any).__wsLoadState = [true, (window as any).__wsLoadState?.[1]];
+            try {
+              const tok = user?.token || localStorage.getItem('forge_token') || '';
+              const r = await fetch(`${BACKEND}/api/web-search`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`}, body: JSON.stringify({ query: q }) });
+              const d = await r.json();
+              (window as any).__wsResultState = [d.results || [], (window as any).__wsResultState?.[1]];
+            } catch {}
+            (window as any).__wsLoadState = [false, (window as any).__wsLoadState?.[1]];
+          };
+          return (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:760, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
+                <span style={{ fontSize:32 }}>🔍</span>
+                <div><h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Web Search</h1>
+                <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Search the web via DuckDuckGo — no tracking, no ads.</p></div>
               </div>
-            ))}
+              <div style={{ display:'flex', gap:10, marginBottom:24 }}>
+                <input id="wsInput" defaultValue="" onKeyDown={e=>e.key==='Enter'&&doSearch()}
+                  placeholder="Search anything…"
+                  style={{ flex:1, padding:'11px 16px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text)', fontSize:14 }} />
+                <button onClick={doSearch} style={{ padding:'11px 22px', background:'var(--fg-orange)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer' }}>Search</button>
+              </div>
+              {(window as any).__wsLoadState?.[0] && <div style={{ textAlign:'center', padding:40, color:'var(--fg-text3)' }}>Searching…</div>}
+              {((window as any).__wsResultState?.[0] || []).length > 0 && (
+                <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+                  {((window as any).__wsResultState?.[0] || []).map((r:any, i:number) => (
+                    <a key={i} href={r.url} target="_blank" rel="noreferrer"
+                      style={{ display:'block', padding:'16px 20px', background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, textDecoration:'none', transition:'border-color 0.15s' }}
+                      onMouseEnter={e=>(e.currentTarget.style.borderColor='var(--fg-orange)')}
+                      onMouseLeave={e=>(e.currentTarget.style.borderColor='var(--fg-border)')}>
+                      <div style={{ fontSize:15, fontWeight:700, color:'var(--fg-orange)', marginBottom:4 }}>{r.title}</div>
+                      {r.snippet && <div style={{ fontSize:13, color:'var(--fg-text2)', lineHeight:1.5, marginBottom:6 }}>{r.snippet}</div>}
+                      <div style={{ fontSize:11, color:'var(--fg-text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.url}</div>
+                    </a>
+                  ))}
+                </div>
+              )}
+              {((window as any).__wsResultState?.[0] || []).length === 0 && !(window as any).__wsLoadState?.[0] && (
+                <div style={{ textAlign:'center', padding:60, color:'var(--fg-text3)' }}>
+                  <div style={{ fontSize:48, marginBottom:12 }}>🔍</div>
+                  <div style={{ fontSize:15 }}>Enter a query to search the web</div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+          );
+        })()}
+        {mainTab === 'imagegen' && (() => {
+          const [igPrompt, setIgPrompt] = (window as any).__igPromptState || ['',(v:any)=>{ (window as any).__igPromptState=[v]; }];
+          const [igResult, setIgResult] = (window as any).__igResultState || [null,(v:any)=>{ (window as any).__igResultState=[v]; }];
+          const [igLoading, setIgLoading] = (window as any).__igLoadState || [false,(v:any)=>{ (window as any).__igLoadState=[v]; }];
+          const [igHistory, setIgHistory] = (window as any).__igHistState || [[],(v:any)=>{ (window as any).__igHistState=[v]; }];
+          const doGen = async () => {
+            const p = (document.getElementById('igPrompt') as HTMLTextAreaElement)?.value?.trim();
+            if (!p) return;
+            (window as any).__igLoadState = [true];
+            try {
+              const tok = user?.token || localStorage.getItem('forge_token') || '';
+              const r = await fetch(`${BACKEND}/api/image-gen`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`}, body: JSON.stringify({ prompt: p }) });
+              const d = await r.json();
+              (window as any).__igResultState = [d];
+              (window as any).__igHistState = [[d, ...((window as any).__igHistState?.[0]||[])].slice(0,12)];
+            } catch {}
+            (window as any).__igLoadState = [false];
+          };
+          return (
+          <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+            <div style={{ maxWidth:760, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:24 }}>
+                <span style={{ fontSize:32 }}>🎨</span>
+                <div><h1 style={{ margin:0, fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>Image Generation</h1>
+                <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Generate images with AI. Add a DALL·E API key for real generation.</p></div>
+              </div>
+              <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:24 }}>
+                <textarea id="igPrompt" rows={3} placeholder="Describe the image you want to generate…"
+                  style={{ width:'100%', padding:'10px 14px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, resize:'vertical', marginBottom:12 }} />
+                <button onClick={doGen} disabled={(window as any).__igLoadState?.[0]}
+                  style={{ padding:'10px 24px', background:'var(--fg-orange)', border:'none', borderRadius:9, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity:(window as any).__igLoadState?.[0]?0.6:1 }}>
+                  {(window as any).__igLoadState?.[0] ? 'Generating…' : '✨ Generate'}
+                </button>
+              </div>
+              {(window as any).__igResultState?.[0] && (
+                <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:24, textAlign:'center' }}>
+                  <img src={(window as any).__igResultState[0].url} alt={(window as any).__igResultState[0].prompt} style={{ maxWidth:'100%', borderRadius:10, marginBottom:12 }} />
+                  <div style={{ fontSize:13, color:'var(--fg-text3)' }}>{(window as any).__igResultState[0].message || (window as any).__igResultState[0].prompt}</div>
+                </div>
+              )}
+            </div>
+          </div>
+          );
+        })()}
       {mainTab === 'notificationbell' && (
         <div className="p-6 space-y-4">
           <div className="flex items-center justify-between">
@@ -51575,9 +51668,388 @@ function ForgeApp() {
 
 {(mainTab as string) === 'therapyjournal98' && <ForgeTab_therapyjournal98 />}
 
+{(mainTab as string) === 'costdash' && <ForgeTab_costdash />}
+{(mainTab as string) === 'ragknow' && <ForgeTab_ragknow />}
+{(mainTab as string) === 'agentmulti' && <ForgeTab_agentmulti />}
+{(mainTab as string) === 'videoanal' && <ForgeTab_videoanal />}
+{(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
+{(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
+
       </div>
     </div>
   );
 }
 
 export default ForgeApp;
+// ============================================================
+// NEW FEATURE TABS — Wave A/B/C (v1274+)
+// ============================================================
+
+function ForgeTab_costdash() {
+  const [data, setData] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : null;
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  React.useEffect(() => {
+    setLoading(true);
+    fetch(`${BACKEND}/api/cost-usage`, { headers: { Authorization: `Bearer ${tok}` } })
+      .then(r => r.json()).then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+  }, []);
+  const models = data?.by_model || [];
+  const total = data?.total_tokens || 0;
+  const totalCost = data?.total_cost_usd || 0;
+  const sessions = data?.recent_sessions || [];
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+      <div style={{ maxWidth:900, margin:'0 auto' }}>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:4 }}>💰 AI Cost & Usage Dashboard</h1>
+        <p style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:24 }}>Real-time token usage and cost breakdown across all models.</p>
+        {loading && <div style={{ color:'var(--fg-text3)', textAlign:'center', padding:40 }}>Loading usage data…</div>}
+        {!loading && (
+          <>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14, marginBottom:28 }}>
+              {[
+                { label:'Total Tokens', val: total.toLocaleString(), icon:'🔢' },
+                { label:'Est. Cost (USD)', val: `$${totalCost.toFixed(4)}`, icon:'💵' },
+                { label:'Sessions', val: data?.session_count || 0, icon:'🗂' },
+                { label:'Models Used', val: models.length, icon:'🤖' },
+              ].map(k => (
+                <div key={k.label} style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18 }}>
+                  <div style={{ fontSize:24, marginBottom:6 }}>{k.icon}</div>
+                  <div style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)' }}>{k.val}</div>
+                  <div style={{ fontSize:12, color:'var(--fg-text3)' }}>{k.label}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:20 }}>
+              <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:14 }}>Tokens by Model</div>
+              {models.length === 0 && <div style={{ color:'var(--fg-text3)', fontSize:13 }}>No model usage data yet. Start chatting to see stats.</div>}
+              {models.map((m: any) => {
+                const pct = total > 0 ? Math.round((m.tokens / total) * 100) : 0;
+                return (
+                  <div key={m.model} style={{ marginBottom:12 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:4 }}>
+                      <span style={{ color:'var(--fg-text)', fontWeight:600 }}>{m.model}</span>
+                      <span style={{ color:'var(--fg-text3)' }}>{m.tokens.toLocaleString()} tokens · ${m.cost_usd?.toFixed(4) || '0.0000'}</span>
+                    </div>
+                    <div style={{ height:6, background:'var(--fg-bg)', borderRadius:3 }}>
+                      <div style={{ height:6, borderRadius:3, background:'var(--fg-orange)', width:`${pct}%`, transition:'width 0.3s' }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+              <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:14 }}>Recent Sessions</div>
+              {sessions.length === 0 && <div style={{ color:'var(--fg-text3)', fontSize:13 }}>No sessions yet.</div>}
+              {sessions.map((s: any, i: number) => (
+                <div key={i} style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid var(--fg-border)', fontSize:12 }}>
+                  <span style={{ color:'var(--fg-text)' }}>{s.model}</span>
+                  <span style={{ color:'var(--fg-text3)' }}>{s.tokens?.toLocaleString()} tokens</span>
+                  <span style={{ color:'var(--fg-text3)' }}>{new Date(s.created_at).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_ragknow() {
+  const [docs, setDocs] = React.useState<any[]>([]);
+  const [question, setQuestion] = React.useState('');
+  const [answer, setAnswer] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [uploading, setUploading] = React.useState(false);
+  const [text, setText] = React.useState('');
+  const [docName, setDocName] = React.useState('');
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : null;
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const loadDocs = () => {
+    fetch(`${BACKEND}/api/rag-docs`, { headers: { Authorization: `Bearer ${tok}` } })
+      .then(r => r.json()).then(d => setDocs(d.data || [])).catch(() => {});
+  };
+  React.useEffect(() => { loadDocs(); }, []);
+  const upload = async () => {
+    if (!text.trim() || !docName.trim()) return;
+    setUploading(true);
+    await fetch(`${BACKEND}/api/rag-docs`, { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${tok}` }, body: JSON.stringify({ name: docName, content: text }) });
+    setText(''); setDocName(''); setUploading(false); loadDocs();
+  };
+  const ask = async () => {
+    if (!question.trim()) return;
+    setLoading(true); setAnswer('');
+    const r = await fetch(`${BACKEND}/api/rag-query`, { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${tok}` }, body: JSON.stringify({ question }) });
+    const d = await r.json();
+    setAnswer(d.answer || d.error || 'No answer'); setLoading(false);
+  };
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+      <div style={{ maxWidth:860, margin:'0 auto' }}>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:4 }}>📚 Knowledge Base</h1>
+        <p style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:24 }}>Upload documents, then ask AI questions grounded in your content.</p>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, marginBottom:24 }}>
+          <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:12 }}>📤 Add Document</div>
+            <input value={docName} onChange={e=>setDocName(e.target.value)} placeholder="Document name..." style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:8, boxSizing:'border-box' }} />
+            <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Paste document text here..." rows={6} style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', marginBottom:8 }} />
+            <button onClick={upload} disabled={uploading||!text.trim()||!docName.trim()} style={{ padding:'9px 20px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:uploading?0.5:1 }}>{uploading?'Uploading…':'+ Add to KB'}</button>
+          </div>
+          <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:12 }}>🗂 Documents ({docs.length})</div>
+            {docs.length === 0 && <div style={{ color:'var(--fg-text3)', fontSize:13 }}>No documents yet. Add one to get started.</div>}
+            <div style={{ display:'flex', flexDirection:'column', gap:8, maxHeight:200, overflowY:'auto' }}>
+              {docs.map((d:any) => (
+                <div key={d.id} style={{ display:'flex', justifyContent:'space-between', padding:'8px 12px', background:'var(--fg-bg)', borderRadius:8, fontSize:12 }}>
+                  <span style={{ color:'var(--fg-text)', fontWeight:600 }}>📄 {d.name}</span>
+                  <span style={{ color:'var(--fg-text3)' }}>{d.word_count || 0} words</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+          <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:12 }}>🔍 Ask Your Knowledge Base</div>
+          <div style={{ display:'flex', gap:10 }}>
+            <input value={question} onChange={e=>setQuestion(e.target.value)} onKeyDown={e=>e.key==='Enter'&&ask()} placeholder="Ask a question about your documents..." style={{ flex:1, padding:'10px 14px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, outline:'none' }} />
+            <button onClick={ask} disabled={loading||!question.trim()||docs.length===0} style={{ padding:'10px 22px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:loading||(docs.length===0)?0.5:1 }}>{loading?'…':'Ask'}</button>
+          </div>
+          {docs.length === 0 && <div style={{ fontSize:12, color:'var(--fg-text3)', marginTop:8 }}>⚠ Add documents first to enable Q&A.</div>}
+          {answer && (
+            <div style={{ marginTop:16, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:16 }}>
+              <div style={{ fontSize:11, color:'var(--fg-text3)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8 }}>Answer</div>
+              <div style={{ fontSize:14, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{answer}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_agentmulti() {
+  const [sessions, setSessions] = React.useState<any[]>([]);
+  const [newGoal, setNewGoal] = React.useState('');
+  const [launching, setLaunching] = React.useState(false);
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : null;
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const load = () => {
+    fetch(`${BACKEND}/api/autonomy/status`, { headers: { Authorization: `Bearer ${tok}` } })
+      .then(r => r.json()).then(d => setSessions(d.recent || [])).catch(() => {});
+  };
+  React.useEffect(() => { load(); const t = setInterval(load, 8000); return () => clearInterval(t); }, []);
+  const launch = async () => {
+    if (!newGoal.trim()) return;
+    setLaunching(true);
+    await fetch(`${BACKEND}/api/autonomy/run`, { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${tok}` }, body: JSON.stringify({ goal: newGoal }) });
+    setNewGoal(''); setLaunching(false); setTimeout(load, 1500);
+  };
+  const statusColor: Record<string,string> = { running:'#22c55e', completed:'#3b82f6', failed:'#ef4444', pending:'#f59e0b' };
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+      <div style={{ maxWidth:860, margin:'0 auto' }}>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:4 }}>🤖 Agent Multiplexer</h1>
+        <p style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:24 }}>Launch and monitor multiple autonomous agent sessions simultaneously.</p>
+        <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:24 }}>
+          <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:12 }}>🚀 Launch New Agent</div>
+          <div style={{ display:'flex', gap:10 }}>
+            <input value={newGoal} onChange={e=>setNewGoal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&launch()} placeholder="Describe the agent's goal..." style={{ flex:1, padding:'10px 14px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, outline:'none' }} />
+            <button onClick={launch} disabled={launching||!newGoal.trim()} style={{ padding:'10px 22px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:launching?0.5:1 }}>{launching?'Launching…':'▶ Launch'}</button>
+          </div>
+        </div>
+        <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>Sessions ({sessions.length})</div>
+            <button onClick={load} style={{ padding:'5px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', fontSize:12, cursor:'pointer' }}>↻ Refresh</button>
+          </div>
+          {sessions.length === 0 && <div style={{ color:'var(--fg-text3)', fontSize:13, textAlign:'center', padding:30 }}>No sessions yet. Launch your first agent above.</div>}
+          {sessions.map((s: any) => (
+            <div key={s.id} style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14, marginBottom:10 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:600, color:'var(--fg-text)', marginBottom:4 }}>{s.goal}</div>
+                  <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{new Date(s.created_at).toLocaleString()}</div>
+                </div>
+                <span style={{ padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:700, background:`${statusColor[s.status] || '#6b7280'}22`, color: statusColor[s.status] || '#6b7280', flexShrink:0, marginLeft:12 }}>{s.status}</span>
+              </div>
+              {s.status === 'running' && (
+                <div style={{ marginTop:10 }}>
+                  <div style={{ fontSize:11, color:'var(--fg-text3)', marginBottom:4 }}>Progress: {s.steps_done || 0} / {s.steps_total || '?'}</div>
+                  <div style={{ height:4, background:'var(--fg-bg2)', borderRadius:2 }}>
+                    <div style={{ height:4, borderRadius:2, background:'#22c55e', width:`${s.steps_total ? Math.round((s.steps_done/s.steps_total)*100) : 50}%`, transition:'width 0.3s' }} />
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_videoanal() {
+  const [url, setUrl] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [mode, setMode] = React.useState<'summary'|'transcript'|'insights'|'questions'>('summary');
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : null;
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const analyze = async () => {
+    if (!url.trim()) return;
+    setLoading(true); setResult('');
+    const r = await fetch(`${BACKEND}/api/dream-tool`, { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${tok}` }, body: JSON.stringify({ tool:'Video Analyzer', toolId:'videoanal', input: `Video URL: ${url}\n\nTask: ${mode}`, model:'claude-haiku-4-5' }) });
+    const d = await r.json(); setResult(d.result || d.error || ''); setLoading(false);
+  };
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+      <div style={{ maxWidth:800, margin:'0 auto' }}>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:4 }}>🎬 Video Analyzer</h1>
+        <p style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:24 }}>Paste any YouTube or video URL — get AI-powered summaries, insights, and Q&A.</p>
+        <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:20 }}>
+          <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="Paste YouTube URL, Loom, or any video link..." style={{ width:'100%', padding:'12px 14px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, outline:'none', boxSizing:'border-box', marginBottom:14 }} />
+          <div style={{ display:'flex', gap:8, marginBottom:14, flexWrap:'wrap' }}>
+            {(['summary','transcript','insights','questions'] as const).map(m => (
+              <button key={m} onClick={()=>setMode(m)} style={{ padding:'7px 16px', borderRadius:20, border:'none', background:mode===m?'var(--fg-orange)':'var(--fg-bg)', color:mode===m?'#fff':'var(--fg-text3)', fontSize:12, fontWeight:600, cursor:'pointer', textTransform:'capitalize' }}>{m}</button>
+            ))}
+          </div>
+          <button onClick={analyze} disabled={loading||!url.trim()} style={{ width:'100%', padding:'12px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity:loading?0.5:1 }}>{loading?'🎬 Analyzing…':'🎬 Analyze Video'}</button>
+        </div>
+        {result && (
+          <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+            <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12 }}>Analysis Result</div>
+            <div style={{ fontSize:14, color:'var(--fg-text)', lineHeight:1.75, whiteSpace:'pre-wrap' }}>{result}</div>
+          </div>
+        )}
+        {!result && !loading && (
+          <div style={{ background:'var(--fg-bg2)', border:'1px dashed var(--fg-border)', borderRadius:12, padding:32, textAlign:'center', color:'var(--fg-text3)' }}>
+            <div style={{ fontSize:40, marginBottom:12 }}>🎬</div>
+            <div style={{ fontSize:14 }}>Paste a video URL above to get started</div>
+            <div style={{ fontSize:12, marginTop:8 }}>Works with YouTube, Loom, Vimeo, and more</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_meetingtrans() {
+  const [transcript, setTranscript] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [mode, setMode] = React.useState<'summary'|'actions'|'decisions'|'followup'>('summary');
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : null;
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const run = async () => {
+    if (!transcript.trim()) return;
+    setLoading(true); setResult('');
+    const prompts: Record<string,string> = {
+      summary: 'Write a concise meeting summary with key points discussed.',
+      actions: 'Extract all action items with owner and deadline if mentioned.',
+      decisions: 'List all decisions made in this meeting.',
+      followup: 'Draft a professional follow-up email summarizing the meeting.',
+    };
+    const r = await fetch(`${BACKEND}/api/dream-tool`, { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${tok}` }, body: JSON.stringify({ tool:'Meeting Transcriber', toolId:'meetingtrans', input: `${prompts[mode]}\n\nMeeting Transcript:\n${transcript}`, model:'claude-haiku-4-5' }) });
+    const d = await r.json(); setResult(d.result || d.error || ''); setLoading(false);
+  };
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+      <div style={{ maxWidth:800, margin:'0 auto' }}>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:4 }}>🎙️ Meeting Intelligence</h1>
+        <p style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:24 }}>Paste a meeting transcript → get summaries, action items, decisions, and follow-up emails instantly.</p>
+        <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20, marginBottom:20 }}>
+          <div style={{ display:'flex', gap:8, marginBottom:14, flexWrap:'wrap' }}>
+            {(['summary','actions','decisions','followup'] as const).map(m => (
+              <button key={m} onClick={()=>setMode(m)} style={{ padding:'7px 16px', borderRadius:20, border:'none', background:mode===m?'var(--fg-orange)':'var(--fg-bg)', color:mode===m?'#fff':'var(--fg-text3)', fontSize:12, fontWeight:600, cursor:'pointer', textTransform:'capitalize' }}>
+                {m==='followup'?'Follow-up Email':m.charAt(0).toUpperCase()+m.slice(1)}
+              </button>
+            ))}
+          </div>
+          <textarea value={transcript} onChange={e=>setTranscript(e.target.value)} placeholder="Paste your meeting transcript or notes here..." rows={10} style={{ width:'100%', padding:'12px 14px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:14, resize:'vertical', outline:'none', boxSizing:'border-box', marginBottom:12 }} />
+          <button onClick={run} disabled={loading||!transcript.trim()} style={{ width:'100%', padding:'12px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity:loading?0.5:1 }}>{loading?'🎙️ Processing…':'🎙️ Analyze Meeting'}</button>
+        </div>
+        {result && (
+          <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:12 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'var(--fg-text3)', textTransform:'uppercase', letterSpacing:'0.08em' }}>Result</div>
+              <button onClick={()=>navigator.clipboard?.writeText(result)} style={{ padding:'4px 10px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:6, color:'var(--fg-text3)', fontSize:11, cursor:'pointer' }}>Copy</button>
+            </div>
+            <div style={{ fontSize:14, color:'var(--fg-text)', lineHeight:1.75, whiteSpace:'pre-wrap' }}>{result}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_skillbuilder() {
+  const [name, setName] = React.useState('');
+  const [icon, setIcon] = React.useState('🧩');
+  const [prompt, setPrompt] = React.useState('');
+  const [cat, setCat] = React.useState('Custom');
+  const [saved, setSaved] = React.useState<any[]>(() => { try { return JSON.parse(localStorage.getItem('forge_custom_skills_v2') || '[]'); } catch { return []; } });
+  const [testing, setTesting] = React.useState(false);
+  const [testInput, setTestInput] = React.useState('');
+  const [testOut, setTestOut] = React.useState('');
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : null;
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const save = () => {
+    if (!name.trim() || !prompt.trim()) return;
+    const skill = { id: 'custom_' + Date.now(), name, icon, prompt, cat, created: new Date().toISOString() };
+    const next = [skill, ...saved]; setSaved(next);
+    localStorage.setItem('forge_custom_skills_v2', JSON.stringify(next));
+    setName(''); setPrompt(''); setIcon('🧩'); setTestOut('');
+  };
+  const runTest = async () => {
+    if (!prompt.trim() || !testInput.trim()) return;
+    setTesting(true); setTestOut('');
+    const r = await fetch(`${BACKEND}/api/dream-tool`, { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${tok}` }, body: JSON.stringify({ tool:name||'Custom Skill', toolId:'skillbuilder', input: `${prompt}\n\nUser Input:\n${testInput}`, model:'claude-haiku-4-5' }) });
+    const d = await r.json(); setTestOut(d.result || d.error || ''); setTesting(false);
+  };
+  const del = (id: string) => { const next = saved.filter((s:any) => s.id !== id); setSaved(next); localStorage.setItem('forge_custom_skills_v2', JSON.stringify(next)); };
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:28, background:'var(--fg-bg)' }}>
+      <div style={{ maxWidth:860, margin:'0 auto' }}>
+        <h1 style={{ fontSize:22, fontWeight:800, color:'var(--fg-text)', marginBottom:4 }}>🛠️ Skill Builder</h1>
+        <p style={{ color:'var(--fg-text3)', fontSize:13, marginBottom:24 }}>Create custom AI skills with system prompts. Test them instantly, save to your library.</p>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, marginBottom:24 }}>
+          <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:14 }}>✍️ Create Skill</div>
+            <div style={{ display:'flex', gap:8, marginBottom:10 }}>
+              <input value={icon} onChange={e=>setIcon(e.target.value)} style={{ width:50, padding:'8px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:20, textAlign:'center' }} />
+              <input value={name} onChange={e=>setName(e.target.value)} placeholder="Skill name..." style={{ flex:1, padding:'8px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13 }} />
+            </div>
+            <input value={cat} onChange={e=>setCat(e.target.value)} placeholder="Category..." style={{ width:'100%', padding:'8px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, marginBottom:10, boxSizing:'border-box' }} />
+            <textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Write the AI system prompt for this skill. Example: 'You are a legal document analyzer. Review the document and identify risks, missing clauses, and red flags...'" rows={6} style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', marginBottom:10 }} />
+            <button onClick={save} disabled={!name.trim()||!prompt.trim()} style={{ width:'100%', padding:'10px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:(!name.trim()||!prompt.trim())?0.5:1 }}>💾 Save Skill</button>
+          </div>
+          <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:14 }}>⚡ Test Live</div>
+            <textarea value={testInput} onChange={e=>setTestInput(e.target.value)} placeholder="Enter test input..." rows={4} style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box', marginBottom:10 }} />
+            <button onClick={runTest} disabled={testing||!prompt.trim()||!testInput.trim()} style={{ width:'100%', padding:'10px', background:'linear-gradient(135deg,var(--fg-orange),#f97316)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', marginBottom:12, opacity:testing?0.5:1 }}>{testing?'Running…':'▶ Test Skill'}</button>
+            {testOut && <div style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:12, fontSize:13, color:'var(--fg-text)', lineHeight:1.6, whiteSpace:'pre-wrap', maxHeight:200, overflowY:'auto' }}>{testOut}</div>}
+          </div>
+        </div>
+        <div style={{ background:'var(--fg-bg2)', border:'1px solid var(--fg-border)', borderRadius:12, padding:20 }}>
+          <div style={{ fontSize:14, fontWeight:700, color:'var(--fg-text)', marginBottom:14 }}>My Skills ({saved.length})</div>
+          {saved.length === 0 && <div style={{ color:'var(--fg-text3)', fontSize:13 }}>No custom skills yet. Create one above.</div>}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:12 }}>
+            {saved.map((s:any) => (
+              <div key={s.id} style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                  <span style={{ fontSize:24 }}>{s.icon}</span>
+                  <button onClick={()=>del(s.id)} style={{ background:'none', border:'none', color:'#ef4444', cursor:'pointer', fontSize:14 }}>✕</button>
+                </div>
+                <div style={{ fontSize:13, fontWeight:700, color:'var(--fg-text)', marginBottom:4 }}>{s.name}</div>
+                <div style={{ fontSize:10, color:'var(--fg-text3)', background:'var(--fg-bg2)', padding:'2px 6px', borderRadius:10, display:'inline-block', marginBottom:8 }}>{s.cat}</div>
+                <div style={{ fontSize:11, color:'var(--fg-text3)', lineHeight:1.5, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' as any }}>{s.prompt}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
