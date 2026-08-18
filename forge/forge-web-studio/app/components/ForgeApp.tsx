@@ -27615,6 +27615,8 @@ function ForgeApp() {
             { id:'summarize',        icon:'⚡',  label:'Summarizer' },
             { id:'ideagen',          icon:'💡',  label:'Idea Generator' },
             { id:'meetingnotes',     icon:'📋',  label:'Meeting Notes' },
+            { id:'contractanalyze',  icon:'⚖️',  label:'Contract Analyzer' },
+            { id:'productdesc',      icon:'🛒',  label:'Product Writer' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51720,6 +51722,8 @@ function ForgeApp() {
 {(mainTab as string) === 'summarize' && <ForgeTab_summarize />}
 {(mainTab as string) === 'ideagen' && <ForgeTab_ideagen />}
 {(mainTab as string) === 'meetingnotes' && <ForgeTab_meetingnotes />}
+{(mainTab as string) === 'contractanalyze' && <ForgeTab_contractanalyze />}
+{(mainTab as string) === 'productdesc' && <ForgeTab_productdesc />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51801,6 +51805,313 @@ function ForgeTab_costdash() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function ForgeTab_contractanalyze() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const CONTRACT_TYPES = ['general','nda','employment','saas','freelance','partnership','lease','service','purchase','licensing'];
+  const [contract, setContract] = React.useState('');
+  const [contractType, setContractType] = React.useState('general');
+  const [perspective, setPerspective] = React.useState('both');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [activeTab, setActiveTab] = React.useState('overview');
+
+  const analyze = async () => {
+    if (contract.trim().length < 50) { setError('Please paste contract text (min 50 chars)'); return; }
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const token = localStorage.getItem('forge_token');
+      const r = await fetch(`${BACKEND}/api/contract-analyze`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ contract, contractType, perspective }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d.result);
+      setActiveTab('overview');
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const riskColor: Record<string, string> = { Low:'#059669', Medium:'#d97706', High:'#dc2626', Critical:'#7f1d1d' };
+  const riskBg: Record<string, string> = { Low:'#ecfdf5', Medium:'#fefce8', High:'#fef2f2', Critical:'#fee2e2' };
+
+  return (
+    <div style={{ padding:'24px', maxWidth:'1000px', margin:'0 auto', fontFamily:'system-ui,sans-serif' }}>
+      <div style={{ marginBottom:'24px' }}>
+        <h2 style={{ fontSize:'22px', fontWeight:700, color:'#1e293b', margin:0 }}>⚖️ Contract Analyzer</h2>
+        <p style={{ color:'#64748b', margin:'4px 0 0', fontSize:'14px' }}>AI-powered contract review — red flags, key terms, obligations (not legal advice)</p>
+      </div>
+
+      {!result ? (
+        <div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'12px' }}>
+            <div>
+              <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Contract Type</label>
+              <select value={contractType} onChange={e => setContractType(e.target.value)} style={{ width:'100%', padding:'8px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', background:'#fff' }}>
+                {CONTRACT_TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Analyze From Perspective</label>
+              <select value={perspective} onChange={e => setPerspective(e.target.value)} style={{ width:'100%', padding:'8px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', background:'#fff' }}>
+                <option value="both">Both Parties</option>
+                <option value="buyer">Buyer / Client</option>
+                <option value="seller">Seller / Vendor</option>
+                <option value="employee">Employee</option>
+                <option value="employer">Employer</option>
+              </select>
+            </div>
+          </div>
+          <div style={{ marginBottom:'16px' }}>
+            <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Contract Text *</label>
+            <textarea value={contract} onChange={e => setContract(e.target.value)} rows={16}
+              placeholder="Paste the full contract text here..."
+              style={{ width:'100%', padding:'12px 14px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'13px', resize:'vertical', boxSizing:'border-box', fontFamily:'monospace', lineHeight:1.6 }} />
+          </div>
+          <div style={{ marginBottom:'12px', padding:'10px 14px', background:'#fefce8', border:'1px solid #fde68a', borderRadius:'8px', fontSize:'12px', color:'#92400e' }}>
+            ⚠️ This is AI analysis for informational purposes only — not legal advice. Always consult a qualified attorney.
+          </div>
+          <button onClick={analyze} disabled={loading || contract.trim().length < 50} style={{
+            padding:'10px 28px', background: loading ? '#94a3b8' : '#6366f1', color:'#fff', border:'none', borderRadius:'8px',
+            cursor: loading ? 'not-allowed' : 'pointer', fontSize:'14px', fontWeight:600,
+          }}>{loading ? '⚖️ Analyzing...' : '⚖️ Analyze Contract'}</button>
+          {error && <div style={{ marginTop:'12px', padding:'10px 14px', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'8px', color:'#dc2626', fontSize:'13px' }}>{error}</div>}
+        </div>
+      ) : (
+        <div>
+          {/* Risk header */}
+          <div style={{ display:'grid', gridTemplateColumns:'auto 1fr auto', gap:'20px', alignItems:'center', marginBottom:'20px', padding:'16px 20px', background: riskBg[result.overallRisk] || '#f8fafc', border:`1px solid ${result.overallRisk === 'High' || result.overallRisk === 'Critical' ? '#fca5a5' : '#e2e8f0'}`, borderRadius:'12px' }}>
+            <div style={{ textAlign:'center' }}>
+              <div style={{ fontSize:'28px', fontWeight:800, color: riskColor[result.overallRisk] || '#374151' }}>{result.overallRisk}</div>
+              <div style={{ fontSize:'11px', color:'#64748b', fontWeight:600 }}>RISK LEVEL</div>
+            </div>
+            <div>
+              <div style={{ fontSize:'14px', fontWeight:700, color:'#1e293b', marginBottom:'4px' }}>{result.contractType}</div>
+              <div style={{ fontSize:'13px', color:'#64748b', lineHeight:1.5 }}>{result.executiveSummary}</div>
+            </div>
+            <button onClick={() => setResult(null)} style={{ padding:'7px 14px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'8px', cursor:'pointer', fontSize:'13px', color:'#64748b' }}>← New</button>
+          </div>
+
+          {/* Tabs */}
+          <div style={{ display:'flex', gap:'4px', marginBottom:'20px', borderBottom:'2px solid #e2e8f0' }}>
+            {['overview','redflags','obligations','terms'].map(t => (
+              <button key={t} onClick={() => setActiveTab(t)} style={{
+                padding:'8px 16px', border:'none', borderBottom: activeTab === t ? '2px solid #6366f1' : '2px solid transparent',
+                background:'none', cursor:'pointer', fontSize:'13px', fontWeight: activeTab === t ? 700 : 400,
+                color: activeTab === t ? '#4f46e5' : '#6b7280', textTransform:'capitalize', marginBottom:'-2px',
+              }}>{t === 'redflags' ? '🚩 Red Flags' : t === 'obligations' ? '📋 Obligations' : t === 'terms' ? '📌 Key Terms' : '📊 Overview'}</button>
+            ))}
+          </div>
+
+          {activeTab === 'overview' && (
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px' }}>
+              {[
+                { label:'Payment Terms', value: result.paymentTerms },
+                { label:'Termination', value: result.terminationConditions },
+                { label:'IP Ownership', value: result.ipOwnership },
+                { label:'Liability Limits', value: result.liabilityLimitations },
+              ].map(item => item.value ? (
+                <div key={item.label} style={{ padding:'14px 16px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'10px' }}>
+                  <div style={{ fontSize:'11px', fontWeight:700, color:'#64748b', marginBottom:'6px' }}>{item.label.toUpperCase()}</div>
+                  <div style={{ fontSize:'13px', color:'#374151', lineHeight:1.5 }}>{item.value}</div>
+                </div>
+              ) : null)}
+              {result.missingClauses?.length > 0 && (
+                <div style={{ gridColumn:'1/-1', padding:'14px 16px', background:'#fefce8', border:'1px solid #fde68a', borderRadius:'10px' }}>
+                  <div style={{ fontSize:'11px', fontWeight:700, color:'#92400e', marginBottom:'8px' }}>⚠️ MISSING CLAUSES</div>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                    {result.missingClauses.map((c: string, i: number) => <span key={i} style={{ padding:'4px 10px', background:'#fde68a', color:'#78350f', borderRadius:'12px', fontSize:'12px' }}>{c}</span>)}
+                  </div>
+                </div>
+              )}
+              {result.negotiationLeverage?.length > 0 && (
+                <div style={{ gridColumn:'1/-1', padding:'14px 16px', background:'#f0f9ff', border:'1px solid #7dd3fc', borderRadius:'10px' }}>
+                  <div style={{ fontSize:'11px', fontWeight:700, color:'#0c4a6e', marginBottom:'8px' }}>💪 NEGOTIATION LEVERAGE POINTS</div>
+                  {result.negotiationLeverage.map((l: string, i: number) => <div key={i} style={{ fontSize:'13px', color:'#075985', padding:'3px 0', display:'flex', gap:'8px' }}><span>•</span><span>{l}</span></div>)}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'redflags' && (
+            <div>
+              {result.redFlags?.length > 0 ? result.redFlags.map((flag: any, i: number) => (
+                <div key={i} style={{ marginBottom:'12px', padding:'14px 16px', background: riskBg[flag.severity] || '#f8fafc', border:`1px solid ${flag.severity === 'High' || flag.severity === 'Critical' ? '#fca5a5' : '#e2e8f0'}`, borderRadius:'10px' }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'6px' }}>
+                    <div style={{ fontSize:'14px', fontWeight:700, color:'#1e293b' }}>{flag.issue}</div>
+                    <span style={{ padding:'2px 10px', borderRadius:'12px', fontSize:'11px', fontWeight:700, color:'#fff', background: riskColor[flag.severity] || '#6b7280' }}>{flag.severity}</span>
+                  </div>
+                  {flag.clause && <div style={{ fontSize:'12px', color:'#64748b', marginBottom:'6px' }}>Clause: {flag.clause}</div>}
+                  <div style={{ fontSize:'13px', color:'#374151' }}>→ {flag.recommendation}</div>
+                </div>
+              )) : <div style={{ color:'#94a3b8', fontSize:'14px' }}>No major red flags identified.</div>}
+            </div>
+          )}
+
+          {activeTab === 'obligations' && (
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px' }}>
+              {Object.entries(result.partyObligations || {}).map(([party, obligations]: [string, any]) => (
+                <div key={party} style={{ padding:'16px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'10px' }}>
+                  <div style={{ fontSize:'12px', fontWeight:700, color:'#374151', marginBottom:'10px', textTransform:'uppercase' }}>{party.replace('party', 'Party ')}</div>
+                  {(obligations as string[]).map((o: string, i: number) => <div key={i} style={{ fontSize:'13px', color:'#475569', padding:'5px 0', borderTop: i > 0 ? '1px solid #e2e8f0' : 'none', display:'flex', gap:'8px' }}><span>•</span><span>{o}</span></div>)}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'terms' && (
+            <div>
+              {result.keyTerms?.map((term: any, i: number) => (
+                <div key={i} style={{ marginBottom:'10px', padding:'14px 16px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'10px' }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'4px' }}>
+                    <div style={{ fontSize:'14px', fontWeight:700, color:'#1e293b' }}>{term.term}</div>
+                    {term.location && <div style={{ fontSize:'12px', color:'#94a3b8' }}>{term.location}</div>}
+                  </div>
+                  <div style={{ fontSize:'13px', color:'#475569', lineHeight:1.5 }}>{term.summary}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ marginTop:'16px', padding:'10px 14px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'8px', fontSize:'11px', color:'#94a3b8' }}>
+            {result.disclaimer}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForgeTab_productdesc() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const PLATFORMS = [
+    { id:'amazon', label:'Amazon', icon:'📦' },
+    { id:'shopify', label:'Shopify', icon:'🛍️' },
+    { id:'ebay', label:'eBay', icon:'🔨' },
+    { id:'etsy', label:'Etsy', icon:'🎨' },
+    { id:'general_seo', label:'SEO Page', icon:'🔍' },
+    { id:'social_media', label:'Social Media', icon:'📱' },
+  ];
+  const TONES = ['professional','friendly','luxury','playful','urgent','minimalist','storytelling'];
+  const [productName, setProductName] = React.useState('');
+  const [features, setFeatures] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [price, setPrice] = React.useState('');
+  const [platform, setPlatform] = React.useState('general_seo');
+  const [tone, setTone] = React.useState('professional');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [copied, setCopied] = React.useState(false);
+
+  const generate = async () => {
+    if (!productName.trim() || !features.trim()) { setError('Product name and features are required'); return; }
+    setLoading(true); setError(''); setResult('');
+    try {
+      const token = localStorage.getItem('forge_token');
+      const r = await fetch(`${BACKEND}/api/product-desc`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ productName, features, targetAudience: audience, tone, platform, price }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d.result);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const copy = () => {
+    navigator.clipboard.writeText(result);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{ padding:'24px', maxWidth:'900px', margin:'0 auto', fontFamily:'system-ui,sans-serif' }}>
+      <div style={{ marginBottom:'24px' }}>
+        <h2 style={{ fontSize:'22px', fontWeight:700, color:'#1e293b', margin:0 }}>🛒 Product Description Writer</h2>
+        <p style={{ color:'#64748b', margin:'4px 0 0', fontSize:'14px' }}>Platform-optimized product copy for Amazon, Shopify, eBay, Etsy, SEO, and Social</p>
+      </div>
+
+      {/* Platform */}
+      <div style={{ marginBottom:'16px' }}>
+        <div style={{ fontSize:'13px', fontWeight:600, color:'#374151', marginBottom:'8px' }}>Platform</div>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:'8px' }}>
+          {PLATFORMS.map(p => (
+            <button key={p.id} onClick={() => setPlatform(p.id)} style={{
+              padding:'8px 16px', borderRadius:'20px', border:'2px solid', cursor:'pointer', fontSize:'13px',
+              borderColor: platform === p.id ? '#6366f1' : '#e5e7eb',
+              background: platform === p.id ? '#eef2ff' : '#fff',
+              color: platform === p.id ? '#4f46e5' : '#6b7280', fontWeight: platform === p.id ? 700 : 400,
+            }}>{p.icon} {p.label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tone */}
+      <div style={{ marginBottom:'16px' }}>
+        <div style={{ fontSize:'13px', fontWeight:600, color:'#374151', marginBottom:'8px' }}>Tone</div>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+          {TONES.map(t => (
+            <button key={t} onClick={() => setTone(t)} style={{
+              padding:'5px 14px', borderRadius:'14px', border:'1.5px solid', cursor:'pointer', fontSize:'12px', textTransform:'capitalize',
+              borderColor: tone === t ? '#10b981' : '#e5e7eb',
+              background: tone === t ? '#ecfdf5' : '#fff',
+              color: tone === t ? '#059669' : '#6b7280', fontWeight: tone === t ? 600 : 400,
+            }}>{t}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Fields */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'12px' }}>
+        <div>
+          <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Product Name *</label>
+          <input value={productName} onChange={e => setProductName(e.target.value)} placeholder="e.g. UltraGrip Pro Running Shoes" style={{ width:'100%', padding:'9px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', boxSizing:'border-box' }} />
+        </div>
+        <div>
+          <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Price (optional)</label>
+          <input value={price} onChange={e => setPrice(e.target.value)} placeholder="e.g. $49.99" style={{ width:'100%', padding:'9px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', boxSizing:'border-box' }} />
+        </div>
+      </div>
+      <div style={{ marginBottom:'12px' }}>
+        <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Target Audience (optional)</label>
+        <input value={audience} onChange={e => setAudience(e.target.value)} placeholder="e.g. Amateur marathon runners aged 25-45 who prioritize comfort" style={{ width:'100%', padding:'9px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', boxSizing:'border-box' }} />
+      </div>
+      <div style={{ marginBottom:'16px' }}>
+        <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Product Features & Details *</label>
+        <textarea value={features} onChange={e => setFeatures(e.target.value)} rows={5}
+          placeholder="List key features, specs, materials, dimensions, what's included, unique advantages...&#10;e.g. Carbon fiber sole, memory foam insole, water-resistant upper, 3 color options, sizes 6-14, machine washable"
+          style={{ width:'100%', padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', resize:'vertical', boxSizing:'border-box', fontFamily:'inherit' }} />
+      </div>
+
+      <button onClick={generate} disabled={loading || !productName.trim() || !features.trim()} style={{
+        padding:'10px 24px', background: loading ? '#94a3b8' : '#6366f1', color:'#fff', border:'none', borderRadius:'8px',
+        cursor: loading ? 'not-allowed' : 'pointer', fontSize:'14px', fontWeight:600,
+      }}>{loading ? '✍️ Writing...' : `✍️ Write for ${PLATFORMS.find(p => p.id === platform)?.label || 'Platform'}`}</button>
+
+      {error && <div style={{ marginTop:'12px', padding:'10px 14px', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'8px', color:'#dc2626', fontSize:'13px' }}>{error}</div>}
+
+      {result && (
+        <div style={{ marginTop:'20px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px' }}>
+            <div style={{ fontSize:'14px', fontWeight:600, color:'#374151' }}>Generated Copy — {PLATFORMS.find(p => p.id === platform)?.label}</div>
+            <div style={{ display:'flex', gap:'8px' }}>
+              <button onClick={copy} style={{ padding:'6px 14px', background: copied ? '#ecfdf5' : '#f1f5f9', border:'1px solid #e2e8f0', borderRadius:'6px', cursor:'pointer', fontSize:'12px', color: copied ? '#059669' : '#475569' }}>
+                {copied ? '✓ Copied!' : '📋 Copy'}
+              </button>
+              <button onClick={generate} style={{ padding:'6px 14px', background:'#f1f5f9', border:'1px solid #e2e8f0', borderRadius:'6px', cursor:'pointer', fontSize:'12px', color:'#6366f1' }}>↻ Regenerate</button>
+            </div>
+          </div>
+          <div style={{ padding:'20px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'12px' }}>
+            <pre style={{ whiteSpace:'pre-wrap', fontFamily:'inherit', fontSize:'14px', color:'#1e293b', margin:0, lineHeight:1.8 }}>{result}</pre>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
