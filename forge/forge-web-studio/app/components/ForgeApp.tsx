@@ -27607,6 +27607,8 @@ function ForgeApp() {
             { id:'codeplay',         icon:'🖥',   label:'Code Playground' },
             { id:'extract',          icon:'🗂',   label:'Data Extractor' },
             { id:'translate',        icon:'🌍',  label:'Translate Hub' },
+            { id:'emailcompose',     icon:'✉️',  label:'Email Composer' },
+            { id:'sqlgen',           icon:'🗄️',  label:'SQL Generator' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51704,6 +51706,8 @@ function ForgeApp() {
 {(mainTab as string) === 'codeplay' && <ForgeTab_codeplay />}
 {(mainTab as string) === 'extract' && <ForgeTab_extract />}
 {(mainTab as string) === 'translate' && <ForgeTab_translate />}
+{(mainTab as string) === 'emailcompose' && <ForgeTab_emailcompose />}
+{(mainTab as string) === 'sqlgen' && <ForgeTab_sqlgen />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51785,6 +51789,165 @@ function ForgeTab_costdash() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function ForgeTab_emailcompose() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const EMAIL_TYPES = [
+    { id:'cold_outreach', label:'Cold Outreach', icon:'📬' },
+    { id:'follow_up', label:'Follow Up', icon:'🔁' },
+    { id:'apology', label:'Apology', icon:'🙏' },
+    { id:'formal', label:'Formal', icon:'👔' },
+    { id:'casual', label:'Casual', icon:'😊' },
+    { id:'thank_you', label:'Thank You', icon:'💛' },
+    { id:'complaint', label:'Complaint', icon:'⚠️' },
+    { id:'proposal', label:'Proposal', icon:'📋' },
+    { id:'introduction', label:'Introduction', icon:'👋' },
+    { id:'newsletter', label:'Newsletter', icon:'📰' },
+  ];
+  const TONES = ['professional','friendly','authoritative','empathetic','persuasive','direct'];
+  const [emailType, setEmailType] = React.useState('formal');
+  const [tone, setTone] = React.useState('professional');
+  const [context, setContext] = React.useState('');
+  const [recipientName, setRecipientName] = React.useState('');
+  const [senderName, setSenderName] = React.useState('');
+  const [desiredSubject, setDesiredSubject] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [copied, setCopied] = React.useState(false);
+
+  const compose = async () => {
+    if (!context.trim()) { setError('Please describe what this email should accomplish'); return; }
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const token = localStorage.getItem('forge_token');
+      const r = await fetch(`${BACKEND}/api/email-compose`, {
+        method: 'POST', headers: { 'Content-Type':'application/json','Authorization':`Bearer ${token}` },
+        body: JSON.stringify({ type: emailType, context, tone, recipientName, senderName, subject: desiredSubject }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d.result);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const copyEmail = () => {
+    if (!result) return;
+    navigator.clipboard.writeText(`Subject: ${result.subject}\n\n${result.body}`);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{ padding:'24px', maxWidth:'900px', margin:'0 auto', fontFamily:'system-ui,sans-serif' }}>
+      <div style={{ marginBottom:'24px' }}>
+        <h2 style={{ fontSize:'22px', fontWeight:700, color:'#1e293b', margin:0 }}>✉️ Email Composer</h2>
+        <p style={{ color:'#64748b', margin:'4px 0 0', fontSize:'14px' }}>AI-powered emails for every situation</p>
+      </div>
+
+      {/* Email Type */}
+      <div style={{ marginBottom:'20px' }}>
+        <div style={{ fontSize:'13px', fontWeight:600, color:'#374151', marginBottom:'8px' }}>Email Type</div>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:'8px' }}>
+          {EMAIL_TYPES.map(t => (
+            <button key={t.id} onClick={() => setEmailType(t.id)} style={{
+              padding:'7px 14px', borderRadius:'20px', border:'2px solid', cursor:'pointer', fontSize:'13px',
+              borderColor: emailType === t.id ? '#6366f1' : '#e5e7eb',
+              background: emailType === t.id ? '#eef2ff' : '#fff',
+              color: emailType === t.id ? '#4f46e5' : '#6b7280', fontWeight: emailType === t.id ? 600 : 400,
+            }}>{t.icon} {t.label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tone */}
+      <div style={{ marginBottom:'20px' }}>
+        <div style={{ fontSize:'13px', fontWeight:600, color:'#374151', marginBottom:'8px' }}>Tone</div>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:'8px' }}>
+          {TONES.map(t => (
+            <button key={t} onClick={() => setTone(t)} style={{
+              padding:'6px 14px', borderRadius:'16px', border:'1.5px solid', cursor:'pointer', fontSize:'13px',
+              borderColor: tone === t ? '#10b981' : '#e5e7eb',
+              background: tone === t ? '#ecfdf5' : '#fff',
+              color: tone === t ? '#059669' : '#6b7280', fontWeight: tone === t ? 600 : 400,
+              textTransform:'capitalize',
+            }}>{t}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Fields */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'12px' }}>
+        <div>
+          <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Recipient Name (optional)</label>
+          <input value={recipientName} onChange={e => setRecipientName(e.target.value)} placeholder="e.g. Sarah Chen" style={{ width:'100%', padding:'8px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', boxSizing:'border-box' }} />
+        </div>
+        <div>
+          <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Your Name (optional)</label>
+          <input value={senderName} onChange={e => setSenderName(e.target.value)} placeholder="e.g. Alex" style={{ width:'100%', padding:'8px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', boxSizing:'border-box' }} />
+        </div>
+      </div>
+      <div style={{ marginBottom:'12px' }}>
+        <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>Desired Subject (optional)</label>
+        <input value={desiredSubject} onChange={e => setDesiredSubject(e.target.value)} placeholder="Leave blank for AI to generate" style={{ width:'100%', padding:'8px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', boxSizing:'border-box' }} />
+      </div>
+      <div style={{ marginBottom:'16px' }}>
+        <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>What should this email accomplish? *</label>
+        <textarea value={context} onChange={e => setContext(e.target.value)} rows={4}
+          placeholder="e.g. Follow up on a sales demo we had last week. They seemed interested in our enterprise plan but went quiet. Want to re-engage without being pushy."
+          style={{ width:'100%', padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', resize:'vertical', boxSizing:'border-box', fontFamily:'inherit' }} />
+      </div>
+
+      <button onClick={compose} disabled={loading || !context.trim()} style={{
+        padding:'10px 24px', background: loading ? '#94a3b8' : '#6366f1', color:'#fff', border:'none', borderRadius:'8px',
+        cursor: loading ? 'not-allowed' : 'pointer', fontSize:'14px', fontWeight:600,
+      }}>{loading ? '✍️ Composing...' : '✉️ Compose Email'}</button>
+
+      {error && <div style={{ marginTop:'12px', padding:'10px 14px', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'8px', color:'#dc2626', fontSize:'13px' }}>{error}</div>}
+
+      {result && (
+        <div style={{ marginTop:'24px' }}>
+          {/* Subject */}
+          <div style={{ marginBottom:'16px', padding:'14px 16px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'10px' }}>
+            <div style={{ fontSize:'12px', fontWeight:600, color:'#64748b', marginBottom:'6px' }}>SUBJECT LINE</div>
+            <div style={{ fontSize:'16px', fontWeight:700, color:'#1e293b' }}>{result.subject}</div>
+            {result.subjectAlternatives?.length > 0 && (
+              <div style={{ marginTop:'8px' }}>
+                <div style={{ fontSize:'11px', color:'#94a3b8', marginBottom:'4px' }}>ALTERNATIVES</div>
+                {result.subjectAlternatives.map((s: string, i: number) => (
+                  <div key={i} style={{ fontSize:'13px', color:'#475569', padding:'3px 0', borderTop:'1px solid #f1f5f9' }}>{s}</div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Body */}
+          <div style={{ marginBottom:'16px', padding:'16px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'10px' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px' }}>
+              <div style={{ fontSize:'12px', fontWeight:600, color:'#64748b' }}>EMAIL BODY</div>
+              <button onClick={copyEmail} style={{ padding:'5px 12px', background: copied ? '#ecfdf5' : '#f1f5f9', border:'1px solid #e2e8f0', borderRadius:'6px', cursor:'pointer', fontSize:'12px', color: copied ? '#059669' : '#475569' }}>
+                {copied ? '✓ Copied!' : '📋 Copy Full Email'}
+              </button>
+            </div>
+            <pre style={{ whiteSpace:'pre-wrap', fontFamily:'inherit', fontSize:'14px', color:'#1e293b', margin:0, lineHeight:1.7 }}>{result.body}</pre>
+          </div>
+
+          {/* Tips */}
+          {result.tips?.length > 0 && (
+            <div style={{ padding:'14px 16px', background:'#fefce8', border:'1px solid #fde68a', borderRadius:'10px' }}>
+              <div style={{ fontSize:'12px', fontWeight:600, color:'#92400e', marginBottom:'8px' }}>💡 TIPS TO IMPROVE</div>
+              {result.tips.map((tip: string, i: number) => (
+                <div key={i} style={{ fontSize:'13px', color:'#78350f', padding:'4px 0', display:'flex', gap:'8px' }}>
+                  <span>•</span><span>{tip}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -51888,6 +52051,171 @@ function ForgeTab_translate() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ForgeTab_sqlgen() {
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const DIALECTS = [
+    { id:'postgresql', label:'PostgreSQL', icon:'🐘' },
+    { id:'mysql', label:'MySQL', icon:'🐬' },
+    { id:'sqlite', label:'SQLite', icon:'💾' },
+    { id:'bigquery', label:'BigQuery', icon:'☁️' },
+    { id:'mssql', label:'SQL Server', icon:'🪟' },
+    { id:'snowflake', label:'Snowflake', icon:'❄️' },
+  ];
+  const MODES = [
+    { id:'generate', label:'Generate', desc:'Natural language → SQL' },
+    { id:'explain', label:'Explain', desc:'SQL → plain English' },
+    { id:'optimize', label:'Optimize', desc:'Improve performance' },
+    { id:'fix', label:'Fix', desc:'Fix errors' },
+  ];
+  const [dialect, setDialect] = React.useState('postgresql');
+  const [mode, setMode] = React.useState('generate');
+  const [question, setQuestion] = React.useState('');
+  const [schema, setSchema] = React.useState('');
+  const [showSchema, setShowSchema] = React.useState(false);
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [copied, setCopied] = React.useState(false);
+
+  const generate = async () => {
+    if (!question.trim()) { setError('Please enter a question or SQL'); return; }
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const token = localStorage.getItem('forge_token');
+      const r = await fetch(`${BACKEND}/api/sql-gen`, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ question, schema, dialect, mode }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d.result);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const copySql = () => {
+    if (!result?.sql) return;
+    navigator.clipboard.writeText(result.sql);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
+  };
+
+  const placeholder = mode === 'generate'
+    ? 'e.g. Find all users who signed up in the last 30 days and made at least 3 purchases, ordered by total spend descending'
+    : 'Paste your SQL query here...';
+
+  return (
+    <div style={{ padding:'24px', maxWidth:'900px', margin:'0 auto', fontFamily:'system-ui,sans-serif' }}>
+      <div style={{ marginBottom:'24px' }}>
+        <h2 style={{ fontSize:'22px', fontWeight:700, color:'#1e293b', margin:0 }}>🗄️ SQL Generator</h2>
+        <p style={{ color:'#64748b', margin:'4px 0 0', fontSize:'14px' }}>Natural language to SQL — generate, explain, optimize, fix</p>
+      </div>
+
+      {/* Mode */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'8px', marginBottom:'20px' }}>
+        {MODES.map(m => (
+          <button key={m.id} onClick={() => setMode(m.id)} style={{
+            padding:'10px 12px', borderRadius:'10px', border:'2px solid', cursor:'pointer', textAlign:'center',
+            borderColor: mode === m.id ? '#6366f1' : '#e5e7eb',
+            background: mode === m.id ? '#eef2ff' : '#fff',
+          }}>
+            <div style={{ fontSize:'13px', fontWeight:700, color: mode === m.id ? '#4f46e5' : '#374151' }}>{m.label}</div>
+            <div style={{ fontSize:'11px', color:'#94a3b8', marginTop:'2px' }}>{m.desc}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Dialect */}
+      <div style={{ marginBottom:'16px' }}>
+        <div style={{ fontSize:'13px', fontWeight:600, color:'#374151', marginBottom:'8px' }}>Database</div>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:'8px' }}>
+          {DIALECTS.map(d => (
+            <button key={d.id} onClick={() => setDialect(d.id)} style={{
+              padding:'6px 14px', borderRadius:'16px', border:'1.5px solid', cursor:'pointer', fontSize:'13px',
+              borderColor: dialect === d.id ? '#0891b2' : '#e5e7eb',
+              background: dialect === d.id ? '#ecfeff' : '#fff',
+              color: dialect === d.id ? '#0e7490' : '#6b7280', fontWeight: dialect === d.id ? 600 : 400,
+            }}>{d.icon} {d.label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Question */}
+      <div style={{ marginBottom:'12px' }}>
+        <label style={{ fontSize:'12px', fontWeight:600, color:'#374151', display:'block', marginBottom:'4px' }}>
+          {mode === 'generate' ? 'What data do you need?' : 'SQL to ' + mode}
+        </label>
+        <textarea value={question} onChange={e => setQuestion(e.target.value)} rows={4} placeholder={placeholder}
+          style={{ width:'100%', padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'14px', resize:'vertical', boxSizing:'border-box', fontFamily:'monospace' }} />
+      </div>
+
+      {/* Schema toggle */}
+      <div style={{ marginBottom:'16px' }}>
+        <button onClick={() => setShowSchema(!showSchema)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:'13px', color:'#6366f1', padding:0, fontWeight:600 }}>
+          {showSchema ? '▼' : '▶'} {showSchema ? 'Hide' : 'Add'} Schema (optional)
+        </button>
+        {showSchema && (
+          <textarea value={schema} onChange={e => setSchema(e.target.value)} rows={5}
+            placeholder="Paste your table definitions here:\nCREATE TABLE users (id INT, email TEXT, created_at TIMESTAMP);\nCREATE TABLE orders (id INT, user_id INT, total DECIMAL, ...);"
+            style={{ marginTop:'8px', width:'100%', padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:'8px', fontSize:'13px', resize:'vertical', boxSizing:'border-box', fontFamily:'monospace', background:'#f8fafc' }} />
+        )}
+      </div>
+
+      <button onClick={generate} disabled={loading || !question.trim()} style={{
+        padding:'10px 24px', background: loading ? '#94a3b8' : '#6366f1', color:'#fff', border:'none', borderRadius:'8px',
+        cursor: loading ? 'not-allowed' : 'pointer', fontSize:'14px', fontWeight:600,
+      }}>{loading ? '⚙️ Generating...' : '🗄️ Generate SQL'}</button>
+
+      {error && <div style={{ marginTop:'12px', padding:'10px 14px', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'8px', color:'#dc2626', fontSize:'13px' }}>{error}</div>}
+
+      {result && (
+        <div style={{ marginTop:'24px' }}>
+          {/* SQL output */}
+          <div style={{ marginBottom:'16px', background:'#0f172a', borderRadius:'10px', overflow:'hidden' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 16px', borderBottom:'1px solid #1e293b' }}>
+              <span style={{ fontSize:'12px', fontWeight:600, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'0.05em' }}>SQL</span>
+              <button onClick={copySql} style={{ padding:'4px 12px', background: copied ? '#059669' : '#1e293b', border:'1px solid #334155', borderRadius:'6px', cursor:'pointer', fontSize:'12px', color: copied ? '#fff' : '#94a3b8' }}>
+                {copied ? '✓ Copied!' : '📋 Copy'}
+              </button>
+            </div>
+            <pre style={{ margin:0, padding:'16px', color:'#e2e8f0', fontSize:'13px', fontFamily:'monospace', overflowX:'auto', lineHeight:1.6 }}>{result.sql}</pre>
+          </div>
+
+          {/* Explanation */}
+          {result.explanation && (
+            <div style={{ marginBottom:'16px', padding:'14px 16px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'10px' }}>
+              <div style={{ fontSize:'12px', fontWeight:600, color:'#64748b', marginBottom:'6px' }}>EXPLANATION</div>
+              <p style={{ margin:0, fontSize:'14px', color:'#374151', lineHeight:1.6 }}>{result.explanation}</p>
+            </div>
+          )}
+
+          {/* Notes */}
+          {result.notes?.length > 0 && (
+            <div style={{ marginBottom:'16px', padding:'14px 16px', background:'#fefce8', border:'1px solid #fde68a', borderRadius:'10px' }}>
+              <div style={{ fontSize:'12px', fontWeight:600, color:'#92400e', marginBottom:'8px' }}>📝 NOTES</div>
+              {result.notes.map((n: string, i: number) => (
+                <div key={i} style={{ fontSize:'13px', color:'#78350f', padding:'3px 0', display:'flex', gap:'8px' }}><span>•</span><span>{n}</span></div>
+              ))}
+            </div>
+          )}
+
+          {/* Alternatives */}
+          {result.alternatives?.length > 0 && (
+            <div>
+              <div style={{ fontSize:'13px', fontWeight:600, color:'#374151', marginBottom:'8px' }}>ALTERNATIVE APPROACHES</div>
+              {result.alternatives.map((alt: any, i: number) => (
+                <div key={i} style={{ marginBottom:'10px', background:'#0f172a', borderRadius:'8px', overflow:'hidden' }}>
+                  <div style={{ padding:'8px 14px', background:'#1e293b', fontSize:'12px', color:'#94a3b8', fontWeight:600 }}>{alt.label}</div>
+                  <pre style={{ margin:0, padding:'12px 14px', color:'#e2e8f0', fontSize:'12px', fontFamily:'monospace', overflowX:'auto' }}>{alt.sql}</pre>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
