@@ -27600,6 +27600,7 @@ function ForgeApp() {
             { id:'agentmulti',       icon:'🤖',  label:'Agent Hub' },
             { id:'videoanal',        icon:'🎬',  label:'Video Analyzer' },
             { id:'forgemetrics',     icon:'📊',  label:'Metrics' },
+            { id:'routerinsights',   icon:'🧠',  label:'Router Intel' },
             { id:'compare',          icon:'⚖️',  label:'Model Compare' },
             { id:'prompts',          icon:'📋',  label:'Prompt Library' },
             { id:'batch',            icon:'⚡',  label:'Batch Process' },
@@ -51763,6 +51764,7 @@ function ForgeApp() {
 {(mainTab as string) === 'agentmulti' && <ForgeTab_agentmulti />}
 {(mainTab as string) === 'videoanal' && <ForgeTab_videoanal />}
 {(mainTab as string) === 'forgemetrics' && <ForgeTab_forgemetrics />}
+{(mainTab as string) === 'routerinsights' && <ForgeTab_routerinsights />}
 {(mainTab as string) === 'compare' && <ForgeTab_compare />}
 {(mainTab as string) === 'prompts' && <ForgeTab_prompts />}
 {(mainTab as string) === 'batch' && <ForgeTab_batch />}
@@ -55266,6 +55268,191 @@ function ForgeTab_compare() {
             })}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_routerinsights() {
+  const [decisions, setDecisions] = React.useState<any[]>([]);
+  const [stats, setStats] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [testPrompt, setTestPrompt] = React.useState('');
+  const [testResult, setTestResult] = React.useState<any>(null);
+  const [testMode, setTestMode] = React.useState<'cheap'|'normal'|'premium'>('normal');
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+  const { token } = useAuth();
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [d, s] = await Promise.all([
+        fetch(`${apiBase}/api/forgerouter/decisions`, { headers:{'Authorization':`Bearer ${token}`} }).then(r=>r.json()),
+        fetch(`${apiBase}/api/forgerouter/stats`, { headers:{'Authorization':`Bearer ${token}`} }).then(r=>r.json()),
+      ]);
+      setDecisions(d.rows || []);
+      setStats(s);
+    } catch {}
+    setLoading(false);
+  };
+
+  const testRouter = async () => {
+    if (!testPrompt.trim()) return;
+    try {
+      const r = await fetch(`${apiBase}/api/forgerouter/decide`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify({ prompt: testPrompt, cost_mode: testMode }) });
+      const d = await r.json();
+      setTestResult(d);
+      load();
+    } catch(e: any) { setTestResult({ error: e.message }); }
+  };
+
+  React.useEffect(() => { load(); }, []);
+
+  const tierColor = (tier: string) => {
+    if (!tier) return '#6b7280';
+    if (tier.includes('expert')) return '#8b5cf6';
+    if (tier.includes('hard')) return '#ef4444';
+    if (tier.includes('medium')) return '#f59e0b';
+    return '#10b981';
+  };
+
+  const tierFromReason = (reasoning: string) => {
+    const m = reasoning?.match(/\[(\w+)\]/);
+    return m ? m[1] : 'unknown';
+  };
+
+  // Count decisions by tier
+  const tierCounts = decisions.reduce((acc: any, d: any) => {
+    const t = tierFromReason(d.reasoning);
+    acc[t] = (acc[t] || 0) + 1;
+    return acc;
+  }, {});
+
+  const total = decisions.length;
+  const avgLatency = total > 0 ? Math.round(decisions.reduce((s, d) => s + (d.latency_ms || 0), 0) / total) : 0;
+  const avgConfidence = total > 0 ? (decisions.reduce((s, d) => s + (d.confidence || 0), 0) / total * 100).toFixed(0) : '0';
+
+  return (
+    <div style={{ padding:24, maxWidth:1000, margin:'0 auto' }}>
+      <div style={{ marginBottom:24, display:'flex', alignItems:'flex-start', justifyContent:'space-between' }}>
+        <div>
+          <h2 style={{ fontSize:22, fontWeight:700, color:'var(--fg-text1)', margin:0 }}>🧠 Router Intelligence</h2>
+          <p style={{ color:'var(--fg-text3)', fontSize:13, margin:'4px 0 0' }}>Live flywheel data — every routing decision logged with tier, model, and latency</p>
+        </div>
+        <button onClick={load} disabled={loading} style={{ padding:'8px 18px', background:'var(--bg-surface2)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text2)', cursor:'pointer', fontSize:13 }}>{loading ? '⏳' : '↻ Refresh'}</button>
+      </div>
+
+      {/* KPI strip */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:20 }}>
+        {[
+          { label:'Total Decisions', value: total, icon:'📊', color:'#3b82f6' },
+          { label:'Avg Latency', value: `${avgLatency}ms`, icon:'⚡', color:'#10b981' },
+          { label:'Avg Confidence', value: `${avgConfidence}%`, icon:'🎯', color:'#8b5cf6' },
+          { label:'Models Used', value: stats?.by_model?.length || 0, icon:'🤖', color:'#f59e0b' },
+        ].map(k => (
+          <div key={k.label} style={{ padding:16, background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:12, textAlign:'center' }}>
+            <div style={{ fontSize:22 }}>{k.icon}</div>
+            <div style={{ fontSize:22, fontWeight:700, color:k.color, margin:'4px 0' }}>{k.value}</div>
+            <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{k.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tier distribution */}
+      {total > 0 && (
+        <div style={{ padding:16, background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:12, marginBottom:16 }}>
+          <h4 style={{ margin:'0 0 12px', color:'var(--fg-text1)', fontSize:14 }}>Complexity Tier Distribution</h4>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            {Object.entries(tierCounts).map(([tier, count]: [string, any]) => (
+              <div key={tier} style={{ flex:1, minWidth:80, padding:12, background:`${tierColor(tier)}15`, border:`1px solid ${tierColor(tier)}40`, borderRadius:10, textAlign:'center' }}>
+                <div style={{ fontSize:18, fontWeight:700, color:tierColor(tier) }}>{count}</div>
+                <div style={{ fontSize:12, color:tierColor(tier), fontWeight:600 }}>{tier}</div>
+                <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{Math.round(count/total*100)}%</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Model breakdown from stats */}
+      {stats?.by_model && stats.by_model.length > 0 && (
+        <div style={{ padding:16, background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:12, marginBottom:16 }}>
+          <h4 style={{ margin:'0 0 12px', color:'var(--fg-text1)', fontSize:14 }}>Model Selection Frequency</h4>
+          <div style={{ display:'grid', gap:8 }}>
+            {stats.by_model.slice(0,8).map((m: any) => {
+              const pct = total > 0 ? Math.round(m.count/total*100) : 0;
+              return (
+                <div key={m.selected_model} style={{ display:'grid', gridTemplateColumns:'1fr auto 60px', alignItems:'center', gap:8 }}>
+                  <div>
+                    <div style={{ fontSize:13, fontWeight:600, color:'var(--fg-text1)' }}>{m.selected_model}</div>
+                    <div style={{ height:4, background:'var(--bg-surface2)', borderRadius:2, marginTop:4 }}>
+                      <div style={{ height:'100%', width:`${pct}%`, background:'var(--fg-orange)', borderRadius:2 }} />
+                    </div>
+                  </div>
+                  <span style={{ fontSize:13, fontWeight:700, color:'var(--fg-text1)', whiteSpace:'nowrap' }}>×{m.count}</span>
+                  <span style={{ fontSize:12, color:'var(--fg-text3)', textAlign:'right' }}>{pct}%</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Live router test */}
+      <div style={{ padding:16, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', borderRadius:12, marginBottom:16 }}>
+        <h4 style={{ margin:'0 0 12px', color:'#8b5cf6', fontSize:14 }}>🧪 Live Router Test</h4>
+        <div style={{ display:'flex', gap:8, marginBottom:8 }}>
+          {(['cheap','normal','premium'] as const).map(m => (
+            <button key={m} onClick={()=>setTestMode(m)} style={{ padding:'5px 14px', background:testMode===m?'#8b5cf6':'var(--bg-surface2)', border:'1px solid var(--border)', borderRadius:20, color:testMode===m?'#fff':'var(--fg-text3)', cursor:'pointer', fontSize:12, fontWeight:600 }}>
+              {m==='cheap'?'💸':m==='premium'?'💎':'⚡'} {m}
+            </button>
+          ))}
+        </div>
+        <div style={{ display:'flex', gap:8 }}>
+          <input value={testPrompt} onChange={e=>setTestPrompt(e.target.value)} placeholder="Type any prompt to see how the router classifies it..." style={{ flex:1, padding:'8px 12px', background:'var(--bg-surface2)', border:'1px solid var(--border)', borderRadius:8, color:'var(--fg-text1)', fontSize:13 }} onKeyDown={e=>e.key==='Enter'&&testRouter()} />
+          <button onClick={testRouter} disabled={!testPrompt.trim()} style={{ padding:'8px 18px', background:'#8b5cf6', border:'none', borderRadius:8, color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>Route →</button>
+        </div>
+        {testResult && !testResult.error && (
+          <div style={{ marginTop:12, display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
+            <div style={{ padding:10, background:'var(--bg-surface)', borderRadius:8 }}>
+              <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>Tier Classified</p>
+              <p style={{ margin:'2px 0 0', fontWeight:700, color:tierColor(testResult.tier||''), fontSize:15 }}>{testResult.tier || testResult.classified?.tier || '—'}</p>
+              <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{testResult.reason || testResult.classified?.reason}</p>
+            </div>
+            <div style={{ padding:10, background:'var(--bg-surface)', borderRadius:8 }}>
+              <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>Selected Model</p>
+              <p style={{ margin:'2px 0 0', fontWeight:700, color:'var(--fg-text1)', fontSize:13 }}>{testResult.selected_model}</p>
+              <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{testResult.selected_provider}</p>
+            </div>
+            <div style={{ padding:10, background:'var(--bg-surface)', borderRadius:8 }}>
+              <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>Confidence</p>
+              <p style={{ margin:'2px 0 0', fontWeight:700, color:'#10b981', fontSize:15 }}>{Math.round((testResult.confidence||0)*100)}%</p>
+            </div>
+          </div>
+        )}
+        {testResult?.error && <p style={{ margin:'8px 0 0', fontSize:13, color:'#ef4444' }}>{testResult.error}</p>}
+      </div>
+
+      {/* Recent decisions log */}
+      <div style={{ padding:16, background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:12 }}>
+        <h4 style={{ margin:'0 0 12px', color:'var(--fg-text1)', fontSize:14 }}>Recent Routing Decisions <span style={{ fontSize:11, color:'var(--fg-text3)', fontWeight:400 }}>(last 50)</span></h4>
+        {decisions.length === 0 && <p style={{ color:'var(--fg-text3)', fontSize:13 }}>No decisions logged yet. Start chatting with forge-auto to populate the flywheel.</p>}
+        <div style={{ display:'grid', gap:6 }}>
+          {decisions.slice(0,20).map((d: any) => {
+            const tier = tierFromReason(d.reasoning);
+            return (
+              <div key={d.id} style={{ display:'grid', gridTemplateColumns:'auto 1fr auto auto', gap:10, alignItems:'center', padding:'8px 10px', background:'var(--bg-surface2)', borderRadius:8 }}>
+                <span style={{ padding:'2px 8px', background:`${tierColor(tier)}20`, color:tierColor(tier), borderRadius:4, fontSize:11, fontWeight:700, whiteSpace:'nowrap' }}>{tier}</span>
+                <div style={{ overflow:'hidden' }}>
+                  <p style={{ margin:0, fontSize:12, color:'var(--fg-text1)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{d.input_prompt}</p>
+                  <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{d.selected_model} · {d.selected_provider}</p>
+                </div>
+                <span style={{ fontSize:11, color:'var(--fg-text3)', whiteSpace:'nowrap' }}>{d.latency_ms ? `${d.latency_ms}ms` : ''}</span>
+                <span style={{ fontSize:11, color:'var(--fg-text3)', whiteSpace:'nowrap' }}>{new Date(d.created_at).toLocaleTimeString()}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
