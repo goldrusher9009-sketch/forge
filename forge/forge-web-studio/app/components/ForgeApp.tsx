@@ -27619,6 +27619,8 @@ function ForgeApp() {
             { id:'productdesc',      icon:'🛒',  label:'Product Writer' },
             { id:'competitorresearch', icon:'🔭', label:'Competitor Intel' },
             { id:'jobdesc',          icon:'💼',  label:'Job Description' },
+            { id:'dailyplan',        icon:'📅',  label:'Daily Planner' },
+            { id:'quickreply',       icon:'⚡',  label:'Quick Reply' },
             { id:'meetingtrans',     icon:'🎙️',  label:'Meeting Intel' },
             { id:'skillbuilder',     icon:'🛠️',  label:'Skill Builder' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
@@ -51775,6 +51777,8 @@ function ForgeApp() {
 {(mainTab as string) === 'productdesc' && <ForgeTab_productdesc />}
 {(mainTab as string) === 'competitorresearch' && <ForgeTab_competitorresearch />}
 {(mainTab as string) === 'jobdesc' && <ForgeTab_jobdesc />}
+{(mainTab as string) === 'dailyplan' && <ForgeTab_dailyplan />}
+{(mainTab as string) === 'quickreply' && <ForgeTab_quickreply />}
 {(mainTab as string) === 'meetingtrans' && <ForgeTab_meetingtrans />}
 {(mainTab as string) === 'skillbuilder' && <ForgeTab_skillbuilder />}
 
@@ -51854,6 +51858,263 @@ function ForgeTab_costdash() {
               ))}
             </div>
           </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_dailyplan() {
+  const [tasks, setTasks] = React.useState('');
+  const [goals, setGoals] = React.useState('');
+  const [timeAvailable, setTimeAvailable] = React.useState('8 hours');
+  const [meetings, setMeetings] = React.useState('');
+  const [energy, setEnergy] = React.useState('medium');
+  const [workStyle, setWorkStyle] = React.useState('balanced');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [activeTab, setActiveTab] = React.useState('schedule');
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const energyOpts = ['low','medium','high'];
+  const styleOpts = ['deep-focus','balanced','meetings-heavy','creative'];
+  const timeOpts = ['4 hours','6 hours','8 hours','10 hours','flexible'];
+  async function generate() {
+    if (!tasks && !goals) return;
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${BACKEND}/api/daily-plan`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`}, body: JSON.stringify({ tasks, goals, timeAvailable, meetings, energy, workStyle }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d.result);
+    } catch(e: any) { setError(e.message); } finally { setLoading(false); }
+  }
+  const typeColor: Record<string,string> = { deep_work:'#6366f1', meeting:'#f59e0b', admin:'#6b7280', break:'#10b981' };
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:32 }}>
+      <div style={{ maxWidth:760, margin:'0 auto' }}>
+        <h2 style={{ color:'var(--fg-orange)', margin:'0 0 4px', fontSize:22, fontFamily:'var(--fg-font-display)', fontWeight:800 }}>📅 Daily Planner</h2>
+        <p style={{ color:'var(--fg-text3)', margin:'0 0 24px', fontSize:14 }}>AI-powered daily plan with time blocks, priorities, and focus sessions</p>
+        <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24, marginBottom:24 }}>
+          <div style={{ marginBottom:16 }}>
+            <label style={{ fontSize:12, fontWeight:700, color:'var(--fg-text2)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>Today's Tasks</label>
+            <textarea value={tasks} onChange={e=>setTasks(e.target.value)} placeholder="List your tasks, one per line or comma-separated..." rows={4} style={{ width:'100%', padding:12, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
+          </div>
+          <div style={{ marginBottom:16 }}>
+            <label style={{ fontSize:12, fontWeight:700, color:'var(--fg-text2)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>Top Goals for Today</label>
+            <input value={goals} onChange={e=>setGoals(e.target.value)} placeholder="What must get done today?" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
+            <div>
+              <label style={{ fontSize:12, fontWeight:700, color:'var(--fg-text2)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>Available Time</label>
+              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                {timeOpts.map(t => <button key={t} onClick={()=>setTimeAvailable(t)} style={{ padding:'5px 10px', borderRadius:20, border:`1px solid ${timeAvailable===t ? 'var(--fg-orange)' : 'var(--fg-border)'}`, background: timeAvailable===t ? 'rgba(251,146,60,0.15)' : 'var(--fg-bg)', color: timeAvailable===t ? 'var(--fg-orange)' : 'var(--fg-text2)', fontSize:12, cursor:'pointer', fontWeight: timeAvailable===t ? 700 : 400 }}>{t}</button>)}
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize:12, fontWeight:700, color:'var(--fg-text2)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>Energy Level</label>
+              <div style={{ display:'flex', gap:6 }}>
+                {energyOpts.map(e => <button key={e} onClick={()=>setEnergy(e)} style={{ padding:'5px 14px', borderRadius:20, border:`1px solid ${energy===e ? 'var(--fg-orange)' : 'var(--fg-border)'}`, background: energy===e ? 'rgba(251,146,60,0.15)' : 'var(--fg-bg)', color: energy===e ? 'var(--fg-orange)' : 'var(--fg-text2)', fontSize:12, cursor:'pointer', fontWeight: energy===e ? 700 : 400, textTransform:'capitalize' }}>{e}</button>)}
+              </div>
+            </div>
+          </div>
+          <div style={{ marginBottom:16 }}>
+            <label style={{ fontSize:12, fontWeight:700, color:'var(--fg-text2)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>Work Style</label>
+            <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+              {styleOpts.map(s => <button key={s} onClick={()=>setWorkStyle(s)} style={{ padding:'5px 12px', borderRadius:20, border:`1px solid ${workStyle===s ? 'var(--fg-orange)' : 'var(--fg-border)'}`, background: workStyle===s ? 'rgba(251,146,60,0.15)' : 'var(--fg-bg)', color: workStyle===s ? 'var(--fg-orange)' : 'var(--fg-text2)', fontSize:12, cursor:'pointer', fontWeight: workStyle===s ? 700 : 400, textTransform:'capitalize' }}>{s.replace('-',' ')}</button>)}
+            </div>
+          </div>
+          <div style={{ marginBottom:20 }}>
+            <label style={{ fontSize:12, fontWeight:700, color:'var(--fg-text2)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>Meetings (optional)</label>
+            <input value={meetings} onChange={e=>setMeetings(e.target.value)} placeholder="e.g. 10am standup 30min, 2pm client call 1hr" style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+          </div>
+          <button onClick={generate} disabled={loading || (!tasks && !goals)} style={{ padding:'12px 28px', background:'var(--fg-orange)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity: loading || (!tasks && !goals) ? 0.6 : 1 }}>
+            {loading ? '⏳ Planning your day...' : '📅 Plan My Day'}
+          </button>
+        </div>
+        {error && <div style={{ background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.3)', borderRadius:10, padding:14, color:'var(--fg-red)', fontSize:13, marginBottom:16 }}>{error}</div>}
+        {result && (
+          <div>
+            <div style={{ background:'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(251,146,60,0.1))', border:'1px solid var(--fg-border)', borderRadius:14, padding:20, marginBottom:20 }}>
+              <p style={{ margin:'0 0 6px', fontSize:11, color:'var(--fg-text3)', fontWeight:700, textTransform:'uppercase' }}>Day Theme</p>
+              <p style={{ margin:'0 0 10px', fontSize:18, fontWeight:700, color:'var(--fg-text)' }}>{result.dayTheme}</p>
+              <p style={{ margin:0, fontSize:13, color:'var(--fg-orange)', fontStyle:'italic' }}>💪 {result.motivationalNote}</p>
+            </div>
+            <div style={{ display:'flex', gap:8, marginBottom:20, borderBottom:'1px solid var(--fg-border)', paddingBottom:12 }}>
+              {['schedule','priorities','focus','quickwins'].map(t => <button key={t} onClick={()=>setActiveTab(t)} style={{ padding:'7px 16px', borderRadius:20, border:`1px solid ${activeTab===t ? 'var(--fg-orange)' : 'var(--fg-border)'}`, background: activeTab===t ? 'rgba(251,146,60,0.15)' : 'transparent', color: activeTab===t ? 'var(--fg-orange)' : 'var(--fg-text2)', fontSize:13, cursor:'pointer', fontWeight: activeTab===t ? 700 : 400, textTransform:'capitalize' }}>{t === 'quickwins' ? 'Quick Wins' : t.charAt(0).toUpperCase()+t.slice(1)}</button>)}
+            </div>
+            {activeTab === 'schedule' && (
+              <div>
+                {(result.schedule || []).map((block: any, i: number) => (
+                  <div key={i} style={{ display:'flex', gap:14, marginBottom:10, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:'12px 16px', alignItems:'center' }}>
+                    <div style={{ minWidth:80, fontSize:12, fontWeight:700, color:'var(--fg-text3)' }}>{block.timeBlock}</div>
+                    <div style={{ width:4, height:40, borderRadius:2, background: typeColor[block.type] || '#6b7280', flexShrink:0 }} />
+                    <div style={{ flex:1 }}>
+                      <p style={{ margin:'0 0 2px', fontSize:13, fontWeight:600, color:'var(--fg-text)' }}>{block.activity}</p>
+                      {block.notes && <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{block.notes}</p>}
+                    </div>
+                    <span style={{ fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:20, background: (typeColor[block.type] || '#6b7280') + '20', color: typeColor[block.type] || '#6b7280', textTransform:'uppercase' }}>{(block.type||'').replace('_',' ')}</span>
+                  </div>
+                ))}
+                <div style={{ background:'rgba(16,185,129,0.1)', border:'1px solid rgba(16,185,129,0.3)', borderRadius:10, padding:14, marginTop:10 }}>
+                  <p style={{ margin:0, fontSize:13, fontWeight:600, color:'var(--fg-green)' }}>🏁 End of Day Goal: {result.endOfDayGoal}</p>
+                </div>
+              </div>
+            )}
+            {activeTab === 'priorities' && (
+              <div>
+                {(result.topPriorities || []).map((p: any, i: number) => (
+                  <div key={i} style={{ display:'flex', gap:14, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:16, marginBottom:10 }}>
+                    <span style={{ fontSize:20, fontWeight:900, color:'var(--fg-orange)', minWidth:28 }}>#{i+1}</span>
+                    <div>
+                      <p style={{ margin:'0 0 4px', fontSize:14, fontWeight:700, color:'var(--fg-text)' }}>{p.task}</p>
+                      <p style={{ margin:'0 0 4px', fontSize:12, color:'var(--fg-text3)' }}>{p.reason}</p>
+                      <span style={{ fontSize:11, color:'var(--fg-orange)', background:'rgba(251,146,60,0.1)', padding:'2px 8px', borderRadius:20 }}>⏱ {p.estimatedTime}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {activeTab === 'focus' && (
+              <div>
+                {(result.focusBlocks || []).map((f: any, i: number) => (
+                  <div key={i} style={{ background:'var(--fg-bg3)', border:'1px solid rgba(99,102,241,0.3)', borderRadius:10, padding:16, marginBottom:10 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                      <span style={{ fontSize:13, fontWeight:700, color:'#6366f1' }}>🎯 {f.focus}</span>
+                      <span style={{ fontSize:11, color:'var(--fg-text3)' }}>{f.start} – {f.end}</span>
+                    </div>
+                    <span style={{ fontSize:11, background:'rgba(99,102,241,0.1)', color:'#6366f1', padding:'2px 8px', borderRadius:20, fontWeight:600 }}>{f.technique}</span>
+                  </div>
+                ))}
+                {(result.avoidList || []).length > 0 && (
+                  <div style={{ marginTop:16, background:'rgba(239,68,68,0.06)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:10, padding:14 }}>
+                    <p style={{ margin:'0 0 8px', fontSize:12, fontWeight:700, color:'var(--fg-red)', textTransform:'uppercase' }}>🚫 Avoid Today</p>
+                    {result.avoidList.map((a: string, i: number) => <p key={i} style={{ margin:'0 0 4px', fontSize:13, color:'var(--fg-text2)' }}>• {a}</p>)}
+                  </div>
+                )}
+              </div>
+            )}
+            {activeTab === 'quickwins' && (
+              <div>
+                <p style={{ fontSize:13, color:'var(--fg-text3)', marginBottom:12 }}>Tasks you can knock out in under 5 minutes:</p>
+                {(result.quickWins || []).map((w: string, i: number) => (
+                  <div key={i} style={{ display:'flex', alignItems:'center', gap:10, background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:8, padding:'10px 14px', marginBottom:8 }}>
+                    <span style={{ fontSize:16 }}>⚡</span>
+                    <span style={{ fontSize:13, color:'var(--fg-text)' }}>{w}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeTab_quickreply() {
+  const [message, setMessage] = React.useState('');
+  const [context, setContext] = React.useState('');
+  const [tone, setTone] = React.useState('professional');
+  const [length, setLength] = React.useState('medium');
+  const [replyType, setReplyType] = React.useState('email');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [copied, setCopied] = React.useState(-1);
+  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+  const BACKEND = 'https://forge-production-2692.up.railway.app';
+  const toneOpts = ['professional','friendly','direct','empathetic','assertive'];
+  const lengthOpts = ['short','medium','long'];
+  const typeOpts = [{ id:'email', label:'📧 Email' }, { id:'slack', label:'💬 Slack' }, { id:'linkedin', label:'💼 LinkedIn' }, { id:'sms', label:'📱 SMS' }];
+  async function generate() {
+    if (!message.trim()) return;
+    setLoading(true); setError(''); setResult(null); setCopied(-1);
+    try {
+      const r = await fetch(`${BACKEND}/api/quick-reply`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`}, body: JSON.stringify({ message, context, tone, length, replyType }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d.result);
+    } catch(e: any) { setError(e.message); } finally { setLoading(false); }
+  }
+  function copyReply(text: string, i: number) {
+    navigator.clipboard.writeText(text).then(() => { setCopied(i); setTimeout(()=>setCopied(-1), 2000); });
+  }
+  const urgencyColor: Record<string,string> = { low:'var(--fg-green)', medium:'var(--fg-orange)', high:'var(--fg-red)' };
+  return (
+    <div style={{ flex:1, overflowY:'auto', padding:32 }}>
+      <div style={{ maxWidth:720, margin:'0 auto' }}>
+        <h2 style={{ color:'var(--fg-orange)', margin:'0 0 4px', fontSize:22, fontFamily:'var(--fg-font-display)', fontWeight:800 }}>⚡ Quick Reply</h2>
+        <p style={{ color:'var(--fg-text3)', margin:'0 0 24px', fontSize:14 }}>Paste any email or message — get 3 smart reply options instantly</p>
+        <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24, marginBottom:24 }}>
+          <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+            {typeOpts.map(t => <button key={t.id} onClick={()=>setReplyType(t.id)} style={{ padding:'6px 14px', borderRadius:20, border:`1px solid ${replyType===t.id ? 'var(--fg-orange)' : 'var(--fg-border)'}`, background: replyType===t.id ? 'rgba(251,146,60,0.15)' : 'var(--fg-bg)', color: replyType===t.id ? 'var(--fg-orange)' : 'var(--fg-text2)', fontSize:12, cursor:'pointer', fontWeight: replyType===t.id ? 700 : 400 }}>{t.label}</button>)}
+          </div>
+          <div style={{ marginBottom:16 }}>
+            <label style={{ fontSize:12, fontWeight:700, color:'var(--fg-text2)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>Message to Reply To</label>
+            <textarea value={message} onChange={e=>setMessage(e.target.value)} placeholder="Paste the email, Slack message, or DM you need to reply to..." rows={5} style={{ width:'100%', padding:12, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text)', fontSize:13, resize:'vertical', boxSizing:'border-box' }} />
+          </div>
+          <div style={{ marginBottom:16 }}>
+            <label style={{ fontSize:12, fontWeight:700, color:'var(--fg-text2)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>Context (optional)</label>
+            <input value={context} onChange={e=>setContext(e.target.value)} placeholder="e.g. I'm declining this meeting, I need more info first, I want to say yes..." style={{ width:'100%', padding:'10px 12px', background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, color:'var(--fg-text)', fontSize:13, boxSizing:'border-box' }} />
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:20 }}>
+            <div>
+              <label style={{ fontSize:12, fontWeight:700, color:'var(--fg-text2)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>Tone</label>
+              <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
+                {toneOpts.map(t => <button key={t} onClick={()=>setTone(t)} style={{ padding:'5px 10px', borderRadius:20, border:`1px solid ${tone===t ? 'var(--fg-orange)' : 'var(--fg-border)'}`, background: tone===t ? 'rgba(251,146,60,0.15)' : 'var(--fg-bg)', color: tone===t ? 'var(--fg-orange)' : 'var(--fg-text2)', fontSize:11, cursor:'pointer', fontWeight: tone===t ? 700 : 400, textTransform:'capitalize' }}>{t}</button>)}
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize:12, fontWeight:700, color:'var(--fg-text2)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:6 }}>Length</label>
+              <div style={{ display:'flex', gap:6 }}>
+                {lengthOpts.map(l => <button key={l} onClick={()=>setLength(l)} style={{ padding:'5px 14px', borderRadius:20, border:`1px solid ${length===l ? 'var(--fg-orange)' : 'var(--fg-border)'}`, background: length===l ? 'rgba(251,146,60,0.15)' : 'var(--fg-bg)', color: length===l ? 'var(--fg-orange)' : 'var(--fg-text2)', fontSize:11, cursor:'pointer', fontWeight: length===l ? 700 : 400, textTransform:'capitalize' }}>{l}</button>)}
+              </div>
+            </div>
+          </div>
+          <button onClick={generate} disabled={loading || !message.trim()} style={{ padding:'12px 28px', background:'var(--fg-orange)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', opacity: loading || !message.trim() ? 0.6 : 1 }}>
+            {loading ? '⏳ Generating replies...' : '⚡ Generate Replies'}
+          </button>
+        </div>
+        {error && <div style={{ background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.3)', borderRadius:10, padding:14, color:'var(--fg-red)', fontSize:13, marginBottom:16 }}>{error}</div>}
+        {result && (
+          <div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:20 }}>
+              <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:12, textAlign:'center' }}>
+                <p style={{ margin:'0 0 4px', fontSize:11, color:'var(--fg-text3)', textTransform:'uppercase', fontWeight:700 }}>Intent</p>
+                <p style={{ margin:0, fontSize:12, color:'var(--fg-text)', fontWeight:600 }}>{result.analysis?.intent || '—'}</p>
+              </div>
+              <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:12, textAlign:'center' }}>
+                <p style={{ margin:'0 0 4px', fontSize:11, color:'var(--fg-text3)', textTransform:'uppercase', fontWeight:700 }}>Urgency</p>
+                <p style={{ margin:0, fontSize:12, fontWeight:700, color: urgencyColor[result.analysis?.urgency] || 'var(--fg-text)', textTransform:'capitalize' }}>{result.analysis?.urgency || '—'}</p>
+              </div>
+              <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:12, textAlign:'center' }}>
+                <p style={{ margin:'0 0 4px', fontSize:11, color:'var(--fg-text3)', textTransform:'uppercase', fontWeight:700 }}>Sentiment</p>
+                <p style={{ margin:0, fontSize:12, color:'var(--fg-text)', fontWeight:600, textTransform:'capitalize' }}>{result.analysis?.sentiment || '—'}</p>
+              </div>
+            </div>
+            {result.suggestedSubject && <div style={{ background:'rgba(99,102,241,0.08)', border:'1px solid rgba(99,102,241,0.2)', borderRadius:8, padding:'10px 14px', marginBottom:16, fontSize:13, color:'#6366f1' }}>📧 Suggested Subject: <strong>{result.suggestedSubject}</strong></div>}
+            <div style={{ marginBottom:20 }}>
+              {(result.replies || []).map((reply: any, i: number) => (
+                <div key={i} style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:12, padding:18, marginBottom:12 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                    <span style={{ fontSize:12, fontWeight:700, color:'var(--fg-orange)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{reply.label}</span>
+                    <button onClick={()=>copyReply(reply.text, i)} style={{ padding:'5px 12px', background: copied===i ? 'rgba(16,185,129,0.15)' : 'var(--fg-bg)', border:`1px solid ${copied===i ? 'var(--fg-green)' : 'var(--fg-border)'}`, borderRadius:6, color: copied===i ? 'var(--fg-green)' : 'var(--fg-text2)', fontSize:11, cursor:'pointer', fontWeight:600 }}>
+                      {copied===i ? '✓ Copied!' : '📋 Copy'}
+                    </button>
+                  </div>
+                  <p style={{ margin:0, fontSize:14, color:'var(--fg-text)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{reply.text}</p>
+                </div>
+              ))}
+            </div>
+            {(result.followUpActions || []).length > 0 && (
+              <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:10, padding:14 }}>
+                <p style={{ margin:'0 0 8px', fontSize:12, fontWeight:700, color:'var(--fg-text2)', textTransform:'uppercase' }}>📋 Follow-up Actions</p>
+                {result.followUpActions.map((a: string, i: number) => <p key={i} style={{ margin:'0 0 4px', fontSize:13, color:'var(--fg-text2)' }}>• {a}</p>)}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
