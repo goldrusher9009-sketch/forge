@@ -27599,6 +27599,7 @@ function ForgeApp() {
             { id:'ragknow',          icon:'📚',  label:'Knowledge Base' },
             { id:'agentmulti',       icon:'🤖',  label:'Agent Hub' },
             { id:'videoanal',        icon:'🎬',  label:'Video Analyzer' },
+            { id:'autonomous',       icon:'🦾',  label:'Auto Mode' },
             { id:'forgemetrics',     icon:'📊',  label:'Metrics' },
             { id:'routerinsights',   icon:'🧠',  label:'Router Intel' },
             { id:'compare',          icon:'⚖️',  label:'Model Compare' },
@@ -51763,6 +51764,7 @@ function ForgeApp() {
 {(mainTab as string) === 'ragknow' && <ForgeTab_ragknow />}
 {(mainTab as string) === 'agentmulti' && <ForgeTab_agentmulti />}
 {(mainTab as string) === 'videoanal' && <ForgeTab_videoanal />}
+{(mainTab as string) === 'autonomous' && <ForgeTab_autonomous />}
 {(mainTab as string) === 'forgemetrics' && <ForgeTab_forgemetrics />}
 {(mainTab as string) === 'routerinsights' && <ForgeTab_routerinsights />}
 {(mainTab as string) === 'compare' && <ForgeTab_compare />}
@@ -55269,6 +55271,231 @@ function ForgeTab_compare() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ForgeTab_autonomous() {
+  const [goal, setGoal] = React.useState('');
+  const [running, setRunning] = React.useState(false);
+  const [steps, setSteps] = React.useState<any[]>([]);
+  const [plan, setPlan] = React.useState<any[]>([]);
+  const [finalResult, setFinalResult] = React.useState('');
+  const [taskId, setTaskId] = React.useState<number|null>(null);
+  const [history, setHistory] = React.useState<any[]>([]);
+  const [maxSteps, setMaxSteps] = React.useState(6);
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+  const { token } = useAuth();
+  const stepRef = React.useRef<HTMLDivElement>(null);
+
+  const TOOLS_INFO = [
+    { name:'web_search', icon:'🔍', color:'#3b82f6' },
+    { name:'think', icon:'🧠', color:'#8b5cf6' },
+    { name:'summarize', icon:'📄', color:'#10b981' },
+    { name:'write_code', icon:'💻', color:'#f59e0b' },
+    { name:'draft_email', icon:'📧', color:'#ef4444' },
+    { name:'analyze_data', icon:'📊', color:'#06b6d4' },
+    { name:'final_answer', icon:'✅', color:'#16a34a' },
+  ];
+  const toolMeta = (name: string) => TOOLS_INFO.find(t => t.name === name) || { name, icon:'⚙️', color:'#6b7280' };
+
+  const loadHistory = async () => {
+    try {
+      const r = await fetch(`${apiBase}/api/autonomous`, { headers:{'Authorization':`Bearer ${token}`} });
+      const d = await r.json();
+      setHistory(d.rows || []);
+    } catch {}
+  };
+
+  React.useEffect(() => { loadHistory(); }, []);
+  React.useEffect(() => { if (stepRef.current) stepRef.current.scrollTop = stepRef.current.scrollHeight; }, [steps]);
+
+  const runTask = async () => {
+    if (!goal.trim() || running) return;
+    setRunning(true);
+    setSteps([]);
+    setPlan([]);
+    setFinalResult('');
+    setTaskId(null);
+
+    try {
+      const resp = await fetch(`${apiBase}/api/autonomous`, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+        body: JSON.stringify({ goal, max_steps: maxSteps })
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json();
+        setSteps([{ type:'error', message: err.error || 'Failed to start task' }]);
+        setRunning(false);
+        return;
+      }
+
+      const reader = resp.body!.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const text = decoder.decode(value);
+        const lines = text.split('\n').filter(l => l.startsWith('data:'));
+        for (const line of lines) {
+          try {
+            const event = JSON.parse(line.slice(5));
+            if (event.type === 'start') setTaskId(event.task_id);
+            else if (event.type === 'plan') setPlan(event.steps || []);
+            else if (event.type === 'step_start') setSteps(prev => [...prev, { ...event, status:'running' }]);
+            else if (event.type === 'step_done') setSteps(prev => prev.map(s => s.step === event.step ? { ...s, ...event, status:'done' } : s));
+            else if (event.type === 'step_error') setSteps(prev => [...prev, { ...event, status:'error' }]);
+            else if (event.type === 'done') { setFinalResult(event.result); loadHistory(); }
+            else if (event.type === 'error') setSteps(prev => [...prev, { type:'error', message: event.message, status:'error' }]);
+          } catch {}
+        }
+      }
+    } catch (e: any) {
+      setSteps(prev => [...prev, { type:'error', message: e.message, status:'error' }]);
+    }
+    setRunning(false);
+  };
+
+  const EXAMPLE_GOALS = [
+    'Research the latest AI models released in 2025 and summarize the key ones',
+    'Write a Python script that scrapes product prices and saves to CSV',
+    'Draft a cold email sequence for a B2B SaaS targeting CTOs',
+    'Analyze this business idea and give me pros, cons, and next steps: AI coding assistant for non-programmers',
+    'Create a 30-day content calendar for a tech startup on LinkedIn',
+  ];
+
+  return (
+    <div style={{ padding:24, maxWidth:1000, margin:'0 auto' }}>
+      <div style={{ marginBottom:20 }}>
+        <h2 style={{ fontSize:22, fontWeight:700, color:'var(--fg-text1)', margin:0 }}>🦾 Autonomous Mode</h2>
+        <p style={{ color:'var(--fg-text3)', fontSize:13, margin:'4px 0 0' }}>Give Forge a goal — it plans, uses tools, and executes autonomously. Watch the agent work in real time.</p>
+      </div>
+
+      {/* Goal input */}
+      <div style={{ padding:20, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.25)', borderRadius:14, marginBottom:16 }}>
+        <textarea value={goal} onChange={e=>setGoal(e.target.value)} placeholder="What do you want Forge to accomplish autonomously?&#10;&#10;e.g. Research the best marketing strategies for a SaaS startup and write me an action plan"
+          style={{ width:'100%', minHeight:90, padding:'10px 12px', background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:10, color:'var(--fg-text1)', fontSize:14, resize:'vertical', fontFamily:'inherit', boxSizing:'border-box' }} />
+        <div style={{ display:'flex', gap:10, marginTop:10, alignItems:'center' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+            <label style={{ fontSize:12, color:'var(--fg-text3)' }}>Max steps:</label>
+            {[3,5,8,12].map(n => (
+              <button key={n} onClick={()=>setMaxSteps(n)} style={{ padding:'3px 10px', background:maxSteps===n?'#8b5cf6':'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:6, color:maxSteps===n?'#fff':'var(--fg-text3)', cursor:'pointer', fontSize:12 }}>{n}</button>
+            ))}
+          </div>
+          <button onClick={runTask} disabled={!goal.trim() || running} style={{ marginLeft:'auto', padding:'10px 24px', background:running?'#6b7280':'#8b5cf6', border:'none', borderRadius:10, color:'#fff', cursor:running?'not-allowed':'pointer', fontSize:14, fontWeight:700 }}>
+            {running ? '⏳ Running...' : '🚀 Run Autonomously'}
+          </button>
+        </div>
+
+        {/* Example goals */}
+        {!running && !finalResult && (
+          <div style={{ marginTop:12 }}>
+            <p style={{ fontSize:11, color:'var(--fg-text3)', margin:'0 0 6px' }}>Example goals:</p>
+            <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+              {EXAMPLE_GOALS.map((eg, i) => (
+                <button key={i} onClick={()=>setGoal(eg)} style={{ padding:'4px 10px', background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:20, color:'var(--fg-text2)', cursor:'pointer', fontSize:11 }}>{eg.slice(0,50)}…</button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Available tools */}
+      {!running && steps.length === 0 && (
+        <div style={{ padding:14, background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:12, marginBottom:16 }}>
+          <p style={{ margin:'0 0 8px', fontSize:13, fontWeight:600, color:'var(--fg-text1)' }}>Available Tools</p>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+            {TOOLS_INFO.map(t => (
+              <span key={t.name} style={{ padding:'4px 10px', background:`${t.color}18`, border:`1px solid ${t.color}40`, borderRadius:20, fontSize:12, color:t.color, fontWeight:600 }}>{t.icon} {t.name.replace('_',' ')}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Execution stream */}
+      {(running || steps.length > 0) && (
+        <div style={{ marginBottom:16 }}>
+          {plan.length > 0 && (
+            <div style={{ padding:14, background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:12, marginBottom:12 }}>
+              <p style={{ margin:'0 0 8px', fontSize:13, fontWeight:600, color:'var(--fg-text1)' }}>📋 Execution Plan ({plan.length} steps)</p>
+              <div style={{ display:'grid', gap:4 }}>
+                {plan.map((s, i) => {
+                  const tm = toolMeta(s.tool);
+                  const done = steps.some(st => st.step === s.step && st.status === 'done');
+                  const active = running && steps.some(st => st.step === s.step && st.status === 'running');
+                  return (
+                    <div key={i} style={{ display:'flex', gap:8, alignItems:'center', opacity: done ? 0.6 : 1 }}>
+                      <span style={{ fontSize:12, color: done?'#10b981':active?tm.color:'var(--fg-text3)', fontWeight:done||active?700:400 }}>{done?'✅':active?'⏳':'○'}</span>
+                      <span style={{ fontSize:12, color:tm.color }}>{tm.icon}</span>
+                      <span style={{ fontSize:12, color:'var(--fg-text2)' }}>{s.description}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div ref={stepRef} style={{ maxHeight:400, overflowY:'auto', display:'grid', gap:8 }}>
+            {steps.map((s, i) => {
+              const tm = toolMeta(s.tool);
+              return (
+                <div key={i} style={{ padding:14, background:s.status==='error'?'rgba(239,68,68,0.08)':'var(--bg-surface)', border:`1px solid ${s.status==='error'?'#ef444440':s.status==='done'?`${tm.color}40`:'var(--border)'}`, borderRadius:10 }}>
+                  <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:s.result?8:0 }}>
+                    <span style={{ fontSize:16 }}>{s.status==='running'?'⏳':s.status==='error'?'❌':tm.icon}</span>
+                    <span style={{ fontSize:13, fontWeight:700, color:tm.color }}>Step {s.step}: {(s.tool||'').replace(/_/g,' ')}</span>
+                    {s.latency_ms && <span style={{ fontSize:11, color:'var(--fg-text3)', marginLeft:'auto' }}>{s.latency_ms}ms</span>}
+                  </div>
+                  {s.description && <p style={{ margin:'0 0 6px', fontSize:12, color:'var(--fg-text3)' }}>{s.description}</p>}
+                  {s.result && <pre style={{ margin:0, fontSize:12, color:'var(--fg-text1)', whiteSpace:'pre-wrap', wordBreak:'break-word', maxHeight:200, overflowY:'auto', background:'var(--bg-surface2)', padding:'8px 10px', borderRadius:6 }}>{s.result.slice(0,1500)}{s.result.length>1500?'…':''}</pre>}
+                  {s.message && <p style={{ margin:0, fontSize:12, color:'#ef4444' }}>{s.message}</p>}
+                </div>
+              );
+            })}
+            {running && steps.length > 0 && steps[steps.length-1]?.status !== 'running' && (
+              <div style={{ padding:12, background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:10, display:'flex', gap:8, alignItems:'center' }}>
+                <span style={{ fontSize:16 }}>⏳</span><span style={{ fontSize:13, color:'var(--fg-text3)' }}>Waiting for next step…</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Final result */}
+      {finalResult && (
+        <div style={{ padding:20, background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.3)', borderRadius:14, marginBottom:16 }}>
+          <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:12 }}>
+            <span style={{ fontSize:20 }}>✅</span>
+            <h3 style={{ margin:0, fontSize:16, fontWeight:700, color:'#10b981' }}>Task Complete {taskId ? `(#${taskId})` : ''}</h3>
+            <button onClick={()=>{setGoal('');setFinalResult('');setSteps([]);setPlan([]);setTaskId(null);}} style={{ marginLeft:'auto', padding:'4px 12px', background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:6, color:'var(--fg-text2)', cursor:'pointer', fontSize:12 }}>New Task</button>
+          </div>
+          <pre style={{ margin:0, fontSize:13, color:'var(--fg-text1)', whiteSpace:'pre-wrap', wordBreak:'break-word', lineHeight:1.6 }}>{finalResult}</pre>
+        </div>
+      )}
+
+      {/* Task history */}
+      {history.length > 0 && (
+        <div style={{ padding:16, background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:12 }}>
+          <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:12 }}>
+            <h4 style={{ margin:0, fontSize:14, fontWeight:600, color:'var(--fg-text1)' }}>Recent Tasks</h4>
+            <button onClick={loadHistory} style={{ marginLeft:'auto', padding:'3px 10px', background:'var(--bg-surface2)', border:'1px solid var(--border)', borderRadius:6, color:'var(--fg-text3)', cursor:'pointer', fontSize:11 }}>↻</button>
+          </div>
+          <div style={{ display:'grid', gap:6 }}>
+            {history.slice(0,10).map((t: any) => (
+              <div key={t.id} onClick={()=>{setGoal(t.goal);setFinalResult(t.result||'');setSteps([]);setPlan([]);}} style={{ display:'grid', gridTemplateColumns:'auto 1fr auto', gap:10, alignItems:'center', padding:'8px 10px', background:'var(--bg-surface2)', borderRadius:8, cursor:'pointer' }}>
+                <span style={{ fontSize:14 }}>{t.status==='completed'?'✅':t.status==='failed'?'❌':'⏳'}</span>
+                <div>
+                  <p style={{ margin:0, fontSize:13, color:'var(--fg-text1)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:500 }}>{t.goal}</p>
+                  <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>{t.steps_completed} steps · {new Date(t.created_at).toLocaleDateString()}</p>
+                </div>
+                <span style={{ fontSize:11, color:t.status==='completed'?'#10b981':'#6b7280', fontWeight:600 }}>{t.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
