@@ -1,172 +1,331 @@
 // Forge AI Extension — Content Script
-// Injects sidebar iframe + captures page context
-
 (function () {
+  'use strict';
+
   if (window.__forgeExtLoaded) return;
   window.__forgeExtLoaded = true;
 
-  const FORGE_URL = 'https://forge-sand-two.vercel.app';
-  let sidebarOpen = false;
-  let sidebarEl = null;
-  let toggleBtn = null;
+  // ─── Config ───────────────────────────────────────────────────────────────
+  const DEFAULT_BACKEND = 'https://forge-production-2692.up.railway.app';
 
-  // ── Page context capture ──────────────────────────────────────────────────
-  function getPageContext() {
-    const selection = window.getSelection()?.toString()?.trim() || '';
-    const metaDesc = document.querySelector('meta[name="description"]')?.content || '';
-    // Get meaningful text — first 1000 chars of body text
-    const bodyText = document.body?.innerText?.replace(/\s+/g, ' ')?.trim()?.slice(0, 1000) || '';
-    return {
-      type: 'page-context',
-      url: location.href,
-      title: document.title,
-      text: bodyText,
-      description: metaDesc,
-      selection,
-      ts: Date.now()
-    };
-  }
+  const TOOLS = [
+    { id: 'improve',      label: '✨ Improve' },
+    { id: 'summarize',    label: '📝 Summarize' },
+    { id: 'simplify',     label: '💡 Explain' },
+    { id: 'shorten',      label: '✂️ Shorten' },
+    { id: 'professional', label: '👔 Professionalize' },
+    { id: 'bullet',       label: '📋 Bullets' },
+    { id: 'translate',    label: '🌍 Translate' },
+    { id: 'tone',         label: '🎭 Tone' },
+  ];
 
-  // Send context immediately and on selection changes
-  function sendContext() {
-    try { chrome.runtime.sendMessage(getPageContext()); } catch (e) {}
-  }
-  sendContext();
-  document.addEventListener('selectionchange', () => {
-    const sel = window.getSelection()?.toString()?.trim();
-    if (sel) sendContext();
-  });
+  // ─── State ────────────────────────────────────────────────────────────────
+  let selectedText = '';
+  let toolbarEl = null;
+  let panelEl = null;
+  let showTimeout = null;
 
-  // ── Sidebar iframe ────────────────────────────────────────────────────────
-  function createSidebar() {
-    if (sidebarEl) return;
-
-    // Container
-    sidebarEl = document.createElement('div');
-    sidebarEl.id = '__forge-sidebar';
-    Object.assign(sidebarEl.style, {
-      position: 'fixed',
-      top: '0',
-      right: '0',
-      width: '420px',
-      height: '100vh',
-      zIndex: '2147483646',
-      boxShadow: '-4px 0 24px rgba(0,0,0,0.25)',
-      transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1)',
-      transform: 'translateX(100%)',
-      borderLeft: '1px solid #333',
-      background: '#0f0f0f'
-    });
-
-    // Iframe — load Forge app
-    const ctx = getPageContext();
-    const params = new URLSearchParams({
-      ext: '1',
-      url: ctx.url,
-      title: ctx.title,
-      text: ctx.text.slice(0, 500),
-      sel: ctx.selection.slice(0, 200)
-    });
-    const iframe = document.createElement('iframe');
-    iframe.src = `${FORGE_URL}?${params}`;
-    Object.assign(iframe.style, {
-      width: '100%',
-      height: '100%',
-      border: 'none',
-      display: 'block'
-    });
-    iframe.allow = 'clipboard-read; clipboard-write';
-    sidebarEl.appendChild(iframe);
-
-    // Close handle (drag strip on left edge)
-    const handle = document.createElement('div');
-    Object.assign(handle.style, {
-      position: 'absolute',
-      top: '0',
-      left: '0',
-      width: '6px',
-      height: '100%',
-      cursor: 'col-resize',
-      zIndex: '1',
-      background: 'rgba(124,58,237,0.15)'
-    });
-    sidebarEl.appendChild(handle);
-
-    document.body.appendChild(sidebarEl);
-  }
-
-  function openSidebar() {
-    createSidebar();
-    // Update iframe with latest context before opening
-    const iframe = sidebarEl?.querySelector('iframe');
-    if (iframe) {
-      const ctx = getPageContext();
-      const params = new URLSearchParams({
-        ext: '1', url: ctx.url, title: ctx.title,
-        text: ctx.text.slice(0, 500), sel: ctx.selection.slice(0, 200)
+  // ─── Get stored settings ──────────────────────────────────────────────────
+  function getSettings() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(['forge_token', 'forge_backend'], (r) => {
+        resolve({
+          token: r.forge_token || '',
+          backend: r.forge_backend || DEFAULT_BACKEND,
+        });
       });
-      iframe.src = `${FORGE_URL}?${params}`;
+    });
+  }
+
+  // ─── Toolbar ──────────────────────────────────────────────────────────────
+  function removeToolbar() {
+    if (toolbarEl) { toolbarEl.remove(); toolbarEl = null; }
+  }
+
+  function createToolbar(rect) {
+    removeToolbar();
+    toolbarEl = document.createElement('div');
+    toolbarEl.id = 'forge-toolbar';
+
+    // Pill
+    const pill = document.createElement('div');
+    pill.className = 'forge-pill';
+    pill.innerHTML = '<span class="forge-logo">⚡</span><span class="forge-pill-text">Forge</span><span class="forge-arrow">▾</span>';
+
+    // Tool grid
+    const grid = document.createElement('div');
+    grid.className = 'forge-tools';
+    grid.style.display = 'none';
+
+    TOOLS.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'forge-tool-btn';
+      btn.textContent = t.label;
+      btn.dataset.tool = t.id;
+      btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        runTool(t.id, selectedText);
+        removeToolbar();
+      });
+      grid.appendChild(btn);
+    });
+
+    pill.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      grid.style.display = grid.style.display === 'none' ? 'grid' : 'none';
+    });
+
+    toolbarEl.appendChild(pill);
+    toolbarEl.appendChild(grid);
+
+    // Position above selection
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const left = Math.max(8, Math.min(rect.left + scrollX, window.innerWidth + scrollX - 240));
+    const top = rect.top + scrollY - 52;
+
+    toolbarEl.style.left = left + 'px';
+    toolbarEl.style.top = top + 'px';
+
+    document.body.appendChild(toolbarEl);
+  }
+
+  // ─── Panel ────────────────────────────────────────────────────────────────
+  function ensurePanel() {
+    if (!panelEl) {
+      panelEl = document.createElement('div');
+      panelEl.id = 'forge-panel';
+      document.body.appendChild(panelEl);
     }
-    sidebarEl.style.transform = 'translateX(0)';
-    sidebarOpen = true;
-    if (toggleBtn) toggleBtn.textContent = '✕';
-    // Push page content
-    document.body.style.transition = 'margin-right 0.25s cubic-bezier(0.4,0,0.2,1)';
-    document.body.style.marginRight = '420px';
+    return panelEl;
   }
 
-  function closeSidebar() {
-    if (sidebarEl) sidebarEl.style.transform = 'translateX(100%)';
-    sidebarOpen = false;
-    if (toggleBtn) toggleBtn.textContent = '⚡';
-    document.body.style.marginRight = '';
+  function showLoading(title) {
+    const p = ensurePanel();
+    p.innerHTML = `
+      <div class="forge-panel-header">
+        <span class="forge-panel-title">⚡ ${title}</span>
+        <div class="forge-panel-actions">
+          <button class="forge-close-btn" id="forge-close">✕</button>
+        </div>
+      </div>
+      <div class="forge-panel-body">
+        <div class="forge-loading">
+          <div class="forge-spinner"></div>
+          <span>Forge is thinking...</span>
+        </div>
+      </div>`;
+    p.classList.add('forge-panel-open');
+    document.getElementById('forge-close').addEventListener('click', closePanel);
   }
 
-  function toggleSidebar() {
-    if (sidebarOpen) closeSidebar();
-    else openSidebar();
+  function showResult(title, htmlContent, originalSnippet) {
+    const p = ensurePanel();
+    const snippet = originalSnippet && originalSnippet.length > 120
+      ? originalSnippet.slice(0, 120) + '…'
+      : originalSnippet;
+
+    p.innerHTML = `
+      <div class="forge-panel-header">
+        <span class="forge-panel-title">⚡ ${title}</span>
+        <div class="forge-panel-actions">
+          <button class="forge-copy-btn" id="forge-copy">📋 Copy</button>
+          <button class="forge-close-btn" id="forge-close">✕</button>
+        </div>
+      </div>
+      <div class="forge-panel-body">
+        <div class="forge-result">${htmlContent}</div>
+        ${snippet ? `<div class="forge-original"><strong>Original:</strong>${escHtml(snippet)}</div>` : ''}
+      </div>`;
+    p.classList.add('forge-panel-open');
+
+    document.getElementById('forge-close').addEventListener('click', closePanel);
+    document.getElementById('forge-copy').addEventListener('click', () => {
+      const text = p.querySelector('.forge-result').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        document.getElementById('forge-copy').textContent = '✓ Copied!';
+        setTimeout(() => {
+          const btn = document.getElementById('forge-copy');
+          if (btn) btn.textContent = '📋 Copy';
+        }, 2000);
+      });
+    });
   }
 
-  // ── Floating toggle button ────────────────────────────────────────────────
-  toggleBtn = document.createElement('button');
-  toggleBtn.id = '__forge-toggle';
-  toggleBtn.textContent = '⚡';
-  toggleBtn.title = 'Open Forge AI';
-  Object.assign(toggleBtn.style, {
-    position: 'fixed',
-    bottom: '24px',
-    right: '24px',
-    zIndex: '2147483647',
-    width: '44px',
-    height: '44px',
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, #7C3AED, #F97316)',
-    border: 'none',
-    color: '#fff',
-    fontSize: '20px',
-    cursor: 'pointer',
-    boxShadow: '0 4px 16px rgba(124,58,237,0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'transform 0.15s, box-shadow 0.15s',
-    fontFamily: 'system-ui, sans-serif'
-  });
-  toggleBtn.onmouseenter = () => { toggleBtn.style.transform = 'scale(1.1)'; toggleBtn.style.boxShadow = '0 6px 24px rgba(124,58,237,0.7)'; };
-  toggleBtn.onmouseleave = () => { toggleBtn.style.transform = 'scale(1)'; toggleBtn.style.boxShadow = '0 4px 16px rgba(124,58,237,0.5)'; };
-  toggleBtn.onclick = toggleSidebar;
-  document.body.appendChild(toggleBtn);
+  function showError(msg) {
+    const p = ensurePanel();
+    p.innerHTML = `
+      <div class="forge-panel-header">
+        <span class="forge-panel-title">⚡ Forge</span>
+        <div class="forge-panel-actions">
+          <button class="forge-close-btn" id="forge-close">✕</button>
+        </div>
+      </div>
+      <div class="forge-panel-body">
+        <div class="forge-error">${escHtml(msg)}</div>
+        ${msg.includes('token') ? `<p style="margin-top:12px;font-size:13px;color:#6b7280">Click the ⚡ Forge icon in your Chrome toolbar to add your token.</p>` : ''}
+      </div>`;
+    p.classList.add('forge-panel-open');
+    document.getElementById('forge-close').addEventListener('click', closePanel);
+  }
 
-  // ── Message listener (from background/popup) ─────────────────────────────
-  chrome.runtime.onMessage.addListener((msg) => {
-    if (msg.type === 'toggle-sidebar') toggleSidebar();
-    if (msg.type === 'open-sidebar') openSidebar();
-    if (msg.type === 'close-sidebar') closeSidebar();
-    if (msg.type === 'get-page-context') sendContext();
+  function closePanel() {
+    if (panelEl) panelEl.classList.remove('forge-panel-open');
+  }
+
+  function escHtml(str) {
+    return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // ─── Tool execution ───────────────────────────────────────────────────────
+  async function runTool(toolId, text) {
+    if (!text || text.length < 5) return;
+
+    const toolLabel = TOOLS.find(t => t.id === toolId)?.label || toolId;
+    showLoading(toolLabel);
+
+    const { token, backend } = await getSettings();
+
+    if (!token) {
+      showError('No Forge token found. Please add your token in the extension settings.');
+      return;
+    }
+
+    try {
+      let endpoint, body, resultHtml;
+
+      if (toolId === 'summarize') {
+        endpoint = '/api/summarize';
+        body = { text, mode: 'tldr', length: 'short' };
+      } else if (toolId === 'translate') {
+        endpoint = '/api/translate';
+        body = { text, languages: ['Spanish', 'French', 'German', 'Japanese', 'Chinese'] };
+      } else if (toolId === 'tone') {
+        endpoint = '/api/tone-detect';
+        body = { text };
+      } else {
+        endpoint = '/api/write-assist';
+        body = { text, mode: toolId };
+      }
+
+      const r = await fetch(`${backend}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || `Server error ${r.status}`);
+
+      // Format result
+      if (toolId === 'summarize') {
+        const stats = d.stats || {};
+        resultHtml = `<p>${escHtml(d.result || '')}</p>
+          <div class="forge-meta">
+            ${stats.inputWords ? `${stats.inputWords} words → ${stats.outputWords} words (${Math.round(stats.compressionRatio * 100)}% compression)` : ''}
+          </div>`;
+
+      } else if (toolId === 'translate') {
+        const results = d.results || [];
+        resultHtml = results.map(r =>
+          `<div style="margin-bottom:14px">
+            <div class="forge-section-title">${escHtml(r.language)}</div>
+            <p>${escHtml(r.translation)}</p>
+           </div>`
+        ).join('');
+
+      } else if (toolId === 'tone') {
+        const emotions = (d.emotions || []).slice(0, 4);
+        const emotionBars = emotions.map(e =>
+          `<div style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+              <span>${escHtml(e.emotion)}</span>
+              <span style="color:#6b7280">${Math.round(e.intensity * 100)}%</span>
+            </div>
+            <div style="height:6px;background:#f3f4f6;border-radius:3px">
+              <div style="height:6px;background:#6366f1;border-radius:3px;width:${Math.round(e.intensity * 100)}%"></div>
+            </div>
+          </div>`
+        ).join('');
+
+        resultHtml = `
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+            <span class="forge-tag" style="background:#eef2ff;color:#6366f1">${escHtml(d.primaryTone || '')}</span>
+            <span class="forge-tag" style="background:#f0fdf4;color:#166534">${escHtml(d.sentiment?.label || '')}</span>
+            <span class="forge-tag" style="background:#fff7ed;color:#92400e">${escHtml(d.formality || '')}</span>
+          </div>
+          <div class="forge-section-title">Emotions</div>
+          ${emotionBars}
+          ${d.insights?.length ? `<div class="forge-section-title" style="margin-top:12px">Insights</div>${d.insights.slice(0,3).map(i => `<p style="font-size:13px;color:#374151">• ${escHtml(i)}</p>`).join('')}` : ''}`;
+
+      } else {
+        // write-assist result
+        const result = d.result || '';
+        resultHtml = result.split('\n').filter(l => l.trim()).map(line => {
+          if (line.startsWith('- ') || line.startsWith('• ')) {
+            return `<p style="padding-left:12px">• ${escHtml(line.replace(/^[-•]\s*/, ''))}</p>`;
+          }
+          return `<p>${escHtml(line)}</p>`;
+        }).join('');
+      }
+
+      showResult(toolLabel, resultHtml, text);
+
+    } catch (e) {
+      showError(e.message || 'Something went wrong. Please try again.');
+    }
+  }
+
+  // ─── Selection listener ───────────────────────────────────────────────────
+  document.addEventListener('mouseup', function (e) {
+    // Don't show toolbar if clicking inside our own UI
+    if (toolbarEl && toolbarEl.contains(e.target)) return;
+    if (panelEl && panelEl.contains(e.target)) return;
+
+    clearTimeout(showTimeout);
+    showTimeout = setTimeout(() => {
+      const sel = window.getSelection();
+      const text = sel ? sel.toString().trim() : '';
+      if (text.length >= 15) {
+        selectedText = text;
+        try {
+          const range = sel.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          createToolbar(rect);
+        } catch (err) { /* ignore */ }
+      } else {
+        removeToolbar();
+      }
+    }, 200);
   });
 
-  // Keyboard shortcut: Alt+Shift+F
-  document.addEventListener('keydown', (e) => {
-    if (e.altKey && e.shiftKey && e.key === 'F') toggleSidebar();
+  document.addEventListener('mousedown', function (e) {
+    if (toolbarEl && !toolbarEl.contains(e.target)) {
+      removeToolbar();
+    }
   });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      removeToolbar();
+      closePanel();
+    }
+  });
+
+  // ─── Context menu messages from background ────────────────────────────────
+  chrome.runtime.onMessage.addListener(function (msg) {
+    if (msg.type === 'run_tool') {
+      const text = msg.text || window.getSelection()?.toString().trim() || '';
+      if (text) {
+        selectedText = text;
+        runTool(msg.tool, text);
+      }
+    }
+  });
+
 })();

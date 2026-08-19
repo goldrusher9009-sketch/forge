@@ -1,54 +1,83 @@
 // Forge AI Extension — Popup Script
 
-const FORGE_URL = 'https://forge-sand-two.vercel.app';
+const DEFAULT_BACKEND = 'https://forge-production-2692.up.railway.app';
 
-async function init() {
-  // Get current tab context from background
-  const response = await chrome.runtime.sendMessage({ type: 'get-tab-context' }).catch(() => null);
-  const ctx = response?.context;
+const tokenInput   = document.getElementById('token-input');
+const backendInput = document.getElementById('backend-input');
+const saveBtn      = document.getElementById('save-btn');
+const testBtn      = document.getElementById('test-btn');
+const statusBar    = document.getElementById('status-bar');
+const statusText   = document.getElementById('status-text');
+const saveMsg      = document.getElementById('save-msg');
 
-  if (ctx) {
-    document.getElementById('page-title').textContent = ctx.title || ctx.url || 'Unknown page';
-    document.getElementById('page-url').textContent = ctx.url || '';
-    if (ctx.selection) {
-      document.getElementById('selection-info').style.display = 'block';
-      document.getElementById('selection-text').textContent = `"${ctx.selection.slice(0, 80)}${ctx.selection.length > 80 ? '…' : ''}"`;
+// Load saved settings
+chrome.storage.local.get(['forge_token', 'forge_backend'], (result) => {
+  if (result.forge_token) tokenInput.value = result.forge_token;
+  backendInput.value = result.forge_backend || DEFAULT_BACKEND;
+  if (result.forge_token) testConnection();
+  else setStatus('disconnected', 'No token — add yours below');
+});
+
+// Save settings
+saveBtn.addEventListener('click', () => {
+  const token = tokenInput.value.trim();
+  const backend = backendInput.value.trim() || DEFAULT_BACKEND;
+
+  chrome.storage.local.set({ forge_token: token, forge_backend: backend }, () => {
+    saveMsg.style.display = 'block';
+    setTimeout(() => { saveMsg.style.display = 'none'; }, 2000);
+    if (token) testConnection();
+    else setStatus('disconnected', 'No token saved');
+  });
+});
+
+// Test connection
+testBtn.addEventListener('click', testConnection);
+
+async function testConnection() {
+  const token = tokenInput.value.trim();
+  const backend = backendInput.value.trim() || DEFAULT_BACKEND;
+
+  if (!token) {
+    setStatus('disconnected', 'No token — add yours below');
+    return;
+  }
+
+  setStatus('checking', 'Testing connection...');
+
+  try {
+    const r = await fetch(`${backend}/api/health`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+
+    if (r.ok || r.status === 404) {
+      // 404 is fine — just means /api/health doesn't exist but server is reachable
+      // Try /api/keys instead which definitely exists
+      const r2 = await fetch(`${backend}/api/keys`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (r2.ok) {
+        setStatus('connected', 'Connected — ready to use!');
+      } else if (r2.status === 401) {
+        setStatus('disconnected', 'Invalid token — check and try again');
+      } else {
+        setStatus('connected', 'Server reachable');
+      }
+    } else if (r.status === 401) {
+      setStatus('disconnected', 'Invalid token — check and try again');
+    } else {
+      setStatus('disconnected', `Error ${r.status} — check backend URL`);
     }
-  } else {
-    // Try to get from active tab directly
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true }).catch(() => [null]);
-    if (tab) {
-      document.getElementById('page-title').textContent = tab.title || tab.url || '';
-      document.getElementById('page-url').textContent = tab.url || '';
-    }
+  } catch (e) {
+    setStatus('disconnected', 'Cannot reach Forge — check URL');
   }
 }
 
-document.getElementById('btn-sidebar').addEventListener('click', async () => {
-  // Toggle sidebar on current page
-  chrome.runtime.sendMessage({ type: 'toggle-sidebar' });
-  window.close();
-});
+function setStatus(type, text) {
+  statusBar.className = 'status-bar ' + type;
+  statusText.textContent = text;
+}
 
-document.getElementById('btn-open-forge').addEventListener('click', () => {
-  chrome.runtime.sendMessage({ type: 'open-forge' });
-  window.close();
-});
-
-document.getElementById('btn-ask-page').addEventListener('click', async () => {
-  // Open sidebar with page context pre-loaded
-  const response = await chrome.runtime.sendMessage({ type: 'get-tab-context' }).catch(() => null);
-  const ctx = response?.context;
-  const params = new URLSearchParams({
-    ext: '1',
-    url: ctx?.url || '',
-    title: ctx?.title || '',
-    text: (ctx?.text || '').slice(0, 500),
-    sel: (ctx?.selection || '').slice(0, 200),
-    ask: '1'
-  });
-  chrome.tabs.create({ url: `${FORGE_URL}?${params}` });
-  window.close();
-});
-
-init();
+// Allow Enter key to save
+tokenInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveBtn.click(); });
+backendInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveBtn.click(); });

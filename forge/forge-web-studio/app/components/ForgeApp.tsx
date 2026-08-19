@@ -31354,6 +31354,53 @@ function ForgeApp() {
                 );
               })()}
 
+              {/* Chrome Extension */}
+              <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24, marginBottom:24 }}>
+                <h3 style={{ color:'var(--fg-text2)', fontSize:14, margin:'0 0 4px', textTransform:'uppercase', letterSpacing:'0.05em' }}>⚡ Chrome Extension</h3>
+                <p style={{ color:'var(--fg-text3)', fontSize:12, margin:'0 0 16px' }}>Use Forge AI on any text, on any website. Select text → click the ⚡ pill → choose a tool.</p>
+                <div style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:12, padding:16, marginBottom:14 }}>
+                  <p style={{ margin:'0 0 8px', fontSize:12, fontWeight:600, color:'var(--fg-text2)', textTransform:'uppercase', letterSpacing:'0.04em' }}>Extension Token</p>
+                  <p style={{ margin:'0 0 12px', fontSize:12, color:'var(--fg-text3)' }}>Copy this token and paste it into the Forge AI Chrome Extension to connect your account.</p>
+                  <button
+                    onClick={(e) => {
+                      const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
+                      if (tok) {
+                        navigator.clipboard.writeText(tok).then(() => {
+                          const btn = e.target as HTMLButtonElement;
+                          btn.textContent = '✓ Token Copied!';
+                          btn.style.background = 'rgba(34,197,94,0.2)';
+                          btn.style.border = '1px solid var(--fg-green)';
+                          btn.style.color = 'var(--fg-green)';
+                          setTimeout(() => {
+                            btn.textContent = '📋 Copy Extension Token';
+                            btn.style.background = 'var(--fg-orange)';
+                            btn.style.border = 'none';
+                            btn.style.color = '#fff';
+                          }, 2000);
+                        });
+                      }
+                    }}
+                    style={{ padding:'9px 20px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer', fontWeight:600 }}
+                  >
+                    📋 Copy Extension Token
+                  </button>
+                </div>
+                <div style={{ display:'flex', gap:8 }}>
+                  <div style={{ flex:1, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:'10px 14px' }}>
+                    <p style={{ margin:'0 0 3px', fontSize:12, fontWeight:700, color:'var(--fg-text2)' }}>1. Install extension</p>
+                    <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>Load <code style={{ background:'rgba(99,102,241,0.1)', color:'#6366f1', padding:'1px 4px', borderRadius:3 }}>forge/forge-extension/</code> as unpacked in Chrome</p>
+                  </div>
+                  <div style={{ flex:1, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:'10px 14px' }}>
+                    <p style={{ margin:'0 0 3px', fontSize:12, fontWeight:700, color:'var(--fg-text2)' }}>2. Paste token</p>
+                    <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>Open ⚡ popup → paste your token → Save Settings</p>
+                  </div>
+                  <div style={{ flex:1, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:'10px 14px' }}>
+                    <p style={{ margin:'0 0 3px', fontSize:12, fontWeight:700, color:'var(--fg-text2)' }}>3. Select any text</p>
+                    <p style={{ margin:0, fontSize:11, color:'var(--fg-text3)' }}>Highlight text anywhere → click ⚡ Forge → pick a tool</p>
+                  </div>
+                </div>
+              </div>
+
               {/* Account */}
               <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24 }}>
                 <h3 style={{ color:'var(--fg-text2)', fontSize:14, margin:'0 0 16px', textTransform:'uppercase', letterSpacing:'0.05em' }}>Account</h3>

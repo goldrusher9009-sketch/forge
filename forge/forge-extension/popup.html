@@ -1,121 +1,196 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Forge AI</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      width: 300px;
-      background: #0f0f0f;
-      color: #e5e5e5;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 13px;
-      padding: 0;
+      width: 320px;
+      background: white;
+      color: #1f2937;
     }
+
     .header {
-      background: linear-gradient(135deg, #7C3AED 0%, #F97316 100%);
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      padding: 20px;
+      color: white;
+      text-align: center;
     }
-    .logo { font-size: 22px; }
-    .header-text h1 { font-size: 16px; font-weight: 700; color: #fff; }
-    .header-text p { font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 2px; }
-    .section { padding: 14px 16px; border-bottom: 1px solid #222; }
-    .section:last-child { border-bottom: none; }
-    .section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #666; margin-bottom: 10px; }
-    .btn {
-      width: 100%;
-      padding: 10px 14px;
-      border: none;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
+    .header .logo { font-size: 32px; margin-bottom: 4px; }
+    .header h1 { font-size: 18px; font-weight: 700; }
+    .header p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+
+    .body { padding: 20px; }
+
+    .status-bar {
       display: flex;
       align-items: center;
       gap: 8px;
-      transition: opacity 0.15s;
-      margin-bottom: 6px;
-    }
-    .btn:last-child { margin-bottom: 0; }
-    .btn:hover { opacity: 0.85; }
-    .btn-primary { background: linear-gradient(135deg, #7C3AED, #F97316); color: #fff; }
-    .btn-secondary { background: #1a1a1a; color: #e5e5e5; border: 1px solid #333; }
-    .btn-icon { font-size: 16px; }
-    .page-info {
-      background: #141414;
+      padding: 10px 14px;
       border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .status-bar.connected { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .status-bar.disconnected { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .status-bar.checking { background: #f9fafb; color: #6b7280; border: 1px solid #e5e7eb; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .connected .status-dot { background: #10b981; }
+    .disconnected .status-dot { background: #ef4444; }
+    .checking .status-dot { background: #9ca3af; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #1f2937;
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 14px;
+    }
+    input:focus { border-color: #6366f1; }
+
+    .field-hint {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: -10px;
+      margin-bottom: 14px;
+    }
+
+    .btn {
+      width: 100%;
       padding: 10px;
-      border: 1px solid #222;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
     }
-    .page-title { font-size: 12px; font-weight: 600; color: #e5e5e5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .page-url { font-size: 10px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; }
-    .shortcut { font-size: 10px; color: #555; text-align: center; padding: 8px; }
-    kbd {
-      background: #1a1a1a;
-      border: 1px solid #333;
-      border-radius: 3px;
-      padding: 1px 5px;
-      font-size: 10px;
-      font-family: monospace;
-      color: #888;
+    .btn-primary { background: #6366f1; color: white; margin-bottom: 8px; }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-secondary { background: #f3f4f6; color: #374151; }
+    .btn-secondary:hover { background: #e5e7eb; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #f3f4f6;
+      margin: 16px 0;
     }
-    #selection-info { display: none; }
-    .selection-badge {
-      display: inline-block;
-      background: rgba(124,58,237,0.2);
-      border: 1px solid rgba(124,58,237,0.4);
-      border-radius: 4px;
-      padding: 2px 7px;
+
+    .how-to {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    .how-to h3 { font-size: 12px; font-weight: 700; margin-bottom: 10px; color: #374151; text-transform: uppercase; letter-spacing: 0.05em; }
+    .how-to-step {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: #6b7280;
+      align-items: flex-start;
+    }
+    .how-to-step .num {
+      background: #6366f1;
+      color: white;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 10px;
-      color: #a78bfa;
-      margin-top: 6px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .footer {
+      padding: 12px 20px;
+      border-top: 1px solid #f3f4f6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer a { font-size: 12px; color: #6366f1; text-decoration: none; }
+    .version { font-size: 11px; color: #9ca3af; }
+
+    #save-msg {
+      font-size: 12px;
+      color: #10b981;
+      text-align: center;
+      margin-bottom: 8px;
+      display: none;
     }
   </style>
 </head>
 <body>
   <div class="header">
     <div class="logo">⚡</div>
-    <div class="header-text">
-      <h1>Forge AI</h1>
-      <p>AI agent on every page</p>
+    <h1>Forge AI</h1>
+    <p>AI tools on any text, anywhere</p>
+  </div>
+
+  <div class="body">
+    <div class="status-bar checking" id="status-bar">
+      <div class="status-dot"></div>
+      <span id="status-text">Checking connection...</span>
+    </div>
+
+    <label for="token-input">Forge Token</label>
+    <input type="password" id="token-input" placeholder="Paste your token from Forge app" autocomplete="off" />
+    <div class="field-hint">Get this from Forge → Settings → Copy Extension Token</div>
+
+    <label for="backend-input">Backend URL</label>
+    <input type="text" id="backend-input" placeholder="https://forge-production-2692.up.railway.app" />
+
+    <div id="save-msg">✓ Settings saved!</div>
+
+    <button class="btn btn-primary" id="save-btn">Save Settings</button>
+    <button class="btn btn-secondary" id="test-btn">Test Connection</button>
+
+    <div class="how-to">
+      <h3>How to use</h3>
+      <div class="how-to-step">
+        <div class="num">1</div>
+        <span>Add your Forge token above</span>
+      </div>
+      <div class="how-to-step">
+        <div class="num">2</div>
+        <span>Select any text on any webpage</span>
+      </div>
+      <div class="how-to-step">
+        <div class="num">3</div>
+        <span>Click the ⚡ Forge pill that appears</span>
+      </div>
+      <div class="how-to-step">
+        <div class="num">4</div>
+        <span>Choose your AI tool — result slides in from the right</span>
+      </div>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-title">Current Page</div>
-    <div class="page-info">
-      <div class="page-title" id="page-title">Loading…</div>
-      <div class="page-url" id="page-url"></div>
-      <div id="selection-info"><div class="selection-badge" id="selection-text"></div></div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Actions</div>
-    <button class="btn btn-primary" id="btn-sidebar">
-      <span class="btn-icon">💬</span>
-      Open Forge Sidebar
-    </button>
-    <button class="btn btn-secondary" id="btn-open-forge">
-      <span class="btn-icon">🚀</span>
-      Open Forge App
-    </button>
-    <button class="btn btn-secondary" id="btn-ask-page">
-      <span class="btn-icon">🔍</span>
-      Ask about this page
-    </button>
-  </div>
-
-  <div class="shortcut">
-    Toggle sidebar: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd>
+  <div class="footer">
+    <a href="https://forge-sand-two.vercel.app" target="_blank">Open Forge ↗</a>
+    <span class="version">v1.0.0</span>
   </div>
 
   <script src="popup.js"></script>
