@@ -12728,60 +12728,6 @@ function ForgeTab_mentalperf() {
 }
 
 
-function ForgeTab_contractanalyze() {
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
-  const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
-  const [text, setText] = React.useState('');
-          const [type, setType] = React.useState('');
-          const [role, setRole] = React.useState('');
-          const [out, setOut] = React.useState<any>(null);
-          const [loading, setLoading] = React.useState(false);
-          const run = async () => {
-            setLoading(true);
-            try {
-              const r = await fetch(`${API_BASE}/api/contract/analyze`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`}, body: JSON.stringify({ contract_text: text, contract_type: type, party_role: role }) });
-              setOut(await r.json());
-            } finally { setLoading(false); }
-          };
-          return (
-            <div style={{padding:'2rem',maxWidth:'900px'}}>
-              <h2>📋 Contract Clause Analyzer</h2>
-              <p style={{color:'var(--text-muted)'}}>Understand contracts in plain English. Not legal advice — consult an attorney for important matters.</p>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem',marginBottom:'1rem'}}>
-                <input placeholder="Contract type (NDA, employment, lease, vendor...)" value={type} onChange={e=>setType(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}} />
-                <input placeholder="Your role (buyer, seller, employee, tenant...)" value={role} onChange={e=>setRole(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)'}} />
-              </div>
-              <textarea placeholder="Paste the contract text here..." value={text} onChange={e=>setText(e.target.value)} style={{width:'100%',height:'180px',marginBottom:'1rem',padding:'0.75rem',borderRadius:'8px',border:'1px solid var(--border)',background:'var(--bg-secondary)',color:'var(--text)',resize:'vertical'}} />
-              <button onClick={run} disabled={loading||!text.trim()} style={{padding:'0.75rem 2rem',borderRadius:'8px',background:'var(--accent)',color:'white',border:'none',cursor:'pointer',fontWeight:600}}>
-                {loading?'Analyzing...':'Analyze Contract'}
-              </button>
-              {out && (
-                <div style={{marginTop:'2rem'}}>
-                  <div style={{background:'#fff3cd',padding:'1rem',borderRadius:'8px',marginBottom:'1rem',color:'#856404'}}>⚠️ {out.disclaimer}</div>
-                  <div style={{display:'flex',gap:'1rem',marginBottom:'1rem',flexWrap:'wrap'}}>
-                    <div style={{background:out.overall_risk==='low'?'#d4edda':out.overall_risk==='medium'?'#fff3cd':'#f8d7da',padding:'1rem',borderRadius:'8px',flex:1,textAlign:'center'}}>
-                      <div style={{fontSize:'0.8rem',opacity:0.7}}>Overall Risk</div>
-                      <div style={{fontSize:'1.5rem',fontWeight:700,textTransform:'capitalize'}}>{out.overall_risk}</div>
-                    </div>
-                    <div style={{background:'var(--bg-secondary)',padding:'1rem',borderRadius:'8px',flex:2}}>
-                      <strong>Recommendation:</strong> {out.recommendation}
-                    </div>
-                  </div>
-                  <div style={{background:'var(--bg-secondary)',padding:'1rem',borderRadius:'8px',marginBottom:'1rem'}}>{out.summary}</div>
-                  {out.red_flags?.length>0&&<div style={{marginBottom:'1rem'}}><h4 style={{color:'#dc3545'}}>🚩 Red Flags</h4>{out.red_flags.map((f:any,i:number)=><div key={i} style={{background:'#f8d7da',padding:'0.75rem',borderRadius:'8px',marginBottom:'0.5rem',borderLeft:'4px solid #dc3545'}}><strong>{f.flag}</strong> — {f.severity} severity<br/><span style={{fontSize:'0.85rem'}}>{f.location}</span></div>)}</div>}
-                  {out.negotiation_points?.map((n:any,i:number)=>(
-                    <div key={i} style={{background:'var(--bg-secondary)',padding:'1rem',borderRadius:'8px',marginBottom:'0.5rem'}}>
-                      <div style={{display:'flex',justifyContent:'space-between'}}><strong>{n.point}</strong><span style={{fontSize:'0.8rem',background:n.priority==='must-have'?'#dc3545':'#6c757d',color:'white',padding:'0.2rem 0.5rem',borderRadius:'4px'}}>{n.priority}</span></div>
-                      <p style={{margin:'0.5rem 0 0',fontSize:'0.9rem',color:'var(--text-muted)'}}>{n.suggested_language}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-}
-
-
 function ForgeTab_taxstrat62() {
   const API = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
   const tok = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
@@ -51284,8 +51230,6 @@ function ForgeApp() {
         {(mainTab as string) === 'longevityprotocol' && <ForgeTab_longevityprotocol />}
 
         {(mainTab as string) === 'mentalperf' && <ForgeTab_mentalperf />}
-
-        {(mainTab as string) === 'contractanalyze' && <ForgeTab_contractanalyze />}
 
         {(mainTab as string) === 'taxstrat62' && <ForgeTab_taxstrat62 />}
 
