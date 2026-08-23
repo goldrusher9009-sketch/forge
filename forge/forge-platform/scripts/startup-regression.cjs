@@ -106,6 +106,11 @@ async function startOpenAIMock() {
       requests.push({ method: req.method, url: req.url, authorization: req.headers.authorization, payload });
       res.setHeader('content-type', 'application/json');
       if (req.method === 'POST' && req.url === '/v1/chat/completions') {
+        if (JSON.stringify(payload.messages || []).includes('Trigger provider log safety failure')) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: { message: 'provider-secret-must-not-leak' } }));
+          return;
+        }
         res.end(JSON.stringify({
           choices: [{ message: { content: '{"businessName":"Metered Pilot","businessType":"other","cities":[],"services":["verification"],"pain":"commercial control"}' } }],
           usage: { prompt_tokens: 100, completion_tokens: 50, cost: 0.000045 },
@@ -507,6 +512,25 @@ test('commercial model access isolates legacy BYOK from metered platform usage a
   });
   await waitForHealth(child, port, getLogs);
 
+  const querySecret = `query-secret-${Date.now()}`;
+  const unmatched = await fetch(`http://127.0.0.1:${port}/api/log-safety-probe?token=${querySecret}`);
+  assert.equal(unmatched.status, 404);
+  const unmatchedRequestId = unmatched.headers.get('x-request-id');
+  assert.match(unmatchedRequestId || '', /^[0-9a-f-]{36}$/);
+  const pathSecret = `path-secret-${Date.now()}`;
+  const secretPath = await fetch(`http://127.0.0.1:${port}/api/webhooks/trigger/missing/${pathSecret}`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}',
+  });
+  assert.equal(secretPath.status, 404);
+  const secretPathRequestId = secretPath.headers.get('x-request-id');
+  assert.match(secretPathRequestId || '', /^[0-9a-f-]{36}$/);
+  await new Promise(resolve => setTimeout(resolve, 25));
+  assert.match(getLogs(), new RegExp(unmatchedRequestId));
+  assert.match(getLogs(), new RegExp(secretPathRequestId));
+  assert.doesNotMatch(getLogs(), new RegExp(querySecret));
+  assert.doesNotMatch(getLogs(), new RegExp(pathSecret));
+  assert.match(getLogs(), /POST \/api\/webhooks\/trigger\/:id\/:secret 404/);
+
   const registered = await fetch(`http://127.0.0.1:${port}/api/auth/register`, {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password }),
   });
@@ -629,6 +653,66 @@ test('commercial model access isolates legacy BYOK from metered platform usage a
   assert.equal(openAIMock.requests.length, 3);
   assert.ok(openAIMock.requests[2].payload.max_tokens > 0);
   assert.ok(openAIMock.requests[2].payload.max_tokens <= 4096);
+
+  const failedProviderChat = await fetch(`http://127.0.0.1:${port}/api/chat`, {
+    method: 'POST', headers, body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 32, messages: [{ role: 'user', content: 'Trigger provider log safety failure' }] }),
+  });
+  assert.equal(failedProviderChat.status, 500, await failedProviderChat.clone().text());
+  const failedProviderBody = await failedProviderChat.json();
+  assert.equal(failedProviderBody.error, 'LLM_ERROR');
+  assert.equal(failedProviderBody.message, 'The model request failed. Retry or choose another model.');
+  assert.doesNotMatch(JSON.stringify(failedProviderBody), /provider-secret-must-not-leak/);
+  const failedProviderRequestId = failedProviderChat.headers.get('x-request-id');
+  assert.match(failedProviderRequestId || '', /^[0-9a-f-]{36}$/);
+  await new Promise(resolve => setTimeout(resolve, 25));
+  assert.match(getLogs(), new RegExp(failedProviderRequestId));
+  assert.doesNotMatch(getLogs(), /provider-secret-must-not-leak/);
+  assert.equal(openAIMock.requests.length, 4);
+
+  const failedThreadResponse = await fetch(`http://127.0.0.1:${port}/api/threads`, {
+    method: 'POST', headers, body: JSON.stringify({ title: 'Thread log safety', model: 'gpt-4o-mini' }),
+  });
+  assert.equal(failedThreadResponse.status, 201, await failedThreadResponse.clone().text());
+  const failedThreadId = (await failedThreadResponse.json()).data.id;
+  const failedThread = await fetch(`http://127.0.0.1:${port}/api/threads/${failedThreadId}/messages`, {
+    method: 'POST', headers, body: JSON.stringify({ content: 'Trigger provider log safety failure', model: 'gpt-4o-mini', token_budget: 10000 }),
+  });
+  assert.equal(failedThread.status, 200);
+  const failedThreadText = await failedThread.text();
+  assert.match(failedThreadText, /All configured models failed\. Retry or choose another model\./);
+  assert.doesNotMatch(failedThreadText, /provider-secret-must-not-leak/);
+  const failedThreadRequestId = failedThread.headers.get('x-request-id');
+  assert.match(failedThreadRequestId || '', /^[0-9a-f-]{36}$/);
+  const liveEvents = await fetch(`http://127.0.0.1:${port}/api/live/events`, { headers });
+  assert.equal(liveEvents.status, 200, await liveEvents.clone().text());
+  const liveEventBody = await liveEvents.text();
+  assert.match(liveEventBody, /All configured models failed\. Retry or choose another model\./);
+  assert.doesNotMatch(liveEventBody, /provider-secret-must-not-leak/);
+  await new Promise(resolve => setTimeout(resolve, 25));
+  assert.match(getLogs(), new RegExp(failedThreadRequestId));
+  assert.doesNotMatch(getLogs(), /provider-secret-must-not-leak/);
+  const requestsAfterFailedThread = openAIMock.requests.length;
+  assert.ok(requestsAfterFailedThread > 4);
+
+  const failedAgentRun = await fetch(`http://127.0.0.1:${port}/api/agent-runs`, {
+    method: 'POST', headers, body: JSON.stringify({ name: 'Agent Run log safety', prompt: 'Trigger provider log safety failure', model: 'gpt-4o-mini', max_tokens: 32 }),
+  });
+  assert.equal(failedAgentRun.status, 200, await failedAgentRun.clone().text());
+  const failedAgentRunId = (await failedAgentRun.json()).id;
+  let persistedFailedRun;
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const runRows = await fetch(`http://127.0.0.1:${port}/api/agent-runs`, { headers });
+    assert.equal(runRows.status, 200, await runRows.clone().text());
+    persistedFailedRun = (await runRows.json()).find(row => row.id === failedAgentRunId);
+    if (persistedFailedRun?.status === 'error') break;
+    await new Promise(resolve => setTimeout(resolve, 25));
+  }
+  assert.equal(persistedFailedRun?.status, 'error');
+  assert.equal(persistedFailedRun.error, 'AGENT_RUN_PROVIDER_FAILED');
+  assert.doesNotMatch(JSON.stringify(persistedFailedRun), /provider-secret-must-not-leak/);
+  await new Promise(resolve => setTimeout(resolve, 25));
+  assert.doesNotMatch(getLogs(), /provider-secret-must-not-leak/);
+  assert.equal(openAIMock.requests.length, requestsAfterFailedThread + 1);
 });
 
 test('Stripe Checkout uses canonical nested fields, trusted return URLs, and the hosted cancellation portal', { timeout: 120_000 }, async t => {
