@@ -27434,7 +27434,7 @@ function ForgeApp() {
     if (!user) return;
     try {
       const d = await apiFetch('/billing/upgrade', { method:'POST', body:JSON.stringify({ plan }) }, user.token);
-      if (d?.checkoutUrl) { window.open(d.checkoutUrl, '_blank'); showToast('Opening Stripe checkout...','info'); }
+      if (d?.checkoutUrl) { window.open(d.checkoutUrl, '_blank'); showToast('Opening secure billing...','info'); }
       else { await loadSubscription(); showToast(d?.message || `✓ Upgraded to ${plan} plan!`); }
     } catch (e: any) { showToast(String(e?.message||e),'err'); }
   };
@@ -30517,24 +30517,22 @@ function ForgeApp() {
               {/* Plans */}
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:16, marginBottom:28 }}>
                 {[
-                  { plan:'free', label:'Free', price:'$0/mo', tokens:'100K tokens', color:'var(--fg-text3)', features:['3 models','Basic agents','Community support'] },
-                  { plan:'starter', label:'Starter', price:'$19/mo', tokens:'2M tokens', color:'var(--fg-blue)', features:['All models','ForgeRouter','Email support'] },
-                  { plan:'pro', label:'Pro', price:'$49/mo', tokens:'10M tokens', color:'var(--fg-orange)', features:['All models','Agent swarm','Priority support','Custom providers'] },
-                  { plan:'team', label:'Team', price:'$29/seat/mo', tokens:'5M tokens/seat', color:'#6366f1', features:['All Pro features','Shared workspace','Team analytics','SSO / admin panel'] },
-                  { plan:'enterprise', label:'Enterprise', price:'Custom', tokens:'Unlimited', color:'var(--fg-orange)', features:['Everything in Team','SLA','Dedicated infra','White-label'] },
+                  { plan:'free', label:'Free', price:'$0/mo', tokens:'10K tokens', color:'var(--fg-text3)', features:['Core chat','BYOK ready','Owner approval queue','Community access'] },
+                  { plan:'starter', label:'Starter', price:'$99/mo', tokens:'500K tokens', color:'var(--fg-blue)', features:['$20 monthly Forge credits','BYOK and model routing','Owner approval queue','Usage history'] },
+                  { plan:'pro', label:'Pro', price:'$299/mo', tokens:'2M tokens', color:'var(--fg-orange)', features:['$75 monthly Forge credits','BYOK and Auto Mode','Agent Passport','Usage and audit history'] },
+                  { plan:'agency', label:'Agency', price:'$499/mo', tokens:'10M tokens', color:'#10b981', features:['$200 monthly Forge credits','BYOK and Auto Mode','Agent Passport','Usage and audit history'] },
                 ].map(p => (
                   <div key={p.plan} style={{ padding:'20px', background:'var(--fg-bg3)', border:`1px solid ${subscription?.plan===p.plan ? p.color : 'var(--fg-border)'}`, borderRadius:14 }}>
                     <p style={{ margin:'0 0 2px', fontSize:16, fontWeight:700, color:p.color }}>{p.label}</p>
                     <p style={{ margin:'0 0 2px', fontSize:20, fontWeight:800, color:'var(--fg-text)' }}>{p.price}</p>
                     <p style={{ margin:'0 0 12px', fontSize:12, color:'var(--fg-text3)' }}>{p.tokens}</p>
                     {p.features.map(f => <p key={f} style={{ margin:'0 0 4px', fontSize:12, color:'var(--fg-text2)' }}>✓ {f}</p>)}
-                    {subscription?.plan !== p.plan && p.plan !== 'enterprise' && (
+                    {subscription?.plan !== p.plan && (
                       <button onClick={() => upgradePlan(p.plan)} style={{ marginTop:12, width:'100%', padding:'8px', background:p.color, border:'none', borderRadius:8, color:'#fff', fontSize:13, cursor:'pointer' }}>
-                        {subscription && ['free','starter','pro'].indexOf(p.plan) > ['free','starter','pro'].indexOf(subscription.plan) ? 'Upgrade' : 'Switch'}
+                        {subscription && ['free','starter','pro','agency'].indexOf(p.plan) > ['free','starter','pro','agency'].indexOf(subscription.plan) ? 'Upgrade' : 'Switch'}
                       </button>
                     )}
                     {subscription?.plan === p.plan && <p style={{ marginTop:12, fontSize:12, color:p.color, textAlign:'center' }}>✓ Current plan</p>}
-                    {p.plan === 'enterprise' && <button onClick={() => window.open('mailto:sales@forge.ai')} style={{ marginTop:12, width:'100%', padding:'8px', background:'transparent', border:`1px solid ${p.color}`, borderRadius:8, color:p.color, fontSize:13, cursor:'pointer' }}>Contact Sales</button>}
                   </div>
                 ))}
               </div>
@@ -30748,39 +30746,6 @@ function ForgeApp() {
                   ))}
                 </div>
               )}
-
-              {/* Referral Program */}
-              <div style={{ background:'linear-gradient(135deg,rgba(251,146,60,0.12),rgba(99,102,241,0.08))', border:'1px solid var(--fg-orange)', borderRadius:16, padding:24, marginBottom:24 }}>
-                <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:12 }}>
-                  <span style={{ fontSize:28 }}>🎉</span>
-                  <div>
-                    <h3 style={{ margin:0, fontSize:16, fontWeight:800, color:'var(--fg-orange)' }}>Referral Program — Earn Free Tokens</h3>
-                    <p style={{ margin:0, fontSize:13, color:'var(--fg-text3)' }}>Share Forge, earn 500K tokens for every friend who signs up. They get 100K bonus tokens too.</p>
-                  </div>
-                </div>
-                <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
-                  <div style={{ flex:1, minWidth:200, background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:8, padding:'10px 14px', fontFamily:'monospace', fontSize:13, color:'var(--fg-orange)' }}>
-                    {`https://forge-sand-two.vercel.app?ref=${user?.email?.split('@')[0] || 'user'}`}
-                  </div>
-                  <button onClick={() => { navigator.clipboard.writeText(`https://forge-sand-two.vercel.app?ref=${user?.email?.split('@')[0] || 'user'}`); showToast('🔗 Referral link copied'); }}
-                    style={{ padding:'10px 20px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>
-                    📋 Copy Link
-                  </button>
-                  <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent('I use Forge AI for multi-model agents, swarms, and deep research. BYOK = no markup. Try it free: https://forge-sand-two.vercel.app')}`, '_blank')}
-                    style={{ padding:'10px 20px', background:'#1da1f2', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>
-                    ↗ Share
-                  </button>
-                </div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginTop:16 }}>
-                  {[{icon:'👥',label:'Friends Referred',val:'0'},{icon:'🎉',label:'Tokens Earned',val:'0'},{icon:'💰',label:'Credits Value',val:'$0.00'}].map(s => (
-                    <div key={s.label} style={{ background:'var(--fg-bg2)', borderRadius:10, padding:14, textAlign:'center' }}>
-                      <div style={{ fontSize:20, marginBottom:4 }}>{s.icon}</div>
-                      <div style={{ fontSize:18, fontWeight:800, color:'var(--fg-orange)' }}>{s.val}</div>
-                      <div style={{ fontSize:11, color:'var(--fg-text3)' }}>{s.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
               {/* Usage breakdown */}
               {Object.keys(keyUsageData).length > 0 && (

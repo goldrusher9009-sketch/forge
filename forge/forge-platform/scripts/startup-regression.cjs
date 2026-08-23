@@ -4,6 +4,7 @@ const { spawn } = require('node:child_process');
 const { once } = require('node:events');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
+const http = require('node:http');
 const net = require('node:net');
 const os = require('node:os');
 const path = require('node:path');
@@ -60,6 +61,86 @@ async function login(port, email, password) {
   });
   assert.equal(response.status, 200);
   return response.json();
+}
+
+async function startStripeMock() {
+  const requests = [];
+  const server = http.createServer((req, res) => {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      requests.push({ method: req.method, url: req.url, headers: req.headers, params: Object.fromEntries(new URLSearchParams(body)) });
+      res.setHeader('content-type', 'application/json');
+      if (req.method === 'POST' && req.url === '/v1/checkout/sessions') {
+        res.end(JSON.stringify({ id: `cs_test_${requests.length}`, url: `https://checkout.stripe.test/session/${requests.length}` }));
+        return;
+      }
+      if (req.method === 'POST' && req.url === '/v1/billing_portal/sessions') {
+        res.end(JSON.stringify({ id: `bps_test_${requests.length}`, url: `https://billing.stripe.test/session/${requests.length}` }));
+        return;
+      }
+      res.statusCode = 404;
+      res.end(JSON.stringify({ error: 'not_found' }));
+    });
+  });
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  const { port } = server.address();
+  return {
+    requests,
+    baseUrl: `http://127.0.0.1:${port}/v1`,
+    close: () => new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve())),
+  };
+}
+
+async function startOpenAIMock() {
+  const requests = [];
+  const server = http.createServer((req, res) => {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      let payload = {};
+      try { payload = JSON.parse(body || '{}'); } catch {}
+      requests.push({ method: req.method, url: req.url, authorization: req.headers.authorization, payload });
+      res.setHeader('content-type', 'application/json');
+      if (req.method === 'POST' && req.url === '/v1/chat/completions') {
+        res.end(JSON.stringify({
+          choices: [{ message: { content: '{"businessName":"Metered Pilot","businessType":"other","cities":[],"services":["verification"],"pain":"commercial control"}' } }],
+          usage: { prompt_tokens: 100, completion_tokens: 50, cost: 0.000045 },
+        }));
+        return;
+      }
+      res.statusCode = 404;
+      res.end(JSON.stringify({ error: 'not_found' }));
+    });
+  });
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  const { port } = server.address();
+  return {
+    requests,
+    baseUrl: `http://127.0.0.1:${port}/v1`,
+    close: () => new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve())),
+  };
+}
+
+function signStripeEvent(event, secret, timestamp = Math.floor(Date.now() / 1000)) {
+  const body = JSON.stringify(event);
+  const signature = crypto.createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
+  return { body, signature: `t=${timestamp},v1=${signature}` };
+}
+
+async function postStripeEvent(port, event, secret, timestamp) {
+  const signed = signStripeEvent(event, secret, timestamp);
+  return fetch(`http://127.0.0.1:${port}/api/billing/webhook`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'stripe-signature': signed.signature },
+    body: signed.body,
+  });
 }
 
 test('cold start migrates legacy Hermes and agent runs, then binds once after late routes', { timeout: 180_000 }, async t => {
@@ -233,6 +314,7 @@ test('production refuses missing JWT, admin, and frontend configuration before o
     ADMIN_PASSWORD: '',
     FRONTEND_URL: '',
     CREDENTIAL_ENCRYPTION_KEY: '',
+    BILLING_REQUIRED: '',
     STRIPE_SECRET_KEY: '',
     STRIPE_WEBHOOK_SECRET: '',
   });
@@ -243,6 +325,39 @@ test('production refuses missing JWT, admin, and frontend configuration before o
   try {
     assert.equal(code, 1);
     assert.match(getLogs(), /Missing required production configuration: JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, FRONTEND_URL, CREDENTIAL_ENCRYPTION_KEY/);
+    assert.doesNotMatch(getLogs(), /running on port/);
+    assert.equal(fs.existsSync(dbPath), false);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('commercial billing mode refuses partial Stripe configuration before opening the database', { timeout: 30_000 }, async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'forge-production-billing-config-'));
+  const dbPath = path.join(tempDir, 'forge.db');
+  const port = await getFreePort();
+  const { child, getLogs } = spawnForge(dbPath, port, {
+    NODE_ENV: 'production',
+    RAILWAY_ENVIRONMENT: '',
+    JWT_SECRET: 'production-billing-gate-jwt-secret-32-bytes',
+    ADMIN_EMAIL: 'billing-gate@forge.test',
+    ADMIN_PASSWORD: 'production-billing-gate-password',
+    FRONTEND_URL: `http://127.0.0.1:${port}`,
+    CREDENTIAL_ENCRYPTION_KEY: 'production-billing-gate-encryption-key',
+    BILLING_REQUIRED: 'true',
+    STRIPE_SECRET_KEY: 'sk_test_partial',
+    STRIPE_WEBHOOK_SECRET: '',
+    STRIPE_PRICE_STARTER: '',
+    STRIPE_PRICE_PRO: '',
+    STRIPE_PRICE_AGENCY: '',
+  });
+  const [code] = await Promise.race([
+    once(child, 'exit'),
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`Forge did not fail closed:\n${getLogs()}`)), 20_000)),
+  ]);
+  try {
+    assert.equal(code, 1);
+    assert.match(getLogs(), /Missing required production configuration: STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_STARTER, STRIPE_PRICE_PRO, STRIPE_PRICE_AGENCY/);
     assert.doesNotMatch(getLogs(), /running on port/);
     assert.equal(fs.existsSync(dbPath), false);
   } finally {
@@ -264,8 +379,10 @@ test('production rejects unapproved origins and dangerous routes without changin
     ADMIN_PASSWORD: password,
     FRONTEND_URL: `http://127.0.0.1:${port}`,
     CREDENTIAL_ENCRYPTION_KEY: 'production-route-credential-encryption-key',
+    BILLING_REQUIRED: '',
     STRIPE_SECRET_KEY: '',
     STRIPE_WEBHOOK_SECRET: '',
+    OPENAI_API_KEY: 'test-only-billing-gate-key',
     RESET_SECRET: '',
   });
   t.after(async () => {
@@ -308,15 +425,266 @@ test('production rejects unapproved origins and dangerous routes without changin
   });
   assert.equal(reset.status, 404);
 
+  const userEmail = 'commercial-user@forge.test';
+  const userPassword = 'commercial-user-regression';
+  const registered = await fetch(`http://127.0.0.1:${port}/api/auth/register`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: userEmail, password: userPassword }),
+  });
+  assert.equal(registered.status, 201, await registered.clone().text());
+  const userAuth = await login(port, userEmail, userPassword);
+  const userHeaders = { authorization: `Bearer ${userAuth.accessToken}`, 'content-type': 'application/json' };
+  const onboarded = await fetch(`http://127.0.0.1:${port}/api/onboarding`, {
+    method: 'POST', headers: userHeaders, body: JSON.stringify({ businessName: 'Commercial Test', businessType: 'other', cities: [], services: [] }),
+  });
+  assert.equal(onboarded.status, 200, await onboarded.clone().text());
+
+  let writable = new Database(dbPath);
+  const freeEntitlement = writable.prepare('SELECT plan,tokens_limit FROM subscriptions WHERE user_id=?').get(userAuth.data.user.id);
+  assert.deepEqual(freeEntitlement, { plan: 'free', tokens_limit: 10000 });
+  writable.prepare('UPDATE subscriptions SET tokens_used=tokens_limit WHERE user_id=?').run(userAuth.data.user.id);
+  writable.close();
+
+  const thread = await fetch(`http://127.0.0.1:${port}/api/threads`, {
+    method: 'POST', headers: userHeaders, body: JSON.stringify({ title: 'Billing gate regression', model: 'gpt-4o-mini' }),
+  });
+  assert.equal(thread.status, 201, await thread.clone().text());
+  const threadId = (await thread.json()).data.id;
+  const blockedThread = await fetch(`http://127.0.0.1:${port}/api/threads/${threadId}/messages`, {
+    method: 'POST', headers: userHeaders, body: JSON.stringify({ content: 'This must not reach a model.', model: 'gpt-4o-mini' }),
+  });
+  assert.equal(blockedThread.status, 200);
+  assert.match(await blockedThread.text(), /TOKEN_LIMIT_EXCEEDED/);
+
+  const blockedChat = await fetch(`http://127.0.0.1:${port}/api/chat`, {
+    method: 'POST', headers: userHeaders, body: JSON.stringify({ messages: [{ role: 'user', content: 'This must not reach a model.' }], model: 'gpt-4o-mini' }),
+  });
+  assert.equal(blockedChat.status, 402, await blockedChat.clone().text());
+  assert.equal((await blockedChat.json()).error, 'TOKEN_LIMIT_EXCEEDED');
+
   const state = new Database(dbPath, { readonly: true });
   const subscription = state.prepare('SELECT plan FROM subscriptions WHERE user_id=?').get(auth.data.user.id);
   const connectors = state.prepare("SELECT COUNT(*) AS count FROM api_keys WHERE user_id=? AND provider LIKE 'connector_%'").get(auth.data.user.id);
+  const blockedMessages = state.prepare('SELECT COUNT(*) AS count FROM messages WHERE thread_id=?').get(threadId);
   state.close();
   assert.equal(subscription.plan, 'free');
   assert.equal(connectors.count, 0);
+  assert.equal(blockedMessages.count, 0);
 });
 
-test('production accepts only a correctly signed Stripe webhook', { timeout: 120_000 }, async t => {
+test('commercial model access isolates legacy BYOK from metered platform usage and debits prepaid overage once', { timeout: 120_000 }, async t => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'forge-commercial-model-access-'));
+  const dbPath = path.join(tempDir, 'forge.db');
+  const openAIMock = await startOpenAIMock();
+  const port = await getFreePort();
+  const email = 'commercial-model-user@forge.test';
+  const password = 'commercial-model-user-regression';
+  const { child, getLogs } = spawnForge(dbPath, port, {
+    NODE_ENV: 'test',
+    RAILWAY_ENVIRONMENT: '',
+    JWT_SECRET: 'commercial-model-access-jwt-secret-32-bytes',
+    ADMIN_EMAIL: 'commercial-model-admin@forge.test',
+    ADMIN_PASSWORD: 'commercial-model-admin-regression',
+    FRONTEND_URL: `http://127.0.0.1:${port}`,
+    CREDENTIAL_ENCRYPTION_KEY: 'commercial-model-access-encryption-key',
+    BILLING_REQUIRED: 'true',
+    STRIPE_SECRET_KEY: 'sk_test_commercial_model_access',
+    STRIPE_WEBHOOK_SECRET: 'whsec_commercial_model_access',
+    STRIPE_PRICE_STARTER: 'price_starter_commercial_model_access',
+    STRIPE_PRICE_PRO: 'price_pro_commercial_model_access',
+    STRIPE_PRICE_AGENCY: 'price_agency_commercial_model_access',
+    ANTHROPIC_API_KEY: '',
+    OPENROUTER_API_KEY: '',
+    GEMINI_API_KEY: '',
+    GROQ_API_KEY: '',
+    MISTRAL_API_KEY: '',
+    OPENAI_API_KEY: 'sk-platform-openai-regression',
+    FORGE_OPENAI_TEST_API_BASE_URL: openAIMock.baseUrl,
+  });
+  t.after(async () => {
+    await stopForge(child);
+    await openAIMock.close();
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+  await waitForHealth(child, port, getLogs);
+
+  const registered = await fetch(`http://127.0.0.1:${port}/api/auth/register`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password }),
+  });
+  assert.equal(registered.status, 201, await registered.clone().text());
+  const auth = await login(port, email, password);
+  const userId = auth.data.user.id;
+  const headers = { authorization: `Bearer ${auth.accessToken}`, 'content-type': 'application/json' };
+
+  const savedKey = await fetch(`http://127.0.0.1:${port}/api/keys`, {
+    method: 'POST', headers, body: JSON.stringify({ openai_key: 'sk-user-openai-regression' }),
+  });
+  assert.equal(savedKey.status, 200, await savedKey.clone().text());
+  const freeLegacy = await fetch(`http://127.0.0.1:${port}/api/onboarding/from-sentence`, {
+    method: 'POST', headers, body: JSON.stringify({ sentence: 'I run a verification business in Austin.' }),
+  });
+  assert.equal(freeLegacy.status, 402, await freeLegacy.clone().text());
+  assert.equal((await freeLegacy.json()).error, 'PAID_PLAN_AND_BYOK_REQUIRED');
+  assert.equal(openAIMock.requests.length, 0);
+
+  const subscriptionResponse = await fetch(`http://127.0.0.1:${port}/api/billing/subscription`, { headers });
+  assert.equal(subscriptionResponse.status, 200, await subscriptionResponse.clone().text());
+  let writable = new Database(dbPath);
+  writable.prepare("UPDATE subscriptions SET plan='starter',status='active',tokens_limit=500000,tokens_used=0 WHERE user_id=?").run(userId);
+  writable.close();
+
+  const paidLegacy = await fetch(`http://127.0.0.1:${port}/api/onboarding/from-sentence`, {
+    method: 'POST', headers, body: JSON.stringify({ sentence: 'I run a verification business in Austin.' }),
+  });
+  assert.equal(paidLegacy.status, 200, await paidLegacy.clone().text());
+  assert.equal((await paidLegacy.json()).data.preview, true);
+  assert.equal(openAIMock.requests.length, 1);
+  assert.equal(openAIMock.requests[0].authorization, 'Bearer sk-user-openai-regression');
+
+  const deletedKey = await fetch(`http://127.0.0.1:${port}/api/keys/openai`, { method: 'DELETE', headers });
+  assert.equal(deletedKey.status, 200, await deletedKey.clone().text());
+  const paidWithoutByok = await fetch(`http://127.0.0.1:${port}/api/onboarding/from-sentence`, {
+    method: 'POST', headers, body: JSON.stringify({ sentence: 'I run a verification business in Austin.' }),
+  });
+  assert.equal(paidWithoutByok.status, 402, await paidWithoutByok.clone().text());
+  assert.equal((await paidWithoutByok.json()).error, 'PAID_PLAN_AND_BYOK_REQUIRED');
+  assert.equal(openAIMock.requests.length, 1);
+
+  const compactThreadResponse = await fetch(`http://127.0.0.1:${port}/api/threads`, {
+    method: 'POST', headers, body: JSON.stringify({ title: 'Compaction safety', model: 'gpt-4o-mini' }),
+  });
+  assert.equal(compactThreadResponse.status, 201, await compactThreadResponse.clone().text());
+  const compactThreadId = (await compactThreadResponse.json()).data.id;
+  writable = new Database(dbPath);
+  const insertMessage = writable.prepare('INSERT INTO messages (id,thread_id,role,content) VALUES (?,?,?,?)');
+  for (let index = 0; index < 8; index += 1) insertMessage.run(`compact-message-${index}`, compactThreadId, index % 2 ? 'assistant' : 'user', `Preserve message ${index}`);
+  writable.close();
+  const blockedCompact = await fetch(`http://127.0.0.1:${port}/api/threads/${compactThreadId}/compact`, {
+    method: 'POST', headers, body: JSON.stringify({ keep_recent: 2 }),
+  });
+  assert.equal(blockedCompact.status, 402, await blockedCompact.clone().text());
+  assert.equal((await blockedCompact.json()).error, 'PAID_PLAN_AND_BYOK_REQUIRED');
+  const compactState = new Database(dbPath, { readonly: true });
+  assert.equal(compactState.prepare('SELECT COUNT(*) AS count FROM messages WHERE thread_id=?').get(compactThreadId).count, 8);
+  compactState.close();
+  assert.equal(openAIMock.requests.length, 1);
+
+  writable = new Database(dbPath);
+  writable.prepare('UPDATE subscriptions SET tokens_used=tokens_limit WHERE user_id=?').run(userId);
+  writable.prepare('UPDATE users SET credits=1 WHERE id=?').run(userId);
+  writable.close();
+  const meteredChat = await fetch(`http://127.0.0.1:${port}/api/forge/chat`, {
+    method: 'POST', headers, body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: 'Prove prepaid metering.' }] }),
+  });
+  assert.equal(meteredChat.status, 200, await meteredChat.clone().text());
+  assert.equal(meteredChat.redirected, true);
+  assert.equal(new URL(meteredChat.url).pathname, '/api/chat');
+  assert.equal((await meteredChat.json()).data.tokensUsed, 150);
+  assert.equal(openAIMock.requests.length, 2);
+  assert.equal(openAIMock.requests[1].authorization, 'Bearer sk-platform-openai-regression');
+
+  const state = new Database(dbPath, { readonly: true });
+  const subscription = state.prepare('SELECT tokens_used,tokens_limit FROM subscriptions WHERE user_id=?').get(userId);
+  const credits = state.prepare('SELECT credits FROM users WHERE id=?').get(userId).credits;
+  const usageLogs = state.prepare('SELECT COUNT(*) AS count,SUM(total_tokens) AS tokens FROM usage_logs WHERE user_id=?').get(userId);
+  const tokenUsage = state.prepare("SELECT COUNT(*) AS count,SUM(total_tokens) AS tokens FROM token_usage WHERE user_id=? AND endpoint='/api/chat'").get(userId);
+  const overageLedger = state.prepare("SELECT COUNT(*) AS count,SUM(delta) AS delta FROM credit_ledger WHERE user_id=? AND reason LIKE 'token_overage_%'").get(userId);
+  state.close();
+  assert.deepEqual(subscription, { tokens_used: 500150, tokens_limit: 500000 });
+  assert.ok(Math.abs(credits - 0.999775) < 1e-9);
+  assert.deepEqual(usageLogs, { count: 1, tokens: 150 });
+  assert.deepEqual(tokenUsage, { count: 1, tokens: 150 });
+  assert.equal(overageLedger.count, 1);
+  assert.ok(Math.abs(overageLedger.delta + 0.000225) < 1e-9);
+});
+
+test('Stripe Checkout uses canonical nested fields, trusted return URLs, and the hosted cancellation portal', { timeout: 120_000 }, async t => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'forge-stripe-checkout-'));
+  const dbPath = path.join(tempDir, 'forge.db');
+  const stripeMock = await startStripeMock();
+  const port = await getFreePort();
+  const email = 'checkout-admin@forge.test';
+  const password = 'checkout-admin-regression';
+  const { child, getLogs } = spawnForge(dbPath, port, {
+    NODE_ENV: 'test',
+    RAILWAY_ENVIRONMENT: '',
+    JWT_SECRET: 'checkout-regression-jwt-secret-32-bytes',
+    ADMIN_EMAIL: email,
+    ADMIN_PASSWORD: password,
+    FRONTEND_URL: `http://127.0.0.1:${port}`,
+    CREDENTIAL_ENCRYPTION_KEY: 'checkout-regression-encryption-key',
+    BILLING_REQUIRED: '',
+    STRIPE_SECRET_KEY: 'sk_test_checkout_regression',
+    STRIPE_WEBHOOK_SECRET: 'whsec_checkout_regression',
+    STRIPE_PRICE_STARTER: 'price_starter_checkout',
+    STRIPE_PRICE_PRO: 'price_pro_checkout',
+    STRIPE_PRICE_AGENCY: 'price_agency_checkout',
+    FORGE_STRIPE_TEST_API_BASE_URL: stripeMock.baseUrl,
+  });
+  t.after(async () => {
+    await stopForge(child);
+    await stripeMock.close();
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+  await waitForHealth(child, port, getLogs);
+  const auth = await login(port, email, password);
+  const headers = { authorization: `Bearer ${auth.accessToken}`, 'content-type': 'application/json' };
+
+  const upgrade = await fetch(`http://127.0.0.1:${port}/api/billing/upgrade`, {
+    method: 'POST', headers, body: JSON.stringify({ plan: 'starter' }),
+  });
+  assert.equal(upgrade.status, 200, await upgrade.clone().text());
+  assert.match((await upgrade.json()).checkoutUrl, /^https:\/\/checkout\.stripe\.test\//);
+  const upgradeRequest = stripeMock.requests[0];
+  assert.equal(upgradeRequest.url, '/v1/checkout/sessions');
+  assert.equal(upgradeRequest.params['line_items[0][price]'], 'price_starter_checkout');
+  assert.equal(upgradeRequest.params['line_items[0][quantity]'], '1');
+  assert.equal(upgradeRequest.params['payment_method_types[0]'], 'card');
+  assert.equal(upgradeRequest.params['metadata[plan]'], 'starter');
+  assert.equal(upgradeRequest.params['subscription_data[metadata][plan]'], 'starter');
+  assert.equal(Object.values(upgradeRequest.params).includes('[object Object]'), false);
+
+  const topup = await fetch(`http://127.0.0.1:${port}/api/billing/topup`, {
+    method: 'POST', headers, body: JSON.stringify({ amount: 50, successUrl: 'https://evil.example/success', cancelUrl: 'https://evil.example/cancel' }),
+  });
+  assert.equal(topup.status, 200, await topup.clone().text());
+  assert.match((await topup.json()).data.checkoutUrl, /^https:\/\/checkout\.stripe\.test\//);
+  const topupRequest = stripeMock.requests[1];
+  assert.equal(topupRequest.params['line_items[0][price_data][unit_amount]'], '5000');
+  assert.equal(topupRequest.params['metadata[kind]'], 'forge_topup');
+  assert.equal(topupRequest.params['metadata[creditAmountCents]'], '5000');
+  assert.equal(new URL(topupRequest.params.success_url).origin, `http://127.0.0.1:${port}`);
+  assert.equal(new URL(topupRequest.params.cancel_url).origin, `http://127.0.0.1:${port}`);
+  assert.equal(topupRequest.params.success_url.includes('evil.example'), false);
+  assert.equal(topupRequest.params.cancel_url.includes('evil.example'), false);
+
+  const writable = new Database(dbPath);
+  writable.prepare("UPDATE subscriptions SET plan='pro',stripe_customer_id='cus_checkout',stripe_subscription_id='sub_checkout' WHERE user_id=?").run(auth.data.user.id);
+  writable.close();
+  const paidSwitch = await fetch(`http://127.0.0.1:${port}/api/billing/upgrade`, {
+    method: 'POST', headers, body: JSON.stringify({ plan: 'agency' }),
+  });
+  assert.equal(paidSwitch.status, 200, await paidSwitch.clone().text());
+  assert.equal((await paidSwitch.json()).action, 'manage_subscription');
+  const paidSwitchPortalRequest = stripeMock.requests[2];
+  assert.equal(paidSwitchPortalRequest.url, '/v1/billing_portal/sessions');
+  assert.equal(paidSwitchPortalRequest.params.customer, 'cus_checkout');
+
+  const downgrade = await fetch(`http://127.0.0.1:${port}/api/billing/upgrade`, {
+    method: 'POST', headers, body: JSON.stringify({ plan: 'free' }),
+  });
+  assert.equal(downgrade.status, 200, await downgrade.clone().text());
+  assert.equal((await downgrade.json()).action, 'manage_subscription');
+  const portalRequest = stripeMock.requests[3];
+  assert.equal(portalRequest.url, '/v1/billing_portal/sessions');
+  assert.equal(portalRequest.params.customer, 'cus_checkout');
+  assert.equal(new URL(portalRequest.params.return_url).origin, `http://127.0.0.1:${port}`);
+
+  const state = new Database(dbPath, { readonly: true });
+  assert.equal(state.prepare('SELECT plan FROM subscriptions WHERE user_id=?').get(auth.data.user.id).plan, 'pro');
+  state.close();
+});
+
+test('production Stripe billing is paid-only, idempotent, and atomic across subscription and credit events', { timeout: 120_000 }, async t => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'forge-stripe-webhook-'));
   const dbPath = path.join(tempDir, 'forge.db');
   const port = await getFreePort();
@@ -331,47 +699,200 @@ test('production accepts only a correctly signed Stripe webhook', { timeout: 120
     ADMIN_PASSWORD: password,
     FRONTEND_URL: `http://127.0.0.1:${port}`,
     CREDENTIAL_ENCRYPTION_KEY: 'production-billing-credential-encryption-key',
+    BILLING_REQUIRED: 'true',
     STRIPE_SECRET_KEY: 'sk_test_forge_regression',
     STRIPE_WEBHOOK_SECRET: webhookSecret,
-    STRIPE_PRICE_STARTER: '',
-    STRIPE_PRICE_PRO: '',
-    STRIPE_PRICE_ENTERPRISE: '',
+    STRIPE_PRICE_STARTER: 'price_starter_regression',
+    STRIPE_PRICE_PRO: 'price_pro_regression',
+    STRIPE_PRICE_AGENCY: 'price_agency_regression',
   });
   t.after(async () => {
     await stopForge(child);
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
   await waitForHealth(child, port, getLogs);
+  const ready = await fetch(`http://127.0.0.1:${port}/ready`);
+  assert.equal(ready.status, 200);
+  assert.equal((await ready.json()).checks.billing, 'ok');
   const auth = await login(port, email, password);
   await fetch(`http://127.0.0.1:${port}/api/billing/subscription`, { headers: { authorization: `Bearer ${auth.accessToken}` } });
+  const userId = auth.data.user.id;
 
-  const event = JSON.stringify({
+  const unpaidEvent = {
+    id: 'evt_checkout_unpaid',
     type: 'checkout.session.completed',
     data: { object: {
-      client_reference_id: auth.data.user.id,
+      mode: 'subscription', status: 'complete', payment_status: 'unpaid',
+      client_reference_id: userId,
       customer: 'cus_regression',
       subscription: 'sub_regression',
-      metadata: { userId: auth.data.user.id, plan: 'pro' },
+      metadata: { userId, plan: 'pro' },
     } },
-  });
+  };
+  const unsignedBody = JSON.stringify(unpaidEvent);
   const unsigned = await fetch(`http://127.0.0.1:${port}/api/billing/webhook`, {
-    method: 'POST', headers: { 'content-type': 'application/json' }, body: event,
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: unsignedBody,
   });
   assert.equal(unsigned.status, 400);
 
-  const timestamp = String(Math.floor(Date.now() / 1000));
-  const signature = crypto.createHmac('sha256', webhookSecret).update(`${timestamp}.${event}`).digest('hex');
-  const signed = await fetch(`http://127.0.0.1:${port}/api/billing/webhook`, {
+  const badSignature = await fetch(`http://127.0.0.1:${port}/api/billing/webhook`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'stripe-signature': `t=${timestamp},v1=${signature}` },
-    body: event,
+    headers: { 'content-type': 'application/json', 'stripe-signature': `t=${Math.floor(Date.now()/1000)},v1=${'0'.repeat(64)}` },
+    body: unsignedBody,
   });
-  assert.equal(signed.status, 200, await signed.text());
+  assert.equal(badSignature.status, 400);
 
-  const state = new Database(dbPath, { readonly: true });
-  const subscription = state.prepare('SELECT plan, stripe_customer_id, stripe_subscription_id FROM subscriptions WHERE user_id=?').get(auth.data.user.id);
+  const stale = await postStripeEvent(port, unpaidEvent, webhookSecret, Math.floor(Date.now()/1000) - 600);
+  assert.equal(stale.status, 400);
+
+  const unpaid = await postStripeEvent(port, unpaidEvent, webhookSecret);
+  assert.equal(unpaid.status, 200, await unpaid.clone().text());
+  assert.equal((await unpaid.json()).action, 'ignored_unpaid_checkout');
+
+  const paidCheckout = {
+    ...unpaidEvent,
+    id: 'evt_checkout_paid',
+    data: { object: { ...unpaidEvent.data.object, payment_status: 'paid' } },
+  };
+  const paid = await postStripeEvent(port, paidCheckout, webhookSecret);
+  assert.equal(paid.status, 200, await paid.clone().text());
+  assert.equal((await paid.json()).action, 'subscription_activated');
+  const replay = await postStripeEvent(port, paidCheckout, webhookSecret);
+  assert.equal(replay.status, 200, await replay.clone().text());
+  assert.equal((await replay.json()).reused, true);
+
+  let state = new Database(dbPath);
+  let subscription = state.prepare('SELECT plan,tokens_used,tokens_limit,status,stripe_customer_id,stripe_subscription_id FROM subscriptions WHERE user_id=?').get(userId);
+  let credits = state.prepare('SELECT credits FROM users WHERE id=?').get(userId).credits;
+  let creditRows = state.prepare('SELECT COUNT(*) AS count FROM credit_ledger WHERE user_id=?').get(userId).count;
+  assert.deepEqual(subscription, { plan: 'pro', tokens_used: 0, tokens_limit: 2000000, status: 'active', stripe_customer_id: 'cus_regression', stripe_subscription_id: 'sub_regression' });
+  assert.equal(credits, 75);
+  assert.equal(creditRows, 1);
+  state.prepare("UPDATE subscriptions SET tokens_used=123456,period_end='2000-01-01T00:00:00.000Z' WHERE user_id=?").run(userId);
   state.close();
-  assert.deepEqual(subscription, { plan: 'pro', stripe_customer_id: 'cus_regression', stripe_subscription_id: 'sub_regression' });
+
+  const elapsedPaidPeriod = await fetch(`http://127.0.0.1:${port}/api/billing/subscription`, { headers: { authorization: `Bearer ${auth.accessToken}` } });
+  assert.equal(elapsedPaidPeriod.status, 200);
+  const elapsedPaidState = await elapsedPaidPeriod.json();
+  assert.equal(elapsedPaidState.tokensUsed, 123456);
+  assert.equal(elapsedPaidState.periodEnd, '2000-01-01T00:00:00.000Z');
+
+  const initialInvoice = {
+    id: 'evt_invoice_subscription_create',
+    type: 'invoice.paid',
+    data: { object: { customer: 'cus_regression', subscription: 'sub_regression', paid: true, status: 'paid', billing_reason: 'subscription_create' } },
+  };
+  const initialInvoiceResponse = await postStripeEvent(port, initialInvoice, webhookSecret);
+  assert.equal(initialInvoiceResponse.status, 200, await initialInvoiceResponse.clone().text());
+  assert.equal((await initialInvoiceResponse.json()).action, 'initial_invoice_covered_by_checkout');
+
+  state = new Database(dbPath, { readonly: true });
+  assert.equal(state.prepare('SELECT tokens_used FROM subscriptions WHERE user_id=?').get(userId).tokens_used, 123456);
+  assert.equal(state.prepare('SELECT credits FROM users WHERE id=?').get(userId).credits, 75);
+  assert.equal(state.prepare('SELECT COUNT(*) AS count FROM credit_ledger WHERE user_id=?').get(userId).count, 1);
+  state.close();
+
+  const periodStart = Math.floor(Date.now()/1000);
+  const renewalInvoice = {
+    id: 'evt_invoice_renewal',
+    type: 'invoice.paid',
+    data: { object: {
+      customer: 'cus_regression', subscription: 'sub_regression', paid: true, status: 'paid', billing_reason: 'subscription_cycle',
+      lines: { data: [{ price: { id: 'price_agency_regression' }, period: { start: periodStart, end: periodStart + 30 * 86400 } }] },
+    } },
+  };
+  const renewal = await postStripeEvent(port, renewalInvoice, webhookSecret);
+  assert.equal(renewal.status, 200, await renewal.clone().text());
+  assert.equal((await renewal.json()).action, 'subscription_renewed');
+  const renewalReplay = await postStripeEvent(port, renewalInvoice, webhookSecret);
+  assert.equal((await renewalReplay.json()).reused, true);
+
+  state = new Database(dbPath);
+  assert.deepEqual(
+    state.prepare('SELECT plan,tokens_used,tokens_limit FROM subscriptions WHERE user_id=?').get(userId),
+    { plan: 'agency', tokens_used: 0, tokens_limit: 10000000 },
+  );
+  assert.equal(state.prepare('SELECT credits FROM users WHERE id=?').get(userId).credits, 275);
+  state.prepare("UPDATE subscriptions SET tokens_limit=2000000,tokens_used=2005000 WHERE user_id=?").run(userId);
+  state.close();
+
+  const overage = {
+    id: 'evt_overage_paid',
+    type: 'checkout.session.completed',
+    data: { object: {
+      mode: 'payment', status: 'complete', payment_status: 'paid', client_reference_id: userId,
+      customer: 'cus_regression', amount_total: 100, currency: 'usd',
+      metadata: { userId, kind: 'forge_overage', overage_tokens: '5000', chargeAmountCents: '100' },
+    } },
+  };
+  const overageResponse = await postStripeEvent(port, overage, webhookSecret);
+  assert.equal(overageResponse.status, 200, await overageResponse.clone().text());
+  assert.equal((await overageResponse.json()).action, 'overage_settled');
+  const overageReplay = await postStripeEvent(port, overage, webhookSecret);
+  assert.equal((await overageReplay.json()).reused, true);
+  state = new Database(dbPath, { readonly: true });
+  assert.equal(state.prepare('SELECT tokens_used FROM subscriptions WHERE user_id=?').get(userId).tokens_used, 2000000);
+  state.close();
+
+  const paymentFailed = {
+    id: 'evt_invoice_failed',
+    type: 'invoice.payment_failed',
+    data: { object: { customer: 'cus_regression', subscription: 'sub_regression', paid: false, status: 'open' } },
+  };
+  const failed = await postStripeEvent(port, paymentFailed, webhookSecret);
+  assert.equal(failed.status, 200, await failed.text());
+
+  const topup = {
+    id: 'evt_topup_paid',
+    type: 'checkout.session.completed',
+    data: { object: {
+      mode: 'payment', status: 'complete', payment_status: 'paid', client_reference_id: userId,
+      customer: 'cus_regression', amount_total: 5000, currency: 'usd',
+      metadata: { userId, kind: 'forge_topup', creditAmountCents: '5000' },
+    } },
+  };
+  const tamperedTopup = {
+    ...topup,
+    id: 'evt_topup_amount_mismatch',
+    data: { object: { ...topup.data.object, amount_total: 1000 } },
+  };
+  const tamperedTopupResponse = await postStripeEvent(port, tamperedTopup, webhookSecret);
+  assert.equal(tamperedTopupResponse.status, 400);
+
+  const topupResponse = await postStripeEvent(port, topup, webhookSecret);
+  assert.equal(topupResponse.status, 200, await topupResponse.clone().text());
+  assert.equal((await topupResponse.json()).action, 'topup_credited');
+  const topupReplay = await postStripeEvent(port, topup, webhookSecret);
+  assert.equal((await topupReplay.json()).reused, true);
+
+  const deleted = {
+    id: 'evt_subscription_deleted',
+    type: 'customer.subscription.deleted',
+    data: { object: { id: 'sub_regression', customer: 'cus_regression', status: 'canceled' } },
+  };
+  const deletedResponse = await postStripeEvent(port, deleted, webhookSecret);
+  assert.equal(deletedResponse.status, 200, await deletedResponse.text());
+
+  const invalidUserTopup = {
+    ...topup,
+    id: 'evt_topup_invalid_user',
+    data: { object: { ...topup.data.object, client_reference_id: 'missing-user', metadata: { ...topup.data.object.metadata, userId: 'missing-user' } } },
+  };
+  const invalidUserResponse = await postStripeEvent(port, invalidUserTopup, webhookSecret);
+  assert.equal(invalidUserResponse.status, 400);
+
+  state = new Database(dbPath, { readonly: true });
+  subscription = state.prepare('SELECT plan,tokens_used,tokens_limit,status,stripe_customer_id,stripe_subscription_id FROM subscriptions WHERE user_id=?').get(userId);
+  credits = state.prepare('SELECT credits FROM users WHERE id=?').get(userId).credits;
+  creditRows = state.prepare('SELECT COUNT(*) AS count FROM credit_ledger WHERE user_id=?').get(userId).count;
+  const events = state.prepare('SELECT COUNT(*) AS count FROM stripe_webhook_events').get().count;
+  const invalidEvent = state.prepare("SELECT COUNT(*) AS count FROM stripe_webhook_events WHERE event_id='evt_topup_invalid_user'").get().count;
+  state.close();
+  assert.deepEqual(subscription, { plan: 'free', tokens_used: 0, tokens_limit: 10000, status: 'cancelled', stripe_customer_id: 'cus_regression', stripe_subscription_id: null });
+  assert.equal(credits, 325);
+  assert.equal(creditRows, 3);
+  assert.equal(events, 8);
+  assert.equal(invalidEvent, 0);
 });
 
 test('legacy Base64 credentials migrate transactionally to authenticated encryption', { timeout: 180_000 }, async t => {
@@ -394,6 +915,7 @@ test('legacy Base64 credentials migrate transactionally to authenticated encrypt
     ADMIN_EMAIL: email,
     ADMIN_PASSWORD: password,
     CREDENTIAL_ENCRYPTION_KEY: encryptionKey,
+    BILLING_REQUIRED: '',
     STRIPE_SECRET_KEY: '',
     STRIPE_WEBHOOK_SECRET: '',
   };
