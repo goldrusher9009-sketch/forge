@@ -4,7 +4,7 @@ const { spawnSync } = require('node:child_process');
 
 const IMAGES = {
   forge: process.env.PILOT_FORGE_IMAGE || 'forge-commercial-rc-autonomous-20260823:test',
-  apptopia: process.env.PILOT_APPTOPIA_IMAGE || 'apptopia-commercial-rc-36404ab:test',
+  apptopia: process.env.PILOT_APPTOPIA_IMAGE || 'apptopia-commercial-rc-115b094:test',
   minera: process.env.PILOT_MINERA_IMAGE || 'minera-commercial-rc-20260823-security:test',
   postgres: process.env.PILOT_POSTGRES_IMAGE
     || 'swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/postgres:16-alpine',
