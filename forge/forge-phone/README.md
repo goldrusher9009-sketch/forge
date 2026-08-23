@@ -1,87 +1,83 @@
 # Forge Phone Agent
 
-AI that controls your entire phone — browse the web, reply to texts, use WhatsApp, navigate maps, and anything else you can do on a phone.
+Forge Phone Agent is a controlled internal Android pilot for executing bounded actions through Forge. It is not an unrestricted phone-control product. Each real session is tied to the authenticated Owner's Agent Passport, subscription, permissions, package allowlist, and explicit execution budgets.
 
-## How it works
+## Supported pilot boundary
 
-```
-User gives a goal
-       ↓
-App captures screenshot of current screen
-       ↓
-Screenshot + goal + action history → Forge Backend AI
-       ↓
-AI returns next action: { action: "tap", args: { x: 450, y: 320, element: "Send button" } }
-       ↓
-Android Accessibility Service executes the tap
-       ↓
-Repeat until goal is complete
-```
+- Android 11 or newer (`minSdk 30`).
+- Planning-only mode is available when the native Android service is unavailable.
+- Real execution is limited to Android packages explicitly allowlisted for that session.
+- Every executable pilot action requires an individual Owner decision. Forge's bulk approval route cannot approve Phone actions.
+- One user can have only one active Phone Agent session.
+- Sessions are bounded to 5, 8, 10, or 12 steps and server-enforced token and cost budgets.
+- A foreground-package change, expired or replayed authorization, native failure, rejection, cancellation, or restart stops execution safely.
+- Banking, payment, authentication, security settings, and other high-risk applications are outside the internal pilot scope.
 
-## Architecture
+## Execution lifecycle
 
-```
-forge-phone/
-├── App.tsx                           # React Native UI — goal input, step viewer
-├── src/
-│   ├── ForgeAgent.ts                 # Core agent loop — calls backend, manages state
-│   └── config.ts                     # Types and API URL config
-├── android/app/src/main/java/
-│   └── com/forge/phoneagent/
-│       ├── ForgeAccessibilityService.kt   # Android Accessibility Service — real phone control
-│       └── ForgeModule.kt                 # React Native ↔ Android bridge
-└── app.json                          # Expo config
+```text
+Owner starts a bounded session
+  -> Android captures the current screenshot and foreground package
+  -> Forge plans one schema-validated action
+  -> Owner sees and approves or rejects that exact action
+  -> Forge issues a short-lived, one-time authorization
+  -> Android rechecks the foreground package and executes the authorized payload
+  -> Android returns a structured native receipt
+  -> Forge records the evidence and either plans the next step or stops
 ```
 
-## Backend
+The client does not invent execution history or report success before Android returns a result. The authentication token remains in the current app process only. Screenshots are used for the current planning request and are not persisted by Forge; audit history contains hashes and execution results rather than screenshots or reusable action payloads.
 
-The AI brain runs on Forge's backend:
-- `POST /api/phone-agent/action` — takes screenshot + goal → returns next action
-- `POST /api/phone-agent/session` — create tracking session
-- `GET /api/phone-agent/sessions` — list past sessions
+## Accessibility disclosure
 
-Uses `claude-sonnet-4-5` with vision for screenshot analysis.
+The native pilot uses an Android Accessibility Service to observe foreground-window changes, capture the current screen after the Owner starts a session, and perform an individually approved gesture or text action. The service can read visible screen content while enabled. Owners must enable it manually in Android Settings and can disable it at any time. The implementation is intended for controlled internal acceptance only; public distribution requires final policy, consent, privacy, data-retention, and store-review approval.
 
-## Setup
+## Configuration
 
-### Android (Full control)
+`EXPO_PUBLIC_FORGE_API_URL` is required at bundle time. No Railway, Vercel, production, or local fallback endpoint is compiled automatically.
 
-1. Install the APK on your Android device
-2. Go to **Settings → Accessibility → Forge Phone Agent → Enable**
-3. Open the app, enter your Forge token, give it a goal
-4. Watch the AI control your phone
+```dotenv
+# Android emulator development
+EXPO_PUBLIC_FORGE_API_URL=http://10.0.2.2:3000
 
-### Demo Mode (No accessibility service needed)
+# Release candidate example; select the actual environment explicitly
+EXPO_PUBLIC_FORGE_API_URL=https://forge-staging.example.com
+```
 
-1. Run the app with `expo start`
-2. Toggle "Demo mode" ON
-3. AI plans every step but doesn't execute — shows you what it would do
+Release candidates must use HTTPS. The main Android manifest disables cleartext traffic. The app requires a valid Forge access token, an active subscription with remaining usage, and an Owner-owned Agent Passport before a real session can be created.
 
-## What it can do
+## Owner acceptance flow
 
-- 💬 **WhatsApp** — read messages, reply, send to contacts
-- 📱 **SMS** — reply to texts, send new messages  
-- 🌐 **Browser** — search Google, browse websites, fill forms
-- 📧 **Gmail** — read emails, compose replies
-- 📍 **Maps** — search locations, start navigation
-- 🎵 **Spotify/Music** — play songs, skip tracks
-- 📷 **Camera** — take photos, record video
-- ⏰ **Clock/Alarms** — set timers, create alarms
-- 📞 **Calls** — dial numbers, answer calls
-- 📋 **Any app** — if a human can tap it, so can the AI
+1. Build and install the Android native application; Expo Go cannot load the Accessibility Service.
+2. Set the Forge API URL for the selected environment before bundling.
+3. Sign in to Forge and enter the short-lived access token for the current app session.
+4. For planning-only validation, keep **Planning only** enabled. No native action can be authorized or executed.
+5. For controlled execution, enter the exact Android package allowlist, enable Forge Phone Agent in **Settings -> Accessibility**, and foreground one of the allowed apps.
+6. Review every proposed action. Approval applies only to that action and cannot be reused.
+7. Stop the session immediately if the displayed target, action, or package is not expected.
 
-## Limitations
+## Android release build
 
-- **iOS**: Apple restricts cross-app automation. Full control requires TestFlight enterprise build or jailbreak. Shortcuts integration available for basic tasks.
-- **Screen reader apps** (banking, etc.) sometimes block accessibility services for security
-- Vision quality depends on screen resolution and lighting
+The validated local RC uses the pinned China-accessible image `dockerproxy.net/mingc/android-build-box:1.27.0`, Gradle from the Tencent mirror, Maven from Aliyun mirrors, and Android NDK `26.1.10909125` from the Tencent Android SDK mirror. Dependency versions must remain unchanged.
 
-## Building the APK
+The native Release task is:
 
 ```bash
-cd forge-phone
-npm install
-npx eas build --platform android --profile production
+cd android
+./gradlew assembleRelease
 ```
 
-Requires [EAS CLI](https://docs.expo.dev/build/setup/) and an Expo account.
+Without external signing variables, this intentionally produces an unsigned validation APK. Production signing material must stay outside the repository and is read only from:
+
+```text
+FORGE_ANDROID_KEYSTORE_PATH
+FORGE_ANDROID_KEYSTORE_PASSWORD
+FORGE_ANDROID_KEY_ALIAS
+FORGE_ANDROID_KEY_PASSWORD
+```
+
+Never commit a keystore, signing password, `.env`, generated APK, `node_modules`, Gradle cache, or build output.
+
+## Current release boundary
+
+The Android Release build, manifest, Accessibility Service registration, native compilation, and backend Phone Agent regression have been validated locally. Physical-device acceptance, production signing, public-store policy approval, production configuration, and live rollout remain separate release gates.

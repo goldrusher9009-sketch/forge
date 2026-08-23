@@ -1,30 +1,32 @@
-/**
- * Forge Phone Agent — Main App
- *
- * This app turns your phone into an AI-controlled device.
- * Give it a goal → it reads your screen → AI decides what to tap/type → executes.
- *
- * Platform capabilities:
- *  - Android: Full accessibility control via AccessibilityService (APK required)
- *  - iOS: Limited (Shortcuts integration) — full control requires TestFlight build
- *
- * For DEMO mode (no accessibility service), it shows what it WOULD do without executing.
- */
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet,
-  SafeAreaView, Alert, Platform, ActivityIndicator, Switch, Dimensions
+  ActivityIndicator,
+  Alert,
+  NativeModules,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import { ForgeAgentLoop } from './src/ForgeAgent';
-import { AgentStep } from './src/config';
+import { AgentStep, FORGE_API, NativeExecutionResult, PhoneAction } from './src/config';
 
-const FORGE_API = 'https://forge-production-2692.up.railway.app';
-const { width: SCREEN_W } = Dimensions.get('window');
+type ForgeAccessibilityBridge = {
+  isAccessibilityEnabled(): Promise<boolean>;
+  openAccessibilitySettings(): Promise<boolean>;
+  captureScreen(): Promise<string>;
+  getCurrentPackage(): Promise<string>;
+  performAction(actionJson: string, expectedPackage: string): Promise<NativeExecutionResult>;
+};
 
-// ─── Color palette ──────────────────────────────────────────────────────────
+const accessibility = NativeModules.ForgeAccessibility as ForgeAccessibilityBridge | undefined;
+
 const C = {
   bg: '#0a0a0f', surface: '#12121a', surface2: '#1a1a28',
   border: '#2a2a3a', text: '#e8e8f0', text2: '#9090a0', text3: '#5a5a70',
@@ -32,7 +34,6 @@ const C = {
   blue: '#3b82f6', orange: '#f97316',
 };
 
-// ─── Action colors ─────────────────────────────────────────────────────────
 const ACTION_COLORS: Record<string, string> = {
   tap: C.blue, long_press: C.blue, type: C.green, swipe: C.yellow,
   scroll: C.yellow, back: C.orange, home: C.orange, wait: C.text3, done: C.green,
@@ -43,12 +44,35 @@ const ACTION_ICONS: Record<string, string> = {
   scroll: '📜', back: '◀️', home: '🏠', wait: '⏳', done: '✅',
 };
 
+const PACKAGE_PATTERN = /^[A-Za-z0-9_.]{3,200}$/;
+
+function parsePackages(value: string): string[] {
+  return Array.from(new Set(value.split(/[\s,]+/).map(item => item.trim()).filter(Boolean)));
+}
+
+function approvalPrompt(step: AgentStep): Promise<boolean> {
+  const details = [
+    `Action: ${step.action}`,
+    `Arguments: ${JSON.stringify(step.args)}`,
+    `Package: ${step.currentPackage || 'unknown'}`,
+    `Risk: ${step.riskLevel}`,
+    step.reasoning ? `Reason: ${step.reasoning}` : '',
+  ].filter(Boolean).join('\n\n');
+  return new Promise(resolve => {
+    Alert.alert('Approve this exact action?', details, [
+      { text: 'Reject and stop', style: 'destructive', onPress: () => resolve(false) },
+      { text: 'Approve once', onPress: () => resolve(true) },
+    ], { cancelable: false });
+  });
+}
+
 export default function App() {
   const [token, setToken] = useState('');
   const [tokenInput, setTokenInput] = useState('');
   const [goal, setGoal] = useState('');
-  const [maxSteps, setMaxSteps] = useState(15);
-  const [demoMode, setDemoMode] = useState(true);
+  const [allowedPackageInput, setAllowedPackageInput] = useState('');
+  const [maxSteps, setMaxSteps] = useState(8);
+  const [planningOnly, setPlanningOnly] = useState(true);
   const [running, setRunning] = useState(false);
   const [steps, setSteps] = useState<AgentStep[]>([]);
   const [done, setDone] = useState(false);
@@ -58,22 +82,49 @@ export default function App() {
   const agentRef = useRef<ForgeAgentLoop | null>(null);
   const scrollRef = useRef<ScrollView>(null);
 
-  // Load saved token
-  useEffect(() => {
-    AsyncStorage.getItem('forge_token').then(t => {
-      if (t) { setToken(t); setScreen('main'); }
-    });
-  }, []);
-
-  const saveToken = async () => {
-    if (!tokenInput.trim()) { Alert.alert('Error', 'Enter your Forge token'); return; }
-    await AsyncStorage.setItem('forge_token', tokenInput.trim());
-    setToken(tokenInput.trim());
+  const connect = () => {
+    const trimmed = tokenInput.trim();
+    if (!trimmed) { Alert.alert('Token required', 'Enter your Forge access token.'); return; }
+    setToken(trimmed);
+    setTokenInput('');
     setScreen('main');
   };
 
+  const showAccessibilitySettings = async () => {
+    if (!accessibility) {
+      Alert.alert('Native build required', 'Install the Forge Phone Android build; Expo Go cannot load the Accessibility Service.');
+      return;
+    }
+    await accessibility.openAccessibilitySettings();
+  };
+
   const startAgent = async () => {
-    if (!goal.trim()) { Alert.alert('Error', 'Enter a goal'); return; }
+    const trimmedGoal = goal.trim();
+    if (!trimmedGoal) { Alert.alert('Goal required', 'Enter a bounded goal.'); return; }
+
+    const allowedPackages = parsePackages(allowedPackageInput);
+    if (allowedPackages.some(item => !PACKAGE_PATTERN.test(item))) {
+      Alert.alert('Invalid package allowlist', 'Use Android package names such as com.android.settings, separated by commas.');
+      return;
+    }
+    if (!planningOnly) {
+      if (Platform.OS !== 'android' || !accessibility) {
+        Alert.alert('Android native build required', 'Real execution is available only in the Android native build. Use planning mode on this device.');
+        return;
+      }
+      if (!allowedPackages.length) {
+        Alert.alert('Package allowlist required', 'List every Android app package the session may control.');
+        return;
+      }
+      if (!(await accessibility.isAccessibilityEnabled())) {
+        Alert.alert('Accessibility Service disabled', 'Enable Forge Phone Agent in Android Accessibility settings before starting.', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => { void showAccessibilitySettings(); } },
+        ]);
+        return;
+      }
+    }
+
     setRunning(true);
     setDone(false);
     setSteps([]);
@@ -81,283 +132,203 @@ export default function App() {
     setError('');
     setScreen('running');
 
-    // Mock screenshot capture (in real app, use AccessibilityService / UIAutomation)
-    const captureScreenshot = async (): Promise<string | null> => {
-      if (demoMode) return null; // No real screenshot in demo
-      // In production: call native bridge to capture screen
-      // Example: await NativeModules.ForgeAccessibility.captureScreen()
-      return null;
-    };
-
-    // Mock action executor (in real app, use AccessibilityService)
-    const executeAction = async (action: any): Promise<boolean> => {
-      if (demoMode) {
-        // Simulate execution time
-        await new Promise(r => setTimeout(r, 500));
-        return true;
+    if (!planningOnly) {
+      // Give the Owner time to foreground one of the explicitly allowed apps.
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      const currentPackage = (await accessibility!.getCurrentPackage()).trim();
+      if (!allowedPackages.includes(currentPackage)) {
+        setRunning(false);
+        setError(`Current app ${currentPackage || 'unknown'} is not in the package allowlist.`);
+        return;
       }
-      // In production: await NativeModules.ForgeAccessibility.performAction(action)
-      return true;
-    };
+    }
 
     agentRef.current = new ForgeAgentLoop({
       token,
-      captureScreenshot,
-      executeAction,
-      onStep: (step) => {
-        setSteps(prev => [...prev, step]);
+      captureScreenshot: async () => planningOnly ? null : accessibility!.captureScreen(),
+      getCurrentPackage: async () => planningOnly ? '' : accessibility!.getCurrentPackage(),
+      executeAction: async (action: PhoneAction, expectedPackage: string) => {
+        if (planningOnly) throw new Error('PHONE_ACTION_PLANNING_ONLY');
+        if (!accessibility || !(await accessibility.isAccessibilityEnabled())) {
+          throw new Error('PHONE_ACCESSIBILITY_DISABLED');
+        }
+        const currentPackage = (await accessibility.getCurrentPackage()).trim();
+        if (currentPackage !== expectedPackage) throw new Error('PHONE_PACKAGE_CHANGED');
+        return accessibility.performAction(JSON.stringify(action), expectedPackage);
+      },
+      requestApproval: approvalPrompt,
+      onStep: step => {
+        setSteps(previous => {
+          const existing = previous.findIndex(item => item.id === step.id);
+          if (existing < 0) return [...previous, step];
+          const updated = [...previous];
+          updated[existing] = step;
+          return updated;
+        });
         setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
       },
-      onDone: (sum, allSteps) => {
-        setSummary(sum);
+      onDone: (message) => {
+        setSummary(message);
         setDone(true);
         setRunning(false);
       },
-      onError: (msg) => {
-        setError(msg);
+      onError: message => {
+        setError(message);
         setRunning(false);
-      }
+      },
     });
 
-    agentRef.current.start(goal, maxSteps);
+    await agentRef.current.start(trimmedGoal, {
+      maxSteps,
+      planningOnly,
+      allowedPackages,
+      confirmationMode: 'every_action',
+      tokenBudget: 8000,
+      costBudgetUsd: 0.5,
+    });
   };
 
-  const stopAgent = () => {
-    agentRef.current?.stop();
+  const stopAgent = async () => {
+    await agentRef.current?.stop();
     setRunning(false);
   };
 
-  // ─── LOGIN SCREEN ──────────────────────────────────────────────────────────
   if (screen === 'login') {
     return (
-      <SafeAreaView style={[s.root, { justifyContent:'center', alignItems:'center' }]}>
+      <SafeAreaView style={[s.root, s.centered]}>
         <StatusBar style="light" />
-        <Text style={{ fontSize:40, marginBottom:8 }}>🦾</Text>
-        <Text style={[s.h1, { fontSize:28, marginBottom:4 }]}>Forge Phone</Text>
-        <Text style={[s.muted, { marginBottom:32, textAlign:'center' }]}>
-          AI that controls your phone.{'\n'}Enter your Forge API token to start.
-        </Text>
-        <View style={{ width:'100%', maxWidth:340 }}>
+        <Text style={{ fontSize: 40, marginBottom: 8 }}>🦾</Text>
+        <Text style={[s.h1, { fontSize: 28, marginBottom: 4 }]}>Forge Phone</Text>
+        <Text style={[s.muted, { marginBottom: 28, textAlign: 'center' }]}>Permissioned phone actions with Owner approval.</Text>
+        <View style={{ width: '100%', maxWidth: 340 }}>
           <TextInput
-            value={tokenInput} onChangeText={setTokenInput}
-            placeholder="Paste your Forge token..."
+            value={tokenInput}
+            onChangeText={setTokenInput}
+            placeholder="Forge access token"
             placeholderTextColor={C.text3}
             style={s.input}
-            secureTextEntry autoCapitalize="none"
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
           />
-          <TouchableOpacity onPress={saveToken} style={[s.btn, { backgroundColor:C.purple }]}>
-            <Text style={s.btnText}>Connect to Forge →</Text>
-          </TouchableOpacity>
-          <Text style={[s.muted, { textAlign:'center', fontSize:11, marginTop:12 }]}>
-            Get your token at forge-sand-two.vercel.app → Settings → API Token
+          <TouchableOpacity onPress={connect} style={s.btn}><Text style={s.btnText}>Connect to Forge →</Text></TouchableOpacity>
+          <Text style={[s.muted, { textAlign: 'center', fontSize: 11, marginTop: 12 }]}>
+            Token stays only in this app session. API: {FORGE_API}
           </Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  // ─── RUNNING SCREEN ────────────────────────────────────────────────────────
   if (screen === 'running') {
+    const successfulActions = steps.filter(step => step.executed && step.success).length;
     return (
       <SafeAreaView style={s.root}>
         <StatusBar style="light" />
-        <View style={[s.header, { gap:8 }]}>
-          <TouchableOpacity onPress={() => { stopAgent(); setScreen('main'); }}>
-            <Text style={{ color:C.text2, fontSize:16 }}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={s.h1} numberOfLines={1} ellipsizeMode="tail">{goal}</Text>
-          {running && (
-            <TouchableOpacity onPress={stopAgent} style={[s.btn, { backgroundColor:C.red, paddingVertical:6, paddingHorizontal:14 }]}>
-              <Text style={[s.btnText, { fontSize:12 }]}>⏹ Stop</Text>
-            </TouchableOpacity>
-          )}
+        <View style={[s.header, { gap: 8 }]}>
+          <TouchableOpacity onPress={() => { void stopAgent(); setScreen('main'); }}><Text style={{ color: C.text2, fontSize: 16 }}>← Back</Text></TouchableOpacity>
+          <Text style={[s.h1, { flex: 1 }]} numberOfLines={1}>{goal}</Text>
+          {running && <TouchableOpacity onPress={() => { void stopAgent(); }} style={[s.btn, s.stopButton]}><Text style={[s.btnText, { fontSize: 12 }]}>⏹ Stop</Text></TouchableOpacity>}
         </View>
 
-        {demoMode && (
-          <View style={{ margin:12, padding:10, background:'rgba(245,158,11,0.15)', borderRadius:8, borderWidth:1, borderColor:C.yellow }}>
-            <Text style={{ color:C.yellow, fontSize:12, textAlign:'center' }}>
-              🎭 DEMO MODE — Actions are planned but not executed on device.{'\n'}
-              Enable Accessibility Service for real phone control.
-            </Text>
-          </View>
-        )}
+        <View style={[s.notice, { borderColor: planningOnly ? C.yellow : C.green }]}>
+          <Text style={{ color: planningOnly ? C.yellow : C.green, fontSize: 12, textAlign: 'center' }}>
+            {planningOnly
+              ? 'PLANNING ONLY — No native action can be authorized or executed.'
+              : 'CONTROLLED EXECUTION — Switch to an allowed app. Every executable action requires one-time Owner approval.'}
+          </Text>
+        </View>
 
-        <ScrollView ref={scrollRef} style={s.stepList} contentContainerStyle={{ padding:12, gap:8 }}>
-          {steps.map((step, i) => (
-            <View key={i} style={[s.stepCard, { borderColor: (ACTION_COLORS[step.action] || C.border) + '60' }]}>
-              <View style={{ flexDirection:'row', alignItems:'center', gap:8, marginBottom:4 }}>
-                <Text style={{ fontSize:20 }}>{ACTION_ICONS[step.action] || '⚙️'}</Text>
+        <ScrollView ref={scrollRef} style={s.stepList} contentContainerStyle={{ padding: 12, gap: 8 }}>
+          {steps.map(step => (
+            <View key={step.id} style={[s.stepCard, { borderColor: (ACTION_COLORS[step.action] || C.border) + '60' }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <Text style={{ fontSize: 20 }}>{ACTION_ICONS[step.action] || '⚙️'}</Text>
                 <Text style={[s.stepAction, { color: ACTION_COLORS[step.action] || C.text }]}>{step.action.toUpperCase()}</Text>
-                <Text style={[s.muted, { marginLeft:'auto', fontSize:11 }]}>#{i+1}</Text>
+                <Text style={[s.muted, { marginLeft: 'auto', fontSize: 11 }]}>#{step.stepIndex} · {step.status}</Text>
               </View>
-              {Object.keys(step.args).length > 0 && (
-                <Text style={[s.muted, { fontFamily:'monospace', fontSize:11, marginBottom:4 }]}>
-                  {JSON.stringify(step.args)}
-                </Text>
-              )}
-              <Text style={[s.muted, { fontSize:12 }]}>{step.reasoning}</Text>
-              {step.progress && <Text style={[s.muted, { fontSize:11, color:C.green, marginTop:2 }]}>↳ {step.progress}</Text>}
+              {Object.keys(step.args).length > 0 && <Text style={[s.muted, s.code]}>{JSON.stringify(step.args)}</Text>}
+              {step.currentPackage && <Text style={[s.muted, { fontSize: 11 }]}>Package: {step.currentPackage}</Text>}
+              <Text style={[s.muted, { fontSize: 12 }]}>{step.reasoning}</Text>
+              {step.progress && <Text style={[s.muted, { fontSize: 11, color: C.green, marginTop: 2 }]}>↳ {step.progress}</Text>}
+              {step.error && <Text style={{ color: C.red, fontSize: 11, marginTop: 4 }}>{step.error}</Text>}
             </View>
           ))}
 
-          {running && steps.length === 0 && (
-            <View style={{ alignItems:'center', padding:40 }}>
-              <ActivityIndicator color={C.purple} size="large" />
-              <Text style={[s.muted, { marginTop:12 }]}>Agent is analyzing the goal…</Text>
-            </View>
-          )}
+          {running && <View style={[s.stepCard, { borderColor: C.purple + '40', flexDirection: 'row', alignItems: 'center', gap: 8 }]}><ActivityIndicator color={C.purple} size="small" /><Text style={[s.muted, { fontSize: 12 }]}>{steps.length ? 'Waiting for the next bounded action…' : planningOnly ? 'Creating the planning session…' : 'Switch to an allowed app now…'}</Text></View>}
 
-          {running && steps.length > 0 && (
-            <View style={[s.stepCard, { borderColor:C.purple+'40', flexDirection:'row', alignItems:'center', gap:8 }]}>
-              <ActivityIndicator color={C.purple} size="small" />
-              <Text style={[s.muted, { fontSize:12 }]}>Deciding next action…</Text>
-            </View>
-          )}
-
-          {done && (
-            <View style={[s.stepCard, { borderColor:C.green, backgroundColor:'rgba(16,185,129,0.08)' }]}>
-              <Text style={{ fontSize:24, marginBottom:8 }}>✅</Text>
-              <Text style={[s.h2, { color:C.green, marginBottom:8 }]}>Task Complete</Text>
-              <Text style={{ color:C.text, fontSize:13, lineHeight:20 }}>{summary}</Text>
-              <Text style={[s.muted, { marginTop:8, fontSize:11 }]}>{steps.length} steps executed</Text>
-            </View>
-          )}
-
-          {error !== '' && (
-            <View style={[s.stepCard, { borderColor:C.red, backgroundColor:'rgba(239,68,68,0.08)' }]}>
-              <Text style={{ color:C.red, fontSize:13 }}>❌ {error}</Text>
-            </View>
-          )}
+          {done && <View style={[s.stepCard, s.successCard]}><Text style={{ fontSize: 24, marginBottom: 8 }}>✅</Text><Text style={[s.h2, { color: C.green, marginBottom: 8 }]}>Session Complete</Text><Text style={{ color: C.text, fontSize: 13, lineHeight: 20 }}>{summary}</Text><Text style={[s.muted, { marginTop: 8, fontSize: 11 }]}>{planningOnly ? `${steps.length} actions planned` : `${successfulActions} native actions succeeded`}</Text></View>}
+          {error !== '' && <View style={[s.stepCard, s.errorCard]}><Text style={{ color: C.red, fontSize: 13 }}>❌ {error}</Text></View>}
         </ScrollView>
       </SafeAreaView>
     );
   }
 
-  // ─── MAIN SCREEN ──────────────────────────────────────────────────────────
-  const EXAMPLES = [
-    'Open WhatsApp and send "I\'ll be 10 minutes late" to the last person I texted',
-    'Search Google for best restaurants near me and text the top result to mom',
-    'Open Gmail and summarize my 3 most recent unread emails',
-    'Set a timer for 25 minutes in the Clock app',
-    'Take a screenshot and send it via WhatsApp to John',
-    'Open Spotify and play lo-fi hip hop',
-    'Reply to the most recent text message with "Got it, thanks!"',
-    'Open Maps and navigate home',
+  const examples = [
+    'Open Android Settings and navigate to the Wi-Fi screen',
+    'Open the Clock app and prepare a 25-minute timer for review',
+    'Open the browser and search for restaurants near me',
+    'Navigate back to the home screen and open Maps',
   ];
 
   return (
     <SafeAreaView style={s.root}>
       <StatusBar style="light" />
-      <ScrollView contentContainerStyle={{ padding:16 }}>
-        {/* Header */}
-        <View style={{ alignItems:'center', marginBottom:24 }}>
-          <Text style={{ fontSize:40 }}>🦾</Text>
-          <Text style={[s.h1, { fontSize:26 }]}>Forge Phone Agent</Text>
-          <Text style={[s.muted, { textAlign:'center', marginTop:4 }]}>
-            AI that controls your phone — browse, text, reply, and more
-          </Text>
+      <ScrollView contentContainerStyle={{ padding: 16 }}>
+        <View style={{ alignItems: 'center', marginBottom: 24 }}>
+          <Text style={{ fontSize: 40 }}>🦾</Text>
+          <Text style={[s.h1, { fontSize: 26 }]}>Forge Phone Agent</Text>
+          <Text style={[s.muted, { textAlign: 'center', marginTop: 4 }]}>Bounded actions, explicit permissions, and verifiable native receipts.</Text>
         </View>
 
-        {/* Goal input */}
-        <Text style={s.label}>What do you want me to do?</Text>
-        <TextInput
-          value={goal} onChangeText={setGoal} multiline
-          placeholder="e.g. Open WhatsApp and reply to the last message saying I'm on my way..."
-          placeholderTextColor={C.text3}
-          style={[s.input, { minHeight:80, textAlignVertical:'top' }]}
-        />
+        <Text style={s.label}>Bounded goal</Text>
+        <TextInput value={goal} onChangeText={setGoal} multiline maxLength={2000} placeholder="e.g. Open Settings and navigate to Wi-Fi…" placeholderTextColor={C.text3} style={[s.input, { minHeight: 80, textAlignVertical: 'top' }]} />
 
-        {/* Settings row */}
-        <View style={{ flexDirection:'row', alignItems:'center', marginTop:12, gap:12 }}>
-          <View style={{ flex:1, flexDirection:'row', alignItems:'center', gap:8 }}>
-            <Text style={s.label}>Demo mode</Text>
-            <Switch
-              value={demoMode} onValueChange={setDemoMode}
-              trackColor={{ true:C.purple, false:C.border }}
-              thumbColor={demoMode ? '#fff' : C.text3}
-            />
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 12 }}>
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={s.label}>Planning only</Text>
+            <Switch value={planningOnly} onValueChange={setPlanningOnly} trackColor={{ true: C.purple, false: C.border }} thumbColor="#fff" />
           </View>
-          <View style={{ flexDirection:'row', gap:4 }}>
-            <Text style={[s.label, { marginRight:4 }]}>Max steps:</Text>
-            {[5, 10, 15, 20].map(n => (
-              <TouchableOpacity key={n} onPress={() => setMaxSteps(n)}
-                style={{ padding:6, paddingHorizontal:10, backgroundColor:maxSteps===n?C.purple:C.surface2, borderRadius:6 }}>
-                <Text style={{ color:maxSteps===n?'#fff':C.text2, fontSize:12 }}>{n}</Text>
-              </TouchableOpacity>
-            ))}
+          <View style={{ flexDirection: 'row', gap: 4 }}>
+            <Text style={[s.label, { marginRight: 4 }]}>Max:</Text>
+            {[5, 8, 10, 12].map(value => <TouchableOpacity key={value} onPress={() => setMaxSteps(value)} style={[s.stepChoice, maxSteps === value && { backgroundColor: C.purple }]}><Text style={{ color: maxSteps === value ? '#fff' : C.text2, fontSize: 12 }}>{value}</Text></TouchableOpacity>)}
           </View>
         </View>
 
-        {demoMode && (
-          <Text style={[s.muted, { fontSize:11, marginTop:6 }]}>
-            ℹ️ Demo mode plans actions without executing them. Enable Accessibility Service for real control.
-          </Text>
-        )}
+        {!planningOnly && <View style={{ marginTop: 12 }}><Text style={s.label}>Allowed Android packages</Text><TextInput value={allowedPackageInput} onChangeText={setAllowedPackageInput} autoCapitalize="none" autoCorrect={false} placeholder="com.android.settings, com.google.android.apps.maps" placeholderTextColor={C.text3} style={s.input} /><Text style={[s.muted, { fontSize: 11 }]}>The session fails closed if the foreground app is outside this allowlist.</Text></View>}
 
-        {/* Run button */}
-        <TouchableOpacity onPress={startAgent} disabled={!goal.trim()} style={[s.btn, { marginTop:16, backgroundColor:goal.trim()?C.purple:C.surface2 }]}>
-          <Text style={s.btnText}>🚀 {demoMode ? 'Plan Task (Demo)' : 'Run on Phone'}</Text>
-        </TouchableOpacity>
+        <TouchableOpacity onPress={() => { void startAgent(); }} disabled={!goal.trim()} style={[s.btn, { marginTop: 16, backgroundColor: goal.trim() ? C.purple : C.surface2 }]}><Text style={s.btnText}>🚀 {planningOnly ? 'Plan Safely' : 'Start Controlled Session'}</Text></TouchableOpacity>
 
-        {/* Accessibility setup banner */}
-        {!demoMode && Platform.OS === 'android' && (
-          <View style={[s.card, { borderColor:C.yellow, marginTop:12 }]}>
-            <Text style={{ color:C.yellow, fontSize:13, fontWeight:'700', marginBottom:4 }}>⚠️ Accessibility Service Required</Text>
-            <Text style={[s.muted, { fontSize:12 }]}>
-              To control other apps, enable Forge in Settings → Accessibility → Forge Phone Agent.{'\n'}
-              This lets the AI tap, type, and navigate across all your apps.
-            </Text>
-          </View>
-        )}
+        {!planningOnly && Platform.OS === 'android' && <View style={[s.card, { borderColor: C.yellow, marginTop: 12 }]}><Text style={{ color: C.yellow, fontSize: 13, fontWeight: '700', marginBottom: 4 }}>Accessibility Service Required</Text><Text style={[s.muted, { fontSize: 12, marginBottom: 10 }]}>The native build verifies the foreground package before every authorized action. Screenshots are hashed by Forge and are not stored.</Text><TouchableOpacity onPress={() => { void showAccessibilitySettings(); }} style={[s.btn, { backgroundColor: C.surface2 }]}><Text style={[s.btnText, { color: C.text }]}>Open Accessibility Settings</Text></TouchableOpacity></View>}
 
-        {/* Example goals */}
-        <Text style={[s.label, { marginTop:20 }]}>Example tasks</Text>
-        <View style={{ gap:8 }}>
-          {EXAMPLES.map((eg, i) => (
-            <TouchableOpacity key={i} onPress={() => setGoal(eg)} style={s.card}>
-              <Text style={{ color:C.text, fontSize:13 }}>{eg}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <Text style={[s.label, { marginTop: 20 }]}>Pilot examples</Text>
+        <View style={{ gap: 8 }}>{examples.map(example => <TouchableOpacity key={example} onPress={() => setGoal(example)} style={s.card}><Text style={{ color: C.text, fontSize: 13 }}>{example}</Text></TouchableOpacity>)}</View>
 
-        {/* Capabilities */}
-        <Text style={[s.label, { marginTop:20 }]}>What I can do</Text>
-        <View style={{ flexDirection:'row', flexWrap:'wrap', gap:8 }}>
-          {[
-            '💬 WhatsApp', '📱 SMS', '🌐 Browse Web', '📧 Gmail',
-            '📍 Maps', '🎵 Spotify', '📷 Camera', '⏰ Alarms',
-            '📞 Calls', '📋 Copy/Paste', '🔍 Search', '📤 Share',
-          ].map(cap => (
-            <View key={cap} style={[s.chip]}>
-              <Text style={{ color:C.text2, fontSize:12 }}>{cap}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Sign out */}
-        <TouchableOpacity onPress={() => { AsyncStorage.removeItem('forge_token'); setToken(''); setScreen('login'); }}
-          style={[s.btn, { marginTop:24, backgroundColor:C.surface2 }]}>
-          <Text style={[s.btnText, { color:C.text2 }]}>Sign Out</Text>
-        </TouchableOpacity>
+        <TouchableOpacity onPress={() => { setToken(''); setTokenInput(''); setScreen('login'); }} style={[s.btn, { marginTop: 24, backgroundColor: C.surface2 }]}><Text style={[s.btnText, { color: C.text2 }]}>Disconnect</Text></TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  root:      { flex:1, backgroundColor:C.bg },
-  header:    { padding:16, paddingBottom:8, flexDirection:'row', alignItems:'center' },
-  h1:        { fontSize:22, fontWeight:'800', color:C.text },
-  h2:        { fontSize:18, fontWeight:'700', color:C.text },
-  muted:     { color:C.text2, fontSize:13 },
-  label:     { color:C.text2, fontSize:12, fontWeight:'600', marginBottom:6, textTransform:'uppercase', letterSpacing:0.5 },
-  input:     { backgroundColor:C.surface, color:C.text, borderRadius:12, padding:14, fontSize:14, borderWidth:1, borderColor:C.border, marginBottom:4 },
-  btn:       { backgroundColor:C.purple, borderRadius:12, padding:14, alignItems:'center' },
-  btnText:   { color:'#fff', fontSize:15, fontWeight:'700' },
-  card:      { backgroundColor:C.surface, borderRadius:12, padding:14, borderWidth:1, borderColor:C.border },
-  stepCard:  { backgroundColor:C.surface, borderRadius:10, padding:12, borderWidth:1, borderColor:C.border },
-  stepAction:{ fontSize:14, fontWeight:'700' },
-  chip:      { backgroundColor:C.surface2, borderRadius:20, paddingVertical:5, paddingHorizontal:10, borderWidth:1, borderColor:C.border },
-  stepList:  { flex:1 },
+  root: { flex: 1, backgroundColor: C.bg },
+  centered: { justifyContent: 'center', alignItems: 'center' },
+  header: { padding: 16, paddingBottom: 8, flexDirection: 'row', alignItems: 'center' },
+  h1: { fontSize: 22, fontWeight: '800', color: C.text },
+  h2: { fontSize: 18, fontWeight: '700', color: C.text },
+  muted: { color: C.text2, fontSize: 13 },
+  label: { color: C.text2, fontSize: 12, fontWeight: '600', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
+  input: { backgroundColor: C.surface, color: C.text, borderRadius: 12, padding: 14, fontSize: 14, borderWidth: 1, borderColor: C.border, marginBottom: 4 },
+  btn: { backgroundColor: C.purple, borderRadius: 12, padding: 14, alignItems: 'center' },
+  btnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  stopButton: { backgroundColor: C.red, paddingVertical: 6, paddingHorizontal: 14 },
+  card: { backgroundColor: C.surface, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: C.border },
+  notice: { margin: 12, padding: 10, backgroundColor: C.surface, borderRadius: 8, borderWidth: 1 },
+  stepCard: { backgroundColor: C.surface, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: C.border },
+  stepAction: { fontSize: 14, fontWeight: '700' },
+  stepList: { flex: 1 },
+  code: { fontFamily: 'monospace', fontSize: 11, marginBottom: 4 },
+  successCard: { borderColor: C.green, backgroundColor: 'rgba(16,185,129,0.08)' },
+  errorCard: { borderColor: C.red, backgroundColor: 'rgba(239,68,68,0.08)' },
+  stepChoice: { padding: 6, paddingHorizontal: 10, backgroundColor: C.surface2, borderRadius: 6 },
 });

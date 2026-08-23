@@ -1,0 +1,9 @@
+node_modules/
+.expo/
+dist/
+.env
+.env.*
+!.env.example
+android/app/debug.keystore
+android/app/build/
+android/build/

@@ -1,7 +1,7 @@
 {
   "name": "forge-phone",
   "version": "1.0.0",
-  "description": "Forge Phone Agent — AI that controls your phone",
+  "description": "Permissioned Android agent for controlled Forge pilot execution",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
