@@ -568,8 +568,28 @@ test('commercial model access isolates legacy BYOK from metered platform usage a
   compactState.close();
   assert.equal(openAIMock.requests.length, 1);
 
+  const passportResponse = await fetch(`http://127.0.0.1:${port}/api/passport`, { headers });
+  assert.equal(passportResponse.status, 200, await passportResponse.clone().text());
   writable = new Database(dbPath);
   writable.prepare('UPDATE subscriptions SET tokens_used=tokens_limit WHERE user_id=?').run(userId);
+  writable.prepare('UPDATE users SET credits=0.000001 WHERE id=?').run(userId);
+  writable.prepare("UPDATE agent_passports SET apptopia_agent_id='budget-agent',apptopia_agent_version_id='budget-version-id',apptopia_agent_version='1.0.0' WHERE user_id=?").run(userId);
+  writable.close();
+  const underfundedAgentRun = await fetch(`http://127.0.0.1:${port}/api/agent-runs`, {
+    method: 'POST', headers, body: JSON.stringify({ name: 'Budget gate', prompt: 'This run must not reach a model.', model: 'gpt-4o-mini', max_tokens: 4096 }),
+  });
+  assert.equal(underfundedAgentRun.status, 402, await underfundedAgentRun.clone().text());
+  assert.equal((await underfundedAgentRun.json()).error, 'TOKEN_LIMIT_EXCEEDED');
+  assert.equal(openAIMock.requests.length, 1);
+
+  const underfundedChat = await fetch(`http://127.0.0.1:${port}/api/chat`, {
+    method: 'POST', headers, body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 4096, messages: [{ role: 'user', content: 'This balance must not unlock a large request.' }] }),
+  });
+  assert.equal(underfundedChat.status, 402, await underfundedChat.clone().text());
+  assert.equal((await underfundedChat.json()).error, 'TOKEN_LIMIT_EXCEEDED');
+  assert.equal(openAIMock.requests.length, 1);
+
+  writable = new Database(dbPath);
   writable.prepare('UPDATE users SET credits=1 WHERE id=?').run(userId);
   writable.close();
   const meteredChat = await fetch(`http://127.0.0.1:${port}/api/forge/chat`, {
@@ -595,6 +615,20 @@ test('commercial model access isolates legacy BYOK from metered platform usage a
   assert.deepEqual(tokenUsage, { count: 1, tokens: 150 });
   assert.equal(overageLedger.count, 1);
   assert.ok(Math.abs(overageLedger.delta + 0.000225) < 1e-9);
+
+  const budgetThreadResponse = await fetch(`http://127.0.0.1:${port}/api/threads`, {
+    method: 'POST', headers, body: JSON.stringify({ title: 'Funded thread budget', model: 'gpt-4o-mini' }),
+  });
+  assert.equal(budgetThreadResponse.status, 201, await budgetThreadResponse.clone().text());
+  const budgetThreadId = (await budgetThreadResponse.json()).data.id;
+  const fundedThread = await fetch(`http://127.0.0.1:${port}/api/threads/${budgetThreadId}/messages`, {
+    method: 'POST', headers, body: JSON.stringify({ content: 'Use the bounded thread budget.', model: 'gpt-4o-mini', token_budget: 10000 }),
+  });
+  assert.equal(fundedThread.status, 200);
+  assert.match(await fundedThread.text(), /"success":true/);
+  assert.equal(openAIMock.requests.length, 3);
+  assert.ok(openAIMock.requests[2].payload.max_tokens > 0);
+  assert.ok(openAIMock.requests[2].payload.max_tokens <= 4096);
 });
 
 test('Stripe Checkout uses canonical nested fields, trusted return URLs, and the hosted cancellation portal', { timeout: 120_000 }, async t => {
