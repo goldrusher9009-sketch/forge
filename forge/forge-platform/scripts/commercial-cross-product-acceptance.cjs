@@ -337,6 +337,10 @@ async function main() {
   const mineraBase = `http://127.0.0.1:${mineraPort}`;
   await waitForHttp(`${mineraBase}/health`);
   await waitForHttp(`${mineraBase}/health/ready`);
+  const mineraSignup = await request(`${mineraBase}/api/auth/signup`, {
+    method: 'POST', expected: [201], body: { email: mineraOwnerEmail, password: mineraOwnerPassword },
+  });
+  assert.equal(mineraSignup.body.owner, true);
   const mineraLogin = await request(`${mineraBase}/api/auth/login`, {
     method: 'POST', expected: [200], body: { email: mineraOwnerEmail, password: mineraOwnerPassword },
   });
