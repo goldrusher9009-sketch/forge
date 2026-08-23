@@ -516,7 +516,7 @@ function SettingsTab() {
                 <div className="settings-section">
                     <h3>API Keys</h3>
                     <div className="api-key-box">
-                        <code>sk_live_xxxxxxxxxxxxxxxxxxxx</code>
+                        <code>sk_live_••••••••••••••••</code>
                         <button className="btn-small">Rotate</button>
                     </div>
                 </div>

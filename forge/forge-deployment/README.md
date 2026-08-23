@@ -267,7 +267,9 @@ Create separate `terraform.tfvars` files:
 - `terraform.tfvars.prod`
 
 ### Custom TLS Certificates
-Replace cert-manager with your own certificates in `k8s/secrets.yaml`.
+Keep certificate and private-key material outside Git. Inject it through the
+authorized secret manager or release pipeline instead of writing it into
+`k8s/secrets.yaml`.
 
 ### Email Configuration
 Update email addresses in:

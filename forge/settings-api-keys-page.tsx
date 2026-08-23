@@ -39,7 +39,7 @@ const ApiKeysPage: React.FC = () => {
       {
         id: '1',
         name: 'Production Server',
-        key: 'sk_live_abc123def456ghi789jkl',
+        key: '',
         maskedKey: 'sk_live_••••••••••••••789jkl',
         createdAt: '2026-03-15',
         lastUsedAt: '2026-05-04',
