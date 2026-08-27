@@ -388,7 +388,7 @@ async function apiFetch(path: string, opts: RequestInit = {}, token?: string, _r
 }
 
 // SSE fetch: reads text/event-stream response, returns the payload from the last "result" event.
-// Used for /api/threads/:id/messages which uses SSE to keep Railway connection alive.
+// Used for /api/threads/:id/messages so streamed results survive proxy and control-plane limits.
 async function apiFetchSSE(path: string, opts: RequestInit = {}, token?: string, onEvent?: (evt: any) => void, _retry = false): Promise<any> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -25139,7 +25139,7 @@ function ForgeApp() {
       const s = document.createElement('style'); s.id = id; s.textContent = GLOBAL_STYLES + LIVING_STYLES;
       document.head.appendChild(s);
     }
-    // Wake Railway backend on mount so it\'s warm when user sends first message
+    // Warm the external control plane before the user sends the first message.
     fetch(`${API.replace('/api', '')}/health`, { signal: AbortSignal.timeout(10000) }).catch(() => {});
   }, []);
 
@@ -25995,7 +25995,7 @@ function ForgeApp() {
     setSuperMessages(prev => [...prev, { role:'user', content }]);
     try {
       const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
-      // Use SSE stream so long tasks (kanban, complex agents) survive Railway\'s 60s HTTP timeout
+      // Use SSE so long tasks (kanban, complex agents) can stream through the Vercel gateway.
       const resp = await fetch(`${API}/superagent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
@@ -27173,7 +27173,7 @@ function ForgeApp() {
           setClarifyQuestion(null);
         }
       } catch (e: any) {
-        // Thread was wiped (Railway redeploy) -- create a fresh one and retry
+        // If the control plane no longer has the thread, create a fresh one and retry.
         if (e.message?.includes('THREAD_NOT_FOUND') || e.message?.includes('404')) {
           const fresh = await apiFetch('/threads', { method:'POST', body:JSON.stringify({ title: userContent.slice(0,60), model: cleanModel }) }, user.token);
           const newT = fresh?.data || fresh;

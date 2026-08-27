@@ -906,7 +906,7 @@ export function ContentEngine({ api }: { api: Api }) {
           </div>
           <div style={{ ...S.card, borderLeft: '3px solid #e31118' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--fg-text,#f0f1f5)', marginBottom: 6 }}>📱 Twilio SMS</div>
-            <div style={{ fontSize: 11, color: 'var(--fg-text3,#888)', marginBottom: 8 }}>Set TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM in Railway env vars.</div>
+            <div style={{ fontSize: 11, color: 'var(--fg-text3,#888)', marginBottom: 8 }}>Set TWILIO_SID, TWILIO_TOKEN, and TWILIO_FROM in the control-plane environment.</div>
             <div style={{ fontSize: 11, color: '#4ade80' }}>Endpoints: POST /api/content/sms/send · /api/content/sms/sequence</div>
           </div>
         </div>
