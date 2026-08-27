@@ -6,7 +6,7 @@
   window.__forgeExtLoaded = true;
 
   // ─── Config ───────────────────────────────────────────────────────────────
-  const DEFAULT_BACKEND = 'https://forge-production-2692.up.railway.app';
+  const DEFAULT_BACKEND = 'https://forge-sand-two.vercel.app';
 
   const TOOLS = [
     { id: 'improve',      label: '✨ Improve' },

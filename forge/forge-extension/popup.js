@@ -1,6 +1,6 @@
 // Forge AI Extension — Popup Script
 
-const DEFAULT_BACKEND = 'https://forge-production-2692.up.railway.app';
+const DEFAULT_BACKEND = 'https://forge-sand-two.vercel.app';
 
 const tokenInput   = document.getElementById('token-input');
 const backendInput = document.getElementById('backend-input');

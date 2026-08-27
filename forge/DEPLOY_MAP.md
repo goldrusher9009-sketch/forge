@@ -1,52 +1,66 @@
-# Forge Deploy Map — READ THIS FIRST
+# Forge deployment map — current release path
 
-Saved 2026-06-13. The single source of truth for how Forge deploys. Verified live in production.
+Verified for the Vercel release branch on 2026-08-28. Provider state can drift;
+re-inspect Vercel and Git before each release claim.
 
-## TL;DR
-- **Live backend:** https://forge-production-2692.up.railway.app
-- **Live frontend:** https://forge-sand-two.vercel.app
-- **GitHub repo:** https://github.com/goldrusher9009-sketch/forge (branch: `main`)
-- Push to `main` → Railway auto-builds backend, Vercel auto-builds frontend.
-- A deploy takes a few minutes. **Re-check the live endpoint before concluding a deploy failed.**
+## Current state
 
-## CRITICAL: the repo is a MONOREPO
-`goldrusher9009-sketch/forge` contains MULTIPLE separate apps in subfolders:
-- `forge/`            ← **THE REAL FORGE** (Express + SQLite backend, Next.js frontend)
-- `viva/`, `viva-platform-repo/`  ← VIVA (dating/twin/markets, Prisma/Next.js) — NOT Forge, do not touch
-- `Flash`, `Flash_Backup`, `LocalZilla/nova-llm`, `VentBuddy`  ← other apps
+- Git repository: `git@github.com:goldrusher9009-sketch/forge.git`.
+- Release branch: `sasaky/forge-google-drive-launch`.
+- Release SHA: resolve with `git rev-parse HEAD` and verify the same SHA exists on
+  `origin/sasaky/forge-google-drive-launch` before making any deployment claim.
+- Vercel project: `forge`.
+- Last verified pre-hardening build candidate at this snapshot: protected
+  Preview `dpl_6Tdg9fQnMFFU8NRyeeJquAJrs61z` (`Ready`, not Production). Re-inspect
+  the branch's newest deployment after every pushed commit.
+- Public production origin: `https://forge-sand-two.vercel.app`.
+- Production still points to older `main` commit `219395f1`; it is not the
+  current sandbox-agent candidate.
+- The external Docker control plane and its DNS hostname are not provisioned yet.
 
-Because every app shares one `main` branch, **the deploy commit messages often say "VIVA" / "notifications" / "feed/markets/twin" even when Forge code changed.** Don't be fooled by commit messages — check the actual file contents.
+## Architecture
 
-## Backend (Railway)
-- Railway project name: **hearty-contentment** (random name — NOT "forge")
-  - project id: `7f6bf5a3-d0ea-4469-b2a1-02e0b4330861`
-  - service: **forge**  (id `dd4b75bd-ff82-4e8b-a3cb-f3b73d74e8a5`)
-  - environment: **production** (id `b52fe1b6-e576-40f7-af17-983b2e406984`)
-  - Railway build config: `/forge/forge-platform/railway.json`
-  - Root dir served: `forge/forge-platform/`
-- Backend source file (the big one, all routes): **`forge/forge-platform/src/index.ts`** in the repo
-  - = local `C:\Users\teste\OneDrive\Documents\Claude\Projects\forge\forge-platform\src\index.ts`
-- `npm run build` is a NO-OP (start runs ts-node on source). Verify with `tsc --noEmit` or the jest tests.
+```text
+Vercel website and same-origin /api gateway
+  -> dedicated HTTPS Caddy gateway
+  -> Forge control plane with durable SQLite volume
+  -> private Docker-socket Orchestrator
+  -> isolated per-run sandbox containers
+```
 
-## Other Railway projects in this account (so I don't confuse them again)
-17 projects total. Forge = hearty-contentment ONLY. Ignore:
-- talented-purpose → viva-platform + Postgres
-- motivated-intuition / positive-transformation → aacg-platform
-- spectacular-gratitude, welcoming-art, pleasing-youth, grand-empathy, hearty-strength, satisfied-abundance → web/worker (other)
-- glistening-flow → Redis/Postgres ; friendly-renewal → nexus-platform
+Vercel hosts the website and server-side gateway only. It does not host the
+Docker Socket, persistent SQLite database, long-running Agent loop, Socket.IO
+process, or user sandboxes.
 
-## How to VERIFY a deploy (do this, don't assume)
-From a browser on the railway.com origin you can read deploy status via GraphQL:
-`backboard.railway.com/graphql/v2` → query `deployments(input:{projectId,environmentId,serviceId})`.
-Simplest: just hit a live endpoint. GET `/api/forge-tools/catalog` (public) should return 200 JSON.
-Auth-required routes return 401 (= route exists). A missing route returns `Cannot GET ...` (real 404).
-POST-only routes (agent/run, tokens/stake, marketplace/install) return 404 on a GET — that's expected, test with POST.
+## Files that define this release
 
-## Push path (sandbox CANNOT git — must run Windows-side)
-Run `PUSH_PHASE0.bat` (repo root) by double-clicking in File Explorer. It runs tests then pushes.
-Sandbox git is blocked (stale config.lock on OneDrive mount). The bash mount also LAGS behind
-real file writes — trust the Read/Edit tools and GitHub raw, not the bash mount's stale view.
+- `forge-web-studio/app/api/[...path]/route.ts`: Vercel catch-all API route.
+- `forge-web-studio/app/api/_forgeProxy.ts`: upstream validation, secret
+  injection, SSE/body forwarding, and fail-closed behavior.
+- `forge-sandbox.compose.yml`: runtime image, Orchestrator, egress proxy, and
+  private networks.
+- `forge-private-candidate.compose.yml`: Forge control plane and durable data.
+- `forge-vps-caddy.compose.yml`: public HTTPS edge only.
+- `forge-control-plane.Caddyfile`: `/api/*` plus gateway-secret enforcement.
+- `FORGE_SANDBOX_GOOGLE_DRIVE_PRIVATE_CANDIDATE_RUNBOOK.md`: required gates and
+  acceptance evidence.
 
-## STATUS as of 2026-06-13
-Phase 0 = DONE + DEPLOYED. Commit `7fe2fba` live at 22:41 UTC. Verified in prod:
-forge-tools/catalog 200; tokens/balance, orgs, analytics/summary, billing/tiers, billing/invoices → 401 (live).
+## Mandatory release sequence
+
+1. Commit and push only `sasaky/forge-google-drive-launch`.
+2. Provision the external Linux Docker host and control-plane hostname.
+3. Deploy the three Compose files using the approved secret store.
+4. Verify Caddy rejects missing/wrong secrets and non-API paths.
+5. Add `FORGE_CONTROL_PLANE_API_URL` and
+   `FORGE_CONTROL_PLANE_GATEWAY_SECRET` to Vercel server environments.
+6. Redeploy the protected Vercel Preview.
+7. Complete sandbox, Google Drive, security, recovery, and human-approval E2E.
+8. Promote the exact accepted Preview only after explicit authorization.
+9. Verify Production status, public HTTP behavior, aliases, and deployed Git SHA.
+
+## Safety boundary
+
+Do not push `main`: a legacy provider is still connected to it. Do not run old
+`PUSH_*.bat`, `push*.ps1`, archived deployment scripts, or historical runbooks as
+release automation. `deploy.sh` is the only root release helper for this branch;
+it creates Vercel Preview deployments only and refuses `main`.

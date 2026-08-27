@@ -31,7 +31,7 @@
     "128": "icons/icon128.png"
   },
   "host_permissions": [
-    "https://forge-production-2692.up.railway.app/*",
+    "https://forge-sand-two.vercel.app/*",
     "http://localhost:3001/*"
   ]
 }

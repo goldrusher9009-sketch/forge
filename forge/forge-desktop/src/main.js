@@ -9,7 +9,7 @@ const WebSocket = require('ws');
 const chokidar = require('chokidar');
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const FORGE_API = 'https://forge-production-2692.up.railway.app/api';
+const FORGE_API = 'https://forge-sand-two.vercel.app/api';
 const MEMORY_FILE = path.join(app.getPath('userData'), 'forge-memory.json');
 const CONFIG_FILE = path.join(app.getPath('userData'), 'forge-config.json');
 const WS_PORT = 27184; // Native messaging bridge port

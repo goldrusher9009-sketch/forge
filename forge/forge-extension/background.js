@@ -50,7 +50,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'test_connection') {
     chrome.storage.local.get(['forge_token', 'forge_backend'], async (result) => {
-      const backend = result.forge_backend || 'https://forge-production-2692.up.railway.app';
+      const backend = result.forge_backend || 'https://forge-sand-two.vercel.app';
       const token = result.forge_token || '';
       try {
         const r = await fetch(`${backend}/api/health`, {

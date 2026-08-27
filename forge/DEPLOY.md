@@ -1,106 +1,101 @@
-# Forge — Deploy to Production
+# Forge deployment: Vercel + private Docker control plane
 
-Backend → Railway | Frontend → Vercel  
-Two commands each. Done in under 10 minutes.
+Forge's website is deployed only on Vercel. Railway is not part of the release
+path. The long-running control plane and per-run Docker sandboxes cannot run in
+Vercel functions, so they run on a dedicated Linux Docker host behind HTTPS.
 
----
+```text
+Browser
+  -> Vercel /api/* gateway
+  -> HTTPS Caddy gateway
+  -> private Forge control plane
+  -> private sandbox Orchestrator
+  -> isolated per-run Docker sandbox
+```
 
-## 1. Push to GitHub (one-time)
+The complete operational procedure and acceptance gates are in
+`FORGE_SANDBOX_GOOGLE_DRIVE_PRIVATE_CANDIDATE_RUNBOOK.md`.
+
+## Release rules
+
+- Release branch: `sasaky/forge-google-drive-launch`.
+- Do not push `main`; it is still connected to a legacy deployment.
+- Build a protected Vercel Preview from the release branch first.
+- Do not promote a Preview until the external control plane and end-to-end
+  acceptance are green.
+- Do not put credentials in Git, shell history, build arguments, browser code,
+  logs, Agent prompts, Orchestrator requests, or sandboxes.
+- Use the domestic Docker, APT, and npm sources already pinned in the Dockerfiles.
+
+## External control plane
+
+Provision a dedicated Linux host and a hostname whose DNS points to it. Install
+Docker Engine and Compose, open only TCP 80/443 (and UDP 443 if HTTP/3 is
+desired), then use these three Compose files together:
 
 ```bash
-# In the forge/ folder:
-git init
-git add .
-git commit -m "Initial Forge Platform release"
+docker compose \
+  -f forge-sandbox.compose.yml \
+  -f forge-private-candidate.compose.yml \
+  -f forge-vps-caddy.compose.yml \
+  config -q
 
-# Create a repo at github.com/new, then:
-git remote add origin https://github.com/YOUR_USERNAME/forge.git
-git branch -M main
-git push -u origin main
+docker compose \
+  -f forge-sandbox.compose.yml \
+  -f forge-private-candidate.compose.yml \
+  -f forge-vps-caddy.compose.yml \
+  build
+
+docker compose \
+  -f forge-sandbox.compose.yml \
+  -f forge-private-candidate.compose.yml \
+  -f forge-vps-caddy.compose.yml \
+  up -d
 ```
 
----
+Supply required values through the approved host secret store. In particular,
+the same high-entropy `FORGE_CONTROL_PLANE_GATEWAY_SECRET` must exist only in
+the Vercel server environment and the Caddy environment. Forge and the sandbox
+Orchestrator ports remain bound to loopback/private networks; only Caddy exposes
+80/443.
 
-## 2. Deploy Backend to Railway
+Before connecting Vercel, verify that the public control-plane hostname returns:
 
-### Option A — Railway Dashboard (easiest)
-1. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub repo
-2. Select your `forge` repo
-3. Set **Root Directory** to `forge-platform`
-4. Railway auto-detects Node.js and runs `npm install && npm run build` then `node dist/index.js`
-5. Add these environment variables in Railway → Variables:
+- `404` without the gateway secret;
+- `404` with a wrong secret;
+- `200` for `/api/health` with the correct secret;
+- `404` for a non-`/api/*` path even with the correct secret.
 
-```
-PORT=3000
-NODE_ENV=production
-JWT_SECRET=<generate: openssl rand -hex 32>
-JWT_EXPIRES_IN=15m
-REFRESH_EXPIRES_IN=7d
-FRONTEND_URL=https://YOUR_VERCEL_URL.vercel.app
-DB_PATH=/data/forge.db
-```
+## Vercel Preview
 
-6. Enable a **Volume** at `/data` (Railway → Storage → Add Volume → mount path `/data`)
-7. Copy the Railway URL (e.g. `https://forge-platform-production.up.railway.app`)
+Set these server-only variables for Preview and, after acceptance, Production:
 
-### Option B — Railway CLI
-```bash
-npm install -g @railway/cli
-railway login
-cd forge-platform
-railway init        # creates project
-railway up          # deploys
-railway variables set JWT_SECRET=$(openssl rand -hex 32) NODE_ENV=production DB_PATH=/data/forge.db
+```text
+FORGE_CONTROL_PLANE_API_URL=https://<control-plane-host>/api/
+FORGE_CONTROL_PLANE_GATEWAY_SECRET=<same value stored by Caddy>
 ```
 
----
-
-## 3. Deploy Frontend to Vercel
-
-### Option A — Vercel Dashboard (easiest)
-1. Go to [vercel.com](https://vercel.com) → New Project → Import from GitHub
-2. Select your `forge` repo
-3. Set **Root Directory** to `forge-web-studio`
-4. Add environment variable:
-```
-NEXT_PUBLIC_API_BASE_URL=https://YOUR_RAILWAY_URL.up.railway.app/api
-```
-5. Deploy → Vercel gives you a URL like `https://forge-web-studio.vercel.app`
-6. Go back to Railway and set `FRONTEND_URL=https://forge-web-studio.vercel.app`
-
-### Option B — Vercel CLI
-```bash
-npm install -g vercel
-cd forge-web-studio
-vercel --prod
-# When prompted, set NEXT_PUBLIC_API_BASE_URL to your Railway URL
-```
-
----
-
-## 4. Verify
+Browser traffic remains same-origin under `/api/*`; never prefix these values
+with `NEXT_PUBLIC_`. The repository's `deploy.sh` builds and creates a Preview
+only. It refuses to run on `main` and cannot promote Production.
 
 ```bash
-# Health check
-curl https://YOUR_RAILWAY_URL.up.railway.app/health
-# → {"status":"ok","timestamp":"..."}
-
-# Login
-curl -X POST https://YOUR_RAILWAY_URL.up.railway.app/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@forge.local","password":"Admin1234!"}'
-# → {"success":true,"data":{"accessToken":"...",...}}
+bash deploy.sh
 ```
 
-Then open your Vercel URL and log in with `admin@forge.local` / `Admin1234!`
+Verify the protected Preview through its Vercel-authenticated URL. Required
+checks include login, an authenticated `/api/health` path, SSE, one sandbox run,
+artifact retrieval, human approval, Google Drive import/write-back/revoke, and
+secret non-disclosure.
 
----
+## Production promotion
 
-## Default Credentials
+Promotion is a separate, explicit operation after Preview acceptance. Confirm
+the deployment ID, inspect that it is `target: preview` and `status: Ready`, then
+promote that exact deployment through Vercel. Re-inspect until the new deployment
+is `target: production` and `status: Ready`, then validate the public production
+domain and the deployed Git revision.
 
-| Field | Value |
-|-------|-------|
-| Email | `admin@forge.local` |
-| Password | `Admin1234!` |
-
-> Change the admin password immediately after first login in production.
+Until customer, payment, contract, operational, and acceptance gates are real,
+describe the result only as an invitation-only private candidate—not a public or
+commercial launch.

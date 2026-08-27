@@ -12,6 +12,7 @@
     "start": "node dist/index.js",
     "test": "jest --testPathPattern='__tests__/(auth|route-manifest)' --forceExit --no-coverage",
     "test:routes": "jest --testPathPattern=route-manifest --forceExit --no-coverage",
+    "test:deployment-provider": "node scripts/deployment-provider-regression.cjs",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
