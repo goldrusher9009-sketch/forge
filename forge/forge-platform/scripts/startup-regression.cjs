@@ -337,6 +337,69 @@ test('production refuses missing JWT, admin, and frontend configuration before o
   }
 });
 
+test('production migrates the historical default admin without changing its identity', { timeout: 120_000 }, async t => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'forge-production-admin-migration-'));
+  const dbPath = path.join(tempDir, 'forge.db');
+  let activeChild = null;
+  t.after(async () => {
+    if (activeChild) await stopForge(activeChild);
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  const developmentPort = await getFreePort();
+  const development = spawnForge(dbPath, developmentPort, {
+    NODE_ENV: 'test',
+    RAILWAY_ENVIRONMENT: '',
+    JWT_SECRET: 'admin-migration-development-jwt-secret',
+    ADMIN_EMAIL: '',
+    ADMIN_PASSWORD: '',
+    FRONTEND_URL: `http://127.0.0.1:${developmentPort}`,
+    CREDENTIAL_ENCRYPTION_KEY: 'admin-migration-development-credential-key',
+    BILLING_REQUIRED: '',
+  });
+  activeChild = development.child;
+  await waitForHealth(development.child, developmentPort, development.getLogs);
+  const legacyAuth = await login(developmentPort, 'admin@forge.local', 'Admin1234!');
+  const legacyId = legacyAuth.data.user.id;
+  await stopForge(development.child);
+  activeChild = null;
+
+  const productionPort = await getFreePort();
+  const productionEmail = 'configured-owner@forge.test';
+  const productionPassword = 'configured-production-admin-password';
+  const production = spawnForge(dbPath, productionPort, {
+    NODE_ENV: 'production',
+    RAILWAY_ENVIRONMENT: '',
+    JWT_SECRET: 'admin-migration-production-jwt-secret-32-bytes',
+    ADMIN_EMAIL: productionEmail,
+    ADMIN_PASSWORD: productionPassword,
+    FRONTEND_URL: `http://127.0.0.1:${productionPort}`,
+    CREDENTIAL_ENCRYPTION_KEY: 'admin-migration-production-credential-key',
+    BILLING_REQUIRED: '',
+    STRIPE_SECRET_KEY: '',
+    STRIPE_WEBHOOK_SECRET: '',
+  });
+  activeChild = production.child;
+  await waitForHealth(production.child, productionPort, production.getLogs);
+  assert.match(production.getLogs(), /Migrated historical development admin to configured production admin/);
+
+  const productionAuth = await login(productionPort, productionEmail, productionPassword);
+  assert.equal(productionAuth.data.user.id, legacyId);
+  assert.equal(productionAuth.data.user.role, 'admin');
+
+  const oldLogin = await fetch(`http://127.0.0.1:${productionPort}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: 'admin@forge.local', password: 'Admin1234!' }),
+  });
+  assert.equal(oldLogin.status, 401);
+
+  const state = new Database(dbPath, { readonly: true });
+  const adminRows = state.prepare("SELECT id,email,role,verified FROM users WHERE role='admin'").all();
+  state.close();
+  assert.deepEqual(adminRows, [{ id: legacyId, email: productionEmail, role: 'admin', verified: 1 }]);
+});
+
 test('commercial billing mode refuses partial Stripe configuration before opening the database', { timeout: 30_000 }, async () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'forge-production-billing-config-'));
   const dbPath = path.join(tempDir, 'forge.db');
