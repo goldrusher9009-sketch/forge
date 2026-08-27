@@ -6,13 +6,15 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     path: string[];
-  };
+  }>;
 };
 
-const handler = (request: NextRequest, context: RouteContext) =>
-  proxyForgeApi(request, context.params.path);
+const handler = async (request: NextRequest, context: RouteContext) => {
+  const { path } = await context.params;
+  return proxyForgeApi(request, path);
+};
 
 export {
   handler as DELETE,

@@ -2,12 +2,14 @@ import { NextRequest } from 'next/server';
 import { proxyForgeApi } from '../../_forgeProxy';
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
-const handler = (request: NextRequest, context: RouteContext) =>
-  proxyForgeApi(request, ['agents', context.params.id]);
+const handler = async (request: NextRequest, context: RouteContext) => {
+  const { id } = await context.params;
+  return proxyForgeApi(request, ['agents', id]);
+};
 
 export { handler as DELETE, handler as GET, handler as PATCH, handler as PUT };

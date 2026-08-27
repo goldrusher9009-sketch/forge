@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */ // v6.87
 const nextConfig = {
   reactStrictMode: true,
-  eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
   env: {
     NEXT_PUBLIC_API_BASE_URL: '/api',
