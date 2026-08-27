@@ -1,0 +1,86 @@
+name: forge-sandbox-candidate
+
+services:
+  sandbox-runtime:
+    image: forge-sandbox-runtime:local
+    build:
+      context: ./forge-sandbox-runtime
+      dockerfile: Dockerfile
+    profiles: ["runtime-image"]
+
+  forge-sandbox-orchestrator:
+    image: forge-sandbox-orchestrator:local
+    build:
+      context: ./forge-sandbox-orchestrator
+      dockerfile: Dockerfile
+    environment:
+      PORT: "3001"
+      FORGE_SANDBOX_HMAC_SECRET: ${FORGE_SANDBOX_HMAC_SECRET:?set FORGE_SANDBOX_HMAC_SECRET}
+      FORGE_SANDBOX_RUNTIME_IMAGE: forge-sandbox-runtime:local
+      FORGE_SANDBOX_NETWORK: forge-sandbox-internal
+      FORGE_SANDBOX_PROXY_URL: http://forge-sandbox-egress:8787
+      FORGE_SANDBOX_DATA_DIR: /var/lib/forge-sandbox
+      FORGE_SANDBOX_MEMORY_BYTES: "805306368"
+      FORGE_SANDBOX_CPU_NANOS: "1000000000"
+      FORGE_SANDBOX_PIDS_LIMIT: "128"
+      FORGE_SANDBOX_BROWSER_PIDS_LIMIT: "256"
+    ports:
+      - "127.0.0.1:3301:3001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - forge_sandbox_orchestrator_data:/var/lib/forge-sandbox
+    networks:
+      - control
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=32m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      forge-sandbox-egress:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  forge-sandbox-egress:
+    image: forge-sandbox-orchestrator:local
+    command: ["node", "src/proxy.js"]
+    user: "10002:10002"
+    environment:
+      PORT: "8787"
+      FORGE_SANDBOX_EGRESS_ALLOWLIST: ${FORGE_SANDBOX_EGRESS_ALLOWLIST:-}
+    networks:
+      - sandbox-internal
+      - egress
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('node:net').connect(8787,'127.0.0.1').once('connect',function(){this.end();process.exit(0)}).once('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  control:
+    name: forge-sandbox-control
+  sandbox-internal:
+    name: forge-sandbox-internal
+    internal: true
+  egress:
+    name: forge-sandbox-egress
+
+volumes:
+  forge_sandbox_orchestrator_data:
+    name: forge-sandbox-orchestrator-data
