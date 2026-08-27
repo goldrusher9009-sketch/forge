@@ -364,6 +364,28 @@ test('production migrates the historical default admin without changing its iden
   await stopForge(development.child);
   activeChild = null;
 
+  const legacyProviderSecret = 'legacy-plaintext-custom-provider-secret';
+  const legacyState = new Database(dbPath);
+  legacyState.exec(`
+    DROP TABLE custom_providers;
+    CREATE TABLE custom_providers (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      base_url TEXT NOT NULL,
+      api_key TEXT NOT NULL DEFAULT '',
+      markup_multiplier REAL NOT NULL DEFAULT 1.3,
+      model_prefix TEXT NOT NULL DEFAULT '',
+      notes TEXT NOT NULL DEFAULT '',
+      active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT,
+      updated_at TEXT
+    );
+  `);
+  legacyState.prepare('INSERT INTO custom_providers (id,user_id,name,base_url,api_key) VALUES (?,?,?,?,?)')
+    .run('legacy-provider', legacyId, 'Legacy Provider', 'https://provider.invalid', legacyProviderSecret);
+  legacyState.close();
+
   const productionPort = await getFreePort();
   const productionEmail = 'configured-owner@forge.test';
   const productionPassword = 'configured-production-admin-password';
@@ -396,8 +418,14 @@ test('production migrates the historical default admin without changing its iden
 
   const state = new Database(dbPath, { readonly: true });
   const adminRows = state.prepare("SELECT id,email,role,verified FROM users WHERE role='admin'").all();
+  const providerColumns = state.prepare('PRAGMA table_info(custom_providers)').all().map(column => column.name);
+  const migratedProvider = state.prepare("SELECT api_key,api_key_encrypted FROM custom_providers WHERE id='legacy-provider'").get();
   state.close();
   assert.deepEqual(adminRows, [{ id: legacyId, email: productionEmail, role: 'admin', verified: 1 }]);
+  assert.equal(providerColumns.includes('api_key_encrypted'), true);
+  assert.equal(migratedProvider.api_key, '');
+  assert.match(migratedProvider.api_key_encrypted, /^v1:/);
+  assert.equal(migratedProvider.api_key_encrypted.includes(legacyProviderSecret), false);
 });
 
 test('commercial billing mode refuses partial Stripe configuration before opening the database', { timeout: 30_000 }, async () => {
