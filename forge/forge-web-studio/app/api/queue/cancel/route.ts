@@ -1,23 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-
-enum TaskStatus { Queued='queued', Running='running', Completed='completed', Failed='failed', Cancelled='cancelled' }
-interface Task { id:string; status:TaskStatus; updatedAt:Date; [k:string]:any; }
-
-const tasks: Map<string, Task> = new Map();
+import { NextRequest } from 'next/server';
+import { proxyForgeApi } from '../../_forgeProxy';
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { taskId } = body;
-    if (!taskId) return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
-    const task = tasks.get(taskId);
-    if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
-    if (task.status !== TaskStatus.Running && task.status !== TaskStatus.Queued)
-      return NextResponse.json({ error: 'Can only cancel running or queued tasks' }, { status: 400 });
-    const cancelledTask: Task = { ...task, status: TaskStatus.Cancelled, updatedAt: new Date() };
-    tasks.set(taskId, cancelledTask);
-    return NextResponse.json(cancelledTask);
-  } catch {
-    return NextResponse.json({ error: 'Failed to cancel task' }, { status: 500 });
-  }
+  return proxyForgeApi(request, ['queue', 'cancel']);
 }

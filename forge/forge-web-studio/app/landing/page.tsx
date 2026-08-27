@@ -528,7 +528,7 @@ export default function LandingPage() {
           <span>© 2026 Forge. All rights reserved.</span>
           <a href="/privacy" style={{color:'#666'}}>Privacy</a>
           <a href="/terms" style={{color:'#666'}}>Terms</a>
-          <a href="https://forge-production-2692.up.railway.app/health" style={{color:'#666'}}>Status</a>
+          <a href="/api/health" style={{color:'#666'}}>Status</a>
         </div>
       </footer>
     </div>
