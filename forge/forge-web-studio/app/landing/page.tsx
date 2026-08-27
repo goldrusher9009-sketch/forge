@@ -524,7 +524,12 @@ export default function LandingPage() {
             <a key={l} href={h} onMouseEnter={e=>(e.currentTarget.style.color='#aaa')} onMouseLeave={e=>(e.currentTarget.style.color='#555')}>{l}</a>
           ))}
         </div>
-        <div style={{fontSize:12,color:'#333'}}>© 2026 Forge. All rights reserved.</div>
+        <div style={{display:'flex',gap:16,alignItems:'center',flexWrap:'wrap' as const,fontSize:12,color:'#444'}}>
+          <span>© 2026 Forge. All rights reserved.</span>
+          <a href="/privacy" style={{color:'#666'}}>Privacy</a>
+          <a href="/terms" style={{color:'#666'}}>Terms</a>
+          <a href="https://forge-production-2692.up.railway.app/health" style={{color:'#666'}}>Status</a>
+        </div>
       </footer>
     </div>
   );
