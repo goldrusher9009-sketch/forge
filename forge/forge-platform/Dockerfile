@@ -18,7 +18,7 @@ COPY . .
 
 RUN NODE_OPTIONS="--max-old-space-size=4096" \
     npm exec --yes --package=esbuild@0.19.12 --registry=https://registry.npmmirror.com -- \
-    esbuild src/index.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist \
+    esbuild src/index.ts src/sandbox-contract.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist \
     && npm cache clean --force
 
 EXPOSE 3000

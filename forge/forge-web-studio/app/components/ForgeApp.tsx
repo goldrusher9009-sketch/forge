@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { OnboardingFlow } from './OnboardingFlow';
 import { ForgeAutonomyHub, OnboardingWizard, CreditBadge, LIVING_STYLES } from './ForgeAutonomy';
+import { GoogleDriveConnectionCard, SandboxAgentConsole } from './SandboxAgentConsole';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -562,6 +563,11 @@ function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
         <button onClick={submit} disabled={loading} style={{ width:'100%', padding:'12px', background:'var(--fg-orange)', border:'none', borderRadius:8, color:'#fff', fontSize:15, fontWeight:600, cursor:'pointer', opacity:loading ? 0.7 : 1 }}>
           {loading ? '...' : (mode==='login' ? 'Sign In' : 'Create Account')}
         </button>
+        {mode === 'register' && (
+          <p style={{ color:'var(--fg-text3)', fontSize:11, lineHeight:1.55, margin:'14px 0 0', textAlign:'center' }}>
+            By creating an account, you agree to the <a href="/terms" style={{ color:'var(--fg-orange2)' }}>Terms of Service</a> and acknowledge the <a href="/privacy" style={{ color:'var(--fg-orange2)' }}>Privacy Policy</a>.
+          </p>
+        )}
       </div>
     </div>
   );
@@ -24507,6 +24513,16 @@ function ForgeApp() {
   const [keysSaved, setKeysSaved] = useState(false);
   const [savedProviders, setSavedProviders] = useState<Record<string,boolean>>({});
 
+  // Conditionally rendered tabs must keep their hooks at the component root.
+  const [byosConfigs, setByosConfigs] = useState<any[]>([]);
+  const [byosLoaded, setByosLoaded] = useState(false);
+  const [byosAdding, setByosAdding] = useState(false);
+  const [byosProvider, setByosProvider] = useState('supabase');
+  const [byosCreds, setByosCreds] = useState<Record<string,string>>({});
+  const [byosLabel, setByosLabel] = useState('');
+  const [byosTesting, setByosTesting] = useState<string|null>(null);
+  const [byosSyncing, setByosSyncing] = useState<string|null>(null);
+
   // Admin panel state
   const [adminTab, setAdminTab] = useState<'stats'|'users'|'keys'|'models'>('stats');
   const [adminStats, setAdminStats] = useState<any>(null);
@@ -24541,6 +24557,20 @@ function ForgeApp() {
   const [webCredForm, setWebCredForm] = useState({ site:'', url:'', username:'', password:'' });
   const [webCredShowPassIds, setWebCredShowPassIds] = useState<Set<string>>(new Set());
   const [webCredEditing, setWebCredEditing] = useState<string|null>(null);
+
+  const loadByos = useCallback(async () => {
+    if (!user) return;
+    const response = await fetch(`${API}/user/storage`, { headers: { Authorization: `Bearer ${user.token}` } });
+    const body = await response.json();
+    if (body.success) {
+      setByosConfigs(body.data);
+      setByosLoaded(true);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (mainTab === 'settings') void loadByos();
+  }, [mainTab, loadByos]);
 
   // Key vault
   const [vaultKeys, setVaultKeys] = useState<VaultKey[]>([]);
@@ -27540,6 +27570,7 @@ function ForgeApp() {
             { id:'router',           icon:'🔀',  label:'Smart Router' },
             { id:'files',            icon:'📁',  label:'Files' },
             { id:'runs',             icon:'🏃',  label:'Run History' },
+            { id:'agentruns',        icon:'🤖',  label:'Agent Runs' },
             { id:'hooks',            icon:'🪝',  label:'Automations' },
             { id:'costdash',         icon:'💰',  label:'Cost Dashboard' },
             { id:'ragknow',          icon:'📚',  label:'Knowledge Base' },
@@ -31158,38 +31189,22 @@ function ForgeApp() {
 
               {/* ── BYOS: Bring Your Own Storage ────────────────────────────────── */}
               {(() => {
-                const [byosConfigs, setByosConfigs] = React.useState<any[]>([]);
-                const [byosLoaded, setByosLoaded] = React.useState(false);
-                const [byosAdding, setByosAdding] = React.useState(false);
-                const [byosProvider, setByosProvider] = React.useState('supabase');
-                const [byosCreds, setByosCreds] = React.useState<Record<string,string>>({});
-                const [byosLabel, setByosLabel] = React.useState('');
-                const [byosTesting, setByosTesting] = React.useState<string|null>(null);
-                const [byosSyncing, setByosSyncing] = React.useState<string|null>(null);
                 const tok = user.token;
                 const h = { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' };
-
-                const loadByos = async () => {
-                  const r = await fetch(`${API}/api/user/storage`, { headers: h });
-                  const d = await r.json();
-                  if (d.success) { setByosConfigs(d.data); setByosLoaded(true); }
-                };
-
-                React.useEffect(() => { loadByos(); }, []);
 
                 const byosProviders: Record<string,{ icon:string; label:string; fields: {key:string;label:string;placeholder:string;type?:string}[] }> = {
                   supabase:    { icon:'⚡', label:'Supabase', fields: [{ key:'url', label:'Project URL', placeholder:'https://xxx.supabase.co' }, { key:'serviceKey', label:'Service Role Key', placeholder:'eyJ...', type:'password' }] },
                   s3:          { icon:'☁️', label:'AWS S3',   fields: [{ key:'endpoint', label:'Endpoint', placeholder:'https://s3.amazonaws.com' }, { key:'bucket', label:'Bucket Name', placeholder:'my-forge-backup' }, { key:'accessKey', label:'Access Key ID', placeholder:'AKIA...' }, { key:'secretKey', label:'Secret Key', placeholder:'...', type:'password' }, { key:'region', label:'Region', placeholder:'us-east-1' }] },
                   r2:          { icon:'🟠', label:'Cloudflare R2', fields: [{ key:'endpoint', label:'R2 Endpoint', placeholder:'https://xxx.r2.cloudflarestorage.com' }, { key:'bucket', label:'Bucket', placeholder:'forge-data' }, { key:'accessKey', label:'Access Key', placeholder:'...' }, { key:'secretKey', label:'Secret Key', placeholder:'...', type:'password' }] },
-                  gdrive:      { icon:'📗', label:'Google Drive', fields: [{ key:'accessToken', label:'OAuth Access Token', placeholder:'ya29...', type:'password' }] },
                   vercel_blob: { icon:'▲', label:'Vercel Blob', fields: [{ key:'token', label:'Blob Read-Write Token', placeholder:'vercel_blob_rw_...', type:'password' }] },
                   github:      { icon:'🐙', label:'GitHub Gist', fields: [{ key:'token', label:'Personal Access Token', placeholder:'ghp_...', type:'password' }, { key:'gistId', label:'Gist ID (optional)', placeholder:'Leave blank to auto-create' }] },
                 };
 
                 const activeProv = byosProviders[byosProvider];
+                const genericByosConfigs = byosConfigs.filter(cfg => cfg.provider !== 'gdrive');
 
                 const saveByos = async () => {
-                  const r = await fetch(`${API}/api/user/storage`, { method:'POST', headers: h, body: JSON.stringify({ provider: byosProvider, label: byosLabel || activeProv.label, credentials: byosCreds }) });
+                  const r = await fetch(`${API}/user/storage`, { method:'POST', headers: h, body: JSON.stringify({ provider: byosProvider, label: byosLabel || activeProv.label, credentials: byosCreds }) });
                   const d = await r.json();
                   if (d.success) { showToast('✅ Storage backend saved'); setByosAdding(false); setByosCreds({}); setByosLabel(''); loadByos(); }
                   else showToast('❌ Save failed');
@@ -31197,7 +31212,7 @@ function ForgeApp() {
 
                 const testByos = async (id: string) => {
                   setByosTesting(id);
-                  const r = await fetch(`${API}/api/user/storage/${id}/test`, { method:'POST', headers: h });
+                  const r = await fetch(`${API}/user/storage/${id}/test`, { method:'POST', headers: h });
                   const d = await r.json();
                   showToast(d.success ? `✅ ${d.message}` : `❌ ${d.message}`);
                   setByosTesting(null);
@@ -31205,7 +31220,7 @@ function ForgeApp() {
 
                 const syncByos = async (id: string) => {
                   setByosSyncing(id);
-                  const r = await fetch(`${API}/api/user/storage/${id}/sync`, { method:'POST', headers: h });
+                  const r = await fetch(`${API}/user/storage/${id}/sync`, { method:'POST', headers: h });
                   const d = await r.json();
                   showToast(d.success ? `✅ Synced ${d.records} records (${(d.bytes/1024).toFixed(1)} KB)` : `❌ ${d.error}`);
                   setByosSyncing(null);
@@ -31214,11 +31229,12 @@ function ForgeApp() {
 
                 const deleteByos = async (id: string) => {
                   if (!confirm('Remove this storage backend?')) return;
-                  await fetch(`${API}/api/user/storage/${id}`, { method:'DELETE', headers: h });
+                  await fetch(`${API}/user/storage/${id}`, { method:'DELETE', headers: h });
                   loadByos();
                 };
 
-                return (
+                return (<>
+                  <GoogleDriveConnectionCard apiBase={API} token={user.token} onToast={showToast} />
                   <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24, marginBottom:24 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
                       <h3 style={{ color:'var(--fg-text2)', fontSize:14, margin:0, textTransform:'uppercase', letterSpacing:'0.05em' }}>🗄 Your Storage (BYOS)</h3>
@@ -31227,7 +31243,7 @@ function ForgeApp() {
                     <p style={{ margin:'0 0 16px', fontSize:12, color:'var(--fg-text3)' }}>Sync your threads, memories, and notes to storage you own. Forge keeps AI intelligence server-side; only your content is exported.</p>
 
                     {/* Existing backends */}
-                    {byosConfigs.length > 0 && byosConfigs.map(cfg => (
+                    {genericByosConfigs.length > 0 && genericByosConfigs.map(cfg => (
                       <div key={cfg.id} style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:'12px 14px', marginBottom:8, display:'flex', alignItems:'center', gap:10 }}>
                         <span style={{ fontSize:20 }}>{byosProviders[cfg.provider]?.icon || '🗄'}</span>
                         <div style={{ flex:1 }}>
@@ -31242,7 +31258,7 @@ function ForgeApp() {
                         <button onClick={() => deleteByos(cfg.id)} style={{ padding:'5px 10px', background:'transparent', border:'1px solid var(--fg-red)', borderRadius:6, color:'var(--fg-red)', fontSize:11, cursor:'pointer' }}>Remove</button>
                       </div>
                     ))}
-                    {byosLoaded && byosConfigs.length === 0 && !byosAdding && (
+                    {byosLoaded && genericByosConfigs.length === 0 && !byosAdding && (
                       <p style={{ color:'var(--fg-text3)', fontSize:13, margin:'0 0 12px' }}>No storage backends connected yet.</p>
                     )}
 
@@ -31268,10 +31284,10 @@ function ForgeApp() {
                         </div>
                       </div>
                     ) : (
-                      <button onClick={() => setByosAdding(true)} style={{ padding:'8px 16px', background:'var(--fg-bg)', border:'1px dashed var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', fontSize:13, cursor:'pointer', marginTop:byosConfigs.length?8:0 }}>+ Add Storage Backend</button>
+                      <button onClick={() => setByosAdding(true)} style={{ padding:'8px 16px', background:'var(--fg-bg)', border:'1px dashed var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', fontSize:13, cursor:'pointer', marginTop:genericByosConfigs.length?8:0 }}>+ Add Storage Backend</button>
                     )}
                   </div>
-                );
+                </>);
               })()}
 
               {/* Chrome Extension */}
@@ -49106,28 +49122,13 @@ function ForgeApp() {
   </div>
 )}
 {mainTab==='agentruns' && (
-  <div style={{padding:24}}>
-    <h2 style={{color:'#f1f5f9',marginBottom:16}}>🤖 Agent Runs</h2>
-    <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
-      <input value={newArName} onChange={e=>setNewArName(e.target.value)} placeholder="Agent name" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
-      <input value={newArPrompt} onChange={e=>setNewArPrompt(e.target.value)} placeholder="Prompt/task" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:2}}/>
-      <button onClick={async()=>{if(!newArName||!newArPrompt)return;await fetch(`${BACKEND}/api/agent-runs`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({name:newArName,prompt:newArPrompt})});setNewArName('');setNewArPrompt('');const r=await fetch(`${BACKEND}/api/agent-runs`,{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAgentRuns(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Run</button>
-      <button onClick={async()=>{const r=await fetch(`${BACKEND}/api/agent-runs`,{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAgentRuns(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
-    </div>
-    {agentRuns.map((r:any)=>(
-      <div key={r.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-        <div>
-          <div style={{color:'#f1f5f9',fontWeight:600}}>{r.name} <span style={{color:r.status==='done'?'#22c55e':r.status==='cancelled'?'#ef4444':'#f59e0b',fontSize:11,marginLeft:6}}>{r.status}</span></div>
-          <div style={{color:'#64748b',fontSize:12,marginTop:2}}>{r.prompt}</div>
-          {r.result && <div style={{color:'#94a3b8',fontSize:12,marginTop:4}}>↳ {r.result}</div>}
-        </div>
-        <div style={{display:'flex',gap:6}}>
-          <button onClick={async()=>{await fetch(`/api/agent-runs/${r.id}/cancel`,{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const res=await fetch(`${BACKEND}/api/agent-runs`,{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAgentRuns(await res.json());}} style={{background:'#78350f',color:'#fde68a',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Cancel</button>
-          <button onClick={async()=>{await fetch(`/api/agent-runs/${r.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAgentRuns(agentRuns.filter((x:any)=>x.id!==r.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
-        </div>
-      </div>
-    ))}
-  </div>
+  <SandboxAgentConsole
+    apiBase={API}
+    token={user.token}
+    initialModel={selectedModel}
+    onModelChange={setSelectedModel}
+    onToast={showToast}
+  />
 )}
 {mainTab==='wspolicies' && (
   <div style={{padding:24}}>

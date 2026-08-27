@@ -910,7 +910,11 @@ export function SandboxAgentConsole({ apiBase, token, initialModel, onModelChang
   const isTerminal = TERMINAL_RUN_STATES.has(String(run?.status || ''));
   const canStop = ACTIVE_RUN_STATES.has(String(run?.status || '')) && !isTerminal;
   const canSteer = ['waiting_approval', 'paused'].includes(String(run?.status || ''));
-  const pendingApprovalInput = parseJson(details?.approval?.input, details?.approval?.input || {});
+  const pendingApprovalTool = (details?.tools || []).find(
+    (tool: any) => String(tool.id) === String(details?.approval?.tool_call_id || ''),
+  );
+  const pendingApprovalRaw = pendingApprovalTool?.input || details?.approval?.request_summary || '';
+  const pendingApprovalInput = parseJson(pendingApprovalRaw, pendingApprovalRaw || {});
 
   return (
     <div className="sac-shell">

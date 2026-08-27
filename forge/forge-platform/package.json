@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "nodemon --exec 'ts-node --transpile-only src/index.ts'",
-    "build": "esbuild src/index.ts --bundle=false --platform=node --target=node18 --format=cjs --outfile=dist/index.js",
+    "build": "esbuild src/index.ts src/sandbox-contract.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist",
     "start": "node dist/index.js",
     "test": "jest --testPathPattern='__tests__/(auth|route-manifest)' --forceExit --no-coverage",
     "test:routes": "jest --testPathPattern=route-manifest --forceExit --no-coverage",
