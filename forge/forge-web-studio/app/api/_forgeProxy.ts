@@ -17,6 +17,11 @@ type ProxyContext = {
   };
 };
 
+type ControlPlaneConfig = {
+  apiUrl: URL;
+  gatewaySecret: string;
+};
+
 function unavailable(message: string) {
   return NextResponse.json(
     {
@@ -34,9 +39,10 @@ function unavailable(message: string) {
   );
 }
 
-function controlPlaneApiUrl(request: NextRequest): URL | null {
+function controlPlaneConfig(request: NextRequest): ControlPlaneConfig | null {
   const configured = process.env.FORGE_CONTROL_PLANE_API_URL?.trim();
-  if (!configured) return null;
+  const gatewaySecret = process.env.FORGE_CONTROL_PLANE_GATEWAY_SECRET?.trim();
+  if (!configured || !gatewaySecret) return null;
 
   let apiUrl: URL;
   try {
@@ -48,18 +54,20 @@ function controlPlaneApiUrl(request: NextRequest): URL | null {
   if (!['https:', 'http:'].includes(apiUrl.protocol)) return null;
   if (process.env.NODE_ENV === 'production' && apiUrl.protocol !== 'https:') return null;
   if (apiUrl.origin === request.nextUrl.origin) return null;
-  return apiUrl;
+  return { apiUrl, gatewaySecret };
 }
 
-function forwardedRequestHeaders(request: NextRequest): Headers {
+function forwardedRequestHeaders(request: NextRequest, gatewaySecret: string): Headers {
   const headers = new Headers(request.headers);
   for (const name of HOP_BY_HOP_HEADERS) headers.delete(name);
   headers.delete('host');
   headers.delete('content-length');
   headers.delete('accept-encoding');
+  headers.delete('x-forge-gateway-secret');
   headers.set('x-forwarded-host', request.nextUrl.host);
   headers.set('x-forwarded-proto', request.nextUrl.protocol.replace(':', ''));
   headers.set('x-forge-proxy', 'vercel');
+  headers.set('x-forge-gateway-secret', gatewaySecret);
   return headers;
 }
 
@@ -95,12 +103,13 @@ export async function proxyForgeApi(
   request: NextRequest,
   path: string | string[] | ProxyContext = [],
 ): Promise<Response> {
-  const apiUrl = controlPlaneApiUrl(request);
-  if (!apiUrl) {
+  const config = controlPlaneConfig(request);
+  if (!config) {
     return unavailable(
-      'The Vercel web gateway is ready, but FORGE_CONTROL_PLANE_API_URL has not been configured with an external HTTPS Forge API.',
+      'The Vercel web gateway is ready, but its external HTTPS control-plane URL and gateway secret have not both been configured.',
     );
   }
+  const { apiUrl, gatewaySecret } = config;
 
   const pathParts = Array.isArray(path)
     ? path
@@ -113,7 +122,7 @@ export async function proxyForgeApi(
 
   const init: RequestInit & { duplex?: 'half' } = {
     method: request.method,
-    headers: forwardedRequestHeaders(request),
+    headers: forwardedRequestHeaders(request, gatewaySecret),
     redirect: 'manual',
     cache: 'no-store',
   };

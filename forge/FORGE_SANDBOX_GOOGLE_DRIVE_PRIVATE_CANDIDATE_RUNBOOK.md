@@ -105,13 +105,22 @@ Required control-plane variables:
 | `FORGE_SANDBOX_ORCHESTRATOR_URL` | Internal-only `http://forge-sandbox-orchestrator:3001` |
 | `FORGE_SANDBOX_HMAC_SECRET` | Shared only by Forge and the Orchestrator; never exposed to a Run container |
 
+Required Vercel-to-control-plane gateway variables:
+
+| Variable | Requirement |
+|---|---|
+| `FORGE_CONTROL_PLANE_API_URL` | Server-only Vercel value such as `https://api.example.com/api/`; never prefix with `NEXT_PUBLIC_` |
+| `FORGE_CONTROL_PLANE_GATEWAY_SECRET` | One generated high-entropy value stored in both Vercel and the Caddy deployment environment |
+| `FORGE_CONTROL_PLANE_DOMAIN` | Public control-plane hostname on the dedicated Docker host; DNS must point to that host |
+| `ACME_EMAIL` | Named operational contact for automatic TLS certificate issuance |
+
 Required Google variables:
 
 | Variable | Meaning |
 |---|---|
 | `GOOGLE_DRIVE_CLIENT_ID` | OAuth 2.0 Web application client ID |
 | `GOOGLE_DRIVE_CLIENT_SECRET` | OAuth web client secret, control plane only |
-| `GOOGLE_DRIVE_REDIRECT_URI` | Exact HTTPS backend callback, for example `https://api.example.com/api/google-drive/oauth/callback` |
+| `GOOGLE_DRIVE_REDIRECT_URI` | Exact public Vercel callback, for example `https://forge.example.com/api/google-drive/oauth/callback` |
 | `GOOGLE_DRIVE_DEVELOPER_KEY` | Browser-restricted developer key for Google Picker |
 | `GOOGLE_DRIVE_APP_ID` | Numeric Google Cloud project number used by Picker |
 
@@ -159,6 +168,7 @@ $env:npm_config_registry='https://registry.npmmirror.com'
 docker compose `
   -f forge-sandbox.compose.yml `
   -f forge-private-candidate.compose.yml `
+  -f forge-vps-caddy.compose.yml `
   config -q
 
 docker compose `
@@ -169,18 +179,19 @@ docker compose `
 
 The Compose overlay intentionally requires every production and Google variable. A missing value must fail configuration rather than silently disable the target capability.
 
-### Gate F — build and configure the frontend
+### Gate F — build and configure the Vercel frontend
 
-The frontend currently consumes both legacy and new API-base variables. Set both to the same HTTPS backend, with the expected path shape:
+Browser requests must remain same-origin under `/api/*`. Configure the external control plane only through Vercel server-side variables:
 
 ```powershell
-$env:NEXT_PUBLIC_API_BASE_URL='https://api.example.com/api'
-$env:NEXT_PUBLIC_API_URL='https://api.example.com'
+$env:NEXT_PUBLIC_API_BASE_URL='/api'
+$env:FORGE_CONTROL_PLANE_API_URL='https://api.example.com/api/'
+$env:FORGE_CONTROL_PLANE_GATEWAY_SECRET='<same generated secret as Caddy>'
 $env:npm_config_registry='https://registry.npmmirror.com'
 npm run build
 ```
 
-Deploy the accepted Next.js build to the private frontend origin. Keep signup closed or operationally inaccessible; distribute access only to named invited users. Confirm the backend `FRONTEND_URL`, Google authorized JavaScript origin, reverse-proxy origin, and frontend origin are identical where exact matching is required.
+Push only the accepted release branch and wait for its protected Vercel Preview to become Ready. Do not push `main` or promote the Preview until the external control plane, secret, and acceptance checks pass. Keep signup closed or operationally inaccessible; distribute access only to named invited users. The backend `FRONTEND_URL`, Google authorized JavaScript origin, and Google redirect URI must use the exact Vercel production origin.
 
 The build currently references Google Fonts and can fall back when that stylesheet is unreachable. For a network-independent production surface, self-host the approved font files in a later hardening change.
 
@@ -192,19 +203,23 @@ Start only the project-scoped services:
 docker compose `
   -f forge-sandbox.compose.yml `
   -f forge-private-candidate.compose.yml `
-  up -d forge-sandbox-egress forge-sandbox-orchestrator forge-platform
+  -f forge-vps-caddy.compose.yml `
+  up -d forge-sandbox-egress forge-sandbox-orchestrator forge-platform forge-control-plane-proxy
 
 docker compose `
   -f forge-sandbox.compose.yml `
   -f forge-private-candidate.compose.yml `
+  -f forge-vps-caddy.compose.yml `
   ps
 ```
 
-The Compose file binds Forge to `127.0.0.1:${FORGE_PRIVATE_BACKEND_PORT:-3401}` and the Orchestrator to `127.0.0.1:3301`. Publish only Forge through the approved HTTPS reverse proxy. Do not publish port 3301.
+The Compose files bind Forge to `127.0.0.1:${FORGE_PRIVATE_BACKEND_PORT:-3401}` and the Orchestrator to `127.0.0.1:3301`. Only Caddy publishes ports 80/443. It accepts `/api/*` only when the request carries the shared Vercel gateway secret; all other public paths return 404. Do not publish port 3301 or the Forge backend port.
 
 Verify separately:
 
 - Forge `/health` returns 200;
+- Vercel `/api/health` reaches Forge `/api/health` through Caddy and returns 200;
+- a direct control-plane request without the gateway secret returns 404;
 - production startup did not fall back to the development database path or development credentials;
 - Orchestrator `/health` is healthy from the control network;
 - the runtime image exists locally by the approved immutable identity;
@@ -349,7 +364,12 @@ Verified locally on the candidate branch with Node 20 and domestic sources:
 - real Orchestrator E2E: passed Shell, Browser, File, spreadsheet, PDF, egress, persistence, integrity, and active-tool cancellation checks;
 - Forge API → real Orchestrator integrated regression: passed with Artifact SHA-256 verification, authenticated SSE ordering, rejected Class B continuation, and cancellation during model, Shell, Browser, and waiting approval;
 - targeted strict TypeScript check for `SandboxAgentConsole.tsx`: passed;
-- Next.js production build: passed, 19/19 static pages generated;
+- Next.js production build: passed, 20/20 pages and API routes generated;
+- frontend and control-plane production dependency audits: 0 known vulnerabilities;
+- Node 20 control-plane image build: passed through DaoCloud Node, Aliyun APT, and npmmirror npm sources;
+- Caddy configuration validation: passed with `docker.m.daocloud.io/library/caddy:2.10.2-alpine`;
+- local Vercel gateway → secret-gated Caddy → production Forge smoke: correct secret 200, missing/wrong secret 404, non-API path 404;
+- forged incoming gateway-secret header regression: passed because the Vercel route deletes the browser-supplied value and injects its server-side value;
 - real browser acceptance: Workspace creation and upload, normal file-tool Run, immutable history, authenticated SSE, Artifact display, Class B rejection, safe continuation, cancellation, sandbox teardown, dedicated Drive OAuth card, disabled-unconfigured state, and removal of Google from the generic token form all passed;
 - browser console: no task-related warning or error entries.
 - production-mode control-plane smoke under the Compose security settings: `/health` reported `production`, unauthenticated Drive config returned 401, and authenticated Drive config reported OAuth and Picker configured but not connected.

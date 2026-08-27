@@ -129,6 +129,7 @@ lib/
 ```env
 NEXT_PUBLIC_API_BASE_URL=/api
 FORGE_CONTROL_PLANE_API_URL=http://127.0.0.1:3401/api/
+FORGE_CONTROL_PLANE_GATEWAY_SECRET=replace-with-a-generated-high-entropy-secret
 NEXT_PUBLIC_ENABLE_AGENT_CREATION=true
 NEXT_PUBLIC_ENABLE_WORKFLOW_CREATION=true
 NEXT_PUBLIC_ENABLE_QUEUE_MONITORING=true
@@ -138,7 +139,8 @@ NEXT_PUBLIC_ENABLE_HISTORY_TRACKING=true
 Browser traffic stays on the Vercel origin under `/api/*`. `FORGE_CONTROL_PLANE_API_URL`
 is server-only: keep the local HTTP value for the private-candidate Compose stack, and
 set an external `https://<control-plane-domain>/api/` value in Vercel Preview/Production.
-Do not expose control-plane credentials or URLs through a `NEXT_PUBLIC_` variable.
+Set the same generated `FORGE_CONTROL_PLANE_GATEWAY_SECRET` in Vercel and the HTTPS
+reverse proxy. Do not expose either control-plane value through a `NEXT_PUBLIC_` variable.
 
 ## Browser Support
 
