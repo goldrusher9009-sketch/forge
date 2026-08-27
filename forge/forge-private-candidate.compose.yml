@@ -1,0 +1,53 @@
+name: forge-private-candidate
+
+# Overlay for forge-sandbox.compose.yml. It adds the Forge control plane while
+# reusing the isolated runtime, Orchestrator, egress proxy, networks, and
+# persistent sandbox data defined by the base file.
+services:
+  forge-platform:
+    image: forge-platform:sandbox-candidate
+    build:
+      context: ./forge-platform
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DB_PATH: /data/forge.db
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET through the approved secret store}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?set the invitation-only administrator email}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set a unique administrator bootstrap password}
+      FRONTEND_URL: ${FRONTEND_URL:?set the exact HTTPS Forge frontend origin}
+      CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY:?set a separate high-entropy credential encryption key}
+      FORGE_SANDBOX_ORCHESTRATOR_URL: http://forge-sandbox-orchestrator:3001
+      FORGE_SANDBOX_HMAC_SECRET: ${FORGE_SANDBOX_HMAC_SECRET:?set FORGE_SANDBOX_HMAC_SECRET}
+      GOOGLE_DRIVE_CLIENT_ID: ${GOOGLE_DRIVE_CLIENT_ID:?set the Google OAuth web client ID}
+      GOOGLE_DRIVE_CLIENT_SECRET: ${GOOGLE_DRIVE_CLIENT_SECRET:?set the Google OAuth web client secret}
+      GOOGLE_DRIVE_REDIRECT_URI: ${GOOGLE_DRIVE_REDIRECT_URI:?set the exact HTTPS backend OAuth callback URL}
+      GOOGLE_DRIVE_DEVELOPER_KEY: ${GOOGLE_DRIVE_DEVELOPER_KEY:?set the restricted Google Picker developer key}
+      GOOGLE_DRIVE_APP_ID: ${GOOGLE_DRIVE_APP_ID:?set the Google Cloud project number}
+    ports:
+      - "127.0.0.1:${FORGE_PRIVATE_BACKEND_PORT:-3401}:3000"
+    volumes:
+      - forge_platform_data:/data
+    networks:
+      - control
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      forge-sandbox-orchestrator:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  forge_platform_data:
+    name: forge-private-candidate-platform-data

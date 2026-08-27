@@ -1,0 +1,16 @@
+{
+  "name": "forge-sandbox-orchestrator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dedicated Docker control boundary for Forge invitation-only sandboxes",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "start:proxy": "node src/proxy.js",
+    "test": "node --test test/*.test.js",
+    "test:e2e": "node scripts/e2e.cjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
