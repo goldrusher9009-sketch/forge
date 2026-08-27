@@ -81,6 +81,13 @@ export default function RegisterPage() {
               className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
               {loading ? 'Creating account…' : 'Create account'}
             </button>
+
+            <p className="text-center text-xs leading-5 text-gray-500 dark:text-gray-400">
+              By creating an account, you agree to the{' '}
+              <a className="font-medium text-red-600 hover:underline dark:text-red-400" href="/terms">Terms of Service</a>
+              {' '}and acknowledge the{' '}
+              <a className="font-medium text-red-600 hover:underline dark:text-red-400" href="/privacy">Privacy Policy</a>.
+            </p>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">

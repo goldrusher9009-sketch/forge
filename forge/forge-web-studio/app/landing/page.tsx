@@ -538,7 +538,7 @@ export default function LandingPage() {
         <div style={{ fontSize: 18, fontWeight: 800 }}><span style={{ color: '#ff1f35' }}>Forge</span> <span style={{ color: '#333', fontSize: 12 }}>OS</span></div>
         <div style={{ fontSize: 12, color: '#444' }}>&#169; 2026 Forge. All rights reserved.</div>
         <div style={{ display: 'flex', gap: 20, fontSize: 12, color: '#555' }}>
-          <a href="#">Privacy</a><a href="#">Terms</a><a href="https://forge-production-2692.up.railway.app/health">Status</a>
+          <a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="https://forge-production-2692.up.railway.app/health">Status</a>
         </div>
       </footer>
     </div>
