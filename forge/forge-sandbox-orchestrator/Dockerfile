@@ -9,6 +9,7 @@ RUN sed -i \
 WORKDIR /app
 COPY package.json ./
 COPY src ./src
+COPY scripts ./scripts
 
 RUN useradd --system --uid 10002 --create-home forge-orchestrator \
     && mkdir -p /var/lib/forge-sandbox \
