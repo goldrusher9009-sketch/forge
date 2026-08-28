@@ -1,0 +1,152 @@
+name: forge-private-isolated
+
+# VPS topology for a host that already runs unrelated Docker workloads.
+# Sandbox containers run in a dedicated nested Docker daemon. The Orchestrator
+# receives only that daemon's socket and cannot see or control host containers.
+services:
+  forge-sandbox-docker:
+    image: docker.m.daocloud.io/library/docker:29-dind@sha256:ab772b0eaf0b01e5843f6574e50ccdfc34a7bdcb82bbf2decafde54a0ee884a9
+    platform: linux/amd64
+    privileged: true
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    command:
+      - --host=unix:///var/run/docker.sock
+      - --storage-driver=overlay2
+    volumes:
+      - forge_sandbox_docker_data:/var/lib/docker
+      - forge_sandbox_docker_run:/var/run
+    networks:
+      - control
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "docker", "info"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+  forge-sandbox-bootstrap:
+    image: docker.m.daocloud.io/library/docker:29-cli@sha256:e650b7a58d7f56be91d4f7be799196380a3bbc1bcbc41f1f4dff1b36ac309e1e
+    platform: linux/amd64
+    environment:
+      DOCKER_HOST: unix:///var/run/docker.sock
+      DOCKER_BUILDKIT: "1"
+      HOME: /tmp
+      FORGE_SANDBOX_RUNTIME_IMAGE: forge-sandbox-runtime:local
+      FORGE_SANDBOX_ORCHESTRATOR_IMAGE: forge-sandbox-orchestrator:local
+      FORGE_SANDBOX_NETWORK: forge-sandbox-internal
+      FORGE_SANDBOX_EGRESS_NETWORK: forge-sandbox-egress
+      FORGE_SANDBOX_EGRESS_ALLOWLIST: ${FORGE_SANDBOX_EGRESS_ALLOWLIST:-}
+    volumes:
+      - forge_sandbox_docker_run:/var/run
+      - ./forge-sandbox-runtime:/src/runtime:ro
+      - ./forge-sandbox-orchestrator:/src/orchestrator:ro
+      - ./scripts/bootstrap-forge-dind.sh:/usr/local/bin/bootstrap-forge-dind.sh:ro
+    command: ["/bin/sh", "/usr/local/bin/bootstrap-forge-dind.sh"]
+    networks:
+      - control
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=32m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      forge-sandbox-docker:
+        condition: service_healthy
+    restart: "no"
+
+  forge-sandbox-orchestrator:
+    image: forge-sandbox-orchestrator:isolated-candidate
+    build:
+      context: ./forge-sandbox-orchestrator
+      dockerfile: Dockerfile
+    environment:
+      PORT: "3001"
+      FORGE_SANDBOX_HMAC_SECRET: ${FORGE_SANDBOX_HMAC_SECRET:?set FORGE_SANDBOX_HMAC_SECRET}
+      FORGE_SANDBOX_RUNTIME_IMAGE: forge-sandbox-runtime:local
+      FORGE_SANDBOX_NETWORK: forge-sandbox-internal
+      FORGE_SANDBOX_PROXY_URL: http://forge-sandbox-egress:8787
+      FORGE_SANDBOX_DATA_DIR: /var/lib/forge-sandbox
+      FORGE_SANDBOX_MEMORY_BYTES: "805306368"
+      FORGE_SANDBOX_CPU_NANOS: "1000000000"
+      FORGE_SANDBOX_PIDS_LIMIT: "128"
+      FORGE_SANDBOX_BROWSER_PIDS_LIMIT: "256"
+    ports:
+      - "127.0.0.1:3301:3001"
+    volumes:
+      - forge_sandbox_docker_run:/var/run
+      - forge_sandbox_orchestrator_data:/var/lib/forge-sandbox
+    networks:
+      - control
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=32m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      forge-sandbox-bootstrap:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  forge-platform:
+    image: forge-platform:isolated-candidate
+    build:
+      context: ./forge-platform
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DB_PATH: /data/forge.db
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET through the approved secret store}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?set the invitation-only administrator email}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set a unique administrator bootstrap password}
+      FRONTEND_URL: ${FRONTEND_URL:?set the exact HTTPS Forge frontend origin}
+      CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY:?set a separate high-entropy credential encryption key}
+      FORGE_SANDBOX_ORCHESTRATOR_URL: http://forge-sandbox-orchestrator:3001
+      FORGE_SANDBOX_HMAC_SECRET: ${FORGE_SANDBOX_HMAC_SECRET:?set FORGE_SANDBOX_HMAC_SECRET}
+    ports:
+      - "127.0.0.1:${FORGE_PRIVATE_BACKEND_PORT:-3401}:3000"
+    volumes:
+      - forge_platform_data:/data
+    networks:
+      - control
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      forge-sandbox-orchestrator:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+networks:
+  control:
+    name: forge-sandbox-control
+
+volumes:
+  forge_platform_data:
+    name: forge-private-candidate-platform-data
+  forge_sandbox_orchestrator_data:
+    name: forge-sandbox-orchestrator-data
+  forge_sandbox_docker_data:
+    name: forge-sandbox-docker-data
+  forge_sandbox_docker_run:
+    name: forge-sandbox-docker-run
