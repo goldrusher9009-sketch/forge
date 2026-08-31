@@ -364,6 +364,8 @@ Verified locally on the candidate branch with Node 20 and domestic sources:
 - Orchestrator unit tests: 4/4 passed;
 - sandbox runtime path-containment unit tests: 2/2 passed;
 - real Orchestrator E2E: passed Shell, Browser, File, spreadsheet, PDF, egress, persistence, integrity, and active-tool cancellation checks;
+- VPS concurrency/capacity E2E: three parallel full sandbox lifecycle runs completed with a six-runtime-container peak; a fourth provisioning request failed closed with HTTP 429 `SANDBOX_CAPACITY_EXCEEDED`; managed containers, managed volumes, and idempotency state returned to their exact baselines;
+- the same concurrency test passed twice on the candidate VPS. During the instrumented run the outer nested-Docker service peaked at about 107% CPU and 264.5 MiB memory, the Orchestrator at about 8% CPU and 128.7 MiB, and Forge at about 3.7% CPU and 367.6 MiB on a 16-vCPU host with about 62 GiB available memory. This is evidence for the configured invited-user ceiling of three active sandboxes, not a public-scale capacity claim;
 - Forge API → real Orchestrator integrated regression: passed with Artifact SHA-256 verification, authenticated SSE ordering, rejected Class B continuation, and cancellation during model, Shell, Browser, and waiting approval;
 - targeted strict TypeScript check for `SandboxAgentConsole.tsx`: passed;
 - Next.js production build: passed, 20/20 pages and API routes generated;
@@ -388,7 +390,7 @@ The following remain open and must not be relabelled as completed:
 - customer security review, data-processing terms, retention/deletion policy, and customer acceptance;
 - stronger-than-Docker hostile multi-tenant isolation;
 - malware scanning, DLP, and content policy for uploaded/Drive-imported files;
-- capacity/load evidence and per-tenant concurrency quotas;
+- capacity/load evidence beyond the current three-active-sandbox invited-user ceiling, plus per-tenant concurrency quotas. The candidate has a verified global admission limit and tool limiter, but those controls must not be described as public-scale or per-tenant capacity isolation;
 - self-hosted fonts for network-independent frontend builds;
 - public signup, public self-service, Paid Beta, or real-money Minera;
 - Cloud PC/mobile-device control. The current target is a mobile-friendly web control plane driving cloud sandboxes, not a full persistent cloud desktop.
