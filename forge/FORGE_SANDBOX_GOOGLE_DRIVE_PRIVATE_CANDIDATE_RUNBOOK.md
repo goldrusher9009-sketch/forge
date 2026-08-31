@@ -374,6 +374,7 @@ Verified on the candidate branch and candidate VPS with Node 20 and domestic sou
 - Forge API → real Orchestrator integrated regression: passed with Artifact SHA-256 verification, authenticated SSE ordering, rejected Class B continuation, and cancellation during model, Shell, Browser, and waiting approval;
 - targeted strict TypeScript check for `SandboxAgentConsole.tsx`: passed;
 - Next.js production build: passed, 20/20 pages and API routes generated;
+- frontend font independence: `npm run build` now runs `scripts/font-independence-regression.cjs`; the gate scans the active `app`/`public` sources and fresh `.next/server`/`.next/static` production output and rejects `fonts.googleapis.com`, `fonts.gstatic.com`, or `next/font/google`. Forge uses local system font stacks and does not require a font CDN at runtime or build time;
 - frontend and control-plane production dependency audits: 0 known vulnerabilities;
 - Node 20 control-plane image build: passed through DaoCloud Node, Aliyun APT, and npmmirror npm sources;
 - Caddy configuration validation: passed with `docker.m.daocloud.io/library/caddy:2.10.2-alpine`;
@@ -396,7 +397,6 @@ The following remain open and must not be relabelled as completed:
 - stronger-than-Docker hostile multi-tenant isolation;
 - malware scanning, DLP, and content policy for uploaded/Drive-imported files;
 - capacity/load evidence beyond the current three-active-sandbox invited-user ceiling. The candidate has a global admission limit, a one-active-sandbox-per-tenant limit, and a global tool limiter, but those controls must not be described as public-scale capacity;
-- self-hosted fonts for network-independent frontend builds;
 - public signup, public self-service, Paid Beta, or real-money Minera;
 - Cloud PC/mobile-device control. The current target is a mobile-friendly web control plane driving cloud sandboxes, not a full persistent cloud desktop.
 

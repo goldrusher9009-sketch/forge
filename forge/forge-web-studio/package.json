@@ -5,9 +5,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/font-independence-regression.cjs",
     "start": "next start",
     "type-check": "tsc --noEmit",
+    "test:font-independence": "node scripts/font-independence-regression.cjs",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\""
   },
   "dependencies": {
