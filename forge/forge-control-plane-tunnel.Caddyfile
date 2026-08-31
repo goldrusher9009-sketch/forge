@@ -1,0 +1,33 @@
+{
+	admin off
+	auto_https off
+}
+
+:8080 {
+	encode zstd gzip
+
+	header {
+		-Server
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+	}
+
+	request_body {
+		max_size 16MB
+	}
+
+	@vercel_gateway {
+		path /api/*
+		header X-Forge-Gateway-Secret {$FORGE_CONTROL_PLANE_GATEWAY_SECRET}
+	}
+
+	handle @vercel_gateway {
+		reverse_proxy forge-platform:3000 {
+			flush_interval -1
+			header_up -X-Forge-Gateway-Secret
+		}
+	}
+
+	respond 404
+}

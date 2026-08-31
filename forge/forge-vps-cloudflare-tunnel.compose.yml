@@ -1,0 +1,79 @@
+name: forge-private-edge
+
+# Independent public ingress for a VPS whose ports 80/443 are already owned by
+# another workload. Cloudflare terminates public TLS and reaches only the
+# internal secret-gated Caddy service. No host port is published, and the
+# cloudflared container is not attached to the Forge control network.
+services:
+  forge-control-plane-tunnel-gateway:
+    image: docker.m.daocloud.io/library/caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    environment:
+      FORGE_CONTROL_PLANE_GATEWAY_SECRET: ${FORGE_CONTROL_PLANE_GATEWAY_SECRET:?set the Vercel-to-control-plane gateway secret}
+    expose:
+      - "8080"
+    volumes:
+      - ./forge-control-plane-tunnel.Caddyfile:/etc/caddy/Caddyfile:ro
+    networks:
+      - control
+      - edge
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=32m
+      - /data:rw,nosuid,nodev,size=16m
+      - /config:rw,nosuid,nodev,size=16m
+    cap_drop:
+      - ALL
+    cap_add:
+      # The official Caddy binary carries this file capability. Keeping only
+      # this capability is required for exec under no-new-privileges even
+      # though the internal listener itself uses unprivileged port 8080.
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          wget -q -O /dev/null
+          --header="X-Forge-Gateway-Secret: $${FORGE_CONTROL_PLANE_GATEWAY_SECRET}"
+          http://127.0.0.1:8080/api/health
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  forge-cloudflared:
+    image: docker.m.daocloud.io/cloudflare/cloudflared:2026.8.2@sha256:0aa26e284f05e6c77ae375b8c9c11d9eb6a448fb7bcd8d40f31cb6176189eb38
+    platform: linux/amd64
+    command:
+      - tunnel
+      - --metrics
+      - 127.0.0.1:2000
+      - --loglevel
+      - info
+      - run
+      - --token-file
+      - /run/secrets/cloudflared-token
+    volumes:
+      - ${CLOUDFLARE_TUNNEL_TOKEN_FILE:?set the absolute token-file path}:/run/secrets/cloudflared-token:ro
+    networks:
+      - edge
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      forge-control-plane-tunnel-gateway:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  control:
+    external: true
+    name: forge-sandbox-control
+  edge:
+    name: forge-private-edge

@@ -16,13 +16,15 @@ re-inspect Vercel and Git before each release claim.
 - Public production origin: `https://forge-sand-two.vercel.app`.
 - Production still points to older `main` commit `219395f1`; it is not the
   current sandbox-agent candidate.
-- The external Docker control plane and its DNS hostname are not provisioned yet.
+- The private VPS control plane is deployed. Its final public DNS hostname and
+  isolated Cloudflare Tunnel are not provisioned yet.
 
 ## Architecture
 
 ```text
 Vercel website and same-origin /api gateway
-  -> dedicated HTTPS Caddy gateway
+  -> Cloudflare HTTPS + named Tunnel
+  -> internal secret-gated Caddy gateway
   -> Forge control plane with durable SQLite volume
   -> private Docker-socket Orchestrator
   -> isolated per-run sandbox containers
@@ -40,17 +42,28 @@ process, or user sandboxes.
 - `forge-sandbox.compose.yml`: runtime image, Orchestrator, egress proxy, and
   private networks.
 - `forge-private-candidate.compose.yml`: Forge control plane and durable data.
-- `forge-vps-caddy.compose.yml`: public HTTPS edge only.
-- `forge-control-plane.Caddyfile`: `/api/*` plus gateway-secret enforcement.
+- `forge-vps-caddy.compose.yml`: direct public HTTPS edge for a dedicated host
+  whose ports 80/443 are available.
+- `forge-vps-cloudflare-tunnel.compose.yml`: isolated edge for the current
+  shared VPS, where Apptopia Nginx already owns ports 80/443.
+- `forge-control-plane.Caddyfile`: direct-host TLS gateway.
+- `forge-control-plane-tunnel.Caddyfile`: internal HTTP gateway reached only by
+  the named Tunnel and protected by the same `/api/*` gateway secret.
+- `FORGE_CLOUDFLARE_TUNNEL_RUNBOOK.md`: domain, token, secret, acceptance, and
+  rollback procedure that does not modify Apptopia Nginx.
 - `FORGE_SANDBOX_GOOGLE_DRIVE_PRIVATE_CANDIDATE_RUNBOOK.md`: required gates and
   acceptance evidence.
 
 ## Mandatory release sequence
 
 1. Commit and push only `sasaky/forge-google-drive-launch`.
-2. Provision the external Linux Docker host and control-plane hostname.
-3. Deploy the three Compose files using the approved secret store.
-4. Verify Caddy rejects missing/wrong secrets and non-API paths.
+2. Register the final domain, create the remotely managed named Tunnel, and map
+   its public hostname to `http://forge-control-plane-tunnel-gateway:8080`.
+3. Store the Tunnel token and gateway secret outside Git, then deploy
+   `forge-vps-cloudflare-tunnel.compose.yml` beside the existing private Forge
+   stack. Do not start the direct Caddy edge on this shared VPS.
+4. Verify the Tunnel gateway rejects missing/wrong secrets and non-API paths,
+   publishes no host ports, and leaves Apptopia Nginx unchanged.
 5. Add `FORGE_CONTROL_PLANE_API_URL` and
    `FORGE_CONTROL_PLANE_GATEWAY_SECRET` to Vercel server environments.
 6. Redeploy the protected Vercel Preview.
