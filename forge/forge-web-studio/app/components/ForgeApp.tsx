@@ -154,6 +154,7 @@ h1,h2,h3,h4 { font-family: var(--fg-font-display); letter-spacing: -0.02em; font
 
 const API = '/api';
 const BACKEND = '';
+const API_BASE = BACKEND;
 
 // --- Global memory + history helpers ---
 function getToken(): string { return typeof window !== 'undefined' ? (localStorage.getItem('forge_token') || '') : ''; }
@@ -18930,7 +18931,7 @@ function ForgeTab_fundraise74() {
         <input placeholder="Ask amount (e.g. $500K)" value={frAsk} onChange={e=>setFrAsk(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Use of funds" value={frUse} onChange={e=>setFrUse(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Industry" value={frIndustry} onChange={e=>setFrIndustry(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <button onClick={async()=>{setPaLoading&&null;setFrLoading(true);setFrResult('');try{const r=await fetch(`${''}/api/fundraising/coach`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({stage:frStage,traction:frTraction,ask_amount:frAsk,use_of_funds:frUse,industry:frIndustry})});const d=await r.json();setFrResult(d.strategy||d.error);}catch(e:any){setFrResult(e.message);}setFrLoading(false);}} disabled={frLoading} style={{padding:'0.75rem',borderRadius:'8px',background:'#27ae60',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
+        <button onClick={async()=>{setFrLoading(true);setFrResult('');try{const r=await fetch(`${''}/api/fundraising/coach`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({stage:frStage,traction:frTraction,ask_amount:frAsk,use_of_funds:frUse,industry:frIndustry})});const d=await r.json();setFrResult(d.strategy||d.error);}catch(e:any){setFrResult(e.message);}setFrLoading(false);}} disabled={frLoading} style={{padding:'0.75rem',borderRadius:'8px',background:'#27ae60',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {frLoading?'Building strategy...':'Build Fundraising Strategy 💸'}
         </button>
       </div>
@@ -20538,7 +20539,7 @@ function ForgeTab_sustliv86() {
         <textarea placeholder="Current eco habits (what you already do)" value={slHab} onChange={e=>setSlHab(e.target.value)} rows={2} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Budget for sustainability upgrades" value={slBud} onChange={e=>setSlBud(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
         <input placeholder="Living situation (apartment, house, city, suburb, rural)" value={slLiv} onChange={e=>setSlLiv(e.target.value)} style={{padding:'0.75rem',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff'}} />
-        <button onClick={async()=>{setCsLoading(true);setSlResult('');try{const r=await fetch(`${''}/api/sustainable/coach`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({current_habits:slHab,budget:slBud,living_situation:slLiv})});const d=await r.json();setSlResult(d.plan||d.error);}catch(e:any){setSlResult(e.message);}setCsLoading(false);}} disabled={slLoading} style={{padding:'0.75rem',borderRadius:'8px',background:'#117a65',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
+        <button onClick={async()=>{setSlLoading(true);setSlResult('');try{const r=await fetch(`${''}/api/sustainable/coach`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('forge_token')}`},body:JSON.stringify({current_habits:slHab,budget:slBud,living_situation:slLiv})});const d=await r.json();setSlResult(d.plan||d.error);}catch(e:any){setSlResult(e.message);}setSlLoading(false);}} disabled={slLoading} style={{padding:'0.75rem',borderRadius:'8px',background:'#117a65',color:'#fff',fontWeight:'600',border:'none',cursor:'pointer'}}>
           {slLoading?'Coaching...':'Get My Sustainability Plan ♻️'}
         </button>
       </div>
@@ -22244,6 +22245,8 @@ function ForgeTab_imagegen() {
 
 function ForgeApp() {
   const [user, setUser] = useState<User | null>(null);
+  const token = getToken();
+  const tok = token;
 
   // Core data
   const [projects, setProjects] = useState<Project[]>([]);
@@ -22436,7 +22439,7 @@ function ForgeApp() {
   const [fastingWindows, setFastingWindows] = useState<any>({rows:[],total:0,completed:0});
   const [incidentSeverity, setIncidentSeverity] = useState<any>({rows:[],total:0,open:0});
   const [readingLog, setReadingLog] = useState<any>({rows:[],total:0,finished:0,reading:0,avg_rating:0});
-  const [apiKeys, setApiKeys] = useState<any>({rows:[],total:0,active:0,expired:0});
+  const [apiKeys, setApiKeys] = useState<Record<string, any>>({rows:[],total:0,active:0,expired:0});
   const [headlineScorer, setHeadlineScorer] = useState<any[]>([]);
   const [habitChains, setHabitChains] = useState<any>({rows:[],total:0,total_links:0,max_streak:0});
   const [sprintBoard, setSprintBoard] = useState<any>({rows:[],total:0,active:0,avg_velocity:0});
@@ -22854,7 +22857,7 @@ function ForgeApp() {
   const [interviewNotesB100, setInterviewNotesB100] = useState<any[]>([]);
   const [newInterview, setNewInterview] = useState({ candidate_name:'', role:'', interview_date:'', questions:'', notes:'', rating:3, recommendation:'undecided' });
   const [costItems, setCostItems] = useState<any[]>([]);
-  const [costTotal, setCostTotal] = useState(0);
+  const [costTotal, setCostTotal] = useState<any>(null);
   const [newCost, setNewCost] = useState({ category:'', vendor:'', amount:0, currency:'USD', billing_period:'monthly', notes:'' });
   const [learnObjectives, setLearnObjectives] = useState<any[]>([]);
   const [newLearnObj, setNewLearnObj] = useState({ title:'', description:'', target_date:'' });
@@ -22894,7 +22897,7 @@ function ForgeApp() {
   const [newTbStart, setNewTbStart] = useState('09:00');
   const [newTbEnd, setNewTbEnd] = useState('10:00');
   const [newTbDate, setNewTbDate] = useState(new Date().toISOString().split('T')[0]);
-  const [knowledgeGraph, setKnowledgeGraph] = useState<any[]>([]);
+  const [knowledgeGraph, setKnowledgeGraph] = useState<any>(null);
   const [newKgLabel, setNewKgLabel] = useState('');
   const [newKgType, setNewKgType] = useState('concept');
   const [newKgRelated, setNewKgRelated] = useState('');
@@ -24522,7 +24525,7 @@ function ForgeApp() {
   const [byosSyncing, setByosSyncing] = useState<string|null>(null);
 
   // Admin panel state
-  const [adminTab, setAdminTab] = useState<'stats'|'users'|'keys'|'models'>('stats');
+  const [adminTab, setAdminTab] = useState<'stats'|'users'|'keys'|'models'|'leads'>('stats');
   const [adminStats, setAdminStats] = useState<any>(null);
   const [adminUsers, setAdminUsers] = useState<any[]>([]);
   const [adminPlatformKeys, setAdminPlatformKeys] = useState<any[]>([]);
@@ -25691,7 +25694,7 @@ function ForgeApp() {
     if (!user) return;
     const body: Record<string,string> = {};
     Object.entries(apiKeys).forEach(([p, k]) => {
-      if (k && k !== '__saved__' && k.trim().length > 0) body[`${p}_key`] = k.trim();
+      if (typeof k === 'string' && k !== '__saved__' && k.trim().length > 0) body[`${p}_key`] = k.trim();
     });
     if (!Object.keys(body).length) { showToast('No key to save.','info'); return; }
     try {
@@ -33045,7 +33048,7 @@ function ForgeApp() {
         )}
 
         {/* -- Dream Tools Hub ------------------------------------------- */}
-        {mainTab === 'dreamtools' && (() => {
+        {(mainTab as string) === 'dreamtools' && (() => {
           const DREAM_TOOLS = [
             // Career & Work
             { id:'resumebuilder', icon:'📄', label:'Resume Builder', cat:'Career' },
@@ -33704,9 +33707,9 @@ function ForgeApp() {
         {/* ── WAVE 16: Roast My Resume ─────────────────────────────── */}
         {(mainTab as string) === 'resumeroast' && (() => {
           const [resumeText, setResumeText] = (React as any).useState('');
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
-          const [history, setHistory] = (React as any).useState<any[]>([]);
+          const [history, setHistory] = React.useState<any[]>([]);
           const API = '';
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           (React as any).useEffect(() => {
@@ -33761,9 +33764,9 @@ function ForgeApp() {
           const [emailText, setEmailText] = (React as any).useState('');
           const [audience, setAudience] = (React as any).useState('');
           const [goal, setGoal] = (React as any).useState('');
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
-          const [tab, setTab] = (React as any).useState<'analysis'|'rewrite'>('analysis');
+          const [tab, setTab] = React.useState<'analysis'|'rewrite'>('analysis');
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const analyze = async () => {
             if (!emailText.trim()) return;
@@ -33823,7 +33826,7 @@ function ForgeApp() {
           const [desc, setDesc] = (React as any).useState('');
           const [industry, setIndustry] = (React as any).useState('');
           const [stage, setStage] = (React as any).useState('seed');
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const critique = async () => {
@@ -33877,9 +33880,9 @@ function ForgeApp() {
         {/* ── WAVE 16: Reference Letter Generator ─────────────────── */}
         {(mainTab as string) === 'refletter' && (() => {
           const [form, setForm] = (React as any).useState({ candidate_name: '', relationship: '', duration: '', role_applying: '', company_applying: '', highlights: '', your_name: '', your_title: '' });
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
-          const [history, setHistory] = (React as any).useState<any[]>([]);
+          const [history, setHistory] = React.useState<any[]>([]);
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           (React as any).useEffect(() => {
             fetch(`${API}/api/reference-letter/history`, { headers: { Authorization: `Bearer ${token}` } })
@@ -33935,7 +33938,7 @@ function ForgeApp() {
           const [offers, setOffers] = (React as any).useState([{ company: '', base_salary: '', bonus: '', equity: '', benefits: '', growth: '', location: '' }, { company: '', base_salary: '', bonus: '', equity: '', benefits: '', growth: '', location: '' }]);
           const [priorities, setPriorities] = (React as any).useState('compensation, growth, work-life balance');
           const [situation, setSituation] = (React as any).useState('');
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const evaluate = async () => {
@@ -33995,9 +33998,9 @@ function ForgeApp() {
         {/* ── WAVE 17: Tinder Bio Writer ───────────────────────────── */}
         {(mainTab as string) === 'datingbio' && (() => {
           const [form, setForm] = (React as any).useState({ age: '', interests: '', personality: '', looking_for: '', platform: 'Tinder' });
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
-          const [copied, setCopied] = (React as any).useState<number|null>(null);
+          const [copied, setCopied] = React.useState<number|null>(null);
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             if (!form.interests) return;
@@ -34044,7 +34047,7 @@ function ForgeApp() {
         {/* ── WAVE 17: First Date Planner ──────────────────────────── */}
         {(mainTab as string) === 'dateplanner' && (() => {
           const [form, setForm] = (React as any).useState({ match_vibe: '', interests_shared: '', location_type: 'city', budget: 'moderate', time_of_day: 'evening' });
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const plan = async () => {
@@ -34093,7 +34096,7 @@ function ForgeApp() {
         {/* ── WAVE 17: Relationship Check-In ───────────────────────── */}
         {(mainTab as string) === 'relcheckin' && (() => {
           const [form, setForm] = (React as any).useState({ relationship_length: '', recent_challenge: '', what_is_working: '', love_languages: '', last_quality_time: '' });
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const checkin = async () => {
@@ -34143,9 +34146,9 @@ function ForgeApp() {
         {/* ── WAVE 17: Breakup Recovery Plan ───────────────────────── */}
         {(mainTab as string) === 'breakuprecover' && (() => {
           const [form, setForm] = (React as any).useState({ relationship_length: '', how_long_ago: '', who_ended_it: 'them', current_feeling: '', support_system: '' });
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
-          const [phase, setPhase] = (React as any).useState<'week1'|'week2'|'month1'>('week1');
+          const [phase, setPhase] = React.useState<'week1'|'week2'|'month1'>('week1');
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const planRecover = async () => {
             if (!form.current_feeling) return;
@@ -34197,9 +34200,9 @@ function ForgeApp() {
         {/* ── WAVE 17: Flirty Text Generator ───────────────────────── */}
         {(mainTab as string) === 'flirtytext' && (() => {
           const [form, setForm] = (React as any).useState({ situation: '', their_last_message: '', relationship_stage: 'early flirting', your_vibe: 'playful' });
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
-          const [copied, setCopied] = (React as any).useState<number|null>(null);
+          const [copied, setCopied] = React.useState<number|null>(null);
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const generate = async () => {
             setLoading(true);
@@ -34251,9 +34254,9 @@ function ForgeApp() {
           const [assets, setAssets] = (React as any).useState({ cash: '', investments: '', retirement: '', real_estate: '', vehicle: '', other: '' });
           const [liabilities, setLiabilities] = (React as any).useState({ mortgage: '', car_loan: '', student_loans: '', credit_cards: '', other: '' });
           const [meta, setMeta] = (React as any).useState({ income: '', age: '', goals: '' });
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
-          const [history, setHistory] = (React as any).useState<any[]>([]);
+          const [history, setHistory] = React.useState<any[]>([]);
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           (React as any).useEffect(() => {
             fetch(`${API}/api/net-worth/history`, { headers: { Authorization: `Bearer ${token}` } })
@@ -34328,7 +34331,7 @@ function ForgeApp() {
           const [income, setIncome] = (React as any).useState('');
           const [expenses, setExpenses] = (React as any).useState({ rent: '', groceries: '', dining_out: '', subscriptions: '', transportation: '', entertainment: '', shopping: '', savings: '', other: '' });
           const [goals, setGoals] = (React as any).useState('');
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const analyze = async () => {
@@ -34382,7 +34385,7 @@ function ForgeApp() {
         {/* ── WAVE 18: Freelance Rate Calculator ───────────────────── */}
         {(mainTab as string) === 'freelancerate' && (() => {
           const [form, setForm] = (React as any).useState({ skill: '', experience_years: '', location: '', desired_annual: '', niche: '', competitors: '' });
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const calculate = async () => {
@@ -34438,10 +34441,10 @@ function ForgeApp() {
         {/* ── WAVE 18: Investment Thesis Writer ────────────────────── */}
         {(mainTab as string) === 'invthesis' && (() => {
           const [form, setForm] = (React as any).useState({ asset: '', asset_type: 'stock', time_horizon: '3-5 years', conviction_level: 'medium', known_risks: '' });
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
-          const [history, setHistory] = (React as any).useState<any[]>([]);
-          const [tab, setTab] = (React as any).useState<'bull'|'bear'|'strategy'>('bull');
+          const [history, setHistory] = React.useState<any[]>([]);
+          const [tab, setTab] = React.useState<'bull'|'bear'|'strategy'>('bull');
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           (React as any).useEffect(() => {
             fetch(`${API}/api/investment-thesis/history`, { headers: { Authorization: `Bearer ${token}` } })
@@ -34525,7 +34528,7 @@ function ForgeApp() {
           const defaultSubs = [{ name: '', monthly_cost: '', category: 'entertainment', last_used: '' }];
           const [subs, setSubs] = (React as any).useState(defaultSubs);
           const [budget, setBudget] = (React as any).useState('');
-          const [result, setResult] = (React as any).useState<any>(null);
+          const [result, setResult] = React.useState<any>(null);
           const [loading, setLoading] = (React as any).useState(false);
           const token = typeof window !== 'undefined' ? localStorage.getItem('forge_token') : '';
           const addSub = () => setSubs((s: any[]) => [...s, { name: '', monthly_cost: '', category: 'entertainment', last_used: '' }]);
@@ -34805,9 +34808,9 @@ function ForgeApp() {
                 <div style={{background:'var(--fg-bg2)',border:'1px solid var(--fg-border)',borderRadius:12,padding:16,marginBottom:16}}>
                   <div style={{fontSize:11,fontWeight:700,letterSpacing:1,color:'var(--fg-text3)',marginBottom:10,textTransform:'uppercase'}}>Customize Your Profile</div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
-                    {[['Persona','persona',['developer','marketer','writer','analyst','designer','founder','pm','finance','legal','sales','general']],
+                    {([['Persona','persona',['developer','marketer','writer','analyst','designer','founder','pm','finance','legal','sales','general']],
                       ['Style','response_style',['concise','balanced','detailed']],
-                      ['Formality','formality',['casual','neutral','formal']]].map(([label,field,opts]:[any,any,any])=>(
+                      ['Formality','formality',['casual','neutral','formal']]] as [string, string, string[]][]).map(([label,field,opts])=>(
                       <div key={field}>
                         <div style={{fontSize:11,color:'var(--fg-text3)',marginBottom:4}}>{label}</div>
                         <select value={fm[field]||''} onChange={async(e)=>{
@@ -51797,7 +51800,7 @@ function ForgeTab_formbuilder() {
   const [error, setError] = React.useState('');
   const [copiedField, setCopiedField] = React.useState('');
   const apiBase = '';
-  const { token } = useAuth();
+  const token = getToken();
 
   const generate = async () => {
     if (!purpose.trim()) return;
@@ -51910,7 +51913,7 @@ function ForgeTab_brandkit() {
   const [error, setError] = React.useState('');
   const [activeSection, setActiveSection] = React.useState('voice');
   const apiBase = '';
-  const { token } = useAuth();
+  const token = getToken();
 
   const generate = async () => {
     if (!companyName.trim() || !description.trim()) return;
@@ -52069,7 +52072,7 @@ function ForgeTab_coldsequence() {
   const [error, setError] = React.useState('');
   const [activeStep, setActiveStep] = React.useState(0);
   const apiBase = '';
-  const { token } = useAuth();
+  const token = getToken();
 
   const generate = async () => {
     if (!product.trim() || !targetRole.trim()) return;
@@ -52167,7 +52170,7 @@ function ForgeTab_npsanalyzer() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
   const apiBase = '';
-  const { token } = useAuth();
+  const token = getToken();
 
   const generate = async () => {
     if (!reviews.trim()) return;
@@ -52288,7 +52291,7 @@ function ForgeTab_pressrelease() {
   const [error, setError] = React.useState('');
   const [activeSection, setActiveSection] = React.useState('release');
   const apiBase = '';
-  const { token } = useAuth();
+  const token = getToken();
 
   const generate = async () => {
     if (!announcement.trim() || !companyName.trim()) return;
@@ -55193,7 +55196,7 @@ function ForgeTab_autonomous() {
   const [history, setHistory] = React.useState<any[]>([]);
   const [maxSteps, setMaxSteps] = React.useState(6);
   const apiBase = '';
-  const { token } = useAuth();
+  const token = getToken();
   const stepRef = React.useRef<HTMLDivElement>(null);
 
   const TOOLS_INFO = [
@@ -55418,7 +55421,7 @@ function ForgeTab_routerinsights() {
   const [testMode, setTestMode] = React.useState<'cheap'|'normal'|'premium'>('normal');
   const [feedbackMap, setFeedbackMap] = React.useState<Record<number,number>>({});
   const apiBase = '';
-  const { token } = useAuth();
+  const token = getToken();
 
   const load = async () => {
     setLoading(true);
