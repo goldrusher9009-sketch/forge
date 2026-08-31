@@ -1,5 +1,15 @@
 # Forge MVP Launch Checklist & Go-Live Plan
 
+> [!WARNING]
+> This is a historical AWS/Stripe/SendGrid launch plan and is not the
+> authoritative checklist for the current Forge candidate. Do not provision or
+> change AWS, RDS, ECS, CloudWatch, Stripe, SendGrid, DNS, or production systems
+> from this document. The current delivery path is Vercel Preview + the isolated
+> OVH Sandbox control plane + a Cloudflare remotely managed Named Tunnel. Use
+> `FORGE_SANDBOX_GOOGLE_DRIVE_PRIVATE_CANDIDATE_RUNBOOK.md` for candidate gates
+> and `FORGE_CLOUDFLARE_TUNNEL_RUNBOOK.md` for public ingress. Production
+> promotion still requires separate explicit approval.
+
 **Target Launch Date:** May 15, 2026  
 **Prepared Date:** May 8, 2026  
 **Days Until Launch:** 7 days  

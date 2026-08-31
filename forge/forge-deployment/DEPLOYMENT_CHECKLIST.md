@@ -1,5 +1,15 @@
 # 🎯 Forge Platform Deployment Checklist
 
+> [!WARNING]
+> This DigitalOcean/Kubernetes/Terraform checklist is retained for historical
+> reference only. It is not the deployment plan for the current Forge candidate
+> and must not be used to create DigitalOcean resources or modify production.
+> The current path is Vercel Preview + the isolated OVH Sandbox control plane +
+> a Cloudflare remotely managed Named Tunnel. Follow
+> `../FORGE_SANDBOX_GOOGLE_DRIVE_PRIVATE_CANDIDATE_RUNBOOK.md` and
+> `../FORGE_CLOUDFLARE_TUNNEL_RUNBOOK.md`. Production promotion requires a
+> separate explicit approval.
+
 Use this checklist to ensure nothing is missed during deployment.
 
 ---
