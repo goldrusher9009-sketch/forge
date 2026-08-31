@@ -337,6 +337,45 @@ test('production refuses missing JWT, admin, and frontend configuration before o
   }
 });
 
+test('same-second production logins mint distinct refresh tokens', { timeout: 120_000 }, async t => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'forge-refresh-token-regression-'));
+  const dbPath = path.join(tempDir, 'forge.db');
+  const port = await getFreePort();
+  const email = 'refresh-token-regression@forge.test';
+  const password = 'refresh-token-regression-password';
+  const { child, getLogs } = spawnForge(dbPath, port, {
+    NODE_ENV: 'production',
+    JWT_SECRET: 'refresh-token-regression-jwt-secret',
+    ADMIN_EMAIL: email,
+    ADMIN_PASSWORD: password,
+    FRONTEND_URL: `http://127.0.0.1:${port}`,
+    CREDENTIAL_ENCRYPTION_KEY: 'refresh-token-regression-encryption-key',
+    BILLING_REQUIRED: 'false',
+    STRIPE_SECRET_KEY: '',
+    STRIPE_WEBHOOK_SECRET: '',
+    STRIPE_PRICE_STARTER: '',
+    STRIPE_PRICE_PRO: '',
+    STRIPE_PRICE_AGENCY: '',
+  });
+  t.after(async () => {
+    await stopForge(child);
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  await waitForHealth(child, port, getLogs);
+  const responses = await Promise.all(Array.from({ length: 4 }, () => fetch(`http://127.0.0.1:${port}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  })));
+  assert.deepEqual(responses.map(response => response.status), [200, 200, 200, 200]);
+
+  const database = new Database(dbPath, { readonly: true });
+  const tokenCounts = database.prepare('SELECT COUNT(*) AS total, COUNT(DISTINCT token) AS unique_tokens FROM refresh_tokens').get();
+  database.close();
+  assert.deepEqual(tokenCounts, { total: 4, unique_tokens: 4 });
+});
+
 test('production migrates the historical default admin without changing its identity', { timeout: 120_000 }, async t => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'forge-production-admin-migration-'));
   const dbPath = path.join(tempDir, 'forge.db');
