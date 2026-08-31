@@ -69,7 +69,8 @@ const Database = require('better-sqlite3');
 NODE
 } 2>&1)" || fail "application-level SQLite backup failed: $source_metadata"
 
-[[ "$source_metadata" =~ ^\{"integrity":"ok","counts":\{.*\}\}$ ]] || fail 'source snapshot did not produce isolated JSON evidence'
+metadata_pattern='^\{"integrity":"ok","counts":\{[^{}]*\}\}$'
+[[ "$source_metadata" != *$'\n'* && "$source_metadata" =~ $metadata_pattern ]] || fail 'source snapshot did not produce isolated JSON evidence'
 printf '%s' "$source_metadata" | grep -q '"integrity":"ok"' || fail 'source snapshot integrity verification failed'
 docker exec "$PLATFORM_CONTAINER" cat "$container_path" | gzip -9 > "$partial_path"
 test -s "$partial_path" || fail 'compressed backup is empty'
