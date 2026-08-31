@@ -90,12 +90,59 @@ function capacityIdentity() {
   };
 }
 
+function volumeNames(userId, workspaceId) {
+  const key = sha256(`${userId}:${workspaceId}`).slice(0, 32);
+  return [`forge-ws-${key}`, `forge-artifacts-${key}`];
+}
+
+async function cleanupCapacityVolumes(ids) {
+  for (const name of volumeNames(ids.userId, ids.workspaceId)) {
+    const inspected = await docker.inspectVolume(name, true);
+    if (inspected.statusCode === 404) continue;
+    const labels = inspected.data && inspected.data.Labels || {};
+    assert(labels['com.forge.managed'] === 'sandbox-volume-v1', `CONCURRENCY_E2E_VOLUME_NOT_MANAGED_${name}`);
+    assert(labels['com.forge.user.id'] === ids.userId, `CONCURRENCY_E2E_VOLUME_USER_MISMATCH_${name}`);
+    assert(labels['com.forge.workspace.id'] === ids.workspaceId, `CONCURRENCY_E2E_VOLUME_WORKSPACE_MISMATCH_${name}`);
+    await docker.request('DELETE', `/volumes/${encodeURIComponent(name)}`, null, { allow404: true });
+  }
+}
+
+async function verifyTenantCapacity() {
+  const first = capacityIdentity();
+  const second = {
+    ...first,
+    runId: `${first.runId}_second`,
+    attemptId: `${first.attemptId}_second`,
+    sandboxId: `${first.sandboxId}_second`,
+  };
+  const live = new Set();
+  let rejected;
+  try {
+    const provisioned = await request('POST', '/v1/sandboxes/provision', first);
+    assert(provisioned.status === 201, `CONCURRENCY_E2E_TENANT_FIRST_FAILED_${provisioned.status}`);
+    live.add(first.sandboxId);
+    rejected = await request('POST', '/v1/sandboxes/provision', second);
+    if (rejected.status === 201) live.add(second.sandboxId);
+    assert(
+      rejected.status === 429 && rejected.payload && rejected.payload.error === 'SANDBOX_TENANT_CAPACITY_EXCEEDED',
+      `CONCURRENCY_E2E_TENANT_GATE_FAILED_${rejected.status}_${String(rejected.payload && rejected.payload.error || 'unknown')}`,
+    );
+    return rejected;
+  } finally {
+    for (const sandboxId of live) await request('DELETE', `/v1/sandboxes/${encodeURIComponent(sandboxId)}`);
+    await cleanupCapacityVolumes(first);
+  }
+}
+
 async function main() {
   const baselineContainers = await managedContainerCount();
   const baselineVolumes = await managedVolumeCount();
   const baselineIdempotency = idempotencyCount();
   assert(baselineContainers === 0, `CONCURRENCY_E2E_REQUIRES_IDLE_RUNTIME_CONTAINERS_${baselineContainers}`);
   assert(baselineVolumes === 0, `CONCURRENCY_E2E_REQUIRES_NO_MANAGED_VOLUMES_${baselineVolumes}`);
+  const tenantCapacity = await verifyTenantCapacity();
+  assert(await managedContainerCount() === baselineContainers, 'CONCURRENCY_E2E_TENANT_CONTAINER_LEAK');
+  assert(await managedVolumeCount() === baselineVolumes, 'CONCURRENCY_E2E_TENANT_VOLUME_LEAK');
   const runs = Array.from({ length: parallel }, (_, index) => runE2e(index + 1));
   const expectedPeak = parallel * 2;
   let peak = 0;
@@ -129,6 +176,8 @@ async function main() {
     peakRuntimeContainers: peak,
     capacityHttp: capacity.status,
     capacityError: capacity.payload.error,
+    tenantCapacityHttp: tenantCapacity.status,
+    tenantCapacityError: tenantCapacity.payload.error,
     remainingContainers,
     remainingVolumes,
     baselineContainers,

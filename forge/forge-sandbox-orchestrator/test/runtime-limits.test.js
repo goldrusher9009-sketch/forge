@@ -41,29 +41,45 @@ test('tool limiter releases capacity when an operation fails', async () => {
 });
 
 test('sandbox admission counts persisted and in-flight sandbox ids once', async () => {
-  const persisted = [{ Labels: { 'com.forge.sandbox.id': 'sandbox_existing' } }];
+  const persisted = [{ Labels: { 'com.forge.sandbox.id': 'sandbox_existing', 'com.forge.tenant.id': 'tenant_existing' } }];
   const docker = { request: async () => ({ statusCode: 200, data: persisted }) };
-  const admission = createSandboxAdmission(docker, 3);
+  const admission = createSandboxAdmission(docker, 3, 1);
 
-  const releaseSecond = await admission.reserve('sandbox_second');
-  const releaseThird = await admission.reserve('sandbox_third');
-  await assert.rejects(admission.reserve('sandbox_fourth'), /SANDBOX_CAPACITY_EXCEEDED/);
+  const releaseSecond = await admission.reserve('sandbox_second', 'tenant_second');
+  const releaseThird = await admission.reserve('sandbox_third', 'tenant_third');
+  await assert.rejects(admission.reserve('sandbox_fourth', 'tenant_fourth'), /SANDBOX_CAPACITY_EXCEEDED/);
   releaseSecond();
-  const releaseFourth = await admission.reserve('sandbox_fourth');
+  const releaseFourth = await admission.reserve('sandbox_fourth', 'tenant_fourth');
 
   releaseThird();
   releaseFourth();
-  assert.deepEqual(admission.stats(), { pending: 0 });
+  assert.deepEqual(admission.stats(), { pending: 0, pendingTenants: 0 });
 });
 
 test('sandbox admission rejects duplicate concurrent provisioning', async () => {
   const docker = { request: async () => ({ statusCode: 200, data: [] }) };
-  const admission = createSandboxAdmission(docker, 3);
-  const release = await admission.reserve('sandbox_duplicate');
-  await assert.rejects(admission.reserve('sandbox_duplicate'), /SANDBOX_PROVISION_IN_PROGRESS/);
+  const admission = createSandboxAdmission(docker, 3, 1);
+  const release = await admission.reserve('sandbox_duplicate', 'tenant_duplicate');
+  await assert.rejects(admission.reserve('sandbox_duplicate', 'tenant_duplicate'), /SANDBOX_PROVISION_IN_PROGRESS/);
   release();
-  const releaseRetry = await admission.reserve('sandbox_duplicate');
+  const releaseRetry = await admission.reserve('sandbox_duplicate', 'tenant_duplicate');
   assert.equal(typeof releaseRetry, 'function');
   releaseRetry();
-  assert.deepEqual(admission.stats(), { pending: 0 });
+  assert.deepEqual(admission.stats(), { pending: 0, pendingTenants: 0 });
+});
+
+test('sandbox admission enforces the per-tenant limit across persisted and pending sandboxes', async () => {
+  const persisted = [{ Labels: { 'com.forge.sandbox.id': 'sandbox_existing', 'com.forge.tenant.id': 'tenant_one' } }];
+  const docker = { request: async () => ({ statusCode: 200, data: persisted }) };
+  const admission = createSandboxAdmission(docker, 3, 1);
+
+  await assert.rejects(admission.reserve('sandbox_same_tenant', 'tenant_one'), /SANDBOX_TENANT_CAPACITY_EXCEEDED/);
+  const releaseOther = await admission.reserve('sandbox_other_tenant', 'tenant_two');
+  await assert.rejects(admission.reserve('sandbox_other_pending', 'tenant_two'), /SANDBOX_TENANT_CAPACITY_EXCEEDED/);
+  releaseOther();
+
+  const releaseRetry = await admission.reserve('sandbox_other_pending', 'tenant_two');
+  releaseRetry();
+  assert.equal(admission.maxActivePerTenant, 1);
+  assert.deepEqual(admission.stats(), { pending: 0, pendingTenants: 0 });
 });

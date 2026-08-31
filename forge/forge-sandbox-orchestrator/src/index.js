@@ -21,7 +21,11 @@ const CPU_NANOS = Math.max(100_000_000, Math.min(Number(process.env.FORGE_SANDBO
 const PIDS_LIMIT = Math.max(32, Math.min(Number(process.env.FORGE_SANDBOX_PIDS_LIMIT) || 128, 512));
 const BROWSER_PIDS_LIMIT = Math.max(PIDS_LIMIT, Math.min(Number(process.env.FORGE_SANDBOX_BROWSER_PIDS_LIMIT) || 256, 512));
 const docker = new DockerApi(process.env.DOCKER_SOCKET || '/var/run/docker.sock');
-const sandboxAdmission = createSandboxAdmission(docker, process.env.FORGE_SANDBOX_MAX_ACTIVE);
+const sandboxAdmission = createSandboxAdmission(
+  docker,
+  process.env.FORGE_SANDBOX_MAX_ACTIVE,
+  process.env.FORGE_SANDBOX_MAX_ACTIVE_PER_TENANT,
+);
 const toolLimiter = createConcurrencyLimiter(process.env.FORGE_SANDBOX_MAX_CONCURRENT_TOOLS);
 const nonces = new Map();
 
@@ -151,7 +155,7 @@ async function provision(body) {
     }
     throw new Error('SANDBOX_IDENTITY_CONFLICT');
   }
-  const releaseAdmission = await sandboxAdmission.reserve(body.sandboxId);
+  const releaseAdmission = await sandboxAdmission.reserve(body.sandboxId, body.tenantId);
   try {
     const volumes = await ensureVolumes(body);
     const commonEnv = [
@@ -338,7 +342,11 @@ const server = http.createServer(async (req, res) => {
         status: 'ok',
         runtimeImage: RUNTIME_IMAGE,
         isolation: 'per-run-containers',
-        limits: { maxActiveSandboxes: sandboxAdmission.maxActive, maxConcurrentTools: toolLimiter.limit },
+        limits: {
+          maxActiveSandboxes: sandboxAdmission.maxActive,
+          maxActiveSandboxesPerTenant: sandboxAdmission.maxActivePerTenant,
+          maxConcurrentTools: toolLimiter.limit,
+        },
         load: { ...sandboxAdmission.stats(), ...toolLimiter.stats() },
       });
     } catch (error) {

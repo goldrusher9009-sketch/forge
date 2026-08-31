@@ -105,6 +105,7 @@ Required control-plane variables:
 | `FORGE_SANDBOX_ORCHESTRATOR_URL` | Internal-only `http://forge-sandbox-orchestrator:3001` |
 | `FORGE_SANDBOX_HMAC_SECRET` | Shared only by Forge and the Orchestrator; never exposed to a Run container |
 | `FORGE_SANDBOX_MAX_ACTIVE` | Global admission ceiling; candidate default is `3` active per-Run sandbox pairs |
+| `FORGE_SANDBOX_MAX_ACTIVE_PER_TENANT` | Per-tenant admission ceiling; candidate default is `1` active per-Run sandbox pair so one tenant cannot consume the global pool |
 | `FORGE_SANDBOX_MAX_CONCURRENT_TOOLS` | Global Docker-exec ceiling; candidate default is `1` until higher concurrency passes the full Browser/Artifact E2E |
 
 Required Vercel-to-control-plane gateway variables:
@@ -361,10 +362,10 @@ Verified on the candidate branch and candidate VPS with Node 20 and domestic sou
 - Agent Run/Apptopia regression: 1 passed, 1 skipped by the existing real-provider-key contract;
 - restart recovery: 1/1 passed;
 - Google Drive OAuth/Picker selection/import/deduplication/approved write-back/revocation/transfer-ledger regression: 1/1 passed;
-- Orchestrator unit tests: 4/4 passed;
+- Orchestrator unit tests: 5/5 passed;
 - sandbox runtime path-containment unit tests: 2/2 passed;
 - real Orchestrator E2E: passed Shell, Browser, File, spreadsheet, PDF, egress, persistence, integrity, and active-tool cancellation checks;
-- VPS concurrency/capacity E2E: three parallel full sandbox lifecycle runs completed with a six-runtime-container peak; a fourth provisioning request failed closed with HTTP 429 `SANDBOX_CAPACITY_EXCEEDED`; managed containers, managed volumes, and idempotency state returned to their exact baselines;
+- VPS concurrency/capacity E2E: three parallel full sandbox lifecycle runs completed with a six-runtime-container peak; a fourth provisioning request failed closed with HTTP 429 `SANDBOX_CAPACITY_EXCEEDED`; a second concurrent sandbox for the same tenant failed closed with HTTP 429 `SANDBOX_TENANT_CAPACITY_EXCEEDED`; managed containers, managed volumes, and idempotency state returned to their exact baselines;
 - the same concurrency test passed twice on the candidate VPS. During the instrumented run the outer nested-Docker service peaked at about 107% CPU and 264.5 MiB memory, the Orchestrator at about 8% CPU and 128.7 MiB, and Forge at about 3.7% CPU and 367.6 MiB on a 16-vCPU host with about 62 GiB available memory. This is evidence for the configured invited-user ceiling of three active sandboxes, not a public-scale capacity claim;
 - SQLite backup regression: an online backup taken while the source used WAL restored with `integrity_check=ok`, identical user/Workspace/Artifact counts, and the exact Artifact SHA-256; the backup path now awaits `better-sqlite3.backup()` before starting gzip;
 - live candidate backup/restore: both a pre-release raw snapshot and a post-release `/api/admin/backup` gzip were exported outside the application data volume to the VPS host with `0600 root:root` permissions and recorded SHA-256 values, then restored in a network-disabled container with a read-only root filesystem. Integrity and all Run/Workspace/Event/Tool/Approval/Artifact/Drive table counts matched the online database;
@@ -394,7 +395,7 @@ The following remain open and must not be relabelled as completed:
 - customer security review, data-processing terms, retention/deletion policy, and customer acceptance;
 - stronger-than-Docker hostile multi-tenant isolation;
 - malware scanning, DLP, and content policy for uploaded/Drive-imported files;
-- capacity/load evidence beyond the current three-active-sandbox invited-user ceiling, plus per-tenant concurrency quotas. The candidate has a verified global admission limit and tool limiter, but those controls must not be described as public-scale or per-tenant capacity isolation;
+- capacity/load evidence beyond the current three-active-sandbox invited-user ceiling. The candidate has a global admission limit, a one-active-sandbox-per-tenant limit, and a global tool limiter, but those controls must not be described as public-scale capacity;
 - self-hosted fonts for network-independent frontend builds;
 - public signup, public self-service, Paid Beta, or real-money Minera;
 - Cloud PC/mobile-device control. The current target is a mobile-friendly web control plane driving cloud sandboxes, not a full persistent cloud desktop.

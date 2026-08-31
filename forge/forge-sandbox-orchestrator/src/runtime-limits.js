@@ -36,9 +36,10 @@ function createConcurrencyLimiter(limitValue) {
   };
 }
 
-function createSandboxAdmission(docker, maxActiveValue) {
+function createSandboxAdmission(docker, maxActiveValue, maxActivePerTenantValue) {
   const maxActive = boundedInteger(maxActiveValue, 3, 1, 32);
-  const pending = new Set();
+  const maxActivePerTenant = boundedInteger(maxActivePerTenantValue, 1, 1, maxActive);
+  const pending = new Map();
   let lockTail = Promise.resolve();
 
   async function synchronized(operation) {
@@ -50,22 +51,31 @@ function createSandboxAdmission(docker, maxActiveValue) {
     finally { unlock(); }
   }
 
-  async function activeSandboxIds() {
+  async function activeSandboxes() {
     const filters = encodeURIComponent(JSON.stringify({
       label: ['com.forge.managed=sandbox-v1', 'com.forge.role=shell'],
     }));
     const response = await docker.request('GET', `/containers/json?all=1&filters=${filters}`, null);
     if (!Array.isArray(response.data)) throw new Error('SANDBOX_CAPACITY_STATE_INVALID');
-    return new Set(response.data.map(container => container && container.Labels && container.Labels['com.forge.sandbox.id']).filter(Boolean));
+    return new Map(response.data.map(container => {
+      const labels = container && container.Labels || {};
+      return [labels['com.forge.sandbox.id'], labels['com.forge.tenant.id']];
+    }).filter(([sandboxId]) => sandboxId));
   }
 
-  async function reserve(sandboxId) {
+  async function reserve(sandboxId, tenantId) {
     return synchronized(async () => {
       if (pending.has(sandboxId)) throw new Error('SANDBOX_PROVISION_IN_PROGRESS');
-      const used = await activeSandboxIds();
-      for (const id of pending) used.add(id);
-      if (!used.has(sandboxId) && used.size >= maxActive) throw new Error('SANDBOX_CAPACITY_EXCEEDED');
-      pending.add(sandboxId);
+      const used = await activeSandboxes();
+      for (const [id, pendingTenantId] of pending) {
+        if (!used.has(id)) used.set(id, pendingTenantId);
+      }
+      if (!used.has(sandboxId)) {
+        const tenantActive = [...used.values()].filter(value => value === tenantId).length;
+        if (tenantActive >= maxActivePerTenant) throw new Error('SANDBOX_TENANT_CAPACITY_EXCEEDED');
+        if (used.size >= maxActive) throw new Error('SANDBOX_CAPACITY_EXCEEDED');
+      }
+      pending.set(sandboxId, tenantId);
       let released = false;
       return () => {
         if (released) return;
@@ -77,8 +87,9 @@ function createSandboxAdmission(docker, maxActiveValue) {
 
   return {
     maxActive,
+    maxActivePerTenant,
     reserve,
-    stats: () => ({ pending: pending.size }),
+    stats: () => ({ pending: pending.size, pendingTenants: new Set(pending.values()).size }),
   };
 }
 
