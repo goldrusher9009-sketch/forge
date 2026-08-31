@@ -51,6 +51,12 @@ process, or user sandboxes.
   the named Tunnel and protected by the same `/api/*` gateway secret.
 - `FORGE_CLOUDFLARE_TUNNEL_RUNBOOK.md`: domain, token, secret, acceptance, and
   rollback procedure that does not modify Apptopia Nginx.
+- `scripts/cloudflare-tunnel-gateway-regression.cjs`: repeatable Docker test for
+  correct/missing/wrong secret behavior, path denial, upstream secret removal,
+  capabilities, read-only root, and zero published ports.
+- `scripts/forge-edge-readiness.sh`: read-only internal/public launch audit for
+  Tunnel credentials, network isolation, Google configuration, service health,
+  loopback bindings, Nginx continuity, and ProjectHash continuity.
 - `FORGE_SANDBOX_GOOGLE_DRIVE_PRIVATE_CANDIDATE_RUNBOOK.md`: required gates and
   acceptance evidence.
 

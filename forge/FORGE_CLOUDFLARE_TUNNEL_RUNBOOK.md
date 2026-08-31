@@ -62,11 +62,14 @@ generated gateway secret:
 ```dotenv
 CLOUDFLARE_TUNNEL_TOKEN_FILE=/opt/forge-private-isolated/shared/cloudflared-token
 FORGE_CONTROL_PLANE_GATEWAY_SECRET=<high-entropy value shared with Vercel>
+FORGE_EXPECTED_NGINX_CONFIG_SHA256=<approved sha256 of sudo nginx -T>
 ```
 
 Keep this environment file outside the release directory with mode `0600`.
 The Tunnel token and gateway secret are different credentials and must not be
 reused as JWT, encryption, Google, provider, or administrator secrets.
+The Nginx hash is not a secret; it freezes the already accepted Apptopia Nginx
+configuration so any later drift blocks the Forge public-readiness audit.
 
 ## Preflight
 
@@ -94,6 +97,21 @@ docker compose \
 The configuration must fail closed when either the token-file path or gateway
 secret is missing. Do not print the fully rendered configuration because it
 contains the expanded gateway secret.
+
+Run the repeatable internal gateway regression before deploying any edge
+change:
+
+```bash
+node scripts/cloudflare-tunnel-gateway-regression.cjs
+```
+
+On the VPS, record the approved existing Nginx configuration hash in the edge
+environment as `FORGE_EXPECTED_NGINX_CONFIG_SHA256`, then run the read-only
+internal readiness audit:
+
+```bash
+bash scripts/forge-edge-readiness.sh internal
+```
 
 ## Start and observe
 
@@ -128,6 +146,16 @@ From outside the VPS, verify independently:
    `forge-private-edge` and `forge-sandbox-control`.
 9. Apptopia/ProjectHash frontend, backend health, database health, Nginx
    configuration hash, and public domains remain unchanged.
+
+After the named Tunnel is running and its public hostname has propagated, run
+the strict public audit. It requires the token file, cloudflared network
+isolation, public secret gate, Google configuration, Forge, Orchestrator,
+ProjectHash, and Nginx continuity to pass together:
+
+```bash
+FORGE_CONTROL_PLANE_PUBLIC_ORIGIN=https://api-forge.example.com \
+  bash scripts/forge-edge-readiness.sh public
+```
 
 Then configure Vercel server-only variables:
 
