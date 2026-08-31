@@ -1,0 +1,25 @@
+[Unit]
+Description=Forge candidate verified SQLite backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/forge-private-isolated/current/scripts/forge-candidate-backup.sh
+TimeoutStartSec=15min
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+LockPersonality=yes
+RestrictSUIDSGID=yes
+CapabilityBoundingSet=
+ReadWritePaths=/opt/forge-private-isolated/backups /run/lock
+
+[Install]
+WantedBy=multi-user.target
