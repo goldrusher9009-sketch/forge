@@ -5,6 +5,7 @@ BASE_DIR="${FORGE_BASE_DIR:-/opt/forge-private-isolated}"
 BACKUP_DIR="${FORGE_BACKUP_DIR:-$BASE_DIR/backups}"
 PLATFORM_CONTAINER="${FORGE_PLATFORM_CONTAINER:-forge-private-isolated-forge-platform-1}"
 LOCK_FILE="${FORGE_BACKUP_LOCK_FILE:-/run/lock/forge-candidate-backup.lock}"
+DOCKER_CONFIG_DIR=/run/forge-candidate-backup
 
 fail() {
   printf 'forge candidate backup: FAIL %s\n' "$1" >&2
@@ -18,6 +19,8 @@ done
 
 install -d -m 0700 "$BACKUP_DIR"
 install -d -m 0755 "$(dirname "$LOCK_FILE")"
+install -d -m 0700 "$DOCKER_CONFIG_DIR"
+export DOCKER_CONFIG="$DOCKER_CONFIG_DIR"
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
   printf 'forge candidate backup: SKIP another verified backup is running\n'
@@ -66,6 +69,7 @@ const Database = require('better-sqlite3');
 NODE
 } 2>&1)" || fail "application-level SQLite backup failed: $source_metadata"
 
+[[ "$source_metadata" =~ ^\{"integrity":"ok","counts":\{.*\}\}$ ]] || fail 'source snapshot did not produce isolated JSON evidence'
 printf '%s' "$source_metadata" | grep -q '"integrity":"ok"' || fail 'source snapshot integrity verification failed'
 docker exec "$PLATFORM_CONTAINER" cat "$container_path" | gzip -9 > "$partial_path"
 test -s "$partial_path" || fail 'compressed backup is empty'

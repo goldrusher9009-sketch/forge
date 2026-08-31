@@ -8,6 +8,7 @@ MIN_FREE_BYTES="${FORGE_MIN_FREE_BYTES:-10737418240}"
 PLATFORM_CONTAINER="forge-private-isolated-forge-platform-1"
 ORCHESTRATOR_CONTAINER="forge-private-isolated-forge-sandbox-orchestrator-1"
 GATEWAY_CONTAINER="forge-private-edge-forge-control-plane-tunnel-gateway-1"
+DOCKER_CONFIG_DIR=/run/forge-candidate-monitor
 failures=()
 
 record_failure() {
@@ -44,12 +45,16 @@ http_check() {
   test "$code" = "$expected" || record_failure "$label http=${code:-failed} expected=$expected"
 }
 
-for command_name in awk basename cat cut curl date df docker find head logger readlink sha256sum sort stat systemctl; do
+for command_name in awk basename cat cut curl date df docker find head id install logger readlink sha256sum sort stat systemctl; do
   command -v "$command_name" >/dev/null 2>&1 || record_failure "missing command: $command_name"
 done
 test "${#failures[@]}" -eq 0 || emit_failure
+test "${EUID:-$(id -u)}" = '0' || record_failure 'must run as root'
 [[ "$MAX_BACKUP_AGE_SECONDS" =~ ^[0-9]+$ ]] || record_failure 'maximum backup age is not an unsigned integer'
 [[ "$MIN_FREE_BYTES" =~ ^[0-9]+$ ]] || record_failure 'minimum free bytes is not an unsigned integer'
+test "${#failures[@]}" -eq 0 || emit_failure
+install -d -m 0700 "$DOCKER_CONFIG_DIR" || record_failure 'isolated Docker configuration directory could not be prepared'
+export DOCKER_CONFIG="$DOCKER_CONFIG_DIR"
 test "${#failures[@]}" -eq 0 || emit_failure
 
 current_release="$(readlink -f "$BASE_DIR/current" 2>/dev/null || true)"
