@@ -7,8 +7,6 @@ import { GoogleDriveConnectionCard, SandboxAgentConsole } from './SandboxAgentCo
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 :root {
   /* -- Taskade-style deep blacks -- */
   --fg-bg:      #080809;
@@ -42,9 +40,9 @@ const GLOBAL_STYLES = `
   --fg-sidebar-expanded: 220px;
   --fg-radius-btn: 10px;
   --fg-radius-card: 14px;
-  --fg-font-ui: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --fg-font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --fg-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  --fg-font-ui: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --fg-font-display: 'Segoe UI Variable Display', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --fg-font-mono: ui-monospace, 'Cascadia Code', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
 }
 
 * { box-sizing: border-box; }

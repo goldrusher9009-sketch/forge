@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
 const { DockerApi } = require('./docker-api');
+const { createConcurrencyLimiter, createSandboxAdmission } = require('./runtime-limits');
 const { pruneNonces, sha256, verifySignedRequest } = require('./security');
 const { firstFileFromTar, singleFileTar } = require('./tar');
 
@@ -20,6 +21,8 @@ const CPU_NANOS = Math.max(100_000_000, Math.min(Number(process.env.FORGE_SANDBO
 const PIDS_LIMIT = Math.max(32, Math.min(Number(process.env.FORGE_SANDBOX_PIDS_LIMIT) || 128, 512));
 const BROWSER_PIDS_LIMIT = Math.max(PIDS_LIMIT, Math.min(Number(process.env.FORGE_SANDBOX_BROWSER_PIDS_LIMIT) || 256, 512));
 const docker = new DockerApi(process.env.DOCKER_SOCKET || '/var/run/docker.sock');
+const sandboxAdmission = createSandboxAdmission(docker, process.env.FORGE_SANDBOX_MAX_ACTIVE);
+const toolLimiter = createConcurrencyLimiter(process.env.FORGE_SANDBOX_MAX_CONCURRENT_TOOLS);
 const nonces = new Map();
 
 fs.mkdirSync(path.join(DATA_DIR, 'idempotency'), { recursive: true, mode: 0o700 });
@@ -148,36 +151,37 @@ async function provision(body) {
     }
     throw new Error('SANDBOX_IDENTITY_CONFLICT');
   }
-  const volumes = await ensureVolumes(body);
-  const commonEnv = [
-    `FORGE_TENANT_ID=${body.tenantId}`,
-    `FORGE_USER_ID=${body.userId}`,
-    `FORGE_WORKSPACE_ID=${body.workspaceId}`,
-    `FORGE_RUN_ID=${body.runId}`,
-    `FORGE_ATTEMPT_ID=${body.attemptId}`,
-    `FORGE_SANDBOX_ID=${body.sandboxId}`,
-    `FORGE_MAX_WORKSPACE_BYTES=${Number(body.maxWorkspaceBytes) || 268435456}`,
-    'HOME=/home/sandbox',
-  ];
-  const shellSpec = {
-    Image: RUNTIME_IMAGE,
-    User: '10001:10001',
-    WorkingDir: '/workspace',
-    Cmd: ['node', '/opt/forge-sandbox/idle.js'],
-    Env: commonEnv,
-    Labels: labels(body, 'shell'),
-    HostConfig: hardenedHostConfig(volumes, 'none'),
-  };
-  const browserSpec = {
-    Image: RUNTIME_IMAGE,
-    User: '10001:10001',
-    WorkingDir: '/workspace',
-    Cmd: ['node', '/opt/forge-sandbox/idle.js'],
-    Env: [...commonEnv, `HTTP_PROXY=${PROXY_URL}`, `HTTPS_PROXY=${PROXY_URL}`, `FORGE_BROWSER_PROXY=${PROXY_URL}`, 'NO_PROXY=localhost,127.0.0.1'],
-    Labels: labels(body, 'browser'),
-    HostConfig: hardenedHostConfig(volumes, SANDBOX_NETWORK, BROWSER_PIDS_LIMIT),
-  };
+  const releaseAdmission = await sandboxAdmission.reserve(body.sandboxId);
   try {
+    const volumes = await ensureVolumes(body);
+    const commonEnv = [
+      `FORGE_TENANT_ID=${body.tenantId}`,
+      `FORGE_USER_ID=${body.userId}`,
+      `FORGE_WORKSPACE_ID=${body.workspaceId}`,
+      `FORGE_RUN_ID=${body.runId}`,
+      `FORGE_ATTEMPT_ID=${body.attemptId}`,
+      `FORGE_SANDBOX_ID=${body.sandboxId}`,
+      `FORGE_MAX_WORKSPACE_BYTES=${Number(body.maxWorkspaceBytes) || 268435456}`,
+      'HOME=/home/sandbox',
+    ];
+    const shellSpec = {
+      Image: RUNTIME_IMAGE,
+      User: '10001:10001',
+      WorkingDir: '/workspace',
+      Cmd: ['node', '/opt/forge-sandbox/idle.js'],
+      Env: commonEnv,
+      Labels: labels(body, 'shell'),
+      HostConfig: hardenedHostConfig(volumes, 'none'),
+    };
+    const browserSpec = {
+      Image: RUNTIME_IMAGE,
+      User: '10001:10001',
+      WorkingDir: '/workspace',
+      Cmd: ['node', '/opt/forge-sandbox/idle.js'],
+      Env: [...commonEnv, `HTTP_PROXY=${PROXY_URL}`, `HTTPS_PROXY=${PROXY_URL}`, `FORGE_BROWSER_PROXY=${PROXY_URL}`, 'NO_PROXY=localhost,127.0.0.1'],
+      Labels: labels(body, 'browser'),
+      HostConfig: hardenedHostConfig(volumes, SANDBOX_NETWORK, BROWSER_PIDS_LIMIT),
+    };
     await docker.createContainer(names.shell, shellSpec);
     await docker.createContainer(names.browser, browserSpec);
     await docker.startContainer(names.shell);
@@ -186,6 +190,8 @@ async function provision(body) {
   } catch (error) {
     await destroy(body.sandboxId).catch(() => {});
     throw error;
+  } finally {
+    releaseAdmission();
   }
 }
 
@@ -221,7 +227,7 @@ async function executeTool(body) {
   const inspected = await docker.inspectContainer(container, true);
   if (inspected.statusCode !== 200 || !inspected.data.State || !inspected.data.State.Running) throw new Error('SANDBOX_NOT_RUNNING');
   const request = Buffer.from(JSON.stringify({ toolName: body.toolName, args: body.args || {} })).toString('base64url');
-  const result = await docker.exec(container, ['node', '/opt/forge-sandbox/tool.js', request], [], Math.max(10_000, Math.min(Number(body.timeoutMs) || 150_000, 180_000)));
+  const result = await toolLimiter.run(() => docker.exec(container, ['node', '/opt/forge-sandbox/tool.js', request], [], Math.max(10_000, Math.min(Number(body.timeoutMs) || 150_000, 180_000))));
   if (result.stdout.length + result.stderr.length > 2 * 1024 * 1024) throw new Error('SANDBOX_TOOL_OUTPUT_TOO_LARGE');
   if (result.exitCode !== 0) throw new Error(`SANDBOX_TOOL_EXIT_${result.exitCode}: ${(result.stderr || result.stdout).slice(0, 1000)}`);
   let parsed;
@@ -328,7 +334,13 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && requestUrl.pathname === '/health') {
     try {
       await docker.ping();
-      json(res, 200, { status: 'ok', runtimeImage: RUNTIME_IMAGE, isolation: 'per-run-containers' });
+      json(res, 200, {
+        status: 'ok',
+        runtimeImage: RUNTIME_IMAGE,
+        isolation: 'per-run-containers',
+        limits: { maxActiveSandboxes: sandboxAdmission.maxActive, maxConcurrentTools: toolLimiter.limit },
+        load: { ...sandboxAdmission.stats(), ...toolLimiter.stats() },
+      });
     } catch (error) {
       json(res, 503, { status: 'not_ready', error: error.message });
     }
@@ -357,7 +369,7 @@ const server = http.createServer(async (req, res) => {
     json(res, 404, { success: false, error: 'NOT_FOUND' });
   } catch (error) {
     const code = String(error && error.message || 'SANDBOX_ORCHESTRATOR_ERROR');
-    const status = code.includes('SIGNATURE') ? 401 : code.includes('NOT_FOUND') ? 404 : code.includes('CONFLICT') ? 409 : code.includes('TOO_LARGE') ? 413 : 400;
+    const status = code.includes('SIGNATURE') ? 401 : code.includes('NOT_FOUND') ? 404 : code.includes('CONFLICT') || code.includes('PROVISION_IN_PROGRESS') ? 409 : code.includes('CAPACITY_EXCEEDED') ? 429 : code.includes('TOO_LARGE') ? 413 : 400;
     json(res, status, { success: false, error: code.slice(0, 2000) });
   }
 });

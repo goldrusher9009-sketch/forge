@@ -104,6 +104,8 @@ Required control-plane variables:
 | `DB_PATH` | `/data/forge.db` in the candidate Compose topology |
 | `FORGE_SANDBOX_ORCHESTRATOR_URL` | Internal-only `http://forge-sandbox-orchestrator:3001` |
 | `FORGE_SANDBOX_HMAC_SECRET` | Shared only by Forge and the Orchestrator; never exposed to a Run container |
+| `FORGE_SANDBOX_MAX_ACTIVE` | Global admission ceiling; candidate default is `3` active per-Run sandbox pairs |
+| `FORGE_SANDBOX_MAX_CONCURRENT_TOOLS` | Global Docker-exec ceiling; candidate default is `1` until higher concurrency passes the full Browser/Artifact E2E |
 
 Required Vercel-to-control-plane gateway variables:
 
@@ -193,7 +195,7 @@ npm run build
 
 Push only the accepted release branch and wait for its protected Vercel Preview to become Ready. Do not push `main` or promote the Preview until the external control plane, secret, and acceptance checks pass. Keep signup closed or operationally inaccessible; distribute access only to named invited users. The backend `FRONTEND_URL`, Google authorized JavaScript origin, and Google redirect URI must use the exact Vercel production origin.
 
-The build currently references Google Fonts and can fall back when that stylesheet is unreachable. For a network-independent production surface, self-host the approved font files in a later hardening change.
+The active frontend uses a platform-native system font stack and makes no Google Fonts request. Keep this zero-external-font property in the release scan unless approved local font files are added later.
 
 ### Gate G — start the candidate behind TLS
 
