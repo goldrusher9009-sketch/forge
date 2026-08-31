@@ -20,6 +20,56 @@ function sha256(value) {
   return crypto.createHash('sha256').update(value).digest('hex');
 }
 
+function crc32(buffer) {
+  let crc = 0xffffffff;
+  for (const byte of buffer) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function makeStoredZip(entries) {
+  const localParts = [];
+  const centralParts = [];
+  let localOffset = 0;
+  for (const entry of entries) {
+    const filename = Buffer.from(entry.name, 'utf8');
+    const content = Buffer.from(entry.content || '', 'utf8');
+    const checksum = crc32(content);
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(0x0800, 6);
+    local.writeUInt32LE(checksum, 14);
+    local.writeUInt32LE(content.length, 18);
+    local.writeUInt32LE(content.length, 22);
+    local.writeUInt16LE(filename.length, 26);
+    localParts.push(local, filename, content);
+
+    const central = Buffer.alloc(46);
+    central.writeUInt32LE(0x02014b50, 0);
+    central.writeUInt16LE(0x0314, 4);
+    central.writeUInt16LE(20, 6);
+    central.writeUInt16LE(0x0800, 8);
+    central.writeUInt32LE(checksum, 16);
+    central.writeUInt32LE(content.length, 20);
+    central.writeUInt32LE(content.length, 24);
+    central.writeUInt16LE(filename.length, 28);
+    central.writeUInt32LE(localOffset, 42);
+    centralParts.push(central, filename);
+    localOffset += local.length + filename.length + content.length;
+  }
+  const centralSize = centralParts.reduce((total, part) => total + part.length, 0);
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(entries.length, 8);
+  eocd.writeUInt16LE(entries.length, 10);
+  eocd.writeUInt32LE(centralSize, 12);
+  eocd.writeUInt32LE(localOffset, 16);
+  return Buffer.concat([...localParts, ...centralParts, eocd]);
+}
+
 function signedHeaders(method, requestPath, rawBody) {
   const timestamp = String(Date.now());
   const nonce = crypto.randomBytes(18).toString('base64url');
@@ -133,8 +183,10 @@ async function main() {
   const liveSandboxes = new Set();
   const sourceContent = `forge-e2e-source:${seed}\n`;
   const resultContent = `forge-e2e-result:${seed}\n`;
+  const safeArchive = makeStoredZip([{ name: 'README.md', content: sourceContent }]);
   const sourceSha256 = sha256(sourceContent);
   const resultSha256 = sha256(resultContent);
+  const safeArchiveSha256 = sha256(safeArchive);
   let artifactPath = '';
   let completion;
 
@@ -145,6 +197,13 @@ async function main() {
       contentBase64: Buffer.from('blocked executable extension').toString('base64'),
     }, 422);
     assert(blocked.success === false && blocked.error === 'SANDBOX_UPLOAD_CONTENT_BLOCKED_EXECUTABLE_OR_ACTIVE_CONTENT_EXTENSION', 'E2E_CONTENT_POLICY_BLOCK_FAILED');
+
+    const blockedArchive = await request('POST', '/v1/workspaces/files', {
+      ...first,
+      path: 'input/traversal.zip',
+      contentBase64: makeStoredZip([{ name: '../escape.txt', content: 'escape' }]).toString('base64'),
+    }, 422);
+    assert(blockedArchive.success === false && blockedArchive.error === 'SANDBOX_UPLOAD_CONTENT_BLOCKED_ARCHIVE_PATH_UNSAFE', 'E2E_ARCHIVE_POLICY_BLOCK_FAILED');
 
     const provisioned = await request('POST', '/v1/sandboxes/provision', first, 201);
     assert(provisioned.data && provisioned.data.state === 'ready', 'E2E_FIRST_SANDBOX_NOT_READY');
@@ -159,7 +218,15 @@ async function main() {
       contentBase64: Buffer.from(sourceContent).toString('base64'),
     }, 201);
     assert(uploaded.data && uploaded.data.sha256 === sourceSha256, 'E2E_WORKSPACE_UPLOAD_INTEGRITY_FAILED');
-    assert(uploaded.data.contentPolicy === 'forge-inbound-v1', 'E2E_CONTENT_POLICY_EVIDENCE_MISSING');
+    assert(uploaded.data.contentPolicy === 'forge-inbound-v2', 'E2E_CONTENT_POLICY_EVIDENCE_MISSING');
+
+    const uploadedArchive = await request('POST', '/v1/workspaces/files', {
+      ...first,
+      path: 'input/source.zip',
+      contentBase64: safeArchive.toString('base64'),
+    }, 201);
+    assert(uploadedArchive.data && uploadedArchive.data.sha256 === safeArchiveSha256, 'E2E_ARCHIVE_UPLOAD_INTEGRITY_FAILED');
+    assert(uploadedArchive.data.contentPolicy === 'forge-inbound-v2', 'E2E_ARCHIVE_POLICY_EVIDENCE_MISSING');
 
     const written = await execute(first, seed, 'write', 'sandbox_file', {
       operation: 'write', path: 'output/result.txt', content: resultContent,
@@ -229,7 +296,9 @@ async function main() {
       metadataBlock,
       privateBlock,
       contentPolicyBlock: blocked.error,
+      archivePolicyBlock: blockedArchive.error,
       contentPolicy: uploaded.data.contentPolicy,
+      archiveSha256: uploadedArchive.data.sha256,
       retainedData: retainData,
     };
   } finally {
