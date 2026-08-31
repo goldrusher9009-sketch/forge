@@ -354,10 +354,10 @@ Never add `--volumes` during rollback. Volume deletion is a separate, explicitly
 
 ## 7. Current evidence
 
-Verified locally on the candidate branch with Node 20 and domestic sources:
+Verified on the candidate branch and candidate VPS with Node 20 and domestic sources:
 
 - sandbox contract: 6/6 passed;
-- production startup/configuration/migration regression: 5/5 passed;
+- production startup/configuration/migration/security regression: 10/10 passed;
 - Agent Run/Apptopia regression: 1 passed, 1 skipped by the existing real-provider-key contract;
 - restart recovery: 1/1 passed;
 - Google Drive OAuth/Picker selection/import/deduplication/approved write-back/revocation/transfer-ledger regression: 1/1 passed;
@@ -366,6 +366,10 @@ Verified locally on the candidate branch with Node 20 and domestic sources:
 - real Orchestrator E2E: passed Shell, Browser, File, spreadsheet, PDF, egress, persistence, integrity, and active-tool cancellation checks;
 - VPS concurrency/capacity E2E: three parallel full sandbox lifecycle runs completed with a six-runtime-container peak; a fourth provisioning request failed closed with HTTP 429 `SANDBOX_CAPACITY_EXCEEDED`; managed containers, managed volumes, and idempotency state returned to their exact baselines;
 - the same concurrency test passed twice on the candidate VPS. During the instrumented run the outer nested-Docker service peaked at about 107% CPU and 264.5 MiB memory, the Orchestrator at about 8% CPU and 128.7 MiB, and Forge at about 3.7% CPU and 367.6 MiB on a 16-vCPU host with about 62 GiB available memory. This is evidence for the configured invited-user ceiling of three active sandboxes, not a public-scale capacity claim;
+- SQLite backup regression: an online backup taken while the source used WAL restored with `integrity_check=ok`, identical user/Workspace/Artifact counts, and the exact Artifact SHA-256; the backup path now awaits `better-sqlite3.backup()` before starting gzip;
+- live candidate backup/restore: both a pre-release raw snapshot and a post-release `/api/admin/backup` gzip were exported outside the application data volume to the VPS host with `0600 root:root` permissions and recorded SHA-256 values, then restored in a network-disabled container with a read-only root filesystem. Integrity and all Run/Workspace/Event/Tool/Approval/Artifact/Drive table counts matched the online database;
+- refresh-token collision regression: four production logins issued in the same second all returned HTTP 200 and stored four distinct refresh tokens. After deployment, internal edge readiness passed three consecutive executions without the previous unique-token HTTP 500;
+- current VPS release `4e8eaacf2a93e41e6014ff563c58ed6d994b1194`: Forge, Orchestrator, Sandbox Docker, and internal gateway are healthy with zero restarts; only Forge was recreated and the adjacent Orchestrator, Sandbox Docker, ProjectHash, and Nginx identities/configuration remained unchanged;
 - Forge API → real Orchestrator integrated regression: passed with Artifact SHA-256 verification, authenticated SSE ordering, rejected Class B continuation, and cancellation during model, Shell, Browser, and waiting approval;
 - targeted strict TypeScript check for `SandboxAgentConsole.tsx`: passed;
 - Next.js production build: passed, 20/20 pages and API routes generated;
@@ -386,7 +390,7 @@ The following remain open and must not be relabelled as completed:
 
 - a real Google account Picker/import/write-back browser acceptance using the intended Google Cloud project;
 - Google consent-screen publishing and any required production verification;
-- approved production DNS, TLS, reverse proxy, firewall, host, secret store, backups, monitoring, and on-call ownership;
+- approved production DNS, TLS, reverse proxy, firewall, host, secret store, automated off-host/geographically independent backup retention and restore drills, monitoring, and on-call ownership. The current VPS-local host backup is verified and usable for candidate rollback, but it is not geographic disaster recovery;
 - customer security review, data-processing terms, retention/deletion policy, and customer acceptance;
 - stronger-than-Docker hostile multi-tenant isolation;
 - malware scanning, DLP, and content policy for uploaded/Drive-imported files;
