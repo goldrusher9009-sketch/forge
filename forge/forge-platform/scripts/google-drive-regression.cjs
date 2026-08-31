@@ -20,9 +20,12 @@ const appId = '864291765788';
 const hmacSecret = 'forge-drive-regression-hmac-secret';
 const inputFileId = 'input-file-123';
 const inputResourceKey = 'input-resource-key';
+const blockedFileId = 'blocked-file-123';
+const blockedResourceKey = 'blocked-resource-key';
 const outputFolderId = 'output-folder-123';
 const outputResourceKey = 'folder-resource-key';
 const inputContent = Buffer.from('Forge Google Drive regression input\n', 'utf8');
+const blockedContent = Buffer.from('blocked executable extension', 'utf8');
 const artifactContent = Buffer.from('Forge approved artifact write-back\n', 'utf8');
 const artifactSha256 = crypto.createHash('sha256').update(artifactContent).digest('hex');
 
@@ -119,6 +122,22 @@ function inputMetadata() {
   };
 }
 
+function blockedInputMetadata() {
+  return {
+    id: blockedFileId,
+    name: 'Invoice.pdf.exe',
+    mimeType: 'application/octet-stream',
+    parents: ['source-folder-123'],
+    size: String(blockedContent.length),
+    md5Checksum: crypto.createHash('md5').update(blockedContent).digest('hex'),
+    modifiedTime: '2026-08-31T00:01:00.000Z',
+    version: '9',
+    webViewLink: `https://drive.google.test/open?id=${blockedFileId}`,
+    trashed: false,
+    capabilities: { canDownload: true, canEdit: false },
+  };
+}
+
 function outputFolderMetadata() {
   return {
     id: outputFolderId,
@@ -157,7 +176,7 @@ test('Google Drive OAuth, verified selection, import, approved write-back, revoc
     uploads: [],
     revocations: [],
   };
-  const orchestratorState = { errors: [], fileWrites: [], artifactReads: [] };
+  const orchestratorState = { errors: [], fileWrites: [], contentPolicyBlocks: [], artifactReads: [] };
   let child = null;
 
   const googleServer = http.createServer(async (req, res) => {
@@ -216,8 +235,14 @@ test('Google Drive OAuth, verified selection, import, approved write-back, revoc
           googleState.metadataRequests.push({ driveFileId, resourceHeader, media: true });
           return sendBytes(res, 200, inputContent, 'text/plain');
         }
+        if (requestUrl.searchParams.get('alt') === 'media' && driveFileId === blockedFileId) {
+          googleState.downloads += 1;
+          googleState.metadataRequests.push({ driveFileId, resourceHeader, media: true });
+          return sendBytes(res, 200, blockedContent);
+        }
         googleState.metadataRequests.push({ driveFileId, resourceHeader, media: false });
         if (driveFileId === inputFileId) return sendJson(res, 200, inputMetadata());
+        if (driveFileId === blockedFileId) return sendJson(res, 200, blockedInputMetadata());
         if (driveFileId === outputFolderId) return sendJson(res, 200, outputFolderMetadata());
         return sendJson(res, 404, { error: { message: 'file not found' } });
       }
@@ -258,6 +283,13 @@ test('Google Drive OAuth, verified selection, import, approved write-back, revoc
       const body = JSON.parse(rawBody.toString('utf8') || '{}');
       if (req.method === 'POST' && req.url === '/v1/workspaces/files') {
         const content = Buffer.from(String(body.contentBase64 || ''), 'base64');
+        if (/\.exe$/i.test(String(body.path || ''))) {
+          orchestratorState.contentPolicyBlocks.push({ body, content });
+          return sendJson(res, 422, {
+            success: false,
+            error: 'SANDBOX_UPLOAD_CONTENT_BLOCKED_EXECUTABLE_OR_ACTIVE_CONTENT_EXTENSION',
+          });
+        }
         orchestratorState.fileWrites.push({ body, content });
         return sendJson(res, 201, {
           success: true,
@@ -465,6 +497,36 @@ test('Google Drive OAuth, verified selection, import, approved write-back, revoc
   assert.equal(orchestratorState.fileWrites.length, 1);
   assert.equal(googleState.downloads, 1);
 
+  const blockedSelection = await api(forgeBase, '/api/google-drive/selections', token, {
+    method: 'POST',
+    body: JSON.stringify({ role: 'input', items: [{ id: blockedFileId, name: 'Harmless name.txt', resourceKey: blockedResourceKey }] }),
+  });
+  assert.equal(blockedSelection.response.status, 201, JSON.stringify(blockedSelection.body));
+  assert.equal(blockedSelection.body.data.length, 1);
+  assert.equal(blockedSelection.body.data[0].name, 'Invoice.pdf.exe');
+  assert.equal(blockedSelection.body.data[0].driveFileId, blockedFileId);
+
+  const successfulWritesBeforeBlockedImport = orchestratorState.fileWrites.length;
+  const blockedImport = await api(forgeBase, `/api/google-drive/selections/${blockedSelection.body.data[0].id}/import`, token, {
+    method: 'POST',
+    body: JSON.stringify({ workspaceId }),
+  });
+  assert.equal(blockedImport.response.status, 422, JSON.stringify(blockedImport.body));
+  assert.equal(blockedImport.body.error, 'SANDBOX_UPLOAD_CONTENT_BLOCKED_EXECUTABLE_OR_ACTIVE_CONTENT_EXTENSION');
+  assert.match(blockedImport.body.transferId, /^drivetransfer_/);
+  assert.equal(orchestratorState.fileWrites.length, successfulWritesBeforeBlockedImport);
+  assert.equal(orchestratorState.contentPolicyBlocks.length, 1);
+  assert.match(orchestratorState.contentPolicyBlocks[0].body.path, /Invoice\.pdf\.exe$/);
+  assert.deepEqual(orchestratorState.contentPolicyBlocks[0].content, blockedContent);
+  assert.equal(googleState.downloads, 2);
+
+  const blockedLedgerDb = new Database(dbPath, { readonly: true });
+  const blockedTransfer = blockedLedgerDb.prepare('SELECT status,error,completed_at FROM google_drive_transfers WHERE id=?').get(blockedImport.body.transferId);
+  blockedLedgerDb.close();
+  assert.equal(blockedTransfer.status, 'failed');
+  assert.equal(blockedTransfer.error, 'SANDBOX_UPLOAD_CONTENT_BLOCKED_EXECUTABLE_OR_ACTIVE_CONTENT_EXTENSION');
+  assert.ok(blockedTransfer.completed_at);
+
   const writer = new Database(dbPath);
   const insertedRun = writer.prepare(`INSERT INTO agent_runs
     (user_id,name,prompt,result,status,execution_mode,tenant_id,workspace_id,run_key,sandbox_id,attempt_id,sandbox_state,completed_at)
@@ -521,8 +583,8 @@ test('Google Drive OAuth, verified selection, import, approved write-back, revoc
 
   const transfers = await api(forgeBase, `/api/google-drive/transfers?workspaceId=${encodeURIComponent(workspaceId)}`, token);
   assert.equal(transfers.response.status, 200);
-  assert.equal(transfers.body.data.length, 3);
-  assert.deepEqual(new Set(transfers.body.data.map(row => row.status)), new Set(['completed', 'deduplicated']));
+  assert.equal(transfers.body.data.length, 4);
+  assert.deepEqual(new Set(transfers.body.data.map(row => row.status)), new Set(['completed', 'deduplicated', 'failed']));
   assert.deepEqual(new Set(transfers.body.data.map(row => row.direction)), new Set(['import', 'writeback']));
   assert.equal(transfers.body.data.find(row => row.direction === 'writeback').sha256, artifactSha256);
 
@@ -560,18 +622,19 @@ test('Google Drive OAuth, verified selection, import, approved write-back, revoc
   assert.deepEqual(activeSelections.body.data, []);
   const retainedTransfers = await api(forgeBase, '/api/google-drive/transfers', token);
   assert.equal(retainedTransfers.response.status, 200);
-  assert.equal(retainedTransfers.body.data.length, 3);
+  assert.equal(retainedTransfers.body.data.length, 4);
 
   const finalDb = new Database(dbPath, { readonly: true });
   assert.equal(finalDb.prepare("SELECT COUNT(*) AS count FROM user_storage_configs WHERE user_id=? AND provider='gdrive'").get(userId).count, 0);
   assert.equal(finalDb.prepare('SELECT COUNT(*) AS count FROM google_drive_oauth_states WHERE user_id=?').get(userId).count, 0);
-  assert.equal(finalDb.prepare("SELECT COUNT(*) AS count FROM google_drive_selections WHERE user_id=? AND status='revoked'").get(userId).count, 2);
+  assert.equal(finalDb.prepare("SELECT COUNT(*) AS count FROM google_drive_selections WHERE user_id=? AND status='revoked'").get(userId).count, 3);
   assert.equal(finalDb.prepare("SELECT COUNT(*) AS count FROM google_drive_writebacks WHERE user_id=? AND status='completed'").get(userId).count, 1);
   assert.equal(finalDb.prepare("SELECT COUNT(*) AS count FROM sandbox_events WHERE run_id=? AND type='drive_writeback_approval_required'").get(runId).count, 1);
   assert.equal(finalDb.prepare("SELECT COUNT(*) AS count FROM sandbox_events WHERE run_id=? AND type='drive_writeback_completed'").get(runId).count, 1);
   finalDb.close();
 
   assert.ok(googleState.metadataRequests.some(row => row.driveFileId === inputFileId && row.resourceHeader === `${inputFileId}/${inputResourceKey}`));
+  assert.ok(googleState.metadataRequests.some(row => row.driveFileId === blockedFileId && row.resourceHeader === `${blockedFileId}/${blockedResourceKey}`));
   assert.ok(googleState.metadataRequests.some(row => row.driveFileId === outputFolderId && row.resourceHeader === `${outputFolderId}/${outputResourceKey}`));
   assert.deepEqual(googleState.errors, []);
   assert.deepEqual(orchestratorState.errors, []);

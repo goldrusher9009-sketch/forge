@@ -4,6 +4,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
+const { CONTENT_POLICY_VERSION, inspectInboundWorkspaceFile } = require('./content-policy');
 const { DockerApi } = require('./docker-api');
 const { createConcurrencyLimiter, createSandboxAdmission } = require('./runtime-limits');
 const { pruneNonces, sha256, verifySignedRequest } = require('./security');
@@ -291,6 +292,8 @@ async function writeWorkspaceFile(body) {
   const content = Buffer.from(String(body.contentBase64 || ''), 'base64');
   if (!content.length && body.contentBase64) throw new Error('SANDBOX_UPLOAD_BASE64_INVALID');
   if (content.length > 10 * 1024 * 1024) throw new Error('SANDBOX_UPLOAD_TOO_LARGE');
+  const inspection = inspectInboundWorkspaceFile(relativePath, content);
+  if (!inspection.allowed) throw new Error(`SANDBOX_UPLOAD_CONTENT_BLOCKED_${inspection.reason}`);
   return withVolumeHelper(body, 'workspace', async helper => {
     const directory = path.posix.dirname(relativePath);
     if (directory !== '.') {
@@ -299,7 +302,7 @@ async function writeWorkspaceFile(body) {
       if (created.exitCode !== 0) throw new Error(`SANDBOX_UPLOAD_MKDIR_FAILED: ${created.stderr.slice(0, 500)}`);
     }
     await docker.putArchive(helper, path.posix.join('/workspace', directory === '.' ? '' : directory), singleFileTar(path.posix.basename(relativePath), content));
-    return { path: relativePath, bytes: content.length, sha256: sha256(content) };
+    return { path: relativePath, bytes: content.length, sha256: sha256(content), contentPolicy: inspection.policy };
   });
 }
 
@@ -342,6 +345,7 @@ const server = http.createServer(async (req, res) => {
         status: 'ok',
         runtimeImage: RUNTIME_IMAGE,
         isolation: 'per-run-containers',
+        contentPolicy: CONTENT_POLICY_VERSION,
         limits: {
           maxActiveSandboxes: sandboxAdmission.maxActive,
           maxActiveSandboxesPerTenant: sandboxAdmission.maxActivePerTenant,
@@ -377,7 +381,7 @@ const server = http.createServer(async (req, res) => {
     json(res, 404, { success: false, error: 'NOT_FOUND' });
   } catch (error) {
     const code = String(error && error.message || 'SANDBOX_ORCHESTRATOR_ERROR');
-    const status = code.includes('SIGNATURE') ? 401 : code.includes('NOT_FOUND') ? 404 : code.includes('CONFLICT') || code.includes('PROVISION_IN_PROGRESS') ? 409 : code.includes('CAPACITY_EXCEEDED') ? 429 : code.includes('TOO_LARGE') ? 413 : 400;
+    const status = code.includes('SIGNATURE') ? 401 : code.includes('NOT_FOUND') ? 404 : code.includes('CONFLICT') || code.includes('PROVISION_IN_PROGRESS') ? 409 : code.includes('CAPACITY_EXCEEDED') ? 429 : code.includes('TOO_LARGE') ? 413 : code.includes('CONTENT_BLOCKED') ? 422 : 400;
     json(res, status, { success: false, error: code.slice(0, 2000) });
   }
 });

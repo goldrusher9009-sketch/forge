@@ -139,6 +139,13 @@ async function main() {
   let completion;
 
   try {
+    const blocked = await request('POST', '/v1/workspaces/files', {
+      ...first,
+      path: 'input/invoice.pdf.exe',
+      contentBase64: Buffer.from('blocked executable extension').toString('base64'),
+    }, 422);
+    assert(blocked.success === false && blocked.error === 'SANDBOX_UPLOAD_CONTENT_BLOCKED_EXECUTABLE_OR_ACTIVE_CONTENT_EXTENSION', 'E2E_CONTENT_POLICY_BLOCK_FAILED');
+
     const provisioned = await request('POST', '/v1/sandboxes/provision', first, 201);
     assert(provisioned.data && provisioned.data.state === 'ready', 'E2E_FIRST_SANDBOX_NOT_READY');
     liveSandboxes.add(first.sandboxId);
@@ -152,6 +159,7 @@ async function main() {
       contentBase64: Buffer.from(sourceContent).toString('base64'),
     }, 201);
     assert(uploaded.data && uploaded.data.sha256 === sourceSha256, 'E2E_WORKSPACE_UPLOAD_INTEGRITY_FAILED');
+    assert(uploaded.data.contentPolicy === 'forge-inbound-v1', 'E2E_CONTENT_POLICY_EVIDENCE_MISSING');
 
     const written = await execute(first, seed, 'write', 'sandbox_file', {
       operation: 'write', path: 'output/result.txt', content: resultContent,
@@ -220,6 +228,8 @@ async function main() {
       publicEgressStatus: publicBrowser.results[0].status,
       metadataBlock,
       privateBlock,
+      contentPolicyBlock: blocked.error,
+      contentPolicy: uploaded.data.contentPolicy,
       retainedData: retainData,
     };
   } finally {

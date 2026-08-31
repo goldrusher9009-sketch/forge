@@ -362,10 +362,11 @@ Verified on the candidate branch and candidate VPS with Node 20 and domestic sou
 - Agent Run/Apptopia regression: 1 passed, 1 skipped by the existing real-provider-key contract;
 - restart recovery: 1/1 passed;
 - Google Drive OAuth/Picker selection/import/deduplication/approved write-back/revocation/transfer-ledger regression: 1/1 passed;
-- Orchestrator unit tests: 5/5 passed;
+- Orchestrator unit tests: 9/9 passed;
 - sandbox runtime path-containment unit tests: 2/2 passed;
 - real Orchestrator E2E: passed Shell, Browser, File, spreadsheet, PDF, egress, persistence, integrity, and active-tool cancellation checks;
 - VPS concurrency/capacity E2E: three parallel full sandbox lifecycle runs completed with a six-runtime-container peak; a fourth provisioning request failed closed with HTTP 429 `SANDBOX_CAPACITY_EXCEEDED`; a second concurrent sandbox for the same tenant failed closed with HTTP 429 `SANDBOX_TENANT_CAPACITY_EXCEEDED`; managed containers, managed volumes, and idempotency state returned to their exact baselines;
+- inbound-content policy pre-release evidence (candidate branch only; VPS release and real E2E still pending): browser Workspace uploads and Google Drive imports converge on the Orchestrator file-ingress boundary. Policy `forge-inbound-v1` rejects clearly executable/installer/disk-image/macro-enabled extensions and renamed native executable signatures with HTTP 422 before any Workspace volume helper is created; ordinary documents, source files, PDFs, standard Office files, and archives remain supported. The isolated Google Drive regression also proves that a rejected import is returned as HTTP 422, records a `failed` transfer ledger row with the policy error, and creates no successful Workspace write;
 - the same concurrency test passed twice on the candidate VPS. During the instrumented run the outer nested-Docker service peaked at about 107% CPU and 264.5 MiB memory, the Orchestrator at about 8% CPU and 128.7 MiB, and Forge at about 3.7% CPU and 367.6 MiB on a 16-vCPU host with about 62 GiB available memory. This is evidence for the configured invited-user ceiling of three active sandboxes, not a public-scale capacity claim;
 - SQLite backup regression: an online backup taken while the source used WAL restored with `integrity_check=ok`, identical user/Workspace/Artifact counts, and the exact Artifact SHA-256; the backup path now awaits `better-sqlite3.backup()` before starting gzip;
 - live candidate backup/restore: both a pre-release raw snapshot and a post-release `/api/admin/backup` gzip were exported outside the application data volume to the VPS host with `0600 root:root` permissions and recorded SHA-256 values, then restored in a network-disabled container with a read-only root filesystem. Integrity and all Run/Workspace/Event/Tool/Approval/Artifact/Drive table counts matched the online database;
@@ -395,7 +396,7 @@ The following remain open and must not be relabelled as completed:
 - approved production DNS, TLS, reverse proxy, firewall, host, secret store, automated off-host/geographically independent backup retention and restore drills, monitoring, and on-call ownership. The current VPS-local host backup is verified and usable for candidate rollback, but it is not geographic disaster recovery;
 - customer security review, data-processing terms, retention/deletion policy, and customer acceptance;
 - stronger-than-Docker hostile multi-tenant isolation;
-- malware scanning, DLP, and content policy for uploaded/Drive-imported files;
+- full signature-based malware scanning, archive inspection, DLP, and organization-specific content policy remain open. Candidate policy `forge-inbound-v1` blocks a narrow high-risk executable/active-content set at the shared Workspace/Drive ingress boundary, but it must not be described as antivirus or comprehensive DLP;
 - capacity/load evidence beyond the current three-active-sandbox invited-user ceiling. The candidate has a global admission limit, a one-active-sandbox-per-tenant limit, and a global tool limiter, but those controls must not be described as public-scale capacity;
 - public signup, public self-service, Paid Beta, or real-money Minera;
 - Cloud PC/mobile-device control. The current target is a mobile-friendly web control plane driving cloud sandboxes, not a full persistent cloud desktop.
