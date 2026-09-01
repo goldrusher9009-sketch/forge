@@ -597,6 +597,71 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// ─── v8.32 Prompt Mutation Engine ────────────────────────────────────────────
+function PromptMutationPanel({ api }: { api: Api }) {
+  const [prompt, setPrompt] = useState('');
+  const [count, setCount] = useState(4);
+  const [variants, setVariants] = useState<{ strategy: string; variant: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState<number|null>(null);
+
+  async function mutate() {
+    if (!prompt.trim()) return;
+    setLoading(true); setError(''); setVariants([]);
+    try {
+      const d = await api('/api/prompts/mutate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: prompt.trim(), count }) });
+      if (d.success) setVariants(d.variants);
+      else setError(d.error || 'Failed');
+    } catch { setError('Request failed'); }
+    setLoading(false);
+  }
+
+  function copy(text: string, i: number) {
+    navigator.clipboard.writeText(text);
+    setCopied(i);
+    setTimeout(() => setCopied(null), 1500);
+  }
+
+  return (
+    <div>
+      <h3 style={{ ...S.h, fontSize: 15, marginBottom: 12 }}>🧬 Prompt Mutation Engine</h3>
+      <p style={{ ...S.sub, marginBottom: 12 }}>Generate smarter variants of any prompt using different engineering strategies.</p>
+      <textarea
+        value={prompt}
+        onChange={e => setPrompt(e.target.value)}
+        placeholder="Enter your prompt to mutate..."
+        style={{ width: '100%', minHeight: 90, background: S.input.background, border: S.input.border, color: S.input.color, borderRadius: 8, padding: 10, fontSize: 13, resize: 'vertical', boxSizing: 'border-box' }}
+      />
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8, marginBottom: 16 }}>
+        <label style={{ ...S.sub, fontSize: 12 }}>Variants:</label>
+        {[2,4,6,8].map(n => (
+          <button key={n} onClick={() => setCount(n)} style={{ ...S.btn, ...(count === n ? {} : S.ghostBtn), padding: '4px 12px', fontSize: 12 }}>{n}</button>
+        ))}
+        <button onClick={mutate} disabled={loading || !prompt.trim()} style={{ ...S.btn, marginLeft: 'auto', opacity: loading || !prompt.trim() ? 0.5 : 1 }}>
+          {loading ? '⏳ Mutating...' : '🧬 Mutate'}
+        </button>
+      </div>
+      {error && <p style={{ color: '#f87171', fontSize: 13, marginBottom: 12 }}>{error}</p>}
+      {variants.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {variants.map((v, i) => (
+            <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <span style={{ fontSize: 11, color: '#a78bfa', fontWeight: 600 }}>Strategy {i+1}: {v.strategy.slice(0, 60)}</span>
+                <button onClick={() => copy(v.variant, i)} style={{ ...S.btn, ...S.ghostBtn, padding: '3px 10px', fontSize: 11 }}>
+                  {copied === i ? '✓ Copied' : '📋 Copy'}
+                </button>
+              </div>
+              <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 12, color: '#e2e8f0', lineHeight: 1.5 }}>{v.variant}</pre>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Morning dashboard + approval inbox ──────────────────────────────────────
 function AgentSchedulePanel({ api }: { api: Api }) {
   const [schedules, setSchedules] = useState<any[]>([]);
@@ -1204,7 +1269,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -1230,6 +1295,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'health', label: '💚 Health' },
     { id: 'relay', label: '⛓️ Relay' },
     { id: 'scoreboard', label: '🏅 Scoreboard' },
+    { id: 'mutate', label: '🧬 Mutate' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -1298,6 +1364,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'health' && <AgentHealthMonitor api={api} />}
         {tab === 'relay' && <RelayRunner api={api} />}
         {tab === 'scoreboard' && <AgentScoreboard api={api} />}
+        {tab === 'mutate' && <PromptMutationPanel api={api} />}
       </div>
     </div>
   );
