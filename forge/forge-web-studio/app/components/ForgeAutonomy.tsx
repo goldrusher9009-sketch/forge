@@ -590,7 +590,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -606,6 +606,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'history', label: '📜 History' },
     { id: 'templates', label: '📦 Templates' },
     { id: 'leaderboard', label: '🏆 Leaders' },
+    { id: 'events', label: '📡 Events' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -664,6 +665,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'history' && <AgentHistoryPanel api={api} />}
         {tab === 'templates' && <AgentTemplatesPanel api={api} />}
         {tab === 'leaderboard' && <AgentLeaderboard api={api} />}
+        {tab === 'events' && <AgentEventFeed api={api} />}
       </div>
     </div>
   );
@@ -1469,6 +1471,46 @@ function AgentLeaderboard({ api }: { api: Api }) {
         ))}
         <button onClick={savePrefs} disabled={saving} style={{ width: '100%', background: '#3b82f6', border: 'none', borderRadius: '6px', color: '#fff', padding: '8px', cursor: 'pointer', fontSize: '13px', marginTop: '4px' }}>{saving ? 'Saving...' : 'Save Preferences'}</button>
       </div>
+    </div>
+  );
+}
+
+function AgentEventFeed({ api }: { api: Api }) {
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const r = await api('/api/agent-events?limit=100');
+      if (r.ok) { const d = await r.json(); setEvents(d.events || []); }
+    } finally { setLoading(false); }
+  };
+  useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, []);
+
+  const typeColor: Record<string, string> = {
+    goal_reached: '#22c55e', alert: '#f59e0b', data_found: '#3b82f6',
+    error: '#ef4444', agent_run: '#8b5cf6', generic: '#64748b',
+  };
+
+  return (
+    <div style={{ padding: '16px', color: '#e2e8f0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+        <h3 style={{ margin: 0, fontSize: '16px' }}>📡 Agent Event Bus</h3>
+        <button onClick={load} disabled={loading} style={{ background: '#334155', border: 'none', borderRadius: '6px', color: '#e2e8f0', padding: '6px 12px', cursor: 'pointer', fontSize: '12px' }}>{loading ? '...' : '↻ Refresh'}</button>
+      </div>
+      <div style={{ fontSize: '12px', color: '#475569', marginBottom: '8px' }}>{events.length} events — auto-refreshes every 15s</div>
+      {events.length === 0 ? (
+        <div style={{ textAlign: 'center', color: '#475569', padding: '32px', fontSize: '14px' }}>No events yet. Agents emit events when they fire alerts, reach goals, or find data.</div>
+      ) : events.map(e => (
+        <div key={e.id} style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '10px 12px', marginBottom: '6px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+          <span style={{ background: typeColor[e.event_type] || '#64748b', color: '#fff', fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '4px', whiteSpace: 'nowrap', marginTop: '1px' }}>{e.event_type}</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '2px' }}>{Object.keys(e.payload||{}).length > 0 ? JSON.stringify(e.payload).slice(0,200) : '(no payload)'}</div>
+            <div style={{ fontSize: '11px', color: '#475569' }}>{new Date(e.created_at).toLocaleString()}</div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
