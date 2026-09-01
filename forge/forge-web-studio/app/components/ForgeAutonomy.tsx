@@ -597,6 +597,104 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// ─── v8.39 Goal Milestone Tracker ────────────────────────────────────────────
+function GoalMilestoneTracker({ api }: { api: Api }) {
+  const [goals, setGoals] = useState<any[]>([]);
+  const [selectedGoal, setSelectedGoal] = useState<any>(null);
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [newTitle, setNewTitle] = useState('');
+  const [newValue, setNewValue] = useState('');
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => { loadGoals(); }, []);
+
+  async function loadGoals() {
+    try { const d = await api('/api/agent-goals'); if (d.success) setGoals(d.data || []); } catch {}
+  }
+
+  async function selectGoal(g: any) {
+    setSelectedGoal(g);
+    try { const d = await api(`/api/agent-goals/${g.id}/milestones`); if (d.success) setMilestones(d.data); } catch {}
+  }
+
+  async function addMilestone() {
+    if (!newTitle.trim() || !selectedGoal) return;
+    setAdding(true);
+    try {
+      await api(`/api/agent-goals/${selectedGoal.id}/milestones`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: newTitle.trim(), target_value: newValue ? parseFloat(newValue) : undefined }) });
+      setNewTitle(''); setNewValue('');
+      selectGoal(selectedGoal);
+    } catch {}
+    setAdding(false);
+  }
+
+  async function complete(mid: number) {
+    try { await api(`/api/agent-goals/milestones/${mid}/complete`, { method: 'PATCH' }); selectGoal(selectedGoal); } catch {}
+  }
+
+  async function remove(mid: number) {
+    try { await api(`/api/agent-goals/milestones/${mid}`, { method: 'DELETE' }); selectGoal(selectedGoal); } catch {}
+  }
+
+  const done = milestones.filter(m => m.completed).length;
+  const pct = milestones.length > 0 ? Math.round((done / milestones.length) * 100) : 0;
+
+  return (
+    <div>
+      <h3 style={{ ...S.h, fontSize: 15, marginBottom: 12 }}>🎯 Goal Milestones</h3>
+      {!selectedGoal ? (
+        <div>
+          <p style={{ ...S.sub, marginBottom: 10 }}>Select a goal to manage its milestones:</p>
+          {goals.length === 0 && <p style={S.sub}>No goals yet.</p>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {goals.filter((g: any) => g.status === 'active').map(g => (
+              <button key={g.id} onClick={() => selectGoal(g)} style={{ ...S.btn, ...S.ghostBtn, textAlign: 'left', padding: '10px 14px' }}>
+                <strong>{g.title}</strong> <span style={{ ...S.sub, fontSize: 11 }}>· {g.metric}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <button onClick={() => setSelectedGoal(null)} style={{ ...S.btn, ...S.ghostBtn, padding: '4px 10px', fontSize: 12 }}>← Back</button>
+            <span style={{ fontWeight: 700 }}>{selectedGoal.title}</span>
+          </div>
+          {milestones.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+                <span style={S.sub}>{done}/{milestones.length} complete</span>
+                <span style={{ color: '#4ade80' }}>{pct}%</span>
+              </div>
+              <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 4, height: 8 }}>
+                <div style={{ background: '#4ade80', width: `${pct}%`, height: '100%', borderRadius: 4, transition: 'width 0.3s' }} />
+              </div>
+            </div>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
+            {milestones.map(m => (
+              <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: m.completed ? 'rgba(74,222,128,0.08)' : 'rgba(255,255,255,0.04)', border: `1px solid ${m.completed ? 'rgba(74,222,128,0.3)' : 'rgba(255,255,255,0.1)'}`, borderRadius: 8, padding: '8px 12px' }}>
+                <button onClick={() => !m.completed && complete(m.id)} style={{ background: 'none', border: `2px solid ${m.completed ? '#4ade80' : 'rgba(255,255,255,0.3)'}`, borderRadius: '50%', width: 20, height: 20, cursor: m.completed ? 'default' : 'pointer', color: '#4ade80', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{m.completed ? '✓' : ''}</button>
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontSize: 13, textDecoration: m.completed ? 'line-through' : 'none', color: m.completed ? '#94a3b8' : '#e2e8f0' }}>{m.title}</span>
+                  {m.target_value != null && <span style={{ ...S.sub, fontSize: 11, marginLeft: 8 }}>@ {m.target_value}</span>}
+                  {m.completed_at && <span style={{ ...S.sub, fontSize: 10, marginLeft: 8 }}>✓ {m.completed_at.slice(0, 10)}</span>}
+                </div>
+                <button onClick={() => remove(m.id)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 14, padding: 0 }}>✕</button>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Milestone title" style={{ ...S.input, flex: 2, padding: '6px 10px', fontSize: 12 }} onKeyDown={e => e.key === 'Enter' && addMilestone()} />
+            <input value={newValue} onChange={e => setNewValue(e.target.value)} placeholder="Value (opt)" type="number" style={{ ...S.input, flex: 1, padding: '6px 10px', fontSize: 12 }} />
+            <button onClick={addMilestone} disabled={adding || !newTitle.trim()} style={{ ...S.btn, opacity: adding ? 0.5 : 1 }}>+ Add</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── v8.38 Agent Digest Panel ────────────────────────────────────────────────
 function AgentDigestPanel({ api }: { api: Api }) {
   const [days, setDays] = useState(1);
@@ -1721,7 +1819,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -1754,6 +1852,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'retry', label: '🔄 Smart Retry' },
     { id: 'tags', label: '🏷️ Tags' },
     { id: 'agentdigest', label: '📨 Digest' },
+    { id: 'milestones', label: '🎯 Milestones' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -1829,6 +1928,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'retry' && <SmartRetryPanel api={api} />}
         {tab === 'tags' && <AgentTagPanel api={api} />}
         {tab === 'agentdigest' && <AgentDigestPanel api={api} />}
+        {tab === 'milestones' && <GoalMilestoneTracker api={api} />}
       </div>
     </div>
   );
