@@ -38951,6 +38951,51 @@ app.put('/api/okr/milestones/:id/complete', requireAuth, (req: any, res: any) =>
 });
 // ─── End B248 ────────────────────────────────────────────────────────────────
 
+// v8.40 Agent Benchmark — run goal with multiple strategies, compare outputs
+app.post('/api/agent-benchmark', requireAuth, async (req: any, res: any) => {
+  try {
+    const { goal, strategies } = req.body;
+    if (!goal) return res.status(400).json({ error: 'goal required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const strats: string[] = strategies && strategies.length ? strategies : [
+      'Be concise and direct.',
+      'Think step-by-step before answering.',
+      'Be creative and think outside the box.',
+      'Use a formal, structured response with headers and bullet points.',
+    ];
+    const results: any[] = [];
+    for (const strat of strats.slice(0, 6)) {
+      const t0 = Date.now();
+      try {
+        const r = await callLLM(provider, key, null as any, [
+          { role: 'user', content: `[Instruction: ${strat}]\n\n${goal}` }
+        ], undefined, { maxTokens: 600 });
+        results.push({ strategy: strat, output: (r.content||'').trim(), latencyMs: Date.now()-t0, tokens: (r.promptTokens||0)+(r.completionTokens||0), error: null });
+      } catch(e:any) {
+        results.push({ strategy: strat, output: '', latencyMs: Date.now()-t0, tokens: 0, error: e.message });
+      }
+    }
+    let winner: any = null;
+    const valid = results.filter(r=>!r.error && r.output);
+    if (valid.length > 1) {
+      const summaries = results.map((r,i)=>`[${i+1}] Strategy: "${r.strategy}"\nOutput: ${r.output.slice(0,300)}`).join('\n\n');
+      const jp = `Evaluate these ${results.length} responses to the goal: "${goal}"\n\n${summaries}\n\nRespond ONLY with JSON: {"rankings":[{"rank":1,"index":1,"score":9,"reasoning":"why"}],"winner_index":1,"winner_reason":"brief"}`;
+      try {
+        const jr = await callLLM(provider, key, null as any, [{ role:'user', content: jp }], undefined, { maxTokens: 400 });
+        const t = (jr.content||'').trim();
+        const jj = t.includes('{') ? JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)) : null;
+        if (jj) winner = jj;
+      } catch(_){}
+    }
+    res.json({ success: true, goal, results, winner });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
