@@ -55417,6 +55417,7 @@ function ForgeTab_urlmonitor() {
   const [url, setUrl] = React.useState('');
   const [label, setLabel] = React.useState('');
   const [interval, setInterval] = React.useState('0 */6 * * *');
+  const [onChangeGoal, setOnChangeGoal] = React.useState('');
   const [adding, setAdding] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
@@ -55440,7 +55441,7 @@ function ForgeTab_urlmonitor() {
       await fetch(`${apiBase}/api/url-monitors`, {
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-        body: JSON.stringify({ url, label: label||url, check_interval: interval, notify_on_change: 1 })
+        body: JSON.stringify({ url, label: label||url, check_interval: interval, notify_on_change: 1, on_change_goal: onChangeGoal||undefined })
       });
       setUrl(''); setLabel('');
       await load();
@@ -55478,6 +55479,8 @@ function ForgeTab_urlmonitor() {
           <input value={label} onChange={e=>setLabel(e.target.value)} placeholder="Label (optional)"
             style={{padding:'10px 14px',borderRadius:'8px',border:'1px solid #334155',background:'#0f172a',color:'#e2e8f0',fontSize:'14px'}} />
         </div>
+        <input value={onChangeGoal} onChange={e=>setOnChangeGoal(e.target.value)} placeholder="Agent goal on change (optional) — e.g. 'Summarize what changed and save to memory'"
+          style={{padding:'10px 14px',borderRadius:'8px',border:'1px solid #334155',background:'#0f172a',color:'#e2e8f0',fontSize:'14px',width:'100%',marginBottom:'12px'}} />
         <div style={{display:'flex',gap:'12px',alignItems:'center'}}>
           <select value={interval} onChange={e=>setInterval(e.target.value)}
             style={{padding:'10px 14px',borderRadius:'8px',border:'1px solid #334155',background:'#0f172a',color:'#e2e8f0',fontSize:'14px',flex:1}}>
