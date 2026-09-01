@@ -225,6 +225,83 @@ function ApprovalCard({ a, api, onResolved }: { a: any; api: Api; onResolved: ()
   );
 }
 
+// ─── v8.27 Run Inspector ──────────────────────────────────────────────────────
+function AgentRunInspector({ api }: { api: Api }) {
+  const [runs, setRuns] = useState<any[]>([]);
+  const [selected, setSelected] = useState<any>(null);
+  const [detail, setDetail] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const load = async () => {
+    const d = await api('/api/agent-runs?limit=100');
+    if (d?.runs) setRuns(d.runs);
+  };
+  useEffect(() => { load(); }, []);
+
+  const openDetail = async (run: any) => {
+    setSelected(run);
+    setDetail(null);
+    setLoading(true);
+    const d = await api(`/api/agent-runs/${run.id}`);
+    setDetail(d?.data || run);
+    setLoading(false);
+  };
+
+  const filtered = runs.filter(r =>
+    !search || r.name?.toLowerCase().includes(search.toLowerCase()) || r.goal?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const statusColor: Record<string, string> = {
+    completed: '#22c55e', failed: '#ef4444', running: '#f59e0b', pending: '#64748b',
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: 12, height: 480 }}>
+      {/* List */}
+      <div style={{ width: 280, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search runs…"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#fff', padding: '6px 10px', fontSize: 12, marginBottom: 6 }} />
+        {filtered.length === 0 && <p style={{ color: '#555', fontSize: 12 }}>No runs yet.</p>}
+        {filtered.map(r => (
+          <div key={r.id} onClick={() => openDetail(r)} style={{
+            padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
+            background: selected?.id === r.id ? 'rgba(255,31,53,0.15)' : 'rgba(255,255,255,0.04)',
+            border: `1px solid ${selected?.id === r.id ? '#ff1f35' : 'rgba(255,255,255,0.07)'}`,
+          }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#fff', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name || r.goal?.slice(0,40) || r.id}</div>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <span style={{ fontSize: 10, color: statusColor[r.status] || '#64748b', fontWeight: 700 }}>●{r.status}</span>
+              {r.score != null && <span style={{ fontSize: 10, color: '#f59e0b' }}>★{r.score}</span>}
+              <span style={{ fontSize: 10, color: '#555', marginLeft: 'auto' }}>{r.created_at?.slice(5,16)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Detail */}
+      <div style={{ flex: 1, overflowY: 'auto', background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 14 }}>
+        {!selected && <p style={{ color: '#555', fontSize: 13 }}>← Select a run to inspect</p>}
+        {selected && loading && <p style={{ color: '#888', fontSize: 13 }}>Loading…</p>}
+        {selected && !loading && detail && (
+          <>
+            <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 8 }}>{detail.name || detail.goal?.slice(0,60)}</h3>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+              <span style={{ background: statusColor[detail.status] || '#64748b', color: '#fff', borderRadius: 4, padding: '2px 7px', fontSize: 11 }}>{detail.status}</span>
+              {detail.score != null && <span style={{ background: '#92400e', color: '#fcd34d', borderRadius: 4, padding: '2px 7px', fontSize: 11 }}>Score: {detail.score}</span>}
+              {detail.model && <span style={{ background: 'rgba(255,255,255,0.08)', color: '#aaa', borderRadius: 4, padding: '2px 7px', fontSize: 11 }}>{detail.model}</span>}
+            </div>
+            {detail.goal && <div style={{ marginBottom: 10 }}><p style={{ color: '#888', fontSize: 11, marginBottom: 4 }}>GOAL</p><p style={{ color: '#ccc', fontSize: 12, whiteSpace: 'pre-wrap' }}>{detail.goal}</p></div>}
+            {detail.score_reason && <div style={{ marginBottom: 10 }}><p style={{ color: '#888', fontSize: 11, marginBottom: 4 }}>SCORE REASON</p><p style={{ color: '#ccc', fontSize: 12 }}>{detail.score_reason}</p></div>}
+            {detail.error && <div style={{ marginBottom: 10 }}><p style={{ color: '#ef4444', fontSize: 11, marginBottom: 4 }}>ERROR</p><p style={{ color: '#fca5a5', fontSize: 12 }}>{detail.error}</p></div>}
+            {detail.result && <div><p style={{ color: '#888', fontSize: 11, marginBottom: 4 }}>RESULT</p><pre style={{ color: '#d1fae5', fontSize: 11, whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: 'rgba(0,0,0,0.3)', borderRadius: 6, padding: 10 }}>{typeof detail.result === 'string' ? detail.result : JSON.stringify(detail.result, null, 2)}</pre></div>}
+            <p style={{ color: '#444', fontSize: 10, marginTop: 10 }}>ID: {detail.id} · {detail.created_at}</p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Morning dashboard + approval inbox ──────────────────────────────────────
 function AgentSchedulePanel({ api }: { api: Api }) {
   const [schedules, setSchedules] = useState<any[]>([]);
@@ -832,7 +909,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -853,6 +930,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'playbook', label: '📖 Playbook' },
     { id: 'memory', label: '🧠 Memory' },
     { id: 'myschedules', label: '⏰ Schedules' },
+    { id: 'runs', label: '🔍 Run Inspector' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -916,6 +994,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'playbook' && <AgentPlaybookPanel api={api} />}
         {tab === 'memory' && <AgentMemorySearch api={api} />}
         {tab === 'myschedules' && <AgentSchedulePanel api={api} />}
+        {tab === 'runs' && <AgentRunInspector api={api} />}
       </div>
     </div>
   );
