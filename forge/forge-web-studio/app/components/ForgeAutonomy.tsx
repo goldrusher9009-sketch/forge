@@ -225,6 +225,77 @@ function ApprovalCard({ a, api, onResolved }: { a: any; api: Api; onResolved: ()
   );
 }
 
+// ─── v8.29 Agent Health Monitor ──────────────────────────────────────────────
+function AgentHealthMonitor({ api }: { api: Api }) {
+  const [health, setHealth] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    const d = await api('/api/schedules/health');
+    if (d?.success) setHealth(d.data || []);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const badgeStyle = (s: string) => {
+    const map: Record<string, { bg: string; color: string }> = {
+      healthy: { bg: 'rgba(34,197,94,0.15)', color: '#4ade80' },
+      degraded: { bg: 'rgba(239,68,68,0.15)', color: '#f87171' },
+      stale: { bg: 'rgba(245,158,11,0.15)', color: '#fbbf24' },
+      paused: { bg: 'rgba(100,116,139,0.15)', color: '#94a3b8' },
+      never: { bg: 'rgba(100,116,139,0.1)', color: '#64748b' },
+    };
+    return map[s] || map.never;
+  };
+
+  if (loading) return <p style={{ color: '#888', fontSize: 13 }}>Loading…</p>;
+  if (!health.length) return <p style={{ color: '#555', fontSize: 13 }}>No schedules found. Create one in the Schedules tab.</p>;
+
+  const summary = { healthy: 0, degraded: 0, stale: 0, paused: 0, never: 0 };
+  health.forEach(h => { (summary as any)[h.statusBadge] = ((summary as any)[h.statusBadge] || 0) + 1; });
+
+  return (
+    <div>
+      {/* Summary row */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+        {Object.entries(summary).filter(([,v]) => v > 0).map(([k, v]) => {
+          const bs = badgeStyle(k);
+          return <span key={k} style={{ background: bs.bg, color: bs.color, borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 700 }}>{v} {k}</span>;
+        })}
+        <button onClick={load} style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.07)', color: '#aaa', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 11 }}>↻ Refresh</button>
+      </div>
+      {/* Table */}
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              {['Agent', 'Cron', 'Status', 'Last Run', 'Runs', 'Success %'].map(h => (
+                <th key={h} style={{ textAlign: 'left', color: '#666', padding: '4px 8px', fontWeight: 600 }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {health.map(h => {
+              const bs = badgeStyle(h.statusBadge);
+              return (
+                <tr key={h.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <td style={{ padding: '7px 8px', color: '#fff', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.name}</td>
+                  <td style={{ padding: '7px 8px', color: '#888', fontFamily: 'monospace' }}>{h.cron}</td>
+                  <td style={{ padding: '7px 8px' }}><span style={{ background: bs.bg, color: bs.color, borderRadius: 4, padding: '2px 7px', fontWeight: 700 }}>{h.statusBadge}</span></td>
+                  <td style={{ padding: '7px 8px', color: '#666' }}>{h.last_run ? h.last_run.slice(0,16) : '—'}{h.hoursSince != null ? ` (${h.hoursSince}h ago)` : ''}</td>
+                  <td style={{ padding: '7px 8px', color: '#aaa' }}>{h.total_runs}</td>
+                  <td style={{ padding: '7px 8px', color: h.successRate !== null && h.successRate < 50 ? '#f87171' : '#4ade80' }}>{h.successRate !== null ? `${h.successRate}%` : '—'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 // ─── v8.28 Goal Autopilot Panel ──────────────────────────────────────────────
 function GoalAutopilotPanel({ api }: { api: Api }) {
   const [goals, setGoals] = useState<any[]>([]);
@@ -962,7 +1033,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -985,6 +1056,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'myschedules', label: '⏰ Schedules' },
     { id: 'runs', label: '🔍 Run Inspector' },
     { id: 'autopilot', label: '🎯 Autopilot' },
+    { id: 'health', label: '💚 Health' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -1050,6 +1122,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'myschedules' && <AgentSchedulePanel api={api} />}
         {tab === 'runs' && <AgentRunInspector api={api} />}
         {tab === 'autopilot' && <GoalAutopilotPanel api={api} />}
+        {tab === 'health' && <AgentHealthMonitor api={api} />}
       </div>
     </div>
   );
