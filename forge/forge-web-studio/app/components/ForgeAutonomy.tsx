@@ -590,7 +590,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -603,6 +603,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'chains', label: '⛓️ Chains' },
     { id: 'conditions', label: '⚡ Triggers' },
     { id: 'playground', label: '🧪 Playground' },
+    { id: 'history', label: '📜 History' },
+    { id: 'templates', label: '📦 Templates' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -658,6 +660,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'chains' && <ChainBuilderPanel api={api} />}
         {tab === 'conditions' && <ConditionTriggersPanel api={api} />}
         {tab === 'playground' && <ToolPlayground api={api} />}
+        {tab === 'history' && <AgentHistoryPanel api={api} />}
+        {tab === 'templates' && <AgentTemplatesPanel api={api} />}
       </div>
     </div>
   );
@@ -1301,6 +1305,103 @@ function ToolPlayground({ api }: { api: Api }) {
           <pre style={{ margin: 0, fontSize: '12px', color: result.startsWith('ERROR') ? '#f87171' : '#86efac', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{result}</pre>
         </div>
       )}
+    </div>
+  );
+}
+
+function AgentHistoryPanel({ api }: { api: Api }) {
+  const [runs, setRuns] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [filter, setFilter] = useState('');
+  const [page, setPage] = useState(0);
+  const [expanded, setExpanded] = useState<string|null>(null);
+  const PAGE = 20;
+
+  const load = async (p = 0, f = filter) => {
+    const params = new URLSearchParams({ limit: String(PAGE), offset: String(p * PAGE) });
+    if (f) params.set('name', f);
+    const r = await api(`/api/agent-runs?${params}`);
+    if (r.ok) { const d = await r.json(); setRuns(d.runs || []); setTotal(d.total || 0); }
+  };
+  useEffect(() => { load(0, filter); }, []);
+
+  const search = () => { setPage(0); load(0, filter); };
+
+  return (
+    <div style={{ padding: '16px', color: '#e2e8f0' }}>
+      <h3 style={{ margin: '0 0 10px', fontSize: '16px' }}>📜 Agent Run History</h3>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+        <input value={filter} onChange={e => setFilter(e.target.value)} onKeyDown={e => e.key==='Enter' && search()} placeholder="Filter by agent name..." style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '7px 10px', fontSize: '13px' }} />
+        <button onClick={search} style={{ background: '#3b82f6', border: 'none', borderRadius: '6px', color: '#fff', padding: '7px 14px', cursor: 'pointer', fontSize: '13px' }}>Search</button>
+      </div>
+      <div style={{ fontSize: '12px', color: '#475569', marginBottom: '8px' }}>{total} total runs</div>
+      {runs.length === 0 ? (
+        <div style={{ textAlign: 'center', color: '#475569', padding: '32px', fontSize: '14px' }}>No runs found.</div>
+      ) : runs.map(r => (
+        <div key={r.id} style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '10px', marginBottom: '6px', cursor: 'pointer' }} onClick={() => setExpanded(expanded === r.id ? null : r.id)}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '11px', background: r.status==='done'?'#065f46':'#1e3a5f', color: r.status==='done'?'#6ee7b7':'#93c5fd', padding: '2px 6px', borderRadius: '4px' }}>{r.status||'done'}</span>
+            <div style={{ flex: 1, fontSize: '13px', fontWeight: 500 }}>{r.name || 'unnamed'}</div>
+            <div style={{ fontSize: '11px', color: '#475569' }}>{new Date(r.created_at).toLocaleString()}</div>
+          </div>
+          {expanded === r.id && (
+            <div style={{ marginTop: '8px' }}>
+              <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Goal: {r.goal?.slice(0,300)}</div>
+              <pre style={{ margin: 0, fontSize: '11px', color: '#94a3b8', whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#0f172a', padding: '8px', borderRadius: '4px' }}>{String(r.result||'').slice(0,600)}</pre>
+            </div>
+          )}
+        </div>
+      ))}
+      {total > PAGE && (
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '12px' }}>
+          <button disabled={page===0} onClick={() => { setPage(page-1); load(page-1); }} style={{ background: '#334155', border: 'none', borderRadius: '6px', color: '#e2e8f0', padding: '6px 12px', cursor: 'pointer' }}>← Prev</button>
+          <span style={{ fontSize: '12px', color: '#64748b', padding: '6px' }}>{page+1} / {Math.ceil(total/PAGE)}</span>
+          <button disabled={(page+1)*PAGE >= total} onClick={() => { setPage(page+1); load(page+1); }} style={{ background: '#334155', border: 'none', borderRadius: '6px', color: '#e2e8f0', padding: '6px 12px', cursor: 'pointer' }}>Next →</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const AGENT_TEMPLATES = [
+  { id: 'daily-news', emoji: '📰', name: 'Daily News Briefing', desc: 'Fetches top tech news and summarizes it every morning.', cron: '0 8 * * *', prompt: 'Browse https://news.ycombinator.com and summarize the top 5 stories. Be concise.' },
+  { id: 'competitor-monitor', emoji: '🕵️', name: 'Competitor Monitor', desc: 'Checks a competitor homepage weekly for changes.', cron: '0 9 * * 1', prompt: 'Browse [URL] and summarize any new features, pricing changes, or announcements. Compare with prior results.' },
+  { id: 'github-stars', emoji: '⭐', name: 'GitHub Stars Tracker', desc: 'Tracks star count for a GitHub repo daily.', cron: '0 10 * * *', prompt: 'Fetch https://api.github.com/repos/[owner/repo] and report the current stargazers_count. Note if it increased from yesterday.' },
+  { id: 'reddit-mention', emoji: '👾', name: 'Reddit Mention Alert', desc: 'Searches Reddit for brand mentions daily.', cron: '0 9 * * *', prompt: 'Browse https://www.reddit.com/search/?q=[brand] and list any new posts mentioning [brand] from the last 24 hours.' },
+  { id: 'price-check', emoji: '💰', name: 'Price Monitor', desc: 'Checks a product URL daily for price changes.', cron: '0 8 * * *', prompt: 'Browse [product URL] and extract the current price. Alert if it changed from prior run.' },
+  { id: 'uptime-check', emoji: '🟢', name: 'Site Uptime Monitor', desc: 'Checks if your site is up every hour.', cron: '0 * * * *', prompt: 'Use http_request to GET [your URL] and report the HTTP status code. Alert if not 200.' },
+  { id: 'weekly-summary', emoji: '📊', name: 'Weekly Agent Summary', desc: 'Summarizes all agent activity from the past week.', cron: '0 9 * * 1', prompt: 'Use list_goals and list_memories to summarize progress made this week. What goals advanced? What needs attention?' },
+  { id: 'content-idea', emoji: '💡', name: 'Daily Content Ideas', desc: 'Generates 3 content ideas based on trending topics.', cron: '0 8 * * *', prompt: 'Browse https://trends.google.com/trends/trendingsearches/daily?geo=US and generate 3 content ideas based on top trends. Store as memories.' },
+];
+
+function AgentTemplatesPanel({ api }: { api: Api }) {
+  const [installing, setInstalling] = useState<string|null>(null);
+  const [installed, setInstalled] = useState<Set<string>>(new Set());
+
+  const install = async (tpl: typeof AGENT_TEMPLATES[0]) => {
+    setInstalling(tpl.id);
+    await api('/api/agent-schedules', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name: tpl.name, prompt: tpl.prompt, cron_expression: tpl.cron, enabled: true }) });
+    setInstalled(s => new Set([...s, tpl.id]));
+    setInstalling(null);
+  };
+
+  return (
+    <div style={{ padding: '16px', color: '#e2e8f0' }}>
+      <h3 style={{ margin: '0 0 6px', fontSize: '16px' }}>📦 Agent Templates</h3>
+      <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#94a3b8' }}>One-click installs. Adds a scheduled agent to your roster. Edit the prompt after to customize.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+        {AGENT_TEMPLATES.map(tpl => (
+          <div key={tpl.id} style={{ background: '#1e293b', border: `1px solid ${installed.has(tpl.id) ? '#059669' : '#334155'}`, borderRadius: '10px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ fontSize: '22px' }}>{tpl.emoji}</div>
+            <div style={{ fontWeight: 700, fontSize: '14px' }}>{tpl.name}</div>
+            <div style={{ fontSize: '12px', color: '#94a3b8', flex: 1 }}>{tpl.desc}</div>
+            <div style={{ fontSize: '11px', color: '#475569' }}>cron: {tpl.cron}</div>
+            <button onClick={() => install(tpl)} disabled={!!installing || installed.has(tpl.id)} style={{ background: installed.has(tpl.id) ? '#065f46' : '#3b82f6', border: 'none', borderRadius: '6px', color: '#fff', padding: '7px', cursor: 'pointer', fontSize: '12px', marginTop: '4px' }}>
+              {installed.has(tpl.id) ? '✓ Installed' : installing === tpl.id ? 'Installing...' : 'Install'}
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
