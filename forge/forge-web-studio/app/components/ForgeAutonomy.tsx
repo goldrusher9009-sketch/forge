@@ -226,6 +226,50 @@ function ApprovalCard({ a, api, onResolved }: { a: any; api: Api; onResolved: ()
 }
 
 // ─── Morning dashboard + approval inbox ──────────────────────────────────────
+function AgentDigestPanel({ api }: { api: Api }) {
+  const [digests, setDigests] = useState<any[]>([]);
+  const [generating, setGenerating] = useState(false);
+  const [latest, setLatest] = useState<string|null>(null);
+
+  const load = async () => {
+    try { const r = await api('/api/agent-digest'); if (r.ok) { const d = await r.json(); setDigests(d.digests||[]); } } catch {}
+  };
+  useEffect(() => { load(); }, []);
+
+  const generate = async () => {
+    setGenerating(true);
+    try {
+      const r = await api('/api/agent-digest', { method: 'POST' });
+      if (r.ok) { const d = await r.json(); setLatest(d.summary); await load(); }
+    } catch {} finally { setGenerating(false); }
+  };
+
+  return (
+    <div style={{ padding: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <h3 style={{ color: '#e2e8f0', margin: 0 }}>📋 Agent Digest</h3>
+        <button onClick={generate} disabled={generating} style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 16px', cursor: generating ? 'not-allowed' : 'pointer', opacity: generating ? 0.7 : 1 }}>
+          {generating ? 'Generating…' : '✨ Generate Now'}
+        </button>
+      </div>
+      {latest && (
+        <div style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid #6366f1', borderRadius: '8px', padding: '14px', marginBottom: '16px', color: '#c7d2fe', lineHeight: 1.6 }}>
+          <div style={{ fontSize: '11px', color: '#6366f1', marginBottom: '6px', fontWeight: 700 }}>JUST GENERATED</div>
+          {latest}
+        </div>
+      )}
+      {digests.length === 0 && !latest ? (
+        <div style={{ color: '#475569', textAlign: 'center', padding: '40px' }}>No digests yet. Click Generate Now to create your first one.</div>
+      ) : digests.map((d: any) => (
+        <div key={d.key} style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '14px', marginBottom: '10px' }}>
+          <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '6px' }}>{d.key?.replace('digest_','').toUpperCase()} · {new Date(d.created_at).toLocaleString()}</div>
+          <div style={{ color: '#cbd5e1', lineHeight: 1.6, fontSize: '14px' }}>{d.value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function AutonomyStatsBar({ api }: { api: Api }) {
   const [stats, setStats] = useState<any>(null);
   useEffect(() => {
@@ -622,7 +666,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -639,6 +683,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'templates', label: '📦 Templates' },
     { id: 'leaderboard', label: '🏆 Leaders' },
     { id: 'events', label: '📡 Events' },
+    { id: 'digest', label: '📋 Digest' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -698,6 +743,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'templates' && <AgentTemplatesPanel api={api} />}
         {tab === 'leaderboard' && <AgentLeaderboard api={api} />}
         {tab === 'events' && <AgentEventFeed api={api} />}
+        {tab === 'digest' && <AgentDigestPanel api={api} />}
       </div>
     </div>
   );
