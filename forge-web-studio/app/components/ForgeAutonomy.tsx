@@ -597,6 +597,107 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.47 Decision Matrix ---
+function DecisionMatrixPanel({ api }: { api: Api }) {
+  const [decision, setDecision] = useState('');
+  const [options, setOptions] = useState(['', '']);
+  const [criteria, setCriteria] = useState('');
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [err, setErr] = useState('');
+
+  const addOption = () => setOptions([...options, '']);
+  const updateOption = (i: number, v: string) => { const o = [...options]; o[i] = v; setOptions(o); };
+  const removeOption = (i: number) => { if (options.length > 2) setOptions(options.filter((_, idx) => idx !== i)); };
+
+  const run = async () => {
+    const validOpts = options.filter(o => o.trim());
+    if (!decision.trim() || validOpts.length < 2) return;
+    setRunning(true); setErr(''); setResult(null);
+    try {
+      const criteriaList = criteria.split(',').map(c => c.trim()).filter(Boolean);
+      const d = await api('/api/decision-matrix', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decision: decision.trim(), options: validOpts, criteria: criteriaList.length ? criteriaList : undefined }) });
+      if (d.success) setResult(d); else setErr(d.error || 'Failed');
+    } catch(e: any) { setErr(e.message); }
+    setRunning(false);
+  };
+
+  const scoreColor = (s: number) => s >= 8 ? '#4ade80' : s >= 6 ? '#fbbf24' : '#f87171';
+  const confColor: Record<string, string> = { high: '#4ade80', medium: '#fbbf24', low: '#f87171' };
+
+  return (
+    <div>
+      <h3 style={{ ...S.h, fontSize: 15, marginBottom: 8 }}>⚖️ Decision Matrix</h3>
+      <p style={{ ...S.sub, marginBottom: 12 }}>Describe your decision, list options, and get a scored matrix with a clear recommendation.</p>
+      <input value={decision} onChange={e => setDecision(e.target.value)} placeholder="What decision are you making? e.g. 'Which cloud provider should we use?'" style={{ ...S.input, width: '100%', marginBottom: 10 }} />
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ fontSize: 11, color: 'var(--fg-text3,#888)', marginBottom: 6 }}>Options (min 2):</div>
+        {options.map((opt, i) => (
+          <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 5 }}>
+            <input value={opt} onChange={e => updateOption(i, e.target.value)} placeholder={`Option ${i+1}`} style={{ ...S.input, flex: 1 }} />
+            {options.length > 2 && <button onClick={() => removeOption(i)} style={{ ...S.btn, fontSize: 11, padding: '4px 8px', background: 'transparent', border: '1px solid var(--fg-border,#2a2a3e)', color: '#f87171' }}>✕</button>}
+          </div>
+        ))}
+        <button onClick={addOption} style={{ ...S.btn, fontSize: 11, background: 'transparent', border: '1px solid var(--fg-border,#2a2a3e)', color: 'var(--fg-text3,#888)' }}>+ Add Option</button>
+      </div>
+      <input value={criteria} onChange={e => setCriteria(e.target.value)} placeholder="Criteria (optional, comma-separated): e.g. Cost, Speed, Risk, Scalability" style={{ ...S.input, width: '100%', marginBottom: 10 }} />
+      <button onClick={run} disabled={running || !decision.trim() || options.filter(o=>o.trim()).length < 2} style={{ ...S.btn, ...S.primaryBtn, marginBottom: 16 }}>
+        {running ? '⏳ Analyzing…' : '⚖️ Analyze Decision'}
+      </button>
+      {err && <div style={{ color: '#f87171', fontSize: 12, marginBottom: 10 }}>{err}</div>}
+      {result && (
+        <div>
+          <div style={{ borderRadius: 10, border: '1px solid rgba(108,99,255,0.3)', background: 'rgba(108,99,255,0.06)', padding: 14, marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--fg-text3,#888)', marginBottom: 2 }}>RECOMMENDED</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--fg-accent,#6c63ff)' }}>{result.winner}</div>
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: confColor[result.confidence] || '#888', border: `1px solid ${confColor[result.confidence] || '#888'}40`, borderRadius: 6, padding: '2px 8px' }}>{result.confidence} confidence</div>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--fg-text2,#ccc)', lineHeight: 1.6, marginBottom: result.key_tradeoff ? 8 : 0 }}>{result.recommendation}</div>
+            {result.key_tradeoff && <div style={{ fontSize: 11, color: 'var(--fg-text3,#888)', fontStyle: 'italic' }}>⚖️ Key tradeoff: {result.key_tradeoff}</div>}
+          </div>
+          <div style={{ overflowX: 'auto', marginBottom: 14 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: 'left', padding: '6px 10px', color: 'var(--fg-text3,#888)', borderBottom: '1px solid var(--fg-border,#2a2a3e)' }}>Criterion</th>
+                  {result.matrix?.map((m: any) => (
+                    <th key={m.option} style={{ padding: '6px 10px', color: m.option === result.winner ? 'var(--fg-accent,#6c63ff)' : 'var(--fg-text2,#ccc)', borderBottom: '1px solid var(--fg-border,#2a2a3e)', textAlign: 'center' }}>{m.option}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {result.criteria?.map((crit: string) => (
+                  <tr key={crit}>
+                    <td style={{ padding: '5px 10px', color: 'var(--fg-text3,#888)', borderBottom: '1px solid var(--fg-border,#2a2a3e)20' }}>{crit}</td>
+                    {result.matrix?.map((m: any) => {
+                      const score = m.scores?.[crit] ?? '—';
+                      return <td key={m.option} style={{ padding: '5px 10px', textAlign: 'center', borderBottom: '1px solid var(--fg-border,#2a2a3e)20', fontWeight: 700, color: typeof score === 'number' ? scoreColor(score) : '#888' }}>{score}</td>;
+                    })}
+                  </tr>
+                ))}
+                <tr>
+                  <td style={{ padding: '6px 10px', fontWeight: 700, color: 'var(--fg-text,#f0f1f5)' }}>Total</td>
+                  {result.matrix?.map((m: any) => (
+                    <td key={m.option} style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 800, fontSize: 13, color: m.option === result.winner ? 'var(--fg-accent,#6c63ff)' : scoreColor(m.total/result.criteria?.length||1) }}>{m.total}</td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          {result.when_to_pick_alternative && (
+            <div style={{ borderRadius: 8, border: '1px solid rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.04)', padding: 10, fontSize: 11, color: 'var(--fg-text2,#ccc)' }}>
+              <span style={{ fontWeight: 700, color: '#fbbf24' }}>💡 Choose differently if: </span>{result.when_to_pick_alternative}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.46 Writing Coach ---
 function WritingCoachPanel({ api }: { api: Api }) {
   const [text, setText] = useState('');
@@ -2330,7 +2431,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -2371,6 +2472,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'persona', label: '🎭 Persona' },
     { id: 'validate', label: '🚀 Validate' },
     { id: 'writecoach', label: '✍️ Coach' },
+    { id: 'decision', label: '⚖️ Decide' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -2454,6 +2556,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'persona' && <PersonaChatPanel api={api} />}
         {tab === 'validate' && <IdeaValidatorPanel api={api} />}
         {tab === 'writecoach' && <WritingCoachPanel api={api} />}
+        {tab === 'decision' && <DecisionMatrixPanel api={api} />}
       </div>
     </div>
   );

@@ -39162,6 +39162,36 @@ ${text.slice(0, 3000)}`;
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.47 Decision Matrix — structured AI-powered decision analysis
+app.post('/api/decision-matrix', requireAuth, async (req: any, res: any) => {
+  try {
+    const { decision, options, criteria } = req.body;
+    if (!decision || !options || options.length < 2) return res.status(400).json({ error: 'decision and at least 2 options required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const criteriaList = criteria && criteria.length ? criteria : ['Cost', 'Time to implement', 'Risk level', 'Long-term value', 'Ease of execution'];
+    const p = `You are a strategic decision advisor. Evaluate this decision and options.
+
+Decision: "${decision}"
+Options: ${options.map((o: string, i: number) => `${i+1}. ${o}`).join(', ')}
+Criteria to evaluate: ${criteriaList.join(', ')}
+
+Return ONLY JSON:
+{"winner":"${options[0]}","confidence":"high"|"medium"|"low","matrix":[{"option":"${options[0]}","scores":{${criteriaList.map((c: string) => `"${c}":7`).join(',')}},"total":35,"pros":["pro1","pro2"],"cons":["con1"]}],"recommendation":"2-3 sentence recommendation","key_tradeoff":"The most important tradeoff in this decision","when_to_pick_alternative":"scenario where second option wins"}
+
+Use scores 1-10 for each criterion. Calculate total as sum of scores.`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, decision, options, criteria: criteriaList, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
