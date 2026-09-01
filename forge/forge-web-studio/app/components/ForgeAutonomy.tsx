@@ -226,6 +226,51 @@ function ApprovalCard({ a, api, onResolved }: { a: any; api: Api; onResolved: ()
 }
 
 // ─── Morning dashboard + approval inbox ──────────────────────────────────────
+function AgentMemorySearch({ api }: { api: Api }) {
+  const [q, setQ] = useState('');
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [deleted, setDeleted] = useState<Set<string>>(new Set());
+
+  const search = async () => {
+    if (!q.trim()) return;
+    setLoading(true);
+    const d = await api(`/api/agent-memory/search?q=${encodeURIComponent(q)}&limit=30`);
+    setResults(d?.results || []);
+    setLoading(false);
+  };
+
+  const del = async (key: string) => {
+    await api(`/api/agent-memory/${encodeURIComponent(key)}`, { method: 'DELETE' });
+    setDeleted(s => new Set([...s, key]));
+  };
+
+  return (
+    <div style={{ padding: '16px', color: '#e2e8f0' }}>
+      <h3 style={{ margin: '0 0 6px', fontSize: '16px' }}>🧠 Memory Search</h3>
+      <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#94a3b8' }}>Search all memories the agent has stored. Delete ones that are outdated or incorrect.</p>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+        <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && search()} placeholder="Search memories by key or value…" style={{ flex: 1, background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px 10px', fontSize: '13px' }} />
+        <button onClick={search} disabled={loading} style={{ background: '#6366f1', border: 'none', borderRadius: '6px', color: '#fff', padding: '8px 14px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>{loading ? '…' : '🔍'}</button>
+      </div>
+      {results.length === 0 && !loading && q && <div style={{ fontSize: '13px', color: '#64748b' }}>No memories found for "{q}"</div>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {results.filter(r => !deleted.has(r.key)).map((r: any) => (
+          <div key={r.key} style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '10px 12px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#818cf8', marginBottom: 3 }}>{r.key}</div>
+              {r.category && <div style={{ fontSize: '10px', color: '#475569', marginBottom: 4 }}>category: {r.category}</div>}
+              <div style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{String(r.value).slice(0, 300)}{r.value?.length > 300 ? '…' : ''}</div>
+              <div style={{ fontSize: '10px', color: '#475569', marginTop: 4 }}>{new Date(r.updated_at).toLocaleString()}</div>
+            </div>
+            <button onClick={() => del(r.key)} style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '5px', color: '#f87171', padding: '4px 8px', cursor: 'pointer', fontSize: '11px', flexShrink: 0 }}>🗑</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AgentPlaybookPanel({ api }: { api: Api }) {
   const [plays, setPlays] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -729,7 +774,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -748,6 +793,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'events', label: '📡 Events' },
     { id: 'digest', label: '📋 Digest' },
     { id: 'playbook', label: '📖 Playbook' },
+    { id: 'memory', label: '🧠 Memory' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -809,6 +855,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'events' && <AgentEventFeed api={api} />}
         {tab === 'digest' && <AgentDigestPanel api={api} />}
         {tab === 'playbook' && <AgentPlaybookPanel api={api} />}
+        {tab === 'memory' && <AgentMemorySearch api={api} />}
       </div>
     </div>
   );
