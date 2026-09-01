@@ -590,11 +590,13 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
     { id: 'agents', label: '🤖 Agents' },
+    { id: 'goals', label: '🎯 Goals' },
+    { id: 'monitors', label: '👁️ Monitor' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -642,6 +644,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'moonshots' && <MoonshotAgents api={api} />}
         {tab === 'hub' && <AgentHub api={api} />}
         {tab === 'cascade' && <DroidPipeline api={api} />}
+        {tab === 'goals' && <GoalTracker api={api} />}
+        {tab === 'monitors' && <UrlMonitorPanel api={api} />}
       </div>
     </div>
   );
@@ -656,6 +660,158 @@ const MOONSHOTS = [
   { id: 'negotiator', icon: '🤝', name: 'Negotiator Agent', desc: 'Handles vendor/client negotiations via email autonomously', endpoint: '/agents/negotiator/draft', method: 'POST' },
   { id: 'connector', icon: '🔗', name: 'Connector Agent', desc: 'Finds partnership opportunities, drafts intros, tracks follow-ups', endpoint: '/agents/connector/find', method: 'POST' },
 ];
+
+// ─── Goal Tracker ─────────────────────────────────────────────────────────────
+function GoalTracker({ api }: { api: Api }) {
+  const [goals, setGoals] = useState<any[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({ title: '', description: '', metric: '', target_value: '', unit: '', deadline: '', agent_goal: '' });
+  const [updating, setUpdating] = useState<{ id: string; val: string; note: string } | null>(null);
+
+  const load = async () => { try { const d = await api('/goals'); if (d?.success) setGoals(d.data); } catch {} };
+  useEffect(() => { load(); }, []);
+
+  const add = async () => {
+    if (!form.title) return;
+    await api('/goals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, target_value: parseFloat(form.target_value) || 0 }) });
+    setAdding(false); setForm({ title: '', description: '', metric: '', target_value: '', unit: '', deadline: '', agent_goal: '' }); load();
+  };
+  const updateProgress = async () => {
+    if (!updating) return;
+    await api(`/goals/${updating.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ current_value: parseFloat(updating.val) || 0, note: updating.note }) });
+    setUpdating(null); load();
+  };
+  const del = async (id: string) => { await api(`/goals/${id}`, { method: 'DELETE' }); load(); };
+  const complete = async (id: string) => { await api(`/goals/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'completed' }) }); load(); };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div>
+          <p style={S.h}>🎯 Goal Tracker</p>
+          <p style={S.sub}>Set goals. Agents track & work toward them automatically.</p>
+        </div>
+        <button style={{ ...S.btn, ...S.primary }} onClick={() => setAdding(!adding)}>+ Goal</button>
+      </div>
+
+      {adding && (
+        <div style={{ ...S.card, marginBottom: 16 }}>
+          <p style={{ ...S.h, marginBottom: 10 }}>New Goal</p>
+          {[['title', 'Title *'], ['description', 'Description'], ['metric', 'Metric (e.g. Twitter followers)'], ['target_value', 'Target (number)'], ['unit', 'Unit (e.g. followers, $, %)'], ['deadline', 'Deadline (YYYY-MM-DD)']].map(([k, ph]) => (
+            <input key={k} placeholder={ph} value={(form as any)[k]} onChange={e => setForm(p => ({ ...p, [k]: e.target.value }))} style={{ ...S.input, marginBottom: 8 }} />
+          ))}
+          <textarea placeholder="Agent goal — what should the agent DO each day toward this goal? (e.g. Search Twitter for engagement opportunities and respond to 3 relevant posts)" value={form.agent_goal} onChange={e => setForm(p => ({ ...p, agent_goal: e.target.value }))} style={{ ...S.input, height: 70, resize: 'vertical', marginBottom: 8 }} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={{ ...S.btn, ...S.primary }} onClick={add}>Create</button>
+            <button style={{ ...S.btn, ...S.ghostBtn }} onClick={() => setAdding(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {goals.length === 0 && !adding && <p style={{ ...S.sub, textAlign: 'center', marginTop: 32 }}>No goals yet. Create one to start autonomous tracking.</p>}
+
+      {goals.map(g => {
+        const pct = g.target_value > 0 ? Math.min(100, Math.round((g.current_value / g.target_value) * 100)) : 0;
+        return (
+          <div key={g.id} style={S.card}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ ...S.h, margin: '0 0 2px' }}>{g.title}</p>
+                {g.metric && <span style={S.tag}>{g.metric}</span>}
+                {g.deadline && <span style={{ ...S.tag, background: 'rgba(255,200,0,0.1)', color: '#ffd000' }}>📅 {g.deadline}</span>}
+                {g.agent_goal && <span style={{ ...S.tag, background: 'rgba(0,200,100,0.1)', color: '#00c864' }}>🤖 Agent active</span>}
+                <div style={{ margin: '8px 0 4px', background: 'rgba(255,255,255,0.07)', borderRadius: 99, height: 6, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', borderRadius: 99, width: `${pct}%`, background: pct >= 100 ? '#00c864' : 'var(--fg-orange,#ff1f35)', transition: 'width 0.4s' }} />
+                </div>
+                <p style={{ ...S.sub, margin: 0 }}>{g.current_value} / {g.target_value} {g.unit} ({pct}%)</p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginLeft: 12 }}>
+                <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11 }} onClick={() => setUpdating({ id: g.id, val: String(g.current_value), note: '' })}>Update</button>
+                <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11 }} onClick={() => complete(g.id)}>✓ Done</button>
+                <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11, color: '#ff4d5e' }} onClick={() => del(g.id)}>Delete</button>
+              </div>
+            </div>
+            {updating?.id === g.id && (
+              <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                <input type="number" placeholder="New value" value={updating.val} onChange={e => setUpdating(p => p && ({ ...p, val: e.target.value }))} style={{ ...S.input, flex: 1 }} />
+                <input placeholder="Note" value={updating.note} onChange={e => setUpdating(p => p && ({ ...p, note: e.target.value }))} style={{ ...S.input, flex: 2 }} />
+                <button style={{ ...S.btn, ...S.primary }} onClick={updateProgress}>Save</button>
+                <button style={{ ...S.btn, ...S.ghostBtn }} onClick={() => setUpdating(null)}>✕</button>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── URL Monitor Panel ────────────────────────────────────────────────────────
+function UrlMonitorPanel({ api }: { api: Api }) {
+  const [monitors, setMonitors] = useState<any[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({ url: '', label: '', check_interval: '0 */6 * * *', notify_on_change: true, on_change_goal: '' });
+
+  const load = async () => { try { const d = await api('/url-monitors'); if (d?.success) setMonitors(d.data); } catch {} };
+  useEffect(() => { load(); }, []);
+
+  const add = async () => {
+    if (!form.url) return;
+    await api('/url-monitors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    setAdding(false); setForm({ url: '', label: '', check_interval: '0 */6 * * *', notify_on_change: true, on_change_goal: '' }); load();
+  };
+  const toggle = async (id: string, enabled: boolean) => { await api(`/url-monitors/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: !enabled }) }); load(); };
+  const del = async (id: string) => { await api(`/url-monitors/${id}`, { method: 'DELETE' }); load(); };
+
+  const INTERVALS = [['0 */1 * * *', 'Every hour'], ['0 */6 * * *', 'Every 6 hours'], ['0 */12 * * *', 'Every 12 hours'], ['0 9 * * *', 'Daily at 9am']];
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div>
+          <p style={S.h}>👁️ Web Monitor</p>
+          <p style={S.sub}>Watch any URL for changes. Trigger agents automatically when pages update.</p>
+        </div>
+        <button style={{ ...S.btn, ...S.primary }} onClick={() => setAdding(!adding)}>+ Monitor</button>
+      </div>
+
+      {adding && (
+        <div style={{ ...S.card, marginBottom: 16 }}>
+          <input placeholder="URL to watch *" value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))} style={{ ...S.input, marginBottom: 8 }} />
+          <input placeholder="Label (optional)" value={form.label} onChange={e => setForm(p => ({ ...p, label: e.target.value }))} style={{ ...S.input, marginBottom: 8 }} />
+          <select value={form.check_interval} onChange={e => setForm(p => ({ ...p, check_interval: e.target.value }))} style={{ ...S.input, marginBottom: 8 }}>
+            {INTERVALS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+          <textarea placeholder="On change, run agent goal: (e.g. Summarize what changed and notify me)" value={form.on_change_goal} onChange={e => setForm(p => ({ ...p, on_change_goal: e.target.value }))} style={{ ...S.input, height: 60, resize: 'vertical', marginBottom: 8 }} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={{ ...S.btn, ...S.primary }} onClick={add}>Add</button>
+            <button style={{ ...S.btn, ...S.ghostBtn }} onClick={() => setAdding(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {monitors.length === 0 && !adding && <p style={{ ...S.sub, textAlign: 'center', marginTop: 32 }}>No monitors yet. Watch a URL for autonomous change detection.</p>}
+
+      {monitors.map(m => (
+        <div key={m.id} style={S.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ ...S.h, margin: '0 0 2px' }}>{m.label || m.url}</p>
+              <p style={{ ...S.sub, margin: '0 0 4px', wordBreak: 'break-all' }}>{m.url}</p>
+              <span style={{ ...S.tag, background: m.enabled ? 'rgba(0,200,100,0.1)' : 'rgba(255,255,255,0.05)', color: m.enabled ? '#00c864' : '#888' }}>{m.enabled ? '● Active' : '○ Paused'}</span>
+              {m.on_change_goal && <span style={{ ...S.tag, background: 'rgba(255,31,53,0.1)', color: '#ff4d5e' }}>🤖 Agent trigger</span>}
+              {m.last_checked && <span style={S.tag}>Checked: {new Date(m.last_checked).toLocaleString()}</span>}
+            </div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11 }} onClick={() => toggle(m.id, m.enabled)}>{m.enabled ? 'Pause' : 'Resume'}</button>
+              <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11, color: '#ff4d5e' }} onClick={() => del(m.id)}>Delete</button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function MoonshotAgents({ api }: { api: Api }) {
   const [results, setResults] = useState<Record<string, any>>({});
