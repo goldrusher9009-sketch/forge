@@ -226,6 +226,38 @@ function ApprovalCard({ a, api, onResolved }: { a: any; api: Api; onResolved: ()
 }
 
 // ─── Morning dashboard + approval inbox ──────────────────────────────────────
+function AutonomyStatsBar({ api }: { api: Api }) {
+  const [stats, setStats] = useState<any>(null);
+  useEffect(() => {
+    const load = async () => { try { const r = await api('/api/autonomy-stats'); if (r.ok) setStats(await r.json()); } catch {} };
+    load();
+    const t = setInterval(load, 30000);
+    return () => clearInterval(t);
+  }, []);
+  if (!stats) return null;
+  const items = [
+    { label: 'Runs Today', value: stats.runsToday ?? 0, icon: '🤖' },
+    { label: 'This Week', value: stats.runsWeek ?? 0, icon: '📈' },
+    { label: 'Avg Score', value: stats.avgScore != null ? `${stats.avgScore}/100` : '—', icon: '⭐' },
+    { label: 'Schedules', value: stats.activeSchedules ?? 0, icon: '⏰' },
+    { label: 'Goals', value: stats.activeGoals ?? 0, icon: '🎯' },
+    { label: 'Events', value: stats.eventsToday ?? 0, icon: '📡' },
+    { label: 'Memories', value: stats.totalMemories ?? 0, icon: '🧠' },
+    { label: 'Approvals', value: stats.pendingApprovals ?? 0, icon: '✅', alert: stats.pendingApprovals > 0 },
+  ];
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '8px', marginBottom: '12px' }}>
+      {items.map(item => (
+        <div key={item.label} style={{ background: item.alert ? 'rgba(239,68,68,0.12)' : '#1e293b', border: `1px solid ${item.alert ? '#ef4444' : '#334155'}`, borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
+          <div style={{ fontSize: '18px', marginBottom: '2px' }}>{item.icon}</div>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: item.alert ? '#f87171' : '#e2e8f0' }}>{item.value}</div>
+          <div style={{ fontSize: '10px', color: '#475569', marginTop: '1px' }}>{item.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function MorningDashboard({ api, username }: { api: Api; username?: string }) {
   const [data, setData] = useState<any>(null);
   const [running, setRunning] = useState(false);
@@ -645,7 +677,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           ))}
         </div>
 
-        {tab === 'dashboard' && <MorningDashboard api={api} />}
+        {tab === 'dashboard' && <><AutonomyStatsBar api={api} /><MorningDashboard api={api} /></>}
         {tab === 'approvals' && <MorningDashboard api={api} />}
         {tab === 'agents' && <UniversalAgents api={api} />}
         {tab === 'market' && <ForgeMarketplace api={api} />}
