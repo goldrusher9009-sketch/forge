@@ -226,6 +226,69 @@ function ApprovalCard({ a, api, onResolved }: { a: any; api: Api; onResolved: ()
 }
 
 // ─── Morning dashboard + approval inbox ──────────────────────────────────────
+function AgentPlaybookPanel({ api }: { api: Api }) {
+  const [plays, setPlays] = useState<any[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ title: '', goal_pattern: '', strategy: '', tags: '' });
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    try { const r = await api('/api/agent-playbook'); if (r.ok) { const d = await r.json(); setPlays(d.playbook||[]); } } catch {}
+  };
+  useEffect(() => { load(); }, []);
+
+  const save = async () => {
+    if (!form.title || !form.strategy) return;
+    setSaving(true);
+    try {
+      await api('/api/agent-playbook', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, tags: form.tags.split(',').map((t:string)=>t.trim()).filter(Boolean) }) });
+      setForm({ title: '', goal_pattern: '', strategy: '', tags: '' });
+      setShowForm(false);
+      await load();
+    } finally { setSaving(false); }
+  };
+
+  const del = async (id: string) => {
+    await api(`/api/agent-playbook/${id}`, { method: 'DELETE' });
+    await load();
+  };
+
+  return (
+    <div style={{ padding: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <h3 style={{ color: '#e2e8f0', margin: 0 }}>📖 Agent Playbook</h3>
+        <button onClick={() => setShowForm(s => !s)} style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 14px', cursor: 'pointer' }}>+ Add Strategy</button>
+      </div>
+      {showForm && (
+        <div style={{ background: '#1e293b', border: '1px solid #6366f1', borderRadius: '8px', padding: '14px', marginBottom: '16px' }}>
+          <input placeholder="Strategy title" value={form.title} onChange={e => setForm(f=>({...f,title:e.target.value}))} style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px', marginBottom: '8px', boxSizing: 'border-box' }} />
+          <input placeholder="Goal pattern (optional, e.g. 'research topic')" value={form.goal_pattern} onChange={e => setForm(f=>({...f,goal_pattern:e.target.value}))} style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px', marginBottom: '8px', boxSizing: 'border-box' }} />
+          <textarea placeholder="Strategy description (what works well, which tools, approach)" value={form.strategy} onChange={e => setForm(f=>({...f,strategy:e.target.value}))} rows={4} style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px', marginBottom: '8px', boxSizing: 'border-box', resize: 'vertical' }} />
+          <input placeholder="Tags (comma-separated)" value={form.tags} onChange={e => setForm(f=>({...f,tags:e.target.value}))} style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px', marginBottom: '10px', boxSizing: 'border-box' }} />
+          <button onClick={save} disabled={saving || !form.title || !form.strategy} style={{ background: '#22c55e', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 20px', cursor: 'pointer' }}>{saving ? 'Saving…' : 'Save'}</button>
+        </div>
+      )}
+      {plays.length === 0 ? (
+        <div style={{ color: '#475569', textAlign: 'center', padding: '40px' }}>No strategies yet. Agents auto-save winning plays, or add one manually above.</div>
+      ) : plays.map((p: any) => (
+        <div key={p.id} style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '14px', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+            <div>
+              <span style={{ color: '#e2e8f0', fontWeight: 700, fontSize: '14px' }}>{p.title}</span>
+              {p.avg_score > 0 && <span style={{ marginLeft: '8px', background: '#22c55e22', color: '#22c55e', fontSize: '11px', padding: '2px 6px', borderRadius: '4px' }}>⭐ {p.avg_score}/100</span>}
+              {p.use_count > 0 && <span style={{ marginLeft: '6px', color: '#64748b', fontSize: '11px' }}>used {p.use_count}x</span>}
+            </div>
+            <button onClick={() => del(p.id)} style={{ background: 'transparent', border: 'none', color: '#475569', cursor: 'pointer', fontSize: '16px' }}>✕</button>
+          </div>
+          {p.goal_pattern && <div style={{ fontSize: '11px', color: '#6366f1', marginBottom: '6px' }}>🎯 {p.goal_pattern}</div>}
+          <div style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.5 }}>{p.strategy.slice(0, 400)}{p.strategy.length > 400 ? '…' : ''}</div>
+          {p.tags?.length > 0 && <div style={{ marginTop: '8px' }}>{p.tags.map((t:string) => <span key={t} style={{ background: '#334155', color: '#94a3b8', fontSize: '10px', padding: '2px 6px', borderRadius: '4px', marginRight: '4px' }}>{t}</span>)}</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function AgentDigestPanel({ api }: { api: Api }) {
   const [digests, setDigests] = useState<any[]>([]);
   const [generating, setGenerating] = useState(false);
@@ -666,7 +729,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -684,6 +747,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'leaderboard', label: '🏆 Leaders' },
     { id: 'events', label: '📡 Events' },
     { id: 'digest', label: '📋 Digest' },
+    { id: 'playbook', label: '📖 Playbook' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -744,6 +808,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'leaderboard' && <AgentLeaderboard api={api} />}
         {tab === 'events' && <AgentEventFeed api={api} />}
         {tab === 'digest' && <AgentDigestPanel api={api} />}
+        {tab === 'playbook' && <AgentPlaybookPanel api={api} />}
       </div>
     </div>
   );
