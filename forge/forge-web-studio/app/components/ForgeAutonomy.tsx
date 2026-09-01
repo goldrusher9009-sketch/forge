@@ -590,7 +590,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -605,6 +605,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'playground', label: '🧪 Playground' },
     { id: 'history', label: '📜 History' },
     { id: 'templates', label: '📦 Templates' },
+    { id: 'leaderboard', label: '🏆 Leaders' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -662,6 +663,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'playground' && <ToolPlayground api={api} />}
         {tab === 'history' && <AgentHistoryPanel api={api} />}
         {tab === 'templates' && <AgentTemplatesPanel api={api} />}
+        {tab === 'leaderboard' && <AgentLeaderboard api={api} />}
       </div>
     </div>
   );
@@ -1401,6 +1403,69 @@ function AgentTemplatesPanel({ api }: { api: Api }) {
             </button>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function AgentLeaderboard({ api }: { api: Api }) {
+  const [board, setBoard] = useState<any[]>([]);
+  const [prefs, setPrefs] = useState<any>({ digest_enabled:1, url_monitor_enabled:1, rss_enabled:1, webhook_enabled:1, goal_enabled:1 });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    api('/api/agent-leaderboard').then(r => r.ok && r.json().then(d => setBoard(d.leaderboard || [])));
+    api('/api/notification-prefs').then(r => r.ok && r.json().then(setPrefs));
+  }, []);
+
+  const savePrefs = async () => {
+    setSaving(true);
+    await api('/api/notification-prefs', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(prefs) });
+    setSaving(false);
+  };
+
+  const medals = ['🥇','🥈','🥉'];
+
+  return (
+    <div style={{ padding: '16px', color: '#e2e8f0' }}>
+      <h3 style={{ margin: '0 0 6px', fontSize: '16px' }}>🏆 Agent Leaderboard</h3>
+      <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#94a3b8' }}>Your top agents ranked by activity.</p>
+
+      {board.length === 0 ? (
+        <div style={{ textAlign: 'center', color: '#475569', padding: '32px', fontSize: '14px' }}>No agent runs yet. Start a scheduled agent to see rankings.</div>
+      ) : (
+        <div style={{ marginBottom: '20px' }}>
+          {board.map((a, i) => (
+            <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: i < 3 ? '#1a2540' : '#1e293b', border: `1px solid ${i===0?'#fbbf24':i===1?'#94a3b8':i===2?'#cd7c2f':'#334155'}`, borderRadius: '8px', padding: '10px 14px', marginBottom: '6px' }}>
+              <div style={{ fontSize: '20px', width: '28px', textAlign: 'center' }}>{medals[i] || `${i+1}`}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: '14px' }}>{a.name}</div>
+                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                  Last run: {a.last_run ? new Date(a.last_run).toLocaleDateString() : 'never'}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '18px', fontWeight: 700, color: '#e2e8f0' }}>{a.total_runs}</div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>runs</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '16px', fontWeight: 600, color: a.success_rate >= 80 ? '#22c55e' : a.success_rate >= 50 ? '#f59e0b' : '#ef4444' }}>{a.success_rate}%</div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>success</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '14px' }}>
+        <h4 style={{ margin: '0 0 10px', fontSize: '14px' }}>🔔 Notification Preferences</h4>
+        {[['digest_enabled','Daily Digest'],['url_monitor_enabled','URL Monitor Alerts'],['rss_enabled','RSS Match Alerts'],['webhook_enabled','Webhook Triggers'],['goal_enabled','Goal Progress']].map(([key,label]) => (
+          <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', cursor: 'pointer' }}>
+            <input type="checkbox" checked={!!prefs[key]} onChange={e => setPrefs((p: any) => ({...p, [key]: e.target.checked ? 1 : 0}))} style={{ width: '16px', height: '16px', accentColor: '#3b82f6' }} />
+            <span style={{ fontSize: '13px' }}>{label}</span>
+          </label>
+        ))}
+        <button onClick={savePrefs} disabled={saving} style={{ width: '100%', background: '#3b82f6', border: 'none', borderRadius: '6px', color: '#fff', padding: '8px', cursor: 'pointer', fontSize: '13px', marginTop: '4px' }}>{saving ? 'Saving...' : 'Save Preferences'}</button>
       </div>
     </div>
   );
