@@ -590,7 +590,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -599,6 +599,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'monitors', label: '👁️ Monitor' },
     { id: 'webhooks', label: '🔗 Webhooks' },
     { id: 'rss', label: '📰 RSS' },
+    { id: 'apikeys', label: '🔑 API' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -650,6 +651,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'monitors' && <UrlMonitorPanel api={api} />}
         {tab === 'webhooks' && <WebhookPanel api={api} />}
         {tab === 'rss' && <RssFeedPanel api={api} />}
+        {tab === 'apikeys' && <ApiKeysPanel api={api} />}
       </div>
     </div>
   );
@@ -961,6 +963,104 @@ function RssFeedPanel({ api }: { api: Api }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function ApiKeysPanel({ api }: { api: Api }) {
+  const [keys, setKeys] = useState<any[]>([]);
+  const [label, setLabel] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [newKey, setNewKey] = useState<string|null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const load = async () => {
+    const r = await api('/api/forge-api-keys');
+    if (r.ok) setKeys((await r.json()).keys || []);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const create = async () => {
+    if (!label.trim()) return;
+    setCreating(true);
+    const r = await api('/api/forge-api-keys', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ label }) });
+    if (r.ok) {
+      const d = await r.json();
+      setNewKey(d.key);
+      setLabel('');
+      load();
+    }
+    setCreating(false);
+  };
+
+  const del = async (id: string) => {
+    await api(`/api/forge-api-keys/${id}`, { method: 'DELETE' });
+    load();
+  };
+
+  const copy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{ padding: '16px', color: '#e2e8f0' }}>
+      <h3 style={{ margin: '0 0 8px', fontSize: '16px' }}>🔑 External API Keys</h3>
+      <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#94a3b8' }}>
+        Use these keys to call <code style={{background:'#1e293b',padding:'2px 6px',borderRadius:'4px'}}>/api/v1/run</code> from external systems.
+      </p>
+
+      {newKey && (
+        <div style={{ background: '#0f2a1a', border: '1px solid #22c55e', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
+          <div style={{ fontSize: '13px', color: '#22c55e', marginBottom: '6px' }}>✅ Key created — copy it now, it won't show again:</div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <code style={{ flex: 1, background: '#1e293b', padding: '6px 10px', borderRadius: '6px', fontSize: '12px', wordBreak: 'break-all' }}>{newKey}</code>
+            <button onClick={() => copy(newKey)} style={{ background: copied ? '#22c55e' : '#3b82f6', border: 'none', borderRadius: '6px', color: '#fff', padding: '6px 12px', cursor: 'pointer', fontSize: '12px' }}>
+              {copied ? '✓ Copied' : 'Copy'}
+            </button>
+          </div>
+          <button onClick={() => setNewKey(null)} style={{ marginTop: '8px', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '12px' }}>Dismiss</button>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+        <input
+          value={label}
+          onChange={e => setLabel(e.target.value)}
+          placeholder="Key label (e.g. my-app)"
+          style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px 12px', fontSize: '13px' }}
+          onKeyDown={e => e.key === 'Enter' && create()}
+        />
+        <button onClick={create} disabled={creating || !label.trim()} style={{ background: '#3b82f6', border: 'none', borderRadius: '6px', color: '#fff', padding: '8px 16px', cursor: 'pointer', fontSize: '13px' }}>
+          {creating ? '...' : 'Create Key'}
+        </button>
+      </div>
+
+      <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '12px', background: '#0f172a', borderRadius: '6px', padding: '10px' }}>
+        <strong>Usage:</strong> <code>POST /api/v1/run</code> with header <code>Authorization: Bearer &lt;key&gt;</code> and body <code>{`{"goal":"do something","userId":"..."}`}</code>
+      </div>
+
+      {keys.length === 0 ? (
+        <div style={{ textAlign: 'center', color: '#475569', padding: '32px', fontSize: '14px' }}>No API keys yet. Create one above.</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {keys.map(k => (
+            <div key={k.id} style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: '14px' }}>{k.label}</div>
+                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                  <code style={{ background: '#0f172a', padding: '2px 6px', borderRadius: '4px' }}>{k.key_preview}...</code>
+                  {' · '}{k.call_count || 0} calls
+                  {k.last_used && ` · last used ${new Date(k.last_used).toLocaleDateString()}`}
+                </div>
+              </div>
+              <button onClick={() => del(k.id)} style={{ background: '#7f1d1d', border: 'none', borderRadius: '6px', color: '#fca5a5', padding: '6px 10px', cursor: 'pointer', fontSize: '12px' }}>Delete</button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
