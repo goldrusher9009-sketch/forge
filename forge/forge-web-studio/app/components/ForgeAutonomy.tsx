@@ -597,6 +597,82 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// ─── v8.35 Agent Cost Tracker ────────────────────────────────────────────────
+function AgentCostTracker({ api }: { api: Api }) {
+  const [data, setData] = useState<any>(null);
+  const [days, setDays] = useState(30);
+  const [loading, setLoading] = useState(false);
+
+  async function load(d = days) {
+    setLoading(true);
+    try { const r = await api(`/api/agent-costs?days=${d}`); if (r.success) setData(r); } catch {}
+    setLoading(false);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  const maxCost = data?.agentRanking?.[0]?.cost || 1;
+  const maxDay = Math.max(...(data?.dailySpend?.map((d: any) => d.cost) || [1]));
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <h3 style={{ ...S.h, fontSize: 15 }}>💰 Agent Cost Tracker</h3>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[7, 14, 30, 90].map(d => (
+            <button key={d} onClick={() => { setDays(d); load(d); }} style={{ ...S.btn, ...(days === d ? {} : S.ghostBtn), padding: '4px 10px', fontSize: 11 }}>{d}d</button>
+          ))}
+        </div>
+      </div>
+      {loading && <p style={S.sub}>Loading...</p>}
+      {data && (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 16 }}>
+            {[
+              { label: 'Total Spend', value: `$${data.totalCost.toFixed(5)}`, color: '#facc15' },
+              { label: 'Total Runs', value: data.runCount, color: '#4ade80' },
+              { label: 'Avg / Run', value: data.runCount > 0 ? `$${(data.totalCost / data.runCount).toFixed(6)}` : '$0', color: '#a78bfa' },
+            ].map(s => (
+              <div key={s.label} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: 12, textAlign: 'center' }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: s.color }}>{s.value}</div>
+                <div style={{ ...S.sub, fontSize: 11 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {data.dailySpend?.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ ...S.sub, fontSize: 12, marginBottom: 8 }}>Daily Spend</p>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 60 }}>
+                {data.dailySpend.map((d: any) => (
+                  <div key={d.date} title={`${d.date}: $${d.cost}`} style={{ flex: 1, background: '#a78bfa', borderRadius: '3px 3px 0 0', height: `${Math.max(4, Math.round((d.cost / maxDay) * 56))}px` }} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {data.agentRanking?.length > 0 && (
+            <div>
+              <p style={{ ...S.sub, fontSize: 12, marginBottom: 8 }}>Top Agents by Cost</p>
+              {data.agentRanking.map((a: any, i: number) => (
+                <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                  <span style={{ fontSize: 11, color: '#94a3b8', width: 16, textAlign: 'right' }}>{i + 1}</span>
+                  <span style={{ fontSize: 12, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</span>
+                  <div style={{ width: 100, background: 'rgba(0,0,0,0.3)', borderRadius: 4, height: 6 }}>
+                    <div style={{ background: '#facc15', width: `${Math.round((a.cost / maxCost) * 100)}%`, height: '100%', borderRadius: 4 }} />
+                  </div>
+                  <span style={{ fontSize: 11, color: '#facc15', width: 70, textAlign: 'right' }}>${a.cost.toFixed(5)}</span>
+                  <span style={{ ...S.sub, fontSize: 10, width: 40, textAlign: 'right' }}>{a.runs}r</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── v8.34 Token Estimator ───────────────────────────────────────────────────
 function TokenEstimatorPanel({ api }: { api: Api }) {
   const [text, setText] = useState('');
@@ -1411,7 +1487,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -1440,6 +1516,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'mutate', label: '🧬 Mutate' },
     { id: 'diff', label: '⚖️ A/B Test' },
     { id: 'tokens', label: '🔢 Token Est.' },
+    { id: 'costs', label: '💰 Cost Tracker' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -1511,6 +1588,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'mutate' && <PromptMutationPanel api={api} />}
         {tab === 'diff' && <PromptDiffPanel api={api} />}
         {tab === 'tokens' && <TokenEstimatorPanel api={api} />}
+        {tab === 'costs' && <AgentCostTracker api={api} />}
       </div>
     </div>
   );
