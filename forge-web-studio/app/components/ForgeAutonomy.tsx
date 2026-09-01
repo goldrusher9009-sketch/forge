@@ -597,6 +597,78 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.44 Persona Chat ---
+const PRESET_PERSONAS = [
+  'Socrates, the ancient Greek philosopher',
+  'Elon Musk, the tech entrepreneur',
+  'Marie Curie, the pioneering scientist',
+  'Gordon Ramsay, the fiery celebrity chef',
+  'A Zen Buddhist monk',
+  'A brutally honest career coach',
+  'Warren Buffett, the legendary investor',
+  'Shakespeare, the Elizabethan playwright',
+];
+
+function PersonaChatPanel({ api }: { api: Api }) {
+  const [persona, setPersona] = useState('');
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<{ role: 'user'|'assistant'; content: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const chatRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight; }, [messages]);
+
+  const send = async () => {
+    if (!input.trim() || !persona.trim() || loading) return;
+    const newMessages = [...messages, { role: 'user' as const, content: input.trim() }];
+    setMessages(newMessages); setInput(''); setLoading(true); setErr('');
+    try {
+      const d = await api('/api/persona-chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ persona, messages: newMessages }) });
+      if (d.success) setMessages([...newMessages, { role: 'assistant', content: d.reply }]);
+      else setErr(d.error || 'Failed');
+    } catch(e: any) { setErr(e.message); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <h3 style={{ ...S.h, fontSize: 15, marginBottom: 8 }}>🎭 Persona Chat</h3>
+      <div style={{ marginBottom: 10 }}>
+        <input value={persona} onChange={e => { setPersona(e.target.value); setMessages([]); }} placeholder="Enter a persona (e.g. 'Steve Jobs')" style={{ ...S.input, width: '100%', marginBottom: 6 }} />
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          {PRESET_PERSONAS.map(p => (
+            <button key={p} onClick={() => { setPersona(p); setMessages([]); }} style={{ ...S.btn, fontSize: 10, padding: '3px 8px', background: persona === p ? 'var(--fg-accent,#6c63ff)' : 'var(--fg-bg2,#1a1a2e)', color: persona === p ? '#fff' : 'var(--fg-text3,#888)', border: '1px solid var(--fg-border,#2a2a3e)' }}>
+              {p.split(',')[0]}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div ref={chatRef} style={{ flex: 1, minHeight: 200, maxHeight: 340, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10, padding: 4 }}>
+        {messages.length === 0 && <div style={{ fontSize: 12, color: 'var(--fg-text3,#888)', textAlign: 'center', marginTop: 40 }}>Select a persona and start chatting…</div>}
+        {messages.map((m, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+            <div style={{ maxWidth: '80%', borderRadius: 10, padding: '8px 12px', fontSize: 12, lineHeight: 1.6,
+              background: m.role === 'user' ? 'var(--fg-accent,#6c63ff)' : 'var(--fg-bg2,#1a1a2e)',
+              color: m.role === 'user' ? '#fff' : 'var(--fg-text2,#ccc)',
+              border: m.role === 'assistant' ? '1px solid var(--fg-border,#2a2a3e)' : 'none' }}>
+              {m.role === 'assistant' && <div style={{ fontSize: 10, color: 'var(--fg-accent,#6c63ff)', marginBottom: 4, fontWeight: 700 }}>🎭 {persona.split(',')[0]}</div>}
+              {m.content}
+            </div>
+          </div>
+        ))}
+        {loading && <div style={{ fontSize: 12, color: 'var(--fg-text3,#888)', fontStyle: 'italic' }}>🎭 {persona.split(',')[0]} is thinking…</div>}
+      </div>
+      {err && <div style={{ color: '#f87171', fontSize: 11, marginBottom: 6 }}>{err}</div>}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder={persona ? `Ask ${persona.split(',')[0]}…` : 'Select a persona first'} disabled={!persona.trim()} style={{ ...S.input, flex: 1 }} />
+        <button onClick={send} disabled={!input.trim() || !persona.trim() || loading} style={{ ...S.btn, ...S.primaryBtn }}>Send</button>
+        {messages.length > 0 && <button onClick={() => setMessages([])} style={{ ...S.btn, fontSize: 11, background: 'transparent', border: '1px solid var(--fg-border,#2a2a3e)', color: 'var(--fg-text3,#888)' }}>Clear</button>}
+      </div>
+    </div>
+  );
+}
+
 // --- v8.43 Debate Simulator ---
 function DebateSimulatorPanel({ api }: { api: Api }) {
   const [topic, setTopic] = useState('');
@@ -2093,7 +2165,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -2131,6 +2203,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'optimizer', label: '✨ Optimizer' },
     { id: 'distill', label: '🧪 Distill' },
     { id: 'debate', label: '⚔️ Debate' },
+    { id: 'persona', label: '🎭 Persona' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -2211,6 +2284,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'optimizer' && <PromptOptimizerPanel api={api} />}
         {tab === 'distill' && <KnowledgeDistillerPanel api={api} />}
         {tab === 'debate' && <DebateSimulatorPanel api={api} />}
+        {tab === 'persona' && <PersonaChatPanel api={api} />}
       </div>
     </div>
   );

@@ -39096,6 +39096,24 @@ app.post('/api/debate', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.44 Persona Chat — chat with any persona/character/expert
+app.post('/api/persona-chat', requireAuth, async (req: any, res: any) => {
+  try {
+    const { persona, messages } = req.body;
+    if (!persona || !messages || !messages.length) return res.status(400).json({ error: 'persona and messages required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const systemPrompt = `You are ${persona}. Stay fully in character at all times. Respond as ${persona} would — with their knowledge, personality, speech patterns, and perspective. Never break character or acknowledge being an AI.`;
+    const llmMessages = [{ role: 'user' as const, content: `[SYSTEM: ${systemPrompt}]\n\n${messages[0].content}` }, ...messages.slice(1)];
+    const r = await callLLM(provider, key, null as any, llmMessages, undefined, { maxTokens: 600 });
+    res.json({ success: true, reply: (r.content || '').trim(), persona });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
