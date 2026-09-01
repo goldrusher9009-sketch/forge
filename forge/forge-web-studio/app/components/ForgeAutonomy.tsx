@@ -590,7 +590,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -602,6 +602,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'apikeys', label: '🔑 API' },
     { id: 'chains', label: '⛓️ Chains' },
     { id: 'conditions', label: '⚡ Triggers' },
+    { id: 'playground', label: '🧪 Playground' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -656,6 +657,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'apikeys' && <ApiKeysPanel api={api} />}
         {tab === 'chains' && <ChainBuilderPanel api={api} />}
         {tab === 'conditions' && <ConditionTriggersPanel api={api} />}
+        {tab === 'playground' && <ToolPlayground api={api} />}
       </div>
     </div>
   );
@@ -1230,6 +1232,75 @@ function ConditionTriggersPanel({ api }: { api: Api }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function ToolPlayground({ api }: { api: Api }) {
+  const [tools, setTools] = useState<any[]>([]);
+  const [selected, setSelected] = useState('');
+  const [argsJson, setArgsJson] = useState('{}');
+  const [result, setResult] = useState<string|null>(null);
+  const [running, setRunning] = useState(false);
+  const [argsError, setArgsError] = useState('');
+
+  useEffect(() => {
+    api('/api/forge-tools').then(r => r.ok && r.json().then(d => {
+      setTools(d.tools || []);
+      if (d.tools?.length > 0) setSelected(d.tools[0].name);
+    }));
+  }, []);
+
+  const run = async () => {
+    let args: any;
+    try { args = JSON.parse(argsJson); setArgsError(''); } catch(e) { setArgsError('Invalid JSON'); return; }
+    setRunning(true); setResult(null);
+    const r = await api('/api/forge-tool-test', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ tool: selected, args }) });
+    const d = await r.json();
+    setResult(d.success ? d.result : `ERROR: ${d.error}`);
+    setRunning(false);
+  };
+
+  const selectedTool = tools.find(t => t.name === selected);
+
+  return (
+    <div style={{ padding: '16px', color: '#e2e8f0' }}>
+      <h3 style={{ margin: '0 0 6px', fontSize: '16px' }}>🧪 Tool Playground</h3>
+      <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#94a3b8' }}>Test any FORGE_TOOL directly. Pick a tool, provide args as JSON, run it.</p>
+
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+        <select value={selected} onChange={e => { setSelected(e.target.value); setResult(null); setArgsJson('{}'); }} style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px 10px', fontSize: '13px' }}>
+          {tools.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
+        </select>
+      </div>
+
+      {selectedTool && (
+        <div style={{ background: '#0f172a', border: '1px solid #1e3a5f', borderRadius: '6px', padding: '10px', marginBottom: '10px', fontSize: '12px', color: '#93c5fd' }}>
+          📖 {selectedTool.desc}
+        </div>
+      )}
+
+      <div style={{ marginBottom: '10px' }}>
+        <label style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Args (JSON):</label>
+        <textarea
+          value={argsJson}
+          onChange={e => setArgsJson(e.target.value)}
+          rows={5}
+          style={{ width: '100%', background: '#1e293b', border: `1px solid ${argsError ? '#ef4444' : '#334155'}`, borderRadius: '6px', color: '#e2e8f0', padding: '8px 10px', fontSize: '12px', fontFamily: 'monospace', resize: 'vertical', boxSizing: 'border-box' }}
+        />
+        {argsError && <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '2px' }}>{argsError}</div>}
+      </div>
+
+      <button onClick={run} disabled={running || !selected} style={{ width: '100%', background: running ? '#334155' : '#7c3aed', border: 'none', borderRadius: '6px', color: '#fff', padding: '10px', cursor: 'pointer', fontSize: '14px', marginBottom: '12px' }}>
+        {running ? '⏳ Running...' : '▶ Run Tool'}
+      </button>
+
+      {result !== null && (
+        <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '12px' }}>
+          <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '6px' }}>Result:</div>
+          <pre style={{ margin: 0, fontSize: '12px', color: result.startsWith('ERROR') ? '#f87171' : '#86efac', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{result}</pre>
+        </div>
+      )}
     </div>
   );
 }
