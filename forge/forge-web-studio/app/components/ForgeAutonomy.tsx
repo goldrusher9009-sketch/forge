@@ -590,7 +590,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -600,6 +600,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'webhooks', label: '🔗 Webhooks' },
     { id: 'rss', label: '📰 RSS' },
     { id: 'apikeys', label: '🔑 API' },
+    { id: 'chains', label: '⛓️ Chains' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -652,6 +653,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'webhooks' && <WebhookPanel api={api} />}
         {tab === 'rss' && <RssFeedPanel api={api} />}
         {tab === 'apikeys' && <ApiKeysPanel api={api} />}
+        {tab === 'chains' && <ChainBuilderPanel api={api} />}
       </div>
     </div>
   );
@@ -1061,6 +1063,96 @@ function ApiKeysPanel({ api }: { api: Api }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function ChainBuilderPanel({ api }: { api: Api }) {
+  const [chains, setChains] = useState<any[]>([]);
+  const [name, setName] = useState('');
+  const [steps, setSteps] = useState([{ name: 'Step 1', goal: '' }, { name: 'Step 2', goal: '' }]);
+  const [creating, setCreating] = useState(false);
+  const [runningId, setRunningId] = useState<string|null>(null);
+  const [runs, setRuns] = useState<Record<string, any[]>>({});
+
+  const load = async () => {
+    const r = await api('/api/agent-chains');
+    if (r.ok) setChains((await r.json()).chains || []);
+  };
+  useEffect(() => { load(); }, []);
+
+  const addStep = () => setSteps(s => [...s, { name: `Step ${s.length+1}`, goal: '' }]);
+  const removeStep = (i: number) => setSteps(s => s.filter((_, idx) => idx !== i));
+  const updateStep = (i: number, field: string, val: string) => setSteps(s => s.map((st, idx) => idx === i ? { ...st, [field]: val } : st));
+
+  const create = async () => {
+    if (!name.trim() || steps.some(s => !s.goal.trim())) return;
+    setCreating(true);
+    await api('/api/agent-chains', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name, steps }) });
+    setName(''); setSteps([{ name: 'Step 1', goal: '' }, { name: 'Step 2', goal: '' }]);
+    load(); setCreating(false);
+  };
+
+  const runChain = async (chain: any) => {
+    setRunningId(chain.id);
+    await api(`/api/agent-chains/${chain.id}/run`, { method: 'POST' });
+    setTimeout(async () => {
+      const r = await api(`/api/agent-chains/${chain.id}/runs`);
+      if (r.ok) { const d = await r.json(); setRuns(prev => ({ ...prev, [chain.id]: d.runs })); }
+      setRunningId(null); load();
+    }, 3000);
+  };
+
+  const del = async (id: string) => { await api(`/api/agent-chains/${id}`, { method: 'DELETE' }); load(); };
+
+  return (
+    <div style={{ padding: '16px', color: '#e2e8f0' }}>
+      <h3 style={{ margin: '0 0 8px', fontSize: '16px' }}>⛓️ Agent Chain Builder</h3>
+      <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#94a3b8' }}>Chain agents together — each step's output feeds the next.</p>
+
+      <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '14px', marginBottom: '16px' }}>
+        <input value={name} onChange={e => setName(e.target.value)} placeholder="Chain name" style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px 10px', fontSize: '13px', marginBottom: '12px', boxSizing: 'border-box' }} />
+        {steps.map((step, i) => (
+          <div key={i} style={{ marginBottom: '10px', background: '#0f172a', borderRadius: '6px', padding: '10px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '6px', alignItems: 'center' }}>
+              <input value={step.name} onChange={e => updateStep(i, 'name', e.target.value)} style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: '4px', color: '#e2e8f0', padding: '4px 8px', fontSize: '12px' }} />
+              {steps.length > 1 && <button onClick={() => removeStep(i)} style={{ background: '#7f1d1d', border: 'none', borderRadius: '4px', color: '#fca5a5', padding: '4px 8px', cursor: 'pointer', fontSize: '11px' }}>✕</button>}
+            </div>
+            <textarea value={step.goal} onChange={e => updateStep(i, 'goal', e.target.value)} placeholder={`Goal for ${step.name}...`} rows={2} style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '4px', color: '#e2e8f0', padding: '6px 8px', fontSize: '12px', resize: 'vertical', boxSizing: 'border-box' }} />
+          </div>
+        ))}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={addStep} style={{ background: '#334155', border: 'none', borderRadius: '6px', color: '#e2e8f0', padding: '8px 14px', cursor: 'pointer', fontSize: '12px' }}>+ Step</button>
+          <button onClick={create} disabled={creating} style={{ flex: 1, background: '#3b82f6', border: 'none', borderRadius: '6px', color: '#fff', padding: '8px', cursor: 'pointer', fontSize: '13px' }}>{creating ? 'Creating...' : 'Create Chain'}</button>
+        </div>
+      </div>
+
+      {chains.length === 0 ? (
+        <div style={{ textAlign: 'center', color: '#475569', padding: '24px', fontSize: '14px' }}>No chains yet.</div>
+      ) : chains.map(chain => (
+        <div key={chain.id} style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '12px', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: '14px' }}>{chain.name}</div>
+              <div style={{ fontSize: '12px', color: '#64748b' }}>{chain.steps?.length || 0} steps · {chain.run_count||0} runs{chain.last_run ? ` · last run ${new Date(chain.last_run).toLocaleDateString()}` : ''}</div>
+            </div>
+            <button onClick={() => runChain(chain)} disabled={runningId === chain.id} style={{ background: runningId === chain.id ? '#334155' : '#059669', border: 'none', borderRadius: '6px', color: '#fff', padding: '6px 12px', cursor: 'pointer', fontSize: '12px' }}>
+              {runningId === chain.id ? '⏳ Running...' : '▶ Run'}
+            </button>
+            <button onClick={() => del(chain.id)} style={{ background: '#7f1d1d', border: 'none', borderRadius: '6px', color: '#fca5a5', padding: '6px 10px', cursor: 'pointer', fontSize: '12px' }}>Delete</button>
+          </div>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {chain.steps?.map((s: any, i: number) => (
+              <span key={i} style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '4px', padding: '2px 8px', fontSize: '11px', color: '#94a3b8' }}>{i+1}. {s.name}</span>
+            ))}
+          </div>
+          {runs[chain.id]?.length > 0 && (
+            <div style={{ marginTop: '8px', fontSize: '11px', color: '#64748b', background: '#0f172a', borderRadius: '4px', padding: '6px' }}>
+              Last run: {runs[chain.id][0].status} — {runs[chain.id][0].step_results?.join(' | ')?.slice(0,200)}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
