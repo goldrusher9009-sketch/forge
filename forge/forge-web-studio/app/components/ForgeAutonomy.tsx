@@ -1342,13 +1342,15 @@ function AgentHistoryPanel({ api }: { api: Api }) {
       ) : runs.map(r => (
         <div key={r.id} style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '10px', marginBottom: '6px', cursor: 'pointer' }} onClick={() => setExpanded(expanded === r.id ? null : r.id)}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '11px', background: r.status==='done'?'#065f46':'#1e3a5f', color: r.status==='done'?'#6ee7b7':'#93c5fd', padding: '2px 6px', borderRadius: '4px' }}>{r.status||'done'}</span>
-            <div style={{ flex: 1, fontSize: '13px', fontWeight: 500 }}>{r.name || 'unnamed'}</div>
+            <span style={{ fontSize: '11px', background: r.status==='done'||r.status==='completed'?'#065f46':'#1e3a5f', color: r.status==='done'||r.status==='completed'?'#6ee7b7':'#93c5fd', padding: '2px 6px', borderRadius: '4px' }}>{r.status||'done'}</span>
+            <div style={{ flex: 1, fontSize: '13px', fontWeight: 500 }}>{r.name || r.goal?.slice(0,50) || 'unnamed'}</div>
+            {r.score != null && <span style={{ fontSize: '11px', background: r.score>=70?'#14532d':r.score>=40?'#78350f':'#7f1d1d', color: r.score>=70?'#86efac':r.score>=40?'#fcd34d':'#fca5a5', padding: '2px 7px', borderRadius: '4px', fontWeight: 700 }}>{r.score}/100</span>}
             <div style={{ fontSize: '11px', color: '#475569' }}>{new Date(r.created_at).toLocaleString()}</div>
           </div>
           {expanded === r.id && (
             <div style={{ marginTop: '8px' }}>
               <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Goal: {r.goal?.slice(0,300)}</div>
+              {r.score_reason && <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px', fontStyle: 'italic' }}>🤖 Score reason: {r.score_reason}</div>}
               <pre style={{ margin: 0, fontSize: '11px', color: '#94a3b8', whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#0f172a', padding: '8px', borderRadius: '4px' }}>{String(r.result||'').slice(0,600)}</pre>
             </div>
           )}
