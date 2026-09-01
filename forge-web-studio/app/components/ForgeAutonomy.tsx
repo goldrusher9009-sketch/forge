@@ -597,6 +597,85 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.45 Idea Validator ---
+function IdeaValidatorPanel({ api }: { api: Api }) {
+  const [idea, setIdea] = useState('');
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [err, setErr] = useState('');
+
+  const run = async () => {
+    if (!idea.trim()) return;
+    setRunning(true); setErr(''); setResult(null);
+    try {
+      const d = await api('/api/idea-validate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idea: idea.trim() }) });
+      if (d.success) setResult(d); else setErr(d.error || 'Failed');
+    } catch(e: any) { setErr(e.message); }
+    setRunning(false);
+  };
+
+  const verdictColor: Record<string, string> = { 'Go for it': '#4ade80', 'Needs work': '#fbbf24', 'Pivot': '#fb923c', 'Red flag': '#f87171' };
+  const scoreColor = (s: number) => s >= 8 ? '#4ade80' : s >= 6 ? '#fbbf24' : '#f87171';
+
+  return (
+    <div>
+      <h3 style={{ ...S.h, fontSize: 15, marginBottom: 8 }}>🚀 Idea Validator</h3>
+      <p style={{ ...S.sub, marginBottom: 12 }}>Describe your startup or project idea — get scored across 6 dimensions with strengths, risks, and first steps.</p>
+      <textarea value={idea} onChange={e => setIdea(e.target.value)} placeholder="e.g. An app that connects dog owners with local dog sitters using AI matching" rows={3}
+        style={{ ...S.input, width: '100%', fontFamily: 'inherit', resize: 'vertical', marginBottom: 10 }} />
+      <button onClick={run} disabled={running || !idea.trim()} style={{ ...S.btn, ...S.primaryBtn, marginBottom: 16 }}>
+        {running ? '⏳ Validating…' : '🚀 Validate Idea'}
+      </button>
+      {err && <div style={{ color: '#f87171', fontSize: 12, marginBottom: 10 }}>{err}</div>}
+      {result && (
+        <div>
+          <div style={{ borderRadius: 10, border: `2px solid ${verdictColor[result.verdict] || '#6c63ff'}40`, background: `${verdictColor[result.verdict] || '#6c63ff'}08`, padding: 16, marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ fontSize: 20, fontWeight: 800, color: verdictColor[result.verdict] || '#6c63ff' }}>{result.verdict}</div>
+              <div style={{ fontSize: 24, fontWeight: 900, color: scoreColor(result.overall_score) }}>{result.overall_score}/10</div>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--fg-text2,#ccc)', lineHeight: 1.6 }}>{result.summary}</div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 8, marginBottom: 14 }}>
+            {(result.dimensions || []).map((d: any) => (
+              <div key={d.name} style={{ borderRadius: 8, border: '1px solid var(--fg-border,#2a2a3e)', background: 'var(--fg-bg2,#1a1a2e)', padding: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--fg-text2,#ccc)' }}>{d.name}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: scoreColor(d.score) }}>{d.score}</div>
+                </div>
+                <div style={{ height: 3, borderRadius: 2, background: 'var(--fg-border,#2a2a3e)', marginBottom: 6 }}>
+                  <div style={{ height: '100%', borderRadius: 2, width: `${d.score*10}%`, background: scoreColor(d.score) }} />
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--fg-text3,#888)', lineHeight: 1.4 }}>{d.rationale}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 14 }}>
+            <div style={{ borderRadius: 8, border: '1px solid rgba(74,222,128,0.3)', background: 'rgba(74,222,128,0.04)', padding: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#4ade80', marginBottom: 8 }}>💪 Strengths</div>
+              {(result.strengths || []).map((s: string, i: number) => <div key={i} style={{ fontSize: 11, color: 'var(--fg-text2,#ccc)', marginBottom: 4 }}>• {s}</div>)}
+            </div>
+            <div style={{ borderRadius: 8, border: '1px solid rgba(248,113,113,0.3)', background: 'rgba(248,113,113,0.04)', padding: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#f87171', marginBottom: 8 }}>⚠️ Risks</div>
+              {(result.risks || []).map((r: string, i: number) => <div key={i} style={{ fontSize: 11, color: 'var(--fg-text2,#ccc)', marginBottom: 4 }}>• {r}</div>)}
+            </div>
+            <div style={{ borderRadius: 8, border: '1px solid rgba(108,99,255,0.3)', background: 'rgba(108,99,255,0.05)', padding: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-accent,#6c63ff)', marginBottom: 8 }}>🎯 First Steps</div>
+              {(result.first_steps || []).map((s: string, i: number) => <div key={i} style={{ fontSize: 11, color: 'var(--fg-text2,#ccc)', marginBottom: 4 }}>{i+1}. {s}</div>)}
+            </div>
+          </div>
+          {result.pivots?.length > 0 && (
+            <div style={{ borderRadius: 8, border: '1px solid rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.04)', padding: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#fbbf24', marginBottom: 8 }}>🔄 Pivot Options</div>
+              {result.pivots.map((p: string, i: number) => <div key={i} style={{ fontSize: 11, color: 'var(--fg-text2,#ccc)', marginBottom: 4 }}>• {p}</div>)}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.44 Persona Chat ---
 const PRESET_PERSONAS = [
   'Socrates, the ancient Greek philosopher',
@@ -2165,7 +2244,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -2204,6 +2283,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'distill', label: '🧪 Distill' },
     { id: 'debate', label: '⚔️ Debate' },
     { id: 'persona', label: '🎭 Persona' },
+    { id: 'validate', label: '🚀 Validate' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -2285,6 +2365,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'distill' && <KnowledgeDistillerPanel api={api} />}
         {tab === 'debate' && <DebateSimulatorPanel api={api} />}
         {tab === 'persona' && <PersonaChatPanel api={api} />}
+        {tab === 'validate' && <IdeaValidatorPanel api={api} />}
       </div>
     </div>
   );

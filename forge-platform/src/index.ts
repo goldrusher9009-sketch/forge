@@ -39114,6 +39114,29 @@ app.post('/api/persona-chat', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.45 Idea Validator — score a startup/project idea across key dimensions
+app.post('/api/idea-validate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { idea } = req.body;
+    if (!idea) return res.status(400).json({ error: 'idea required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const p = `You are a seasoned startup advisor and investor. Evaluate this idea: "${idea}"
+
+Return ONLY JSON with this exact structure:
+{"overall_score":7,"verdict":"Go for it"|"Needs work"|"Pivot"|"Red flag","summary":"2-sentence overall take","dimensions":[{"name":"Market Size","score":8,"rationale":"brief"},{"name":"Problem Clarity","score":7,"rationale":"brief"},{"name":"Competitive Moat","score":6,"rationale":"brief"},{"name":"Execution Complexity","score":5,"rationale":"brief"},{"name":"Revenue Potential","score":8,"rationale":"brief"},{"name":"Timing","score":7,"rationale":"brief"}],"strengths":["strength1","strength2","strength3"],"risks":["risk1","risk2","risk3"],"pivots":["alternative angle 1","alternative angle 2"],"first_steps":["concrete action 1","concrete action 2","concrete action 3"]}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 900 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, idea, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
