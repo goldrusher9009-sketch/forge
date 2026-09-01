@@ -590,13 +590,14 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
     { id: 'agents', label: '🤖 Agents' },
     { id: 'goals', label: '🎯 Goals' },
     { id: 'monitors', label: '👁️ Monitor' },
+    { id: 'webhooks', label: '🔗 Webhooks' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -646,6 +647,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cascade' && <DroidPipeline api={api} />}
         {tab === 'goals' && <GoalTracker api={api} />}
         {tab === 'monitors' && <UrlMonitorPanel api={api} />}
+        {tab === 'webhooks' && <WebhookPanel api={api} />}
       </div>
     </div>
   );
@@ -805,6 +807,81 @@ function UrlMonitorPanel({ api }: { api: Api }) {
             <div style={{ display: 'flex', gap: 4 }}>
               <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11 }} onClick={() => toggle(m.id, m.enabled)}>{m.enabled ? 'Pause' : 'Resume'}</button>
               <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11, color: '#ff4d5e' }} onClick={() => del(m.id)}>Delete</button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Webhook Panel ────────────────────────────────────────────────────────────
+function WebhookPanel({ api }: { api: Api }) {
+  const [endpoints, setEndpoints] = useState<any[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({ label: '', agent_goal: '' });
+  const [newToken, setNewToken] = useState<{ id: string; token: string; url: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const baseUrl = 'https://forge-production-2692.up.railway.app';
+  const load = async () => { try { const d = await api('/webhook-endpoints'); if (d?.success) setEndpoints(d.data); } catch {} };
+  useEffect(() => { load(); }, []);
+
+  const add = async () => {
+    if (!form.agent_goal) return;
+    const d = await api('/webhook-endpoints', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    if (d?.success) { setNewToken({ id: d.id, token: d.token, url: `${baseUrl}${d.url}` }); setAdding(false); setForm({ label: '', agent_goal: '' }); load(); }
+  };
+  const del = async (id: string) => { await api(`/webhook-endpoints/${id}`, { method: 'DELETE' }); load(); };
+  const copy = (text: string) => { try { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch {} };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div>
+          <p style={S.h}>🔗 Webhook Receiver</p>
+          <p style={S.sub}>External services (GitHub, Stripe, Zapier) POST to your URL and trigger agents.</p>
+        </div>
+        <button style={{ ...S.btn, ...S.primary }} onClick={() => setAdding(!adding)}>+ Endpoint</button>
+      </div>
+
+      {newToken && (
+        <div style={{ ...S.card, border: '1px solid rgba(0,200,100,0.3)', marginBottom: 16 }}>
+          <p style={{ ...S.h, color: '#00c864', margin: '0 0 6px' }}>✓ Webhook created</p>
+          <p style={{ ...S.sub, margin: '0 0 6px' }}>POST to this URL from any external service:</p>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <code style={{ flex: 1, background: 'rgba(0,0,0,0.4)', padding: '8px 12px', borderRadius: 8, fontSize: 11, wordBreak: 'break-all', color: '#a8f0c8' }}>{newToken.url}</code>
+            <button style={{ ...S.btn, ...S.primary, whiteSpace: 'nowrap' }} onClick={() => copy(newToken.url)}>{copied ? '✓ Copied' : 'Copy URL'}</button>
+          </div>
+          <button style={{ ...S.btn, ...S.ghostBtn, marginTop: 10, fontSize: 11 }} onClick={() => setNewToken(null)}>Dismiss</button>
+        </div>
+      )}
+
+      {adding && (
+        <div style={{ ...S.card, marginBottom: 16 }}>
+          <input placeholder="Label (e.g. GitHub push, Stripe payment)" value={form.label} onChange={e => setForm(p => ({ ...p, label: e.target.value }))} style={{ ...S.input, marginBottom: 8 }} />
+          <textarea placeholder="Agent goal — what should the agent do when triggered? (e.g. A payment was received. Check Stripe dashboard and send a thank-you summary to the notifications)" value={form.agent_goal} onChange={e => setForm(p => ({ ...p, agent_goal: e.target.value }))} style={{ ...S.input, height: 80, resize: 'vertical', marginBottom: 8 }} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={{ ...S.btn, ...S.primary }} onClick={add}>Create</button>
+            <button style={{ ...S.btn, ...S.ghostBtn }} onClick={() => setAdding(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {endpoints.length === 0 && !adding && <p style={{ ...S.sub, textAlign: 'center', marginTop: 32 }}>No webhook endpoints. Create one to receive external triggers.</p>}
+
+      {endpoints.map(ep => (
+        <div key={ep.id} style={S.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ ...S.h, margin: '0 0 2px' }}>{ep.label || 'Unnamed endpoint'}</p>
+              <code style={{ fontSize: 10, color: '#888', wordBreak: 'break-all', display: 'block', marginBottom: 4 }}>{baseUrl}/api/webhooks/in/{ep.token}</code>
+              <span style={S.tag}>🔥 {ep.trigger_count || 0} triggers</span>
+              {ep.last_triggered && <span style={S.tag}>Last: {new Date(ep.last_triggered).toLocaleString()}</span>}
+            </div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11 }} onClick={() => copy(`${baseUrl}/api/webhooks/in/${ep.token}`)}>Copy</button>
+              <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11, color: '#ff4d5e' }} onClick={() => del(ep.id)}>Delete</button>
             </div>
           </div>
         </div>
