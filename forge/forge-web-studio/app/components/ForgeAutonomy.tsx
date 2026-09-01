@@ -225,6 +225,59 @@ function ApprovalCard({ a, api, onResolved }: { a: any; api: Api; onResolved: ()
   );
 }
 
+// ─── v8.28 Goal Autopilot Panel ──────────────────────────────────────────────
+function GoalAutopilotPanel({ api }: { api: Api }) {
+  const [goals, setGoals] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [running, setRunning] = useState<string|null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    const d = await api('/api/agent-goals/nudges');
+    if (d?.success) setGoals(d.data || []);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const runGoal = async (g: any) => {
+    setRunning(g.id);
+    // Find a matching schedule or just trigger via /api/agent-runs
+    await api('/api/agent-runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ goal: g.agent_prompt || `Work on goal: ${g.title}`, name: g.title }) });
+    setTimeout(() => { setRunning(null); load(); }, 2000);
+  };
+
+  if (loading) return <p style={{ color: '#888', fontSize: 13 }}>Loading…</p>;
+  if (!goals.length) return <p style={{ color: '#555', fontSize: 13 }}>No active goals. Create goals in the Goals tab.</p>;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <p style={{ color: '#888', fontSize: 12, margin: 0 }}>Active goals with progress + staleness — nudge any that need a run.</p>
+      {goals.map(g => (
+        <div key={g.id} style={{ background: g.stale ? 'rgba(239,68,68,0.07)' : 'rgba(255,255,255,0.04)', border: `1px solid ${g.stale ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 10, padding: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <div>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>{g.title}</span>
+              {g.stale && <span style={{ marginLeft: 8, background: '#7f1d1d', color: '#fca5a5', borderRadius: 4, padding: '1px 6px', fontSize: 10 }}>⚠ Stale {g.hoursSince}h</span>}
+              {!g.stale && <span style={{ marginLeft: 8, background: 'rgba(34,197,94,0.15)', color: '#4ade80', borderRadius: 4, padding: '1px 6px', fontSize: 10 }}>✓ Active</span>}
+            </div>
+            <button onClick={() => runGoal(g)} disabled={running === g.id} style={{ background: '#ff1f35', color: '#fff', border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 11 }}>
+              {running === g.id ? '…' : '▶ Run Now'}
+            </button>
+          </div>
+          {/* Progress bar */}
+          <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 999, height: 6, marginBottom: 6, overflow: 'hidden' }}>
+            <div style={{ width: `${g.pct}%`, height: '100%', background: g.pct >= 100 ? '#22c55e' : '#ff1f35', borderRadius: 999, transition: 'width 0.4s' }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#888' }}>
+            <span>{g.current_value}{g.unit ? ` ${g.unit}` : ''} / {g.target_value}{g.unit ? ` ${g.unit}` : ''} ({g.pct}%)</span>
+            {g.deadline && <span>Due: {g.deadline}</span>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── v8.27 Run Inspector ──────────────────────────────────────────────────────
 function AgentRunInspector({ api }: { api: Api }) {
   const [runs, setRuns] = useState<any[]>([]);
@@ -909,7 +962,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -931,6 +984,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'memory', label: '🧠 Memory' },
     { id: 'myschedules', label: '⏰ Schedules' },
     { id: 'runs', label: '🔍 Run Inspector' },
+    { id: 'autopilot', label: '🎯 Autopilot' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -995,6 +1049,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'memory' && <AgentMemorySearch api={api} />}
         {tab === 'myschedules' && <AgentSchedulePanel api={api} />}
         {tab === 'runs' && <AgentRunInspector api={api} />}
+        {tab === 'autopilot' && <GoalAutopilotPanel api={api} />}
       </div>
     </div>
   );
