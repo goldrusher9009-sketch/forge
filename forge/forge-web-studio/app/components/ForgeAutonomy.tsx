@@ -225,6 +225,107 @@ function ApprovalCard({ a, api, onResolved }: { a: any; api: Api; onResolved: ()
   );
 }
 
+// ─── v8.30 Relay Runner ──────────────────────────────────────────────────────
+function RelayRunner({ api }: { api: Api }) {
+  const [chains, setChains] = useState<any[]>([]);
+  const [selected, setSelected] = useState<any>(null);
+  const [steps, setSteps] = useState<{name:string;status:'idle'|'running'|'done'|'error';result:string}[]>([]);
+  const [running, setRunning] = useState(false);
+  const [runId, setRunId] = useState<string|null>(null);
+
+  const load = async () => {
+    const d = await api('/api/agent-chains');
+    if (d?.chains) setChains(d.chains);
+  };
+  useEffect(() => { load(); }, []);
+
+  const select = (chain: any) => {
+    setSelected(chain);
+    setSteps((chain.steps || []).map((s: any) => ({ name: s.name, status: 'idle' as const, result: '' })));
+    setRunId(null);
+  };
+
+  const runRelay = async () => {
+    if (!selected) return;
+    setRunning(true);
+    setSteps(s => s.map(st => ({ ...st, status: 'idle', result: '' })));
+    const d = await api(`/api/agent-chains/${selected.id}/run`, { method: 'POST', body: '{}' });
+    const newRunId = d?.run_id;
+    setRunId(newRunId);
+    // Poll chain_runs for step_results
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      attempts++;
+      const r = await api(`/api/agent-chains/${selected.id}/runs`);
+      const run = r?.runs?.[0];
+      if (run) {
+        const stepResults: string[] = run.step_results || [];
+        setSteps(s => s.map((st, i) => ({
+          ...st,
+          status: i < stepResults.length ? 'done' : (i === stepResults.length && run.status === 'running' ? 'running' : 'idle'),
+          result: stepResults[i] || '',
+        })));
+        if (run.status === 'done' || attempts > 60) {
+          clearInterval(poll);
+          setRunning(false);
+          setSteps(s => s.map((st, i) => ({ ...st, status: stepResults[i] ? 'done' : 'idle', result: stepResults[i] || '' })));
+        }
+      }
+    }, 3000);
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: 14, height: 480 }}>
+      {/* Chain list */}
+      <div style={{ width: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <p style={{ color: '#666', fontSize: 11, margin: '0 0 4px' }}>SELECT CHAIN</p>
+        {chains.length === 0 && <p style={{ color: '#555', fontSize: 12 }}>No chains — create one in the ⛓️ Chains tab.</p>}
+        {chains.map(c => (
+          <div key={c.id} onClick={() => select(c)} style={{
+            padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
+            background: selected?.id === c.id ? 'rgba(255,31,53,0.15)' : 'rgba(255,255,255,0.04)',
+            border: `1px solid ${selected?.id === c.id ? '#ff1f35' : 'rgba(255,255,255,0.07)'}`,
+          }}>
+            <div style={{ color: '#fff', fontSize: 12, fontWeight: 600 }}>{c.name}</div>
+            <div style={{ color: '#555', fontSize: 10 }}>{c.steps?.length || 0} steps · {c.run_count || 0} runs</div>
+          </div>
+        ))}
+      </div>
+      {/* Step pipeline */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {!selected && <p style={{ color: '#555', fontSize: 13 }}>← Select a chain to run</p>}
+        {selected && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <h3 style={{ color: '#fff', fontSize: 14, margin: 0 }}>{selected.name}</h3>
+              <button onClick={runRelay} disabled={running} style={{ background: running ? '#334155' : '#ff1f35', color: '#fff', border: 'none', borderRadius: 6, padding: '5px 14px', cursor: 'pointer', fontSize: 12 }}>
+                {running ? '⏳ Running…' : '▶ Run Relay'}
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {steps.map((st, i) => {
+                const colors: Record<string,string> = { idle:'#475569', running:'#f59e0b', done:'#22c55e', error:'#ef4444' };
+                const icons: Record<string,string> = { idle:'○', running:'◌', done:'✓', error:'✕' };
+                return (
+                  <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${colors[st.status]}40`, borderRadius: 8, padding: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ color: colors[st.status], fontWeight: 700, fontSize: 14 }}>{icons[st.status]}</span>
+                      <span style={{ color: '#fff', fontSize: 12, fontWeight: 600 }}>Step {i+1}: {st.name}</span>
+                      {i < steps.length - 1 && <span style={{ color: '#555', fontSize: 10, marginLeft: 'auto' }}>↓ feeds next</span>}
+                    </div>
+                    {st.result && <pre style={{ color: '#d1fae5', fontSize: 10, whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0, background: 'rgba(0,0,0,0.3)', borderRadius: 4, padding: 6 }}>{st.result.slice(0, 400)}</pre>}
+                    {st.status === 'running' && <p style={{ color: '#f59e0b', fontSize: 11, margin: '4px 0 0' }}>Running…</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── v8.29 Agent Health Monitor ──────────────────────────────────────────────
 function AgentHealthMonitor({ api }: { api: Api }) {
   const [health, setHealth] = useState<any[]>([]);
@@ -1033,7 +1134,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -1057,6 +1158,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'runs', label: '🔍 Run Inspector' },
     { id: 'autopilot', label: '🎯 Autopilot' },
     { id: 'health', label: '💚 Health' },
+    { id: 'relay', label: '⛓️ Relay' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -1123,6 +1225,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'runs' && <AgentRunInspector api={api} />}
         {tab === 'autopilot' && <GoalAutopilotPanel api={api} />}
         {tab === 'health' && <AgentHealthMonitor api={api} />}
+        {tab === 'relay' && <RelayRunner api={api} />}
       </div>
     </div>
   );
