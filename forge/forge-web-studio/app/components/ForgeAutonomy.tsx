@@ -225,6 +225,76 @@ function ApprovalCard({ a, api, onResolved }: { a: any; api: Api; onResolved: ()
   );
 }
 
+// ─── v8.31 Agent Scoreboard ──────────────────────────────────────────────────
+function AgentScoreboard({ api }: { api: Api }) {
+  const [board, setBoard] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sort, setSort] = useState<'avg_score'|'total_runs'|'success_rate'>('avg_score');
+
+  const load = async () => {
+    setLoading(true);
+    const d = await api('/api/agent-scoreboard');
+    if (d?.success) setBoard(d.data || []);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const sorted = [...board].sort((a, b) => {
+    if (sort === 'avg_score') return (b.avg_score ?? -1) - (a.avg_score ?? -1);
+    if (sort === 'total_runs') return b.total_runs - a.total_runs;
+    return b.success_rate - a.success_rate;
+  });
+
+  const Bar = ({ pct, color }: { pct: number; color: string }) => (
+    <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 999, height: 5, width: 60, overflow: 'hidden', display: 'inline-block', verticalAlign: 'middle', marginLeft: 6 }}>
+      <div style={{ width: `${Math.min(100, pct)}%`, height: '100%', background: color, borderRadius: 999 }} />
+    </div>
+  );
+
+  if (loading) return <p style={{ color: '#888', fontSize: 13 }}>Loading…</p>;
+  if (!board.length) return <p style={{ color: '#555', fontSize: 13 }}>No agent runs yet.</p>;
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12, alignItems: 'center' }}>
+        <span style={{ color: '#666', fontSize: 11 }}>Sort by:</span>
+        {(['avg_score','total_runs','success_rate'] as const).map(s => (
+          <button key={s} onClick={() => setSort(s)} style={{ background: sort === s ? '#ff1f35' : 'rgba(255,255,255,0.07)', color: sort === s ? '#fff' : '#aaa', border: 'none', borderRadius: 5, padding: '3px 9px', cursor: 'pointer', fontSize: 11 }}>
+            {s === 'avg_score' ? '⭐ Score' : s === 'total_runs' ? '🔄 Runs' : '✅ Success%'}
+          </button>
+        ))}
+        <button onClick={load} style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.07)', color: '#888', border: 'none', borderRadius: 5, padding: '3px 9px', cursor: 'pointer', fontSize: 11 }}>↻</button>
+      </div>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              {['#','Agent','Runs','Success','Avg Score','Top Score','Last Run'].map(h => (
+                <th key={h} style={{ textAlign: 'left', color: '#555', padding: '4px 8px', fontWeight: 600 }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((r, i) => (
+              <tr key={r.name} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: i === 0 ? 'rgba(255,215,0,0.04)' : 'transparent' }}>
+                <td style={{ padding: '7px 8px', color: i < 3 ? ['#ffd700','#c0c0c0','#cd7f32'][i] : '#555', fontWeight: 700 }}>{i+1}</td>
+                <td style={{ padding: '7px 8px', color: '#fff', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</td>
+                <td style={{ padding: '7px 8px', color: '#aaa' }}>{r.total_runs}</td>
+                <td style={{ padding: '7px 8px', color: r.success_rate >= 80 ? '#4ade80' : r.success_rate >= 50 ? '#fbbf24' : '#f87171' }}>
+                  {r.success_rate}%<Bar pct={r.success_rate} color={r.success_rate >= 80 ? '#22c55e' : r.success_rate >= 50 ? '#f59e0b' : '#ef4444'} />
+                </td>
+                <td style={{ padding: '7px 8px', color: '#fbbf24', fontWeight: 700 }}>{r.avg_score != null ? `★ ${r.avg_score}` : '—'}</td>
+                <td style={{ padding: '7px 8px', color: '#888' }}>{r.top_score != null ? r.top_score : '—'}</td>
+                <td style={{ padding: '7px 8px', color: '#555', fontSize: 11 }}>{r.last_run?.slice(0,16) || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 // ─── v8.30 Relay Runner ──────────────────────────────────────────────────────
 function RelayRunner({ api }: { api: Api }) {
   const [chains, setChains] = useState<any[]>([]);
@@ -1134,7 +1204,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -1159,6 +1229,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'autopilot', label: '🎯 Autopilot' },
     { id: 'health', label: '💚 Health' },
     { id: 'relay', label: '⛓️ Relay' },
+    { id: 'scoreboard', label: '🏅 Scoreboard' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -1226,6 +1297,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'autopilot' && <GoalAutopilotPanel api={api} />}
         {tab === 'health' && <AgentHealthMonitor api={api} />}
         {tab === 'relay' && <RelayRunner api={api} />}
+        {tab === 'scoreboard' && <AgentScoreboard api={api} />}
       </div>
     </div>
   );
