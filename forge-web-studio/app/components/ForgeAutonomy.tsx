@@ -597,6 +597,70 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.41 Prompt Optimizer ---
+function PromptOptimizerPanel({ api }: { api: Api }) {
+  const [prompt, setPrompt] = useState('');
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [err, setErr] = useState('');
+
+  const run = async () => {
+    if (!prompt.trim()) return;
+    setRunning(true); setErr(''); setResult(null);
+    try {
+      const d = await api('/api/prompt-optimizer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: prompt.trim() }) });
+      if (d.success) setResult(d); else setErr(d.error || 'Failed');
+    } catch(e: any) { setErr(e.message); }
+    setRunning(false);
+  };
+
+  return (
+    <div>
+      <h3 style={{ ...S.h, fontSize: 15, marginBottom: 8 }}>✨ Prompt Optimizer</h3>
+      <p style={{ ...S.sub, marginBottom: 12 }}>Paste any prompt — AI will rewrite it to be clearer and more effective, then compare outputs side by side.</p>
+      <textarea value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Enter your prompt to optimize…" rows={4}
+        style={{ ...S.input, width: '100%', fontFamily: 'inherit', resize: 'vertical', marginBottom: 10 }} />
+      <button onClick={run} disabled={running || !prompt.trim()} style={{ ...S.btn, ...S.primaryBtn, marginBottom: 16 }}>
+        {running ? '⏳ Optimizing…' : '✨ Optimize Prompt'}
+      </button>
+      {err && <div style={{ color: '#f87171', fontSize: 12, marginBottom: 10 }}>{err}</div>}
+      {result && (
+        <div>
+          {result.optimized?.reasoning && (
+            <div style={{ borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)', background: 'rgba(139,92,246,0.06)', padding: 12, marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa', marginBottom: 4 }}>🧠 Optimization Reasoning</div>
+              <div style={{ fontSize: 11, color: 'var(--fg-text2,#ccc)' }}>{result.optimized.reasoning}</div>
+              {result.optimized.improvements?.length > 0 && (
+                <ul style={{ margin: '8px 0 0', paddingLeft: 16 }}>
+                  {result.optimized.improvements.map((imp: string, i: number) => (
+                    <li key={i} style={{ fontSize: 11, color: 'var(--fg-text2,#ccc)', marginBottom: 2 }}>{imp}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ borderRadius: 8, border: '1px solid var(--fg-border,#2a2a3e)', background: 'var(--fg-bg2,#1a1a2e)', padding: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-text3,#888)', marginBottom: 6 }}>📝 Original Prompt</div>
+              <div style={{ fontSize: 11, color: 'var(--fg-text3,#888)', fontStyle: 'italic', marginBottom: 8, padding: '6px 8px', background: 'rgba(0,0,0,0.2)', borderRadius: 4 }}>{result.original.prompt}</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-text2,#ccc)', marginBottom: 4 }}>Output:</div>
+              <div style={{ fontSize: 11, color: 'var(--fg-text2,#ccc)', lineHeight: 1.6, maxHeight: 200, overflowY: 'auto', whiteSpace: 'pre-wrap' }}>{result.original.output}</div>
+              <div style={{ fontSize: 9, color: 'var(--fg-text3,#888)', marginTop: 6 }}>{result.original.latencyMs}ms</div>
+            </div>
+            <div style={{ borderRadius: 8, border: '1.5px solid rgba(139,92,246,0.4)', background: 'rgba(139,92,246,0.04)', padding: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa', marginBottom: 6 }}>✨ Optimized Prompt</div>
+              <div style={{ fontSize: 11, color: '#c4b5fd', fontStyle: 'italic', marginBottom: 8, padding: '6px 8px', background: 'rgba(139,92,246,0.1)', borderRadius: 4 }}>{result.optimized.prompt}</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-text2,#ccc)', marginBottom: 4 }}>Output:</div>
+              <div style={{ fontSize: 11, color: 'var(--fg-text2,#ccc)', lineHeight: 1.6, maxHeight: 200, overflowY: 'auto', whiteSpace: 'pre-wrap' }}>{result.optimized.output}</div>
+              <div style={{ fontSize: 9, color: 'var(--fg-text3,#888)', marginTop: 6 }}>{result.optimized.latencyMs}ms</div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.40 Agent Benchmark ---
 function AgentBenchmarkPanel({ api }: { api: Api }) {
   const [goal, setGoal] = useState('');
@@ -1886,7 +1950,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -1921,6 +1985,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'agentdigest', label: '≡ƒô¿ Digest' },
     { id: 'milestones', label: '≡ƒÄ» Milestones' },
     { id: 'benchmark', label: '≡ƒÅÆ Benchmark' },
+    { id: 'optimizer', label: '✨ Optimizer' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -1998,6 +2063,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'agentdigest' && <AgentDigestPanel api={api} />}
         {tab === 'milestones' && <GoalMilestoneTracker api={api} />}
         {tab === 'benchmark' && <AgentBenchmarkPanel api={api} />}
+        {tab === 'optimizer' && <PromptOptimizerPanel api={api} />}
       </div>
     </div>
   );

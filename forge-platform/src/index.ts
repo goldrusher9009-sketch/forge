@@ -38996,6 +38996,52 @@ app.post('/api/agent-benchmark', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.41 Prompt Optimizer — analyze prompt, rewrite it, compare outputs
+app.post('/api/prompt-optimizer', requireAuth, async (req: any, res: any) => {
+  try {
+    const { prompt } = req.body;
+    if (!prompt) return res.status(400).json({ error: 'prompt required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    // Step 1: run original prompt
+    const t0 = Date.now();
+    const origResult = await callLLM(provider, key, null as any, [
+      { role: 'user', content: prompt }
+    ], undefined, { maxTokens: 600 });
+    const origOutput = (origResult.content || '').trim();
+    const origLatency = Date.now() - t0;
+    // Step 2: ask LLM to optimize the prompt
+    const optimizerInstructions = `You are a prompt engineering expert. Analyze the following prompt and rewrite it to be clearer, more specific, and likely to produce better results. Return ONLY JSON with keys: {"optimized_prompt": "...", "improvements": ["improvement1","improvement2","improvement3"], "reasoning": "brief explanation"}
+
+Original prompt: ${prompt}`;
+    const optResult = await callLLM(provider, key, null as any, [
+      { role: 'user', content: optimizerInstructions }
+    ], undefined, { maxTokens: 600 });
+    const optText = (optResult.content || '').trim();
+    let optimizedPrompt = prompt;
+    let improvements: string[] = [];
+    let reasoning = '';
+    try {
+      const j = JSON.parse(optText.slice(optText.indexOf('{'), optText.lastIndexOf('}')+1));
+      optimizedPrompt = j.optimized_prompt || prompt;
+      improvements = j.improvements || [];
+      reasoning = j.reasoning || '';
+    } catch(_) {}
+    // Step 3: run optimized prompt
+    const t1 = Date.now();
+    const optRunResult = await callLLM(provider, key, null as any, [
+      { role: 'user', content: optimizedPrompt }
+    ], undefined, { maxTokens: 600 });
+    const optOutput = (optRunResult.content || '').trim();
+    const optLatency = Date.now() - t1;
+    res.json({ success: true, original: { prompt, output: origOutput, latencyMs: origLatency }, optimized: { prompt: optimizedPrompt, output: optOutput, latencyMs: optLatency, improvements, reasoning } });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
