@@ -590,7 +590,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -601,6 +601,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'rss', label: '📰 RSS' },
     { id: 'apikeys', label: '🔑 API' },
     { id: 'chains', label: '⛓️ Chains' },
+    { id: 'conditions', label: '⚡ Triggers' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -654,6 +655,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'rss' && <RssFeedPanel api={api} />}
         {tab === 'apikeys' && <ApiKeysPanel api={api} />}
         {tab === 'chains' && <ChainBuilderPanel api={api} />}
+        {tab === 'conditions' && <ConditionTriggersPanel api={api} />}
       </div>
     </div>
   );
@@ -1151,6 +1153,81 @@ function ChainBuilderPanel({ api }: { api: Api }) {
               Last run: {runs[chain.id][0].status} — {runs[chain.id][0].step_results?.join(' | ')?.slice(0,200)}
             </div>
           )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ConditionTriggersPanel({ api }: { api: Api }) {
+  const [triggers, setTriggers] = useState<any[]>([]);
+  const [form, setForm] = useState({ name: '', check_url: '', json_path: '', operator: 'contains', threshold: '', agent_goal: '', cooldown_hours: 24 });
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    const r = await api('/api/condition-triggers');
+    if (r.ok) setTriggers((await r.json()).triggers || []);
+  };
+  useEffect(() => { load(); }, []);
+
+  const save = async () => {
+    if (!form.name || !form.check_url || !form.threshold || !form.agent_goal) return;
+    setSaving(true);
+    await api('/api/condition-triggers', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(form) });
+    setForm({ name: '', check_url: '', json_path: '', operator: 'contains', threshold: '', agent_goal: '', cooldown_hours: 24 });
+    load(); setSaving(false);
+  };
+
+  const toggle = async (t: any) => {
+    await api(`/api/condition-triggers/${t.id}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ enabled: t.enabled ? 0 : 1 }) });
+    load();
+  };
+  const del = async (id: string) => { await api(`/api/condition-triggers/${id}`, { method: 'DELETE' }); load(); };
+
+  const inp = (style?: any) => ({ background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '7px 10px', fontSize: '13px', width: '100%', boxSizing: 'border-box' as const, ...style });
+
+  const OPERATORS = ['contains','not_contains','gt','lt','eq','gte','lte'];
+
+  return (
+    <div style={{ padding: '16px', color: '#e2e8f0' }}>
+      <h3 style={{ margin: '0 0 6px', fontSize: '16px' }}>⚡ Condition Triggers</h3>
+      <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#94a3b8' }}>Fire an agent when a URL response meets a condition. Checked every 15 min.</p>
+
+      <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '14px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <input style={inp()} placeholder="Trigger name" value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} />
+        <input style={inp()} placeholder="URL to poll (e.g. https://api.coinbase.com/v2/prices/BTC-USD/spot)" value={form.check_url} onChange={e => setForm(f => ({...f, check_url: e.target.value}))} />
+        <input style={inp()} placeholder="JSON path (optional, e.g. data.amount)" value={form.json_path} onChange={e => setForm(f => ({...f, json_path: e.target.value}))} />
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <select style={{...inp(), flex: '0 0 140px'}} value={form.operator} onChange={e => setForm(f => ({...f, operator: e.target.value}))}>
+            {OPERATORS.map(op => <option key={op} value={op}>{op}</option>)}
+          </select>
+          <input style={inp()} placeholder="Threshold value" value={form.threshold} onChange={e => setForm(f => ({...f, threshold: e.target.value}))} />
+        </div>
+        <textarea style={{...inp(), resize: 'vertical'}} rows={2} placeholder="Agent goal when condition is met..." value={form.agent_goal} onChange={e => setForm(f => ({...f, agent_goal: e.target.value}))} />
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <label style={{ fontSize: '12px', color: '#94a3b8' }}>Cooldown (h):</label>
+          <input style={{...inp(), width: '80px'}} type="number" value={form.cooldown_hours} onChange={e => setForm(f => ({...f, cooldown_hours: parseInt(e.target.value)||24}))} />
+          <button onClick={save} disabled={saving} style={{ flex: 1, background: '#3b82f6', border: 'none', borderRadius: '6px', color: '#fff', padding: '8px', cursor: 'pointer', fontSize: '13px' }}>{saving ? 'Saving...' : 'Create Trigger'}</button>
+        </div>
+      </div>
+
+      {triggers.length === 0 ? (
+        <div style={{ textAlign: 'center', color: '#475569', padding: '24px', fontSize: '14px' }}>No triggers yet.</div>
+      ) : triggers.map(t => (
+        <div key={t.id} style={{ background: '#1e293b', border: `1px solid ${t.enabled ? '#334155' : '#1e293b'}`, borderRadius: '8px', padding: '12px', marginBottom: '8px', opacity: t.enabled ? 1 : 0.6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: '14px' }}>{t.name}</div>
+              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                {t.operator} "{t.threshold}" · fired {t.fire_count||0}×
+                {t.last_fired ? ` · last ${new Date(t.last_fired).toLocaleDateString()}` : ''}
+                {t.last_checked ? ` · checked ${new Date(t.last_checked).toLocaleTimeString()}` : ''}
+              </div>
+              <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px', wordBreak: 'break-all' }}>{t.check_url}{t.json_path ? ` → ${t.json_path}` : ''}</div>
+            </div>
+            <button onClick={() => toggle(t)} style={{ background: t.enabled ? '#059669' : '#334155', border: 'none', borderRadius: '6px', color: '#fff', padding: '5px 10px', cursor: 'pointer', fontSize: '11px' }}>{t.enabled ? 'ON' : 'OFF'}</button>
+            <button onClick={() => del(t.id)} style={{ background: '#7f1d1d', border: 'none', borderRadius: '6px', color: '#fca5a5', padding: '5px 8px', cursor: 'pointer', fontSize: '11px' }}>✕</button>
+          </div>
         </div>
       ))}
     </div>
