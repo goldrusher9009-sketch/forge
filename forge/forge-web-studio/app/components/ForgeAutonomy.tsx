@@ -597,6 +597,68 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// ─── v8.34 Token Estimator ───────────────────────────────────────────────────
+function TokenEstimatorPanel({ api }: { api: Api }) {
+  const [text, setText] = useState('');
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function estimate() {
+    if (!text.trim()) return;
+    setLoading(true);
+    try {
+      const d = await api('/api/tokens/estimate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+      if (d.success) setResult(d);
+    } catch {}
+    setLoading(false);
+  }
+
+  // live estimate while typing (no API needed for char/word count)
+  const liveTokens = Math.round(text.length / 4);
+  const liveWords = text.trim() ? text.trim().split(/\s+/).length : 0;
+
+  const providerColor: Record<string,string> = { anthropic: '#a78bfa', openai: '#4ade80', google: '#60a5fa', groq: '#fb923c', mistral: '#f472b6' };
+
+  return (
+    <div>
+      <h3 style={{ ...S.h, fontSize: 15, marginBottom: 8 }}>🔢 Context Window Estimator</h3>
+      <p style={{ ...S.sub, marginBottom: 12 }}>Paste any text to see token count and which models can fit it.</p>
+      <div style={{ display: 'flex', gap: 16, marginBottom: 10 }}>
+        <span style={{ ...S.sub, fontSize: 12 }}>Chars: <strong style={{ color: '#e2e8f0' }}>{text.length.toLocaleString()}</strong></span>
+        <span style={{ ...S.sub, fontSize: 12 }}>Words: <strong style={{ color: '#e2e8f0' }}>{liveWords.toLocaleString()}</strong></span>
+        <span style={{ ...S.sub, fontSize: 12 }}>~Tokens: <strong style={{ color: '#a78bfa' }}>{liveTokens.toLocaleString()}</strong></span>
+      </div>
+      <textarea
+        value={text}
+        onChange={e => { setText(e.target.value); setResult(null); }}
+        placeholder="Paste your prompt, document, or context here..."
+        style={{ width: '100%', minHeight: 120, background: (S.input as any).background, border: (S.input as any).border, color: (S.input as any).color, borderRadius: 8, padding: 10, fontSize: 12, resize: 'vertical', boxSizing: 'border-box', marginBottom: 10 }}
+      />
+      <button onClick={estimate} disabled={loading || !text.trim()} style={{ ...S.btn, opacity: loading ? 0.5 : 1 }}>
+        {loading ? '⏳...' : '🔢 Check Model Fit'}
+      </button>
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {result.models.map((m: any) => (
+              <div key={m.name} style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${m.fits ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'}`, borderRadius: 8, padding: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: providerColor[m.provider] || '#e2e8f0' }}>{m.name}</span>
+                  <span style={{ fontSize: 11, color: m.fits ? '#4ade80' : '#f87171' }}>{m.fits ? '✓ fits' : '✗ too big'}</span>
+                </div>
+                <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 4, height: 6, marginBottom: 4 }}>
+                  <div style={{ background: m.fits ? '#4ade80' : '#f87171', width: `${m.pct}%`, height: '100%', borderRadius: 4, transition: 'width 0.3s' }} />
+                </div>
+                <span style={{ fontSize: 10, color: '#94a3b8' }}>{m.pct}% of {(m.context/1000).toFixed(0)}k ctx</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── v8.33 Prompt A/B Diff Tester ────────────────────────────────────────────
 function PromptDiffPanel({ api }: { api: Api }) {
   const [promptA, setPromptA] = useState('');
@@ -1349,7 +1411,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -1377,6 +1439,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'scoreboard', label: '🏅 Scoreboard' },
     { id: 'mutate', label: '🧬 Mutate' },
     { id: 'diff', label: '⚖️ A/B Test' },
+    { id: 'tokens', label: '🔢 Token Est.' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -1447,6 +1510,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'scoreboard' && <AgentScoreboard api={api} />}
         {tab === 'mutate' && <PromptMutationPanel api={api} />}
         {tab === 'diff' && <PromptDiffPanel api={api} />}
+        {tab === 'tokens' && <TokenEstimatorPanel api={api} />}
       </div>
     </div>
   );
