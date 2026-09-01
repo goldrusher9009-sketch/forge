@@ -1526,7 +1526,8 @@ const AGENT_TEMPLATES = [
 function AgentTemplatesPanel({ api }: { api: Api }) {
   const [installing, setInstalling] = useState<string|null>(null);
   const [installed, setInstalled] = useState<Set<string>>(new Set());
-  const [customForm, setCustomForm] = useState({ name: '', cron: '0 8 * * *', prompt: '', persona: '' });
+  const [customForm, setCustomForm] = useState({ name: '', cron: '0 8 * * *', prompt: '', persona: '', trigger_schedule_id: '' });
+  const [scheduleList, setScheduleList] = useState<any[]>([]);
   const [customSaving, setCustomSaving] = useState(false);
   const [customSaved, setCustomSaved] = useState(false);
 
@@ -1540,12 +1541,16 @@ function AgentTemplatesPanel({ api }: { api: Api }) {
   const saveCustom = async () => {
     if (!customForm.name || !customForm.prompt) return;
     setCustomSaving(true);
-    await api('/api/schedules', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name: customForm.name, cron_expression: customForm.cron, prompt: customForm.prompt, persona: customForm.persona || null }) });
+    await api('/api/schedules', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name: customForm.name, cron_expression: customForm.cron, prompt: customForm.prompt, persona: customForm.persona || null, trigger_schedule_id: customForm.trigger_schedule_id || null }) });
     setCustomSaved(true);
-    setCustomForm({ name: '', cron: '0 8 * * *', prompt: '', persona: '' });
+    setCustomForm({ name: '', cron: '0 8 * * *', prompt: '', persona: '', trigger_schedule_id: '' });
     setTimeout(() => setCustomSaved(false), 3000);
     setCustomSaving(false);
   };
+
+  useEffect(() => {
+    api('/api/schedules').then((d: any) => { if (d?.success) setScheduleList(d.data || []); });
+  }, []);
 
   return (
     <div style={{ padding: '16px', color: '#e2e8f0' }}>
@@ -1572,7 +1577,11 @@ function AgentTemplatesPanel({ api }: { api: Api }) {
         <input value={customForm.name} onChange={e => setCustomForm(f => ({...f, name: e.target.value}))} placeholder="Schedule name (e.g. Daily SEO Audit)" style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px 10px', fontSize: '13px', marginBottom: 8, boxSizing: 'border-box' }} />
         <input value={customForm.cron} onChange={e => setCustomForm(f => ({...f, cron: e.target.value}))} placeholder="Cron expression (e.g. 0 8 * * *)" style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px 10px', fontSize: '13px', marginBottom: 8, boxSizing: 'border-box' }} />
         <textarea value={customForm.prompt} onChange={e => setCustomForm(f => ({...f, prompt: e.target.value}))} placeholder="Agent goal / prompt (what should this agent do?)" rows={3} style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px 10px', fontSize: '13px', marginBottom: 8, boxSizing: 'border-box', resize: 'vertical' }} />
-        <input value={customForm.persona} onChange={e => setCustomForm(f => ({...f, persona: e.target.value}))} placeholder="Persona (optional) — e.g. Data Analyst, Security Auditor, Marketing Strategist" style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px 10px', fontSize: '13px', marginBottom: 10, boxSizing: 'border-box' }} />
+        <input value={customForm.persona} onChange={e => setCustomForm(f => ({...f, persona: e.target.value}))} placeholder="Persona (optional) — e.g. Data Analyst, Security Auditor, Marketing Strategist" style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px 10px', fontSize: '13px', marginBottom: 8, boxSizing: 'border-box' }} />
+        <select value={customForm.trigger_schedule_id} onChange={e => setCustomForm(f => ({...f, trigger_schedule_id: e.target.value}))} style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: customForm.trigger_schedule_id ? '#e2e8f0' : '#64748b', padding: '8px 10px', fontSize: '13px', marginBottom: 10 }}>
+          <option value="">⛓ Run after schedule (cascade trigger — optional)</option>
+          {scheduleList.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
         <button onClick={saveCustom} disabled={customSaving || !customForm.name || !customForm.prompt} style={{ background: customSaved ? '#065f46' : '#6366f1', border: 'none', borderRadius: '6px', color: '#fff', padding: '8px 16px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>
           {customSaved ? '✓ Saved!' : customSaving ? 'Saving...' : '+ Create Schedule'}
         </button>
@@ -1659,7 +1668,7 @@ function AgentEventFeed({ api }: { api: Api }) {
 
   const typeColor: Record<string, string> = {
     goal_reached: '#22c55e', alert: '#f59e0b', data_found: '#3b82f6',
-    error: '#ef4444', agent_run: '#8b5cf6', watchdog_alert: '#ef4444', generic: '#64748b',
+    error: '#ef4444', agent_run: '#8b5cf6', watchdog_alert: '#ef4444', cascade_trigger: '#f97316', generic: '#64748b',
   };
 
   return (
