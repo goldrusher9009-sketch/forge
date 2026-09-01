@@ -590,7 +590,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -598,6 +598,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'goals', label: '🎯 Goals' },
     { id: 'monitors', label: '👁️ Monitor' },
     { id: 'webhooks', label: '🔗 Webhooks' },
+    { id: 'rss', label: '📰 RSS' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -648,6 +649,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'goals' && <GoalTracker api={api} />}
         {tab === 'monitors' && <UrlMonitorPanel api={api} />}
         {tab === 'webhooks' && <WebhookPanel api={api} />}
+        {tab === 'rss' && <RssFeedPanel api={api} />}
       </div>
     </div>
   );
@@ -882,6 +884,79 @@ function WebhookPanel({ api }: { api: Api }) {
             <div style={{ display: 'flex', gap: 4 }}>
               <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11 }} onClick={() => copy(`${baseUrl}/api/webhooks/in/${ep.token}`)}>Copy</button>
               <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11, color: '#ff4d5e' }} onClick={() => del(ep.id)}>Delete</button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── RSS Feed Panel ────────────────────────────────────────────────────────────
+function RssFeedPanel({ api }: { api: Api }) {
+  const [feeds, setFeeds] = useState<any[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({ url: '', label: '', keywords: '', check_interval: '*/30 * * * *', agent_goal: '' });
+
+  const load = async () => { try { const d = await api('/rss-feeds'); if (d?.success) setFeeds(d.data); } catch {} };
+  useEffect(() => { load(); }, []);
+
+  const add = async () => {
+    if (!form.url) return;
+    await api('/rss-feeds', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    setAdding(false); setForm({ url: '', label: '', keywords: '', check_interval: '*/30 * * * *', agent_goal: '' }); load();
+  };
+  const toggle = async (id: string, enabled: boolean) => { await api(`/rss-feeds/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: !enabled }) }); load(); };
+  const del = async (id: string) => { await api(`/rss-feeds/${id}`, { method: 'DELETE' }); load(); };
+
+  const INTERVALS = [['*/30 * * * *', 'Every 30 min'], ['0 * * * *', 'Every hour'], ['0 */6 * * *', 'Every 6 hours'], ['0 9 * * *', 'Daily at 9am']];
+  const EXAMPLES = ['https://feeds.feedburner.com/TechCrunch', 'https://hnrss.org/frontpage', 'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml'];
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div>
+          <p style={S.h}>📰 RSS Feed Monitor</p>
+          <p style={S.sub}>Subscribe to RSS feeds. Agents react when matching news arrives.</p>
+        </div>
+        <button style={{ ...S.btn, ...S.primary }} onClick={() => setAdding(!adding)}>+ Feed</button>
+      </div>
+
+      {adding && (
+        <div style={{ ...S.card, marginBottom: 16 }}>
+          <input placeholder="RSS feed URL *" value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))} style={{ ...S.input, marginBottom: 8 }} />
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
+            {EXAMPLES.map(ex => <button key={ex} style={{ ...S.btn, ...S.ghostBtn, fontSize: 10 }} onClick={() => setForm(p => ({ ...p, url: ex }))}>{ex.split('/')[2]}</button>)}
+          </div>
+          <input placeholder="Label (e.g. TechCrunch)" value={form.label} onChange={e => setForm(p => ({ ...p, label: e.target.value }))} style={{ ...S.input, marginBottom: 8 }} />
+          <input placeholder="Keywords to match (comma-separated, e.g. AI, OpenAI, Anthropic)" value={form.keywords} onChange={e => setForm(p => ({ ...p, keywords: e.target.value }))} style={{ ...S.input, marginBottom: 8 }} />
+          <select value={form.check_interval} onChange={e => setForm(p => ({ ...p, check_interval: e.target.value }))} style={{ ...S.input, marginBottom: 8 }}>
+            {INTERVALS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+          <textarea placeholder="Agent goal on match (e.g. Summarize this article and suggest 3 actionable insights for my startup)" value={form.agent_goal} onChange={e => setForm(p => ({ ...p, agent_goal: e.target.value }))} style={{ ...S.input, height: 60, resize: 'vertical', marginBottom: 8 }} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={{ ...S.btn, ...S.primary }} onClick={add}>Subscribe</button>
+            <button style={{ ...S.btn, ...S.ghostBtn }} onClick={() => setAdding(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {feeds.length === 0 && !adding && <p style={{ ...S.sub, textAlign: 'center', marginTop: 32 }}>No feeds. Subscribe to RSS feeds to monitor news automatically.</p>}
+
+      {feeds.map(f => (
+        <div key={f.id} style={S.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ ...S.h, margin: '0 0 2px' }}>{f.label || f.url}</p>
+              <p style={{ ...S.sub, margin: '0 0 4px', fontSize: 10, wordBreak: 'break-all' }}>{f.url}</p>
+              <span style={{ ...S.tag, background: f.enabled ? 'rgba(0,200,100,0.1)' : 'rgba(255,255,255,0.05)', color: f.enabled ? '#00c864' : '#888' }}>{f.enabled ? '● Active' : '○ Paused'}</span>
+              {f.keywords && <span style={S.tag}>🔍 {f.keywords}</span>}
+              {f.agent_goal && <span style={{ ...S.tag, background: 'rgba(255,31,53,0.1)', color: '#ff4d5e' }}>🤖 Agent</span>}
+              {f.last_checked && <span style={S.tag}>Checked: {new Date(f.last_checked).toLocaleString()}</span>}
+            </div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11 }} onClick={() => toggle(f.id, f.enabled)}>{f.enabled ? 'Pause' : 'Resume'}</button>
+              <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11, color: '#ff4d5e' }} onClick={() => del(f.id)}>Delete</button>
             </div>
           </div>
         </div>
