@@ -1568,7 +1568,7 @@ function AgentEventFeed({ api }: { api: Api }) {
 
   const typeColor: Record<string, string> = {
     goal_reached: '#22c55e', alert: '#f59e0b', data_found: '#3b82f6',
-    error: '#ef4444', agent_run: '#8b5cf6', generic: '#64748b',
+    error: '#ef4444', agent_run: '#8b5cf6', watchdog_alert: '#ef4444', generic: '#64748b',
   };
 
   return (
