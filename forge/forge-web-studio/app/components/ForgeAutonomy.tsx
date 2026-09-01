@@ -597,6 +597,96 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// ─── v8.37 Agent Tag Panel ───────────────────────────────────────────────────
+const TAG_COLORS = ['#a78bfa','#4ade80','#60a5fa','#fb923c','#f472b6','#facc15','#34d399','#f87171'];
+function tagColor(t: string) { return TAG_COLORS[Math.abs(t.split('').reduce((a,c)=>a+c.charCodeAt(0),0)) % TAG_COLORS.length]; }
+
+function AgentTagPanel({ api }: { api: Api }) {
+  const [tags, setTags] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string|null>(null);
+  const [runs, setRuns] = useState<any[]>([]);
+  const [editRun, setEditRun] = useState<any>(null);
+  const [newTag, setNewTag] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => { loadTags(); }, []);
+
+  async function loadTags() {
+    try { const d = await api('/api/agent-tags'); if (d.success) setTags(d.tags); } catch {}
+  }
+
+  async function selectTag(tag: string) {
+    setSelected(tag); setLoading(true);
+    try { const d = await api(`/api/agent-runs/by-tag/${encodeURIComponent(tag)}`); if (d.success) setRuns(d.data); } catch {}
+    setLoading(false);
+  }
+
+  async function saveTagsForRun(run: any, newTags: string[]) {
+    setSaving(true);
+    try {
+      await api(`/api/agent-runs/${run.id}/tags`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tags: newTags }) });
+      setEditRun(null);
+      loadTags();
+      if (selected) selectTag(selected);
+    } catch {}
+    setSaving(false);
+  }
+
+  return (
+    <div>
+      <h3 style={{ ...S.h, fontSize: 15, marginBottom: 12 }}>🏷️ Agent Tags</h3>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+        {tags.length === 0 && <p style={S.sub}>No tags yet — add tags to runs to see them here.</p>}
+        {tags.map(t => (
+          <button key={t} onClick={() => selectTag(t)} style={{ background: selected === t ? tagColor(t) : 'rgba(255,255,255,0.06)', border: `1px solid ${tagColor(t)}`, color: selected === t ? '#000' : tagColor(t), borderRadius: 20, padding: '4px 12px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>{t}</button>
+        ))}
+      </div>
+
+      {selected && (
+        <div>
+          <p style={{ ...S.sub, fontSize: 12, marginBottom: 8 }}>Runs tagged <strong style={{ color: tagColor(selected) }}>#{selected}</strong> ({runs.length})</p>
+          {loading && <p style={S.sub}>Loading...</p>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {runs.map(run => {
+              const runTags: string[] = (() => { try { return JSON.parse(run.tags || '[]'); } catch { return []; } })();
+              return (
+                <div key={run.id} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 10 }}>
+                  {editRun?.id === run.id ? (
+                    <div>
+                      <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600 }}>{run.name}</p>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
+                        {editRun.tags.map((t: string) => (
+                          <span key={t} style={{ background: tagColor(t), color: '#000', borderRadius: 12, padding: '2px 8px', fontSize: 11, cursor: 'pointer' }} onClick={() => setEditRun((e: any) => ({ ...e, tags: e.tags.filter((x: string) => x !== t) }))}>✕ {t}</span>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <input value={newTag} onChange={e => setNewTag(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && newTag.trim()) { setEditRun((er: any) => ({ ...er, tags: [...er.tags, newTag.trim()] })); setNewTag(''); }}} placeholder="Add tag + Enter" style={{ ...S.input, flex: 1, padding: '4px 8px', fontSize: 12 }} />
+                        <button onClick={() => saveTagsForRun(run, editRun.tags)} disabled={saving} style={{ ...S.btn, padding: '4px 12px' }}>Save</button>
+                        <button onClick={() => setEditRun(null)} style={{ ...S.btn, ...S.ghostBtn, padding: '4px 12px' }}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <p style={{ margin: 0, fontSize: 12, fontWeight: 600 }}>{run.name}</p>
+                        <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
+                          {runTags.map(t => <span key={t} style={{ background: tagColor(t), color: '#000', borderRadius: 12, padding: '1px 7px', fontSize: 10 }}>{t}</span>)}
+                        </div>
+                      </div>
+                      <button onClick={() => setEditRun({ id: run.id, tags: [...runTags] })} style={{ ...S.btn, ...S.ghostBtn, padding: '3px 10px', fontSize: 11 }}>✏️ Edit</button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── v8.36 Smart Retry Panel ─────────────────────────────────────────────────
 function SmartRetryPanel({ api }: { api: Api }) {
   const [runs, setRuns] = useState<any[]>([]);
@@ -1564,7 +1654,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -1595,6 +1685,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'tokens', label: '🔢 Token Est.' },
     { id: 'costs', label: '💰 Cost Tracker' },
     { id: 'retry', label: '🔄 Smart Retry' },
+    { id: 'tags', label: '🏷️ Tags' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -1668,6 +1759,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'tokens' && <TokenEstimatorPanel api={api} />}
         {tab === 'costs' && <AgentCostTracker api={api} />}
         {tab === 'retry' && <SmartRetryPanel api={api} />}
+        {tab === 'tags' && <AgentTagPanel api={api} />}
       </div>
     </div>
   );
