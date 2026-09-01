@@ -226,6 +226,64 @@ function ApprovalCard({ a, api, onResolved }: { a: any; api: Api; onResolved: ()
 }
 
 // ─── Morning dashboard + approval inbox ──────────────────────────────────────
+function AgentSchedulePanel({ api }: { api: Api }) {
+  const [schedules, setSchedules] = useState<any[]>([]);
+  const [running, setRunning] = useState<string|null>(null);
+  const [toggling, setToggling] = useState<string|null>(null);
+
+  const load = async () => {
+    const d = await api('/api/schedules');
+    if (d?.success) setSchedules(d.data || []);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const runNow = async (id: string) => {
+    setRunning(id);
+    await api(`/api/schedules/${id}/run`, { method: 'POST', body: '{}' });
+    setTimeout(() => setRunning(null), 2000);
+  };
+
+  const toggle = async (id: string, enabled: number) => {
+    setToggling(id);
+    await api(`/api/schedules/${id}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ enabled: enabled ? 0 : 1 }) });
+    await load();
+    setToggling(null);
+  };
+
+  const del = async (id: string) => {
+    await api(`/api/schedules/${id}`, { method: 'DELETE' });
+    setSchedules(s => s.filter(x => x.id !== id));
+  };
+
+  return (
+    <div style={{ padding: '16px', color: '#e2e8f0' }}>
+      <h3 style={{ margin: '0 0 6px', fontSize: '16px' }}>⏰ My Schedules</h3>
+      <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#94a3b8' }}>All autonomous schedules — enable/disable, run on demand, or delete.</p>
+      {schedules.length === 0 && <div style={{ fontSize: '13px', color: '#64748b' }}>No schedules yet. Create one in the Templates tab.</div>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {schedules.map((s: any) => (
+          <div key={s.id} style={{ background: '#1e293b', border: `1px solid ${s.enabled ? '#1d4ed8' : '#334155'}`, borderRadius: '10px', padding: '12px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: s.enabled ? '#60a5fa' : '#64748b', flex: 1 }}>{s.name}</span>
+              <span style={{ fontSize: '10px', background: s.enabled ? '#1e3a5f' : '#1e293b', color: s.enabled ? '#93c5fd' : '#64748b', padding: '2px 7px', borderRadius: '4px' }}>{s.enabled ? '● active' : '○ paused'}</span>
+            </div>
+            <div style={{ fontSize: '11px', color: '#475569', marginBottom: 4 }}>cron: {s.cron_expression}</div>
+            {s.persona && <div style={{ fontSize: '11px', color: '#7c3aed', marginBottom: 4 }}>🎭 {s.persona}</div>}
+            {s.trigger_schedule_id && <div style={{ fontSize: '11px', color: '#f97316', marginBottom: 4 }}>⛓ cascade trigger</div>}
+            <div style={{ fontSize: '11px', color: '#64748b', marginBottom: 8 }}>{String(s.prompt).slice(0, 100)}{s.prompt?.length > 100 ? '…' : ''}</div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => runNow(s.id)} disabled={running === s.id} style={{ background: '#6366f1', border: 'none', borderRadius: '5px', color: '#fff', padding: '5px 10px', cursor: 'pointer', fontSize: '11px', fontWeight: 700 }}>{running === s.id ? '▶ Running…' : '▶ Run Now'}</button>
+              <button onClick={() => toggle(s.id, s.enabled)} disabled={toggling === s.id} style={{ background: s.enabled ? '#78350f' : '#14532d', border: 'none', borderRadius: '5px', color: s.enabled ? '#fcd34d' : '#86efac', padding: '5px 10px', cursor: 'pointer', fontSize: '11px' }}>{s.enabled ? 'Pause' : 'Enable'}</button>
+              <button onClick={() => del(s.id)} style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '5px', color: '#f87171', padding: '5px 10px', cursor: 'pointer', fontSize: '11px' }}>Delete</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AgentMemorySearch({ api }: { api: Api }) {
   const [q, setQ] = useState('');
   const [results, setResults] = useState<any[]>([]);
@@ -774,7 +832,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -794,6 +852,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digest', label: '📋 Digest' },
     { id: 'playbook', label: '📖 Playbook' },
     { id: 'memory', label: '🧠 Memory' },
+    { id: 'myschedules', label: '⏰ Schedules' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -856,6 +915,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digest' && <AgentDigestPanel api={api} />}
         {tab === 'playbook' && <AgentPlaybookPanel api={api} />}
         {tab === 'memory' && <AgentMemorySearch api={api} />}
+        {tab === 'myschedules' && <AgentSchedulePanel api={api} />}
       </div>
     </div>
   );
