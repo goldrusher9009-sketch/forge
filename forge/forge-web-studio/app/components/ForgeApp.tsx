@@ -27577,6 +27577,7 @@ function ForgeApp() {
             { id:'agentmulti',       icon:'🤖',  label:'Agent Hub' },
             { id:'videoanal',        icon:'🎬',  label:'Video Analyzer' },
             { id:'autonomous',       icon:'🦾',  label:'Auto Mode' },
+            { id:'urlmonitor',       icon:'👁️',  label:'Web Monitor' },
             { id:'forgemetrics',     icon:'📊',  label:'Metrics' },
             { id:'routerinsights',   icon:'🧠',  label:'Router Intel' },
             { id:'compare',          icon:'⚖️',  label:'Model Compare' },
@@ -51675,6 +51676,7 @@ function ForgeApp() {
 {(mainTab as string) === 'agentmulti' && <ForgeTab_agentmulti />}
 {(mainTab as string) === 'videoanal' && <ForgeTab_videoanal />}
 {(mainTab as string) === 'autonomous' && <ForgeTab_autonomous />}
+{(mainTab as string) === 'urlmonitor' && <ForgeTab_urlmonitor />}
 {(mainTab as string) === 'forgemetrics' && <ForgeTab_forgemetrics />}
 {(mainTab as string) === 'routerinsights' && <ForgeTab_routerinsights />}
 {(mainTab as string) === 'compare' && <ForgeTab_compare />}
@@ -55404,6 +55406,116 @@ function ForgeTab_autonomous() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForgeTab_urlmonitor() {
+  const [monitors, setMonitors] = React.useState<any[]>([]);
+  const [url, setUrl] = React.useState('');
+  const [label, setLabel] = React.useState('');
+  const [interval, setInterval] = React.useState('0 */6 * * *');
+  const [adding, setAdding] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://forge-production-2692.up.railway.app';
+  const { token } = useAuth();
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${apiBase}/api/url-monitors`, { headers:{'Authorization':`Bearer ${token}`} });
+      const d = await r.json();
+      setMonitors(d.data || []);
+    } catch {} finally { setLoading(false); }
+  };
+
+  React.useEffect(() => { load(); }, []);
+
+  const add = async () => {
+    if (!url.trim()) return;
+    setAdding(true);
+    try {
+      await fetch(`${apiBase}/api/url-monitors`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ url, label: label||url, check_interval: interval, notify_on_change: 1 })
+      });
+      setUrl(''); setLabel('');
+      await load();
+    } catch {} finally { setAdding(false); }
+  };
+
+  const toggle = async (m: any) => {
+    await fetch(`${apiBase}/api/url-monitors/${m.id}`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+      body: JSON.stringify({ enabled: m.enabled ? 0 : 1 })
+    });
+    await load();
+  };
+
+  const del = async (id: string) => {
+    await fetch(`${apiBase}/api/url-monitors/${id}`, { method:'DELETE', headers:{'Authorization':`Bearer ${token}`} });
+    setMonitors(ms => ms.filter(m => m.id !== id));
+  };
+
+  return (
+    <div style={{padding:'24px',maxWidth:'800px',margin:'0 auto'}}>
+      <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'24px'}}>
+        <span style={{fontSize:'28px'}}>👁️</span>
+        <div>
+          <h2 style={{margin:0,fontSize:'22px',fontWeight:700}}>Web Monitor</h2>
+          <p style={{margin:0,color:'#6b7280',fontSize:'14px'}}>Watch URLs for changes — get notified automatically</p>
+        </div>
+      </div>
+
+      <div style={{background:'#1e293b',borderRadius:'12px',padding:'20px',marginBottom:'24px'}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',marginBottom:'12px'}}>
+          <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://example.com"
+            style={{padding:'10px 14px',borderRadius:'8px',border:'1px solid #334155',background:'#0f172a',color:'#e2e8f0',fontSize:'14px'}} />
+          <input value={label} onChange={e=>setLabel(e.target.value)} placeholder="Label (optional)"
+            style={{padding:'10px 14px',borderRadius:'8px',border:'1px solid #334155',background:'#0f172a',color:'#e2e8f0',fontSize:'14px'}} />
+        </div>
+        <div style={{display:'flex',gap:'12px',alignItems:'center'}}>
+          <select value={interval} onChange={e=>setInterval(e.target.value)}
+            style={{padding:'10px 14px',borderRadius:'8px',border:'1px solid #334155',background:'#0f172a',color:'#e2e8f0',fontSize:'14px',flex:1}}>
+            <option value="*/30 * * * *">Every 30 min</option>
+            <option value="0 * * * *">Every hour</option>
+            <option value="0 */6 * * *">Every 6 hours</option>
+            <option value="0 */12 * * *">Every 12 hours</option>
+            <option value="0 9 * * *">Daily at 9am</option>
+          </select>
+          <button onClick={add} disabled={adding||!url.trim()} style={{padding:'10px 20px',borderRadius:'8px',background:'#6366f1',color:'#fff',border:'none',cursor:'pointer',fontWeight:600,whiteSpace:'nowrap'}}>
+            {adding ? 'Adding…' : '+ Add Monitor'}
+          </button>
+        </div>
+      </div>
+
+      {loading ? <p style={{color:'#6b7280'}}>Loading…</p> : monitors.length === 0 ? (
+        <div style={{textAlign:'center',padding:'48px',color:'#475569'}}>
+          <div style={{fontSize:'48px',marginBottom:'12px'}}>🕵️</div>
+          <p>No monitors yet. Add a URL above to start watching.</p>
+        </div>
+      ) : (
+        <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+          {monitors.map(m => (
+            <div key={m.id} style={{background:'#1e293b',borderRadius:'10px',padding:'16px',display:'flex',alignItems:'center',gap:'12px'}}>
+              <span style={{fontSize:'20px'}}>{m.enabled ? '🟢' : '⚪'}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontWeight:600,color:'#e2e8f0',fontSize:'15px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{m.label}</div>
+                <div style={{color:'#64748b',fontSize:'12px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{m.url}</div>
+                <div style={{color:'#475569',fontSize:'11px',marginTop:'2px'}}>Last checked: {m.last_checked ? new Date(m.last_checked).toLocaleString() : 'never'}</div>
+              </div>
+              <button onClick={()=>toggle(m)} style={{padding:'6px 12px',borderRadius:'6px',border:'1px solid #334155',background:'transparent',color:'#94a3b8',cursor:'pointer',fontSize:'12px'}}>
+                {m.enabled ? 'Pause' : 'Resume'}
+              </button>
+              <button onClick={()=>del(m.id)} style={{padding:'6px 12px',borderRadius:'6px',border:'1px solid #ef4444',background:'transparent',color:'#ef4444',cursor:'pointer',fontSize:'12px'}}>
+                Delete
+              </button>
+            </div>
+          ))}
         </div>
       )}
     </div>
