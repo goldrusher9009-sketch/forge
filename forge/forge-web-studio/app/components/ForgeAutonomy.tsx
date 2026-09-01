@@ -597,6 +597,86 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// ─── v8.33 Prompt A/B Diff Tester ────────────────────────────────────────────
+function PromptDiffPanel({ api }: { api: Api }) {
+  const [promptA, setPromptA] = useState('');
+  const [promptB, setPromptB] = useState('');
+  const [testInput, setTestInput] = useState('');
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  async function run() {
+    if (!promptA.trim() || !promptB.trim() || !testInput.trim()) return;
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const d = await api('/api/prompts/diff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ promptA: promptA.trim(), promptB: promptB.trim(), testInput: testInput.trim() }) });
+      if (d.success) setResult(d);
+      else setError(d.error || 'Failed');
+    } catch { setError('Request failed'); }
+    setLoading(false);
+  }
+
+  const colStyle = { flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: 14 };
+  const scoreColor = (n: number) => n >= 8 ? '#4ade80' : n >= 5 ? '#facc15' : '#f87171';
+
+  return (
+    <div>
+      <h3 style={{ ...S.h, fontSize: 15, marginBottom: 8 }}>⚖️ Prompt A/B Tester</h3>
+      <p style={{ ...S.sub, marginBottom: 14 }}>Run two prompts against the same input and get a scored comparison.</p>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+        <div style={{ flex: 1 }}>
+          <label style={{ ...S.sub, fontSize: 11, display: 'block', marginBottom: 4 }}>Prompt A</label>
+          <textarea value={promptA} onChange={e => setPromptA(e.target.value)} placeholder="System or instruction prompt A..." style={{ width: '100%', minHeight: 80, background: (S.input as any).background, border: (S.input as any).border, color: (S.input as any).color, borderRadius: 8, padding: 8, fontSize: 12, resize: 'vertical', boxSizing: 'border-box' }} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <label style={{ ...S.sub, fontSize: 11, display: 'block', marginBottom: 4 }}>Prompt B</label>
+          <textarea value={promptB} onChange={e => setPromptB(e.target.value)} placeholder="System or instruction prompt B..." style={{ width: '100%', minHeight: 80, background: (S.input as any).background, border: (S.input as any).border, color: (S.input as any).color, borderRadius: 8, padding: 8, fontSize: 12, resize: 'vertical', boxSizing: 'border-box' }} />
+        </div>
+      </div>
+      <label style={{ ...S.sub, fontSize: 11, display: 'block', marginBottom: 4 }}>Test Input (same for both)</label>
+      <textarea value={testInput} onChange={e => setTestInput(e.target.value)} placeholder="The user message / test case to run both prompts against..." style={{ width: '100%', minHeight: 60, background: (S.input as any).background, border: (S.input as any).border, color: (S.input as any).color, borderRadius: 8, padding: 8, fontSize: 12, resize: 'vertical', boxSizing: 'border-box', marginBottom: 10 }} />
+      <button onClick={run} disabled={loading || !promptA.trim() || !promptB.trim() || !testInput.trim()} style={{ ...S.btn, opacity: loading ? 0.5 : 1 }}>
+        {loading ? '⏳ Running...' : '⚖️ Compare'}
+      </button>
+      {error && <p style={{ color: '#f87171', fontSize: 13, marginTop: 10 }}>{error}</p>}
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          {result.scores?.winner && (
+            <div style={{ textAlign: 'center', marginBottom: 14, padding: '10px 0', background: 'rgba(139,92,246,0.15)', borderRadius: 10, border: '1px solid rgba(139,92,246,0.3)' }}>
+              <span style={{ fontSize: 18 }}>{result.scores.winner === 'A' ? '🏆 Prompt A wins' : result.scores.winner === 'B' ? '🏆 Prompt B wins' : '🤝 Tie'}</span>
+              {result.scores.reason && <p style={{ ...S.sub, margin: '4px 0 0', fontSize: 12 }}>{result.scores.reason}</p>}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 12 }}>
+            {(['A','B'] as const).map(k => {
+              const sc = result.scores?.[k.toLowerCase()];
+              const out = k === 'A' ? result.outputA : result.outputB;
+              return (
+                <div key={k} style={{ ...colStyle, border: `1px solid ${result.scores?.winner === k ? '#a78bfa' : 'rgba(255,255,255,0.1)'}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontWeight: 700, fontSize: 14 }}>Prompt {k}</span>
+                    {sc && <span style={{ color: scoreColor(sc.overall), fontWeight: 700 }}>⭐ {sc.overall}/10</span>}
+                  </div>
+                  {sc && (
+                    <div style={{ display: 'flex', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+                      {(['clarity','relevance','usefulness'] as const).map(m => (
+                        <span key={m} style={{ fontSize: 11, color: scoreColor(sc[m]) }}>{m}: {sc[m]}/10</span>
+                      ))}
+                    </div>
+                  )}
+                  {sc?.verdict && <p style={{ ...S.sub, fontSize: 11, marginBottom: 8, fontStyle: 'italic' }}>"{sc.verdict}"</p>}
+                  <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 12, color: '#e2e8f0', lineHeight: 1.5, maxHeight: 200, overflowY: 'auto' }}>{out}</pre>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── v8.32 Prompt Mutation Engine ────────────────────────────────────────────
 function PromptMutationPanel({ api }: { api: Api }) {
   const [prompt, setPrompt] = useState('');
@@ -1269,7 +1349,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -1296,6 +1376,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'relay', label: '⛓️ Relay' },
     { id: 'scoreboard', label: '🏅 Scoreboard' },
     { id: 'mutate', label: '🧬 Mutate' },
+    { id: 'diff', label: '⚖️ A/B Test' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -1365,6 +1446,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'relay' && <RelayRunner api={api} />}
         {tab === 'scoreboard' && <AgentScoreboard api={api} />}
         {tab === 'mutate' && <PromptMutationPanel api={api} />}
+        {tab === 'diff' && <PromptDiffPanel api={api} />}
       </div>
     </div>
   );
