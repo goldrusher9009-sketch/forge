@@ -597,6 +597,92 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.42 Knowledge Distiller ---
+function KnowledgeDistillerPanel({ api }: { api: Api }) {
+  const [text, setText] = useState('');
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [err, setErr] = useState('');
+  const [view, setView] = useState<'summary'|'insights'|'faq'|'flashcards'>('summary');
+
+  const run = async () => {
+    if (!text.trim() || text.trim().length < 50) return;
+    setRunning(true); setErr(''); setResult(null);
+    try {
+      const d = await api('/api/knowledge-distill', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text.trim() }) });
+      if (d.success) { setResult(d); setView('summary'); } else setErr(d.error || 'Failed');
+    } catch(e: any) { setErr(e.message); }
+    setRunning(false);
+  };
+
+  const views: { id: typeof view; label: string }[] = [
+    { id: 'summary', label: '📋 Summary' },
+    { id: 'insights', label: '💡 Insights' },
+    { id: 'faq', label: '❓ FAQ' },
+    { id: 'flashcards', label: '🃏 Flashcards' },
+  ];
+
+  return (
+    <div>
+      <h3 style={{ ...S.h, fontSize: 15, marginBottom: 8 }}>🧪 Knowledge Distiller</h3>
+      <p style={{ ...S.sub, marginBottom: 12 }}>Paste any text — get a summary, key insights, FAQ, and study flashcards.</p>
+      <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Paste an article, document, notes, or any text to distill…" rows={5}
+        style={{ ...S.input, width: '100%', fontFamily: 'inherit', resize: 'vertical', marginBottom: 10 }} />
+      <button onClick={run} disabled={running || text.trim().length < 50} style={{ ...S.btn, ...S.primaryBtn, marginBottom: 16 }}>
+        {running ? '⏳ Distilling…' : '🧪 Distill Knowledge'}
+      </button>
+      {err && <div style={{ color: '#f87171', fontSize: 12, marginBottom: 10 }}>{err}</div>}
+      {result && (
+        <div>
+          <div style={{ fontSize: 10, color: 'var(--fg-text3,#888)', marginBottom: 10 }}>{result.wordCount} words processed</div>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
+            {views.map(v => (
+              <button key={v.id} onClick={() => setView(v.id)} style={{ ...S.btn, background: view === v.id ? 'var(--fg-accent,#6c63ff)' : 'var(--fg-bg2,#1a1a2e)', color: view === v.id ? '#fff' : 'var(--fg-text2,#ccc)', border: `1px solid ${view === v.id ? 'transparent' : 'var(--fg-border,#2a2a3e)'}`, fontSize: 11 }}>
+                {v.label}
+              </button>
+            ))}
+          </div>
+          {view === 'summary' && (
+            <div style={{ borderRadius: 8, border: '1px solid var(--fg-border,#2a2a3e)', background: 'var(--fg-bg2,#1a1a2e)', padding: 16 }}>
+              <div style={{ fontSize: 13, color: 'var(--fg-text,#f0f1f5)', lineHeight: 1.7 }}>{result.summary}</div>
+            </div>
+          )}
+          {view === 'insights' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(result.insights || []).map((ins: string, i: number) => (
+                <div key={i} style={{ borderRadius: 8, border: '1px solid var(--fg-border,#2a2a3e)', background: 'var(--fg-bg2,#1a1a2e)', padding: 12, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--fg-accent,#6c63ff)', minWidth: 20 }}>{i+1}.</div>
+                  <div style={{ fontSize: 12, color: 'var(--fg-text2,#ccc)', lineHeight: 1.6 }}>{ins}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {view === 'faq' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {(result.faq || []).map((item: any, i: number) => (
+                <div key={i} style={{ borderRadius: 8, border: '1px solid var(--fg-border,#2a2a3e)', background: 'var(--fg-bg2,#1a1a2e)', padding: 12 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--fg-text,#f0f1f5)', marginBottom: 6 }}>Q: {item.q}</div>
+                  <div style={{ fontSize: 12, color: 'var(--fg-text2,#ccc)', lineHeight: 1.6 }}>A: {item.a}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {view === 'flashcards' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 10 }}>
+              {(result.flashcards || []).map((card: any, i: number) => (
+                <div key={i} style={{ borderRadius: 8, border: '1px solid rgba(99,102,241,0.3)', background: 'rgba(99,102,241,0.05)', padding: 14 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#818cf8', marginBottom: 8, borderBottom: '1px solid rgba(99,102,241,0.2)', paddingBottom: 6 }}>{card.front}</div>
+                  <div style={{ fontSize: 11, color: 'var(--fg-text2,#ccc)', lineHeight: 1.6 }}>{card.back}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.41 Prompt Optimizer ---
 function PromptOptimizerPanel({ api }: { api: Api }) {
   const [prompt, setPrompt] = useState('');
@@ -1950,7 +2036,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -1986,6 +2072,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'milestones', label: '≡ƒÄ» Milestones' },
     { id: 'benchmark', label: '≡ƒÅÆ Benchmark' },
     { id: 'optimizer', label: '✨ Optimizer' },
+    { id: 'distill', label: '🧪 Distill' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -2064,6 +2151,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'milestones' && <GoalMilestoneTracker api={api} />}
         {tab === 'benchmark' && <AgentBenchmarkPanel api={api} />}
         {tab === 'optimizer' && <PromptOptimizerPanel api={api} />}
+        {tab === 'distill' && <KnowledgeDistillerPanel api={api} />}
       </div>
     </div>
   );

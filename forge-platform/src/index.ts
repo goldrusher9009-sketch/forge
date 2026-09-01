@@ -39042,6 +39042,32 @@ Original prompt: ${prompt}`;
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.42 Knowledge Distiller — extract summary, insights, FAQ, flashcards from text
+app.post('/api/knowledge-distill', requireAuth, async (req: any, res: any) => {
+  try {
+    const { text } = req.body;
+    if (!text || text.trim().length < 50) return res.status(400).json({ error: 'text must be at least 50 characters' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const snippet = text.slice(0, 4000);
+    const p = `Analyze this text and return ONLY JSON with this exact structure:
+{"summary":"2-3 sentence summary","insights":["insight1","insight2","insight3","insight4","insight5"],"faq":[{"q":"question","a":"answer"},{"q":"question","a":"answer"},{"q":"question","a":"answer"}],"flashcards":[{"front":"term or concept","back":"definition or explanation"},{"front":"term","back":"explanation"},{"front":"term","back":"explanation"},{"front":"term","back":"explanation"},{"front":"term","back":"explanation"}]}
+
+Text: ${snippet}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1200 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try {
+      data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1));
+    } catch(_) { return res.status(500).json({ error: 'Failed to parse LLM response' }); }
+    res.json({ success: true, wordCount: text.split(/\s+/).length, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
