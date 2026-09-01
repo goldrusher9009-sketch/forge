@@ -597,6 +597,73 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// ─── v8.38 Agent Digest Panel ────────────────────────────────────────────────
+function AgentDigestPanel({ api }: { api: Api }) {
+  const [days, setDays] = useState(1);
+  const [format, setFormat] = useState<'email'|'slack'>('email');
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function generate() {
+    setLoading(true); setResult(null);
+    try {
+      const d = await api('/api/agent-digest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ days, format }) });
+      if (d.success) setResult(d);
+    } catch {}
+    setLoading(false);
+  }
+
+  function copy() {
+    if (result?.narrative) { navigator.clipboard.writeText(result.narrative); setCopied(true); setTimeout(() => setCopied(false), 1500); }
+  }
+
+  return (
+    <div>
+      <h3 style={{ ...S.h, fontSize: 15, marginBottom: 12 }}>📨 Agent Digest</h3>
+      <p style={{ ...S.sub, marginBottom: 14 }}>Generate a copy-ready summary of your agent activity.</p>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
+        <label style={{ ...S.sub, fontSize: 12 }}>Period:</label>
+        {[1, 7, 30].map(d => (
+          <button key={d} onClick={() => setDays(d)} style={{ ...S.btn, ...(days === d ? {} : S.ghostBtn), padding: '4px 12px', fontSize: 12 }}>{d === 1 ? 'Today' : `${d}d`}</button>
+        ))}
+        <label style={{ ...S.sub, fontSize: 12, marginLeft: 8 }}>Format:</label>
+        {(['email','slack'] as const).map(f => (
+          <button key={f} onClick={() => setFormat(f)} style={{ ...S.btn, ...(format === f ? {} : S.ghostBtn), padding: '4px 12px', fontSize: 12 }}>{f === 'email' ? '📧 Email' : '💬 Slack'}</button>
+        ))}
+        <button onClick={generate} disabled={loading} style={{ ...S.btn, marginLeft: 'auto', opacity: loading ? 0.5 : 1 }}>
+          {loading ? '⏳ Generating...' : '✨ Generate'}
+        </button>
+      </div>
+
+      {result && (
+        <div>
+          {result.raw && (
+            <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+              {[
+                { label: 'Runs', val: result.raw.runs },
+                { label: 'Completed', val: result.raw.completed, color: '#4ade80' },
+                { label: 'Failed', val: result.raw.failed, color: '#f87171' },
+                { label: 'Avg Score', val: result.raw.avgScore ?? '—' },
+                { label: 'Goals', val: result.raw.goals },
+              ].map(s => (
+                <div key={s.label} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: '8px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: s.color || '#e2e8f0' }}>{s.val}</div>
+                  <div style={{ ...S.sub, fontSize: 10 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ position: 'relative' }}>
+            <pre style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: 16, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 13, lineHeight: 1.6, color: '#e2e8f0', maxHeight: 300, overflowY: 'auto' }}>{result.narrative}</pre>
+            <button onClick={copy} style={{ position: 'absolute', top: 10, right: 10, ...S.btn, ...S.ghostBtn, padding: '4px 10px', fontSize: 11 }}>{copied ? '✓ Copied' : '📋 Copy'}</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── v8.37 Agent Tag Panel ───────────────────────────────────────────────────
 const TAG_COLORS = ['#a78bfa','#4ade80','#60a5fa','#fb923c','#f472b6','#facc15','#34d399','#f87171'];
 function tagColor(t: string) { return TAG_COLORS[Math.abs(t.split('').reduce((a,c)=>a+c.charCodeAt(0),0)) % TAG_COLORS.length]; }
@@ -1654,7 +1721,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -1686,6 +1753,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'costs', label: '💰 Cost Tracker' },
     { id: 'retry', label: '🔄 Smart Retry' },
     { id: 'tags', label: '🏷️ Tags' },
+    { id: 'agentdigest', label: '📨 Digest' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -1760,6 +1828,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'costs' && <AgentCostTracker api={api} />}
         {tab === 'retry' && <SmartRetryPanel api={api} />}
         {tab === 'tags' && <AgentTagPanel api={api} />}
+        {tab === 'agentdigest' && <AgentDigestPanel api={api} />}
       </div>
     </div>
   );
