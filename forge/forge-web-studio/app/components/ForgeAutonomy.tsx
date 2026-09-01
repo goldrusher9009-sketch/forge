@@ -597,6 +597,83 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// ─── v8.36 Smart Retry Panel ─────────────────────────────────────────────────
+function SmartRetryPanel({ api }: { api: Api }) {
+  const [runs, setRuns] = useState<any[]>([]);
+  const [retrying, setRetrying] = useState<number|null>(null);
+  const [results, setResults] = useState<Record<number,string>>({});
+  const [delay, setDelay] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  async function load() {
+    setLoading(true);
+    try { const d = await api('/api/agent-runs/failed?limit=50'); if (d.success) setRuns(d.data); } catch {}
+    setLoading(false);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function retry(run: any) {
+    setRetrying(run.id);
+    try {
+      const d = await api(`/api/agent-runs/${run.id}/retry`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ delay_ms: delay }) });
+      if (d.success) {
+        setResults(r => ({ ...r, [run.id]: d.result || 'Done' }));
+        setRuns(prev => prev.filter(r => r.id !== run.id));
+      } else {
+        setResults(r => ({ ...r, [run.id]: `Error: ${d.error}` }));
+      }
+    } catch { setResults(r => ({ ...r, [run.id]: 'Request failed' })); }
+    setRetrying(null);
+  }
+
+  async function retryAll() {
+    for (const run of runs.slice(0, 10)) {
+      await retry(run);
+      if (delay > 0) await new Promise(r => setTimeout(r, delay));
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <h3 style={{ ...S.h, fontSize: 15 }}>🔄 Smart Retry</h3>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <label style={{ ...S.sub, fontSize: 11 }}>Delay:</label>
+          {[0, 1000, 3000, 5000].map(d => (
+            <button key={d} onClick={() => setDelay(d)} style={{ ...S.btn, ...(delay === d ? {} : S.ghostBtn), padding: '3px 8px', fontSize: 11 }}>{d === 0 ? 'None' : `${d/1000}s`}</button>
+          ))}
+          <button onClick={retryAll} disabled={runs.length === 0} style={{ ...S.btn, background: '#dc2626' }}>⚡ Retry All</button>
+          <button onClick={load} style={{ ...S.btn, ...S.ghostBtn }}>↺</button>
+        </div>
+      </div>
+      {loading && <p style={S.sub}>Loading failed runs...</p>}
+      {!loading && runs.length === 0 && Object.keys(results).length === 0 && <p style={{ ...S.sub, textAlign: 'center', padding: 24 }}>✅ No failed runs</p>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {runs.map(run => (
+          <div key={run.id} style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: 10, padding: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{run.name || 'Unnamed'}</p>
+                <p style={{ ...S.sub, margin: '2px 0 0', fontSize: 11 }}>{run.created_at?.slice(0, 19)} · {run.error || 'Unknown error'}</p>
+              </div>
+              <button onClick={() => retry(run)} disabled={retrying === run.id} style={{ ...S.btn, background: '#16a34a', marginLeft: 10, opacity: retrying === run.id ? 0.5 : 1, flexShrink: 0 }}>
+                {retrying === run.id ? '⏳' : '🔄 Retry'}
+              </button>
+            </div>
+          </div>
+        ))}
+        {Object.entries(results).map(([id, res]) => (
+          <div key={id} style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 10, padding: 12 }}>
+            <p style={{ margin: 0, fontSize: 12, color: '#4ade80' }}>✓ Run {id} retried</p>
+            <pre style={{ margin: '6px 0 0', fontSize: 11, whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: 80, overflowY: 'auto', color: '#94a3b8' }}>{res}</pre>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── v8.35 Agent Cost Tracker ────────────────────────────────────────────────
 function AgentCostTracker({ api }: { api: Api }) {
   const [data, setData] = useState<any>(null);
@@ -1487,7 +1564,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '🌅 Morning' },
     { id: 'approvals', label: '✅ Approvals' },
@@ -1517,6 +1594,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'diff', label: '⚖️ A/B Test' },
     { id: 'tokens', label: '🔢 Token Est.' },
     { id: 'costs', label: '💰 Cost Tracker' },
+    { id: 'retry', label: '🔄 Smart Retry' },
     { id: 'market', label: '🛒 Market' },
     { id: 'modes', label: '⚡ Modes' },
     { id: 'voice', label: '🎙️ Voice' },
@@ -1589,6 +1667,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'diff' && <PromptDiffPanel api={api} />}
         {tab === 'tokens' && <TokenEstimatorPanel api={api} />}
         {tab === 'costs' && <AgentCostTracker api={api} />}
+        {tab === 'retry' && <SmartRetryPanel api={api} />}
       </div>
     </div>
   );
