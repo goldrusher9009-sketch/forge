@@ -1526,12 +1526,25 @@ const AGENT_TEMPLATES = [
 function AgentTemplatesPanel({ api }: { api: Api }) {
   const [installing, setInstalling] = useState<string|null>(null);
   const [installed, setInstalled] = useState<Set<string>>(new Set());
+  const [customForm, setCustomForm] = useState({ name: '', cron: '0 8 * * *', prompt: '', persona: '' });
+  const [customSaving, setCustomSaving] = useState(false);
+  const [customSaved, setCustomSaved] = useState(false);
 
   const install = async (tpl: typeof AGENT_TEMPLATES[0]) => {
     setInstalling(tpl.id);
     await api('/api/agent-schedules', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name: tpl.name, prompt: tpl.prompt, cron_expression: tpl.cron, enabled: true }) });
     setInstalled(s => new Set([...s, tpl.id]));
     setInstalling(null);
+  };
+
+  const saveCustom = async () => {
+    if (!customForm.name || !customForm.prompt) return;
+    setCustomSaving(true);
+    await api('/api/schedules', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name: customForm.name, cron_expression: customForm.cron, prompt: customForm.prompt, persona: customForm.persona || null }) });
+    setCustomSaved(true);
+    setCustomForm({ name: '', cron: '0 8 * * *', prompt: '', persona: '' });
+    setTimeout(() => setCustomSaved(false), 3000);
+    setCustomSaving(false);
   };
 
   return (
@@ -1550,6 +1563,19 @@ function AgentTemplatesPanel({ api }: { api: Api }) {
             </button>
           </div>
         ))}
+      </div>
+
+      {/* Custom schedule with persona */}
+      <div style={{ marginTop: 20, background: '#1e293b', border: '1px solid #334155', borderRadius: '10px', padding: '16px' }}>
+        <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: 4 }}>🎭 Custom Schedule with Persona</div>
+        <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: 12 }}>Create a schedule and assign an expert persona — the agent will think and reason from that role's perspective.</div>
+        <input value={customForm.name} onChange={e => setCustomForm(f => ({...f, name: e.target.value}))} placeholder="Schedule name (e.g. Daily SEO Audit)" style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px 10px', fontSize: '13px', marginBottom: 8, boxSizing: 'border-box' }} />
+        <input value={customForm.cron} onChange={e => setCustomForm(f => ({...f, cron: e.target.value}))} placeholder="Cron expression (e.g. 0 8 * * *)" style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px 10px', fontSize: '13px', marginBottom: 8, boxSizing: 'border-box' }} />
+        <textarea value={customForm.prompt} onChange={e => setCustomForm(f => ({...f, prompt: e.target.value}))} placeholder="Agent goal / prompt (what should this agent do?)" rows={3} style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px 10px', fontSize: '13px', marginBottom: 8, boxSizing: 'border-box', resize: 'vertical' }} />
+        <input value={customForm.persona} onChange={e => setCustomForm(f => ({...f, persona: e.target.value}))} placeholder="Persona (optional) — e.g. Data Analyst, Security Auditor, Marketing Strategist" style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '8px 10px', fontSize: '13px', marginBottom: 10, boxSizing: 'border-box' }} />
+        <button onClick={saveCustom} disabled={customSaving || !customForm.name || !customForm.prompt} style={{ background: customSaved ? '#065f46' : '#6366f1', border: 'none', borderRadius: '6px', color: '#fff', padding: '8px 16px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>
+          {customSaved ? '✓ Saved!' : customSaving ? 'Saving...' : '+ Create Schedule'}
+        </button>
       </div>
     </div>
   );
