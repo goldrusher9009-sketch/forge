@@ -597,6 +597,92 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.46 Writing Coach ---
+function WritingCoachPanel({ api }: { api: Api }) {
+  const [text, setText] = useState('');
+  const [goal, setGoal] = useState('');
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [err, setErr] = useState('');
+
+  const run = async () => {
+    if (!text.trim() || text.trim().length < 30) return;
+    setRunning(true); setErr(''); setResult(null);
+    try {
+      const d = await api('/api/writing-coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text.trim(), goal: goal.trim() }) });
+      if (d.success) setResult(d); else setErr(d.error || 'Failed');
+    } catch(e: any) { setErr(e.message); }
+    setRunning(false);
+  };
+
+  const scoreColor = (s: number) => s >= 8 ? '#4ade80' : s >= 6 ? '#fbbf24' : '#f87171';
+  const sevColor: Record<string, string> = { high: '#f87171', medium: '#fbbf24', low: '#888' };
+
+  return (
+    <div>
+      <h3 style={{ ...S.h, fontSize: 15, marginBottom: 8 }}>✍️ Writing Coach</h3>
+      <p style={{ ...S.sub, marginBottom: 12 }}>Paste your writing for expert feedback on clarity, structure, voice, and conciseness.</p>
+      <input value={goal} onChange={e => setGoal(e.target.value)} placeholder="Writing goal (optional): e.g. 'persuasive blog post', 'formal email'" style={{ ...S.input, width: '100%', marginBottom: 8 }} />
+      <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Paste your writing here…" rows={5}
+        style={{ ...S.input, width: '100%', fontFamily: 'inherit', resize: 'vertical', marginBottom: 10 }} />
+      <button onClick={run} disabled={running || text.trim().length < 30} style={{ ...S.btn, ...S.primaryBtn, marginBottom: 16 }}>
+        {running ? '⏳ Analyzing…' : '✍️ Coach My Writing'}
+      </button>
+      {err && <div style={{ color: '#f87171', fontSize: 12, marginBottom: 10 }}>{err}</div>}
+      {result && (
+        <div>
+          <div style={{ borderRadius: 10, border: '1px solid var(--fg-border,#2a2a3e)', background: 'var(--fg-bg2,#1a1a2e)', padding: 14, marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: scoreColor(result.overall_score) }}>{result.grade}</div>
+              <div style={{ fontSize: 10, color: 'var(--fg-text3,#888)' }}>{result.wordCount} words analyzed</div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {result.scores && Object.entries(result.scores).map(([k, v]: any) => (
+                <div key={k} style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: scoreColor(v) }}>{v}</div>
+                  <div style={{ fontSize: 9, color: 'var(--fg-text3,#888)', textTransform: 'capitalize' }}>{k}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {result.praise?.length > 0 && (
+            <div style={{ borderRadius: 8, border: '1px solid rgba(74,222,128,0.3)', background: 'rgba(74,222,128,0.04)', padding: 12, marginBottom: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#4ade80', marginBottom: 6 }}>👏 What's Working</div>
+              {result.praise.map((p: string, i: number) => <div key={i} style={{ fontSize: 11, color: 'var(--fg-text2,#ccc)', marginBottom: 3 }}>• {p}</div>)}
+            </div>
+          )}
+          {result.issues?.length > 0 && (
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-text2,#ccc)', marginBottom: 8 }}>🔧 Issues to Fix</div>
+              {result.issues.map((iss: any, i: number) => (
+                <div key={i} style={{ borderRadius: 8, border: `1px solid ${sevColor[iss.severity]}40`, background: `${sevColor[iss.severity]}08`, padding: 10, marginBottom: 6 }}>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: sevColor[iss.severity], textTransform: 'uppercase', border: `1px solid ${sevColor[iss.severity]}60`, borderRadius: 4, padding: '1px 5px' }}>{iss.severity}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-text,#f0f1f5)' }}>{iss.issue}</div>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--fg-text3,#888)' }}>→ {iss.fix}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {result.rewritten_opening && (
+            <div style={{ borderRadius: 8, border: '1px solid rgba(108,99,255,0.3)', background: 'rgba(108,99,255,0.05)', padding: 12, marginBottom: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-accent,#6c63ff)', marginBottom: 6 }}>✨ Rewritten Opening</div>
+              <div style={{ fontSize: 12, color: 'var(--fg-text2,#ccc)', lineHeight: 1.6, fontStyle: 'italic' }}>{result.rewritten_opening}</div>
+            </div>
+          )}
+          {result.next_level && (
+            <div style={{ borderRadius: 8, border: '1px solid rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.04)', padding: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#fbbf24', marginBottom: 4 }}>🎯 Next Level Tip</div>
+              <div style={{ fontSize: 12, color: 'var(--fg-text2,#ccc)' }}>{result.next_level}</div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.45 Idea Validator ---
 function IdeaValidatorPanel({ api }: { api: Api }) {
   const [idea, setIdea] = useState('');
@@ -2244,7 +2330,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -2284,6 +2370,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'debate', label: '⚔️ Debate' },
     { id: 'persona', label: '🎭 Persona' },
     { id: 'validate', label: '🚀 Validate' },
+    { id: 'writecoach', label: '✍️ Coach' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -2366,6 +2453,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'debate' && <DebateSimulatorPanel api={api} />}
         {tab === 'persona' && <PersonaChatPanel api={api} />}
         {tab === 'validate' && <IdeaValidatorPanel api={api} />}
+        {tab === 'writecoach' && <WritingCoachPanel api={api} />}
       </div>
     </div>
   );

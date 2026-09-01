@@ -39137,6 +39137,31 @@ Return ONLY JSON with this exact structure:
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.46 Writing Coach — analyze writing quality and give actionable feedback
+app.post('/api/writing-coach', requireAuth, async (req: any, res: any) => {
+  try {
+    const { text, goal } = req.body;
+    if (!text || text.trim().length < 30) return res.status(400).json({ error: 'text must be at least 30 characters' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const goalCtx = goal ? `The writer's goal: ${goal}. ` : '';
+    const p = `You are an expert writing coach and editor. ${goalCtx}Analyze this writing and return ONLY JSON:
+{"overall_score":7,"grade":"B+","scores":{"clarity":8,"engagement":7,"structure":6,"conciseness":7,"voice":8},"praise":["specific thing done well","another strength"],"issues":[{"severity":"high"|"medium"|"low","issue":"description","fix":"concrete suggestion"},{"severity":"medium","issue":"description","fix":"suggestion"}],"rewritten_opening":"A rewritten version of just the first sentence or two, showing improved style","power_words":["strong word to add","another"],"cut_these":["phrase that weakens the writing","another"],"next_level":"One piece of advice to take this writing to the next level"}
+
+Text to analyze:
+${text.slice(0, 3000)}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 900 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, wordCount: text.split(/\s+/).length, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
