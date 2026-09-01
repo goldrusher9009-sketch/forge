@@ -39068,6 +39068,34 @@ Text: ${snippet}`;
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.43 Debate Simulator — AI argues both sides, then gives verdict
+app.post('/api/debate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { topic } = req.body;
+    if (!topic) return res.status(400).json({ error: 'topic required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const [proRes, conRes] = await Promise.all([
+      callLLM(provider, key, null as any, [{ role: 'user', content: `You are a skilled debate champion arguing strongly IN FAVOR of: "${topic}". Give 3 compelling arguments with evidence. Be persuasive and confident. Keep it under 250 words.` }], undefined, { maxTokens: 400 }),
+      callLLM(provider, key, null as any, [{ role: 'user', content: `You are a skilled debate champion arguing strongly AGAINST: "${topic}". Give 3 compelling counter-arguments with evidence. Be persuasive and confident. Keep it under 250 words.` }], undefined, { maxTokens: 400 }),
+    ]);
+    const proArgs = (proRes.content || '').trim();
+    const conArgs = (conRes.content || '').trim();
+    const verdictRes = await callLLM(provider, key, null as any, [{
+      role: 'user',
+      content: `Topic: "${topic}"\n\nPRO arguments:\n${proArgs}\n\nCON arguments:\n${conArgs}\n\nAs an impartial judge, evaluate both sides. Return ONLY JSON: {"winner":"pro"|"con"|"tie","margin":"close"|"moderate"|"decisive","verdict":"2-3 sentence verdict","pro_score":7,"con_score":6,"key_insight":"the most important insight from this debate"}`
+    }], undefined, { maxTokens: 300 });
+    const vt = (verdictRes.content || '').trim();
+    let verdict: any = null;
+    try { verdict = JSON.parse(vt.slice(vt.indexOf('{'), vt.lastIndexOf('}')+1)); } catch(_) {}
+    res.json({ success: true, topic, pro: proArgs, con: conArgs, verdict });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
