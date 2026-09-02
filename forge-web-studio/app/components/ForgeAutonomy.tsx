@@ -597,6 +597,115 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.19 Due Diligence Report Generator ---
+const DD_SEV: Record<string,string> = { 'Critical':'text-red-400','High':'text-orange-400','Medium':'text-yellow-400','Low':'text-green-400' };
+const DD_STATUS: Record<string,string> = { 'Clean':'bg-green-800','Flagged':'bg-red-800','In Progress':'bg-yellow-800','Pending':'bg-gray-700' };
+function DueDiligencePanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ targetCompany:'', acquirer:'', dealType:'Acquisition', industry:'', targetRevenue:'', targetEbitda:'', employeeCount:'', foundedYear:'', businessModel:'', keyProducts:'', topCustomers:'', keyRisks:'', growthRate:'', debtLevel:'', requestedValuation:'', ddFocus:'Financial, Legal, Commercial, Technology', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'snapshot'|'financial'|'valuation'|'business'|'risks'|'legal'|'checklist'>('snapshot');
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/due-diligence`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">🔍 Due Diligence Report</h2>
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        {[['targetCompany','Target Company'],['acquirer','Acquirer'],['dealType','Deal Type'],['industry','Industry'],['targetRevenue','Target Revenue'],['targetEbitda','EBITDA'],['employeeCount','Employees'],['foundedYear','Founded'],['growthRate','YoY Growth Rate'],['debtLevel','Debt Level'],['requestedValuation','Requested Valuation']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} /></div>
+        ))}
+      </div>
+      {[['businessModel','Business Model'],['keyProducts','Key Products / Services'],['topCustomers','Top Customers'],['keyRisks','Known Risks'],['ddFocus','DD Focus Areas']].map(([k,l])=>(
+        <div key={k} className="mb-2"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <div className="mb-4"><label className="text-xs text-gray-400">Provider</label><select className="w-48 bg-gray-800 text-white rounded p-2 text-sm mt-1 ml-2" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      <button onClick={run} disabled={loading} className="bg-cyan-700 hover:bg-cyan-600 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Analyzing…':'Generate DD Report'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded p-4 mb-4">
+            <p className="text-white font-bold mb-1">{result.reportTitle}</p>
+            {result.dealSnapshot && <div className="flex gap-3 items-center mb-2"><span className={result.dealSnapshot.verdict==='Proceed'?'bg-green-700 text-white text-xs px-3 py-1 rounded-full':result.dealSnapshot.verdict==='Caution'?'bg-yellow-700 text-white text-xs px-3 py-1 rounded-full':'bg-red-700 text-white text-xs px-3 py-1 rounded-full'}>{result.dealSnapshot.verdict}</span><span className="text-gray-400 text-xs">Confidence: {result.dealSnapshot.confidence}</span></div>}
+            <p className="text-gray-300 text-sm">{result.executiveSummary}</p>
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['snapshot','financial','valuation','business','risks','legal','checklist'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs ${subtab===s?'bg-cyan-700 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.charAt(0).toUpperCase()+s.slice(1)}</button>)}
+          </div>
+          {subtab==='snapshot' && result.dealSnapshot && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-800 rounded p-3"><p className="text-green-400 text-xs font-bold mb-2">Key Strengths</p><ul>{(result.dealSnapshot.keyStrengths||[]).map((s:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {s}</li>)}</ul></div>
+                <div className="bg-gray-800 rounded p-3"><p className="text-red-400 text-xs font-bold mb-2">Key Risks</p><ul>{(result.dealSnapshot.keyRisks||[]).map((r:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {r}</li>)}</ul></div>
+              </div>
+              {(result.dealSnapshot.criticalIssues||[]).length>0 && <div className="bg-red-900 rounded p-3"><p className="text-red-300 text-xs font-bold mb-2">⚠ Critical Issues</p><ul>{result.dealSnapshot.criticalIssues.map((c:string,i:number)=><li key={i} className="text-red-200 text-xs">• {c}</li>)}</ul></div>}
+              {result.recommendation && <div className="bg-gray-800 rounded p-3"><p className="text-cyan-300 text-sm font-medium">{result.recommendation}</p></div>}
+            </div>
+          )}
+          {subtab==='financial' && result.financialAnalysis && (
+            <div className="space-y-3">
+              {[['revenueQuality','Revenue Quality'],['marginAnalysis','Margin Analysis'],['cashFlowAssessment','Cash Flow'],['workingCapital','Working Capital']].map(([k,l])=>result.financialAnalysis[k] && <div key={k} className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-1">{l}</p><p className="text-gray-300 text-sm">{result.financialAnalysis[k]}</p></div>)}
+              {(result.financialAnalysis.keyMetrics||[]).map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-2 flex justify-between items-center">
+                  <div><p className="text-white text-xs">{m.metric}</p><p className="text-gray-400 text-xs">Benchmark: {m.benchmark}</p></div>
+                  <div className="text-right"><p className="text-cyan-300 font-medium text-sm">{m.value}</p><p className={`text-xs ${m.assessment==='Strong'?'text-green-400':m.assessment==='Weak'?'text-red-400':'text-yellow-400'}`}>{m.assessment}</p></div>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='valuation' && result.valuationAnalysis && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">{[['requestedMultiple','Requested Multiple'],['benchmarkMultiple','Benchmark Multiple'],['impliedValuation','Implied Valuation'],['fairValueRange','Fair Value Range']].map(([k,l])=>result.valuationAnalysis[k] && <div key={k} className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-1">{l}</p><p className="text-white font-medium">{result.valuationAnalysis[k]}</p></div>)}</div>
+              {result.valuationAnalysis.valuationVerdict && <div className={`rounded p-3 ${result.valuationAnalysis.valuationVerdict.includes('Fair')?'bg-green-900':result.valuationAnalysis.valuationVerdict.includes('Over')?'bg-red-900':'bg-yellow-900'}`}><p className="text-white text-sm font-medium">{result.valuationAnalysis.valuationVerdict}</p></div>}
+              {result.synergies && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Synergy Analysis</p><div className="grid grid-cols-2 gap-2 text-xs">{[['revenueUpside','Rev Upside'],['costSavings','Cost Savings'],['integrationCost','Integration Cost'],['netSynergy','Net Synergy']].map(([k,l])=><div key={k}><p className="text-gray-400">{l}</p><p className="text-cyan-300 font-medium">{result.synergies[k]}</p></div>)}</div></div>}
+            </div>
+          )}
+          {subtab==='business' && result.businessAnalysis && (
+            <div className="space-y-3">
+              {[['marketPosition','Market Position'],['competitiveAdvantage','Competitive Advantage'],['customerConcentration','Customer Concentration'],['productStrength','Product Strength'],['technologyAssets','Technology Assets']].map(([k,l])=>result.businessAnalysis[k] && <div key={k} className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-1">{l}</p><p className="text-gray-300 text-sm">{result.businessAnalysis[k]}</p></div>)}
+              {result.humanCapital && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Human Capital</p>{[['keyPersonDependency','Key Person Risk'],['managementAssessment','Management'],['cultureRisks','Culture Risks'],['retentionRisks','Retention Risks']].map(([k,l])=>result.humanCapital[k] && <p key={k} className="text-gray-300 text-xs"><span className="text-gray-500">{l}: </span>{result.humanCapital[k]}</p>)}</div>}
+            </div>
+          )}
+          {subtab==='risks' && (
+            <div className="space-y-2">
+              {(result.riskMatrix||[]).map((r:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex justify-between mb-1"><div><span className="text-gray-400 text-xs">{r.category}: </span><span className="text-white text-sm">{r.risk}</span></div><div className="flex gap-2 text-xs"><span className={DD_SEV[r.severity]||'text-gray-400'}>{r.severity}</span><span className="text-gray-400">{r.likelihood}</span></div></div>
+                  <p className="text-green-300 text-xs">Mitigant: {r.mitigant}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='legal' && result.legalCompliance && (
+            <div className="space-y-3">
+              {(result.legalCompliance.redFlags||[]).length>0 && <div className="bg-red-900 rounded p-3"><p className="text-red-300 text-xs font-bold mb-2">Red Flags</p><ul>{result.legalCompliance.redFlags.map((f:string,i:number)=><li key={i} className="text-red-200 text-xs">• {f}</li>)}</ul></div>}
+              {[['pendingLitigation','Pending Litigation'],['ipAssessment','IP Assessment'],['regulatoryRisks','Regulatory Risks']].map(([k,l])=>result.legalCompliance[k] && <div key={k} className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-1">{l}</p><p className="text-gray-300 text-sm">{result.legalCompliance[k]}</p></div>)}
+              {result.dealStructure && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Deal Structure Recommendation</p><p className="text-cyan-300 text-sm mb-1">{result.dealStructure.recommendedStructure}</p>{result.dealStructure.earnoutSuggestion && <p className="text-gray-300 text-xs">Earnout: {result.dealStructure.earnoutSuggestion}</p>}</div>}
+            </div>
+          )}
+          {subtab==='checklist' && (
+            <div className="space-y-2">
+              {(result.ddChecklist||[]).map((item:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3 flex items-start gap-3">
+                  <span className={`${DD_STATUS[item.status]||'bg-gray-700'} text-white text-xs px-2 py-0.5 rounded shrink-0`}>{item.status}</span>
+                  <div><p className="text-white text-xs font-medium">{item.area}</p><p className="text-gray-400 text-xs">{item.findingSummary}</p>{item.followUpNeeded && <p className="text-yellow-300 text-xs">→ {item.followUpNeeded}</p>}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.18 Digital Transformation Roadmap ---
 const MATURITY_COLOR: Record<number,string> = { 1:'text-red-400',2:'text-orange-400',3:'text-yellow-400',4:'text-blue-400',5:'text-green-400' };
 function DigitalTransformPanel({ api }: { api: string }) {
@@ -8502,7 +8611,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -8606,6 +8715,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'pricingstrategy', label: '💲 Pricing Strategy' },
     { id: 'csplaybook', label: '🎖️ CS Playbook' },
     { id: 'digitaltransform', label: '🔮 Digital Transform' },
+    { id: 'duediligence', label: '🔍 Due Diligence' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -8763,6 +8873,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
         {tab === 'digitaltransform' && <DigitalTransformPanel api={api} />}
+        {tab === 'duediligence' && <DueDiligencePanel api={api} />}
         {tab === 'partnershipproposal' && <PartnershipProposalPanel api={api} />}
         {tab === 'execsummary' && <ExecSummaryPanel api={api} />}
         {tab === 'swotanalysis' && <SWOTAnalysisPanel api={api} />}

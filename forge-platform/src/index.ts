@@ -39500,6 +39500,33 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.19 Due Diligence Report Generator ---
+app.post('/api/due-diligence', requireAuth, async (req: AuthRequest, res) => {
+  const { targetCompany, acquirer, dealType, industry, targetRevenue, targetEbitda, employeeCount, foundedYear, businessModel, keyProducts, topCustomers, keyRisks, growthRate, debtLevel, requestedValuation, ddFocus, provider = 'anthropic' } = req.body;
+  try {
+    const key = await getUserKey(req.user!.id, provider, true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a seasoned M&A due diligence expert. Generate a comprehensive due diligence report.
+Target Company: ${targetCompany} | Acquirer: ${acquirer}
+Deal Type: ${dealType} | Industry: ${industry}
+Target Revenue: ${targetRevenue} | EBITDA: ${targetEbitda}
+Employees: ${employeeCount} | Founded: ${foundedYear}
+Business Model: ${businessModel}
+Key Products: ${keyProducts}
+Top Customers: ${topCustomers}
+Key Risks: ${keyRisks}
+Growth Rate: ${growthRate}
+Debt Level: ${debtLevel}
+Requested Valuation: ${requestedValuation}
+DD Focus Areas: ${ddFocus}
+
+Return JSON: { reportTitle, executiveSummary, dealSnapshot: { verdict, confidence, keyStrengths: string[], keyRisks: string[], criticalIssues: string[] }, financialAnalysis: { revenueQuality, marginAnalysis, cashFlowAssessment, workingCapital, keyMetrics: [{ metric, value, benchmark, assessment }] }, valuationAnalysis: { requestedMultiple, benchmarkMultiple, impliedValuation, fairValueRange, valuationVerdict }, businessAnalysis: { marketPosition, competitiveAdvantage, customerConcentration, productStrength, technologyAssets }, riskMatrix: [{ category, risk, severity, likelihood, mitigant }], legalCompliance: { redFlags: string[], pendingLitigation, ipAssessment, regulatoryRisks }, humanCapital: { keyPersonDependency, managementAssessment, cultureRisks, retentionRisks }, synergies: { revenueUpside, costSavings, strategicValue, integrationCost, netSynergy }, dealStructure: { recommendedStructure, earnoutSuggestion, representations, conditions }, ddChecklist: [{ area, status, findingSummary, followUpNeeded }], recommendation }`;
+    const result = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.18 Digital Transformation Roadmap ---
 app.post('/api/digital-transform', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, companySize, currentTechStack, transformationGoals, budget, timeline, painPoints, competitors, regulatoryConstraints, changeReadiness, keyStakeholders, provider = 'anthropic' } = req.body;
