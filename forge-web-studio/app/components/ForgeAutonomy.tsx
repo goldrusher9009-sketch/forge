@@ -597,6 +597,115 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.10 M&A Integration Playbook ---
+const SYNERGY_CONF: Record<string,string> = { 'High':'text-green-400','Medium':'text-yellow-400','Low':'text-red-400' };
+function MAIntegrationPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ acquirer:'', target:'', dealType:'', dealValue:'', industry:'', acquirerRevenue:'', targetRevenue:'', acquirerEmployees:'', targetEmployees:'', strategicRationale:'', integrationApproach:'', day1Priorities:'', keyRisks:'', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'thesis'|'day1'|'workstreams'|'synergies'|'talent'|'risks'>('thesis');
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/ma-integration`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">🤝 M&A Integration Playbook</h2>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {[['acquirer','Acquirer'],['target','Target Company'],['dealType','Deal Type'],['dealValue','Deal Value'],['industry','Industry'],['acquirerRevenue','Acquirer Revenue'],['targetRevenue','Target Revenue'],['acquirerEmployees','Acquirer Employees'],['targetEmployees','Target Employees'],['integrationApproach','Integration Approach']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+        ))}
+      </div>
+      {[['strategicRationale','Strategic Rationale'],['day1Priorities','Day 1 Priorities'],['keyRisks','Key Risks']].map(([k,l])=>(
+        <div key={k} className="mb-3"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <div className="mb-4"><label className="text-xs text-gray-400">Provider</label><select className="w-48 bg-gray-800 text-white rounded p-2 text-sm mt-1 ml-2" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      <button onClick={run} disabled={loading} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Generating…':'Generate Playbook'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded-lg p-4 mb-4">
+            <p className="text-white font-bold text-base mb-1">{result.playbookTitle}</p>
+            <p className="text-gray-300 text-sm mb-2">{result.executiveSummary}</p>
+            {result.integrationThesis && <div className="grid grid-cols-3 gap-3 text-xs"><div><span className="text-gray-400">Total Synergies: </span><span className="text-green-300 font-bold">{result.integrationThesis.totalSynergyValue}</span></div><div><span className="text-gray-400">Int. Cost: </span><span className="text-red-300">{result.integrationThesis.integrationCost}</span></div><div><span className="text-gray-400">Payback: </span><span className="text-indigo-300">{result.integrationThesis.paybackPeriod}</span></div></div>}
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['thesis','day1','workstreams','synergies','talent','risks'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs ${subtab===s?'bg-indigo-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s==='day1'?'Day 1':s.charAt(0).toUpperCase()+s.slice(1)}</button>)}
+          </div>
+          {subtab==='thesis' && result.integrationThesis && (
+            <div className="space-y-2">
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-300 text-sm">{result.integrationThesis.strategicRationale}</p></div>
+              {(result.integrationThesis.synergyTargets||[]).map((s:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center justify-between mb-1"><p className="text-white text-sm font-medium">{s.category}</p><span className={SYNERGY_CONF[s.confidence]||'text-gray-400'}>{s.confidence} confidence</span></div>
+                  <div className="flex gap-4 text-xs mb-1"><span className="text-green-300 font-bold">{s.targetValue}</span><span className="text-gray-400">{s.timeline}</span></div>
+                  {(s.assumptions||[]).length>0 && <ul>{s.assumptions.slice(0,2).map((a:string,j:number)=><li key={j} className="text-gray-400 text-xs">• {a}</li>)}</ul>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='day1' && (
+            <div className="space-y-1">
+              {(result.day1Checklist||[]).map((item:any,i:number)=>(
+                <div key={i} className={`flex items-center gap-3 p-2 rounded ${item.critical?'bg-red-900/30 border border-red-700/50':'bg-gray-800'}`}>
+                  {item.critical && <span className="text-red-400 text-xs">CRIT</span>}
+                  <div className="flex-1"><p className="text-white text-xs">{item.item}</p><p className="text-gray-400 text-xs">{item.category} · {item.owner} · {item.deadline}</p></div>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='workstreams' && (
+            <div className="space-y-2">
+              {(result.workstreams||[]).map((w:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center justify-between mb-2"><p className="text-white font-medium text-sm">{w.workstream}</p><span className="text-indigo-300 text-xs">{w.lead}</span></div>
+                  <p className="text-gray-400 text-xs mb-2">Timeline: {w.timeline}</p>
+                  {(w.keyDecisions||[]).slice(0,2).map((d:any,j:number)=><div key={j} className="border-l-2 border-yellow-600 pl-2 mb-1"><p className="text-yellow-300 text-xs">{d.decision}</p><p className="text-gray-400 text-xs">{d.deadline}</p></div>)}
+                  {(w.metrics||[]).slice(0,2).map((m:any,j:number)=><div key={j} className="text-xs text-gray-300">• {m.metric}: {m.target}</div>)}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='synergies' && (
+            <div className="space-y-2">
+              {(result.synergyCaptureTimeline||[]).map((q:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center justify-between mb-2"><p className="text-white font-medium text-sm">{q.quarter}</p><span className="text-green-300 font-bold text-sm">{q.cumulativeSynergies}</span></div>
+                  <ul>{(q.initiatives||[]).map((ini:string,j:number)=><li key={j} className="text-gray-300 text-xs">• {ini}</li>)}</ul>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='talent' && result.talentRetention && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Critical Roles</p><div className="flex flex-wrap gap-2">{(result.talentRetention.criticalRoles||[]).map((r:string,i:number)=><span key={i} className="bg-indigo-800 text-indigo-200 text-xs px-2 py-1 rounded">{r}</span>)}</div></div>
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Retention Packages</p><ul>{(result.talentRetention.retentionPackages||[]).map((r:string,i:number)=><li key={i} className="text-green-300 text-xs">• {r}</li>)}</ul></div>
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-1">Target Retention Rate</p><p className="text-white font-bold text-lg">{result.talentRetention.retentionRate}</p></div>
+            </div>
+          )}
+          {subtab==='risks' && (
+            <div className="space-y-2">
+              {(result.riskRegister||[]).map((r:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center justify-between mb-1"><p className="text-white text-sm">{r.risk}</p><div className="flex gap-2 text-xs"><span className={THREAT_COLOR[r.likelihood]||'text-gray-400'}>L:{r.likelihood}</span><span className={IMPACT_COLOR[r.impact]||'text-gray-400'}>I:{r.impact}</span></div></div>
+                  <p className="text-gray-400 text-xs">Category: {r.category}</p>
+                  <p className="text-gray-300 text-xs mt-1">{r.mitigation}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.09 Sales Territory Planner ---
 const GROWTH_COLOR: Record<string,string> = { 'High':'text-green-400','Medium':'text-yellow-400','Low':'text-gray-400' };
 const THREAT_COLOR: Record<string,string> = { 'High':'text-red-400','Medium':'text-yellow-400','Low':'text-green-400' };
@@ -7483,7 +7592,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -7578,6 +7687,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'bcp', label: '🛡️ Business Continuity' },
     { id: 'changemgmtplan', label: '🔄 Change Management' },
     { id: 'territoryplan', label: '🗺️ Territory Plan' },
+    { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -7724,6 +7834,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'bcp' && <BCPPanel api={api} />}
         {tab === 'changemgmtplan' && <ChangeMgmtPlanPanel api={api} />}
         {tab === 'territoryplan' && <TerritoryPlanPanel api={api} />}
+        {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}

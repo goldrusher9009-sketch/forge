@@ -39500,6 +39500,24 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.10 M&A Integration Playbook ---
+app.post('/api/ma-integration', requireAuth, async (req: AuthRequest, res) => {
+  const { acquirer, target, dealType, dealValue, industry, acquirerRevenue, targetRevenue, acquirerEmployees, targetEmployees, strategicRationale, integrationApproach, day1Priorities, keyRisks, provider = 'anthropic' } = req.body;
+  try {
+    const key = await getUserKey(req.user!.id, provider, true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are an expert M&A integration consultant. Create a comprehensive post-merger integration playbook.
+Acquirer: ${acquirer} | Target: ${target} | Deal Type: ${dealType} | Value: ${dealValue}
+Industry: ${industry} | Acquirer Rev: ${acquirerRevenue} | Target Rev: ${targetRevenue}
+Employees: ${acquirerEmployees}+${targetEmployees} | Rationale: ${strategicRationale}
+Integration Approach: ${integrationApproach} | Day 1 Priorities: ${day1Priorities} | Key Risks: ${keyRisks}
+Return JSON: { playbookTitle, executiveSummary, integrationThesis:{ strategicRationale, synergyTargets:[{ category, targetValue, timeline, confidence:'High'|'Medium'|'Low', assumptions:string[] }], totalSynergyValue, integrationCost, netSynergyValue, paybackPeriod }, integrationModel:{ approach, retentionStrategy, brandStrategy, culturalIntegration }, day1Checklist:[{ category, item, owner, deadline, critical:boolean }], workstreams:[{ workstream, lead, team:string[], timeline, phase1:string[], phase2:string[], phase3:string[], keyDecisions:[{ decision, deadline, stakeholders:string[] }], risks:[{ risk, likelihood:'High'|'Medium'|'Low', impact:'High'|'Medium'|'Low', mitigation }], metrics:[{ metric, baseline, target, timeline }] }], communicationPlan:[{ audience, message, channel, timing, owner }], talentRetention:{ criticalRoles:string[], retentionPackages:string[], atRiskIndicators:string[], retentionRate }, governanceStructure:{ imcChair, workstreamLeads:string[], meetingCadence, escalationPath }, milestones:[{ milestone, date, owner, successCriteria }], riskRegister:[{ risk, category, likelihood:'High'|'Medium'|'Low', impact:'High'|'Medium'|'Low', mitigation, owner }], synergyCaptureTimeline:[{ quarter, cumulativeSynergies, initiatives:string[] }] }`;
+    const result = await callLLM(provider, key, null as any, [{ role:'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.09 Sales Territory Planner ---
 app.post('/api/territory-plan', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, industry, totalReps, regions, revenueTarget, averageDealSize, salesCycle, icp, competitorPresence, existingAccounts, expansionGoal, provider = 'anthropic' } = req.body;
