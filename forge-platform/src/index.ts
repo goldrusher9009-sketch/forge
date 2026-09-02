@@ -39500,6 +39500,19 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.44 Board Meeting Prep AI ---
+app.post('/api/board-prep', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, meetingDate, meetingType, boardMembers, arr, growth, burnRate, runway, keyMetrics, strategicInitiatives, challenges, decisions_needed, competitiveUpdates, financialHighlights, productUpdates, teamUpdates, goals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a board meeting preparation expert. Create a comprehensive board deck and prep package for: Company: ${company}, Industry: ${industry}, Meeting Date: ${meetingDate}, Meeting Type: ${meetingType}, Board Members: ${boardMembers}, ARR: ${arr}, Growth: ${growth}, Burn Rate: ${burnRate}, Runway: ${runway}, Key Metrics: ${keyMetrics}, Strategic Initiatives: ${strategicInitiatives}, Challenges: ${challenges}, Decisions Needed: ${decisions_needed}, Competitive Updates: ${competitiveUpdates}, Financial Highlights: ${financialHighlights}, Product Updates: ${productUpdates}, Team Updates: ${teamUpdates}, Goals: ${goals}. Return JSON: { prepTitle, executiveSummary, agendaRecommendation (array: {item, duration, presenter, type ("Update"/"Discussion"/"Decision"/"FYI")}), ceoNarrative, financialPackage (array: {slide, headline, keyMetrics, narrative, risks}), strategicUpdates (array: {initiative, status, kpis, risks, asks}), decisionItems (array: {decision, background, options, recommendation, boardAsk}), boardMemberProfiles (array: {name, background, likelyQuestions, focusAreas}), anticipatedQuestions (array: {question, suggestedAnswer, category}), preReadMaterials, followUpActions, redFlagsToAddress, talkingPoints, closingNarrative }`;
+  try {
+    const data = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.43 M&A Due Diligence AI ---
 app.post('/api/ma-due-diligence', requireAuth, async (req: AuthRequest, res) => {
   const { acquirerCompany, targetCompany, industry, dealType, dealSize, strategicRationale, targetRevenue, targetEbitda, targetGrowthRate, targetMarket, targetCustomers, keyRisks, synergyHypothesis, integrationTimeline, regulatoryContext, financingStructure, ddGoals } = req.body;
