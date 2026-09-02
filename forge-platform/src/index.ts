@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.97 AI Revenue Operations (RevOps) Command Center ---
+app.post('/api/revops-command', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, arr, growthRate, salesTeamSize, marketingBudget, currentCRM, salesCycle, leadVolume, winRate, churnRate, revopsMaturity, topChallenges } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are an elite Revenue Operations strategist. Build a comprehensive RevOps command center plan for: Company: ${companyName}, Industry: ${industry}, ARR: ${arr}, Growth Rate: ${growthRate}, Sales Team: ${salesTeamSize}, Marketing Budget: ${marketingBudget||'TBD'}, CRM: ${currentCRM||'Salesforce'}, Sales Cycle: ${salesCycle||'30 days'}, Lead Volume: ${leadVolume||'Unknown'}, Win Rate: ${winRate||'Unknown'}, Churn Rate: ${churnRate||'Unknown'}, RevOps Maturity: ${revopsMaturity||'Intermediate'}, Top Challenges: ${topChallenges}.
+Return ONLY valid JSON: { "revopsTitle": string, "executiveSummary": string, "revenueHealthScore": number (0-100), "revenueLeakageEstimate": string, "funnelAnalysis": { "awareness": string, "acquisition": string, "activation": string, "retention": string, "expansion": string, "topLeakagePoints": string[] }, "revenueIntelligence": { "arrBreakdown": string, "ndrBenchmark": string, "cacPaybackPeriod": string, "ltv": string, "ltvCacRatio": string, "burnMultiple": string, "efficiencyScore": number (0-100) }, "processOptimization": [{ "process": string, "currentState": string, "targetState": string, "impact": "High"|"Medium"|"Low", "effort": "Low"|"Medium"|"High", "actions": string[] }], "techStackRecommendations": [{ "category": string, "currentTool": string, "recommendation": string, "rationale": string, "estimatedImpact": string }], "dataStrategy": { "keyMetrics": string[], "reportingCadence": string, "dashboards": string[], "dataQualityActions": string[] }, "alignmentPlaybook": [{ "team": string, "sla": string, "handoffProcess": string, "sharedMetrics": string[] }], "quickWinOpportunities": [{ "opportunity": string, "potentialRevenue": string, "effort": "Low"|"Medium"|"High", "timeline": string }], "roadmap": [{ "quarter": string, "theme": string, "initiatives": string[], "targetARRImpact": string }], "kpis": [{ "metric": string, "current": string, "target": string, "owner": string }], "quickWins": string[] }`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const match = raw.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.96 AI Digital Transformation Roadmap Builder ---
 app.post('/api/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
