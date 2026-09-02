@@ -39500,6 +39500,47 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.86 AI Data Strategy & Analytics Roadmap ---
+app.post('/api/data-strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { company, industry, stage, currentDataSources, currentTools, dataTeamSize, biggestDataChallenges, decisionsMadeWithData } = req.body;
+    const p = `You are a Chief Data Officer and analytics strategy expert. Build a comprehensive data strategy and analytics roadmap.
+Company: ${company || 'Unknown'}
+Industry: ${industry || 'Unknown'}
+Stage: ${stage || 'Series A'}
+Current Data Sources: ${currentDataSources || 'Unknown'}
+Current Tools: ${currentTools || 'Unknown'}
+Data Team Size: ${dataTeamSize || 'Unknown'}
+Biggest Challenges: ${biggestDataChallenges || 'Unknown'}
+Decisions Made With Data: ${decisionsMadeWithData || 'Unknown'}
+Return ONLY valid JSON:
+{
+  "dataStrategyTitle": "string",
+  "executiveSummary": "string",
+  "dataMaturityScore": 0-100,
+  "dataMaturityLevel": "Ad-hoc|Aware|Defined|Managed|Optimized",
+  "northStarMetric": "string",
+  "dataArchitecturePlan": "string",
+  "dataGovernanceFramework": "string",
+  "analyticsCapabilityRoadmap": [{"phase": "string", "duration": "string", "capabilities": ["string"], "investment": "string", "outcomes": ["string"]}],
+  "keyDataProducts": [{"product": "string", "owner": "string", "users": "string", "businessValue": "string", "priority": "Critical|High|Medium|Low"}],
+  "techStackRecommendation": [{"layer": "string", "tool": "string", "rationale": "string", "cost": "string"}],
+  "dataTeamStructure": "string",
+  "selfServeAnalyticsStrategy": "string",
+  "aiMLRoadmap": "string",
+  "dataPrivacyCompliance": "string",
+  "roiProjection": "string",
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.85 AI Customer Experience Optimizer ---
 app.post('/api/cx-optimizer', requireAuth, async (req: AuthRequest, res) => {
   try {
