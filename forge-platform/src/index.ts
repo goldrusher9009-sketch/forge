@@ -39357,6 +39357,26 @@ app.post('/api/content-calendar', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.56 Headline Analyzer — score and improve headlines/titles
+app.post('/api/headline-analyze', requireAuth, async (req: any, res: any) => {
+  try {
+    const { headline, context } = req.body;
+    if (!headline || headline.trim().length < 3) return res.status(400).json({ error: 'headline required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const p = `You are a headline optimization expert. Analyze this headline and provide scores and improvements.\nHeadline: "${headline}"\nContext: ${context || 'general content'}\n\nReturn ONLY JSON:\n{"original":"${headline.replace(/"/g,"'")}","scores":{"clarity":85,"emotional_appeal":70,"curiosity":80,"urgency":60,"seo_strength":75,"overall":74},"grade":"B+","verdict":"one sentence verdict","strengths":["strength1","strength2"],"weaknesses":["weakness1","weakness2"],"improvements":[{"headline":"Improved version 1","score":88,"why":"reason this is better"},{"headline":"Improved version 2","score":85,"why":"reason"},{"headline":"Improved version 3","score":82,"why":"reason"}],"power_words":["word1","word2"],"missing_elements":["element1","element2"],"best_for":"platform or context this headline works best for"}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 800 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
