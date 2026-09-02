@@ -39500,6 +39500,68 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.34 AI Fundraising & Investor Relations Engine ---
+app.post('/api/fundraising-ir', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, stage, arr, growth, targetRaise, useOfFunds } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const p = `You are an elite fundraising and investor relations advisor with deep VC and growth equity experience. Generate a comprehensive fundraising strategy for: Company: ${companyName||'Tech Startup'}, Industry: ${industry||'SaaS'}, Stage: ${stage||'Series A'}, ARR: ${arr||'$2M'}, Growth: ${growth||'150% YoY'}, Target Raise: ${targetRaise||'$10M'}, Use of Funds: ${useOfFunds||'sales, product, hiring'}.
+
+Return ONLY valid JSON:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "fundraisingScore": 80,
+  "fundabilityRating": "string",
+  "criticalGap": "string",
+  "investorThesis": "string",
+  "targetInvestors": [{"type":"string","examples":["string"],"fitReason":"string","stage":"string"}],
+  "pitchNarrative": {
+    "hook": "string",
+    "problem": "string",
+    "solution": "string",
+    "marketOpportunity": "string",
+    "traction": "string",
+    "businessModel": "string",
+    "competitiveAdvantage": "string",
+    "team": "string",
+    "ask": "string"
+  },
+  "dueDiligencePrep": {
+    "financialMetrics": [{"metric":"string","value":"string","benchmark":"string"}],
+    "dataRoomChecklist": ["string"],
+    "commonQuestions": [{"question":"string","suggestedAnswer":"string"}]
+  },
+  "valuationFramework": {
+    "range": "string",
+    "methodology": "string",
+    "keyDrivers": ["string"],
+    "dilutionTargets": "string"
+  },
+  "processTimeline": [{"week":"string","milestone":"string","actions":["string"]}],
+  "negotiationStrategy": {
+    "mustHaveTerms": ["string"],
+    "niceToHaveTerms": ["string"],
+    "redLines": ["string"]
+  },
+  "irStrategy": {
+    "updateCadence": "string",
+    "reportingMetrics": ["string"],
+    "relationshipBuilding": ["string"]
+  },
+  "thirtyDayActions": ["string"],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = typeof result === 'string' ? result : JSON.stringify(result);
+    let data: any = {};
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.33 AI Operations Excellence & Process Intelligence Engine ---
 app.post('/api/ops-excellence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
