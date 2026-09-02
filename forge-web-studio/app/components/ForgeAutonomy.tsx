@@ -597,6 +597,135 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.60 Landing Page Copy Generator ---
+function LandingCopyPanel({ api }: { api: Api }) {
+  const [form, setForm] = useState({ product: '', audience: '', value_prop: '', tone: 'confident and clear' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [section, setSection] = useState('hero');
+  const submit = async () => {
+    if (!form.product.trim()) return;
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api.base}/api/landing-copy`, { method: 'POST', headers: { ...api.headers, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d); setSection('hero');
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+  const copyAll = () => {
+    if (!result) return;
+    const lines = [
+      `HERO\nH1: ${result.hero?.headline}\nSub: ${result.hero?.subheadline}\nCTA: ${result.hero?.cta_primary}`,
+      `PROBLEM\n${result.problem?.heading}\n${result.problem?.body}`,
+      `SOLUTION\n${result.solution?.heading}\n${result.solution?.body}\n${(result.solution?.bullets||[]).map((b:string)=>`• ${b}`).join('\n')}`,
+      `FEATURES\n${(result.features||[]).map((f:any)=>`${f.icon} ${f.title}: ${f.description}`).join('\n')}`,
+      `FAQ\n${(result.faq||[]).map((f:any)=>`Q: ${f.q}\nA: ${f.a}`).join('\n\n')}`,
+    ];
+    navigator.clipboard.writeText(lines.join('\n\n'));
+  };
+  const sections = ['hero', 'problem', 'solution', 'features', 'testimonials', 'faq', 'ctas'];
+  return (
+    <div style={{ padding: 16 }}>
+      <h3 style={{ marginBottom: 12, fontSize: 15 }}>🚀 Landing Page Copy Generator</h3>
+      <input placeholder="Product name / description *" value={form.product} onChange={e => setForm(f => ({ ...f, product: e.target.value }))} style={{ width: '100%', padding: 8, marginBottom: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <input placeholder="Target audience" value={form.audience} onChange={e => setForm(f => ({ ...f, audience: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+        <input placeholder="Main value proposition" value={form.value_prop} onChange={e => setForm(f => ({ ...f, value_prop: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={submit} disabled={loading} style={{ padding: '8px 16px', background: '#7c3aed', border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 13 }}>
+          {loading ? 'Generating...' : 'Generate Copy'}
+        </button>
+        {result && <button onClick={copyAll} style={{ padding: '8px 12px', background: '#333', border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 12 }}>Copy All</button>}
+      </div>
+      {error && <p style={{ color: '#f87171', marginTop: 8, fontSize: 12 }}>{error}</p>}
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
+            {sections.map(s => (
+              <button key={s} onClick={() => setSection(s)} style={{ padding: '3px 10px', background: section === s ? '#7c3aed' : '#1a1a2e', border: `1px solid ${section === s ? '#7c3aed' : '#333'}`, borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 11 }}>
+                {s}
+              </button>
+            ))}
+          </div>
+          {section === 'hero' && result.hero && (
+            <div style={{ background: '#1a1a2e', padding: 16, borderRadius: 8 }}>
+              <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{result.hero.headline}</div>
+              <div style={{ fontSize: 14, color: '#ccc', marginBottom: 12 }}>{result.hero.subheadline}</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ padding: '8px 16px', background: '#7c3aed', borderRadius: 6, fontSize: 13 }}>{result.hero.cta_primary}</div>
+                <div style={{ padding: '8px 16px', background: '#333', borderRadius: 6, fontSize: 13 }}>{result.hero.cta_secondary}</div>
+              </div>
+            </div>
+          )}
+          {section === 'problem' && result.problem && (
+            <div style={{ background: '#1a1a2e', padding: 16, borderRadius: 8 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>{result.problem.heading}</div>
+              <div style={{ fontSize: 13, lineHeight: 1.6 }}>{result.problem.body}</div>
+            </div>
+          )}
+          {section === 'solution' && result.solution && (
+            <div style={{ background: '#1a1a2e', padding: 16, borderRadius: 8 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>{result.solution.heading}</div>
+              <div style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 10 }}>{result.solution.body}</div>
+              {(result.solution.bullets || []).map((b: string, i: number) => <div key={i} style={{ fontSize: 13, padding: '3px 0' }}>✓ {b}</div>)}
+            </div>
+          )}
+          {section === 'features' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {(result.features || []).map((f: any, i: number) => (
+                <div key={i} style={{ background: '#1a1a2e', padding: 12, borderRadius: 8 }}>
+                  <div style={{ fontSize: 20, marginBottom: 4 }}>{f.icon}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>{f.title}</div>
+                  <div style={{ fontSize: 12, color: '#aaa' }}>{f.description}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {section === 'testimonials' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(result.testimonials || []).map((t: any, i: number) => (
+                <div key={i} style={{ background: '#1a1a2e', padding: 12, borderRadius: 8 }}>
+                  <div style={{ fontSize: 13, fontStyle: 'italic', marginBottom: 6 }}>"{t.quote}"</div>
+                  <div style={{ fontSize: 12, color: '#888' }}>— {t.author}</div>
+                  <div style={{ fontSize: 11, color: '#4ade80', marginTop: 4 }}>Result: {t.result}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {section === 'faq' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(result.faq || []).map((f: any, i: number) => (
+                <div key={i} style={{ background: '#1a1a2e', padding: 12, borderRadius: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Q: {f.q}</div>
+                  <div style={{ fontSize: 13, color: '#aaa' }}>A: {f.a}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {section === 'ctas' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {result.pricing_cta && <div style={{ background: '#1a1a2e', padding: 12, borderRadius: 8 }}>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>{result.pricing_cta.heading}</div>
+                <div style={{ fontSize: 12, color: '#aaa', margin: '4px 0' }}>{result.pricing_cta.subtext}</div>
+                <div style={{ padding: '6px 14px', background: '#7c3aed', borderRadius: 6, display: 'inline-block', fontSize: 13 }}>{result.pricing_cta.cta}</div>
+              </div>}
+              {result.footer_cta && <div style={{ background: '#1a1a2e', padding: 12, borderRadius: 8 }}>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>{result.footer_cta.heading}</div>
+                <div style={{ fontSize: 12, color: '#aaa', margin: '4px 0' }}>{result.footer_cta.subtext}</div>
+                <div style={{ padding: '6px 14px', background: '#7c3aed', borderRadius: 6, display: 'inline-block', fontSize: 13 }}>{result.footer_cta.cta}</div>
+              </div>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.59 Cold Email Personalizer ---
 function ColdEmailPanel({ api }: { api: Api }) {
   const [form, setForm] = useState({ prospect_name: '', prospect_company: '', prospect_role: '', your_offer: '', pain_point: '', tone: 'professional and direct' });
@@ -3430,7 +3559,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -3484,6 +3613,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'threadwriter', label: '🧵 Threads' },
     { id: 'newsletter', label: '📧 Newsletter' },
     { id: 'coldemail', label: '🎯 Cold Email' },
+    { id: 'landingcopy', label: '🚀 Landing Copy' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -3580,6 +3710,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'threadwriter' && <ThreadWriterPanel api={api} />}
         {tab === 'newsletter' && <NewsletterPanel api={api} />}
         {tab === 'coldemail' && <ColdEmailPanel api={api} />}
+        {tab === 'landingcopy' && <LandingCopyPanel api={api} />}
       </div>
     </div>
   );

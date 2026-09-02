@@ -39438,6 +39438,26 @@ app.post('/api/cold-email', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.60 Landing Page Copy Generator — generate complete landing page copy
+app.post('/api/landing-copy', requireAuth, async (req: any, res: any) => {
+  try {
+    const { product, audience, value_prop, tone } = req.body;
+    if (!product || product.trim().length < 3) return res.status(400).json({ error: 'product required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const p = `You are a world-class conversion copywriter. Write complete landing page copy.\nProduct: ${product}\nTarget audience: ${audience || 'general users'}\nMain value proposition: ${value_prop || 'saves time and increases results'}\nTone: ${tone || 'confident and clear'}\n\nReturn ONLY JSON:\n{"hero":{"headline":"Main H1 headline (powerful, benefit-focused)","subheadline":"Supporting subtitle (1-2 sentences)","cta_primary":"Primary button text","cta_secondary":"Secondary link text"},"social_proof":{"stat1":"Key metric or stat","stat2":"Another metric","stat3":"Third metric","logos_placeholder":"[Logos of trusted brands]"},"problem":{"heading":"Problem section heading","body":"2-3 sentences describing the pain"},"solution":{"heading":"Solution heading","body":"2-3 sentences introducing your solution","bullets":["Benefit 1","Benefit 2","Benefit 3","Benefit 4"]},"features":[{"icon":"emoji","title":"Feature name","description":"One sentence description"},{"icon":"emoji","title":"Feature name","description":"One sentence description"},{"icon":"emoji","title":"Feature name","description":"One sentence description"}],"testimonials":[{"quote":"Compelling fake testimonial quote","author":"Name, Title at Company","result":"Specific result achieved"},{"quote":"Another testimonial","author":"Name, Role","result":"Result"}],"pricing_cta":{"heading":"Pricing section heading","subtext":"Risk reducer text (money-back guarantee, free trial, etc.)","cta":"Final CTA button text"},"faq":[{"q":"Common objection as question","a":"Reassuring answer"},{"q":"Another question","a":"Answer"}],"footer_cta":{"heading":"Final push headline","subtext":"Urgency or reassurance","cta":"Button text"}}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
