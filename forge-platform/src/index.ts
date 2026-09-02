@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.20 AI Brand Architecture & Identity Strategy Engine ---
+app.post('/api/brand-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const { companyName, industry, targetAudience, currentBrandPerception, competitorLandscape, brandStrengths, brandWeaknesses, expansionPlans, brandBudget, coreValues } = req.body;
+  const p = `You are a world-class brand strategist (think Interbrand + Wolff Olins). Build a comprehensive Brand Architecture & Identity Strategy report.
+Company: ${companyName}, Industry: ${industry}, Audience: ${targetAudience}, Current perception: ${currentBrandPerception}, Competitors: ${competitorLandscape}, Strengths: ${brandStrengths}, Weaknesses: ${brandWeaknesses}, Expansion: ${expansionPlans}, Budget: ${brandBudget}, Values: ${coreValues}
+
+Return JSON:
+- reportTitle (string)
+- executiveSummary (string)
+- brandScore (number 0-100)
+- brandArchitectureModel (string: "Monolithic"|"Endorsed"|"Pluralistic"|"Hybrid")
+- positioningWhitespace (string)
+- brandFoundation (object: mission string, vision string, values string[], personality_traits string[], brand_promise string, proof_points string[])
+- architectureStrategy (object: recommended_model string, rationale string, portfolio_structure string[], naming_system string, hierarchy_rules string[])
+- visualIdentitySystem (object: logo_direction string, color_strategy string, typography_approach string, imagery_style string, design_principles string[])
+- verbalIdentity (object: brand_voice string, tone_attributes string[], messaging_framework string, tagline_options string[], key_messages string[])
+- brandPositioning (object: positioning_statement string, competitive_frame string, target_insight string, key_differentiators string[], proof_points string[])
+- brandActivation (object: launch_strategy string, touchpoint_priority string[], internal_activation string, external_activation string, ambassador_program string)
+- brandGovernance (object: guidelines_structure string, approval_process string, brand_police string, evolution_triggers string[])
+- metrics (array of objects: kpi string, measurement string, target string)
+- implementationRoadmap (array of objects: phase string, initiative string, timeline string, budget string)
+- quickWins (array of 5 strings)`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result.content[0].type === 'text' ? result.content[0].text : '';
+    const json = text.match(/\{[\s\S]*\}/)?.[0] || '{}';
+    res.json(JSON.parse(json));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.19 AI Customer Success & Retention Intelligence Engine ---
 app.post('/api/cs-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
