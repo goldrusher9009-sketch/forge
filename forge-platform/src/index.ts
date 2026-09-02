@@ -39500,6 +39500,82 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.44 AI Customer Experience & Journey Optimization Engine ---
+app.post('/api/cx-optimization', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, industry, businessModel, currentNPS, mainChannels, painPoints, competitors, customerSegments, cxBudget } = req.body;
+  const p = `You are a world-class Chief Customer Officer and CX transformation expert. Create a comprehensive customer experience and journey optimization strategy.
+
+Company: ${companyName || 'Unknown'}
+Industry: ${industry || 'Unknown'}
+Business Model: ${businessModel || 'Unknown'}
+Current NPS: ${currentNPS || 'Unknown'}
+Main Channels: ${mainChannels || 'Unknown'}
+Customer Pain Points: ${painPoints || 'Unknown'}
+Competitors: ${competitors || 'Unknown'}
+Customer Segments: ${customerSegments || 'Unknown'}
+CX Budget: ${cxBudget || 'Unknown'}
+
+Return a JSON object with these exact fields:
+{
+  "reportTitle": "CX Optimization Report for [company]",
+  "executiveSummary": "3-sentence CX health assessment and transformation vision",
+  "cxScore": <number 0-100>,
+  "cxMaturity": "Reactive|Aware|Committed|Proactive|Transformative",
+  "biggestFriction": "most critical customer friction point",
+  "highestImpactFix": "single highest-impact CX improvement",
+  "estimatedChurnReduction": "estimated churn reduction from full CX program",
+  "cxAudit": {
+    "acquisition": { "score": <0-100>, "topFriction": "main friction", "opportunity": "improvement" },
+    "onboarding": { "score": <0-100>, "topFriction": "main friction", "opportunity": "improvement" },
+    "engagement": { "score": <0-100>, "topFriction": "main friction", "opportunity": "improvement" },
+    "support": { "score": <0-100>, "topFriction": "main friction", "opportunity": "improvement" },
+    "retention": { "score": <0-100>, "topFriction": "main friction", "opportunity": "improvement" },
+    "advocacy": { "score": <0-100>, "topFriction": "main friction", "opportunity": "improvement" }
+  },
+  "customerJourneyMap": [
+    { "stage": "journey stage", "customerGoal": "what customer wants", "currentExperience": "current state", "emotionalState": "😊/😐/😤", "frictionPoints": ["friction 1"], "opportunities": ["opportunity 1"], "priority": "High/Medium/Low" }
+  ],
+  "personaInsights": [
+    { "persona": "persona name", "segment": "customer segment", "primaryNeed": "key need", "biggestFrustration": "main frustration", "preferredChannel": "channel preference", "cxStrategy": "tailored strategy" }
+  ],
+  "channelOptimization": [
+    { "channel": "channel name", "currentExperience": "current state", "targetExperience": "ideal state", "keyImprovement": "specific fix", "investment": "cost estimate", "expectedLift": "NPS/CSAT impact" }
+  ],
+  "voiceOfCustomer": {
+    "topComplaint": "most frequent complaint",
+    "topPraise": "most frequent positive feedback",
+    "featureRequests": ["request 1", "request 2"],
+    "collectionMethods": ["method 1", "method 2"],
+    "closedLoopProcess": "how to act on feedback"
+  },
+  "npsImprovementPlan": {
+    "currentNPS": "current NPS score or estimate",
+    "targetNPS": "target NPS in 12 months",
+    "detractorStrategy": "how to address detractors",
+    "passiveStrategy": "how to convert passives",
+    "promoterStrategy": "how to amplify promoters",
+    "measurementCadence": "how often to measure"
+  },
+  "technologyStack": [
+    { "category": "tech category", "currentTool": "existing tool or gap", "recommendation": "recommended tool", "rationale": "why", "estimatedCost": "cost" }
+  ],
+  "implementationRoadmap": [
+    { "phase": "phase name", "timeline": "timeline", "initiatives": ["initiative 1", "initiative 2"], "investment": "budget", "expectedCXLift": "measurable outcome" }
+  ],
+  "quickWins": ["action 1", "action 2", "action 3"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(match[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.43 AI Pricing & Revenue Optimization Engine ---
 app.post('/api/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
