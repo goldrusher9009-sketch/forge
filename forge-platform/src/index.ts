@@ -39500,6 +39500,46 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.69 AI Regulatory Compliance & Risk Intelligence ---
+app.post('/api/compliance-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { businessType, industry, geography, dataTypes, employeeCount, revenueRange, currentCompliance, plannedActivities } = req.body;
+    const p = `You are a regulatory compliance and risk intelligence expert. Generate a comprehensive compliance assessment and risk management plan.
+Business Type: ${businessType || 'SaaS Platform'}
+Industry: ${industry || 'Healthcare Technology'}
+Geography: ${geography || 'US, EU, UK'}
+Data Types Handled: ${dataTypes || 'PHI, PII, financial data'}
+Employee Count: ${employeeCount || '150 employees'}
+Annual Revenue: ${revenueRange || '$5M-$20M'}
+Current Compliance Certifications: ${currentCompliance || 'SOC 2 Type I, HIPAA BAA'}
+Planned Activities: ${plannedActivities || 'Expanding to EU, launching payment processing'}
+
+Return JSON only:
+{
+  "complianceTitle": "string",
+  "executiveSummary": "string",
+  "overallRiskScore": 0-100,
+  "complianceReadiness": "Non-Compliant|Partially Compliant|Mostly Compliant|Compliant|Certified",
+  "applicableRegulations": [{ "regulation": "string", "jurisdiction": "string", "applicability": "Mandatory|Likely Required|Best Practice", "currentStatus": "Not Started|In Progress|Partially Met|Met|Certified", "gapCount": 0, "priority": "Critical|High|Medium|Low" }],
+  "criticalGaps": [{ "gap": "string", "regulation": "string", "riskLevel": "Critical|High|Medium|Low", "remediation": "string", "timeline": "string", "cost": "Low (<$10k)|Medium ($10k-$50k)|High ($50k-$200k)|Very High (>$200k)" }],
+  "dataProtectionAssessment": { "dataInventory": ["string"], "retentionRisks": ["string"], "transferRisks": ["string"], "recommendations": ["string"] },
+  "complianceRoadmap": [{ "quarter": "string", "objectives": ["string"], "regulations": ["string"], "estimatedCost": "string", "expectedOutcome": "string" }],
+  "vendorRiskAssessment": { "highRiskVendors": ["string"], "dueDiligenceGaps": ["string"], "contractRequirements": ["string"] },
+  "incidentResponsePlan": { "notificationTimelines": [{ "regulation": "string", "timeline": "string" }], "keyContacts": ["string"], "documentationRequired": ["string"] },
+  "complianceBudget": { "immediateNeeds": "string", "annualOngoing": "string", "certificationCosts": "string", "totalFirstYear": "string" },
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.68 AI Customer Experience & Journey Optimizer ---
 app.post('/api/cx-optimizer', requireAuth, async (req: AuthRequest, res) => {
   try {

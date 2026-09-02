@@ -597,6 +597,112 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.69 AI Regulatory Compliance & Risk Intelligence ---
+const COMPLIANCE_READINESS_COLOR: Record<string,string> = { 'Non-Compliant':'bg-red-800','Partially Compliant':'bg-orange-700','Mostly Compliant':'bg-yellow-700','Compliant':'bg-green-700','Certified':'bg-purple-700' };
+const COMPLIANCE_STATUS_COLOR: Record<string,string> = { 'Not Started':'bg-gray-600','In Progress':'bg-blue-700','Partially Met':'bg-yellow-700','Met':'bg-green-700','Certified':'bg-purple-700' };
+function ComplianceIntelPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ businessType:'', industry:'', geography:'', dataTypes:'', employeeCount:'', revenueRange:'', currentCompliance:'', plannedActivities:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/compliance-intel`, { method:'POST', headers:{'Content-Type':'application/json',...( (typeof window!=='undefined'&&(window as any).__forgeToken) ? {'Authorization':`Bearer ${(window as any).__forgeToken}`} : {})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error||'Error');
+      setResult(d);
+    } catch(e:any) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold text-white">⚖️ AI Regulatory Compliance & Risk Intelligence</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {([['businessType','Business Type','SaaS Platform'],['industry','Industry','Healthcare Technology'],['geography','Geography (markets)','US, EU, UK'],['dataTypes','Data Types Handled','PHI, PII, financial data'],['employeeCount','Employee Count','150 employees'],['revenueRange','Annual Revenue','$5M-$20M'],['currentCompliance','Current Certifications','SOC 2 Type I, HIPAA BAA'],['plannedActivities','Planned Activities','EU expansion, payment processing']] as [string,string,string][]).map(([k,l,ph])=>(
+          <div key={k} className={k==='dataTypes'||k==='plannedActivities'?'col-span-2':''}>
+            <label className="text-xs text-gray-400 block mb-1">{l}</label>
+            <input className="w-full bg-gray-700 text-white px-2 py-1.5 rounded text-sm" placeholder={ph} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} />
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded font-medium disabled:opacity-50">{loading?'Analyzing…':'Run Compliance Assessment'}</button>
+      {error && <div className="text-red-400 text-sm">{error}</div>}
+      {result && (
+        <div className="space-y-4 mt-2">
+          <div className="bg-gray-800 rounded p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <span className={`px-2 py-1 rounded text-xs font-bold text-white ${COMPLIANCE_READINESS_COLOR[result.complianceReadiness]||'bg-gray-600'}`}>{result.complianceReadiness}</span>
+              <span className="text-gray-400 text-sm">Risk Score: <span className="text-white font-bold">{result.overallRiskScore}/100</span></span>
+            </div>
+            <h3 className="text-white font-bold text-lg">{result.complianceTitle}</h3>
+            <p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p>
+          </div>
+          {result.applicableRegulations?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-blue-400 font-semibold mb-2">📋 Applicable Regulations</h4>
+              <div className="space-y-2">{result.applicableRegulations.map((r:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-white font-medium text-sm">{r.regulation}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-xs ${COMPLIANCE_STATUS_COLOR[r.currentStatus]||'bg-gray-600'}`}>{r.currentStatus}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-xs ml-auto ${r.priority==='Critical'?'bg-red-700':r.priority==='High'?'bg-orange-700':'bg-gray-600'}`}>{r.priority}</span>
+                  </div>
+                  <div className="text-gray-400 text-xs">{r.jurisdiction} · {r.gapCount} gaps identified</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.criticalGaps?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-red-400 font-semibold mb-2">🚨 Critical Gaps</h4>
+              <div className="space-y-2">{result.criticalGaps.map((g:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-white font-medium text-sm">{g.gap}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-xs ${g.riskLevel==='Critical'?'bg-red-700':g.riskLevel==='High'?'bg-orange-700':'bg-yellow-700'}`}>{g.riskLevel}</span>
+                  </div>
+                  <div className="text-gray-400 text-xs">{g.regulation} · {g.cost}</div>
+                  <div className="text-indigo-400 text-xs mt-0.5">Fix: {g.remediation}</div>
+                  <div className="text-gray-500 text-xs">Timeline: {g.timeline}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.complianceBudget && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-green-400 font-semibold mb-2">💰 Compliance Budget</h4>
+              <div className="grid grid-cols-2 gap-2">{[['Immediate Needs',result.complianceBudget.immediateNeeds],['Annual Ongoing',result.complianceBudget.annualOngoing],['Certification Costs',result.complianceBudget.certificationCosts],['Total First Year',result.complianceBudget.totalFirstYear]].map(([l,v])=>(
+                <div key={l} className="bg-gray-700 rounded p-2"><div className="text-gray-400 text-xs">{l}</div><div className="text-white text-sm font-medium mt-0.5">{v}</div></div>
+              ))}</div>
+            </div>
+          )}
+          {result.complianceRoadmap?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-purple-400 font-semibold mb-2">🗺️ Compliance Roadmap</h4>
+              <div className="space-y-2">{result.complianceRoadmap.map((q:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-white font-medium text-sm">{q.quarter}</span>
+                    <span className="text-gray-400 text-xs">{q.estimatedCost}</span>
+                  </div>
+                  <ul className="list-disc list-inside text-gray-400 text-xs space-y-0.5">{q.objectives?.slice(0,3).map((o:string,j:number)=><li key={j}>{o}</li>)}</ul>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.quickWins?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-orange-400 font-semibold mb-2">⚡ Quick Wins</h4>
+              <ul className="list-disc list-inside text-gray-300 text-sm space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i}>{w}</li>)}</ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.68 AI Customer Experience & Journey Optimizer ---
 const CX_MATURITY_COLOR: Record<string,string> = { 'Basic':'bg-red-700','Developing':'bg-orange-700','Defined':'bg-yellow-700','Advanced':'bg-blue-700','World-Class':'bg-purple-700' };
 const EMOTIONAL_STATE_COLOR: Record<string,string> = { 'Frustrated':'bg-red-700','Neutral':'bg-gray-600','Satisfied':'bg-blue-700','Delighted':'bg-green-700' };
@@ -11414,7 +11520,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -11502,6 +11608,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'agencyproposal', label: '📄 Agency Proposal' },
     { id: 'perfreview', label: '⭐ Perf Review' },
     { id: 'vendoreval', label: '🔍 Vendor Eval' },
+    { id: 'complianceintel', label: '⚖️ Compliance' },
     { id: 'cxoptimizer', label: '🛤️ CX Optimizer' },
     { id: 'talentacq', label: '🎯 Talent Acq' },
     { id: 'crisiscommand', label: '🚨 Crisis Command' },
@@ -11541,6 +11648,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'pricingengine', label: '💰 Pricing Engine' },
     { id: 'competitivemoat', label: '🏰 Competitive Moat' },
     { id: 'globalexpansion', label: '🌍 Global Expansion' },
+    { id: 'complianceintel', label: '⚖️ Compliance' },
     { id: 'cxoptimizer', label: '🛤️ CX Optimizer' },
     { id: 'talentacq', label: '🎯 Talent Acq' },
     { id: 'crisiscommand', label: '🚨 Crisis Command' },
@@ -11720,6 +11828,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'agencyproposal' && <AgencyProposalPanel api={api} />}
         {tab === 'perfreview' && <PerfReviewPanel api={api} />}
         {tab === 'vendoreval' && <VendorEvalPanel api={api} />}
+        {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
@@ -11753,6 +11862,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
         {tab === 'digitaltransform' && <DigitalTransformPanel api={api} />}
+        {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
@@ -11769,6 +11879,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'pricingengine' && <PricingEnginePanel api={api} />}
         {tab === 'competitivemoat' && <CompetitiveMoatPanel api={api} />}
         {tab === 'globalexpansion' && <GlobalExpansionPanel api={api} />}
+        {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
