@@ -39500,6 +39500,93 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.10 AI Growth Hacking & Demand Generation Engine ---
+app.post('/api/growth-engine', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyStage, productCategory, targetAudience, currentMRR, growthGoal, currentChannels, budget, teamCapabilities, competitiveAdvantage } = req.body;
+  const p = `You are an elite growth hacker and demand generation strategist. Create a comprehensive growth strategy and demand generation playbook.
+
+Company Stage: ${companyStage || 'Series A startup'}
+Product Category: ${productCategory || 'B2B SaaS'}
+Target Audience: ${targetAudience || 'SMB and mid-market'}
+Current MRR: ${currentMRR || '$100K-$500K'}
+Growth Goal: ${growthGoal || '3x in 18 months'}
+Current Channels: ${currentChannels || 'content, paid, outbound'}
+Budget: ${budget || '$50K-$200K/month'}
+Team: ${teamCapabilities || 'small growth team'}
+Competitive Advantage: ${competitiveAdvantage || 'unique product features'}
+
+Return a JSON object with this exact structure:
+{
+  "strategyTitle": "string",
+  "executiveSummary": "string",
+  "growthScore": number 0-100,
+  "primaryGrowthMotion": "PLG|SLG|Community|Viral|Paid|Content",
+  "northStarMetric": "string",
+  "growthModel": {
+    "currentState": "string",
+    "targetState": "string",
+    "keyLeverages": ["string"],
+    "constraints": ["string"],
+    "growthEquation": "string"
+  },
+  "channelStrategy": [
+    { "channel": "string", "priority": "Primary|Secondary|Test", "currentROI": "string", "optimization": "string", "budget": "string", "expectedContribution": "string", "tactics": ["string"] }
+  ],
+  "plgStrategy": {
+    "viralLoops": ["string"],
+    "freemiumDesign": "string",
+    "activationOptimization": ["string"],
+    "productLedExpansion": ["string"],
+    "networkEffects": "string"
+  },
+  "contentEngine": {
+    "contentPillars": ["string"],
+    "seoStrategy": "string",
+    "thoughtLeadership": ["string"],
+    "distributionChannels": ["string"],
+    "contentCalendar": [{ "type": "string", "frequency": "string", "purpose": "string", "format": "string" }]
+  },
+  "demandGenPlaybooks": [
+    { "playbook": "string", "targetSegment": "string", "channel": "string", "tactics": ["string"], "budget": "string", "expectedLeads": "string", "timeline": "string" }
+  ],
+  "growthExperiments": [
+    { "experiment": "string", "hypothesis": "string", "channel": "string", "effort": "Low|Medium|High", "expectedImpact": "Low|Medium|High", "duration": "string", "successMetric": "string" }
+  ],
+  "viralAndReferral": {
+    "referralProgram": "string",
+    "viralCoefficient": "string",
+    "communityStrategy": "string",
+    "advocateProgram": ["string"]
+  },
+  "paidAcquisition": {
+    "channels": ["string"],
+    "targetCPL": "string",
+    "targetCAC": "string",
+    "creativStrategy": "string",
+    "audienceTargeting": ["string"],
+    "retargetingStrategy": "string"
+  },
+  "partnershipGrowth": [
+    { "partnerType": "string", "example": "string", "mechanism": "string", "revenueImpact": "string" }
+  ],
+  "metrics": [
+    { "metric": "string", "current": "string", "target": "string", "timeframe": "string", "owner": "string" }
+  ],
+  "thirtyDayPlan": ["string"],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.09 AI Customer Success & Retention Intelligence Engine ---
 app.post('/api/cs-retention', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
