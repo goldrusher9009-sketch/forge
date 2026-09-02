@@ -39500,6 +39500,113 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.64 AI Product Roadmap & Prioritization Engine ---
+app.post('/api/product-roadmap', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const { companyName, productName, stage, teamSize, quarterlyBudget, currentFeatures, proposedFeatures, targetUsers, businessGoals, technicalDebt, competitorFeatures, userFeedbackThemes, revenueModel, releaseConstraints, stakeholderPriorities } = req.body;
+    const p = `You are an expert product strategist and roadmap architect. Analyze this product context and create a comprehensive AI-powered roadmap with prioritization.
+
+Company: ${companyName}
+Product: ${productName}
+Stage: ${stage}
+Team Size: ${teamSize}
+Quarterly Budget: ${quarterlyBudget}
+Current Features: ${currentFeatures}
+Proposed Features: ${proposedFeatures}
+Target Users: ${targetUsers}
+Business Goals: ${businessGoals}
+Technical Debt: ${technicalDebt}
+Competitor Features: ${competitorFeatures}
+User Feedback Themes: ${userFeedbackThemes}
+Revenue Model: ${revenueModel}
+Release Constraints: ${releaseConstraints}
+Stakeholder Priorities: ${stakeholderPriorities}
+
+Return a JSON object with:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "productHealthScore": number (0-100),
+  "productHealthStatus": "Excellent|Good|Needs Work|Critical",
+  "roadmapConfidence": number (0-100),
+  "estimatedQuartersToGoal": number,
+  "prioritizationFramework": {
+    "methodology": "string (RICE/ICE/Weighted Scoring)",
+    "scoringCriteria": [{"criterion":"string","weight":number,"rationale":"string"}],
+    "scoringGuide": "string"
+  },
+  "featureScorecard": [
+    {
+      "feature": "string",
+      "category": "Growth|Retention|Monetization|Infrastructure|Delight",
+      "riceScore": number,
+      "reach": number,
+      "impact": number (1-3),
+      "confidence": number (0-100),
+      "effort": "XS|S|M|L|XL",
+      "effortDays": number,
+      "businessValue": "string",
+      "userValue": "string",
+      "risks": ["string"],
+      "dependencies": ["string"],
+      "recommendedQuarter": "Q1|Q2|Q3|Q4|Backlog",
+      "priority": "P0|P1|P2|P3"
+    }
+  ],
+  "technicalDebtPlan": {
+    "debtScore": number (0-100, higher=more debt),
+    "debtImpactOnVelocity": "string",
+    "debtItems": [{"item":"string","severity":"Critical|High|Medium|Low","estimatedDays":number,"revenueImpact":"string","recommendation":"string"}],
+    "debtReductionStrategy": "string",
+    "recommendedDebtAllocation": "string (% of capacity)"
+  },
+  "quarterlyRoadmap": [
+    {
+      "quarter": "Q1|Q2|Q3|Q4",
+      "theme": "string",
+      "objectives": ["string"],
+      "features": ["string"],
+      "successMetrics": ["string"],
+      "teamCapacity": "string",
+      "estimatedRevenueLift": "string",
+      "risks": ["string"]
+    }
+  ],
+  "competitiveGapAnalysis": {
+    "gaps": [{"feature":"string","competitorHas":["string"],"urgency":"Urgent|High|Medium|Low","recommendation":"string"}],
+    "uniqueDifferentiators": ["string"],
+    "whitespaceOpportunities": ["string"]
+  },
+  "userFeedbackAlignment": {
+    "topThemes": [{"theme":"string","frequency":"string","linkedFeatures":["string"],"priority":"string"}],
+    "unaddressedPain": ["string"],
+    "delightOpportunities": ["string"]
+  },
+  "resourcePlan": {
+    "teamStructure": "string",
+    "capacityConstraints": ["string"],
+    "hiringRecommendations": ["string"],
+    "outsourcingOpportunities": ["string"]
+  },
+  "releaseStrategy": {
+    "cadence": "string",
+    "releaseTypes": [{"type":"string","frequency":"string","scope":"string"}],
+    "featureFlagStrategy": "string",
+    "betaProgram": "string"
+  },
+  "successMetrics": [{"metric":"string","baseline":"string","target":"string","timeframe":"string"}],
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.63 AI Sales Intelligence & Revenue Engine ---
 app.post('/api/sales-intelligence', requireAuth, async (req: AuthRequest, res) => {
   try {
